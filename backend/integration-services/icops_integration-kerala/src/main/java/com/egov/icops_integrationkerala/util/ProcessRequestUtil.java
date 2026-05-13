@@ -4,6 +4,7 @@ import com.egov.icops_integrationkerala.config.IcopsConfiguration;
 import com.egov.icops_integrationkerala.model.AuthResponse;
 import com.egov.icops_integrationkerala.model.ChannelMessage;
 import com.egov.icops_integrationkerala.model.ProcessRequest;
+import com.egov.icops_integrationkerala.model.RescheduleProcessRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +55,27 @@ public class ProcessRequestUtil {
         } catch (RestClientException e) {
             log.error("Error occurred when sending Process Request ", e);
 
+            return ChannelMessage.builder().acknowledgementStatus("FAILURE").failureMsg("Failed to connect to ICOPS").build();
+        }
+    }
+
+    public ChannelMessage callRescheduleRequest(AuthResponse authResponse, RescheduleProcessRequest rescheduleRequest) throws Exception {
+        String icopsUrl = config.getIcopsUrl() + config.getRescheduleRequestEndPoint();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + authResponse.getAccessToken());
+        HttpEntity<RescheduleProcessRequest> requestEntity = new HttpEntity<>(rescheduleRequest, headers);
+
+        try {
+            log.info("Reschedule Request Headers: {}", headers);
+            log.info("Reschedule Request Body: {}", objectMapper.writeValueAsString(rescheduleRequest));
+            ResponseEntity<Object> responseEntity =
+                    restTemplate.postForEntity(icopsUrl, requestEntity, Object.class);
+            log.info("Reschedule Status Code: {}", responseEntity.getStatusCode());
+            log.info("Reschedule Response Body: {}", responseEntity.getBody());
+            return objectMapper.convertValue(responseEntity.getBody(), ChannelMessage.class);
+        } catch (RestClientException e) {
+            log.error("Error occurred when sending Reschedule Request ", e);
             return ChannelMessage.builder().acknowledgementStatus("FAILURE").failureMsg("Failed to connect to ICOPS").build();
         }
     }

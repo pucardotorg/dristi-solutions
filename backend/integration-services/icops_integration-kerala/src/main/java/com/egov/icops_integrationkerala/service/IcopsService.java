@@ -17,6 +17,9 @@ import org.springframework.stereotype.Service;
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
+
+import static com.egov.icops_integrationkerala.config.ServiceConstants.SIGNED_TASK_DOCUMENT;
 
 @Service
 @Slf4j
@@ -37,16 +40,23 @@ public class IcopsService {
 
     private final PoliceJurisdictionUtil policeJurisdictionUtil;
 
-
     private final Producer producer;
 
     private final IcopsConfiguration config;
 
     private final IcopsRepository icopsRepository;
 
+    private final FileStorageUtil fileStorageUtil;
+
+    private final DateStringConverter dateStringConverter;
+
     @Autowired
     public IcopsService(AuthUtil authUtil, AuthenticationManager authenticationManager,
-                        JwtUtil jwtUtil, IcopsEnrichment icopsEnrichment, ProcessRequestUtil processRequestUtil, RequestInfoGenerator requestInfoGenerator, PoliceJurisdictionUtil policeJurisdictionUtil, Producer producer, IcopsConfiguration config, com.egov.icops_integrationkerala.repository.IcopsRepository icopsRepository) {
+                        JwtUtil jwtUtil, IcopsEnrichment icopsEnrichment, ProcessRequestUtil processRequestUtil,
+                        RequestInfoGenerator requestInfoGenerator, PoliceJurisdictionUtil policeJurisdictionUtil,
+                        Producer producer, IcopsConfiguration config,
+                        com.egov.icops_integrationkerala.repository.IcopsRepository icopsRepository,
+                        FileStorageUtil fileStorageUtil, DateStringConverter dateStringConverter) {
 
         this.authUtil = authUtil;
         this.authenticationManager = authenticationManager;
@@ -58,6 +68,8 @@ public class IcopsService {
         this.producer = producer;
         this.config = config;
         this.icopsRepository = icopsRepository;
+        this.fileStorageUtil = fileStorageUtil;
+        this.dateStringConverter = dateStringConverter;
     }
 
 
@@ -194,5 +206,63 @@ public class IcopsService {
     public LocationBasedJurisdiction getLocationBasedJurisdiction(LocationRequest request) throws Exception {
         AuthResponse authResponse = authUtil.authenticateAndGetToken();
         return policeJurisdictionUtil.getLocationBasedJurisdiction(authResponse,request.getLocation());
+    }
+
+    public ChannelMessage rescheduleProcess(TaskRequest taskRequest) throws Exception {
+        Task task = taskRequest.getTask();
+
+        List<IcopsTracker> trackers = icopsRepository.getIcopsTrackerByTaskNumber(task.getTaskNumber());
+        if (trackers.isEmpty()) {
+            log.error("No IcopsTracker found for taskNumber: {}", task.getTaskNumber());
+            return ChannelMessage.builder()
+                    .acknowledgementStatus("FAILURE")
+                    .failureMsg("No process found for taskNumber: " + task.getTaskNumber())
+                    .build();
+        }
+        IcopsTracker icopsTracker = trackers.get(0);
+
+        String processNextHearingDate = dateStringConverter.convertLongToDate(
+                task.getTaskDetails().getCaseDetails().getHearingDate());
+
+        String signedFileStoreId = task.getDocuments().stream()
+                .filter(doc -> doc.getDocumentType() != null
+                        && doc.getDocumentType().equalsIgnoreCase(SIGNED_TASK_DOCUMENT))
+                .findFirst()
+                .map(org.egov.common.contract.models.Document::getFileStore)
+                .orElseThrow(() -> new Exception("Signed document not found in task documents"));
+
+        String processDoc = fileStorageUtil.getFileFromFileStoreService(
+                signedFileStoreId, config.getEgovStateTenantId());
+
+        RescheduleProcessRequest icopsPayload = RescheduleProcessRequest.builder()
+                .processUniqueId(icopsTracker.getProcessNumber())
+                .processNextHearingDate(processNextHearingDate)
+                .processDoc(processDoc)
+                .build();
+
+        AuthResponse authResponse = authUtil.authenticateAndGetToken();
+        ChannelMessage channelMessage = processRequestUtil.callRescheduleRequest(authResponse, icopsPayload);
+
+        icopsTracker.setRowVersion(icopsTracker.getRowVersion() + 1);
+        icopsTracker.setDeliveryStatus(channelMessage.getAcknowledgementStatus().equalsIgnoreCase("SUCCESS")
+                ? DeliveryStatus.RESCHEDULED : DeliveryStatus.FAILED);
+        ZoneId zone;
+        try {
+            zone = ZoneId.of(config.getZoneId());
+        } catch (DateTimeException e) {
+            log.warn("Invalid zoneId '{}' in config, falling back to UTC", config.getZoneId());
+            zone = ZoneId.of("UTC");
+        }
+        icopsTracker.setReceivedDate(LocalDateTime.now(zone).toString());
+        if (!channelMessage.getAcknowledgementStatus().equalsIgnoreCase("SUCCESS")) {
+            icopsTracker.setFailureReason(channelMessage.getFailureMsg());
+        }
+        IcopsRequest icopsRequest = IcopsRequest.builder()
+                .requestInfo(taskRequest.getRequestInfo())
+                .icopsTracker(icopsTracker)
+                .build();
+        producer.push("update-icops-tracker", icopsRequest);
+
+        return channelMessage;
     }
 }

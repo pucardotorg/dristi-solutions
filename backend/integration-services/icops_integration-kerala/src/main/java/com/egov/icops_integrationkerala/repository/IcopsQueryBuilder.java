@@ -32,6 +32,17 @@ public class IcopsQueryBuilder {
         }
     }
 
+    public String getIcopsTrackerByTaskNumber(String taskNumber, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(BASE_APPLICATION_QUERY);
+        query.append(FROM_TABLES);
+        if (taskNumber != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" task_number = ? ");
+            preparedStmtList.add(taskNumber);
+        }
+        return query.toString();
+    }
+
     public String getUpdateResponseBlobQuery() {
         return "UPDATE dristi_kerala_icops SET response_blob = ?::jsonb WHERE process_number = ?";
     }
