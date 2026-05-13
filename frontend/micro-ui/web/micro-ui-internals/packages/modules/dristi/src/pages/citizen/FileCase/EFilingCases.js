@@ -192,6 +192,7 @@ function EFilingCases({ path }) {
   const [showEditCaseNameModal, setShowEditCaseNameModal] = useState(false);
   const [modalCaseName, setModalCaseName] = useState("");
   const [isEditingAllowed, setIsEditingAllowed] = useState(false);
+  const [showFillComplainantDetailsAdvisoryModal, setShowFillComplainantDetailsAdvisoryModal] = useState({ show: false, redirectTo: "" });
   const [deleteFormIndex, setDeleteFormIndex] = useState(null);
   const [formRenderKey, setFormRenderKey] = useState(0);
   const setFieldsRemainingInitially = () => {
@@ -233,26 +234,6 @@ function EFilingCases({ path }) {
     }
     return count;
   }, [fieldsRemaining]);
-
-  const showMandatoryFieldsRemainingModal = useMemo(() => {
-    if (selected === "reviewCaseFile") {
-      if (mandatoryFieldsLeftTotalCount > 0) {
-        setShowConfirmMandatoryModal(true);
-        return true;
-      } else return false;
-    }
-    return false;
-  }, [selected, mandatoryFieldsLeftTotalCount]);
-
-  const showOptionalFieldsRemainingModal = useMemo(() => {
-    if (selected === "reviewCaseFile") {
-      if (checkAndGetOptionalFieldLeftPages.length !== 0) {
-        setShowConfirmOptionalModal(true);
-        return true;
-      } else return false;
-    }
-    return false;
-  }, [selected, checkAndGetOptionalFieldLeftPages]);
 
   const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
     {
@@ -352,6 +333,75 @@ function EFilingCases({ path }) {
     const updatedCaseData = transformCaseDataForFetching(caseDetails, ["witnessDetails", "advocateDetails"]);
     return updatedCaseData;
   }, [caseData]);
+
+  const state = useMemo(() => caseDetails?.status, [caseDetails]);
+
+  const isCaseReAssigned = useMemo(() => state === CaseWorkflowState.CASE_REASSIGNED, [state]);
+  const isPendingReESign = useMemo(() => state === CaseWorkflowState.PENDING_RE_E_SIGN, [state]);
+  const isPendingESign = useMemo(() => state === CaseWorkflowState.PENDING_E_SIGN, [state]);
+  const isDisableAllFieldsMode = !(
+    state === CaseWorkflowState.CASE_REASSIGNED ||
+    state === CaseWorkflowState.DRAFT_IN_PROGRESS ||
+    state === CaseWorkflowState.PENDING_E_SIGN ||
+    state === CaseWorkflowState.PENDING_RE_E_SIGN
+  );
+
+  const isDraftInProgress = state === CaseWorkflowState.DRAFT_IN_PROGRESS;
+
+  const isComplainantDetailsCompleted = useMemo(() => {
+    const complainantForms = (caseDetails || errorCaseDetails || {})?.additionalDetails?.["complainantDetails"]?.formdata || [];
+
+    // if any form is incomplete
+    if (complainantForms.find((form) => form.isFormCompleted === false)) {
+      return false;
+    }
+
+    return true;
+  }, [caseDetails, errorCaseDetails]);
+
+  const isComplainantDetailsChanged = useMemo(() => {
+    const caseLitigants = (caseDetails || errorCaseDetails || {})?.litigants || [];
+
+    // if any form is changed
+    if (caseLitigants.find((litigant) => litigant?.additionalDetails?.isLitigantDetailsChanged)) {
+      return true;
+    }
+
+    return false;
+  }, [caseDetails, errorCaseDetails]);
+
+  const showMandatoryFieldsRemainingModal = useMemo(() => {
+    if (selected === "reviewCaseFile") {
+      if (mandatoryFieldsLeftTotalCount > 0) {
+        setShowConfirmMandatoryModal(true);
+        return true;
+      } else return false;
+    }
+    return false;
+  }, [selected, mandatoryFieldsLeftTotalCount]);
+
+  const showOptionalFieldsRemainingModal = useMemo(() => {
+    if (selected === "reviewCaseFile") {
+      if (!isComplainantDetailsCompleted && isDraftInProgress) {
+        setShowFillComplainantDetailsAdvisoryModal({ show: true, redirectTo: "complainantDetails" });
+        return false;
+      } else if (isComplainantDetailsChanged && mandatoryFieldsLeftTotalCount === 0 && isDraftInProgress) {
+        setShowFillComplainantDetailsAdvisoryModal({ show: true, redirectTo: "advocateDetails" });
+        return false;
+      } else if (checkAndGetOptionalFieldLeftPages.length !== 0) {
+        setShowConfirmOptionalModal(true);
+        return true;
+      } else return false;
+    }
+    return false;
+  }, [
+    selected,
+    checkAndGetOptionalFieldLeftPages,
+    isComplainantDetailsCompleted,
+    isComplainantDetailsChanged,
+    mandatoryFieldsLeftTotalCount,
+    isDraftInProgress,
+  ]);
 
   const { data: taskManagementData, isLoading: isTaskManagementLoading, refetch: refetchTaskManagement } = useSearchTaskMangementService(
     {
@@ -500,19 +550,6 @@ function EFilingCases({ path }) {
       warningErrors,
     };
   }, [scrutinyErrors]);
-
-  const state = useMemo(() => caseDetails?.status, [caseDetails]);
-
-  const isCaseReAssigned = useMemo(() => state === CaseWorkflowState.CASE_REASSIGNED, [state]);
-  const isPendingReESign = useMemo(() => state === CaseWorkflowState.PENDING_RE_E_SIGN, [state]);
-  const isPendingESign = useMemo(() => state === CaseWorkflowState.PENDING_E_SIGN, [state]);
-  const isDisableAllFieldsMode = !(
-    state === CaseWorkflowState.CASE_REASSIGNED ||
-    state === CaseWorkflowState.DRAFT_IN_PROGRESS ||
-    state === CaseWorkflowState.PENDING_E_SIGN ||
-    state === CaseWorkflowState.PENDING_RE_E_SIGN
-  );
-  const isDraftInProgress = state === CaseWorkflowState.DRAFT_IN_PROGRESS;
 
   useEffect(() => {
     const hydrateFreshCaseData = async () => {
@@ -703,6 +740,9 @@ function EFilingCases({ path }) {
       caseDetails?.caseDetails?.[selected]?.formdata ||
       (selected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
     if (selected === "advocateDetails") {
+      if (!isComplainantDetailsCompleted && isDraftInProgress) {
+        setShowFillComplainantDetailsAdvisoryModal({ show: true, redirectTo: "complainantDetails" });
+      }
       const newAdvData = []; //  we will update the advocate data in the same order as order of complainant forms
       const advData = caseDetails?.additionalDetails?.[selected]?.formdata || [];
       for (let i = 0; i < completedComplainants?.length; i++) {
@@ -2595,6 +2635,9 @@ function EFilingCases({ path }) {
           filingType: filingType,
           setShouldShowConfirmDcaModal,
           isDelayCondonation,
+          isContinueClicked: true,
+          isCaseReAssigned,
+          isDraftInProgress,
         });
 
         if (resetFormData.current) {
@@ -2680,6 +2723,8 @@ function EFilingCases({ path }) {
       filingType: filingType,
       isDelayCondonation,
       setShouldShowConfirmDcaModal,
+      isCaseReAssigned,
+      isDraftInProgress,
     })
       .then(() => {
         refetchCaseData().then((updatedCaseData) => {
@@ -2765,6 +2810,8 @@ function EFilingCases({ path }) {
       filingType: filingType,
       setShouldShowConfirmDcaModal,
       isDelayCondonation,
+      isCaseReAssigned,
+      isDraftInProgress,
     })
       .then(() => {
         if (!isCaseReAssigned) {
@@ -2865,6 +2912,11 @@ function EFilingCases({ path }) {
     section: "138",
     courtName: "Kollam S-138 Special Court",
     href: "https://www.indiacode.nic.in/bitstream/123456789/2189/1/a1881-26.pdf",
+  };
+  const handleComplainantDetailsAdvisoryModal = (redirectTo) => {
+    setPrevSelected(selected);
+    history.push(`?caseId=${caseId}&selected=${redirectTo}`); // introduce refetch casedta here due to react 18 upgrade changes
+    setShowFillComplainantDetailsAdvisoryModal({ show: false, redirectTo: "" });
   };
 
   const takeUserToRemainingMandatoryFieldsPage = async () => {
@@ -3345,6 +3397,19 @@ function EFilingCases({ path }) {
 
                 history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
               }}
+            ></Modal>
+          )}
+          {showFillComplainantDetailsAdvisoryModal?.show && (
+            <Modal
+              headerBarMain={<Heading label={t("ADVISORY_TITLE")} />}
+              headerBarEnd={<CloseBtn onClick={() => handleComplainantDetailsAdvisoryModal(showFillComplainantDetailsAdvisoryModal?.redirectTo)} />}
+              actionSaveLabel={t("OK")}
+              children={
+                showFillComplainantDetailsAdvisoryModal?.redirectTo === "complainantDetails"
+                  ? t("PLEASE_GO_TO_COMPLAINANT_SCREEN_AND_CLICK_CONTINUE")
+                  : t("PLEASE_GO_TO_ADVOCATE_SCREEN_AND_CLICK_CONTINUE")
+              }
+              actionSaveOnSubmit={() => handleComplainantDetailsAdvisoryModal(showFillComplainantDetailsAdvisoryModal?.redirectTo)}
             ></Modal>
           )}
           {/* show this modal only for filingParty */}

@@ -62,6 +62,15 @@ const SearchCaseAndShowDetails = ({
     return [];
   }, [caseDetails]);
 
+  const getDisplayNumber = (option, searchTerm) => {
+    if (!searchTerm) return option?.filingNumber;
+    const term = searchTerm.toLowerCase();
+    if (option?.cmpNumber?.toLowerCase().includes(term)) return option?.cmpNumber;
+    if (option?.cnrNumber?.toLowerCase().includes(term)) return option?.cnrNumber;
+    if (option?.courtCaseNumber?.toLowerCase().includes(term)) return option?.courtCaseNumber;
+    return option?.filingNumber;
+  };
+
   return (
     <div className="case-number-input">
       {!caseDetails?.cnrNumber && (
@@ -77,7 +86,7 @@ const SearchCaseAndShowDetails = ({
                 setCaseList([]);
                 let str = e.target.value;
                 if (str) {
-                  str = str.replace(/[^a-zA-Z0-9.-]/g, "");
+                  str = str.replace(/[^a-zA-Z0-9.\/-]/g, "");
                   if (str.length > 50) {
                     str = str.substring(0, 50);
                   }
@@ -102,13 +111,11 @@ const SearchCaseAndShowDetails = ({
                     onSelect(option);
                   }}
                 >
-                  <span> {option?.filingNumber}</span>
+                  <span> {getDisplayNumber(option, caseNumber)}</span>
                 </div>
               );
             })}
-          <p style={{ fontSize: "12px" }}>
-            {t("FILLING_NUMBER_FORMATE_TEXT")} {"KL-<6 digit sequence number>-<YYYY>"}
-          </p>
+
         </LabelFieldPair>
       )}
       {errors?.caseNumber && (

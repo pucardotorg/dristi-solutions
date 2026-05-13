@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
-import { InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import { InfoCircleIcon, ManageOfficeCloseIcon } from "../../../icons/svgIndex";
 import { assignCasesConfig } from "./assignCasesConfig";
 import CustomToast from "../../../components/CustomToast";

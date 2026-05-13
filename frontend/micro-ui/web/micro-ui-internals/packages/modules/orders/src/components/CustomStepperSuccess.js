@@ -28,6 +28,7 @@ const CustomStepperSuccess = ({
   closeButtonText,
   orderType,
   isSubmitting = false,
+  rowData = {},
 }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const fileStore = sessionStorage.getItem("SignedFileStoreID");
@@ -84,6 +85,7 @@ const CustomStepperSuccess = ({
                 t={t}
                 style={{ marginLeft: "0.5rem", color: "#007E7E" }}
                 displayFilename={"PRINT"}
+                name={`${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber}_${rowData?.taskNumber}_${rowData?.taskType}`}
               />
             ) : (
               <span style={{ marginLeft: "0.5rem", color: "grey" }}>Print</span>

@@ -16,7 +16,10 @@ function ADiaryDocumentPdfModal({ t, tenantId, data, setShowDocumentPdfModal, is
     (filestoreId) => {
       if (filestoreId) {
         try {
-          downloadPdf(tenantId, filestoreId);
+          const fileName = `${data?.rowData?.caseNumber || "diary-document"}_${data?.rowData?.referenceId}_${t(
+            data?.rowData?.referenceType
+          )}_${"diary-document"}`;
+          downloadPdf(tenantId, filestoreId, fileName);
         } catch (error) {
           console.error("Failed to generate diary document PDF:", error);
           const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
@@ -24,7 +27,7 @@ function ADiaryDocumentPdfModal({ t, tenantId, data, setShowDocumentPdfModal, is
         }
       }
     },
-    [downloadPdf, tenantId, t]
+    [downloadPdf, tenantId, t, data]
   );
 
   const handleUpdateBusinessOfDayEntry = async () => {
