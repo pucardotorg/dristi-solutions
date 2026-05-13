@@ -9,7 +9,7 @@ import AttendanceSection from "../../sections/AttendanceSection";
 import OrderTypeSection from "../../sections/OrderTypeSection";
 import OrderTextSection from "../../sections/OrderTextSection";
 import { applicationTypeConfig, attendeesOptions, purposeOfHearingConfig, nextDateOfHearing, itemTextConfig } from "../../configs/ordersCreateConfig";
-import { configKeys, stateSlaMap, dayInMillisecond, ErrorAttendeesKey, ORDER_TYPE_SETS } from "../../configs/generateOrdersConstants";
+import { configKeys, stateSlaMap, dayInMillisecond, ErrorAttendeesKey, ORDER_TYPE_SETS, createDefaultOrderData } from "../../configs/generateOrdersConstants";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
@@ -20,7 +20,6 @@ import useOrderTaskHandlers from "../../hooks/useOrderTaskHandlers";
 import { OrderWorkflowAction, OrderWorkflowState } from "../../utils/orderWorkflow";
 import { applicationTypes } from "../../utils/applicationTypes";
 import { ordersService, taskService } from "../../hooks/services";
-import { createDefaultOrderData } from "../../configs/generateOrdersConstants";
 import { getSafeFileExtension } from "../../utils";
 import { ORDER_TYPES, ORDER_CATEGORIES } from "../../utils/constants";
 import { userRolesEnum } from "@egovernments/digit-ui-module-dristi/src/Utils/constants";
@@ -3050,8 +3049,6 @@ const GenerateOrdersV2 = () => {
             skipScheduling={skipScheduling}
             purposeOfHearing={purposeOfHearing}
             nextHearingDate={nextHearingDate}
-            purposeOfHearingConfig={purposeOfHearingConfig}
-            nextDateOfHearing={nextDateOfHearing}
           />
         </div>
         {hasOrderUpdateAccess && (

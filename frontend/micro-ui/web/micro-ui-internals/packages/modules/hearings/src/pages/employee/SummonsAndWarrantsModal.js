@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useHistory } from "react-router-dom";
-import { Modal, CloseSvg, Button, InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
+import { Modal, CloseSvg, Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { summonsConfig } from "../../configs/SummonsNWarrantConfig";
 import useSearchOrdersService from "../../../../orders/src/hooks/orders/useSearchOrdersService";
@@ -147,8 +147,8 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const isCaseAdmitted = useMemo(() => caseDetails?.status === CaseWorkflowState.CASE_ADMITTED, [caseDetails]);
 
-  const { caseId, cnrNumber, caseTitle } = useMemo(
-    () => ({ cnrNumber: caseDetails.cnrNumber || "", caseId: caseDetails?.id, caseTitle: caseDetails?.caseTitle }),
+  const { caseId, cnrNumber } = useMemo(
+    () => ({ cnrNumber: caseDetails.cnrNumber || "", caseId: caseDetails?.id }),
     [caseDetails]
   );
 

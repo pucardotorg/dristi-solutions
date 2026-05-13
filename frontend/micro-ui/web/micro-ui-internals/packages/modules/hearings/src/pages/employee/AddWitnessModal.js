@@ -1,6 +1,7 @@
 import { Button, FormComposerV2, Loader } from "@egovernments/digit-ui-react-components";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useCallback, useMemo, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import addWitnessConfig from "../../configs/AddWitnessConfig.js";
 import { useTranslation } from "react-i18next";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal.js";
@@ -642,6 +643,16 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
       )}
     </React.Fragment>
   );
+};
+
+AddWitnessModal.propTypes = {
+  activeTab: PropTypes.string,
+  caseDetails: PropTypes.object,
+  isEmployee: PropTypes.bool,
+  onAddSuccess: PropTypes.func,
+  onCancel: PropTypes.func.isRequired,
+  style: PropTypes.object,
+  tenantId: PropTypes.string.isRequired,
 };
 
 export default AddWitnessModal;

@@ -18,7 +18,7 @@ const fileStoreCache = window.__docViewerFileStoreCache;
 
 // Revoke all cached blob URLs and clear the cache
 const clearFileStoreCache = () => {
-  for (const [key, entry] of fileStoreCache) {
+  for (const [, entry] of fileStoreCache) {
     if (entry.blobUrl) {
       URL.revokeObjectURL(entry.blobUrl);
     }

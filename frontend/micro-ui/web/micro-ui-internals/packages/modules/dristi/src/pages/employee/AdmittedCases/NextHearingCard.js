@@ -73,7 +73,6 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
 
     if (enableJoinButton && hearingLink) {
       window.open(hearingLink, "_blank");
-      return;
     }
   };
 

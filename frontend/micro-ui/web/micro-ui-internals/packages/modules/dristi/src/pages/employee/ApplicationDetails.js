@@ -1,5 +1,5 @@
 import { Header, Card, Loader, SubmitBar, Modal, CardText, TextArea } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import DocumentDetailCard from "../../components/DocumentDetailCard";
