@@ -1634,7 +1634,6 @@ function EFilingCases({ path }) {
                       "SelectCustomDragDrop",
                       "SelectBulkInputs",
                       "SelectCustomTextArea",
-                      "SelectUploadFiles",
                       "SelectCustomFormatterTextArea",
                       "SelectUserTypeComponent",
                     ].includes(formComponent.component)
@@ -1747,14 +1746,6 @@ function EFilingCases({ path }) {
                   }
                 }
                 if (scrutiny?.[selected] && scrutiny?.[selected]?.form?.[index]) {
-                  if (formComponent.component === "SelectUploadFiles") {
-                    if (formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name in scrutiny?.[selected]?.form?.[index]) {
-                      key = formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name;
-                    }
-                    if (formComponent.key + "." + formComponent.populators?.inputs?.[1]?.name in scrutiny?.[selected]?.form?.[index]) {
-                      key = formComponent.key + "." + formComponent.populators?.inputs?.[1]?.name;
-                    }
-                  }
                   if (selected === "chequeDetails" && formComponent.component === "InputWithSearch") {
                     key = formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name;
                   }

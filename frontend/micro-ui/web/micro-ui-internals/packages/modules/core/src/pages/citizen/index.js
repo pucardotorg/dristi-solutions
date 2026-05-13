@@ -10,7 +10,6 @@ import FAQsSection from "./FAQs/FAQs";
 import CitizenHome from "./Home";
 import LanguageSelection from "./Home/LanguageSelection";
 import LocationSelection from "./Home/LocationSelection";
-import UserProfile from "./Home/UserProfile";
 import HowItWorks from "./HowItWorks/howItWorks";
 import Login from "./Login";
 import Search from "./SearchApp";
@@ -219,10 +218,6 @@ const Home = ({
 
           <Route path={`${path}/register`}>
             <Login stateCode={stateCode} isUserRegistered={false} />
-          </Route>
-
-          <Route path={`${path}/user/profile`}>
-            <UserProfile stateCode={stateCode} userType={"citizen"} cityDetails={cityDetails} />
           </Route>
 
           <Route path={`${path}/Audit`}>
