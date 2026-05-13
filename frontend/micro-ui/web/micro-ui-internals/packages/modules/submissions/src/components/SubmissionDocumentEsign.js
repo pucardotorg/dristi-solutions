@@ -203,7 +203,6 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
           isDisabled={loader}
           isParentLoading={loader}
           fileUploadError={fileUploadError}
-          submitLabel={"CS_SUBMIT_SIGNATURE"}
         />
       )}
       {showToast && (

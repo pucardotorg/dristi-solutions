@@ -170,7 +170,6 @@ function SubmissionSignatureModal({
           isDisabled={loader}
           isParentLoading={loader}
           fileUploadError={fileUploadError}
-          submitLabel={"CS_SUBMIT_SIGNATURE"}
         />
       )}
       {showToast && (

@@ -24,7 +24,7 @@ import { DateUtils, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/U
 import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS } from "../../utils/constants";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
+import { UploadModal } from "@egovernments/digit-ui-module-common";
 
 const defaultSearchValues = {
   eprocess: "",

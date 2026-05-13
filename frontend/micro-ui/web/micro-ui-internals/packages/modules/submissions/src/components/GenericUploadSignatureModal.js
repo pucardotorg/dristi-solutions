@@ -3,7 +3,7 @@ import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Util
 import React, { useMemo, useState } from "react";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-import { SIGNATURE_UPLOAD_CONFIG, UploadModal } from "@egovernments/digit-ui-module-common";
+import { UploadModal } from "@egovernments/digit-ui-module-common";
 const GenericUploadSignatureModal = ({
   t,
   handleCloseSignatureModal,
