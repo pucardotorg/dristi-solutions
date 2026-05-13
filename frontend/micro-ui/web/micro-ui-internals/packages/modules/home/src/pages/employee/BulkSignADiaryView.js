@@ -1,4 +1,5 @@
-import { InboxSearchComposer, SubmitBar, Loader, Button } from "@egovernments/digit-ui-react-components";
+import { SubmitBar, Loader, Button } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { bulkADiarySignConfig } from "../../configs/BulkADiarySignConfig";

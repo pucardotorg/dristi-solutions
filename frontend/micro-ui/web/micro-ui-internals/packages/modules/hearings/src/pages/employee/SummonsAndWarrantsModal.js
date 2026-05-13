@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useHistory } from "react-router-dom";
-import { Modal, CloseSvg, Button, InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
+import { Modal, CloseSvg, Button, Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import { useTranslation } from "react-i18next";
 import { summonsConfig } from "../../configs/SummonsNWarrantConfig";
 import useSearchOrdersService from "../../../../orders/src/hooks/orders/useSearchOrdersService";
