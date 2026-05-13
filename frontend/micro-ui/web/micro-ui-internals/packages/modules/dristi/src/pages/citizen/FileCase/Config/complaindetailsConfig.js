@@ -597,13 +597,13 @@ const complainantDetailsFormConfig = [
         component: "SelectComponents",
         populators: {
           inputs: [
-            {
-              name: "typeOfAddress",
-              type: "Radio",
-              label: "CS_TYPE_OF_ADDRESS",
-              options: [],
-              showOptional: true,
-            },
+            // {
+            //   name: "typeOfAddress",
+            //   type: "Radio",
+            //   label: "CS_TYPE_OF_ADDRESS",
+            //   options: [],
+            //   showOptional: true,
+            // },
             {
               name: "pincode",
               type: "text",

@@ -189,7 +189,7 @@ export const DigitalDocumentSignModal = ({
     return (
       <div className="evidence-title">
         <h1 className="heading-m">{props.label}</h1>
-        <CustomChip text={props.status} shade={"green"} />
+        {props.status && <CustomChip text={props.status} shade={"green"} />}
       </div>
     );
   }, []);

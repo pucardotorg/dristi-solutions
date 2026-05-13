@@ -764,6 +764,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
             zIndex: 1000,
             backgroundColor: "grey",
           }}
+          caseDetails={caseDetails}
         />
       )}
     </div>
