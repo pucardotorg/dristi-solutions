@@ -104,16 +104,16 @@ const Home = ({
   const history = useHistory();
 
   const hideSidebar = sidebarHiddenFor.some((e) => window.location.href.includes(e)) || true;
-  const appRoutes = modules.map(({ code, tenants }, index) => {
+  const appRoutes = modules.map(({ code, tenants }) => {
     const Module = Digit.ComponentRegistryService.getComponent(`${code}Module`);
     return Module ? (
-      <Route key={index} path={`${path}/${code.toLowerCase()}`}>
+      <Route key={code} path={`${path}/${code.toLowerCase()}`}>
         <Module stateCode={stateCode} moduleCode={code} userType="citizen" tenants={getTenants(tenants, appTenants)} />
       </Route>
     ) : null;
   });
 
-  const ModuleLevelLinkHomePages = modules.map(({ code, bannerImage }, index) => {
+  const ModuleLevelLinkHomePages = modules.map(({ code, bannerImage }) => {
     let Links = Digit.ComponentRegistryService.getComponent(`${code}Links`) || (() => <React.Fragment />);
     let mdmsDataObj = isLinkDataFetched ? processLinkData(linkData, code, t) : undefined;
 
@@ -123,8 +123,8 @@ const Home = ({
       });
     }
     return (
-      <React.Fragment>
-        <Route key={index} path={`${path}/${code.toLowerCase()}-home`}>
+      <React.Fragment key={code}>
+        <Route path={`${path}/${code.toLowerCase()}-home`}>
           <div className="moduleLinkHomePage">
             <img src={bannerImage || stateInfo?.bannerUrl} alt="noimagefound" />
             <BackButton className="moduleLinkHomePageBackButton" />
@@ -146,18 +146,18 @@ const Home = ({
                         )
                       : null
                   }
-                  isInfo={code === "OBPS" ? true : false}
+                  isInfo={code === "OBPS"}
                 />
               )}
-              <Links key={index} matchPath={`/${window?.contextPath}/citizen/${code.toLowerCase()}`} userType={"citizen"} />
+              <Links key={`links-${code}`} matchPath={`/${window?.contextPath}/citizen/${code.toLowerCase()}`} userType={"citizen"} />
             </div>
             <StaticDynamicCard moduleCode={code?.toUpperCase()} />
           </div>
         </Route>
-        <Route key={"faq" + index} path={`${path}/${code.toLowerCase()}-faq`}>
+        <Route key={`${code}-faq`} path={`${path}/${code.toLowerCase()}-faq`}>
           <FAQsSection module={code?.toUpperCase()} />
         </Route>
-        <Route key={"hiw" + index} path={`${path}/${code.toLowerCase()}-how-it-works`}>
+        <Route key={`${code}-how-it-works`} path={`${path}/${code.toLowerCase()}-how-it-works`}>
           <HowItWorks module={code?.toUpperCase()} />
         </Route>
       </React.Fragment>

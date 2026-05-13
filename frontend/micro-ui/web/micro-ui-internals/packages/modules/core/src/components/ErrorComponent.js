@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import React from "react";
 import { useTranslation } from "react-i18next";
 
@@ -63,14 +64,14 @@ const LeftBackArrow = () => (
     <path
       d="M3.05469 6.50713L25.8915 6.50713C28.7354 6.50713 31.0408 8.81253 31.0408 11.6564L31.0408 13.5453C31.0408 16.3892 28.7354 18.6946 25.8915 18.6946L8.01997 18.6946"
       stroke="#3A3A3A"
-      stroke-width="2.5769"
-      stroke-linejoin="round"
+      strokeWidth="2.5769"
+      strokeLinejoin="round"
     />
     <path
       d="M7.57031 1.09025C5.45497 3.20559 4.26899 4.39158 2.15365 6.50692L7.57031 11.9236"
       stroke="#3A3A3A"
-      stroke-width="2.5769"
-      stroke-linejoin="round"
+      strokeWidth="2.5769"
+      strokeLinejoin="round"
     />
   </svg>
 );
@@ -105,7 +106,6 @@ const ErrorComponent = (props) => {
   const config = ErrorConfig[type];
   const { t } = useTranslation();
 
-  const stateInfo = props.stateInfo;
   const styles = getStyles();
 
   return (
@@ -141,7 +141,12 @@ const ErrorComponent = (props) => {
         )}
         <CustomButton
           onButtonClick={() => {
-            props.goToHome();
+            if (props.goToHome) {
+              props.goToHome();
+            } else {
+              const segment = Digit?.UserService?.getType?.() || "citizen";
+              window.location.assign(`/${window?.contextPath}/${segment}`);
+            }
           }}
           icon={<LeftBackArrow />}
           label={t(config.buttonInfo)}
@@ -151,6 +156,11 @@ const ErrorComponent = (props) => {
       </div>
     </div>
   );
+};
+
+ErrorComponent.propTypes = {
+  goToHome: PropTypes.func,
+  initData: PropTypes.object,
 };
 
 export default ErrorComponent;

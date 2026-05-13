@@ -7,8 +7,6 @@ import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import CustomTextArea from "@egovernments/digit-ui-module-dristi/src/components/CustomTextArea";
 
-/* global globalThis */
-
 function respondentHasRepresentative(representatives, litigantIndividualId) {
   return Boolean(
     representatives?.some((representative) =>
@@ -34,11 +32,11 @@ const SelectParty = ({
   advocateId,
 }) => {
   const { t } = useTranslation();
-  const userInfo = JSON.parse(globalThis.localStorage?.getItem("user-info"));
+  const userInfo = JSON.parse(window.localStorage?.getItem("user-info"));
   const setFormError = useRef(null);
   const clearFormError = useRef(null);
 
-  const MultiSelectDropdown = globalThis?.Digit?.ComponentRegistryService?.getComponent("MultiSelectDropdown");
+  const MultiSelectDropdown = window?.Digit?.ComponentRegistryService?.getComponent("MultiSelectDropdown");
 
   const targetRef = useRef(null);
 
@@ -540,7 +538,7 @@ const SelectParty = ({
               )}
 
               {(selectPartyData?.advocateToReplaceList?.length > 0 || advocateToReplaceList?.length === 0) && (
-                <React.Fragment>
+                <div className="advocate-replace-approver-block">
                   <LabelFieldPair className="case-label-field-pair">
                     <CardLabel className="case-input-label">{`${t("SELECT_APPROVER")}`}</CardLabel>
                     <RadioButtons
@@ -575,7 +573,7 @@ const SelectParty = ({
                       placeholder={t("TYPE_HERE_PLACEHOLDER")}
                     />
                   </LabelFieldPair>
-                </React.Fragment>
+                </div>
               )}
             </React.Fragment>
           )}

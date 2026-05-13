@@ -1,6 +1,6 @@
 import { Body, Loader } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, createContext } from "react"; // Added createContext for breadcrumb implementation
-import { getI18n } from "react-i18next";
+import PropTypes from "prop-types";
+import React, { createContext, useMemo, useState } from "react";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { Provider } from "react-redux";
 import { BrowserRouter as Router } from "react-router-dom";
@@ -8,7 +8,6 @@ import { DigitApp } from "./App";
 import SelectOtp from "./pages/citizen/Login/SelectOtp";
 import ChangeCity from "./components/ChangeCity";
 import ChangeLanguage from "./components/ChangeLanguage";
-import { useState } from "react";
 import ErrorBoundary from "./components/ErrorBoundaries";
 import getStore from "./redux/store";
 import { useGetAccessToken } from "./hooks/useGetAccessToken";
@@ -60,7 +59,6 @@ const DigitUIWrapper = ({ stateCode, enabledModules, moduleReducers, defaultLand
   // Ensure initData has a default value to prevent Redux undefined state errors
   const safeInitData = initData || {};
 
-  const i18n = getI18n();
   return (
     <Provider store={getStore(safeInitData, moduleReducers(safeInitData))}>
       <Router>
@@ -92,7 +90,6 @@ export const DigitUI = ({ stateCode, registry, enabledModules, moduleReducers, d
     return <Loader />;
   }
 
-  const userType = Digit.UserService.getType();
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -112,47 +109,37 @@ export const DigitUI = ({ stateCode, registry, enabledModules, moduleReducers, d
   const ComponentProvider = Digit.Contexts.ComponentProvider;
   const PrivacyProvider = Digit.Contexts.PrivacyProvider;
 
-  const DSO = Digit.UserService.hasAccess(["FSM_DSO"]);
+  const privacyProviderValue = useMemo(
+    () => ({
+      privacy: privacy?.[window.location.pathname],
+      resetPrivacy: (_data) => {
+        Digit.Utils.setPrivacyObject({});
+        setPrivacy({});
+      },
+      getPrivacy: () => {
+        const privacyObj = Digit.Utils.getPrivacyObject();
+        setPrivacy(privacyObj);
+        return privacyObj;
+      },
+      updatePrivacyDescoped: (_data) => {
+        const privacyObj = Digit.Utils.getAllPrivacyObject();
+        const newObj = { ...privacyObj, [window.location.pathname]: _data };
+        Digit.Utils.setPrivacyObject({ ...newObj });
+        setPrivacy(privacyObj?.[window.location.pathname] || {});
+      },
+      updatePrivacy: (uuid, fieldName) => {
+        setPrivacy(Digit.Utils.updatePrivacy(uuid, fieldName) || {});
+      },
+    }),
+    [privacy]
+  );
 
   return (
     <div>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <ComponentProvider.Provider value={registry}>
-            <PrivacyProvider.Provider
-              value={{
-                privacy: privacy?.[window.location.pathname],
-                resetPrivacy: (_data) => {
-                  Digit.Utils.setPrivacyObject({});
-                  setPrivacy({});
-                },
-                getPrivacy: () => {
-                  const privacyObj = Digit.Utils.getPrivacyObject();
-                  setPrivacy(privacyObj);
-                  return privacyObj;
-                },
-                /*  Descoped method to update privacy object  */
-                updatePrivacyDescoped: (_data) => {
-                  const privacyObj = Digit.Utils.getAllPrivacyObject();
-                  const newObj = { ...privacyObj, [window.location.pathname]: _data };
-                  Digit.Utils.setPrivacyObject({ ...newObj });
-                  setPrivacy(privacyObj?.[window.location.pathname] || {});
-                },
-                /**
-                 * Main Method to update the privacy object anywhere in the application
-                 *
-                 * @author jagankumar-egov
-                 *
-                 * Feature :: Privacy
-                 *
-                 * @example
-                 *    const { privacy , updatePrivacy } = Digit.Hooks.usePrivacyContext();
-                 */
-                updatePrivacy: (uuid, fieldName) => {
-                  setPrivacy(Digit.Utils.updatePrivacy(uuid, fieldName) || {});
-                },
-              }}
-            >
+            <PrivacyProvider.Provider value={privacyProviderValue}>
               <AdvocateDataContext.Provider value={{ AdvocateData, setAdvocateDataContext }}>
                 {/* Provide breadcrumb context to all child components */}
                 <BreadCrumbsParamsDataContext.Provider value={{ BreadCrumbsParamsData, setBreadCrumbsParamsData }}>
@@ -176,6 +163,21 @@ const componentsToRegister = {
   SelectOtp,
   ChangeCity,
   ChangeLanguage,
+};
+
+DigitUIWrapper.propTypes = {
+  stateCode: PropTypes.string,
+  enabledModules: PropTypes.arrayOf(PropTypes.any),
+  moduleReducers: PropTypes.func.isRequired,
+  defaultLanding: PropTypes.string,
+};
+
+DigitUI.propTypes = {
+  stateCode: PropTypes.string,
+  registry: PropTypes.any,
+  enabledModules: PropTypes.arrayOf(PropTypes.any),
+  moduleReducers: PropTypes.func.isRequired,
+  defaultLanding: PropTypes.string,
 };
 
 export const initCoreComponents = () => {

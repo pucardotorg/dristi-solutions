@@ -22,7 +22,7 @@ const Response = () => {
   const { state } = useLocation();
 
   const navigateHome = () => {
-    history.push(`/${globalThis.contextPath}/employee`);
+    history.push(`/${window?.contextPath}/employee`);
   };
 
   return (
@@ -36,7 +36,7 @@ const Response = () => {
         </div>
       </PanelCard>
       <ActionBar>
-        <Link to={`/${globalThis.contextPath}/employee`}>
+        <Link to={`/${window?.contextPath}/employee`}>
           <SubmitBar label={t("CORE_COMMON_GO_TO_HOME")} />
         </Link>
       </ActionBar>

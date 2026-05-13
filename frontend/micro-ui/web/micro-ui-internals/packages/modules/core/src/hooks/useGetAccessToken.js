@@ -27,7 +27,7 @@ const authenticate = async (details) => {
     },
   });
   const invalidRoles = window?.globalConfigs?.getConfig("INVALIDROLES") || [];
-  if (invalidRoles && invalidRoles.length > 0 && authResponse && authResponse?.UserRequest?.roles?.some((role) => invalidRoles.includes(role.code))) {
+  if ((invalidRoles?.length ?? 0) > 0 && authResponse?.UserRequest?.roles?.some((role) => invalidRoles.includes(role.code))) {
     throw new Error("ES_ERROR_USER_NOT_PERMITTED");
   }
   return authResponse;

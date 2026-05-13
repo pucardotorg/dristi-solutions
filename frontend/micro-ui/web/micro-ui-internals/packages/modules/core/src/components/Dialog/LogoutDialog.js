@@ -1,38 +1,23 @@
 import { CardText, Modal } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
-const Close = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFFFFF">
-    <path d="M0 0h24v24H0V0z" fill="none" />
-    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
-  </svg>
-);
+
+const MOBILE_BREAKPOINT = 780;
+
 const LogoutDialog = ({ onSelect, onCancel, onDismiss }) => {
   const { t } = useTranslation();
-  const mobileDeviceWidth = 780;
-  const [isMobileView, setIsMobileView] = React.useState(window.innerWidth <= mobileDeviceWidth);
-  const onResize = () => {
-    if (window.innerWidth <= mobileDeviceWidth) {
-      if (!isMobileView) {
-        setIsMobileView(true);
-      }
-    } else {
-      if (isMobileView) {
-        setIsMobileView(false);
-      }
-    }
-  };
+  const [isMobileView, setIsMobileView] = React.useState(() => typeof window !== "undefined" && window.innerWidth <= MOBILE_BREAKPOINT);
+
   React.useEffect(() => {
-    window.addEventListener("resize", () => {
-      onResize();
-    });
-    return () => {
-      window.addEventListener("resize", () => {
-        onResize();
-      });
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth <= MOBILE_BREAKPOINT);
     };
-  });
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return isMobileView ? (
     <Modal
       popupStyles={{
@@ -92,4 +77,11 @@ const LogoutDialog = ({ onSelect, onCancel, onDismiss }) => {
     </Modal>
   );
 };
+
+LogoutDialog.propTypes = {
+  onSelect: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  onDismiss: PropTypes.func.isRequired,
+};
+
 export default LogoutDialog;

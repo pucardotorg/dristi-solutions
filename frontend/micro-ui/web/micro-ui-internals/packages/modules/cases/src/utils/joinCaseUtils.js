@@ -7,6 +7,39 @@ const TYPE_REGISTER = { type: "register" };
 const TYPE_LOGIN = { type: "login" };
 const DEFAULT_USER = "digit-user";
 
+const INDIVIDUAL_ROLE_CODES = [
+  "CASE_CREATOR",
+  "CASE_EDITOR",
+  "CASE_VIEWER",
+  "EVIDENCE_CREATOR",
+  "EVIDENCE_VIEWER",
+  "EVIDENCE_EDITOR",
+  "APPLICATION_CREATOR",
+  "APPLICATION_VIEWER",
+  "HEARING_VIEWER",
+  "ORDER_VIEWER",
+  "SUBMISSION_CREATOR",
+  "SUBMISSION_RESPONDER",
+  "SUBMISSION_DELETE",
+  "TASK_VIEWER",
+  "ADVOCATE_VIEWER",
+  "CASE_RESPONDER",
+  "HEARING_ACCEPTOR",
+  "PENDING_TASK_CREATOR",
+  "BAIL_BOND_CREATOR",
+  "BAIL_BOND_VIEWER",
+  "BAIL_BOND_EDITOR",
+  "PLEA_SIGNER",
+  "PLEA_EDITOR",
+  "MEDIATION_SIGNER",
+  "MEDIATION_EDITOR",
+  "EXAMINATION_SIGNER",
+  "EXAMINATION_EDITOR",
+  "PLEA_VIEWER",
+  "MEDIATION_VIEWER",
+  "EXAMINATION_VIEWER",
+];
+
 const sendOtp = async (data, tenantId) => {
   try {
     const res = await window?.Digit.UserService.sendOtp(data, tenantId);
@@ -26,8 +59,8 @@ export const selectMobileNumber = async (mobileNumber, tenantId) => {
   if (!err) {
     return { response: res, isRegistered: true };
   } else {
-    const [res, err] = await sendOtp({ otp: { ...data, name: DEFAULT_USER, ...TYPE_REGISTER } });
-    return { response: res, isRegistered: false };
+    const [registrationRes] = await sendOtp({ otp: { ...data, name: DEFAULT_USER, ...TYPE_REGISTER } });
+    return { response: registrationRes, isRegistered: false };
   }
 };
 
@@ -84,38 +117,7 @@ export const registerIndividualWithNameAndMobileNumber = async (data, tenantId) 
             name: "Citizen",
             tenantId: tenantId,
           },
-          ...[
-            "CASE_CREATOR",
-            "CASE_EDITOR",
-            "CASE_VIEWER",
-            "EVIDENCE_CREATOR",
-            "EVIDENCE_VIEWER",
-            "EVIDENCE_EDITOR",
-            "APPLICATION_CREATOR",
-            "APPLICATION_VIEWER",
-            "HEARING_VIEWER",
-            "ORDER_VIEWER",
-            "SUBMISSION_CREATOR",
-            "SUBMISSION_RESPONDER",
-            "SUBMISSION_DELETE",
-            "TASK_VIEWER",
-            "ADVOCATE_VIEWER",
-            "CASE_RESPONDER",
-            "HEARING_ACCEPTOR",
-            "PENDING_TASK_CREATOR",
-            "BAIL_BOND_CREATOR",
-            "BAIL_BOND_VIEWER",
-            "BAIL_BOND_EDITOR",
-            "PLEA_SIGNER",
-            "PLEA_EDITOR",
-            "MEDIATION_SIGNER",
-            "MEDIATION_EDITOR",
-            "EXAMINATION_SIGNER",
-            "EXAMINATION_EDITOR",
-            "PLEA_VIEWER",
-            "MEDIATION_VIEWER",
-            "EXAMINATION_VIEWER",
-          ]?.map((role) => ({
+          ...INDIVIDUAL_ROLE_CODES.map((role) => ({
             code: role,
             name: role,
             tenantId: tenantId,
@@ -244,7 +246,7 @@ export const createPendingTask = async ({
   caseTitle,
   applicationType,
 }) => {
-  const assignees = !isAssignedRole ? [userInfo?.uuid] || [] : [];
+  const assignees = !isAssignedRole ? (userInfo?.uuid ? [userInfo.uuid] : []) : [];
   await DRISTIService.customApiService(Urls.task.pendingTask, {
     pendingTask: {
       name,

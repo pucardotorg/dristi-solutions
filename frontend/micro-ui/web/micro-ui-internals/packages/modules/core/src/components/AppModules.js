@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import React from "react";
 import { Redirect, Route, Switch, useLocation, useRouteMatch } from "react-router-dom";
 
@@ -11,8 +12,6 @@ const getTenants = (codes, tenants) => {
 };
 
 export const AppModules = ({ stateCode, userType, modules, appTenants, additionalComponent }) => {
-  const ComponentProvider = Digit.Contexts.ComponentProvider;
-  const { path } = useRouteMatch();
   const location = useLocation();
 
   const user = Digit.UserService.getUser();
@@ -21,17 +20,15 @@ export const AppModules = ({ stateCode, userType, modules, appTenants, additiona
     return <Redirect to={{ pathname: `/${window?.contextPath}/employee/user/login`, state: { from: location.pathname + location.search } }} />;
   }
 
-  const appRoutes = modules.map(({ code, tenants }, index) => {
+  const appRoutes = modules.map(({ code, tenants }) => {
     const Module = Digit.ComponentRegistryService.getComponent(`${code}Module`);
     return Module ? (
-      <Route key={index} path={`${path}/${code.toLowerCase()}`}>
+      <Route key={code} path={`${path}/${code.toLowerCase()}`}>
         <Module stateCode={stateCode} moduleCode={code} userType={userType} tenants={getTenants(tenants, appTenants)} />
       </Route>
     ) : (
-      <Route key={index} path={`${path}/${code.toLowerCase()}`}>
-        <Redirect
-          to={`/${window?.contextPath}/employee/user/error?type=notfound&module=${code}` }
-        />
+      <Route key={code} path={`${path}/${code.toLowerCase()}`}>
+        <Redirect to={`/${window?.contextPath}/employee/user/error?type=notfound&module=${code}`} />
       </Route>
     );
   });
@@ -56,4 +53,12 @@ export const AppModules = ({ stateCode, userType, modules, appTenants, additiona
       </Switch>
     </div>
   );
+};
+
+AppModules.propTypes = {
+  stateCode: PropTypes.string,
+  userType: PropTypes.string,
+  modules: PropTypes.arrayOf(PropTypes.any),
+  appTenants: PropTypes.arrayOf(PropTypes.any),
+  additionalComponent: PropTypes.arrayOf(PropTypes.any),
 };
