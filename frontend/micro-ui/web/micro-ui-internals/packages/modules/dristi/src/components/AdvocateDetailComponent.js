@@ -71,7 +71,7 @@ const AdvocateDetailComponent = ({ t, config, onSelect, formData = {}, errors, c
       if (input?.clearFieldsType && section) {
         Object.keys(input?.clearFields).forEach((ele) => {
           if (
-            input.clearFieldsType != null &&
+            input.clearFieldsType !== null &&
             ele in input.clearFieldsType &&
             input.clearFieldsType[ele] === "documentUpload" &&
             Array.isArray(section[ele]) &&
@@ -91,7 +91,6 @@ const AdvocateDetailComponent = ({ t, config, onSelect, formData = {}, errors, c
       const selectedFile = filesData?.[0]?.[1] || {};
       const existingFileStoreId = getExistingFileStoreId(selectedFile);
 
-      // MultiUploadWrapper emits state updates for parent-sync as well; avoid re-upload for already uploaded files.
       if (existingFileStoreId) {
         setFileName(filesData?.[0]?.[0]);
         setFileStoreID(existingFileStoreId);
@@ -122,7 +121,6 @@ const AdvocateDetailComponent = ({ t, config, onSelect, formData = {}, errors, c
         .catch((error) => {
           setShowDoc(false);
           setUploadErrors((prev) => ({ ...prev, [input.name]: error?.message || "CS_FILE_UPLOAD_ERROR" }));
-          // Reset the field so mandatory validation blocks continue.
           setValue([], input.name, input);
         });
     } else {
@@ -145,11 +143,11 @@ const AdvocateDetailComponent = ({ t, config, onSelect, formData = {}, errors, c
 
   const showDocument = useMemo(() => {
     return (
-      <div onClick={() => handleImageModalOpen(fileStoreId, fileName)}>
+      <button type="button" style={{ background: "none", border: "none", padding: 0, cursor: "pointer", width: "100%" }} onClick={() => handleImageModalOpen(fileStoreId, fileName)}>
         <div className="documentDetails_row_items" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           <DocViewerWrapper fileStoreId={fileStoreId} tenantId={tenantId} displayFilename={fileName} />
         </div>
-      </div>
+      </button>
     );
   }, [fileStoreId, tenantId, fileName]);
 
@@ -228,7 +226,6 @@ const AdvocateDetailComponent = ({ t, config, onSelect, formData = {}, errors, c
             {uploadErrors[input.name] && (
               <CardLabelError style={{ color: "#FF0000", marginTop: "5px", fontSize: "14px" }}>{t(uploadErrors[input.name])}</CardLabelError>
             )}
-            {/* )} */}
           </React.Fragment>
         );
       })}
@@ -262,9 +259,9 @@ const advocateDetailConfigPropType = PropTypes.shape({
 });
 
 AdvocateDetailComponent.propTypes = {
-  t: PropTypes.func.isRequired,
-  config: advocateDetailConfigPropType.isRequired,
-  onSelect: PropTypes.func.isRequired,
+  t: PropTypes.func,
+  config: advocateDetailConfigPropType,
+  onSelect: PropTypes.func,
   formData: PropTypes.object,
   errors: PropTypes.object,
   clearErrors: PropTypes.func,

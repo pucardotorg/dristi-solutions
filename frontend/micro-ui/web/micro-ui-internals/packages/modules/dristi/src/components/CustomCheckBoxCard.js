@@ -1,19 +1,20 @@
 import { CardHeader, CardLabelError, CardText, CheckBox, LabelFieldPair } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
+import PropTypes from "prop-types";
 
 const CustomCheckBoxCard = ({ t, config, onSelect, formData = {}, errors, label }) => {
   const inputs = useMemo(() => config?.populators?.inputs, [config?.populators?.inputs]);
   const [value, setValue] = useState([]);
 
-  function setFormValue(value, name, input) {
-    onSelect(config.key, value);
+  function setFormValue(val, name, input) {
+    onSelect(config.key, val);
   }
 
   return (
     <div className="custom-checkbox-card">
-      {inputs?.map((input, index) => {
+      {inputs?.map((input) => {
         return (
-          <React.Fragment key={index}>
+          <React.Fragment key={input.name}>
             <LabelFieldPair style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
               <CardHeader style={{ fontSize: "30px" }} className="card-label-smaller">
                 {t(input.label)}
@@ -24,7 +25,7 @@ const CustomCheckBoxCard = ({ t, config, onSelect, formData = {}, errors, label 
               </CardText>
 
               <div className="field multi-select-checkbox-wrapper">
-                {input?.options?.map((option, index) => (
+                {input?.options?.map((option) => (
                   <CheckBox
                     onChange={(e) => {
                       let tempData = value;
@@ -34,7 +35,7 @@ const CustomCheckBoxCard = ({ t, config, onSelect, formData = {}, errors, label 
                       setFormValue(tempData, input?.name);
                       setValue(tempData);
                     }}
-                    key={index}
+                    key={option.code}
                     value={value?.find((val) => val?.code === option?.code)}
                     checked={value?.find((val) => val?.code === option?.code)}
                     label={t(option?.name)}
@@ -52,6 +53,20 @@ const CustomCheckBoxCard = ({ t, config, onSelect, formData = {}, errors, label 
       })}
     </div>
   );
+};
+
+CustomCheckBoxCard.propTypes = {
+  t: PropTypes.func,
+  config: PropTypes.shape({
+    key: PropTypes.string,
+    populators: PropTypes.shape({
+      inputs: PropTypes.array,
+    }),
+  }),
+  onSelect: PropTypes.func,
+  formData: PropTypes.object,
+  errors: PropTypes.object,
+  label: PropTypes.string,
 };
 
 export default CustomCheckBoxCard;

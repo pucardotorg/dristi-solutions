@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { LabelFieldPair, CardLabel, CardLabelError, CustomDropdown, CardSectionHeader } from "@egovernments/digit-ui-react-components";
 import SelectCustomNote from "./SelectCustomNote";
 
@@ -9,7 +10,7 @@ const extractValue = (data, key) => {
   const keyParts = key?.split(".");
   let value = data;
   keyParts?.forEach((part) => {
-    if (value && value?.hasOwnProperty(part)) {
+    if (value && Object.hasOwn(value, part)) {
       value = value[part];
     } else {
       value = undefined;
@@ -84,6 +85,32 @@ const CustomRadioInfoComponent = ({ t, config, onSelect, formData = {}, errors, 
       </div>
     </div>
   );
+};
+
+CustomRadioInfoComponent.propTypes = {
+  t: PropTypes.func,
+  config: PropTypes.shape({
+    key: PropTypes.string,
+    name: PropTypes.string,
+    head: PropTypes.string,
+    label: PropTypes.string,
+    error: PropTypes.string,
+    isProfileEdit: PropTypes.bool,
+    resetFormData: PropTypes.bool,
+    disableScrutinyHeader: PropTypes.bool,
+    disable: PropTypes.bool,
+    notes: PropTypes.object,
+    noteDependentOn: PropTypes.string,
+    noteDependentOnValue: PropTypes.any,
+    populators: PropTypes.object,
+    labelStyles: PropTypes.object,
+  }),
+  onSelect: PropTypes.func,
+  formData: PropTypes.object,
+  errors: PropTypes.object,
+  formState: PropTypes.object,
+  control: PropTypes.object,
+  setError: PropTypes.func,
 };
 
 export default CustomRadioInfoComponent;

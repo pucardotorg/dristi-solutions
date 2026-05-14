@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import { OrderWorkflowState } from "../Utils/orderWorkflow";
 
 export const BulkCheckBox = ({ rowData, colData, isBailBond, defaultChecked = true }) => {
@@ -9,15 +10,32 @@ export const BulkCheckBox = ({ rowData, colData, isBailBond, defaultChecked = tr
       type="checkbox"
       className="custom-checkbox"
       onChange={(e) => {
-        e.stopPropagation(); // Prevent row click event
+        e.stopPropagation();
         setChecked(!checked);
         colData?.updateOrderFunc(rowData, !checked);
       }}
       onClick={(e) => {
-        e.stopPropagation(); // Prevent row click event
+        e.stopPropagation();
       }}
       checked={checked}
       style={{ cursor: "pointer", width: "20px", height: "20px" }}
     />
   ) : null;
 };
+
+BulkCheckBox.propTypes = {
+  rowData: PropTypes.shape({
+    businessObject: PropTypes.shape({
+      orderNotification: PropTypes.shape({
+        status: PropTypes.string,
+      }),
+    }),
+  }),
+  colData: PropTypes.shape({
+    updateOrderFunc: PropTypes.func,
+  }),
+  isBailBond: PropTypes.bool,
+  defaultChecked: PropTypes.bool,
+};
+
+export default BulkCheckBox;

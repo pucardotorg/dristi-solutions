@@ -1,7 +1,17 @@
-import React, { useState } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import Modal from "./Modal";
-import { TextArea } from "@egovernments/digit-ui-react-components";
 import { CloseBtn } from "./ModalComponents";
+
+const EvidenceHeading = ({ label }) => (
+  <div className="evidence-title">
+    <h1 className="heading-m">{label}</h1>
+  </div>
+);
+
+EvidenceHeading.propTypes = {
+  label: PropTypes.string,
+};
 
 function ConfirmEvidenceAction({
   t,
@@ -12,15 +22,6 @@ function ConfirmEvidenceAction({
   isFromActions = false,
   setMenuData,
 }) {
-  
-  const Heading = (props) => {
-    return (
-      <div className="evidence-title">
-        <h1 className="heading-m">{props.label}</h1>
-      </div>
-    );
-  };
-
   const actionSaveLabel = isFromActions ? t("ACTIONS_MARK_EVIDENCE_TEXT") : t("MARK_EVIDENCE_TEXT");
 
   return (
@@ -36,7 +37,7 @@ function ConfirmEvidenceAction({
           disabled={isBackButtonDisabled}
         />
       }
-      headerBarMain={<Heading label={isFromActions ? t("ACTIONS_MARK_SUBMISSION_HEADER") : t("MARK_SUBMISSION_HEADER")} />}
+      headerBarMain={<EvidenceHeading label={isFromActions ? t("ACTIONS_MARK_SUBMISSION_HEADER") : t("MARK_SUBMISSION_HEADER")} />}
       actionCancelLabel={t("CS_COMMON_BACK")}
       actionSaveLabel={actionSaveLabel}
       isDisabled={isDisabled}
@@ -55,5 +56,15 @@ function ConfirmEvidenceAction({
     </Modal>
   );
 }
+
+ConfirmEvidenceAction.propTypes = {
+  t: PropTypes.func,
+  setShowConfirmationModal: PropTypes.func,
+  handleAction: PropTypes.func,
+  isDisabled: PropTypes.bool,
+  isBackButtonDisabled: PropTypes.bool,
+  isFromActions: PropTypes.bool,
+  setMenuData: PropTypes.func,
+};
 
 export default ConfirmEvidenceAction;

@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 const styles = {
   chip: {
@@ -21,6 +22,12 @@ const CustomChip = ({ text, shade, style }) => {
   const { textColor, backgroundColor } = shades[shade] || { textColor: "#3d3c3c", backgroundColor: "#E8E8E8" };
 
   return <div style={{ ...styles.chip, backgroundColor, color: textColor, ...style }}>{text}</div>;
+};
+
+CustomChip.propTypes = {
+  text: PropTypes.string,
+  shade: PropTypes.string,
+  style: PropTypes.object,
 };
 
 export default CustomChip;

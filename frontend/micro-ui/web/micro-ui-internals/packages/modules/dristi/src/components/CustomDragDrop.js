@@ -1,5 +1,6 @@
 import { ErrorIcon, FileIcon, UploadIcon } from "@egovernments/digit-ui-react-components";
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import PropTypes from "prop-types";
 import { ReactComponent as DeleteFileIcon } from "../images/delete.svg";
 import { ReactComponent as InfoToolTipIcon } from "../images/Vector.svg";
 
@@ -23,7 +24,7 @@ const CustomDragDrop = ({
   const [uploadErrorInfo, setUploadErrorInfo] = useState("");
   const [showReupload, setShowReupload] = useState(false);
   const [showDragDropArea, setShowDragDropArea] = useState(true);
-  const maxFileSize = 1024 * 1024 * 50; // 2 MB limit
+  const maxFileSize = 1024 * 1024 * 50;
   const fileInputRef = useRef();
 
   useEffect(() => {
@@ -31,17 +32,17 @@ const CustomDragDrop = ({
   }, [file]);
 
   const handleChange = (data, chosenFromReupload) => {
-    let file = data;
+    let uploadedFile = data;
     if (chosenFromReupload) {
-      file = data.target.files[0];
+      uploadedFile = data.target.files[0];
     }
-    if (file.size > maxFileSize) {
+    if (uploadedFile.size > maxFileSize) {
       setUploadErrorInfo("Your file exceeded the 50mb limit.");
     } else setUploadErrorInfo("");
-    setFileData(file);
+    setFileData(uploadedFile);
     setShowReupload(true);
     setShowDragDropArea(false);
-    onChange(file);
+    onChange(uploadedFile);
   };
 
   const dragDropJSX = (
@@ -74,10 +75,10 @@ const CustomDragDrop = ({
             <div>
               <CustomUploadButton t={t} onChange={handleChange} fileInputRef={fileInputRef} handleReupload={handleReupload} />
             </div>
-            <div className="icon delete-uploaded-file" onClick={handleDeleteFile}>
+            <button type="button" className="icon delete-uploaded-file" style={{ background: "none", border: "none", cursor: "pointer" }} onClick={handleDeleteFile}>
               <DeleteFileIcon></DeleteFileIcon>
               <h3> Delete </h3>
-            </div>
+            </button>
           </div>
         </div>
         {!!uploadErrorInfo && (
@@ -124,6 +125,19 @@ const CustomDragDrop = ({
       {!showDragDropArea && fileData && renderFileCard}
     </div>
   );
+};
+
+CustomDragDrop.propTypes = {
+  heading: PropTypes.string,
+  isOptional: PropTypes.bool,
+  showInfoTooltip: PropTypes.bool,
+  note: PropTypes.string,
+  uploadGuidelines: PropTypes.string,
+  file: PropTypes.object,
+  t: PropTypes.func,
+  fileTypes: PropTypes.arrayOf(PropTypes.string),
+  fileValidator: PropTypes.func,
+  onChange: PropTypes.func,
 };
 
 export default CustomDragDrop;
