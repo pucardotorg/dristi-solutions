@@ -15,3 +15,4 @@ export const initCommonComponents = () => {
 // Re-export all utilities for direct import
 export * from "./utils";
 export { default as UploadModal } from "./components/UploadModal";
+export { default as EmployeeFlowResponse } from "./components/EmployeeFlowResponse";

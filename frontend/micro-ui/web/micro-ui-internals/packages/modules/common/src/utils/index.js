@@ -10,5 +10,6 @@ export const getFormattedName = (firstName, middleName, lastName, designation, p
   return partyTypeLabel ? `${nameWithDesignation} ${partyTypeLabel}` : nameWithDesignation;
 };
 
+export { transformCreateData } from "./hrmsIndividualCreateUtils";
 export { getAllAssignees, getAdvocates } from "./caseUtils";
 export { SIGNATURE_UPLOAD_CONFIG, SIGNATURE_PDF_ONLY_CONFIG, DOCUMENT_UPLOAD_CONFIG, buildUploadModalConfig } from "./fileConfig";
