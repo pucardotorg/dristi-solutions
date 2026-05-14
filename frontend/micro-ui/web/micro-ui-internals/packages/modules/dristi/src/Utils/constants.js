@@ -1,0 +1,15 @@
+export const EXTENSION_TO_MIME = {
+  jpg: ["image/jpeg", "image/jpg"],
+  jpeg: ["image/jpeg", "image/jpg"],
+  png: ["image/png"],
+  pdf: ["application/pdf"],
+  doc: ["application/msword"],
+  docx: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+  xls: ["application/vnd.ms-excel"],
+  xlsx: ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+  odt: ["application/vnd.oasis.opendocument.text"],
+  ods: ["application/vnd.oasis.opendocument.spreadsheet"],
+  csv: ["text/csv", "text/plain"],
+  txt: ["text/plain"],
+  dxf: ["application/dxf", "image/vnd.dxf", "image/x-dxf"],
+};

@@ -51,19 +51,16 @@ const BulkRescheduleModal = ({
   bulkFormData,
   showToast,
   newHearingData,
+  isADiarySigned,
 }) => {
   const history = useHistory();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
-  const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+  const judgeId = localStorage.getItem("judgeId");
+  const courtId = localStorage.getItem("courtId");
   const [isReschedule, setIsReschedule] = useState(false);
   const [isLoader, setIsLoader] = useState(false);
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-  };
 
   const handleSearch = async () => {
     try {
@@ -87,7 +84,7 @@ const BulkRescheduleModal = ({
       setIsReschedule(!isReschedule);
       setNewHearingData(tentativeDates?.Hearings);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
       setIsLoader(false);
     }
@@ -155,6 +152,7 @@ const BulkRescheduleModal = ({
                     defaultValue={currentDiaryEntry?.businessOfDay}
                     style={{}}
                     textInputStyle={{ maxWidth: "100%" }}
+                    disable={isADiarySigned ? true : false} //BOTD should not be editable if Adiary is already signed
                   />
                   {currentDiaryEntry && (
                     <Button
@@ -164,6 +162,7 @@ const BulkRescheduleModal = ({
                       onButtonClick={() => {
                         handleUpdateBusinessOfDayEntry();
                       }}
+                      isDisabled={isADiarySigned ? true : false} //BOTD should not be editable if Adiary is already signed
                     />
                   )}
                 </div>

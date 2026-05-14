@@ -1,8 +1,9 @@
 import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
-import { advocateClerkConfig } from "./config";
+import { advocateClerkConfig, advocateClerkVerificationConfig } from "./config";
+import { getFileByFileStore } from "../../../Utils";
 
 const headerStyle = {
   fontFamily: "Roboto",
@@ -34,6 +35,14 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
   const setFormErrors = useRef(null);
 
   const tenantId = Digit.ULBService.getCurrentTenantId();
+
+  // Determine if user is registering as advocate clerk
+  const isAdvocateClerk = params?.userType?.clientDetails?.selectUserType?.code === "ADVOCATE_CLERK";
+
+  // Use different config based on user type
+  const currentConfig = useMemo(() => {
+    return isAdvocateClerk ? advocateClerkVerificationConfig : advocateClerkConfig;
+  }, [isAdvocateClerk]);
   const closeToast = () => {
     setShowErrorToast(false);
   };
@@ -52,7 +61,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
 
   const validateFormData = (data) => {
     let isValid = true;
-    advocateClerkConfig.forEach((curr) => {
+    currentConfig.forEach((curr) => {
       if (!isValid) return;
       if (!(curr.body[0].key in data) || !data[curr.body[0].key]) {
         isValid = false;
@@ -108,7 +117,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
     }
 
     let isDisabled = false;
-    advocateClerkConfig.forEach((curr) => {
+    currentConfig.forEach((curr) => {
       if (isDisabled) return;
       if (!(curr.body[0].key in formData) || !formData[curr.body[0].key]) {
         return;
@@ -157,16 +166,110 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
       ...params,
       formData: formData,
     });
-    history.push(`/${window?.contextPath}/citizen/dristi/home/registration/terms-condition`);
+    history.push(`/${window?.contextPath}/citizen/dristi/home/registration/terms-condition`, { newParams: { ...params, formData } });
   };
-  if (!params?.IndividualPayload) {
-    history.push(pathOnRefresh);
-  }
+
+  // Map stateRegnNumber to barRegistrationNumber for form default values
+  const mappedDefaultValues = useMemo(() => {
+    const formData = params?.formData || {};
+    if (formData?.clientDetails) {
+      // If stateRegnNumber exists but barRegistrationNumber doesn't, map it
+      if (formData.clientDetails.stateRegnNumber && !formData.clientDetails.barRegistrationNumber) {
+        return {
+          ...formData,
+          clientDetails: {
+            ...formData.clientDetails,
+            barRegistrationNumber: formData.clientDetails.stateRegnNumber,
+          },
+        };
+      }
+      // Also check if stateRegnNumber is at the root level (from API response)
+      if (!formData.clientDetails.barRegistrationNumber && !formData.clientDetails.stateRegnNumber) {
+        // Check if stateRegnNumber exists in params directly (from API)
+        const stateRegnNumber = params?.stateRegnNumber || params?.advocate?.stateRegnNumber;
+        if (stateRegnNumber) {
+          return {
+            ...formData,
+            clientDetails: {
+              ...formData.clientDetails,
+              barRegistrationNumber: stateRegnNumber,
+            },
+          };
+        }
+      }
+    }
+    return formData;
+  }, [params?.formData, params?.stateRegnNumber, params?.advocate?.stateRegnNumber]);
+
+  useEffect(() => {
+    const handleRedirect = async () => {
+      if (!params?.IndividualPayload) {
+        const storedParams = sessionStorage.getItem("userRegistrationParams");
+        let newParams = storedParams ? JSON.parse(storedParams) : params;
+
+        const fileStoreId = newParams?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId;
+        const filename = newParams?.uploadedDocument?.filename;
+
+        const barCouncilFileStoreId = newParams?.formData?.clientDetails?.barCouncilId?.[1]?.fileStoreId;
+        const barCouncilFilename = newParams?.formData?.clientDetails?.barCouncilId?.[0];
+
+        // Map stateRegnNumber to barRegistrationNumber if needed
+        if (newParams?.formData?.clientDetails?.stateRegnNumber && !newParams?.formData?.clientDetails?.barRegistrationNumber) {
+          newParams.formData.clientDetails.barRegistrationNumber = newParams.formData.clientDetails.stateRegnNumber;
+        }
+
+        if (barCouncilFileStoreId && barCouncilFilename) {
+          const barCouncilUri = `${
+            window.location.origin
+          }/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${barCouncilFileStoreId}`;
+          const barCouncilFile = await getFileByFileStore(barCouncilUri, barCouncilFilename);
+
+          newParams = {
+            ...newParams,
+            formData: {
+              ...newParams.formData,
+              clientDetails: {
+                ...newParams.formData.clientDetails,
+                barCouncilId: [
+                  [
+                    barCouncilFilename,
+                    {
+                      file: barCouncilFile,
+                      fileStoreId: barCouncilFileStoreId,
+                    },
+                  ],
+                ],
+              },
+            },
+          };
+        }
+
+        if (fileStoreId && filename) {
+          const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${fileStoreId}`;
+          const file = await getFileByFileStore(uri, filename);
+
+          newParams = {
+            ...newParams,
+            uploadedDocument: {
+              ...newParams.uploadedDocument,
+              file,
+            },
+          };
+        }
+
+        sessionStorage.removeItem("userRegistrationParams");
+        history.push(pathOnRefresh, { newParams });
+      }
+    };
+
+    handleRedirect();
+  }, [params, history, pathOnRefresh, Digit.ULBService]);
+
   return (
     <div className="advocate-additional-details">
       <div className="id-verificatin-header">
         <p className="vefifcation-header" style={headerStyle}>
-          {t("CORE_ADVOCATE_VERFICATION")}
+          {t(isAdvocateClerk ? "CORE_ADVOCATE_CLERK_VERFICATION" : "CORE_ADVOCATE_VERFICATION")}
         </p>
         <p className="vefifcation-sub-header" style={subHeaderStyle}>
           {t("CORE_ADVOCATE_AUTHENTICITY_TEXT")}
@@ -176,14 +279,14 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
         </p>
       </div>
       <FormComposerV2
-        config={advocateClerkConfig}
+        config={currentConfig}
         t={t}
         onSubmit={(props) => {
           onSubmit(props);
         }}
         isDisabled={isDisabled}
         label={"CS_COMMON_CONTINUE"}
-        defaultValues={{ ...params?.registrationData } || {}}
+        defaultValues={mappedDefaultValues || {}}
         submitInForm
         onFormValueChange={onFormValueChange}
       ></FormComposerV2>

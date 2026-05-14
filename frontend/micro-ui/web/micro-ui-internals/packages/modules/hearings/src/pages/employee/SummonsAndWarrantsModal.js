@@ -4,11 +4,11 @@ import { Modal, CloseSvg, Button, InboxSearchComposer } from "@egovernments/digi
 import { useTranslation } from "react-i18next";
 import { summonsConfig } from "../../configs/SummonsNWarrantConfig";
 import useSearchOrdersService from "../../../../orders/src/hooks/orders/useSearchOrdersService";
-import { formatDate } from "../../utils";
 import { hearingService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const modalPopup = {
   height: "70%",
@@ -108,11 +108,14 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   const [itemId, setItemId] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
   const userType = Digit.UserService.getType();
+  const courtId = localStorage.getItem("courtId");
+
   const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
       criteria: [
         {
           filingNumber: filingNumber,
+          ...(courtId && userType === "employee" && { courtId }),
         },
       ],
       tenantId,
@@ -123,22 +126,6 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     Boolean(filingNumber)
   );
 
-  const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
-    {
-      hearing: { tenantId },
-      criteria: {
-        tenantID: tenantId,
-        filingNumber: filingNumber,
-        hearingId: hearingId,
-      },
-    },
-    { applicationNumber: "", cnrNumber: "" },
-    hearingId,
-    Boolean(hearingId)
-  );
-
-  const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
-
   const caseDetails = useMemo(
     () => ({
       ...caseData?.criteria?.[0]?.responseList?.[0],
@@ -146,12 +133,30 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     [caseData]
   );
 
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const isCaseAdmitted = useMemo(() => caseDetails?.status === "CASE_ADMITTED", [caseDetails]);
 
   const { caseId, cnrNumber, caseTitle } = useMemo(
     () => ({ cnrNumber: caseDetails.cnrNumber || "", caseId: caseDetails?.id, caseTitle: caseDetails?.caseTitle }),
     [caseDetails]
   );
+
+  const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
+    {
+      hearing: { tenantId },
+      criteria: {
+        tenantID: tenantId,
+        filingNumber: filingNumber,
+        hearingId: hearingId,
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
+    },
+    { applicationNumber: "", cnrNumber: "" },
+    hearingId,
+    Boolean(hearingId && caseCourtId)
+  );
+
+  const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
 
   const handleCloseModal = () => {
     if (handleClose) {
@@ -173,7 +178,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
         tenantId,
         cnrNumber,
         filingNumber: filingNumber,
-        hearingNumber: hearingId,
+        // hearingNumber: hearingId,
         statuteSection: {
           tenantId,
         },
@@ -198,7 +203,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               type: orderType,
               name: `ORDER_TYPE_${orderType}`,
             },
-            dateOfHearing: formatDate(new Date(hearingDetails?.startTime)),
+            dateOfHearing: DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), "YYYY-MM-DD"),
             warrantFor: respondentName,
           },
         },
@@ -213,7 +218,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
           referenceId: `MANUAL_${res.order.orderNumber}`,
           status: "DRAFT_IN_PROGRESS",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
+          assignedRole: ["PENDING_TASK_ORDER"],
           cnrNumber: caseDetails?.cnrNumber,
           filingNumber: filingNumber,
           caseId: caseDetails?.id,
@@ -224,15 +229,15 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
           tenantId,
         },
       });
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+      history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
     } catch (error) {}
   };
 
   const { data: ordersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const [orderList, setOrderList] = useState([]);
@@ -245,8 +250,10 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
         return order?.compositeItems
           ?.filter(
             (item) =>
-              (taskOrderType === "NOTICE" ? item?.orderType === "NOTICE" : ["SUMMONS", "WARRANT"].includes(item?.orderType)) &&
-              order?.hearingNumber === hearingId
+              (taskOrderType === "NOTICE"
+                ? item?.orderType === "NOTICE"
+                : ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(item?.orderType)) &&
+              (order?.scheduledHearingNumber || order?.hearingNumber) === hearingId
           )
           ?.map((item) => ({
             ...order,
@@ -256,8 +263,10 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
             itemId: item?.id,
           }));
       } else {
-        return (taskOrderType === "NOTICE" ? order?.orderType === "NOTICE" : ["SUMMONS", "WARRANT"].includes(order?.orderType)) &&
-          order?.hearingNumber === hearingId
+        return (taskOrderType === "NOTICE"
+          ? order?.orderType === "NOTICE"
+          : ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(order?.orderType)) &&
+          (order?.scheduledHearingNumber || order?.hearingNumber) === hearingId
           ? [order]
           : [];
       }
@@ -278,13 +287,14 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     setItemId(orderListFiltered?.[0]?.ordersList?.[0]?.itemId);
   }, [orderListFiltered]);
 
-  const config = useMemo(() => summonsConfig({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId }), [
+  const config = useMemo(() => summonsConfig({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId, caseCourtId }), [
     taskCnrNumber,
     filingNumber,
     orderId,
     orderNumber,
     orderType,
     itemId,
+    caseCourtId,
   ]);
 
   const getOrderPartyData = (orderType, orderList) => {
@@ -346,13 +356,13 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
           </div>
           <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
             <span style={{ minWidth: "40%" }}>{t("Next Hearing Date")}</span>
-            <span>{hearingDetails?.startTime && formatDate(new Date(hearingDetails?.startTime), "DD-MM-YYYY")}</span>
+            <span>{hearingDetails?.startTime && DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), "DD-MM-YYYY")}</span>
           </div>
           {totalSummons > 0 && (
             <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
               <span style={{ minWidth: "40%" }}>{t("Last Summon issued on")}</span>
               <span>
-                {lastSummon.createdDate && formatDate(new Date(lastSummon?.createdDate), "DD-MM-YYYY")} (Round {totalSummons})
+                {lastSummon.createdDate && DateUtils.getFormattedDate(new Date(lastSummon?.createdDate), "DD-MM-YYYY")} (Round {totalSummons})
               </span>
             </div>
           )}
@@ -360,7 +370,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
             <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
               <span style={{ minWidth: "40%" }}>{t("Last Warrant issued on")}</span>
               <span>
-                {lastWarrant?.createdDate && formatDate(new Date(lastWarrant?.createdDate), "DD-MM-YYYY")} (Round {totalWarrants})
+                {lastWarrant?.createdDate && DateUtils.getFormattedDate(new Date(lastWarrant?.createdDate), "DD-MM-YYYY")} (Round {totalWarrants})
               </span>
             </div>
           )}
@@ -368,7 +378,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
             <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
               <span style={{ minWidth: "40%" }}>{t("Last Notice issued on")}</span>
               <span>
-                {lastNotice?.createdDate && formatDate(new Date(lastNotice?.createdDate), "DD-MM-YYYY")} (Round {totalNotices})
+                {lastNotice?.createdDate && DateUtils.getFormattedDate(new Date(lastNotice?.createdDate), "DD-MM-YYYY")} (Round {totalNotices})
               </span>
             </div>
           )}
@@ -392,7 +402,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     );
   }, [caseDetails, filingNumber, respondentName, hearingDetails, orderList, userType, caseId]);
 
-  const modalLabel = ["SUMMONS", "WARRANT"].includes(orderType) ? "SUMMON_WARRANT_STATUS" : "NOTICE_STATUS";
+  const modalLabel = ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(orderType) ? "SUMMON_WARRANT_STATUS" : "NOTICE_STATUS";
 
   function removeAccusedSuffix(partyName) {
     return partyName.replace(/\s*\(Accused\)$/, "");
@@ -501,8 +511,8 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               />
             )
           )}
-          <Button
-            label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
+          {/* <Button
+            label={`Re-Issue ${t(orderType)}`}
             onButtonClick={() => {
               handleNavigate();
             }}
@@ -512,7 +522,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               padding: "16px 24px",
             }}
             textStyles={headingStyle}
-          />
+          /> */}
         </div>
       </div>
     </Modal>

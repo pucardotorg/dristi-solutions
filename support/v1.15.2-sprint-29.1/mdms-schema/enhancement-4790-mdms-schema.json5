@@ -1,0 +1,62 @@
+// TODO :  need to delete the schema first and then create the schema
+{
+  "tenantId": "kl",
+  "code": "case.CaseOverallStatusType",
+  "description": null,
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "required": [
+      "id",
+      "action",
+      "state",
+      "workflowModule",
+      "stage",
+      "typeIdentifier",
+      "substage"
+    ],
+    "x-unique": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "stage": {
+        "type": "string"
+      },
+      "state": {
+        "type": "string"
+      },
+      "action": {
+        "type": "string"
+      },
+      "priority": {
+        "type": "number"
+      },
+      "substage": {
+        "type": "string"
+      },
+      "entityType": {
+        "type": "string"
+      },
+      "processHandler": {
+        "type": "string"
+      },
+      "typeIdentifier": {
+        "type": "string"
+      },
+      "workflowModule": {
+        "type": "string"
+      },
+      "compositeHearingPath": {
+        "type": "string"
+      },
+      "intermediateHearingPath": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "isActive": true
+}

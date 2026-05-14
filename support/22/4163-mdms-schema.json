@@ -1,0 +1,31 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "payment",
+    "masterName": "paymentDemandType",
+    "mdmsPayload": {
+      "tenantId": "kl",
+      "code": "payment.paymentDemandType",
+      "description": null,
+      "definition": {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "required": ["id", "code", "name"],
+        "x-unique": ["id"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "isActive": true
+    }
+  }
+]

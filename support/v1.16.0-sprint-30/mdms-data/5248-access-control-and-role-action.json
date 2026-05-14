@@ -1,0 +1,141 @@
+[{
+  "tenantId": "kl",
+  "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+  "masterName": "actions-test",
+  "mdmsPayload":[
+    {
+      "id": "501239eb-3206-416f-af64-8b782d5eb97d",
+      "tenantId": "kl",
+      "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+      "uniqueIdentifier": "2783",
+      "data": {
+        "id": 2783,
+        "url": "/template-configuration/v1/search",
+        "code": "2783",
+        "name": "Template Search",
+        "displayName": "Template Search",
+        "serviceCode": "template-configuration",
+        "parentModule": "template-configuration"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+        "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+        "createdTime": 1769604604550,
+        "lastModifiedTime": 1769604637156
+      }
+    },
+    {
+      "id": "7cfe8ec0-7e95-4d7e-8473-343cda029f10",
+      "tenantId": "kl",
+      "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+      "uniqueIdentifier": "2782",
+      "data": {
+        "id": 2782,
+        "url": "/template-configuration/v1/update",
+        "code": "2782",
+        "name": "Template Update",
+        "displayName": "Template Update",
+        "serviceCode": "template-configuration",
+        "parentModule": "template-configuration"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+        "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+        "createdTime": 1769604575872,
+        "lastModifiedTime": 1769604623932
+      }
+    },
+    {
+      "id": "7f639e49-de58-4ad0-a7b0-088a6ff97b78",
+      "tenantId": "kl",
+      "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+      "uniqueIdentifier": "2781",
+      "data": {
+        "id": 2781,
+        "url": "/template-configuration/v1/create",
+        "code": "2781",
+        "name": "Template Create",
+        "displayName": "Template Create",
+        "serviceCode": "template-configuration",
+        "parentModule": "template-configuration"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+        "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+        "createdTime": 1769604539417,
+        "lastModifiedTime": 1769604539417
+      }
+    }
+  ]
+},
+  {
+  "tenantId": "kl",
+  "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+  "masterName": "roleactions",
+  "mdmsPayload":[
+    {
+      "id": "b50acd53-028a-4e0c-ac2f-5cff1ce16bfd",
+      "tenantId": "kl",
+      "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+      "uniqueIdentifier": "553",
+      "data": {
+        "id": 553,
+        "actionid": 2783,
+        "rolecode": "EMPLOYEE",
+        "tenantid": "kl",
+        "actioncode": "2783"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+        "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+        "createdTime": 1769604817122,
+        "lastModifiedTime": 1769604817122
+      }
+    },
+    {
+      "id": "d36a45ce-0eb1-4376-8220-d0276bc64119",
+      "tenantId": "kl",
+      "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+      "uniqueIdentifier": "552",
+      "data": {
+        "id": 552,
+        "actionid": 2782,
+        "rolecode": "EMPLOYEE",
+        "tenantid": "kl",
+        "actioncode": "2782"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+        "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+        "createdTime": 1769604802361,
+        "lastModifiedTime": 1769604802361
+      }
+    },
+    {
+      "id": "7da3a766-caa4-45a6-a2d8-9e2e781b18e7",
+      "tenantId": "kl",
+      "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+      "uniqueIdentifier": "551",
+      "data": {
+        "id": 551,
+        "actionid": 2781,
+        "rolecode": "EMPLOYEE",
+        "tenantid": "kl",
+        "actioncode": "2781"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+        "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+        "createdTime": 1769604786271,
+        "lastModifiedTime": 1769604786271
+      }
+    }
+  ]
+}
+]

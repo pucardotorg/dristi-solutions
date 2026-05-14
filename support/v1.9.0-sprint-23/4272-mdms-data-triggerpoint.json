@@ -1,0 +1,14 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "CaseManagement.case_bundle_state_master",
+  "uniqueIdentifier": "15",
+  "data": {
+    "id": "15",
+    "state": "COMPLETED",
+    "topic": "save-wf-transition",
+    "moduleName": "bail",
+    "businessservice": "bail-bond-default",
+    "isDelayRequired": true
+  },
+  "isActive": true
+}

@@ -58,7 +58,10 @@ function EFilingPaymentResponse() {
             label={t("CS_GO_TO_HOME")}
             labelClassName={"tertiary-label-selector"}
             onButtonClick={() => {
-              history.push(`/${window?.contextPath}/employee/dristi/pending-payment-inbox`);
+              history.push(
+                `/${window?.contextPath}/employee/home/home-screen`,
+                { state: { offlinePaymentsTab: true } } // Open the 'Offline Payments' tab when returning to the home screen.
+              );
             }}
             style={{ width: "100%" }}
           />

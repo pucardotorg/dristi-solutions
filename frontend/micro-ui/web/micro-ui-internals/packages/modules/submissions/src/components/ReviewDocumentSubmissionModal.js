@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import { Toast } from "@egovernments/digit-ui-react-components";
-import SubmissionDocumentEsign from "./SubmissionDocumentEsign";
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { SubmissionDocumentWorkflowState } from "../utils/submissionDocumentsWorkflow";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const downloadSvgStyle = {
   margin: "0px 12px 0px 0px",
@@ -16,61 +15,18 @@ const downloadSvgStyle = {
 const downloadPathStyle = {
   fill: "#007e7e",
 };
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div style={{ display: "flex" }}>
-      <Button
-        icon={<FileDownloadIcon svgStyle={downloadSvgStyle} pathStyle={downloadPathStyle} />}
-        label={""}
-        onButtonClick={() => {
-          props.handleDownload();
-        }}
-        style={{ boxShadow: "none", background: "none", border: "none", padding: "20px 10px", maxWidth: "fit-content" }}
-        textStyles={{
-          width: "unset",
-        }}
-      >
-        <h1
-          style={{
-            fontFamily: "Roboto",
-            fontSize: "16px",
-            fontWeight: 700,
-            lineHeight: "18.75px",
-            textAlign: "center",
-            color: "#007E7E",
-          }}
-        >
-          {props.t("SUBMISSION_DOCUMENT_DOWNLOAD")}
-        </h1>
-      </Button>
-      <div onClick={props?.onClick} style={{ maxHeight: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    </div>
-  );
-};
-
 function ReviewDocumentSubmissionModal({
   t,
   combinedFileStoreId,
-  handleGoToSign,
+  handleSubmit,
   handleGoBack,
-  setSignedDocumentUploadID,
   currentSubmissionStatus,
   combinedDocumentFile,
   handleDownloadReviewModal,
 }) {
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showErrorToast, setShowErrorToast] = useState(null);
-  const [isSignedHeading, setIsSignedHeading] = useState(false);
-  const [signedId, setSignedId] = useState(null);
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const signedDisplayFileStoreId = useMemo(() => signedId || sessionStorage.getItem("fileStoreId"), [signedId]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -87,16 +43,15 @@ function ReviewDocumentSubmissionModal({
   const showDocument = useMemo(() => {
     return (
       <React.Fragment>
-        {combinedDocumentFile || combinedFileStoreId || signedId ? (
+        {combinedDocumentFile || combinedFileStoreId ? (
           <DocViewerWrapper
             docWidth={"100%"}
             docHeight={"fit-content"}
+            errorHeight={"460px"}
             tenantId={tenantId}
             showDownloadOption={false}
             docViewerStyle={{ maxWidth: "100%", width: "100%", padding: "0px 16px 24px 16px" }}
-            fileStoreId={
-              currentSubmissionStatus === SubmissionDocumentWorkflowState.PENDING_ESIGN && (signedDisplayFileStoreId || combinedFileStoreId)
-            }
+            fileStoreId={currentSubmissionStatus === SubmissionDocumentWorkflowState.PENDING_ESIGN && combinedFileStoreId}
             selectedDocs={[combinedDocumentFile]}
           />
         ) : (
@@ -104,34 +59,17 @@ function ReviewDocumentSubmissionModal({
         )}
       </React.Fragment>
     );
-  }, [combinedDocumentFile, combinedFileStoreId, currentSubmissionStatus, signedDisplayFileStoreId, signedId, t, tenantId]);
+  }, [combinedDocumentFile, combinedFileStoreId, currentSubmissionStatus, t, tenantId]);
 
   return (
     <Modal
-      headerBarMain={
-        <Heading
-          label={
-            currentSubmissionStatus !== SubmissionDocumentWorkflowState.PENDING_ESIGN
-              ? t("REVIEW_SUBMISSION_DOCUMENT_HEADING")
-              : !isSignedHeading
-              ? t("SIGN_SUBMISSION")
-              : t("VIEW_SIGNED_SUBMISSION")
-          }
-        />
-      }
+      headerBarMain={<Heading label={t("REVIEW_SUBMISSION_DOCUMENT_HEADING")} />}
       headerBarEnd={<CloseBtn t={t} onClick={handleGoBack} handleDownload={handleDownloadReviewModal} />}
       actionCancelLabel={currentSubmissionStatus !== SubmissionDocumentWorkflowState.PENDING_ESIGN && t("SUBMISSION_DOCUMENT_BACK")}
       actionCancelOnSubmit={handleGoBack}
-      actionSaveLabel={
-        !isSignedHeading
-          ? currentSubmissionStatus !== SubmissionDocumentWorkflowState.PENDING_ESIGN
-            ? t("SUBMISSION_DOCUMENT_SIGN")
-            : t("SUBMISSION_DOCUMENT_NEXT")
-          : t("SUBMISSION_DOCUMENT_FINISH")
-      }
-      isDisabled={currentSubmissionStatus === SubmissionDocumentWorkflowState.PENDING_ESIGN && !isSignedHeading}
+      actionSaveLabel={t("SUBMIT")}
       actionSaveOnSubmit={() => {
-        handleGoToSign();
+        handleSubmit();
       }}
       className={"review-submission-appl-modal"}
       textStyle={{ color: "#FFFFFF", margin: 0 }}
@@ -143,15 +81,6 @@ function ReviewDocumentSubmissionModal({
             {showDocument}
           </div>
         </div>
-        {currentSubmissionStatus === SubmissionDocumentWorkflowState.PENDING_ESIGN && (
-          <SubmissionDocumentEsign
-            t={t}
-            setSignedDocumentUploadID={setSignedDocumentUploadID}
-            combinedFileStoreId={combinedFileStoreId}
-            setSignedId={setSignedId}
-            setIsSignedHeading={setIsSignedHeading}
-          />
-        )}
       </div>
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </Modal>

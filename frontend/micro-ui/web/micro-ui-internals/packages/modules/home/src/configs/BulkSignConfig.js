@@ -49,7 +49,7 @@ export const bulkESignOrderConfig = {
                 masterName: "OrderStatus",
                 moduleName: "Order",
                 select:
-                  "(data) => {return data['Order'].OrderStatus?.filter((item)=>[`PENDING_BULK_E-SIGN`, `DRAFT_IN_PROGRESS`].includes(item.type));}",
+                  "(data) => {return data['Order'].OrderStatus?.filter((item)=>[`PENDING_BULK_E-SIGN`, `DRAFT_IN_PROGRESS`].includes(item.type)).sort((a, b) => a.type.localeCompare(b.type));}",
               },
             },
           },
@@ -93,6 +93,10 @@ export const bulkESignOrderConfig = {
         // customPageSizesArray: [15, 30, 45, 60, 75],
         columns: [
           {
+            label: "SELECT",
+            additionalCustomization: true,
+          },
+          {
             label: "CASE_NAME_AND_NUMBER",
             jsonPath: "businessObject.orderNotification.caseTitle",
           },
@@ -109,10 +113,6 @@ export const bulkESignOrderConfig = {
           {
             label: "DATE_ADDED",
             jsonPath: "businessObject.orderNotification.createdTime",
-            additionalCustomization: true,
-          },
-          {
-            label: "SELECT",
             additionalCustomization: true,
           },
           {

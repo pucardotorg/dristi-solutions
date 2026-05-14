@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
-import { FormComposerV2, Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { useToast } from "../../../components/Toast/useToast";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
@@ -48,6 +48,23 @@ const ReviewLitigantDetails = ({ path }) => {
   const referenceId = urlParams.get("referenceId");
   const refApplicationNUmber = urlParams.get("refApplicationId");
   const [showDocModal, setShowDocModal] = useState(false);
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const courtId = localStorage.getItem("courtId");
+  const [showErrorToast, setShowErrorToast] = useState(null);
+
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
 
   const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
     {
@@ -55,6 +72,7 @@ const ReviewLitigantDetails = ({ path }) => {
         {
           caseId: caseId,
           defaultFields: false,
+          ...(courtId && userType === "employee" && { courtId }),
         },
       ],
       tenantId,
@@ -71,6 +89,24 @@ const ReviewLitigantDetails = ({ path }) => {
     }),
     [caseData]
   );
+
+  const { data: applicationData, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        applicationNumber: refApplicationNUmber,
+        tenantId,
+        courtId,
+      },
+      tenantId,
+    },
+    {},
+    refApplicationNUmber,
+    Boolean(refApplicationNUmber)
+  );
+
+  const applicationDetails = useMemo(() => {
+    return applicationData?.applicationList?.[0];
+  }, [applicationData?.applicationList]);
 
   const profileRequest = useMemo(() => {
     return caseDetails?.additionalDetails?.profileRequests?.find((req) => req?.pendingTaskRefId === referenceId);
@@ -192,6 +228,14 @@ const ReviewLitigantDetails = ({ path }) => {
     return false;
   }, [profileRequest, caseDetails]);
 
+  const getPersonNameByUUID = (litigantDetails, representative, uuid) => {
+    const combined = [...(litigantDetails || []), ...(representative || [])];
+
+    const person = combined?.find((item) => item?.additionalDetails?.uuid === uuid);
+
+    return person?.additionalDetails?.fullName || person?.additionalDetails?.advocateName || "";
+  };
+
   const handleApproveReject = async (action) => {
     try {
       const reqBody = {
@@ -216,6 +260,11 @@ const ReviewLitigantDetails = ({ path }) => {
             documents: [{}],
           },
           documents: [],
+          orderDetails: {
+            applicantName: getPersonNameByUUID(caseDetails?.litigants, caseDetails?.representatives, profileRequest?.editorDetails?.uuid),
+            applicationStatus: action === "ACCEPT" ? "APPROVED" : "REJECTED",
+            applicationCMPNumber: applicationDetails?.applicationCMPNumber,
+          },
           applicationNumber: [refApplicationNUmber],
           additionalDetails: {
             formdata: {
@@ -244,7 +293,7 @@ const ReviewLitigantDetails = ({ path }) => {
       const res = await HomeService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId });
       if (res.order.orderNumber) {
         history.push(
-          `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
+          `/${window.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       }
     } catch (error) {
@@ -294,7 +343,16 @@ const ReviewLitigantDetails = ({ path }) => {
         <div
           className="supporting-document"
           style={{ marginTop: "-25px", marginLeft: "10px", cursor: "pointer" }}
-          onClick={() => setShowDocModal(true)}
+          onClick={() => {
+            if (profileRequest?.document?.fileStore) {
+              setShowDocModal(true);
+            } else {
+              setShowErrorToast({
+                label: t("NO_SUPPORTING_DOCUMENTS_UPLOADED"),
+                error: true,
+              });
+            }
+          }}
         >
           <DocViewerWrapper
             fileStoreId={profileRequest?.document?.fileStore}
@@ -385,6 +443,7 @@ const ReviewLitigantDetails = ({ path }) => {
         </div>
       </div>
       {showDocModal && <ImageModal imageInfo={imageInfo} handleCloseModal={() => setShowDocModal(false)}></ImageModal>}
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </div>
   );
 };

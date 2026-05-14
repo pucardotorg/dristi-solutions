@@ -2,26 +2,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
 import { UploadIcon } from "../icons/svgIndex";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
-import { CardLabelError, TextInput, CloseSvg, Toast } from "@egovernments/digit-ui-react-components";
+import { CardLabelError, TextInput, Toast } from "@egovernments/digit-ui-react-components";
 import Button from "./Button";
 import ImageModal from "./ImageModal";
-
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        cursor: "pointer",
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn } from "./ModalComponents";
 const DragDropComponent = ({ config, label }) => {
   return (
     <div
@@ -71,12 +55,12 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
         {
           name: "uploadedDocs",
           isMandatory: true,
-          textAreaHeader: "CS_DOCUMENT",
+          label: "CS_DOCUMENT",
           fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-          uploadGuidelines: "UPLOAD_DOC_50",
-          maxFileSize: 50,
-          maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-          textAreaStyle: {
+          uploadGuidelines: "UPLOAD_DOC_10",
+          maxFileSize: 10,
+          maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
+          labelStyle: {
             fontSize: "16px",
             fontWeight: 400,
             marginBottom: "8px",
@@ -166,9 +150,20 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
         `}
         </style>
         <div className={`file-uploader-div-main show-file-uploader select-UploadFiles`}>
-          {input.textAreaHeader && (
-            <h1 className={`custom-text-area-header ${input?.headerClassName}`} style={{ margin: "0px 0px 8px", ...input.textAreaStyle }}>
-              {t(input?.textAreaHeader)}
+          {input.label && (
+            <h1
+              className={`custom-text-area-header ${input?.headerClassName}`}
+              style={{ margin: "0px 0px 8px", display: "flex", gap: "2px", ...input.labelStyle }}
+            >
+              {t(input?.label)}{" "}
+              {input?.isOptional && (
+                <span>
+                  <p className={`custom-sub-header ${input?.subHeaderClassName}`} style={{ margin: "0px 0px 8px" }}>
+                    {`${t(input?.textAreaSubHeader)}`}
+                    {input?.isOptional && <span style={{ color: "#77787B" }}>&nbsp;{t("CS_IS_OPTIONAL")}</span>}
+                  </p>
+                </span>
+              )}
             </h1>
           )}
           <div className="file-uploader" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -190,6 +185,12 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                 types={input?.fileTypes}
                 children={<DragDropComponent config={config} label={currentValue?.length > 0 ? t("UPLOAD_MORE") : t("UPLOAD")} />}
                 key={input?.name}
+                onTypeError={() =>
+                  setShowErrorToast({
+                    label: t("NOT_SUPPORTED_FILE_TYPE"),
+                    error: true,
+                  })
+                }
               />
             )}
           </div>
@@ -275,6 +276,7 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                   zIndex: 1000,
                   backgroundColor: "grey",
                 }}
+                popupModuleMianStyles={input?.popupModuleMianStyles}
               />
             )}
           </div>

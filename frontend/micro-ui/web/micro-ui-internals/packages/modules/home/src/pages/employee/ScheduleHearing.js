@@ -6,6 +6,8 @@ import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.m
 import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
 import { HomeService, Urls } from "../../hooks/services";
 import { InfoCard } from "@egovernments/digit-ui-components";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const hearingTypeOptions = [{}];
 
@@ -17,11 +19,6 @@ const dropdownConfig = {
   isMandatory: true,
   options: hearingTypeOptions,
 };
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 const Close = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g clip-path="url(#clip0_4124_3214)">
@@ -138,10 +135,12 @@ function ScheduleHearing({
 
   const fetchBasicUserInfo = async () => {
     const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+    const userUuid = userInfo?.uuid;
+    const authorizedUuid = getAuthorizedUuid(userUuid);
     const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
       {
         Individual: {
-          userUuid: [userInfo?.uuid],
+          userUuid: [authorizedUuid],
         },
       },
       { tenantId, limit: 1000, offset: 0 },
@@ -169,6 +168,7 @@ function ScheduleHearing({
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
+  const courtId = localStorage.getItem("courtId");
   const { t } = useTranslation();
   const history = useHistory();
   const shortCaseInfo = useMemo(() => {
@@ -190,6 +190,7 @@ function ScheduleHearing({
       criteria: [
         {
           filingNumber: filingNumber,
+          ...(courtId && userInfoType === "employee" && { courtId }),
         },
       ],
       tenantId,
@@ -201,21 +202,6 @@ function ScheduleHearing({
   );
   const caseDetails = useMemo(() => caseData?.criteria[0]?.responseList[0], [caseData]);
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
-
-  const { data: applicationData } = Digit.Hooks.submissions.useSearchSubmissionService(
-    {
-      criteria: {
-        filingNumber: filingNumber,
-        tenantId: tenantId,
-        applicationType: "RE_SCHEDULE",
-        status: "COMPLETED",
-      },
-      tenantId,
-    },
-    {},
-    "",
-    true
-  );
 
   const { data: dateResponse } = Digit.Hooks.home.useSearchReschedule(
     {
@@ -345,7 +331,7 @@ function ScheduleHearing({
               referenceId: `MANUAL_${caseDetails?.filingNumber}`,
               status: "SCHEDULE_HEARING",
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
+              assignedRole: ["PENDING_TASK_ORDER"],
               cnrNumber: caseDetails?.cnrNumber,
               filingNumber: caseDetails?.filingNumber,
               caseId: caseDetails?.id,
@@ -355,7 +341,7 @@ function ScheduleHearing({
               tenantId,
             },
           });
-          history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+          history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
           setIsSubmitDisabled(false);
         })
         .catch((err) => {
@@ -363,7 +349,7 @@ function ScheduleHearing({
         });
     } else if (status && status === "OPTOUT") {
       const individualId = await fetchBasicUserInfo();
-      const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+      const judgeId = localStorage.getItem("judgeId");
 
       setIsSubmitDisabled(true);
       HomeService.customApiService(

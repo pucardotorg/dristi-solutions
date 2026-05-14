@@ -3,9 +3,6 @@ import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 
 const Breadcrumb = (props) => {
-  function isLastCrumb(index) {
-    return index === props.crumbs.length - 1;
-  }
 
   return (
     <ol className={`bread-crumb ${props?.className ? props?.className : ""}`} style={props?.breadcrumbStyle}>
@@ -25,7 +22,15 @@ const Breadcrumb = (props) => {
             {isLast || !crumb?.path ? (
               <span style={props?.spanStyle ? { ...props?.spanStyle } : {}}>{crumb.content}</span>
             ) : (
-              <Link to={{ pathname: crumb.path, state: { count: crumb?.count }, search: crumb?.query }}>{crumb.content}</Link>
+              <Link
+                to={{
+                  pathname: crumb.path,
+                  state: { count: crumb?.count, homeFilteredData: crumb?.homeFilteredData, homeActiveTab: crumb?.homeActiveTab },
+                  search: crumb?.query,
+                }}
+              >
+                {crumb.content}
+              </Link>
             )}
           </li>
         );

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 import AdvocateClerkAdditionalDetail from "./AdvocateClerkAdditionalDetail";
 import SelectUserType from "./SelectUserType";
@@ -16,6 +16,7 @@ import UploadIdType from "./UploadIdType";
 import TermsCondition from "./TermsCondition";
 import SelectEmail from "./SelectEmail";
 import Modal from "../../../components/Modal";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 const TYPE_REGISTER = { type: "REGISTER" };
 const setCitizenDetail = (userObject, token, tenantId) => {
@@ -30,19 +31,6 @@ const setCitizenDetail = (userObject, token, tenantId) => {
   localStorage.setItem("user-info", JSON.stringify(userObject));
   localStorage.setItem("Citizen.user-info", JSON.stringify(userObject));
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 const Registration = ({ stateCode }) => {
   const Digit = window.Digit || {};
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -52,7 +40,6 @@ const Registration = ({ stateCode }) => {
   const isUserLoggedIn = Boolean(token);
   const moduleCode = "DRISTI";
   const [newParams, setNewParams] = useState(history.location.state?.newParams || {});
-  const [userTypeRegister] = useState(history.location.state?.userType || {});
 
   const [canSubmitNo, setCanSubmitNo] = useState(true);
   const [isUserRegistered, setIsUserRegistered] = useState(true);
@@ -78,6 +65,20 @@ const Registration = ({ stateCode }) => {
 
     return () => clearTimeout(timer);
   }, [closeToast]);
+
+  useEffect(() => {
+    if (location?.state?.newParams) {
+      setNewParams(location.state.newParams);
+    }
+  }, [location.state?.newParams]);
+
+  useEffect(() => {
+    if (newParams) {
+      const { mobileNumber, ...sanitizedParams } = newParams || {};
+      sessionStorage.setItem("userRegistrationParams", JSON.stringify(sanitizedParams));
+    }
+  }, [newParams]);
+
   useEffect(() => {
     if (!user) {
       return;
@@ -107,9 +108,6 @@ const Registration = ({ stateCode }) => {
       [newConfig]
     )
   );
-  const getFromLocation = (state, searchParams) => {
-    return state?.from || searchParams?.from;
-  };
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const { data, isLoading, refetch, isFetching } = Digit.Hooks.dristi.useGetIndividualUser(
     {
@@ -133,18 +131,6 @@ const Registration = ({ stateCode }) => {
     const address = data?.Individual[0]?.address;
     return !address || (Array.isArray(address) && address.length === 0);
   }, [data?.Individual, userInfoType]);
-
-  useEffect(() => {
-    if (isLitigantPartialRegistered && data?.Individual) {
-      setNewParams({
-        name: {
-          firstName: data?.Individual?.[0]?.name?.givenName,
-          middleName: data?.Individual?.[0]?.name?.otherNames,
-          lastName: data?.Individual?.[0]?.name?.familyName,
-        },
-      });
-    }
-  }, [data?.Individual, isLitigantPartialRegistered]);
 
   const handleAadharOtpChange = (aadharOtp) => {
     setNewParams({ ...newParams, aadharOtp });
@@ -240,11 +226,11 @@ const Registration = ({ stateCode }) => {
   const onSelectSkipEmail = async () => {
     setShowSkipEmailModal(false);
     setNewParams({ ...newParams, isSkip: true });
-    history.push(`${path}/user-name`);
+    history.push(`${path}/user-name`, { newParams: { ...newParams, isSkip: true } });
   };
   const selectName = async (name) => {
     setNewParams({ ...newParams, name });
-    history.push(`${path}/user-address`);
+    history.push(`${path}/user-address`, { newParams: { ...newParams, name } });
   };
 
   const onAadharOtpSelect = () => {
@@ -255,39 +241,45 @@ const Registration = ({ stateCode }) => {
       showOtpModal: false,
       isAdhaar: false,
     }));
-    history.replace(`${path}/user-type`);
+    history.replace(`${path}/user-type`, { newParams });
     setCanSubmitAadharOtp(true);
   };
   const handleAddressSave = (address) => {
     setNewParams({ ...newParams, address });
-    history.push(`${path}/id-verification`);
+    history.push(`${path}/id-verification`, { newParams: { ...newParams, address } });
   };
   const handleIdentitySave = (indentity) => {
     setNewParams({ ...newParams, indentity, adhaarNumber: "" });
     indentity.IdVerification.selectIdType.code === "AADHAR"
       ? history.push(`${path}/enter-adhaar`, { comingFrom: "Aadhaar" })
-      : history.push(`${path}/upload-id`, { comingFrom: "otherId" });
+      : history.push(`${path}/upload-id`, { comingFrom: "otherId", newParams: { ...newParams, indentity } });
   };
   const handleUserTypeSave = (userType) => {
     setNewParams({ ...newParams, userType });
     history.push(`/${window?.contextPath}/citizen/dristi/home/response`);
   };
   const onDocumentUpload = async (filename, filedata, IdType) => {
-    const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", filedata, Digit.ULBService.getStateId());
-    const identityObj = {
-      IdVerification: {
-        selectIdType: {
-          code: "OTHER ID",
-          name: "CS_OTHER",
-          subText: "CS_OTHER_SUB_TEXT",
+    try {
+      const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", filedata, Digit.ULBService.getStateId());
+      const identityObj = {
+        IdVerification: {
+          selectIdType: {
+            id: 2,
+            code: "OTHER_ID",
+            name: "CS_OTHER",
+            subText: "CS_OTHER_SUB_TEXT",
+          },
         },
-      },
-    };
-    setNewParams({ ...newParams, indentity: identityObj });
-
-    Digit.SessionStorage.set("UploadedDocument", { filedata: fileUploadRes?.data, IdType, filename });
-    Digit.SessionStorage.del("aadharNumber");
-    history.replace(`${path}/user-type`);
+      };
+      setNewParams({ ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } });
+      Digit.SessionStorage.del("aadharNumber");
+      history.replace(`${path}/user-type`, {
+        newParams: { ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } },
+      });
+    } catch (error) {
+      console.error("Error while uploading id proof", error);
+      setError(t("ERROR_WHILE_UPLOADING_ID_PROOF"));
+    }
   };
   if (isLoading || isFetching) {
     return <Loader />;
@@ -419,7 +411,6 @@ const Registration = ({ stateCode }) => {
               setParams={setNewParams}
               pathOnRefresh={pathOnRefresh}
               params={newParams}
-              userTypeRegister={userTypeRegister}
               onSelect={handleUserTypeSave}
               path={path}
             />

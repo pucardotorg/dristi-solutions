@@ -1,0 +1,30 @@
+// TODO : need to delete the schema from db and create the schema
+{
+  "tenantId": "kl",
+  "code": "Epost.PostalHubAndUserName",
+  "description": null,
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "required": [
+      "postHubName",
+      "userName"
+    ],
+    "x-unique": [
+      "userName"
+    ],
+    "properties": {
+      "district": {
+        "type": "string"
+      },
+      "userName": {
+        "type": "string"
+      },
+      "postHubName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "isActive": true
+}

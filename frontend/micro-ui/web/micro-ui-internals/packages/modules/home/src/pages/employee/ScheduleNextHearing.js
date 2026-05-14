@@ -6,6 +6,7 @@ import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.m
 import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
 import { HomeService, Urls } from "../../hooks/services";
 import { InfoCard } from "@egovernments/digit-ui-components";
+import { Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const hearingTypeOptions = [{}];
 
@@ -17,11 +18,6 @@ const dropdownConfig = {
   isMandatory: true,
   options: hearingTypeOptions,
 };
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 const Close = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g clip-path="url(#clip0_4124_3214)">
@@ -123,6 +119,7 @@ function ScheduleNextHearing({
   const CustomChooseDate = Digit.ComponentRegistryService.getComponent("CustomChooseDate") || <React.Fragment></React.Fragment>;
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const courtId = localStorage.getItem("courtId");
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
   const { t } = useTranslation();
   const history = useHistory();
@@ -145,6 +142,7 @@ function ScheduleNextHearing({
       criteria: [
         {
           filingNumber: filingNumber,
+          ...(courtId && userInfoType === "employee" && { courtId: courtId }),
         },
       ],
       tenantId,
@@ -155,6 +153,7 @@ function ScheduleNextHearing({
     Boolean(filingNumber)
   );
   const caseDetails = useMemo(() => caseData?.criteria[0]?.responseList[0], [caseData]);
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
 
   const { data: applicationData } = Digit.Hooks.submissions.useSearchSubmissionService(
@@ -162,6 +161,7 @@ function ScheduleNextHearing({
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
         applicationType: "RE_SCHEDULE",
         status: "COMPLETED",
       },
@@ -169,7 +169,7 @@ function ScheduleNextHearing({
     },
     {},
     "",
-    true
+    Boolean(caseCourtId)
   );
 
   const { data: dateResponse } = Digit.Hooks.home.useSearchReschedule(
@@ -232,7 +232,7 @@ function ScheduleNextHearing({
           createdDate: null,
           tenantId,
           cnrNumber,
-          hearingNumber: applicationData.applicationList[0]?.hearingId,
+          // hearingNumber: applicationData.applicationList[0]?.hearingId,
           filingNumber: filingNumber,
           statuteSection: {
             tenantId,
@@ -271,6 +271,7 @@ function ScheduleNextHearing({
         .then(async (res) => {
           await HomeService.customApiService(Urls.pendingTask, {
             pendingTask: {
+              actionCategory: "Schedule Hearing",
               name: "Create Order for rescheduling the hearing",
               entityType: "order-default",
               referenceId: `MANUAL_${referenceId}`,
@@ -287,7 +288,7 @@ function ScheduleNextHearing({
               tenantId,
             },
           });
-          history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+          history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
           setIsSubmitDisabled(false);
         })
         .catch((err) => {
@@ -296,7 +297,7 @@ function ScheduleNextHearing({
     } else if (status && status === "OPTOUT") {
       const individualId = await fetchBasicUserInfo();
       setIsSubmitDisabled(true);
-      const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+      const judgeId = localStorage.getItem("judgeId");
 
       HomeService.customApiService(
         Urls.submitOptOutDates,

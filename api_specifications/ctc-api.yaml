@@ -1,0 +1,694 @@
+openapi: 3.0.0
+
+info:
+  title: CTC Service API
+  description: >
+    DIGIT Certified/Certified True Copy (CTC) service responsible for creating,
+    updating, searching, reviewing and validating users for CTC applications.
+  version: 1.0.0
+
+servers:
+  - url: /ctc-services
+    description: CTC Service Base Path
+
+tags:
+  - name: CTC Applications
+
+paths:
+
+  /applications/_create:
+    post:
+      tags: [CTC Applications]
+      summary: Create CTC application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CtcApplicationRequest'
+      responses:
+        '201':
+          description: CTC application created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CtcApplicationResponse'
+        '400':
+          description: CTC application creation failed
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /applications/_update:
+    post:
+      tags: [CTC Applications]
+      summary: Update CTC application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CtcApplicationRequest'
+      responses:
+        '200':
+          description: CTC application updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CtcApplicationResponse'
+        '400':
+          description: CTC application update failed
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /applications/_search:
+    post:
+      tags: [CTC Applications]
+      summary: Search CTC applications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CtcApplicationSearchRequest'
+      responses:
+        '200':
+          description: CTC application search result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CtcApplicationSearchResponse'
+        '400':
+          description: CTC application search failed
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /applications/_review:
+    post:
+      tags: [CTC Applications]
+      summary: Bulk review (approve/reject) CTC applications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CtcApplicationReviewRequest'
+      responses:
+        '200':
+          description: CTC applications reviewed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CtcApplicationSearchResponse'
+        '400':
+          description: CTC application review failed
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /applications/documents/issue-reject:
+    post:
+      tags: [CTC Applications]
+      summary: Bulk issue or reject CTC documents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueCtcDocumentUpdateRequest'
+      responses:
+        '200':
+          description: Documents processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueCtcDocumentUpdateResponse'
+        '400':
+          description: Document issue/reject update failed
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /applications/_validate:
+    post:
+      tags: [CTC Applications]
+      summary: Validate user for CTC application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateUserRequest'
+      responses:
+        '200':
+          description: User validated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateUserResponse'
+        '400':
+          description: User validation failed
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /applications/documents/_getDocsToSign:
+    post:
+      tags: [CTC Applications]
+      summary: Prepare merged CTC documents for eSign flow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocsToSignRequest'
+      responses:
+        '200':
+          description: Documents prepared for signing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocsToSignResponse'
+        '400':
+          description: Failed to prepare documents for signing
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /applications/documents/_updateSignedDocs:
+    post:
+      tags: [CTC Applications]
+      summary: Upload signed copies and mark documents as issued
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSignedDocsRequest'
+      responses:
+        '200':
+          description: Signed documents processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateSignedDocsResponse'
+        '400':
+          description: Failed to update signed documents
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+components:
+
+  schemas:
+
+    CtcApplicationRequest:
+      type: object
+      required: [RequestInfo, CtcApplication]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        CtcApplication:
+          $ref: '#/components/schemas/CtcApplication'
+
+    CtcApplicationResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        ctcApplication:
+          $ref: '#/components/schemas/CtcApplication'
+
+    CtcApplicationSearchRequest:
+      type: object
+      required: [RequestInfo, criteria]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/CtcApplicationSearchCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    CtcApplicationSearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        ctcApplications:
+          type: array
+          items:
+            $ref: '#/components/schemas/CtcApplication'
+        totalCount:
+          type: number
+          format: double
+
+    CtcApplicationReviewRequest:
+      type: object
+      required: [RequestInfo, courtId, action, applications]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        courtId:
+          type: string
+          description: Court ID for the review
+        action:
+          type: string
+          description: Review action to perform
+          enum:
+            - APPROVE
+            - REJECT
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewItem'
+
+    ReviewItem:
+      type: object
+      required: [ctcApplicationNumber, filingNumber]
+      properties:
+        ctcApplicationNumber:
+          type: string
+          description: CTC application number to review
+        filingNumber:
+          type: string
+          description: Filing number of the application
+        comments:
+          type: string
+          description: Optional comments for the review
+
+    CtcApplicationSearchCriteria:
+      type: object
+      required: [tenantId]
+      properties:
+        tenantId:
+          type: string
+        ctcApplicationNumber:
+          type: string
+        filingNumber:
+          type: string
+        searchByCaseNumberAnTitle:
+          type: string
+        courtId:
+          type: string
+        searchText:
+          type: string
+        status:
+          type: string
+        createdBy:
+          type: string
+
+    CtcApplication:
+      type: object
+      required:
+        - tenantId
+        - caseNumber
+        - caseTitle
+        - filingNumber
+        - cnrNumber
+        - courtId
+        - applicantName
+        - mobileNumber
+        - isPartyToCase
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the CTC application
+        ctcApplicationNumber:
+          type: string
+          description: Unique application number for the CTC application
+        tenantId:
+          type: string
+        caseNumber:
+          type: string
+        caseTitle:
+          type: string
+        filingNumber:
+          type: string
+        cnrNumber:
+          type: string
+        courtId:
+          type: string
+        applicantName:
+          type: string
+        mobileNumber:
+          type: string
+        isPartyToCase:
+          type: boolean
+        partyDesignation:
+          type: string
+        affidavitDocument:
+          $ref: '#/components/schemas/Document'
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        selectedCaseBundle:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseBundleNode'
+        caseBundles:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseBundleNode'
+        totalPages:
+          type: integer
+          format: int32
+        status:
+          type: string
+          enum:
+            - DRAFT_IN_PROGRESS
+            - PENDING_ESIGN
+            - PENDING_PAYMENT
+            - PENDING_JUDGE_APPROVAL
+            - PENDING_ISSUE
+            - PARTIALLY_ISSUED
+            - PENDING_CMO_ESIGN
+            - ISSUED
+            - REJECTED
+        judgeComments:
+          type: string
+        workflow:
+          $ref: '#/components/schemas/WorkflowObject'
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+
+    CaseBundleNode:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the case bundle node
+        title:
+          type: string
+          description: Title of the case bundle node
+        fileStoreId:
+          type: string
+          description: File store ID for the document
+        issuedFileStoreId:
+          type: string
+          description: File store ID for the issued document
+        status:
+          type: string
+          enum:
+            - accepted
+            - rejected
+            - pending
+          description: Status of the case bundle node
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseBundleNode'
+          description: Child case bundle nodes (for hierarchical structure)
+
+    IssueCtcDocumentUpdateRequest:
+      type: object
+      required: [RequestInfo, courtId, action, docs]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        courtId:
+          type: string
+        action:
+          type: string
+          description: Action to perform on all documents
+          enum:
+            - ISSUE
+            - REJECT
+        docs:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentActionItem'
+
+    IssueCtcDocumentUpdateResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        docs:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentActionItem'
+
+    DocumentActionItem:
+      type: object
+      required: [docId, ctcApplicationNumber, filingNumber]
+      properties:
+        docId:
+          type: string
+          description: Document ID to issue or reject
+        ctcApplicationNumber:
+          type: string
+          description: CTC application number this document belongs to
+        filingNumber:
+          type: string
+          description: Filing number mapped to the CTC application
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+          description: Documents associated with this action item
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+        documentType:
+          type: string
+        fileStore:
+          type: string
+        documentUid:
+          type: string
+        additionalDetails:
+          type: object
+          additionalProperties: true
+        isActive:
+          type: boolean
+
+    WorkflowObject:
+      type: object
+      properties:
+        action:
+          type: string
+          description: Workflow action to be performed
+          enum:
+            - SAVE_DRAFT
+            - SUBMIT
+            - EDIT
+            - ESIGN
+            - UPLOAD_SIGNED_COPY
+            - PAY_PARTY_OF_CASE
+            - PAY_NOT_PARTY_OF_CASE
+            - APPROVE
+            - REJECT
+            - REJECT_ALL
+            - ISSUE
+            - ISSUE_ALL
+            - SEND_FOR_ISSUE
+            - SEND_FOR_APPROVAL
+            - MAKE_PAYMENT
+        comments:
+          type: string
+          description: Comments associated with the workflow action
+        assignes:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of user UUIDs assigned to this workflow
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+          description: Documents associated with the workflow
+        uuid:
+          type: string
+          format: uuid
+          description: Unique identifier for the workflow instance
+        tenantId:
+          type: string
+          description: Tenant ID of the workflow
+        businessService:
+          type: string
+          description: Business service name for the workflow
+        moduleName:
+          type: string
+          description: Module name for the workflow
+        notificationBusinessService:
+          type: string
+          description: Notification business service name
+        additionalDetails:
+          type: object
+          additionalProperties: true
+          description: Additional details for the workflow
+
+    ValidateUserRequest:
+      type: object
+      required: [RequestInfo, filingNumber, mobileNumber, tenantId, courtId]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        filingNumber:
+          type: string
+        mobileNumber:
+          type: string
+        tenantId:
+          type: string
+        courtId:
+          type: string
+
+    ValidateUserResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        validateUserInfo:
+          $ref: '#/components/schemas/ValidateUserInfo'
+
+    DocsToSignRequest:
+      type: object
+      required: [RequestInfo, criteria]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocsToSignCriteria'
+
+    DocsToSignCriteria:
+      type: object
+      required: [fileStoreId, docId, ctcApplicationNumber, filingNumber, placeholder, tenantId]
+      properties:
+        fileStoreId:
+          type: string
+          description: Original file store id of the document to be sealed and signed
+        docId:
+          type: string
+          description: Document identifier in CTC issue flow
+        ctcApplicationNumber:
+          type: string
+          description: CTC application number for the document
+        filingNumber:
+          type: string
+          description: Filing number mapped to the application
+        placeholder:
+          type: string
+          description: Placeholder text used by eSign coordinate service
+        tenantId:
+          type: string
+          description: Tenant id of the document
+
+    DocsToSignResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        docList:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocToSign'
+
+    DocToSign:
+      type: object
+      properties:
+        docId:
+          type: string
+        ctcApplicationNumber:
+          type: string
+        filingNumber:
+          type: string
+        courtId:
+          type: string
+        request:
+          type: string
+          description: Generated XML request payload for eSign
+
+    UpdateSignedDocsRequest:
+      type: object
+      required: [RequestInfo, signedDocs]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        signedDocs:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignedDoc'
+
+    SignedDoc:
+      type: object
+      required: [docId, signedDocData, signed]
+      properties:
+        docId:
+          type: string
+        signedDocData:
+          type: string
+          description: Base64 encoded signed PDF data
+        signed:
+          type: boolean
+        tenantId:
+          type: string
+        ctcApplicationNumber:
+          type: string
+        filingNumber:
+          type: string
+        courtId:
+          type: string
+        errorMsg:
+          type: string
+
+    UpdateSignedDocsResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+
+    ValidateUserInfo:
+      type: object
+      properties:
+        userName:
+          type: string
+        designation:
+          type: string
+        mobileNumber:
+          type: string
+        filingNumber:
+          type: string
+        courtId:
+          type: string
+        isPartyToCase:
+          type: boolean
+
+    Pagination:
+      type: object
+      properties:
+        limit:
+          type: number
+          format: double
+          default: 10
+        offSet:
+          type: number
+          format: double
+          default: 0
+        totalCount:
+          type: number
+          format: double
+        sortBy:
+          type: string
+        order:
+          $ref: '#/components/schemas/OrderPagination'
+
+    OrderPagination:
+      type: string
+      enum: [asc, desc]

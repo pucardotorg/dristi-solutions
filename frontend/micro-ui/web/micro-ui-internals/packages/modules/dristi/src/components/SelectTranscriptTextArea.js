@@ -96,7 +96,6 @@ function SelectTranscriptTextArea({ t, config, formData = {}, onSelect, errors }
         type: "joined_room",
         room_id: roomId,
       };
-      console.log(websocket, message, "websocket join room success");
 
       websocket.send(JSON.stringify(message));
     }
@@ -116,19 +115,16 @@ function SelectTranscriptTextArea({ t, config, formData = {}, onSelect, errors }
     const websocketAddress = "wss://dristi-kerala-dev.pucar.org/transcription";
 
     if (!websocketAddress) {
-      console.log("WebSocket address is required.");
       return;
     }
 
     const ws = new WebSocket(websocketAddress);
 
     ws.onopen = () => {
-      console.log("WebSocket connection established");
       setWebSocketStatus("Connected");
     };
 
     ws.onclose = (event) => {
-      console.log("WebSocket connection closed", event);
       setWebSocketStatus("Not Connected");
     };
 

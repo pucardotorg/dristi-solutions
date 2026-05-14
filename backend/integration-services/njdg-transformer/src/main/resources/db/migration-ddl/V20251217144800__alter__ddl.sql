@@ -1,0 +1,1 @@
+ALTER TABLE case_hearings ADD COLUMN order_id varchar(64);

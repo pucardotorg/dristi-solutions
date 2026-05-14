@@ -24,33 +24,35 @@ function SelectCustomNote({ t, config, onClick = () => {} }) {
           <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage) || input?.showTooltip} />
           <h2>{t(input?.infoHeader)}</h2>
         </div>
-        <div className="custom-note-info-div">
-          {
-            <p>
-              {`${t(input?.infoText)} `}
-              {!input?.key && <br />}
-              {input?.linkText && (
-                <span
-                  style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}
-                  onClick={() => {
-                    if (input.key === "witnessNote" || input.key === "evidenceNote") {
-                      if (input?.customFunction) {
-                        input?.customFunction();
+        {(input?.infoText || input?.linkText) && (
+          <div className="custom-note-info-div">
+            {
+              <p>
+                {`${t(input?.infoText)} `}
+                {!input?.key && <br />}
+                {input?.linkText && (
+                  <span
+                    style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}
+                    onClick={() => {
+                      if (input.key === "witnessNote" || input.key === "evidenceNote") {
+                        if (input?.customFunction) {
+                          input?.customFunction();
+                        }
+                        history.push(
+                          `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${input?.caseId}&filingNumber=${input?.filingNumber}&tab=${input?.tab}`
+                        );
+                      } else {
+                        onClick();
                       }
-                      history.push(
-                        `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${input?.caseId}&filingNumber=${input?.filingNumber}&tab=${input?.tab}`
-                      );
-                    } else {
-                      onClick();
-                    }
-                  }}
-                >
-                  {String(t(input?.linkText))}
-                </span>
-              )}
-            </p>
-          }
-        </div>
+                    }}
+                  >
+                    {String(t(input?.linkText))}
+                  </span>
+                )}
+              </p>
+            }
+          </div>
+        )}
         {input?.children}
       </div>
     );

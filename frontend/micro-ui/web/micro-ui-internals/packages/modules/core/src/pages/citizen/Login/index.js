@@ -139,23 +139,6 @@ const Login = ({ stateCode, isUserRegistered = true }) => {
     }
   };
 
-  const selectName = async (name) => {
-    const data = {
-      ...params,
-      tenantId: stateCode,
-      userType: getUserType(),
-      ...name,
-    };
-    setParmas({ ...params, ...name });
-    setCanSubmitName(true);
-    const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_REGISTER } });
-    if (res) {
-      setCanSubmitName(false);
-      history.replace(`${path}/otp`, { from: getFromLocation(location.state, searchParams) });
-    } else {
-      setCanSubmitName(false);
-    }
-  };
 
   const selectOtp = async () => {
     try {

@@ -14,11 +14,7 @@ import { DRISTIService } from "../../../services";
 import ScheduleHearing from "./ScheduleHearingModal";
 import { OrderWorkflowAction } from "../../../Utils/orderWorkflow";
 import { Urls } from "../../../hooks";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { Heading } from "../../../components/ModalComponents";
 const Close = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g clip-path="url(#clip0_4124_3214)">
@@ -72,6 +68,15 @@ function AdmissionActionModal({
   const history = useHistory();
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [label, setLabel] = useState(false);
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const courtId = localStorage.getItem("courtId");
+
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   const closeToast = () => {
     setShowErrorToast(false);
@@ -166,7 +171,8 @@ function AdmissionActionModal({
       {
         criteria: [
           {
-            status: ["PENDING_ADMISSION"],
+            status: ["PENDING_REGISTRATION"],
+            ...(courtId && userType === "employee" && { courtId }),
           },
         ],
         tenantId,
@@ -179,11 +185,11 @@ function AdmissionActionModal({
             `/${window?.contextPath}/employee/dristi/admission?filingNumber=${res?.criteria?.[0]?.responseList?.[0]?.filingNumber}&caseId=${res?.criteria?.[0]?.responseList?.[0]?.id}`
           );
         } else {
-          history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+          history.push(homePath);
         }
       })
       .catch(() => {
-        history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+        history.push(homePath);
       });
   };
 
@@ -210,7 +216,7 @@ function AdmissionActionModal({
           documents: [{}],
         },
         documents: [],
-        ...(hearingNumber && { hearingNumber }),
+        // ...(hearingNumber && { hearingNumber }),
         additionalDetails: {
           formdata: {
             orderType: {
@@ -225,7 +231,7 @@ function AdmissionActionModal({
       DRISTIService.customApiService(Urls.dristi.ordersCreate, orderBody, { tenantId })
         .then((res) => {
           history.push(
-            `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+            `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
             {
               caseId: caseDetails?.id,
               tab: "Orders",

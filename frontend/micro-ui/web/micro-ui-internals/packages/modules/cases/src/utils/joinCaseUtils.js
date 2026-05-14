@@ -1,6 +1,6 @@
 import { userTypeOptions } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/registration/config";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { CASEService } from "../hooks/services";
+import { CASEService, Urls } from "../hooks/services";
 import { getUserDetails } from "@egovernments/digit-ui-module-dristi/src/hooks/useGetAccessToken";
 
 const TYPE_REGISTER = { type: "register" };
@@ -66,106 +66,6 @@ export const selectOtp = async (isUserRegistered, mobileNumber, otp, tenantId, n
   }
 };
 
-export const createRespondentIndividualUser = async (data, documentData, tenantId) => {
-  const identifierId = documentData?.fileStoreId;
-  const identifierIdDetails = documentData
-    ? {
-        fileStoreId: identifierId,
-        filename: documentData?.filename,
-        documentType: documentData?.fileType,
-      }
-    : {};
-  const identifierType = documentData?.identifierType;
-  let Individual = {
-    Individual: {
-      tenantId: tenantId,
-      name: {
-        givenName: data?.firstName,
-        familyName: data?.lastName,
-        otherNames: data?.middleName,
-      },
-      userDetails: {
-        username: data?.userDetails?.username,
-        type: data?.userDetails?.type,
-        roles: [
-          {
-            code: "CITIZEN",
-            name: "Citizen",
-            tenantId: tenantId,
-          },
-          ...[
-            "CASE_CREATOR",
-            "CASE_EDITOR",
-            "CASE_VIEWER",
-            "EVIDENCE_CREATOR",
-            "EVIDENCE_VIEWER",
-            "EVIDENCE_EDITOR",
-            "APPLICATION_CREATOR",
-            "APPLICATION_VIEWER",
-            "HEARING_VIEWER",
-            "ORDER_VIEWER",
-            "SUBMISSION_CREATOR",
-            "SUBMISSION_RESPONDER",
-            "SUBMISSION_DELETE",
-            "TASK_VIEWER",
-            "ADVOCATE_VIEWER",
-            "CASE_RESPONDER",
-            "HEARING_ACCEPTOR",
-            "PENDING_TASK_CREATOR",
-          ]?.map((role) => ({
-            code: role,
-            name: role,
-            tenantId: tenantId,
-          })),
-        ],
-      },
-      userUuid: data?.userDetails?.userUuid,
-      userId: data?.userDetails?.userId,
-      mobileNumber: data?.userDetails?.mobileNumber,
-      address: [
-        {
-          tenantId: data?.addressDetails?.[0]?.tenantId,
-          type: "PERMANENT",
-          doorNo: data?.addressDetails?.[0]?.addressDetails?.doorNo,
-          latitude: data?.addressDetails?.[0]?.addressDetails?.coordinates?.latitude,
-          longitude: data?.addressDetails?.[0]?.addressDetails?.coordinates?.longitude,
-          city: data?.addressDetails?.[0]?.addressDetails?.city,
-          pincode: data?.addressDetails?.[0]?.addressDetails?.pincode,
-          addressLine1: data?.addressDetails?.[0]?.addressDetails?.state,
-          addressLine2: data?.addressDetails?.[0]?.addressDetails?.district,
-          buildingName: data?.addressDetails?.[0]?.addressDetails?.buildingName,
-          street: data?.addressDetails?.[0]?.addressDetails?.locality,
-        },
-      ],
-      identifiers: [
-        {
-          identifierType: identifierType,
-          identifierId: identifierId,
-        },
-      ],
-      isSystemUser: true,
-      skills: [],
-      additionalFields: {
-        fields: [
-          { key: "userType", value: userTypeOptions?.[0]?.code },
-          { key: "userTypeDetail", value: JSON.stringify(userTypeOptions) },
-          { key: "termsAndCondition", value: true },
-          { key: "identifierIdDetails", value: JSON.stringify(identifierIdDetails) },
-        ],
-      },
-      clientAuditDetails: {},
-      auditDetails: {},
-    },
-  };
-  const response = await window?.Digit.DRISTIService.postIndividualService(Individual, tenantId);
-  const refreshToken = window.localStorage.getItem(`temp-refresh-token-${response?.Individual?.mobileNumber}`);
-  window.localStorage.removeItem(`temp-refresh-token-${response?.Individual?.mobileNumber}`);
-  if (refreshToken) {
-    await getUserDetails(refreshToken, response?.Individual?.mobileNumber);
-  }
-  return response;
-};
-
 export const registerIndividualWithNameAndMobileNumber = async (data, tenantId) => {
   let Individual = {
     Individual: {
@@ -203,6 +103,18 @@ export const registerIndividualWithNameAndMobileNumber = async (data, tenantId) 
             "CASE_RESPONDER",
             "HEARING_ACCEPTOR",
             "PENDING_TASK_CREATOR",
+            "BAIL_BOND_CREATOR",
+            "BAIL_BOND_VIEWER",
+            "BAIL_BOND_EDITOR",
+            "PLEA_SIGNER",
+            "PLEA_EDITOR",
+            "MEDIATION_SIGNER",
+            "MEDIATION_EDITOR",
+            "EXAMINATION_SIGNER",
+            "EXAMINATION_EDITOR",
+            "PLEA_VIEWER",
+            "MEDIATION_VIEWER",
+            "EXAMINATION_VIEWER",
           ]?.map((role) => ({
             code: role,
             name: role,
@@ -213,6 +125,7 @@ export const registerIndividualWithNameAndMobileNumber = async (data, tenantId) 
       userUuid: data?.userUuid,
       userId: data?.userId,
       mobileNumber: data?.mobileNumber,
+      fatherName: data?.fatherName,
       isSystemUser: true,
       skills: [],
       additionalFields: {
@@ -277,8 +190,12 @@ export const searchIndividualUserWithUuid = async (uuid, tenantId) => {
   return individualData;
 };
 
-export const getFullName = (seperator, ...strings) => {
-  return strings.filter(Boolean).join(seperator);
+export const getFullName = (separator, ...strings) => {
+  return strings
+    ?.map((s) => s?.trim())
+    ?.filter(Boolean)
+    ?.join(separator)
+    ?.trim();
 };
 
 export const createShorthand = (fullname) => {
@@ -298,4 +215,54 @@ export const getUserUUID = async (individualId, tenantId) => {
     { tenantId, limit: 1000, offset: 0 }
   );
   return individualData;
+};
+
+export const getTaskDetails = async (taskNumber, tenantId) => {
+  const taskDetails = await window?.Digit.DRISTIService?.searchTask({
+    criteria: {
+      tenantId: tenantId,
+      taskNumber: taskNumber,
+    },
+  });
+  return taskDetails;
+};
+
+export const createPendingTask = async ({
+  name,
+  status,
+  isCompleted = false,
+  refId,
+  stateSla = null,
+  isAssignedRole = false,
+  assignedRole = [],
+  userInfo,
+  entityType,
+  tenantId,
+  cnrNumber,
+  filingNumber,
+  caseId,
+  caseTitle,
+  applicationType,
+}) => {
+  const assignees = !isAssignedRole ? [userInfo?.uuid] || [] : [];
+  await DRISTIService.customApiService(Urls.task.pendingTask, {
+    pendingTask: {
+      name,
+      entityType,
+      referenceId: `MANUAL_${refId}`,
+      status,
+      assignedTo: assignees?.map((uuid) => ({ uuid })),
+      assignedRole: assignedRole,
+      cnrNumber: cnrNumber,
+      filingNumber: filingNumber,
+      caseId: caseId,
+      caseTitle: caseTitle,
+      isCompleted,
+      stateSla,
+      additionalDetails: {
+        applicationType,
+      },
+      tenantId,
+    },
+  });
 };
