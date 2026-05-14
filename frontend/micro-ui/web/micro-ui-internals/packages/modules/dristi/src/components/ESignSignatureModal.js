@@ -1,23 +1,11 @@
-import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
 import React, { useState, useMemo, useEffect } from "react";
 import Modal from "./Modal";
 import { Button } from "@egovernments/digit-ui-react-components";
 import { FileUploadIcon } from "../icons/svgIndex";
 import { Urls } from "../hooks";
 import AuthenticatedLink from "../Utils/authenticatedLink";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn, Heading } from "./ModalComponents";
 function ESignSignatureModal({
   t,
   handleIssueOrder,
@@ -208,6 +196,7 @@ function ESignSignatureModal({
       formData={formData}
       onSubmit={onSubmit}
       fileUploadError={fileUploadError}
+      setFileUploadError={setFileUploadError}
     />
   );
 }

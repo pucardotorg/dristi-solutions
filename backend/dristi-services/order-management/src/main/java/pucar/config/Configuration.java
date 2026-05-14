@@ -335,4 +335,7 @@ public class Configuration {
 
     @Value("${egov.mdms.v2.search.endpoint}")
     private String mdmsV2EndPoint;
+
+    @Value("${sla.envelope.sla.value}")
+    private Long envelopeSlaValue;
 }

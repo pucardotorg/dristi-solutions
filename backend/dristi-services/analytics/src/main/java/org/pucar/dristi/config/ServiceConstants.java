@@ -3,6 +3,8 @@ package org.pucar.dristi.config;
 
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
+
 
 @Component
 public class ServiceConstants {
@@ -292,5 +294,64 @@ public class ServiceConstants {
     public static final String SCHEDULING_NEXT_HEARING = "SCHEDULING_NEXT_HEARING";
 
     public static final String RESTORE_BACKUP = "RESTORE_BACKUP";
+
+    // PRD Primary Stage Names (mapped to stage field in MDMS CaseOverallStatusType)
+    public static final String STAGE_FILING = "Filing";
+    public static final String STAGE_SCRUTINY = "Scrutiny";
+    public static final String STAGE_DEFECT_CORRECTION = "Defect Correction";
+    public static final String STAGE_REGISTRATION = "Registration";
+    public static final String STAGE_COGNIZANCE = "Cognizance";
+    public static final String STAGE_APPEARANCE = "Appearance";
+    public static final String STAGE_BAIL_AND_RECORDING_OF_PLEA = "Bail & Recording of Plea";
+    public static final String STAGE_COMPLAINANT_EVIDENCE = "Complainant Evidence";
+    public static final String STAGE_EXAMINATION_OF_ACCUSED = "Examination of Accused";
+    public static final String STAGE_DEFENSE_EVIDENCE = "Defense Evidence";
+    public static final String STAGE_ARGUMENTS = "Arguments";
+    public static final String STAGE_JUDGEMENT = "Judgement";
+    public static final String STAGE_POST_JUDGEMENT = "Post-Judgement";
+    public static final String STAGE_POST_DISPOSAL = "Post-Disposal";
+    public static final String STAGE_LONG_PENDING_REGISTER = "Long Pending Register";
+
+    public static final Set<String> TASK_END_TRIGGER_STATUSES = Set.of(
+            "EXECUTED", "EXPIRED", "DELIVERED", "ABATED", "UNDELIVERED", "NOT_EXECUTED","OTHER");
+
+    // Party type for accused side
+    public static final String ACCUSED_PARTY_TYPE = "respondent";
+
+    // JSON path for case litigants
+    public static final String CASE_LITIGANTS_PATH = "$.litigants";
+    public static final String SUMMONS = "Summons";
+
+    // PRD Secondary Stage Names
+    public static final String SECONDARY_STAGE_DELAY_CONDONATION = "Delay Condonation";
+    public static final String SECONDARY_STAGE_NOTICE = "Notice";
+    public static final String SECONDARY_STAGE_SUMMONS = "Summons";
+    public static final String SECONDARY_STAGE_WARRANT = "Warrant";
+    public static final String SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT = "Proclamation & Attachment";
+    public static final String SECONDARY_STAGE_MEDIATION = "Mediation";
+
+    // Order type identifiers that trigger secondary stages (start triggers)
+    public static final String ORDER_TYPE_NOTICE = "NOTICE";
+    public static final String ORDER_TYPE_SUMMONS = "SUMMONS";
+    public static final String ORDER_TYPE_WARRANT = "WARRANT";
+    public static final String ORDER_TYPE_PROCLAMATION = "PROCLAMATION";
+    public static final String ORDER_TYPE_ATTACHMENT = "ATTACHMENT";
+
+    // Application type for delay condonation
+    public static final String APPLICATION_DELAY_CONDONATION = "DELAY_CONDONATION";
+
+    // Hearing purpose for mediation
+    public static final String HEARING_PURPOSE_MEDIATION = "MEDIATION";
+
+    // Status constants for application end triggers
+    public static final String APPLICATION_STATUS_ACCEPTED = "COMPLETED";
+    public static final String APPLICATION_STATUS_REJECTED = "REJECTED";
+
+    // Status for order published
+    public static final String ORDER_STATUS_PUBLISHED = "published";
+
+    // JSON path for delay condonation type in case details
+    public static final String DELAY_CONDONATION_TYPE_CODE_PATH = "$.caseDetails.delayApplications.formdata[0].data.delayCondonationType.code";
+    public static final String DELAY_CONDONATION_REQUIRED = "NO";
 
 }

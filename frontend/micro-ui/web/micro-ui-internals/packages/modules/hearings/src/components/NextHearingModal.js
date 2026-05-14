@@ -7,11 +7,7 @@ import { useHistory } from "react-router-dom";
 import CustomCalendar from "../../../dristi/src/components/CustomCalendar";
 import { useTranslation } from "react-i18next";
 import { DateUtils, formatDateInMonth } from "@egovernments/digit-ui-module-dristi/src/Utils";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 const Close = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g>

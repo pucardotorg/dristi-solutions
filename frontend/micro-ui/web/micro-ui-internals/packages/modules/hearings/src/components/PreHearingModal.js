@@ -1,4 +1,4 @@
-import { Button, CloseSvg, InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
+import { Button, InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Modal from "../../../dristi/src/components/Modal";
@@ -7,6 +7,7 @@ import { preHearingConfig } from "../configs/PreHearingConfig";
 import BulkReschedule from "../pages/employee/BulkReschedule";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 function PreHearingModal({ onCancel, hearingData, courtData, individualId, userType, events }) {
   const { t } = useTranslation();
@@ -25,18 +26,7 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
 
   const DateFormat = "DD-MM-YYYY";
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   const openRescheduleModal = (caseDetails) => {
     setPurposeModalData(caseDetails);
     setPurposeModalOpen(true);

@@ -117,7 +117,6 @@ No dedicated Redux slices. The module relies on the common Redux store initializ
 
 ### Local State Strategy
 - React `useState` for form state within join-case components
-- `react-hook-form` (v6.15.8) for form management in registration and verification flows
 
 ---
 
@@ -182,10 +181,8 @@ User Action (Search/Join Case)
 |---|---|---|
 | `react` | 17.0.2 | UI framework |
 | `react-router-dom` | 5.3.0 | Routing |
-| `react-hook-form` | 6.15.8 | Form management |
 | `react-i18next` | 11.16.2 | Internationalization |
 | `react-query` | 3.6.1 | Async data fetching |
-| `react-date-range` | ^1.4.0 | Date range picker |
 | `@egovernments/digit-ui-react-components` | 1.8.2-beta.9 | Shared UI components |
 | `@egovernments/digit-ui-components` | 0.0.2-beta.1 | Design system components |
 

@@ -8,21 +8,6 @@ import { Urls } from "../../../hooks";
 import CustomCopyTextDiv from "../../../components/CustomCopyTextDiv";
 import { extractFeeMedium, getFilteredPaymentData, getTaskType } from "../../../Utils";
 
-const paymentTaskType = {
-  TASK_SUMMON: "task-summons",
-  TASK_NOTICE: "task-notice",
-  TASK_WARRANT: "task-warrant",
-  TASK_SUMMON_ADVANCE_CARRYFORWARD: "TASK_SUMMON_ADVANCE_CARRYFORWARD",
-  TASK_NOTICE_ADVANCE_CARRYFORWARD: "TASK_NOTICE_ADVANCE_CARRYFORWARD",
-  ORDER_MANAGELIFECYCLE: "order-default",
-  SUMMON_WARRANT_STATUS: "SUMMON_WARRANT_STATUS",
-  NOTICE_STATUS: "NOTICE_STATUS",
-  ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE: "application-order-submission-default",
-  PAYMENT_PENDING_POST: "PAYMENT_PENDING_POST",
-  PAYMENT_PENDING_EMAIL: "PAYMENT_PENDING_EMAIL",
-  PAYMENT_PENDING_SMS: "PAYMENT_PENDING_SMS",
-};
-
 const paymentOptionConfig = {
   label: "CS_MODE_OF_PAYMENT",
   type: "dropdown",
@@ -59,8 +44,6 @@ const handleTaskSearch = async (businessService, consumerCodeWithoutSuffix, tena
 
 const ViewPaymentDetails = ({ location, match }) => {
   const { t } = useTranslation();
-  const todayDate = new Date().getTime();
-  const dayInMillisecond = 24 * 3600 * 1000;
   const history = useHistory();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [payer, setPayer] = useState("");
@@ -270,30 +253,7 @@ const ViewPaymentDetails = ({ location, match }) => {
   const onSubmitCase = async () => {
     const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
     let taskFilingNumber = "";
-    let taskHearingNumber = "";
-    let taskOrderType = "";
-    let taskPartyIndex = "";
     if (["task-notice", "task-summons", "task-warrant"].includes(businessService)) {
-      const {
-        list: [orderDetails],
-      } = await ordersService.searchOrder({
-        criteria: {
-          tenantId: tenantId,
-          id: tasksData?.orderId,
-          courtId: tasksData?.courtId,
-        },
-      });
-
-      taskHearingNumber = orderDetails?.scheduledHearingNumber || orderDetails?.hearingNumber || "";
-      const compositeItem = orderDetails?.compositeItems?.find((item) => item?.id === tasksData?.additionalDetails?.itemId) || {};
-      taskOrderType = compositeItem?.orderType || orderDetails?.orderType || "";
-      // if (taskOrderType === "NOTICE") {
-      //   const noticeOrder =
-      //     orderDetails?.orderCategory === "COMPOSITE"
-      //       ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder
-      //       : orderDetails?.additionalDetails?.formdata?.noticeOrder;
-      //   taskPartyIndex = noticeOrder?.party?.data?.partyIndex;
-      // }
       taskFilingNumber = tasksData?.filingNumber || demandBill?.additionalDetails?.filingNumber;
     }
 
@@ -342,31 +302,6 @@ const ViewPaymentDetails = ({ location, match }) => {
             isCompleted: true,
             stateSla: null,
             additionalDetails: {},
-            tenantId,
-          },
-        });
-      }
-
-      // removal of additional condition (["task-notice", "task-summons", "task-warrant"].includes(businessService) && isDeliveryPartnerPaid ) as now epost also have only one delivery partner bill
-      if (["task-notice", "task-summons", "task-warrant"].includes(businessService)) {
-        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-          pendingTask: {
-            name: taskOrderType === "SUMMONS" ? "Show Summon-Warrant Status" : "Show Notice Status",
-            entityType: paymentTaskType.ORDER_MANAGELIFECYCLE,
-            referenceId: taskHearingNumber,
-            status: taskOrderType === "SUMMONS" ? paymentTaskType.SUMMON_WARRANT_STATUS : paymentTaskType.NOTICE_STATUS,
-            assignedTo: [],
-            assignedRole: [taskOrderType === "SUMMONS" ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
-            cnrNumber: demandBill?.additionalDetails?.cnrNumber,
-            filingNumber: filingNumber,
-            caseId: caseId,
-            caseTitle: caseTitle,
-            isCompleted: false,
-            stateSla: 3 * dayInMillisecond + todayDate,
-            additionalDetails: {
-              hearingId: taskHearingNumber,
-              partyIndex: taskPartyIndex,
-            },
             tenantId,
           },
         });

@@ -1,10 +1,10 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
 import { Toast } from "@egovernments/digit-ui-react-components";
 import { OrderWorkflowAction } from "../utils/orderWorkflow";
 import { ordersService } from "../hooks/services";
 import { Loader, TextInput } from "@egovernments/digit-ui-react-components";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 function OrderBulkReviewModal({ t, history, orderDetails }) {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -28,18 +28,7 @@ function OrderBulkReviewModal({ t, history, orderDetails }) {
     }
   }, [showErrorToast]);
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   const orderFileStoreId = useMemo(() => {
     return orderDetails?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore;
   }, [orderDetails]);
@@ -54,7 +43,7 @@ function OrderBulkReviewModal({ t, history, orderDetails }) {
         }}
       >
         {orderFileStoreId ? (
-          <DocViewerWrapper docWidth={"74vw"} docHeight={"50vh"} fileStoreId={orderFileStoreId} tenantId={tenantId} showDownloadOption={false} />
+          <DocViewerWrapper docWidth={"74vw"} docHeight={"100%"} fileStoreId={orderFileStoreId} tenantId={tenantId} showDownloadOption={false} />
         ) : (
           <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
         )}

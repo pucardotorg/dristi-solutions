@@ -37,12 +37,14 @@ on:
           - dev
           - qa
           - demo
+          - sdc-uat
 
   push:
     branches:
       - main
       - develop
       - release/*
+      - sdc-uat
 
 
 jobs:
@@ -159,14 +161,16 @@ jobs:
             ENV_VALUE="${{ inputs.deployment_env }}"
           elif [[ "$EVENT" == "pull_request" ]]; then
             case "$BASE_REF" in
-              main)          ENV_VALUE="demo" ;;
+              main)          ENV_VALUE="sdc-uat" ;;
+              sdc-uat)       ENV_VALUE="sdc-uat" ;;
               develop)       ENV_VALUE="dev" ;;
               release/*)     ENV_VALUE="qa" ;;
               *)             ENV_VALUE="dev" ;;
             esac
           elif [[ "$EVENT" == "push" ]]; then
             case "$REF_NAME" in
-              main)          ENV_VALUE="demo" ;;
+              main)          ENV_VALUE="sdc-uat" ;;
+              sdc-uat)       ENV_VALUE="sdc-uat" ;;
               develop)       ENV_VALUE="dev" ;;
               release/*)     ENV_VALUE="qa" ;;
               *)             ENV_VALUE="dev" ;;
@@ -219,6 +223,7 @@ jobs:
           echo "Docker image build: docker.io/venkatramireddyb/${{ matrix.service }}:${{ steps.docker_build.outputs.image_tag }} and deploying to ${{ needs.check-diff.outputs.deployment_env }}"
 
       - name: Deploy to Kubernetes
+        if: needs.check-diff.outputs.deployment_env != 'sdc-uat'
         uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
         with:
           environment: ${{ needs.check-diff.outputs.deployment_env }}
@@ -229,3 +234,12 @@ jobs:
           env_file: ${{ vars.HELMFILE_ENV }}
           checkout_ref: ${{ vars.DEVOPS_BRANCH }}
           sops_keys_txt: ${{ secrets.SOPS_KEYS_TXT }}
+
+      - name: Deploy to SDC UAT
+        if: needs.check-diff.outputs.deployment_env == 'sdc-uat'
+        run: |
+          curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.GHUB_TOKEN }}" \
+          https://api.github.com/repos/pucardotorg/pucar-Devops/actions/workflows/update-image-tag.yaml/dispatches \
+          -d '{"ref":"pucar-stg", "inputs": {"service_name": "${{ matrix.service }}", "service_tag": "${{ steps.docker_build.outputs.image_tag }}"}}'

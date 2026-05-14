@@ -1,22 +1,9 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import React, { useCallback, useMemo, useState } from "react";
 import { Button, Modal, TextInput, Toast } from "@egovernments/digit-ui-react-components";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
 import { sanitizeData } from "@egovernments/digit-ui-module-dristi/src/Utils";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 function ADiaryDocumentPdfModal({ t, tenantId, data, setShowDocumentPdfModal, isSelectedDataSigned, setReload, reload }) {
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [businessOfTheDay, setBusinessOfTheDay] = useState(data?.rowData?.businessOfDay || "");

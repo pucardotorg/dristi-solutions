@@ -162,6 +162,9 @@ public class CourtCase {
     @Valid
     private AuditDetails auditdetails = null;
 
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = new ArrayList<>();
+
     @JsonProperty("advocateStatus")
     private String advocateStatus = null;
 

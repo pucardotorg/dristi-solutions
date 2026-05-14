@@ -1,4 +1,3 @@
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import React, { useState } from "react";
 import SelectCustomDragDrop from "./SelectCustomDragDrop";
 import Modal from "./Modal";
@@ -7,6 +6,7 @@ import WarningTextComponent from "./WarningTextComponent";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import AuthenticatedLink from "../Utils/authenticatedLink";
 import { Urls } from "../hooks";
+import { CloseBtn, Heading } from "./ModalComponents";
 
 function UploadSignatureModal({
   t,
@@ -27,6 +27,7 @@ function UploadSignatureModal({
   fileStoreId,
   fileUploadError,
   onCustomDownload,
+  setFileUploadError,
 }) {
   const toast = useToast();
   const [error, setError] = useState({});
@@ -45,18 +46,8 @@ function UploadSignatureModal({
     } else onSelect(config.key, { ...formData[config.key], [input]: value });
   }
 
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
+  
+  
   const onCancel = () => {
     setValue(null, name);
     setOpenUploadSignatureModal(false);
@@ -67,11 +58,13 @@ function UploadSignatureModal({
     const updatedError = { ...error };
     delete updatedError[key];
     setError(updatedError);
+    setFileUploadError(null);
   };
 
   const setErrors = (key, errorMsg) => {
     if (!key) return;
     setError((prevErrors) => ({ ...prevErrors, [key]: errorMsg }));
+    setFileUploadError(null);
   };
 
   return (

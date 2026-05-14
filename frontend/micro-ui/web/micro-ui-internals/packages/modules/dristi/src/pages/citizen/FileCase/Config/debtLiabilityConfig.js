@@ -2,85 +2,87 @@ const debtLiabilityFromconfig = [
   {
     body: [
       {
-        type: "dropdown",
-        key: "liabilityNature",
+        type: "text",
         label: "CS_NATURE_DEBT_LIABILITY",
-        isMandatory: true,
         populators: {
-          label: "SELECT_RESPONDENT_TYPE",
           name: "liabilityNature",
-          type: "radioButton",
-          optionsKey: "name",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          required: false,
-          isMandatory: true,
-          mdmsConfig: {
-            masterName: "DebtNature",
-            moduleName: "case",
-            select: "(data) => {return data['case'].DebtNature?.map((item) => {return item;});}",
+          error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
+          validation: {
+            title: "",
+            pattern: {
+              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
+              masterName: "commonUiConfig",
+              moduleName: "patternValidation",
+              patternType: "debtNature",
+            },
+            minLength: 1,
+            patternType: "Name",
           },
         },
+        isMandatory: true,
       },
     ],
   },
   {
     body: [
       {
-        type: "radio",
         key: "liabilityType",
-        label: "CS_CHEQUE_LIABILITY",
-        isMandatory: true,
+        type: "radio",
+        label: "CHEQUE_FOR_FULL_OR_PARTIAL_LIABILITY",
         populators: {
-          label: "SELECT_RESPONDENT_TYPE",
           name: "liabilityType",
           type: "radioButton",
-          optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
+          label: "SELECT_RESPONDENT_TYPE",
           required: false,
-          isMandatory: true,
-          isDependent: true,
           mdmsConfig: {
+            select: "(data) => {return data['case'].LiabilityCategory?.map((item) => {return item;});}",
             masterName: "LiabilityCategory",
             moduleName: "case",
-            select: "(data) => {return data['case'].LiabilityCategory?.map((item) => {return item;});}",
           },
+          optionsKey: "name",
+          isDependent: true,
+          isMandatory: true,
         },
+        isMandatory: true,
       },
     ],
   },
   {
-    dependentKey: { liabilityType: ["showAmountCovered"] },
     body: [
       {
         type: "amount",
-        component: "CustomInput",
         label: "CS_TOTAL_CHEQUE_AMOUNT",
-        isMandatory: true,
+        component: "CustomInput",
         populators: {
-          componentInFront: "₹",
           name: "totalAmount",
           prefix: "",
           validation: {
-            maxLength: 12,
             max: 999999999999,
+            maxLength: 12,
           },
+          componentInFront: "₹",
         },
+        isMandatory: true,
       },
     ],
+    dependentKey: {
+      liabilityType: ["showAmountCovered"],
+    },
   },
   {
     body: [
       {
+        key: "addressDetailsNote",
         type: "component",
         component: "SelectCustomNote",
-        key: "addressDetailsNote",
         populators: {
           inputs: [
             {
-              infoHeader: "CS_COMMON_NOTE",
-              infoText: "CS_NOTE_DEBT_LIABILITY",
-              infoTooltipMessage: "CS_NOTE_DEBT_LIABILITY",
               type: "InfoComponent",
+              infoText: "CS_NOTE_DEBT_LIABILITY",
+              infoHeader: "CS_COMMON_NOTE",
+              infoTooltipMessage: "CS_NOTE_DEBT_LIABILITY",
             },
           ],
         },
@@ -90,44 +92,47 @@ const debtLiabilityFromconfig = [
   {
     body: [
       {
-        type: "component",
-        component: "SelectCustomDragDrop",
         key: "debtLiabilityFileUpload",
+        type: "component",
+        label: "CS_PROOF_DEBT",
+        component: "SelectCustomDragDrop",
         populators: {
           inputs: [
             {
               name: "document",
-              documentHeader: "CS_PROOF_DEBT",
-              isOptional: "CS_IS_OPTIONAL",
-              infoTooltipMessage: "CS_PROOF_DEBT",
               type: "DragDropComponent",
-              uploadGuidelines: "UPLOAD_DOC_10",
+              fileTypes: ["JPG", "JPEG", "PDF", "PNG"],
+              isOptional: "CS_IS_OPTIONAL",
               maxFileSize: 10,
+              documentHeader: "CS_PROOF_DEBT",
+              isMultipleUpload: false,
+              uploadGuidelines: "UPLOAD_DOC_10",
               maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-              fileTypes: ["JPG", "PDF", "PNG"],
-              isMultipleUpload: true,
             },
           ],
         },
+        withoutLabel: true,
       },
     ],
   },
   {
     body: [
       {
-        type: "component",
-        component: "SelectCustomTextArea",
         key: "additionalDebtLiabilityDetails",
+        type: "component",
+        label: "CS_DEBT_ADDITIONAL_DETAILS",
+        component: "SelectCustomFormatterTextArea",
         populators: {
           inputs: [
             {
               name: "text",
-              textAreaSubHeader: "CS_DEBT_ADDITIONAL_DETAILS",
-              isOptional: true,
               type: "TextAreaComponent",
+              isOptional: true,
+              textAreaSubHeader: "CS_DEBT_ADDITIONAL_DETAILS",
             },
           ],
         },
+        withoutLabel: true,
       },
     ],
   },
@@ -135,7 +140,7 @@ const debtLiabilityFromconfig = [
 export const debtliabilityconfig = {
   formconfig: debtLiabilityFromconfig,
   header: "CS_DEBT_LIABILITY_HEADING",
-  subtext: "CS_DEBT_LIABILITY_SUBTEXT",
+  subtext: "CS_COMPLAINT_DATA_ENTRY_INFO",
   isOptional: false,
   className: "debt-liability",
   selectDocumentName: {

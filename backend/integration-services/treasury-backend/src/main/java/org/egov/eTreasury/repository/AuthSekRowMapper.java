@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.eTreasury.model.AuthSek;
+import org.egov.eTreasury.model.PaymentStatus;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +30,16 @@ public class AuthSekRowMapper implements RowMapper<AuthSek> {
         authSek.setPaidBy(rs.getString("paid_by"));
         authSek.setSessionTime(rs.getLong("session_time"));
         authSek.setDepartmentId(rs.getString("department_id"));
+        String paymentStatusStr = rs.getString("payment_status");
+        if (paymentStatusStr != null && !paymentStatusStr.trim().isEmpty()) {
+            authSek.setPaymentStatus(PaymentStatus.valueOf(paymentStatusStr));
+        }
+        authSek.setCompletionSource(rs.getString("completion_source"));
+        long verificationTimestamp = rs.getLong("verification_timestamp");
+        if (!rs.wasNull()) {
+            authSek.setVerificationTimestamp(verificationTimestamp);
+        }
+        authSek.setProcessedStatus(rs.getString("processed_status"));
 
         String requestBlobJson = rs.getString("request_blob");
         if (requestBlobJson != null && !requestBlobJson.trim().isEmpty()) {

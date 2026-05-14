@@ -11,6 +11,7 @@ import ActionEdit from "../components/ActionEdit";
 import ReactTooltip from "react-tooltip";
 import {
   _getDigitilizationPatiresName,
+  DateUtils,
   getAssistantAdvocateMembersForPartiesTab,
   getAuthorizedUuid,
   getClerkMembersForPartiesTab,
@@ -23,6 +24,7 @@ import { constructFullName } from "@egovernments/digit-ui-module-orders/src/util
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
 import { OrderWorkflowState } from "../Utils/orderWorkflow";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
+import { CaseWorkflowState } from "../Utils/caseWorkflow";
 
 export const getSelectedAdvocate = () => {
   try {
@@ -683,12 +685,7 @@ export const UICustomizations = {
           );
         case "DATE_ISSUED":
         case "DATE_ADDED":
-          const date = new Date(value);
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0");
-          const year = date.getFullYear();
-          const formattedDate = `${day}-${month}-${year}`;
-          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+          return <span>{value && value !== "0" ? DateUtils.getFormattedDate(value) : ""}</span>;
         case "ORDER_TITLE":
           return <OrderName rowData={row} colData={column} value={value} />;
         case "CS_ACTIONS":
@@ -879,12 +876,7 @@ export const UICustomizations = {
         case "DATE_ADDED":
         case "DATE_ISSUED":
         case "DATE":
-          const date = new Date(value);
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
-          const year = date.getFullYear();
-          const formattedDate = `${day}-${month}-${year}`;
-          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+          return <span>{value && value !== "0" ? DateUtils.getFormattedDate(value) : ""}</span>;
         case "PARTIES":
           if (value === null || value === undefined || value === "undefined" || value === "null") {
             return null;
@@ -1121,12 +1113,7 @@ export const UICustomizations = {
         case "Instance":
           return <RenderInstance value={value} t={t} />;
         case "Date":
-          const date = new Date(value);
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
-          const year = date.getFullYear();
-          const formattedDate = `${day}-${month}-${year}`;
-          return <span>{formattedDate}</span>;
+          return <span>{DateUtils.getFormattedDate(value)}</span>;
         case "Status":
           return t(value);
         default:
@@ -1230,7 +1217,9 @@ export const UICustomizations = {
         case "OWNER":
           return removeInvalidNameParts(value);
         case "REPRESENTATIVES":
-          return t(value) || "";
+          const val = value === "COURT" ? "COURT_SOURCE" : value; // Do not change it, it is doen because "COURT" has duplicate localization in different modules which is causing issue.
+          // So we created a new string "COURT_SOURCE" for this.
+          return t(val) || "";
         case "CS_ACTIONS":
           return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="FilingsConfig" />;
         case "EVIDENCE_NUMBER":
@@ -1633,15 +1622,15 @@ export const UICustomizations = {
         processSearchCriteria: {
           businessService: ["hearing-default"],
           moduleName: "Hearing Service",
-          tenantId: requestCriteria?.params?.tenantId || "kl",
+          tenantId: requestCriteria?.params?.tenantId,
         },
         moduleSearchCriteria: {
           fromDate: new Date(requestCriteria?.state?.searchForm?.date + "T00:00:00").getTime(),
           toDate: new Date(requestCriteria?.state?.searchForm?.date + "T23:59:59.999").getTime(),
-          tenantId: requestCriteria?.params?.tenantId || "kl",
+          tenantId: requestCriteria?.params?.tenantId,
           ...(requestCriteria?.state?.searchForm?.status && { status: requestCriteria?.state?.searchForm?.status?.value }),
         },
-        tenantId: requestCriteria?.params?.tenantId || "kl",
+        tenantId: requestCriteria?.params?.tenantId,
         limit: requestCriteria?.state?.tableForm?.limit || 10,
         offset: requestCriteria?.state?.tableForm?.offset || 0,
       };
@@ -2610,7 +2599,9 @@ export const UICustomizations = {
       const caseId = row?.caseNumber || row?.filingNumber;
       switch (key) {
         case "PENDING_CASE_NAME":
-          return row?.substage === "SCRUTINY" && row?.hasCaseReviewerAccess ? (
+          return row?.substage === CaseWorkflowState.FILING ? (
+            <span>{value ? value : "-"}</span>
+          ) : (
             <Link
               style={{ color: "black", textDecoration: "underline" }}
               to={{
@@ -2621,8 +2612,6 @@ export const UICustomizations = {
             >
               {value ? value : "-"}
             </Link>
-          ) : (
-            value || "-"
           );
         case "CASE_TYPE":
           return <span>NIA S138</span>;
@@ -2858,9 +2847,7 @@ export const UICustomizations = {
           return rawTitle ? rawTitle : t("CASE_UNTITLED") || "Case Untitled";
         }
         case "CASE_NUMBER": {
-          const caseNumber = row?.isLPRCase
-            ? row?.lprNumber
-            : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
+          const caseNumber = row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
           return caseNumber || "";
         }
         default:

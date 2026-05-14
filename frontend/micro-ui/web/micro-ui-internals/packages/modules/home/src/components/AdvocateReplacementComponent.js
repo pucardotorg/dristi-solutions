@@ -3,21 +3,14 @@ import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { OrderWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import { ordersService, taskService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
-import { CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
+import { CheckBox } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
+import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 const Heading = (props) => {
   return (
     <div className="evidence-title">

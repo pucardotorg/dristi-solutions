@@ -7,6 +7,7 @@ import { ordersService } from "../hooks/services";
 import { OrderWorkflowAction } from "../utils/orderWorkflow";
 import { Urls } from "../hooks/services/Urls";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 function ReIssueSummonsModal() {
   const { t } = useTranslation();
   const history = useHistory();
@@ -35,10 +36,7 @@ function ReIssueSummonsModal() {
     history.goBack();
   };
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
+  
   const CloseButton = (props) => {
     return (
       <div onClick={props?.onClick} className="header-bar-end">

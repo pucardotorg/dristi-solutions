@@ -1,4 +1,4 @@
-import { Button, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { Button } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { Urls } from "../hooks/services";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
@@ -6,19 +6,7 @@ import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/au
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { downloadPdfFromBlob } from "@egovernments/digit-ui-module-dristi/src/Utils";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 const AddSignatureCTCModal = ({
   t,
   setSignedDocumentUploadID,
@@ -186,6 +174,7 @@ const AddSignatureCTCModal = ({
       onSubmit={onSubmit}
       isDisabled={loader}
       fileUploadError={fileUploadError}
+      setFileUploadError={setFileUploadError}
     />
   );
 };

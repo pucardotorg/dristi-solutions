@@ -283,6 +283,9 @@ public class Configuration {
     @Value("${egov.sms.notification.process.fee.payment.template.id}")
     private String smsNotificationProcessFeePaymentTemplateId;
 
+    @Value("${egov.sms.notification.rpad.dispatch.template.id}")
+    private String smsNotificationRPADTemplateId;
+
     //Individual Service
     @Value("${egov.individual.host}")
     private String individualHost;

@@ -61,13 +61,14 @@ public class CaseListSummaryRowMapper implements ResultSetExtractor<List<CaseSum
                         .outcome(rs.getString("outcome"))
                         .status(rs.getString("status"))
                         .natureOfDisposal(getNatureOfDisposal(rs))
-                        .substage(rs.getString("substage"))
+                        .stage(rs.getString("stage"))
                         .courtCaseNumber(rs.getString("courtcasenumber"))
                         .cnrNumber(rs.getString("cnrnumber"))
                         .cmpNumber(rs.getString("cmpnumber"))
                         .caseNumber(rs.getString("casenumber"))
                         .pendingAdvocateRequests(getObjectListFromJson(rs.getString("pendingadvocaterequests"), new TypeReference<List<PendingAdvocateRequest>>() {}))
                         .courtId(rs.getString("courtid"))
+                        .secondaryStage(getObjectListFromJson(rs.getString("secondaryStage"), new TypeReference<List<String>>() {}))
                         .filingNumber(rs.getString("filingnumber"))
                         .lastModifiedTime(rs.getLong("lastmodifiedtime"))
                         .isLPRCase(rs.getBoolean("isLPRCase"))
@@ -95,4 +96,5 @@ public class CaseListSummaryRowMapper implements ResultSetExtractor<List<CaseSum
             throw new CustomException("Failed to convert JSON to " + typeRef.getType(), e.getMessage());
         }
     }
+
 }

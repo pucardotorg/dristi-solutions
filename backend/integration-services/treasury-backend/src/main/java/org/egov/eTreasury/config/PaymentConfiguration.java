@@ -184,6 +184,9 @@ public class PaymentConfiguration {
     @Value("${isMock.enabled}")
     private boolean isMockEnabled;
 
+    @Value("${treasury.kafka.push-enabled:true}")
+    private boolean kafkaPushEnabled;
+
     @PostConstruct
     public void init() {
         headsList = Arrays.asList(heads.split(","));
@@ -226,5 +229,12 @@ public class PaymentConfiguration {
 
     @Value("${egov.localization.search.endpoint}")
     private String localizationSearchEndpoint;
+
+    // Payment Reconciliation
+    @Value("${payment.reconciliation.cron}")
+    private String reconciliationCron;
+
+    @Value("${payment.reconciliation.threshold.hours}")
+    private Long reconciliationThresholdHours;
 
 }

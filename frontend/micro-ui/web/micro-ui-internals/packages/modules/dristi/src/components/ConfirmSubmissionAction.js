@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import Modal from "./Modal";
-import { CheckBox, CloseSvg, TextArea } from "@egovernments/digit-ui-react-components";
+import { CheckBox, TextArea } from "@egovernments/digit-ui-react-components";
 import { sanitizeData } from "../Utils";
+import { CloseBtn } from "./ModalComponents";
 
 function ConfirmSubmissionAction({
   t,
@@ -15,13 +16,7 @@ function ConfirmSubmissionAction({
   applicationType,
 }) {
   const [generateOrder, setGenerateOrder] = useState(true);
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
+  
   const Heading = (props) => {
     return (
       <div className="evidence-title">

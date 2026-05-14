@@ -1,28 +1,12 @@
 import React from "react";
-import { CloseSvg, TextArea } from "@egovernments/digit-ui-react-components";
+import { TextArea } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { sanitizeData } from "@egovernments/digit-ui-module-dristi/src/Utils";
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return (
-    <h1 className="heading-m" style={{ padding: 0, marginBottom: "8px" }}>
-      {props.label}
-    </h1>
-  );
-};
-
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 function RejectCTCApplicationReasonModal({ t, onGoBack, onReject, reason, setReason, isDisabled }) {
   return (
     <Modal
-      headerBarMain={<Heading label={t("REASON_FOR_REJECTION")} />}
+      headerBarMain={<Heading style={{ padding: 0, marginBottom: "8px" }} label={t("REASON_FOR_REJECTION")} />}
       headerBarEnd={<CloseBtn onClick={onGoBack} />}
       actionCancelLabel={t("CANCEL")}
       actionCancelOnSubmit={onGoBack}

@@ -1,4 +1,4 @@
-import { CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -11,18 +11,7 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import { getSuffixByBusinessCode } from "../utils";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
   const { t } = useTranslation();
   const location = useLocation();
@@ -127,7 +116,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
         criteria: {
           tenantId: tenantId,
           taskNumber: taskNumber,
-          courtId: courtId || "KLKM52",
+          courtId: courtId,
         },
       });
       const taskData = task?.list?.[0];

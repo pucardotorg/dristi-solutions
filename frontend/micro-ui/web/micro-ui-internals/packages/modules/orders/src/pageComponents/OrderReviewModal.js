@@ -1,4 +1,3 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "react-query";
 import Modal from "../../../dristi/src/components/Modal";
@@ -7,6 +6,7 @@ import { Toast, TextInput } from "@egovernments/digit-ui-react-components";
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 import { OrderWorkflowAction } from "../utils/orderWorkflow";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const onDocumentUpload = async (fileData, filename) => {
   try {
@@ -96,18 +96,7 @@ function OrderReviewModal({
     enabled: !!order?.id && !!order?.cnrNumber,
   });
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   useEffect(() => {
     if (order?.filesData) {
       const numberOfFiles = order?.filesData.length;
@@ -179,6 +168,8 @@ function OrderReviewModal({
   };
 
   const handleAddSignature = () => {
+    setShowsignatureModal(true);
+    setShowReviewModal(false);
     if (showActions) {
       handleDocumentUpload((fileStoreId) => {
         setOrderPdfFileStoreID(fileStoreId);

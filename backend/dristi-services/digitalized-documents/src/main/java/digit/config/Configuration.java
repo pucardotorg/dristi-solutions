@@ -183,6 +183,12 @@ public class Configuration {
     @Value("${egov.sms.notification.mediation.sign.template.id}")
     private String mediationSignTemplateId;
 
+    @Value("${egov.sms.notification.client.examination.esign.template.id}")
+    private String clientExaminationEsignTemplateId;
+
+    @Value("${egov.sms.notification.client.plea.esign.template.id}")
+    private String clientPleaEsignTemplateId;
+
     // ESign Config
     @Value("${egov.esign.host}")
     private String esignHost;
@@ -198,5 +204,16 @@ public class Configuration {
 
     @Value("${app.zone.id}")
     private String zoneId;
+
+    //Individual Service
+    @Value("${egov.individual.host}")
+    private String individualHost;
+
+    @Value("${egov.individual.search.path}")
+    private String individualSearchEndpoint;
+
+    //Tenant Id
+    @Value("${egov-state-level-tenant-id}")
+    private String egovStateTenantId;
 
 }

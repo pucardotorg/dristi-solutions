@@ -1,6 +1,7 @@
 import React, { useEffect, useReducer, useState } from "react";
 import UploadFile from "./UploadFile";
 import isEqual from "lodash/isEqual";
+import { EXTENSION_TO_MIME } from "../Utils/constants";
 
 const displayError = ({ t, error, name }, customErrorMsg) => (
   <span style={{ display: "flex", flexDirection: "column" }}>
@@ -22,14 +23,21 @@ const fileValidationStatus = (file, regex, maxSize, t, notSupportedError, maxFil
   const status = { valid: true, name: file?.name?.substring(0, 15), error: "" };
   if (!file) return;
 
-  if (!updatedRegex.test(file?.name) && file.size / 1024 / 1024 > maxSize) {
+  const allowedMimes = EXTENSION_TO_MIME[extension];
+  if (allowedMimes && file.type && !allowedMimes.includes(file.type)) {
     status.valid = false;
-    status.error = t(`NOT_SUPPORTED_FILE_TYPE_AND_FILE_SIZE_EXCEEDED_10MB`);
+    status.error = t(notSupportedError ? notSupportedError : `NOT_SUPPORTED_FILE_TYPE`);
+    return status;
   }
 
   if (!updatedRegex.test(file?.name)) {
     status.valid = false;
     status.error = t(notSupportedError ? notSupportedError : `NOT_SUPPORTED_FILE_TYPE`);
+  }
+
+  if (!updatedRegex.test(file?.name) && file.size / 1024 / 1024 > maxSize) {
+    status.valid = false;
+    status.error = t(`NOT_SUPPORTED_FILE_TYPE_AND_FILE_SIZE_EXCEEDED_10MB`);
   }
 
   if (file.size / 1024 / 1024 > maxSize) {

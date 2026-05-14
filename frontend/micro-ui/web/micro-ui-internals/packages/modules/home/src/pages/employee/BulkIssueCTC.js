@@ -78,7 +78,7 @@ const BulkIssueCTC = () => {
 
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       const accessToken = window.localStorage.getItem("token");
-      const courtId = window.localStorage.getItem("courtId") || "KLKM52";
+      const courtId = window.localStorage.getItem("courtId");
 
       // Call the PDF generation API
       const response = await axiosInstance.post(
@@ -427,7 +427,7 @@ const BulkIssueCTC = () => {
       };
 
       const payload = {
-        courtId: selectedRowData?.businessObject?.courtId || window.localStorage.getItem("courtId") || "KLKM52",
+        courtId: selectedRowData?.businessObject?.courtId || window.localStorage.getItem("courtId"),
         action,
         docs: [docsDetails],
         status: "PENDING",

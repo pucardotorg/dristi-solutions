@@ -1,10 +1,11 @@
-import { Button, CloseSvg } from "@egovernments/digit-ui-components";
+import { Button } from "@egovernments/digit-ui-components";
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
 import { Urls } from "../hooks/services/Urls";
 import { FileUploadIcon } from "../../../dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 function SubmissionSignatureModal({
   t,
@@ -95,18 +96,7 @@ function SubmissionSignatureModal({
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
   }, [checkSignStatus]);
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   const handleClickEsign = () => {
     if (mockESignEnabled) {
       setIsSigned(true);
@@ -185,6 +175,7 @@ function SubmissionSignatureModal({
       onSubmit={onSubmit}
       isDisabled={loader}
       fileUploadError={fileUploadError}
+      setFileUploadError={setFileUploadError}
     />
   );
 }

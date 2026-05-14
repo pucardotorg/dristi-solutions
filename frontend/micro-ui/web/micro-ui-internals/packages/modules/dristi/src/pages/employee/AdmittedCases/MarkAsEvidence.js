@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Modal from "../../../components/Modal";
-import { Dropdown, Loader, CloseSvg, TextInput, LabelFieldPair, CardLabel } from "@egovernments/digit-ui-react-components";
+import { Dropdown, Loader, TextInput, LabelFieldPair, CardLabel } from "@egovernments/digit-ui-react-components";
 import { DRISTIService } from "../../../services";
 import SuccessBannerModal from "../../../../../submissions/src/components/SuccessBannerModal";
 import { MarkAsEvidenceAction } from "../../../Utils/submissionWorkflow";
@@ -11,6 +11,7 @@ import { InfoCard } from "@egovernments/digit-ui-components";
 import { getAuthorizedUuid, sanitizeData } from "../../../Utils";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 // Helper functions for button labels and actions
 const getButtonLabels = (isJudge, evidenceDetails, currentDiaryEntry = false, t) => {
@@ -105,29 +106,6 @@ export const clearEvidenceSessionData = () => {
   sessionStorage.removeItem("bulkMarkAsEvidenceSignCaseTitle");
   sessionStorage.removeItem("homeActiveTab");
 };
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        paddingRight: "20px",
-        cursor: "pointer",
-        ...(props?.backgroundColor && { backgroundColor: props.backgroundColor }),
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-
 const MarkAsEvidence = ({
   t,
   isEvidenceLoading = false,

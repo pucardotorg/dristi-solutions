@@ -1,4 +1,4 @@
-import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
 import React, { useState, useMemo, useEffect } from "react";
 import Modal from "../../../dristi/src/components/Modal";
 import { Button } from "@egovernments/digit-ui-react-components";
@@ -7,19 +7,7 @@ import useESign from "../hooks/orders/useESign";
 import { Urls } from "../hooks/services/Urls";
 import useDocumentUpload from "../hooks/orders/useDocumentUpload";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 function OrderSignatureModal({
   t,
   order,
@@ -189,6 +177,7 @@ function OrderSignatureModal({
       onSubmit={onSubmit}
       isDisabled={loader}
       fileUploadError={fileUploadError}
+      setFileUploadError={setFileUploadError}
     />
   );
 }

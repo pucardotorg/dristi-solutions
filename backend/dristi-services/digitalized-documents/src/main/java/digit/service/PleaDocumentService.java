@@ -10,6 +10,7 @@ import digit.enrichment.PleaEnrichment;
 import digit.kafka.Producer;
 import digit.util.CaseUtil;
 import digit.util.FileStoreUtil;
+import digit.util.IndividualUtil;
 import digit.util.UrlShortenerUtil;
 import digit.validators.PleaValidator;
 import digit.web.models.*;
@@ -44,8 +45,9 @@ public class PleaDocumentService implements DocumentTypeService {
     private final NotificationService notificationService;
     private final CaseUtil caseUtil;
     private final ObjectMapper objectMapper;
+    private final IndividualUtil individualUtil;
 
-    public PleaDocumentService(PleaValidator validator, DigitalizedDocumentEnrichment enrichment, PleaEnrichment pleaEnrichment, WorkflowService workflowService, Producer producer, Configuration config, FileStoreUtil fileStoreUtil, UrlShortenerUtil urlShortenerUtil, NotificationService notificationService, CaseUtil caseUtil, ObjectMapper objectMapper) {
+    public PleaDocumentService(PleaValidator validator, DigitalizedDocumentEnrichment enrichment, PleaEnrichment pleaEnrichment, WorkflowService workflowService, Producer producer, Configuration config, FileStoreUtil fileStoreUtil, UrlShortenerUtil urlShortenerUtil, NotificationService notificationService, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualUtil individualUtil) {
         this.validator = validator;
         this.enrichment = enrichment;
         this.pleaEnrichment = pleaEnrichment;
@@ -57,6 +59,7 @@ public class PleaDocumentService implements DocumentTypeService {
         this.notificationService = notificationService;
         this.caseUtil = caseUtil;
         this.objectMapper = objectMapper;
+        this.individualUtil = individualUtil;
     }
 
     @Override
@@ -94,6 +97,7 @@ public class PleaDocumentService implements DocumentTypeService {
             log.info("Calling notification service for SMS");
             try{
                 callNotificationServiceForSMS(request);
+                callNotificationServiceForSMSToAccusedAdvocate(request);
             } catch (Exception e) {
                 log.error("Error occurred while trying to send SMS: {}", e.getMessage());
             }
@@ -169,6 +173,102 @@ public class PleaDocumentService implements DocumentTypeService {
     private String getMessageCode(String action){
         if(SUBMIT.equalsIgnoreCase(action)){
             return SIGN_PLEA_DOCUMENT;
+        }
+        return null;
+    }
+
+    private void callNotificationServiceForSMSToAccusedAdvocate(DigitalizedDocumentRequest request){
+
+        RequestInfo requestInfo = request.getRequestInfo();
+        CaseCriteria caseCriteria = CaseCriteria.builder()
+                .filingNumber(request.getDigitalizedDocument().getCaseFilingNumber())
+                .courtId(request.getDigitalizedDocument().getCourtId())
+                .defaultFields(false)
+                .build();
+
+        CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(List.of(caseCriteria))
+                .build();
+        JsonNode courtCase = caseUtil.searchCaseDetails(caseSearchRequest);
+        String cmpNumber = courtCase.path("cmpNumber").asText(null);
+        String courtCaseNumber = courtCase.path("courtCaseNumber").asText(null);
+
+        SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                .tenantId(request.getDigitalizedDocument().getTenantId())
+                .cmpNumber(cmpNumber)
+                .courtCaseNumber(courtCaseNumber)
+                .shortenedUrl(request.getDigitalizedDocument().getShortenedUrl())
+                .build();
+
+        String mobileNumber = Optional.ofNullable(request.getDigitalizedDocument())
+                .map(DigitalizedDocument::getPleaDetails)
+                .map(PleaDetails::getAccusedMobileNumber)
+                .orElse(null);
+        JsonNode representatives = courtCase.path("representatives");
+
+        Individual accusedIndividual = individualUtil.getIndividualFromMobileNumber(requestInfo,mobileNumber);
+        if(accusedIndividual == null){
+            return;
+        }
+        String accusedIndividualId = accusedIndividual.getIndividualId();
+
+        if (representatives != null && representatives.isArray()) {
+            for (JsonNode representative : representatives) {
+
+                JsonNode representingLitigants = representative.path("representing");
+
+                if (representingLitigants != null && representingLitigants.isArray()) {
+                    for (JsonNode representing : representingLitigants) {
+
+                        String individualId = representing.path("individualId").asText();
+
+                        if (accusedIndividualId.equalsIgnoreCase(individualId)) {
+
+                            // ✅ Get representative's UUID (correct person)
+                            String representativeUuid = representative
+                                    .path("additionalDetails")
+                                    .path("uuid")
+                                    .asText();
+
+                            String advocateMobileNumber = extractMobileNumberFromIndividual(
+                                    representativeUuid,
+                                    request.getDigitalizedDocument().getTenantId()
+                            );
+
+                            if (advocateMobileNumber != null && !advocateMobileNumber.isEmpty()) {
+                                notificationService.sendNotification(
+                                        requestInfo,
+                                        smsTemplateData,
+                                        CLIENT_PLEA_ESIGN,
+                                        advocateMobileNumber
+                                );
+                            }
+
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    private String extractMobileNumberFromIndividual(String individualId,String tenantId) {
+        try {
+            // Get RequestInfo from current context or create a new one
+            RequestInfo requestInfo = RequestInfo.builder()
+                    .build();
+
+            // Get individual details using individualId
+            List<Individual> individuals = individualUtil.getIndividuals(requestInfo, List.of(individualId), tenantId);
+
+            if (!individuals.isEmpty()) {
+                Individual individual = individuals.get(0);
+                return individual.getMobileNumber();
+            }
+        } catch (Exception e) {
+            log.error("Error fetching mobile number for individualId: {}", individualId, e);
         }
         return null;
     }

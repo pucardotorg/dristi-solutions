@@ -1,4 +1,4 @@
-import { Button, TextInput, CardLabelError, CloseSvg, Loader } from "@egovernments/digit-ui-react-components";
+import { Button, TextInput, CardLabelError, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { CustomAddIcon } from "../icons/svgIndex";
 import ReactTooltip from "react-tooltip";
@@ -6,6 +6,7 @@ import { CustomMultiSelectDropdown } from "./CustomMultiSelectDropdown";
 import Modal from "./Modal";
 import SelectCustomNote from "./SelectCustomNote";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
+import { CloseBtn, Heading } from "./ModalComponents";
 
 const InfoIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -17,18 +18,6 @@ const InfoIcon = () => (
     />
   </svg>
 );
-const Heading = (props) => {
-  return <h1 className="main-heading">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
 function CourierService({
   t,
   isDelayCondonation,
@@ -40,10 +29,13 @@ function CourierService({
   setSummonsActive,
   noticeActive,
   setNoticeActive,
+  warrantActive,
+  setWarrantActive,
   setShowConfirmationModal,
   handleAddAddress,
   orderType,
   isDisableAllFields = false,
+  handleInitialCourierServiceChange,
 }) {
   const [newAddress, setNewAddress] = useState({});
   const [addressErrors, setAddressErrors] = useState({});
@@ -80,21 +72,23 @@ function CourierService({
 
   const paymentCriteriaList = useMemo(() => {
     if (!processCourierData?.addressDetails?.length) return [];
-
     // add "EPOST" when it is needed
-    const channels = ["RPAD"];
-    const taskTypes = orderType ? [orderType] : ["NOTICE", "SUMMONS"];
+    const defaultChannels = ["RPAD"];
+    const warrantChannels = ["RPAD", "POLICE"];
+    const taskTypes = orderType ? [orderType] : ["NOTICE", "SUMMONS", "WARRANT"];
 
     return processCourierData?.addressDetails?.flatMap((addr) =>
-      taskTypes?.flatMap((taskType) =>
-        channels?.map((channelId) => ({
+      taskTypes?.flatMap((taskType) => {
+        const channels = taskType === "WARRANT" ? warrantChannels : defaultChannels;
+
+        return channels.map((channelId) => ({
           channelId,
           receiverPincode: addr?.addressDetails?.pincode,
           tenantId,
           id: `${taskType}_${channelId}_${addr?.id}`,
           taskType,
-        }))
-      )
+        }));
+      })
     );
   }, [processCourierData, tenantId, orderType]);
 
@@ -106,6 +100,18 @@ function CourierService({
     `PAYMENT-${processCourierData?.uniqueId}-${processCourierData?.addressDetails?.length}-${paymentCriteriaList?.length > 0}`,
     Boolean(paymentCriteriaList?.length > 0)
   );
+
+  const _getChannelCodeAndDeliveryTime = ({ taskType, channelId }) => {
+    if (["NOTICE", "SUMMONS"]?.includes(taskType)) {
+      const channelCode = channelId === "RPAD" ? "REGISTERED_POST" : "E_POST";
+      const channelDeliveryTime = channelId === "RPAD" ? "RPAD_DELIVERY_TIME" : "EPOST_DELIVERY_TIME";
+      return { channelCode, channelDeliveryTime };
+    } else {
+      const channelCode = channelId === "RPAD" ? "REGISTERED_POST" : "ICOPS";
+      const channelDeliveryTime = channelId === "RPAD" ? "RPAD_DELIVERY_TIME" : "POLICE_DELIVERY_TIME";
+      return { channelCode, channelDeliveryTime };
+    }
+  };
 
   const courierOptions = useMemo(() => {
     if (!breakupResponse?.Calculation?.length) return [];
@@ -123,8 +129,8 @@ function CourierService({
           channelId: channelId,
           taskType,
           fees: 0,
-          channelCode: channelId === "RPAD" ? "REGISTERED_POST" : "E_POST",
-          channelDeliveryTime: channelId === "RPAD" ? "RPAD_DELIVERY_TIME" : "EPOST_DELIVERY_TIME",
+          channelCode: _getChannelCodeAndDeliveryTime({ taskType, channelId })?.channelCode,
+          channelDeliveryTime: _getChannelCodeAndDeliveryTime({ taskType, channelId })?.channelDeliveryTime,
         };
       }
 
@@ -170,18 +176,34 @@ function CourierService({
       }
     }
 
+    if (Array.isArray(processCourierData?.warrantCourierService) && processCourierData?.warrantCourierService?.length > 0) {
+      const warrantOptions = options?.filter((opt) => opt?.taskType === "WARRANT");
+      const needsUpdate = processCourierData?.warrantCourierService?.some((selected) => {
+        const updatedOption = warrantOptions?.find((opt) => opt?.channelId === selected?.channelId);
+        return updatedOption && updatedOption?.fees !== selected?.fees;
+      });
+      if (needsUpdate) {
+        const updatedSelections = processCourierData?.warrantCourierService.map((selected) => {
+          const updatedOption = warrantOptions?.find((opt) => opt?.channelId === selected?.channelId);
+          return updatedOption || selected;
+        });
+        handleCourierServiceChange(updatedSelections, "warrant");
+      }
+    }
+
     return options;
   }, [breakupResponse, processCourierData, t, handleCourierServiceChange]);
 
   useEffect(() => {
     if (courierOptions?.length > 0 && !hasSetInitialDefaults.current) {
+      let data = {};
       if (
         (orderType === "NOTICE" || isDelayCondonation) &&
         (!processCourierData?.noticeCourierService || processCourierData?.noticeCourierService?.length === 0)
       ) {
         const rpadNoticeOption = courierOptions?.find((option) => option?.channelId === "RPAD" && option?.taskType === "NOTICE");
         if (rpadNoticeOption) {
-          handleCourierServiceChange([rpadNoticeOption], "notice");
+          data = { ...data, notice: [rpadNoticeOption] };
         }
       }
 
@@ -191,13 +213,23 @@ function CourierService({
       ) {
         const rpadSummonsOption = courierOptions?.find((option) => option?.channelId === "RPAD" && option?.taskType === "SUMMONS");
         if (rpadSummonsOption) {
-          handleCourierServiceChange([rpadSummonsOption], "summons");
+          data = { ...data, summons: [rpadSummonsOption] };
         }
       }
 
+      if ((orderType === "WARRANT" || !orderType) && !processCourierData?.warrantCourierService) {
+        const policeWarrantOption = courierOptions?.find((option) => option?.channelId === "POLICE" && option?.taskType === "WARRANT");
+        if (policeWarrantOption) {
+          data = { ...data, warrant: [policeWarrantOption] };
+        }
+      }
+
+      if (!hasSetInitialDefaults.current) {
+        handleInitialCourierServiceChange(data);
+      }
       hasSetInitialDefaults.current = true;
     }
-  }, [courierOptions, orderType, isDelayCondonation, handleCourierServiceChange, processCourierData]);
+  }, [courierOptions, orderType, isDelayCondonation, handleInitialCourierServiceChange, processCourierData]);
 
   if (isBreakUpLoading || isLoading) {
     return (
@@ -323,7 +355,7 @@ function CourierService({
             <div
               className="dropdown-container"
               onClick={() => {
-                if (!summonsActive && isDelayCondonation && processCourierData?.summonsCourierService?.length === 0) {
+                if (!isDisableAllFields && !summonsActive && isDelayCondonation && processCourierData?.summonsCourierService?.length === 0) {
                   setShowConfirmationModal(true);
                 }
               }}
@@ -350,11 +382,49 @@ function CourierService({
             </div>
           </div>
         )}
+
+        {(orderType === "WARRANT" || !orderType) && (
+          <div className="row" style={orderType ? { marginBottom: "24px" } : {}}>
+            <div className="label-container">
+              <div className="label">{t("CS_WARRANT_COURIER")}</div>
+              {!orderType && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div className="optional">{t("CS_IS_OPTIONAL")}</div>
+                  <div className="info-icon">
+                    <span style={{ position: "relative" }} data-tip data-for="warrant-tooltip">
+                      <InfoIcon />
+                    </span>
+                    <ReactTooltip id="warrant-tooltip" place="bottom" content={t("CS_WARRANT_COURIER_TOOLTIP")}>
+                      {t("CS_WARRANT_COURIER_TOOLTIP")}
+                    </ReactTooltip>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="dropdown-container">
+              <CustomMultiSelectDropdown
+                t={t}
+                defaultLabel={t("SELECT_COURIER_SERVICES")}
+                options={courierOptions?.filter((option) => option?.taskType === "WARRANT")}
+                selected={processCourierData?.warrantCourierService}
+                onSelect={(value) => {
+                  handleCourierServiceChange(value, "warrant");
+                }}
+                optionsKey="deliveryChannelName"
+                displayKey="channelCode"
+                filterKey="deliveryChannelName"
+                disable={isDisableAllFields || processCourierData?.addressDetails?.filter((addr) => addr?.checked)?.length === 0}
+                active={warrantActive}
+                setActive={setWarrantActive}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {showAddAddressModal && (
         <Modal
-          headerBarMain={<Heading label={t("CS_ADD_ADDRESS")} />}
+          headerBarMain={<Heading className="main-heading" label={t("CS_ADD_ADDRESS")} />}
           headerBarEnd={
             <CloseBtn
               onClick={() => {

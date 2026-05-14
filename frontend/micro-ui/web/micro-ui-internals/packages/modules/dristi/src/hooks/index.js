@@ -9,7 +9,6 @@ import useGetEvidence from "./dristi/useGetEvidence";
 import useGetOrders from "./dristi/useGetOrders";
 import useGetBotdOrders from "./dristi/useGetBotdOrders";
 import useGetSubmissions from "./dristi/useGetSubmissions";
-import useInboxCustomHook from "./dristi/useInboxCustomHook";
 import useSearchCaseService from "./dristi/useSearchCaseService";
 import useCasePdfGeneration from "./dristi/useCasePdfGeneration";
 
@@ -119,6 +118,7 @@ export const Urls = {
     searchCaseMember: "/advocate-office-management/v1/_searchCaseMember",
     leaveOffice: "/advocate-office-management/v1/_leaveOffice",
     bankDetails: "/bank-details/v1/_search",
+    previewDoc: "/casemanagement/casemanager/preview/doc",
   },
   case: {
     addWitness: "/case/v1/add/witness",
@@ -151,7 +151,6 @@ const dristi = {
   useGetIndividualAdvocate,
   useIndividualService,
   useGetIndividualUser,
-  useInboxCustomHook,
   useSearchCaseService,
   useCasePdfGeneration,
   usePaymentCalculator,

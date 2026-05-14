@@ -668,4 +668,12 @@ export const DRISTIService = {
       params,
       method: "POST",
     }),
+  getPreviewDoc: (data, params) =>
+    Request({
+      url: Urls.dristi.previewDoc,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
 };

@@ -2,6 +2,7 @@ import { AppContainer, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Route, Switch, useHistory, useLocation, useRouteMatch } from "react-router-dom";
+import InfoModal from "../../../components/InfoModal";
 import { loginSteps } from "./config";
 import SelectMobileNumber from "./SelectMobileNumber";
 import SelectOtp from "./SelectOtp";
@@ -43,10 +44,6 @@ function getRedirectionUrl(status) {
 
 const DEFAULT_REDIRECT_URL = getRedirectionUrl("isNotRegistered");
 
-const getFromLocation = (state, searchParams) => {
-  return state?.from || searchParams?.from || DEFAULT_REDIRECT_URL;
-};
-
 const Login = ({ stateCode }) => {
   const Digit = window.Digit || {};
   const { t } = useTranslation();
@@ -61,12 +58,12 @@ const Login = ({ stateCode }) => {
   const [tokens, setTokens] = useState(null);
   const [params, setParmas] = useState({});
   const [errorTO, setErrorTO] = useState(null);
-  const searchParams = Digit.Hooks.useQueryParams();
   const [canSubmitOtp, setCanSubmitOtp] = useState(true);
   const [canSubmitNo, setCanSubmitNo] = useState(true);
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [otpCooldownTimer, setOtpCooldownTimer] = useState(null);
   const [isUserRegistered, setIsUserRegistered] = useState(true);
+  const [showUnregisteredModal, setShowUnregisteredModal] = useState(false);
   const [{ showOtpModal }, setState] = useState({ showOtpModal: false });
 
   useEffect(() => {
@@ -195,8 +192,7 @@ const Login = ({ stateCode }) => {
     } else {
       setCanSubmitNo(true);
       setIsUserRegistered(false);
-      setError(t("ES_ERROR_USER_NOT_PERMITTED"));
-      history.replace(`${path}/login`, { from: getFromLocation(location.state, searchParams) });
+      setShowUnregisteredModal(true);
     }
   };
 
@@ -323,6 +319,26 @@ const Login = ({ stateCode }) => {
           )}
 
           {error && <Toast error={true} label={error} onClose={() => setError(null)} />}
+          {showUnregisteredModal && (
+            <InfoModal
+              t={t}
+              heading={"UNREGISTERED_NUMBER"}
+              message={"UNREGISTERED_NUMBER_MESSAGE"}
+              primaryLabel={"CS_USER_REGISTER"}
+              secondaryLabel={"CS_COMMON_CANCEL"}
+              onPrimaryClick={() => {
+                setShowUnregisteredModal(false);
+                history.push(`/${window?.contextPath}/citizen/dristi/home/registration/mobile-number`, {
+                  newParams: { mobileNumber: params.mobileNumber },
+                });
+              }}
+              onSecondaryClick={() => {
+                setShowUnregisteredModal(false);
+                setIsUserRegistered(true);
+              }}
+              className={"unregistered-number-modal"}
+            />
+          )}
         </React.Fragment>
       </Switch>
     </div>

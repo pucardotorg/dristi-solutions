@@ -1,22 +1,14 @@
-import { CloseSvg, TextArea } from "@egovernments/digit-ui-components";
+import { TextArea } from "@egovernments/digit-ui-components";
 import React, { useEffect } from "react";
 import Modal from "./Modal";
 import { SubmitBar } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { DateUtils } from "../Utils";
+import { CloseBtn } from "./ModalComponents";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.heading}</h1>;
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
 const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView = false }) => {
   const { t } = useTranslation();
 

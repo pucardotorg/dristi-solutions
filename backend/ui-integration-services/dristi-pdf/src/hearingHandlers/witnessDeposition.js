@@ -183,7 +183,7 @@ const witnessDeposition = async (req, res, qrCode) => {
           depositionType: "",
           witnessDeposition: witnessDepositionText,
           witnessPlaceholder: "Deponent",
-          judgePlaceholder: "Judicial Magistrate of First Class",
+          judgePlaceholder: courtCaseJudgeDetails.judgeDetails?.designation,
           qrCodeUrl: base64Url,
           designation:
             witnessEvidence.additionalDetails.witnessDetails.designation,

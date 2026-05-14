@@ -16,14 +16,12 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import Accordion from "../../../components/Accordion";
-import ConfirmCourtModal from "../../../components/ConfirmCourtModal";
 import ErrorsAccordion from "../../../components/ErrorsAccordion";
 import FlagBox from "../../../components/FlagBox";
 import Modal from "../../../components/Modal";
 import ScrutinyInfo from "../../../components/ScrutinyInfo";
 import SelectCustomNote from "../../../components/SelectCustomNote";
 import { useToast } from "../../../components/Toast/useToast";
-import useGetAllCasesConfig from "../../../hooks/dristi/useGetAllCasesConfig";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { ReactComponent as InfoIcon } from "../../../icons/info.svg";
 import { CustomAddIcon, CustomArrowDownIcon, CustomDeleteIcon, RightArrow, WarningInfoRedIcon } from "../../../icons/svgIndex";
@@ -56,7 +54,6 @@ import {
   runGenericTextSanitizer,
   showDemandNoticeModal,
   showToastForComplainant,
-  signatureValidation,
   transformCaseDataForFetching,
   updateCaseDetails,
   validateDateForDelayApplication,
@@ -83,6 +80,7 @@ import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
 import ErrorDataModal from "./ErrorDataModal";
 import { documentLabels } from "../../../Utils";
 import useSearchTaskMangementService from "../../../hooks/dristi/useSearchTaskMangementService";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 export const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -127,11 +125,6 @@ export const extractValue = (data, key) => {
   });
   return value;
 };
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 const selectedArray = [
   "complainantDetails",
   "respondentDetails",
@@ -206,7 +199,6 @@ function EFilingCases({ path }) {
   const [parentOpen, setParentOpen] = useState(sideMenuConfig.findIndex((parent) => parent.children.some((child) => child.key === selected)));
 
   const [openConfigurationModal, setOpenConfigurationModal] = useState(false);
-  const [openConfirmCourtModal, setOpenConfirmCourtModal] = useState(false);
   const [serviceOfDemandNoticeModal, setServiceOfDemandNoticeModal] = useState({ show: false, index: 0 });
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [showConfirmMandatoryModal, setShowConfirmMandatoryModal] = useState(false);
@@ -240,6 +232,7 @@ function EFilingCases({ path }) {
     showSuccessToast: false,
     successMsg: "",
   });
+  const [showFillComplainantDetailsAdvisoryModal, setShowFillComplainantDetailsAdvisoryModal] = useState({ show: false, redirectTo: "" });
   const [deleteFormIndex, setDeleteFormIndex] = useState(null);
   const setFieldsRemainingInitially = () => {
     const array = [];
@@ -280,26 +273,6 @@ function EFilingCases({ path }) {
     }
     return count;
   }, [fieldsRemaining]);
-
-  const showMandatoryFieldsRemainingModal = useMemo(() => {
-    if (selected === "reviewCaseFile") {
-      if (mandatoryFieldsLeftTotalCount > 0) {
-        setShowConfirmMandatoryModal(true);
-        return true;
-      } else return false;
-    }
-    return false;
-  }, [selected, mandatoryFieldsLeftTotalCount]);
-
-  const showOptionalFieldsRemainingModal = useMemo(() => {
-    if (selected === "reviewCaseFile") {
-      if (checkAndGetOptionalFieldLeftPages.length !== 0) {
-        setShowConfirmOptionalModal(true);
-        return true;
-      } else return false;
-    }
-    return false;
-  }, [selected, checkAndGetOptionalFieldLeftPages]);
 
   const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
     {
@@ -396,9 +369,78 @@ function EFilingCases({ path }) {
 
   const caseDetails = useMemo(() => {
     const caseDetails = structuredClone(caseData?.criteria?.[0]?.responseList?.[0] || {});
-    const updatedCaseData = transformCaseDataForFetching(caseDetails, "witnessDetails");
+    const updatedCaseData = transformCaseDataForFetching(caseDetails, ["witnessDetails", "advocateDetails"]);
     return updatedCaseData;
   }, [caseData]);
+
+  const state = useMemo(() => caseDetails?.status, [caseDetails]);
+
+  const isCaseReAssigned = useMemo(() => state === CaseWorkflowState.CASE_REASSIGNED, [state]);
+  const isPendingReESign = useMemo(() => state === CaseWorkflowState.PENDING_RE_E_SIGN, [state]);
+  const isPendingESign = useMemo(() => state === CaseWorkflowState.PENDING_E_SIGN, [state]);
+  const isDisableAllFieldsMode = !(
+    state === CaseWorkflowState.CASE_REASSIGNED ||
+    state === CaseWorkflowState.DRAFT_IN_PROGRESS ||
+    state === CaseWorkflowState.PENDING_E_SIGN ||
+    state === CaseWorkflowState.PENDING_RE_E_SIGN
+  );
+
+  const isDraftInProgress = state === CaseWorkflowState.DRAFT_IN_PROGRESS;
+
+  const isComplainantDetailsCompleted = useMemo(() => {
+    const complainantForms = (caseDetails || errorCaseDetails || {})?.additionalDetails?.["complainantDetails"]?.formdata || [];
+
+    // if any form is incomplete
+    if (complainantForms.find((form) => form.isFormCompleted === false)) {
+      return false;
+    }
+
+    return true;
+  }, [caseDetails, errorCaseDetails]);
+
+  const isComplainantDetailsChanged = useMemo(() => {
+    const caseLitigants = (caseDetails || errorCaseDetails || {})?.litigants || [];
+
+    // if any form is changed
+    if (caseLitigants.find((litigant) => litigant?.additionalDetails?.isLitigantDetailsChanged)) {
+      return true;
+    }
+
+    return false;
+  }, [caseDetails, errorCaseDetails]);
+
+  const showMandatoryFieldsRemainingModal = useMemo(() => {
+    if (selected === "reviewCaseFile") {
+      if (mandatoryFieldsLeftTotalCount > 0) {
+        setShowConfirmMandatoryModal(true);
+        return true;
+      } else return false;
+    }
+    return false;
+  }, [selected, mandatoryFieldsLeftTotalCount]);
+
+  const showOptionalFieldsRemainingModal = useMemo(() => {
+    if (selected === "reviewCaseFile") {
+      if (!isComplainantDetailsCompleted && mandatoryFieldsLeftTotalCount === 0 && isDraftInProgress) {
+        setShowFillComplainantDetailsAdvisoryModal({ show: true, redirectTo: "complainantDetails" });
+        return false;
+      } else if (isComplainantDetailsChanged && mandatoryFieldsLeftTotalCount === 0 && isDraftInProgress) {
+        setShowFillComplainantDetailsAdvisoryModal({ show: true, redirectTo: "advocateDetails" });
+        return false;
+      } else if (checkAndGetOptionalFieldLeftPages.length !== 0) {
+        setShowConfirmOptionalModal(true);
+        return true;
+      } else return false;
+    }
+    return false;
+  }, [
+    selected,
+    checkAndGetOptionalFieldLeftPages,
+    mandatoryFieldsLeftTotalCount,
+    isComplainantDetailsCompleted,
+    isComplainantDetailsChanged,
+    isDraftInProgress,
+  ]);
 
   const { data: taskManagementData, isLoading: isTaskManagementLoading, refetch: refetchTaskManagement } = useSearchTaskMangementService(
     {
@@ -406,7 +448,7 @@ function EFilingCases({ path }) {
         filingNumber: caseDetails?.filingNumber,
         status: TaskManagementWorkflowState.TASK_CREATION,
         tenantId: tenantId,
-        taskType: ["NOTICE", "SUMMONS"],
+        taskType: ["NOTICE", "SUMMONS", "WARRANT"],
       },
     },
     {},
@@ -548,18 +590,6 @@ function EFilingCases({ path }) {
     };
   }, [scrutinyErrors]);
 
-  const state = useMemo(() => caseDetails?.status, [caseDetails]);
-
-  const isCaseReAssigned = useMemo(() => state === CaseWorkflowState.CASE_REASSIGNED, [state]);
-  const isPendingReESign = useMemo(() => state === CaseWorkflowState.PENDING_RE_E_SIGN, [state]);
-  const isPendingESign = useMemo(() => state === CaseWorkflowState.PENDING_E_SIGN, [state]);
-  const isDisableAllFieldsMode = !(
-    state === CaseWorkflowState.CASE_REASSIGNED ||
-    state === CaseWorkflowState.DRAFT_IN_PROGRESS ||
-    state === CaseWorkflowState.PENDING_E_SIGN ||
-    state === CaseWorkflowState.PENDING_RE_E_SIGN
-  );
-  const isDraftInProgress = state === CaseWorkflowState.DRAFT_IN_PROGRESS;
   const { data: courtRoomDetails, isLoading: isCourtIdsLoading } = useGetStatuteSection("common-masters", [{ name: "Court_Rooms" }]);
   const courtRooms = useMemo(() => courtRoomDetails?.Court_Rooms || [], [courtRoomDetails]);
 
@@ -696,6 +726,9 @@ function EFilingCases({ path }) {
       caseDetails?.caseDetails?.[selected]?.formdata ||
       (selected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
     if (selected === "advocateDetails") {
+      if (!isComplainantDetailsCompleted && isDraftInProgress) {
+        setShowFillComplainantDetailsAdvisoryModal({ show: true, redirectTo: "complainantDetails" });
+      }
       const newAdvData = []; //  we will update the advocate data in the same order as order of complainant forms
       const advData = caseDetails?.additionalDetails?.[selected]?.formdata || [];
       for (let i = 0; i < completedComplainants?.length; i++) {
@@ -833,12 +866,6 @@ function EFilingCases({ path }) {
     }
     if (!["advocateDetails", "processCourierService"]?.includes(selected)) {
       setFormdata(data);
-    }
-    if (selected === "addSignature" && !caseDetails?.additionalDetails?.signedCaseDocument && !isLoading) {
-      setShowReviewCorrectionModal(true);
-    }
-    if (selected === "addSignature" && !caseDetails?.additionalDetails?.["reviewCaseFile"]?.isCompleted && !isLoading) {
-      setShowReviewCorrectionModal(true);
     }
   }, [selected, caseDetails, isLoading, completedComplainants, completedAccuseds, litigants, isDelayCondonation]);
 
@@ -1032,18 +1059,10 @@ function EFilingCases({ path }) {
     }));
   }, [caseDetails, parentOpen, selected]);
 
-  const { data: caseDetailsConfig, isLoading: isGetAllCasesLoading } = useGetAllCasesConfig();
-
   const pageConfig = useMemo(() => {
-    if (!caseDetailsConfig) {
-      return {
-        formconfig: [],
-      };
-    }
-    return caseDetailsConfig
-      .find((parent) => parent.children.some((child) => child.key === selected))
-      ?.children?.find((child) => child.key === selected)?.pageConfig;
-  }, [caseDetailsConfig, selected]);
+    return sideMenuConfig.find((parent) => parent.children.some((child) => child.key === selected))?.children?.find((child) => child.key === selected)
+      ?.pageConfig;
+  }, [selected]);
 
   const formConfig = useMemo(() => {
     return pageConfig?.formconfig;
@@ -1070,14 +1089,6 @@ function EFilingCases({ path }) {
     return pageConfig?.confirmmodalconfig;
   }, [pageConfig?.confirmmodalconfig]);
 
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
   const isDependentEnabled = useMemo(() => {
     let result = false;
     formConfig.forEach((config) => {
@@ -1100,61 +1111,27 @@ function EFilingCases({ path }) {
           return formConfig.map((config) => {
             return {
               ...config,
-              body: config?.body?.map((body) => {
-                return {
-                  ...body,
-                  populators: {
-                    inputs: body?.populators?.inputs?.map((input) => {
-                      let dataobj = caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {};
-                      if (isCaseReAssigned) {
-                        dataobj =
-                          errorCaseDetails?.additionalDetails?.[input?.key]?.formdata || errorCaseDetails?.caseDetails?.[input?.key]?.formdata || {};
-                      }
-                      return {
-                        ...input,
-                        data: dataobj,
-                        isEditingAllowed: isEditingAllowed,
-                      };
-                    }),
-                  },
-                };
-              }),
-            };
-          });
-        }
-        if (selected === "addSignature") {
-          return formConfig.map((config) => {
-            return {
-              ...config,
               body: config?.body
-                ?.filter((data) => {
-                  if (
-                    data.dependentOn &&
-                    !extractValue(caseDetails?.additionalDetails?.[data.dependentOn]?.formdata?.[0]?.data, data?.dependentKey)
-                  ) {
-                    return false;
-                  }
-                  return true;
-                })
-                .map((body) => {
+                ?.filter((body) => body?.key !== "submissionFromAccused")
+                ?.map((body) => {
                   return {
                     ...body,
                     populators: {
                       inputs: body?.populators?.inputs?.map((input) => {
+                        let dataobj =
+                          caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {};
+
+                        if (isCaseReAssigned) {
+                          dataobj =
+                            errorCaseDetails?.additionalDetails?.[input?.key]?.formdata ||
+                            errorCaseDetails?.caseDetails?.[input?.key]?.formdata ||
+                            {};
+                        }
+
                         return {
                           ...input,
-                          data:
-                            input.key === "advocateDetails"
-                              ? [
-                                  {
-                                    name:
-                                      caseDetails?.additionalDetails?.[input.key]?.formdata?.[0]?.data?.advocateBarRegNumberWithName?.[0]
-                                        ?.advocateName,
-                                  },
-                                ] || []
-                              : caseDetails?.additionalDetails?.[input.key]?.formdata?.map((data) => ({
-                                  name: `${data?.data?.firstName || ""} ${data?.data?.middleName || ""} ${data?.data?.lastName || ""}`,
-                                })),
+                          data: dataobj,
+                          isEditingAllowed: isEditingAllowed,
                         };
                       }),
                     },
@@ -1168,6 +1145,7 @@ function EFilingCases({ path }) {
             const updatedBody = config?.body?.map((item) => ({
               ...item,
               isDelayCondonation: isDelayCondonation,
+              isDisableAllFields: false,
             }));
 
             if (index === 0) {
@@ -1199,7 +1177,17 @@ function EFilingCases({ path }) {
                                 </li>
                                 <li>
                                   <span>
-                                    <strong>{t("COURIER_RPAD")}</strong> {t("COURIER_RPAD_NOTE")}
+                                    <strong>{t("COURIER_WARRANT")}</strong> {t("CS_NOT_DELAY_WARRANT_PROCESS_COURIER_SERVICE_NOTE")}
+                                  </span>
+                                </li>
+                                <li>
+                                  <span>
+                                    <strong>{t("REFUND_REQUEST")}</strong> {t("CS_REFUND_REQUEST_NOTE")}
+                                  </span>
+                                </li>
+                                <li>
+                                  <span>
+                                    <strong>{t("COURIER_RPAD_SUBMISSION")}</strong> {t("COURIER_RPAD_SUBMISSION_NOTE")}
                                   </span>
                                 </li>
                               </ul>
@@ -1208,10 +1196,24 @@ function EFilingCases({ path }) {
                             <div className="info-card-content">
                               <ul style={{ width: "100%" }}>
                                 <li>
-                                  <span>{t("CS_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
+                                  <span>
+                                    <strong>{t("COURIER_SUMMONS")}</strong> {t("CS_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}
+                                  </span>
                                 </li>
                                 <li>
-                                  <span>{t("COURIER_RPAD_NOTE")}</span>
+                                  <span>
+                                    <strong>{t("COURIER_WARRANT")}</strong> {t("CS_NOT_DELAY_WARRANT_PROCESS_COURIER_SERVICE_NOTE")}
+                                  </span>
+                                </li>
+                                <li>
+                                  <span>
+                                    <strong>{t("REFUND_REQUEST")}</strong> {t("CS_REFUND_REQUEST_NOTE")}
+                                  </span>
+                                </li>
+                                <li>
+                                  <span>
+                                    <strong>{t("COURIER_RPAD_SUBMISSION")}</strong> {t("COURIER_RPAD_SUBMISSION_NOTE")}
+                                  </span>
                                 </li>
                               </ul>
                             </div>
@@ -1326,7 +1328,7 @@ function EFilingCases({ path }) {
           };
         });
       });
-      if ((!isCaseReAssigned && !isPendingESign && !isPendingReESign) || selected === "addSignature" || selected === "reviewCaseFile") {
+      if ((!isCaseReAssigned && !isPendingESign && !isPendingReESign) || selected === "reviewCaseFile") {
         return modifiedFormData;
       }
     }
@@ -1419,6 +1421,7 @@ function EFilingCases({ path }) {
               if (selected === "processCourierService") {
                 if (judgeObj && Object.keys(judgeObj).length > 0 && body?.key === "multipleAccusedProcessCourier") {
                   body.isDisableAllFields = true;
+                  body.isDelayCondonation = isDelayCondonation;
                 }
               }
 
@@ -2487,25 +2490,6 @@ function EFilingCases({ path }) {
     ) {
       return;
     }
-    if (
-      formdata
-        .filter((data) => data.isenabled)
-        .some((data) =>
-          signatureValidation({
-            formData: data?.data,
-            selected,
-            setShowErrorToast,
-            setErrorMsg,
-            caseDetails: modifiedFormConfig?.[0].reduce((res, curr) => {
-              if (curr?.body && Array.isArray(curr.body) && curr.body?.length === 0) return res;
-              else res[curr?.body?.[0]?.key] = curr?.body?.[0]?.populators?.inputs?.[0]?.data;
-              return res;
-            }, {}),
-          })
-        )
-    ) {
-      return;
-    }
 
     if (selected === "reviewCaseFile" && isCaseReAssigned && !isCaseLocked) {
       setShowCaseLockingModal(true);
@@ -2515,19 +2499,7 @@ function EFilingCases({ path }) {
     if (selected === "reviewCaseFile" && !showCaseLockingModal && isDraftInProgress) {
       setShowCaseLockingModal(true);
       return;
-    }
-
-    //check- include below commented code for signing process changes.
-
-    // if (selected === "addSignature" && (isPendingESign || isPendingReESign)) {
-    //   if (courtRooms?.length === 1) {
-    //     onSubmitCase({ court: courtRooms[0], action: CaseWorkflowAction.E_SIGN });
-    //     return;
-    //   } else {
-    //     setOpenConfirmCourtModal(true);
-    //   }
-    // }
-    else {
+    } else {
       let caseComplaintDocument = {};
       try {
         if (isCaseLocked) {
@@ -2588,9 +2560,26 @@ function EFilingCases({ path }) {
 
             const noticeAccusedDetails = getAccusedDetails("NOTICE");
             const summonsAccusedDetails = getAccusedDetails("SUMMONS");
+            const warrantAccusedDetails = getAccusedDetails("WARRANT");
 
             const noticeTask = taskManagementList?.find((item) => item?.taskType === "NOTICE");
             const summonsTask = taskManagementList?.find((item) => item?.taskType === "SUMMONS");
+            const warrantTask = taskManagementList?.find((item) => item?.taskType === "WARRANT");
+            let updatedWarrantTask = null;
+
+            // removing processDelieveryDetails for warrant because of payment calculation handled at backend
+            if (warrantTask) {
+              const warrantPartyDetails = warrantTask?.partyDetails || [];
+              const updatedWarrantPartyDetails = warrantPartyDetails?.map((party) => ({
+                ...party,
+                processDeliveryDetails: null,
+              }));
+
+              updatedWarrantTask = {
+                ...warrantTask,
+                partyDetails: updatedWarrantPartyDetails,
+              };
+            }
 
             await createOrUpdateTask({
               type: "NOTICE",
@@ -2607,6 +2596,17 @@ function EFilingCases({ path }) {
               type: "SUMMONS",
               existingTask: summonsTask,
               accusedDetails: summonsAccusedDetails,
+              respondentFormData,
+              filingNumber: caseDetails?.filingNumber,
+              tenantId,
+              isUpfrontPayment: true,
+              status: "NOT_COMPLETED",
+            });
+
+            await createOrUpdateTask({
+              type: "WARRANT",
+              existingTask: updatedWarrantTask,
+              accusedDetails: warrantAccusedDetails,
               respondentFormData,
               filingNumber: caseDetails?.filingNumber,
               tenantId,
@@ -2649,6 +2649,9 @@ function EFilingCases({ path }) {
           filingType: filingType,
           setShouldShowConfirmDcaModal,
           isDelayCondonation,
+          isContinueClicked: true,
+          isCaseReAssigned,
+          isDraftInProgress,
         });
 
         if (resetFormData.current) {
@@ -2733,6 +2736,8 @@ function EFilingCases({ path }) {
       filingType: filingType,
       isDelayCondonation,
       setShouldShowConfirmDcaModal,
+      isCaseReAssigned,
+      isDraftInProgress,
     })
       .then(() => {
         refetchCaseData().then((updatedCaseData) => {
@@ -2813,6 +2818,8 @@ function EFilingCases({ path }) {
       filingType: filingType,
       setShouldShowConfirmDcaModal,
       isDelayCondonation,
+      isCaseReAssigned,
+      isDraftInProgress,
     })
       .then(() => {
         if (!isCaseReAssigned) {
@@ -2935,74 +2942,6 @@ function EFilingCases({ path }) {
     });
     return calculationResponse;
   };
-  const onSubmitCase = async (data) => {
-    setOpenConfirmCourtModal(false);
-    setIsDisabled(true);
-    let calculationResponse = {};
-    const assignees = getAllAssignees(caseDetails);
-    const poaHolders = (caseDetails?.poaHolders || [])?.map((poaHolder) => ({
-      uuid: poaHolder?.additionalDetails?.uuid,
-    }));
-
-    const fileStoreId = sessionStorage.getItem("fileStoreId");
-    await DRISTIService.caseUpdateService(
-      {
-        cases: {
-          ...caseDetails,
-          ...(fileStoreId && {
-            additionalDetails: {
-              ...caseDetails?.additionalDetails,
-              signedCaseDocument: fileStoreId,
-            },
-          }),
-          caseTitle:
-            `${getComplainantName(caseDetails?.additionalDetails?.complainantDetails?.formdata || {}, t)} vs ${getRespondentName(
-              caseDetails?.additionalDetails?.respondentDetails?.formdata || {},
-              t
-            )}` || caseDetails?.caseTitle,
-          courtId: "KLKM52" || data?.court?.code,
-          workflow: {
-            ...caseDetails?.workflow,
-            action: data?.action || "E-SIGN",
-            assignes: [],
-          },
-        },
-        tenantId,
-      },
-      tenantId
-    ).then(async (res) => {
-      await closePendingTask({ status: "PENDING_PAYMENT" });
-      if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
-        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-          pendingTask: {
-            name: "Pending Payment",
-            entityType: "case-default",
-            referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-            status: "PENDING_PAYMENT",
-            assignedTo: [...assignees?.map((uuid) => ({ uuid })), ...poaHolders],
-            assignedRole: ["CASE_CREATOR"],
-            cnrNumber: caseDetails?.cnrNumber,
-            filingNumber: caseDetails?.filingNumber,
-            caseId: caseDetails?.id,
-            caseTitle: caseDetails?.caseTitle,
-            isCompleted: false,
-            stateSla: stateSla.PENDING_PAYMENT * dayInMillisecond + todayDate,
-            additionalDetails: {},
-            tenantId,
-          },
-        });
-        calculationResponse = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
-      }
-      if (isPendingReESign) setCaseResubmitSuccess(true);
-      setIsDisabled(false);
-      return;
-    });
-
-    setPrevSelected(selected);
-    if (isPendingESign) {
-      history.push(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculationResponse } });
-    }
-  };
 
   const getFormClassName = useCallback(() => {
     if (formdata && formdata?.[0]?.data?.advocateBarRegNumberWithName?.[0]?.isDisable) {
@@ -3034,10 +2973,6 @@ function EFilingCases({ path }) {
           : isPendingReESign
           ? t("CS_COMMON_CONTINUE")
           : t("CS_GO_TO_HOME")
-        : selected === "addSignature"
-        ? isPendingESign || isPendingReESign
-          ? t("CS_SUBMIT_CASE")
-          : t("CS_COMMON_CONTINUE")
         : isDisableAllFieldsMode
         ? t("CS_GO_TO_HOME")
         : isCaseReAssigned
@@ -3054,7 +2989,7 @@ function EFilingCases({ path }) {
   }, [isEditingAllowed, mandatoryFieldsLeftTotalCount, isDisableAllFieldsMode]);
 
   const [isOpen, setIsOpen] = useState(false);
-  if (isLoading || isGetAllCasesLoading || isCourtIdsLoading || isLoader || isIndividualLoading || isFilingTypeLoading || isTaskManagementLoading) {
+  if (isLoading || isCourtIdsLoading || isLoader || isIndividualLoading || isFilingTypeLoading || isTaskManagementLoading) {
     return <Loader />;
   }
 
@@ -3064,6 +2999,11 @@ function EFilingCases({ path }) {
     section: "138",
     courtName: "Kollam S-138 Special Court",
     href: "https://www.indiacode.nic.in/bitstream/123456789/2189/1/a1881-26.pdf",
+  };
+  const handleComplainantDetailsAdvisoryModal = (redirectTo) => {
+    setPrevSelected(selected);
+    history.push(`?caseId=${caseId}&selected=${redirectTo}`); // introduce refetch casedta here due to react 18 upgrade changes
+    setShowFillComplainantDetailsAdvisoryModal({ show: false, redirectTo: "" });
   };
 
   const takeUserToRemainingMandatoryFieldsPage = () => {
@@ -3099,7 +3039,7 @@ function EFilingCases({ path }) {
     history.push(`?caseId=${caseId}&selected=reviewCaseFile`);
   }
 
-  if (isCaseReAssigned && !errorPages.some((item) => item.key === selected) && selected !== "reviewCaseFile" && selected !== "addSignature") {
+  if (isCaseReAssigned && !errorPages.some((item) => item.key === selected) && selected !== "reviewCaseFile") {
     if (!judgeObj) {
       history.push(`?caseId=${caseId}&selected=${nextSelected}`);
     }
@@ -3479,6 +3419,19 @@ function EFilingCases({ path }) {
               }}
             ></Modal>
           )}
+          {showFillComplainantDetailsAdvisoryModal?.show && (
+            <Modal
+              headerBarMain={<Heading label={t("ADVISORY_TITLE")} />}
+              headerBarEnd={<CloseBtn onClick={() => handleComplainantDetailsAdvisoryModal(showFillComplainantDetailsAdvisoryModal?.redirectTo)} />}
+              actionSaveLabel={t("OK")}
+              children={
+                showFillComplainantDetailsAdvisoryModal?.redirectTo === "complainantDetails"
+                  ? t("PLEASE_GO_TO_COMPLAINANT_SCREEN_AND_CLICK_CONTINUE")
+                  : t("PLEASE_GO_TO_ADVOCATE_SCREEN_AND_CLICK_CONTINUE")
+              }
+              actionSaveOnSubmit={() => handleComplainantDetailsAdvisoryModal(showFillComplainantDetailsAdvisoryModal?.redirectTo)}
+            ></Modal>
+          )}
           {/* show this modal only for filingParty */}
           {isEditingAllowed && showMandatoryFieldsRemainingModal && showConfirmMandatoryModal && (
             <Modal
@@ -3563,7 +3516,6 @@ function EFilingCases({ path }) {
           {showSuccessToast && <Toast label={t(successMsg)} isDleteBtn={true} onClose={closeToast} />}
         </div>
       </div>
-      {openConfirmCourtModal && <ConfirmCourtModal setOpenConfirmCourtModal={setOpenConfirmCourtModal} t={t} onSubmitCase={onSubmitCase} />}
 
       {caseResubmitSuccess && (
         <CorrectionsSubmitModal

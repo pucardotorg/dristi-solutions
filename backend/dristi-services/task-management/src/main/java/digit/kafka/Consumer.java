@@ -77,6 +77,11 @@ public class Consumer {
                 log.info("Processing complete without payment for task: {}", 
                     request.getTaskManagement().getTaskManagementNumber());
 
+                if (WARRANT.equalsIgnoreCase(request.getTaskManagement().getTaskType())) {
+                    log.info("skipping task creation as task type is warrant");
+                    return;
+                }
+
                 // Generate follow-up tasks
                 closePendingTask(request.getRequestInfo(), request.getTaskManagement());
                 taskCreationService.generateFollowUpTasks(request.getRequestInfo(), request.getTaskManagement());

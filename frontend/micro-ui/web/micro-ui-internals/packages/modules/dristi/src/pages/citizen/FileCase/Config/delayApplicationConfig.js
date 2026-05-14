@@ -64,7 +64,6 @@ const delayApplicationFormConfig = [
         populators: {
           name: "isDcaSkippedInEFiling",
           type: "radioButton",
-          optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
           label: "SKIP_DELAY_APPLICATION_CONFIRM",
           options: [
@@ -79,6 +78,7 @@ const delayApplicationFormConfig = [
               showDcaFileUpload: true,
             },
           ],
+          optionsKey: "name",
           isDependent: true,
           isMandatory: true,
         },
@@ -91,21 +91,23 @@ const delayApplicationFormConfig = [
   {
     body: [
       {
-        type: "component",
-        component: "SelectCustomTextArea",
         key: "additionalDelayCondonationDetails",
-        isMandatory: false,
+        type: "component",
+        label: "DELAY_ADDITIONAL_INFO",
+        component: "SelectCustomFormatterTextArea",
         populators: {
-          isMandatory: false,
           inputs: [
             {
               name: "text",
-              textAreaSubHeader: "ADDITIONAL_INFO",
-              isOptional: true,
               type: "TextAreaComponent",
+              isOptional: true,
+              textAreaSubHeader: "DELAY_ADDITIONAL_INFO",
             },
           ],
+          isMandatory: false,
         },
+        isMandatory: false,
+        withoutLabel: true,
       },
     ],
     dependentKey: {
@@ -130,7 +132,7 @@ const delayApplicationFormConfig = [
               isMultipleUpload: true,
               uploadGuidelines: "UPLOAD_DOC_10",
               infoTooltipMessage: "CS_DELAY_CONDONATION_APPLICATION",
-              maxFileErrorMessage: "CS_FILE_LIMIT_1_MB",
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             },
           ],
         },
@@ -147,7 +149,7 @@ const delayApplicationFormConfig = [
 export const delayApplicationConfig = {
   formconfig: delayApplicationFormConfig,
   header: "CS_RESPONDENT_DELAY_APPLICATION_HEADING",
-  subtext: "CS_RESPONDENT_DELAY_APPLICATION_SUBTEXT",
+  subtext: "CS_COMPLAINT_DATA_ENTRY_INFO",
   className: "delay-application",
   selectDocumentName: {
     condonationFileUpload: "CS_DELAY_CONDONATION_APPLICATION",

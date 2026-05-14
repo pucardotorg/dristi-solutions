@@ -210,6 +210,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
       formData={formData}
       onSubmit={onSubmit}
       fileUploadError={fileUploadError}
+      setFileUploadError={setFileUploadError}
     />
   );
 }
