@@ -1,3 +1,10 @@
+import {
+  orderFormCommentsSection,
+  orderFormCommentsSectionHideInForm,
+  orderFormRejectionReasonCommentsSection,
+  orderFormCommentsTextAreaFieldHideInForm,
+} from "./ordersCreateConfigShared";
+
 export const applicationTypeConfig = [
   {
     body: [
@@ -354,28 +361,7 @@ export const configsOrderSection202CRPC = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  orderFormCommentsSection,
 ];
 
 export const configsOrderMandatorySubmissions = [
@@ -790,29 +776,7 @@ export const configsOrderSubmissionExtension = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-          hideInForm: true,
-        },
-      },
-    ],
-  },
+  orderFormCommentsSectionHideInForm,
 ];
 
 export const configsOrderTranferToADR = [
@@ -1048,29 +1012,7 @@ export const configsScheduleHearingDate = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-          hideInForm: true,
-        },
-      },
-    ],
-  },
+  orderFormCommentsSectionHideInForm,
 ];
 
 export const configsScheduleNextHearingDate = [
@@ -1270,28 +1212,7 @@ export const configsScheduleNextHearingDate = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  orderFormCommentsSection,
 ];
 
 export const configsRejectRescheduleHeadingDate = [
@@ -1319,28 +1240,7 @@ export const configsRejectRescheduleHeadingDate = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  orderFormCommentsSection,
 ];
 
 export const configsRejectCheckout = [
@@ -1368,28 +1268,7 @@ export const configsRejectCheckout = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  orderFormCommentsSection,
 ];
 
 export const configsRescheduleHearingDate = [
@@ -1523,29 +1402,7 @@ export const configsRescheduleHearingDate = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-          hideInForm: true,
-        },
-      },
-    ],
-  },
+  orderFormCommentsSectionHideInForm,
 ];
 
 export const configCheckout = [
@@ -1662,28 +1519,7 @@ export const configCheckout = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  orderFormCommentsSection,
 ];
 
 export const configsInitiateRescheduleHearingDate = [
@@ -1783,29 +1619,7 @@ export const configsInitiateRescheduleHearingDate = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-          hideInForm: true,
-        },
-      },
-    ],
-  },
+  orderFormCommentsSectionHideInForm,
 ];
 
 export const configsAssignDateToRescheduledHearing = [
@@ -1878,28 +1692,7 @@ export const configsAssignDateToRescheduledHearing = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  orderFormCommentsSection,
 ];
 
 export const configsAssignNewHearingDate = [
@@ -1973,29 +1766,7 @@ export const configsAssignNewHearingDate = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-          hideInForm: true,
-        },
-      },
-    ],
-  },
+  orderFormCommentsSectionHideInForm,
 ];
 
 export const configsAcceptSubmission = [
@@ -2045,28 +1816,7 @@ export const configRejectSubmission = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          hideInForm: true,
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "REASON_FOR_REJECTION_SUBMISSION",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  orderFormRejectionReasonCommentsSection,
 ];
 export const configsVoluntarySubmissionStatus = [
   {
@@ -2145,29 +1895,7 @@ export const configsVoluntarySubmissionStatus = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-          hideInForm: true,
-        },
-      },
-    ],
-  },
+  orderFormCommentsSectionHideInForm,
   {
     body: [
       {
@@ -2323,28 +2051,7 @@ export const configsCaseTransfer = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  orderFormCommentsSection,
   {
     body: [
       {
@@ -2521,29 +2228,7 @@ export const configsCaseTransferAccept = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-          hideInForm: true,
-        },
-      },
-    ],
-  },
+  orderFormCommentsSectionHideInForm,
   {
     body: [
       {
@@ -2699,29 +2384,7 @@ export const configsCaseTransferReject = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-          hideInForm: true,
-        },
-      },
-    ],
-  },
+  orderFormCommentsSectionHideInForm,
   {
     body: [
       {
@@ -2883,29 +2546,7 @@ export const configsCaseSettlementAccept = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-          hideInForm: true,
-        },
-      },
-    ],
-  },
+  orderFormCommentsSectionHideInForm,
   {
     body: [
       {
@@ -3046,29 +2687,7 @@ export const configsCaseSettlementReject = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-          hideInForm: true,
-        },
-      },
-    ],
-  },
+  orderFormCommentsSectionHideInForm,
   {
     body: [
       {
@@ -3175,29 +2794,7 @@ export const configsIssueSummons = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-          hideInForm: true,
-        },
-      },
-    ],
-  },
+  orderFormCommentsSectionHideInForm,
   {
     body: [
       {
@@ -3326,29 +2923,7 @@ export const configsIssueNotice = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-          hideInForm: true,
-        },
-      },
-    ],
-  },
+  orderFormCommentsSectionHideInForm,
   {
     body: [
       {
@@ -3440,28 +3015,7 @@ export const configsIssueOfWarrants = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  orderFormCommentsSection,
   {
     body: [
       {
@@ -3605,25 +3159,7 @@ export const configsCaseWithdrawalAccept = [
         type: "text",
         populators: { name: "reasonForWithdrawal", hideInForm: true },
       },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-          hideInForm: true,
-        },
-      },
+      orderFormCommentsTextAreaFieldHideInForm,
       {
         label: "NATURE_OF_DISPOSAL",
         isMandatory: true,
@@ -3695,25 +3231,7 @@ export const configsCaseWithdrawalReject = [
         type: "text",
         populators: { name: "reasonForWithdrawal", hideInForm: true },
       },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-          hideInForm: true,
-        },
-      },
+      orderFormCommentsTextAreaFieldHideInForm,
     ],
   },
 ];

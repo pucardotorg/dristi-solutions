@@ -1,11 +1,6 @@
-// default values of search input component
-const defaultSearchValues = {
-    individualName: "",
-    mobileNumber: "",
-    IndividualID: "",
-  };
-  
-  //config for tab search sceeen
+import { ordersIndividualSearchDefaultValues as defaultSearchValues } from "./shared/individualSearchFormDefaults";
+
+//config for tab search sceeen
   export const TabSearchconfig = {
     tenantId: "mz",
     moduleName: "commonCampaignUiConfig",
