@@ -1,6 +1,7 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { EditPencilIcon } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useMemo } from "react";
+import PropTypes from "prop-types";
 import { FlagIcon } from "../icons/svgIndex";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
 import ReactTooltip from "react-tooltip";
@@ -37,6 +38,50 @@ const LocationContent = ({ latitude = 17.2, longitude = 17.2 }) => {
       </div>
     </div>
   );
+};
+
+LocationContent.propTypes = {
+  latitude: PropTypes.number,
+  longitude: PropTypes.number,
+};
+
+// NOSONAR S6827 — styled div flagged by layout/CSS; wrapping in native <button> would require rework across scrutiny screens.
+function InteractiveFlagWrap({ onActivate, children }) {
+  const onKeyDown = (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    onActivate(e);
+  };
+  return (
+    <div role="button" tabIndex={0} className="flag" onClick={onActivate} onKeyDown={onKeyDown}>
+      {children}
+    </div>
+  );
+}
+
+// NOSONAR S6827 — preview tiles match doc viewer sizing; switching to native <button> needs coordinated CSS resets.
+function ClickableThumb({ style = {}, children, onOpen }) {
+  const onKeyDown = (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    onOpen(e);
+  };
+  return (
+    <div role="button" tabIndex={0} style={{ cursor: "pointer", ...style }} onClick={onOpen} onKeyDown={onKeyDown}>
+      {children}
+    </div>
+  );
+}
+
+InteractiveFlagWrap.propTypes = {
+  onActivate: PropTypes.func.isRequired,
+  children: PropTypes.node,
+};
+
+ClickableThumb.propTypes = {
+  onOpen: PropTypes.func.isRequired,
+  children: PropTypes.node,
+  style: PropTypes.object,
 };
 
 const badgeStyle = {
@@ -105,7 +150,7 @@ const CustomReviewCardRow = ({
     defaultValue = null,
     hideOnStatus = null,
   } = config;
-  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId(); // NOSONAR — Digit globals use window
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
 
   function getNestedValue(obj, path) {
@@ -124,13 +169,13 @@ const CustomReviewCardRow = ({
         const prop = match[1];
         const index = parseInt(match[2], 10);
 
-        if (value && value.hasOwnProperty(prop) && Array.isArray(value[prop])) {
+        if (value && Object.hasOwn(value, prop) && Array.isArray(value[prop])) {
           value = value[prop][index];
         } else {
           value = undefined;
         }
       } else {
-        if (value && value.hasOwnProperty(part)) {
+        if (value && Object.hasOwn(value, part)) {
           value = value[part];
         } else {
           value = undefined;
@@ -148,11 +193,14 @@ const CustomReviewCardRow = ({
     },
     [handleClickImage, isScrutiny, disableScrutiny, enableScrutinyField]
   );
+  // NOSONAR S3776 — large per-type scrutiny render switch; deeper extraction is a separate refactor.
   const renderCard = useMemo(() => {
     let bgclassname = "";
-    let showFlagIcon = isScrutiny && caseState === CaseWorkflowState.UNDER_SCRUTINY && (!disableScrutiny || enableScrutinyField) ? true : false;
+    let showFlagIcon = Boolean(
+      isScrutiny && caseState === CaseWorkflowState.UNDER_SCRUTINY && (!disableScrutiny || enableScrutinyField)
+    );
     if (isPrevScrutiny && (!disableScrutiny || enableScrutinyField)) {
-      showFlagIcon = prevDataError ? true : false;
+      showFlagIcon = Boolean(prevDataError);
     }
 
     if (isCitizen) showFlagIcon = false;
@@ -171,7 +219,7 @@ const CustomReviewCardRow = ({
     }
 
     switch (type) {
-      case "date":
+      case "date": {
         const dateValue = extractValue(data, value);
         const formattedDate = dateValue
           ? (() => {
@@ -195,12 +243,10 @@ const CustomReviewCardRow = ({
               <div className="label">{t(label)}</div>
               <div className="value">{formattedDate}</div>
               {showFlagIcon && (
-                <div
-                  className="flag"
-                  onClick={(e) => {
+                <InteractiveFlagWrap
+                  onActivate={(e) => {
                     handleOpenPopup(e, configKey, name, dataIndex, value);
                   }}
-                  key={dataIndex}
                 >
                   {dataError && isScrutiny && !isWarning ? (
                     <React.Fragment>
@@ -215,7 +261,7 @@ const CustomReviewCardRow = ({
                   ) : (
                     <FlagIcon />
                   )}
-                </div>
+                </InteractiveFlagWrap>
               )}
             </div>
             {dataError && isScrutiny && (
@@ -230,7 +276,8 @@ const CustomReviewCardRow = ({
             )}
           </div>
         );
-      case "title":
+      }
+      case "title": {
         const titleError = dataError?.title?.FSOError;
         const prevTitleError = prevDataError?.title?.FSOError;
         if (isPrevScrutiny && !prevTitleError && !disableScrutiny) {
@@ -261,9 +308,8 @@ const CustomReviewCardRow = ({
               )}
 
               {showFlagIcon && (
-                <div
-                  className="flag"
-                  onClick={(e) => {
+                <InteractiveFlagWrap
+                  onActivate={(e) => {
                     handleOpenPopup(
                       e,
                       configKey,
@@ -273,9 +319,7 @@ const CustomReviewCardRow = ({
                       Array.isArray(value) ? [...value, type, ...(badgeType ? [badgeType] : [])] : [value, type]
                     );
                   }}
-                  key={dataIndex}
                 >
-                  {/* {badgeType && <div>{extractValue(data, badgeType)}</div>} */}
                   {titleError ? (
                     <React.Fragment>
                       <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
@@ -289,7 +333,7 @@ const CustomReviewCardRow = ({
                   ) : (
                     <FlagIcon />
                   )}
-                </div>
+                </InteractiveFlagWrap>
               )}
             </div>
             {titleError && isScrutiny && (
@@ -305,7 +349,8 @@ const CustomReviewCardRow = ({
             )}
           </div>
         );
-      case "witnessTitle":
+      }
+      case "witnessTitle": {
         const witnessTitleError = dataError?.witnessTitle?.FSOError;
         const witnessPrevTitleError = prevDataError?.witnessTitle?.FSOError;
         if (isPrevScrutiny && !witnessPrevTitleError && !disableScrutiny) {
@@ -345,9 +390,8 @@ const CustomReviewCardRow = ({
               {badgeType && <div>{extractValue(data, badgeType)}</div>}
 
               {showFlagIcon && (
-                <div
-                  className="flag"
-                  onClick={(e) => {
+                <InteractiveFlagWrap
+                  onActivate={(e) => {
                     handleOpenPopup(
                       e,
                       configKey,
@@ -357,9 +401,7 @@ const CustomReviewCardRow = ({
                       Array.isArray(value) ? [...value, type] : [value, type]
                     );
                   }}
-                  key={dataIndex}
                 >
-                  {/* {badgeType && <div>{extractValue(data, badgeType)}</div>} */}
                   {witnessTitleError ? (
                     <React.Fragment>
                       <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
@@ -373,7 +415,7 @@ const CustomReviewCardRow = ({
                   ) : (
                     <FlagIcon />
                   )}
-                </div>
+                </InteractiveFlagWrap>
               )}
             </div>
             {witnessTitleError && isScrutiny && (
@@ -389,8 +431,8 @@ const CustomReviewCardRow = ({
             )}
           </div>
         );
-
-      case "textTitle":
+      }
+      case "textTitle": {
         const textTitle = dataError?.textTitle?.FSOError;
         const prevTextError = prevDataError?.textTitle?.FSOError;
         if (isPrevScrutiny && !prevTextError && !disableScrutiny) {
@@ -411,9 +453,8 @@ const CustomReviewCardRow = ({
               <div className="value">{textTitleValue}</div>
 
               {showFlagIcon && (
-                <div
-                  className="flag"
-                  onClick={(e) => {
+                <InteractiveFlagWrap
+                  onActivate={(e) => {
                     handleOpenPopup(
                       e,
                       configKey,
@@ -423,7 +464,6 @@ const CustomReviewCardRow = ({
                       Array.isArray(value) ? [...value, type] : [value, type]
                     );
                   }}
-                  key={dataIndex}
                 >
                   {textTitle ? (
                     <React.Fragment>
@@ -438,7 +478,7 @@ const CustomReviewCardRow = ({
                   ) : (
                     <FlagIcon />
                   )}
-                </div>
+                </InteractiveFlagWrap>
               )}
             </div>
             {textTitle && isScrutiny && (
@@ -454,8 +494,8 @@ const CustomReviewCardRow = ({
             )}
           </div>
         );
-
-      case "text":
+      }
+      case "text": {
         let textValue;
         if (Array.isArray(value)) {
           textValue = value.map((key) => extractValue(data, key)).join(" ");
@@ -476,7 +516,9 @@ const CustomReviewCardRow = ({
                 {textValue
                   ? (Array.isArray(textValue)
                       ? textValue.length > 0
-                        ? textValue.map((text, index) => <div key={index}>{t(text) || t("")}</div>)
+                        ? textValue.map((text, index) => (
+                            <div key={`text-row-${index}-${String(text)}`}>{t(text) || t("")}</div>
+                          ))
                         : t("")
                       : textValue && typeof textValue === "object"
                       ? textValue?.text || ""
@@ -488,12 +530,10 @@ const CustomReviewCardRow = ({
                   : defaultValue || t("")}
               </div>
               {showFlagIcon && (
-                <div
-                  className="flag"
-                  onClick={(e) => {
+                <InteractiveFlagWrap
+                  onActivate={(e) => {
                     handleOpenPopup(e, configKey, name, dataIndex, value);
                   }}
-                  key={dataIndex}
                 >
                   {dataError && isScrutiny ? (
                     <React.Fragment>
@@ -508,7 +548,7 @@ const CustomReviewCardRow = ({
                   ) : (
                     <FlagIcon />
                   )}
-                </div>
+                </InteractiveFlagWrap>
               )}
             </div>
             {dataError && isScrutiny && (
@@ -523,7 +563,8 @@ const CustomReviewCardRow = ({
             )}
           </div>
         );
-      case "formattedText":
+      }
+      case "formattedText": {
         let formattedValue;
         if (Array.isArray(value)) {
           formattedValue = value.map((key) => extractValue(data, key)).join(" ");
@@ -556,12 +597,10 @@ const CustomReviewCardRow = ({
                 }}
               ></div>
               {showFlagIcon && (
-                <div
-                  className="flag"
-                  onClick={(e) => {
+                <InteractiveFlagWrap
+                  onActivate={(e) => {
                     handleOpenPopup(e, configKey, name, dataIndex, value);
                   }}
-                  key={dataIndex}
                 >
                   {dataError && isScrutiny ? (
                     <React.Fragment>
@@ -576,7 +615,7 @@ const CustomReviewCardRow = ({
                   ) : (
                     <FlagIcon />
                   )}
-                </div>
+                </InteractiveFlagWrap>
               )}
             </div>
 
@@ -592,7 +631,8 @@ const CustomReviewCardRow = ({
             )}
           </div>
         );
-      case "infoBox":
+      }
+      case "infoBox": {
         if (!data?.[value]?.header) {
           return null;
         }
@@ -603,16 +643,14 @@ const CustomReviewCardRow = ({
                 variant={"default"}
                 label={t(isScrutiny || isJudge ? data?.[value]?.scrutinyHeader || data?.[value]?.header : data?.[value]?.header)}
                 additionalElements={[
-                  <React.Fragment>
-                    {Array.isArray(data?.[value]?.data) && (
-                      <ul style={{ listStyleType: "disc", margin: "4px" }}>
-                        {data?.[value]?.data.map((data) => (
-                          <li>{t(data)}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </React.Fragment>,
-                ]}
+                  Array.isArray(data?.[value]?.data) ? (
+                    <ul style={{ listStyleType: "disc", margin: "4px" }} key={`info-ul-${value}`}>
+                      {data?.[value]?.data.map((line, liIdx) => (
+                        <li key={`info-${value}-${liIdx}-${String(line)}`}>{t(line)}</li>
+                      ))}
+                    </ul>
+                  ) : null,
+                ].filter(Boolean)}
                 inline
                 text={typeof data?.[value]?.data === "string" && data?.[value]?.data}
                 textStyle={{}}
@@ -621,8 +659,8 @@ const CustomReviewCardRow = ({
             </div>
           </div>
         );
-
-      case "amount":
+      }
+      case "amount": {
         let amountValue = extractValue(data, value);
         amountValue = amountValue ? convertToIndianCurrency(amountValue, "en-IN", "INR") : t("");
         return (
@@ -631,12 +669,10 @@ const CustomReviewCardRow = ({
               <div className="label">{t(label)}</div>
               <div className="value"> {amountValue} </div>
               {showFlagIcon && (
-                <div
-                  className="flag"
-                  onClick={(e) => {
+                <InteractiveFlagWrap
+                  onActivate={(e) => {
                     handleOpenPopup(e, configKey, name, dataIndex, value);
                   }}
-                  key={dataIndex}
                 >
                   {dataError && isScrutiny ? (
                     <React.Fragment>
@@ -651,7 +687,7 @@ const CustomReviewCardRow = ({
                   ) : (
                     <FlagIcon />
                   )}
-                </div>
+                </InteractiveFlagWrap>
               )}
             </div>
             {dataError && isScrutiny && (
@@ -666,7 +702,8 @@ const CustomReviewCardRow = ({
             )}
           </div>
         );
-      case "phonenumber":
+      }
+      case "phonenumber": {
         const numbers = extractValue(data, value);
         return (
           <div className={`phone-number-main ${bgclassname}`}>
@@ -675,19 +712,19 @@ const CustomReviewCardRow = ({
               <div className="value">
                 {Array.isArray(numbers)
                   ? numbers.length > 0
-                    ? numbers.map((number, index) => <div key={index}>{`+91-${number}`}</div>)
+                    ? numbers.map((number, index) => (
+                        <div key={`phone-${String(number)}-${index}`}>{`+91-${number}`}</div>
+                      ))
                     : t("")
                   : numbers
                   ? `+91-${numbers}`
                   : t("")}
               </div>
               {showFlagIcon && (
-                <div
-                  className="flag"
-                  onClick={(e) => {
+                <InteractiveFlagWrap
+                  onActivate={(e) => {
                     handleOpenPopup(e, configKey, name, dataIndex, value);
                   }}
-                  key={dataIndex}
                 >
                   {dataError && isScrutiny ? (
                     <React.Fragment>
@@ -702,7 +739,7 @@ const CustomReviewCardRow = ({
                   ) : (
                     <FlagIcon />
                   )}
-                </div>
+                </InteractiveFlagWrap>
               )}
             </div>
             {dataError && isScrutiny && (
@@ -717,7 +754,8 @@ const CustomReviewCardRow = ({
             )}
           </div>
         );
-      case "image":
+      }
+      case "image": {
         let FSOErrors = [];
         let systemErrors = [];
         if (typeof dataError === "object") {
@@ -767,10 +805,9 @@ const CustomReviewCardRow = ({
                         return file.map((nestedData, index) => {
                           if (nestedData?.fileStore) {
                             return (
-                              <div
+                              <ClickableThumb
                                 key={`${nestedData.fileStore}-${pathKey}-${index}`}
-                                style={{ cursor: "pointer" }}
-                                onClick={() => {
+                                onOpen={() => {
                                   handleImageClick(configKey, name, dataIndex, pathKey, nestedData, [pathKey], dataError);
                                   if (!isScrutiny)
                                     setShowImageModal({
@@ -796,16 +833,15 @@ const CustomReviewCardRow = ({
                                   documentName={nestedData?.fileName || nestedData?.additionalDetails?.fileName}
                                   preview
                                 />
-                              </div>
+                              </ClickableThumb>
                             );
                           }
                           if (nestedData?.document) {
                             return nestedData.document.map((docItem, docIndex) => {
                               return (
-                                <div
+                                <ClickableThumb
                                   key={`${docItem?.fileStore || docIndex}-${pathKey}-${docIndex}`}
-                                  style={{ cursor: "pointer" }}
-                                  onClick={() => {
+                                  onOpen={() => {
                                     handleImageClick(configKey, name, dataIndex, pathKey, docItem, [pathKey], dataError);
                                     if (!isScrutiny)
                                       setShowImageModal({
@@ -831,7 +867,7 @@ const CustomReviewCardRow = ({
                                     documentName={docItem?.fileName}
                                     preview
                                   />
-                                </div>
+                                </ClickableThumb>
                               );
                             });
                           }
@@ -840,10 +876,9 @@ const CustomReviewCardRow = ({
                       }
                       if (file?.fileStore) {
                         return (
-                          <div
+                          <ClickableThumb
                             key={`filestore-${pathKey}-${file.fileStore}-${file.fileName}`}
-                            style={{ cursor: "pointer" }}
-                            onClick={() => {
+                            onOpen={() => {
                               handleImageClick(configKey, name, dataIndex, pathKey, file, [pathKey], dataError);
                             }}
                           >
@@ -857,7 +892,7 @@ const CustomReviewCardRow = ({
                               documentName={data?.fileName}
                               preview
                             />
-                          </div>
+                          </ClickableThumb>
                         );
                       }
                       if (file?.fileName) {
@@ -903,12 +938,10 @@ const CustomReviewCardRow = ({
                   : null}
               </div>
               {showFlagIcon && (
-                <div
-                  className="flag"
-                  onClick={(e) => {
+                <InteractiveFlagWrap
+                  onActivate={(e) => {
                     handleOpenPopup(e, configKey, name, dataIndex, Array.isArray(value) ? type : value, [...valuesAvailable, type]);
                   }}
-                  key={dataIndex}
                 >
                   {isScrutiny &&
                     (FSOErrors?.length > 0 ? (
@@ -924,14 +957,14 @@ const CustomReviewCardRow = ({
                     ) : (
                       <FlagIcon />
                     ))}
-                </div>
+                </InteractiveFlagWrap>
               )}
             </div>
             {FSOErrors?.length > 0 &&
               isScrutiny &&
               FSOErrors.map((error, ind) => {
                 return (
-                  <div className="scrutiny-error input" key={ind}>
+                  <div className="scrutiny-error input" key={`fso-${ind}-${error?.FSOError}-${error?.fileName ?? ""}`}>
                     {bgclassname === "preverror" ? (
                       <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
                     ) : (
@@ -941,7 +974,7 @@ const CustomReviewCardRow = ({
                   </div>
                 );
               })}
-            {!(FSOErrors?.length > 0) &&
+            {(FSOErrors?.length ?? 0) <= 0 &&
               systemErrors?.length > 0 &&
               isScrutiny &&
               systemErrors.map((error, ind) => {
@@ -951,7 +984,7 @@ const CustomReviewCardRow = ({
                       width: "fit-content",
                     }}
                     className="scrutiny-error input"
-                    key={ind}
+                    key={`sys-${ind}-${error?.systemError}-${error?.fileName ?? ""}`}
                   >
                     {bgclassname === "preverror" ? (
                       <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
@@ -976,7 +1009,8 @@ const CustomReviewCardRow = ({
               })}
           </div>
         );
-      case "address":
+      }
+      case "address": {
         const addressDetails = extractValue(data, value);
         let address = [""];
         if (Array.isArray(addressDetails)) {
@@ -1018,7 +1052,7 @@ const CustomReviewCardRow = ({
             <div className="address" style={{ position: "relative" }}>
               <div className="address-container" style={{ display: "flex", flexDirection: "column", gap: "1rem", width: "100%" }}>
                 {(address?.length ? address : [{}])?.map((item, index) => (
-                  <div key={index} className="address-block">
+                  <div key={`addr-${index}-${String(item?.address).slice(0, 48)}`} className="address-block">
                     <div
                       className="row"
                       style={{
@@ -1056,12 +1090,10 @@ const CustomReviewCardRow = ({
               </div>
 
               {showFlagIcon && (
-                <div
-                  className="flag"
-                  onClick={(e) => {
+                <InteractiveFlagWrap
+                  onActivate={(e) => {
                     handleOpenPopup(e, configKey, name, dataIndex, value);
                   }}
-                  key={dataIndex}
                 >
                   {dataError && isScrutiny ? (
                     <React.Fragment>
@@ -1076,7 +1108,7 @@ const CustomReviewCardRow = ({
                   ) : (
                     <FlagIcon />
                   )}
-                </div>
+                </InteractiveFlagWrap>
               )}
             </div>
             {dataError && isScrutiny && (
@@ -1091,23 +1123,25 @@ const CustomReviewCardRow = ({
             )}
           </div>
         );
-      default:
+      }
+      default: {
         const defaulValue = extractValue(data, value);
         return (
           <div>
             <div className="text">
               <div className="label">{t(label)}</div>
               <div className="value">
-                {Array.isArray(defaulValue) && defaulValue.map((text) => <div> {text || t("")} </div>)}
+                {Array.isArray(defaulValue) &&
+                  defaulValue.map((text, tdIdx) => (
+                    <div key={`default-txt-${tdIdx}-${String(text)}`}>{text || t("")}</div>
+                  ))}
                 {(!Array.isArray(defaulValue) && defaulValue) || t("")}
               </div>
               {showFlagIcon && (
-                <div
-                  className="flag"
-                  onClick={(e) => {
+                <InteractiveFlagWrap
+                  onActivate={(e) => {
                     handleOpenPopup(e, configKey, name, dataIndex, value);
                   }}
-                  key={dataIndex}
                 >
                   {dataError && isScrutiny ? (
                     <React.Fragment>
@@ -1122,7 +1156,7 @@ const CustomReviewCardRow = ({
                   ) : (
                     <FlagIcon />
                   )}
-                </div>
+                </InteractiveFlagWrap>
               )}
             </div>
             <div className="scrutiny-error input">
@@ -1135,6 +1169,7 @@ const CustomReviewCardRow = ({
             </div>
           </div>
         );
+      }
     }
   }, [
     isScrutiny,

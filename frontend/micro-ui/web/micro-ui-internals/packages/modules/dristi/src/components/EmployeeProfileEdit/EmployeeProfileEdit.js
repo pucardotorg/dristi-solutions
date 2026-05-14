@@ -1,12 +1,12 @@
 import { CardLabel, LabelFieldPair, MobileNumber, TextInput, CardLabelError, Loader, SubmitBar } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import UploadDrawer from "../ImageUpload/UploadDrawer";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
-const EmployeeProfileEdit = ({ stateCode, userType, cityDetails }) => {
+const EmployeeProfileEdit = ({ stateCode, userType }) => {
   const { t } = useTranslation();
-  const stateId = Digit.ULBService.getStateId();
   const tenant = Digit.ULBService.getCurrentTenantId();
   const userInfo = Digit.UserService.getUser()?.info || {};
   const [userDetails, setUserDetails] = useState(null);
@@ -28,16 +28,19 @@ const EmployeeProfileEdit = ({ stateCode, userType, cityDetails }) => {
     const uuid = userInfo?.uuid;
     if (uuid) {
       const usersResponse = await Digit.UserService.userSearch(tenant, { uuid: [uuid] }, {});
-      usersResponse && usersResponse.user && usersResponse.user.length && setUserDetails(usersResponse.user[0]);
+      if (usersResponse?.user?.length) {
+        setUserDetails(usersResponse.user[0]);
+      }
     }
   };
 
   React.useEffect(() => {
-    window.addEventListener("resize", () => setWindowWidth(window.innerWidth));
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener("resize", () => setWindowWidth(window.innerWidth));
+      window.removeEventListener("resize", handleResize);
     };
-  });
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -47,9 +50,20 @@ const EmployeeProfileEdit = ({ stateCode, userType, cityDetails }) => {
     setLoading(false);
   }, [userDetails !== null]);
 
-  let validation = {};
   const editScreen = false; // To-do: Deubug and make me dynamic or remove if not needed
-  const TogleforPassword = () => setChangepassword(!changepassword);
+  const citizenNameValidationProps = {
+    isRequired: true,
+    pattern: "^[a-zA-Z-.`' ]*$",
+    type: "tel",
+    title: t("CORE_COMMON_PROFILE_NAME_ERROR_MESSAGE"),
+  };
+  const employeeNameValidationProps = {
+    isRequired: true,
+    pattern: "^[a-zA-Z-.`' ]*$",
+    type: "text",
+    title: t("CORE_COMMON_PROFILE_NAME_ERROR_MESSAGE"),
+  };
+  const togglePassword = () => setChangepassword(!changepassword);
   const closeFileUploadDrawer = () => setOpenUploadSide(false);
 
   const setUserName = (value) => {
@@ -137,16 +151,16 @@ const EmployeeProfileEdit = ({ stateCode, userType, cityDetails }) => {
         }
       }
 
-      const { responseInfo, user } = await Digit.UserService.updateUser(requestData, stateCode);
+      const { responseInfo } = await Digit.UserService.updateUser(requestData, stateCode);
 
       if (responseInfo && responseInfo.status === "200") {
-        const user = Digit.UserService.getUser();
+        const sessionUser = Digit.UserService.getUser();
 
-        if (user) {
+        if (sessionUser) {
           Digit.UserService.setUser({
-            ...user,
+            ...sessionUser,
             info: {
-              ...user.info,
+              ...sessionUser.info,
               name,
               mobileNumber,
             },
@@ -173,7 +187,7 @@ const EmployeeProfileEdit = ({ stateCode, userType, cityDetails }) => {
               setShowToast({ label: t("CORE_COMMON_PROFILE_UPDATE_SUCCESS_WITH_PASSWORD"), error: false });
               setTimeout(() => Digit.UserService.logout(), 2000);
             } else {
-              throw "";
+              throw new Error("CORE_COMMON_PROFILE_UPDATE_ERROR_WITH_PASSWORD");
             }
           } catch (error) {
             throw JSON.stringify({
@@ -188,20 +202,23 @@ const EmployeeProfileEdit = ({ stateCode, userType, cityDetails }) => {
         setShowToast({ label: t("CORE_COMMON_PROFILE_UPDATE_SUCCESS"), error: false });
       }
     } catch (error) {
-      const errorObj = JSON.parse(error);
+      let messageKey = "CORE_COMMON_PROFILE_UPDATE_ERROR";
+      if (typeof error === "string") {
+        try {
+          const parsed = JSON.parse(error);
+          if (parsed?.message) messageKey = parsed.message;
+        } catch {
+          messageKey = error || messageKey;
+        }
+      } else if (error && typeof error === "object") {
+        messageKey = error.message || messageKey;
+      }
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-      setShowToast({ label: t(errorObj.message), error: true, errorId });
+      setShowToast({ label: t(messageKey), error: true, errorId });
     }
 
     setLoading(false);
   };
-
-  let menu = [];
-  const { data: Menu } = Digit.Hooks.useGenderMDMS(stateId, "common-masters", "GenderType");
-  Menu &&
-    Menu.map((genderDetails) => {
-      menu.push({ i18nKey: `PT_COMMON_GENDER_${genderDetails.code}`, code: `${genderDetails.code}`, value: `${genderDetails.code}` });
-    });
 
   const setFileStoreId = async (fileStoreId) => {
     setProfilePic(fileStoreId);
@@ -299,12 +316,7 @@ const EmployeeProfileEdit = ({ stateCode, userType, cityDetails }) => {
                     name="name"
                     value={name}
                     onChange={(e) => setUserName(e.target.value)}
-                    {...(validation = {
-                      isRequired: true,
-                      pattern: "^[a-zA-Z-.`' ]*$",
-                      type: "tel",
-                      title: t("CORE_COMMON_PROFILE_NAME_ERROR_MESSAGE"),
-                    })}
+                    {...citizenNameValidationProps}
                     disable={editScreen || true}
                   />
                   {errors?.userName && <CardLabelError> {t(errors?.userName?.message)} </CardLabelError>}
@@ -312,6 +324,7 @@ const EmployeeProfileEdit = ({ stateCode, userType, cityDetails }) => {
               </LabelFieldPair>
 
               <button
+                type="button"
                 onClick={updateProfile}
                 style={{
                   marginTop: "24px",
@@ -349,12 +362,7 @@ const EmployeeProfileEdit = ({ stateCode, userType, cityDetails }) => {
                     value={name}
                     onChange={(e) => setUserName(e.target.value)}
                     placeholder="Enter Your Name"
-                    {...(validation = {
-                      isRequired: true,
-                      pattern: "^[a-zA-Z-.`' ]*$",
-                      type: "text",
-                      title: t("CORE_COMMON_PROFILE_NAME_ERROR_MESSAGE"),
-                    })}
+                    {...employeeNameValidationProps}
                     disable={editScreen || true}
                   />
                   {errors?.userName && <CardLabelError style={{ margin: 0, padding: 0 }}> {t(errors?.userName?.message)} </CardLabelError>}
@@ -386,9 +394,22 @@ const EmployeeProfileEdit = ({ stateCode, userType, cityDetails }) => {
 
               <LabelFieldPair>
                 <div>
-                  <a style={{ color: "orange", cursor: "default", marginBottom: "5", cursor: "pointer" }} onClick={TogleforPassword}>
+                  <button
+                    type="button"
+                    onClick={togglePassword}
+                    style={{
+                      color: "orange",
+                      marginBottom: "5px",
+                      cursor: "pointer",
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      font: "inherit",
+                      textDecoration: "underline",
+                    }}
+                  >
                     {t("CORE_COMMON_CHANGE_PASSWORD")}
-                  </a>
+                  </button>
                   {changepassword ? (
                     <div style={{ marginTop: "10px" }}>
                       <LabelFieldPair style={{ display: "flex" }}>
@@ -512,6 +533,11 @@ const EmployeeProfileEdit = ({ stateCode, userType, cityDetails }) => {
       )}
     </div>
   );
+};
+
+EmployeeProfileEdit.propTypes = {
+  stateCode: PropTypes.string,
+  userType: PropTypes.string,
 };
 
 export default EmployeeProfileEdit;
