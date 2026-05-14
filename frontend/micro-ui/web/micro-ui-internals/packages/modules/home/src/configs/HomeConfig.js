@@ -1,7 +1,3 @@
-import { TabBenchSearchConfig } from "./BenchHomeConfig";
-import { TabCourtRoomSearchConfig } from "./CourtRoomHomeConfig";
-import { TabFSOSearchConfig } from "./FSOHomeConfig";
-import { TabJudgeSearchConfig } from "./JudgeHomeConfig";
 import { TabLitigantSearchConfig } from "./LitigantHomeConfig";
 import { defaultSearchValues, userTypeOptions } from "./shared/employeeHomeSearchDefaults";
 
@@ -1017,99 +1013,60 @@ export const getOnRowClickConfig = (roles) => {
 };
 
 export const rolesToConfigMapping = [
-  {
-    roles: ["CASE_VIEWER", "JUDGE_ROLE"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
-    config: TabJudgeSearchConfig,
-    isJudge: true,
-    onRowClickRoute: {
-      dependentUrl: "/dristi/admission",
-      urlDependentOn: "status",
-      urlDependentValue: "",
-      params: [
-        { key: "filingNumber", value: "filingNumber" },
-        { key: "caseId", value: "id" },
-      ],
-    },
-  },
+  // {
+  //   roles: ["CASE_VIEWER", "JUDGE_ROLE"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
+  //   config: TabJudgeSearchConfig,
+  //   isJudge: true,
+  //   onRowClickRoute: {
+  //     dependentUrl: "/dristi/admission",
+  //     urlDependentOn: "status",
+  //     urlDependentValue: "",
+  //     params: [
+  //       { key: "filingNumber", value: "filingNumber" },
+  //       { key: "caseId", value: "id" },
+  //     ],
+  //   },
+  // },
   // {
   //   roles: ["CASE_VIEWER"],
   //   config: getUnifiedEmployeeConfig(["CASE_VIEWER"]),
   //   isJudge: true,
   //   onRowClickRoute: getOnRowClickConfig(["CASE_VIEWER"]),
   // },
-  {
-    roles: ["TYPIST_ROLE"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
-    config: TabJudgeSearchConfig,
-    isTypist: true,
-    onRowClickRoute: {
-      dependentUrl: "/dristi/admission",
-      urlDependentOn: "status",
-      urlDependentValue: "",
-      params: [
-        { key: "filingNumber", value: "filingNumber" },
-        { key: "caseId", value: "id" },
-      ],
-    },
-  },
-  {
-    roles: ["CASE_VIEWER", "HEARING_CREATOR"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
-    config: TabJudgeSearchConfig,
-    isCourtOfficer: true,
-    onRowClickRoute: {
-      dependentUrl: "/dristi/admission",
-      urlDependentOn: "status",
-      urlDependentValue: "",
-      params: [
-        { key: "filingNumber", value: "filingNumber" },
-        { key: "caseId", value: "id" },
-      ],
-    },
-  },
-  {
-    roles: ["CASE_VIEWER", "CASE_REVIEWER"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
-    config: TabFSOSearchConfig,
-    isFSO: true,
-    onRowClickRoute: {
-      dependentUrl: "/dristi/case",
-      urlDependentOn: "status",
-      urlDependentValue: "UNDER_SCRUTINY",
-      params: [{ key: "caseId", value: "id" }],
-    },
-  },
+  // {
+  //   roles: ["TYPIST_ROLE"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
+  //   config: TabJudgeSearchConfig,
+  //   isTypist: true,
+  //   onRowClickRoute: {
+  //     dependentUrl: "/dristi/admission",
+  //     urlDependentOn: "status",
+  //     urlDependentValue: "",
+  //     params: [
+  //       { key: "filingNumber", value: "filingNumber" },
+  //       { key: "caseId", value: "id" },
+  //     ],
+  //   },
+  // },
+  // {
+  //   roles: ["CASE_VIEWER", "HEARING_CREATOR"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
+  //   config: TabJudgeSearchConfig,
+  //   isCourtOfficer: true,
+  //   onRowClickRoute: {
+  //     dependentUrl: "/dristi/admission",
+  //     urlDependentOn: "status",
+  //     urlDependentValue: "",
+  //     params: [
+  //       { key: "filingNumber", value: "filingNumber" },
+  //       { key: "caseId", value: "id" },
+  //     ],
+  //   },
+  // },
   // {
   //   roles: ["CASE_VIEWER", "CASE_REVIEWER"],
   //   config: getUnifiedEmployeeConfig(["CASE_VIEWER", "CASE_REVIEWER"]),
   //   isFSO: true,
   //   onRowClickRoute: getOnRowClickConfig(["CASE_VIEWER", "CASE_REVIEWER"]),
   // },
-  {
-    roles: ["CASE_VIEWER", "BENCH_CLERK"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
-    config: TabBenchSearchConfig,
-    isCourtOfficer: true,
-    onRowClickRoute: {
-      dependentUrl: "/dristi/admission",
-      urlDependentOn: "status",
-      urlDependentValue: "",
-      params: [
-        { key: "filingNumber", value: "filingNumber" },
-        { key: "caseId", value: "id" },
-      ],
-    },
-  },
-  {
-    roles: ["CASE_VIEWER", "COURT_ADMIN", "COURT_ROOM_MANAGER"], // this mapping is redundant now, we are now using getUnifiedEmployeeConfig logic for employees config.
-    config: TabCourtRoomSearchConfig,
-    isCourtOfficer: true,
-    onRowClickRoute: {
-      dependentUrl: "/dristi/admission",
-      urlDependentOn: "status",
-      urlDependentValue: "",
-      params: [
-        { key: "filingNumber", value: "filingNumber" },
-        { key: "caseId", value: "id" },
-      ],
-    },
-  },
 ];
 
 export const litigantConfig = {
