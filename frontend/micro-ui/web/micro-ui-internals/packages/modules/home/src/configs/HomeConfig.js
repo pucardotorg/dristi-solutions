@@ -3,6 +3,7 @@ import { TabCourtRoomSearchConfig } from "./CourtRoomHomeConfig";
 import { TabFSOSearchConfig } from "./FSOHomeConfig";
 import { TabJudgeSearchConfig } from "./JudgeHomeConfig";
 import { TabLitigantSearchConfig } from "./LitigantHomeConfig";
+import { defaultSearchValues, userTypeOptions } from "./shared/employeeHomeSearchDefaults";
 
 export const CaseWorkflowState = {
   CASE_REASSIGNED: "CASE_REASSIGNED",
@@ -12,111 +13,7 @@ export const CaseWorkflowState = {
   PENDING_ADMISSION: "PENDING_ADMISSION",
 };
 
-export const userTypeOptions = [
-  {
-    code: "LITIGANT",
-    name: "LITIGANT_TEXT",
-    showBarDetails: false,
-    isVerified: false,
-    role: [
-      "CASE_CREATOR",
-      "CASE_EDITOR",
-      "CASE_VIEWER",
-      "EVIDENCE_CREATOR",
-      "EVIDENCE_VIEWER",
-      "EVIDENCE_EDITOR",
-      "APPLICATION_CREATOR",
-      "APPLICATION_VIEWER",
-      "HEARING_VIEWER",
-      "ORDER_VIEWER",
-      "SUBMISSION_CREATOR",
-      "SUBMISSION_RESPONDER",
-      "SUBMISSION_DELETE",
-      "TASK_VIEWER",
-      "ADVOCATE_VIEWER",
-      "PENDING_TASK_CREATOR",
-      "BAIL_BOND_CREATOR",
-      "BAIL_BOND_VIEWER",
-      "BAIL_BOND_EDITOR",
-    ],
-    subText: "LITIGANT_SUB_TEXT",
-  },
-  {
-    code: "ADVOCATE",
-    name: "ADVOCATE_TEXT",
-    showBarDetails: true,
-    isVerified: true,
-    hasBarRegistrationNo: true,
-    role: [
-      "ADVOCATE_ROLE",
-      "CASE_CREATOR",
-      "CASE_EDITOR",
-      "CASE_VIEWER",
-      "EVIDENCE_CREATOR",
-      "EVIDENCE_VIEWER",
-      "EVIDENCE_EDITOR",
-      "APPLICATION_CREATOR",
-      "APPLICATION_VIEWER",
-      "HEARING_VIEWER",
-      "ORDER_VIEWER",
-      "SUBMISSION_CREATOR",
-      "SUBMISSION_RESPONDER",
-      "SUBMISSION_DELETE",
-      "TASK_VIEWER",
-      "USER_REGISTER",
-      "ADVOCATE_VIEWER",
-      "ADVOCATE_APPLICATION_VIEWER",
-      "PENDING_TASK_CREATOR",
-      "BAIL_BOND_CREATOR",
-      "BAIL_BOND_VIEWER",
-      "BAIL_BOND_EDITOR",
-    ],
-    apiDetails: {
-      serviceName: "/advocate/v1/_create",
-      requestKey: "advocate",
-      AdditionalFields: ["barRegistrationNumber"],
-    },
-    subText: "ADVOCATE_SUB_TEXT",
-  },
-  {
-    code: "ADVOCATE_CLERK",
-    name: "ADVOCATE_CLERK_TEXT",
-    showBarDetails: true,
-    hasStateRegistrationNo: true,
-    isVerified: true,
-    role: [
-      "ADVOCATE_CLERK_ROLE",
-      "CASE_CREATOR",
-      "CASE_EDITOR",
-      "CASE_VIEWER",
-      "EVIDENCE_CREATOR",
-      "EVIDENCE_VIEWER",
-      "EVIDENCE_EDITOR",
-      "APPLICATION_CREATOR",
-      "APPLICATION_VIEWER",
-      "HEARING_VIEWER",
-      "ORDER_VIEWER",
-      "SUBMISSION_CREATOR",
-      "SUBMISSION_RESPONDER",
-      "SUBMISSION_DELETE",
-      "TASK_VIEWER",
-      "USER_REGISTER",
-      "ADVOCATE_VIEWER",
-      "ADVOCATE_APPLICATION_VIEWER",
-      "PENDING_TASK_CREATOR",
-      "BAIL_BOND_CREATOR",
-      "BAIL_BOND_VIEWER",
-      "BAIL_BOND_EDITOR",
-    ],
-    apiDetails: {
-      serviceName: "/advocate/clerk/v1/_create",
-      requestKey: "clerk",
-      AdditionalFields: ["stateRegnNumber"],
-    },
-
-    subText: "ADVOCATE_CLERK_SUB_TEXT",
-  },
-];
+export { userTypeOptions };
 
 export const TabUnifiedEmployeeSearchConfig = {
   tenantId: Digit.ULBService.getCurrentTenantId(),
@@ -165,12 +62,7 @@ export const TabUnifiedEmployeeSearchConfig = {
             primaryLabel: "ES_COMMON_SEARCH",
             secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
             minReqFields: 0,
-            defaultValues: {
-              caseSearchText: "",
-              caseType: "NIA S138",
-              substage: "",
-              secondaryStage: "",
-            },
+            defaultValues: defaultSearchValues,
             fields: [
               {
                 label: "CASE_TYPE",
@@ -338,12 +230,7 @@ export const TabUnifiedEmployeeSearchConfig = {
             primaryLabel: "ES_COMMON_SEARCH",
             secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
             minReqFields: 0,
-            defaultValues: {
-              caseSearchText: "",
-              caseType: "NIA S138",
-              substage: "",
-              secondaryStage: "",
-            },
+            defaultValues: defaultSearchValues,
             fields: [
               {
                 label: "CASE_TYPE",
@@ -509,12 +396,7 @@ export const TabUnifiedEmployeeSearchConfig = {
             primaryLabel: "ES_COMMON_SEARCH",
             secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
             minReqFields: 0,
-            defaultValues: {
-              caseSearchText: "",
-              caseType: "NIA S138",
-              substage: "",
-              secondaryStage: "",
-            },
+            defaultValues: defaultSearchValues,
             fields: [
               {
                 type: "component",
@@ -686,12 +568,7 @@ export const TabUnifiedEmployeeSearchConfig = {
             primaryLabel: "ES_COMMON_SEARCH",
             secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
             minReqFields: 0,
-            defaultValues: {
-              caseSearchText: "",
-              caseType: "NIA S138",
-              substage: "",
-              secondaryStage: "",
-            },
+            defaultValues: defaultSearchValues,
             fields: [
               {
                 type: "component",
@@ -833,12 +710,7 @@ export const TabUnifiedEmployeeSearchConfig = {
             primaryLabel: "ES_COMMON_SEARCH",
             secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
             minReqFields: 0,
-            defaultValues: {
-              caseSearchText: "",
-              caseType: "NIA S138",
-              substage: "",
-              secondaryStage: "",
-            },
+            defaultValues: defaultSearchValues,
             fields: [
               {
                 type: "component",
@@ -955,10 +827,7 @@ export const CaseReviewerAdditionalTab = {
         secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
         minReqFields: 0,
         defaultValues: {
-          caseSearchText: "",
-          caseType: "NIA S138",
-          substage: "",
-          secondaryStage: "",
+          ...defaultSearchValues,
           sortCaseListByDate: {
             sortBy: "createdtime",
             order: "desc",

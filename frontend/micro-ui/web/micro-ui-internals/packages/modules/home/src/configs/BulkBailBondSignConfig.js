@@ -1,8 +1,4 @@
-import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
-
-const defaultSearchValues = {
-  caseTitle: "",
-};
+import { bulkInboxCaseTitleSearchDefaults as defaultSearchValues } from "./shared/bulkInboxCaseTitleDefaults";
 
 const limit = parseInt(sessionStorage.getItem("bulkBailBondSignlimit") || 10);
 const offset = parseInt(sessionStorage.getItem("bulkBailBondSignoffset") || 0);

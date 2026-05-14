@@ -1,6 +1,4 @@
-const defaultSearchValues = {
-  caseTitle: "",
-};
+import { bulkInboxCaseTitleSearchDefaults as defaultSearchValues } from "./shared/bulkInboxCaseTitleDefaults";
 
 const limit = parseInt(sessionStorage.getItem("bulkWitnessDepositionSignlimit") || 10);
 const offset = parseInt(sessionStorage.getItem("bulkWitnessDepositionSignoffset") || 0);
