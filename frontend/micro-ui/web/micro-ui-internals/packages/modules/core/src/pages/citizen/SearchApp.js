@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import AuditSearchApplication from "../../components/Search";
-const Search = ({ path }) => {
+
+const Search = () => {
   const { t } = useTranslation();
   const tenantId = Digit.ULBService.getCitizenCurrentTenant();
   const [payload, setPayload] = useState({});
@@ -36,7 +37,7 @@ const Search = ({ path }) => {
     const filteredData = Object.keys(data)
       .filter((k) => data[k])
       .reduce((acc, key) => {
-        acc[key] = typeof data[key] === "object" ? data[key] : data[key];
+        acc[key] = data[key];
         return acc;
       }, {});
     setPayload(filteredData);
@@ -68,14 +69,20 @@ const Search = ({ path }) => {
     config,
   });
 
+  let tableData = "";
+  if (!isLoading) {
+    tableData = data?.ElasticSearchData?.length > 0 ? data?.ElasticSearchData : { display: "ES_COMMON_NO_DATA" };
+  }
+
   return (
     <AuditSearchApplication
       t={t}
       tenantId={tenantId}
       onSubmit={onSubmit}
-      data={!isLoading ? (data?.ElasticSearchData?.length > 0 ? data?.ElasticSearchData : { display: "ES_COMMON_NO_DATA" }) : ""}
+      data={tableData}
       count={data?.ElasticSearchData?.length}
     />
   );
 };
+
 export default Search;

@@ -5,9 +5,35 @@ import { useHistory } from "react-router-dom";
 import Background from "../../../components/Background";
 import Header from "../../../components/Header";
 
+const CityDropdown = ({ cities, cityName, onChange, customProps }) => (
+  <Dropdown
+    option={cities}
+    optionKey="name"
+    id={cityName}
+    className="login-city-dd"
+    select={(d) => onChange(d)}
+    {...customProps}
+  />
+);
+
+CityDropdown.propTypes = {
+  cities: PropTypes.array,
+  cityName: PropTypes.string,
+  onChange: PropTypes.func,
+  customProps: PropTypes.object,
+};
+
+const buildCityComponent = (cities, cityName) => {
+  const Wrapper = ({ onChange }, customProps) => (
+    <CityDropdown cities={cities} cityName={cityName} onChange={onChange} customProps={customProps} />
+  );
+  Wrapper.propTypes = { onChange: PropTypes.func };
+  return Wrapper;
+};
+
 const ForgotPassword = ({ config: propsConfig, t }) => {
   const { data: cities, isLoading } = Digit.Hooks.useTenants();
-  const [user, setUser] = useState(null);
+  const [user] = useState(null);
   const history = useHistory();
   const [showToast, setShowToast] = useState(null);
   const getUserType = () => Digit.UserService.getType();
@@ -71,18 +97,7 @@ const ForgotPassword = ({ config: propsConfig, t }) => {
           populators: {
             name: city.name,
             customProps: {},
-            component: (props, customProps) => (
-              <Dropdown
-                option={cities}
-                optionKey="name"
-                id={city.name}
-                className="login-city-dd"
-                select={(d) => {
-                  props.onChange(d);
-                }}
-                {...customProps}
-              />
-            ),
+            component: buildCityComponent(cities, city.name),
           },
           isMandatory: true,
         },
@@ -122,11 +137,16 @@ const ForgotPassword = ({ config: propsConfig, t }) => {
 };
 
 ForgotPassword.propTypes = {
-  loginParams: PropTypes.any,
-};
-
-ForgotPassword.defaultProps = {
-  loginParams: null,
+  config: PropTypes.shape({
+    inputs: PropTypes.array,
+    texts: PropTypes.shape({
+      submitButtonLabel: PropTypes.string,
+      secondaryButtonLabel: PropTypes.string,
+      header: PropTypes.string,
+      description: PropTypes.string,
+    }),
+  }),
+  t: PropTypes.func.isRequired,
 };
 
 export default ForgotPassword;

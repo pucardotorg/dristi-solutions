@@ -1,4 +1,4 @@
-import { BackButton, Dropdown, FormComposer, FormComposerV2, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { BackButton, FormComposerV2, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import PropTypes from "prop-types";
 import React, { useEffect, useState, useMemo } from "react";
 import { useHistory } from "react-router-dom";
@@ -9,7 +9,7 @@ import axiosInstance from "../../../Utils/axiosInstance";
 
 /* set employee details to enable backward compatiable */
 const setEmployeeDetail = (userObject, token) => {
-  let locale = JSON.parse(sessionStorage.getItem("Digit.locale"))?.value || Digit.Utils.getDefaultLanguage();
+  const locale = JSON.parse(sessionStorage.getItem("Digit.locale"))?.value || Digit.Utils.getDefaultLanguage();
   localStorage.setItem("Employee.tenant-id", userObject?.tenantId);
   localStorage.setItem("tenant-id", userObject?.tenantId);
   localStorage.setItem("citizen.userRequestObject", JSON.stringify(userObject));
@@ -21,10 +21,25 @@ const setEmployeeDetail = (userObject, token) => {
   localStorage.setItem("Employee.user-info", JSON.stringify(userObject));
 };
 
-const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataLoading }) => {
-  const { data: cities, isLoading } = Digit.Hooks.useTenants();
-  const { data: storeData, isLoading: isStoreLoading } = Digit.Hooks.useStore.getInitData();
-  const { stateInfo } = storeData || {};
+const getRedirectPath = (user) => {
+  let redirectPath = `/${window?.contextPath}/employee`;
+
+  if (window?.location?.href?.includes("from=")) {
+    redirectPath = decodeURIComponent(window?.location?.href?.split("from=")?.[1]) || `/${window?.contextPath}/employee`;
+  }
+
+  if (user?.info?.roles?.length > 0 && user?.info?.roles?.every((e) => e.code === "NATADMIN")) {
+    redirectPath = `/${window?.contextPath}/employee/dss/landing/NURT_DASHBOARD`;
+  }
+  if (user?.info?.roles?.length > 0 && user?.info?.roles?.every((e) => e.code === "STADMIN")) {
+    redirectPath = `/${window?.contextPath}/employee/dss/landing/home`;
+  }
+  return redirectPath;
+};
+
+const Login = ({ config: propsConfig, t, isDisabled, tenantsData }) => {
+  const { isLoading } = Digit.Hooks.useTenants();
+  const { isLoading: isStoreLoading } = Digit.Hooks.useStore.getInitData();
   const [user, setUser] = useState(null);
   const [showToast, setShowToast] = useState(null);
   const [disable, setDisable] = useState(false);
@@ -41,37 +56,14 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
     if (user?.info?.roles?.length > 0) user.info.roles = filteredRoles;
     Digit.UserService.setUser(user);
     setEmployeeDetail(user?.info, user?.access_token);
-    let redirectPath = `/${window?.contextPath}/employee`;
-
-    /* logic to redirect back to same screen where we left off  */
-    if (window?.location?.href?.includes("from=")) {
-      redirectPath = decodeURIComponent(window?.location?.href?.split("from=")?.[1]) || `/${window?.contextPath}/employee`;
-    }
-
-    /*  RAIN-6489 Logic to navigate to National DSS home incase user has only one role [NATADMIN]*/
-    if (user?.info?.roles && user?.info?.roles?.length > 0 && user?.info?.roles?.every((e) => e.code === "NATADMIN")) {
-      redirectPath = `/${window?.contextPath}/employee/dss/landing/NURT_DASHBOARD`;
-    }
-    /*  RAIN-6489 Logic to navigate to National DSS home incase user has only one role [NATADMIN]*/
-    if (user?.info?.roles && user?.info?.roles?.length > 0 && user?.info?.roles?.every((e) => e.code === "STADMIN")) {
-      redirectPath = `/${window?.contextPath}/employee/dss/landing/home`;
-    }
-    const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-    const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
-    // function hasPostManagerRole() {
-    //   return userInfo.roles.some((userRole) => userRole.name === "POST_MANAGER");
-    // }
-    // if (hasPostManagerRole()) {
-    //   redirectPath = `/${window?.contextPath}/${userType}/home/epost-home-screen`;
-    // }
-    history.replace(redirectPath);
+    history.replace(getRedirectPath(user));
   }, [user]);
 
+  const closeToast = () => {
+    setShowToast(null);
+  };
+
   const onLogin = async (data) => {
-    // if (!data.city) {
-    //   alert("Please Select City!");
-    //   return;
-    // }
     setDisable(true);
 
     const requestData = {
@@ -140,15 +132,9 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
     setDisable(false);
   };
 
-  const closeToast = () => {
-    setShowToast(null);
-  };
-
   const onForgotPassword = () => {
     history.push(`/${window?.contextPath}/employee/user/forgot-password`);
   };
-
-  const { mode } = Digit.Hooks.useQueryParams();
 
   const [config, setConfig] = useState([{ body: propsConfig?.inputs }]);
 
@@ -162,12 +148,11 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
   );
 
   const defaultValue = useMemo(() => {
-    // Remove once the default district and courtroom are removed from the login screen
-    const district = commonMasterData?.["common-masters"]?.District?.find((district) => district?.code === "KOLLAM");
+    const district = commonMasterData?.["common-masters"]?.District?.find((d) => d?.code === "KOLLAM");
     const courtRoom = commonMasterData?.["common-masters"]?.Court_Rooms?.find((room) => room?.code === "KLKM52");
     setPrevDistrict(district);
     return {
-      district: district,
+      district,
       courtroom: courtRoom,
     };
   }, [commonMasterData]);
@@ -177,32 +162,32 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
     const courtRoom = commonMasterData?.["common-masters"]?.Court_Rooms;
     if (!district) return courtRoom;
     const filteredCourtEstablishmnets = courtEstablishmnets.filter((ce) => ce.district === district);
-    const filteredCourtRoom = courtRoom.filter((court) => filteredCourtEstablishmnets.some((ce) => ce.code === court.establishment));
-    return filteredCourtRoom;
+    return courtRoom.filter((court) => filteredCourtEstablishmnets.some((ce) => ce.code === court.establishment));
   };
   const getModifiedConfig = (district) => {
     const newPopulators = {
       name: "courtroom",
       optionsKey: "name",
-      // error: "ERR_HRMS_INVALID_COURT_ROOM",
       options: getFilteredCourtRoom(district?.code),
     };
-    let modifiedConfig = config;
+    const modifiedConfig = config;
     modifiedConfig[0].body[3].populators = newPopulators;
     return modifiedConfig;
   };
 
-  const onFormValueChange = (setValue, formData, formState) => {
+  const onFormValueChange = (setValue, formData) => {
     if (formData?.district !== prevDistrict) {
       setConfig(getModifiedConfig(formData?.district));
       setValue("courtroom", "");
     }
-    setPrevDistrict((prev) => formData?.district);
+    setPrevDistrict(() => formData?.district);
   };
 
-  return isLoading || isStoreLoading || isCommonMasterDataLoading ? (
-    <Loader />
-  ) : (
+  if (isLoading || isStoreLoading || isCommonMasterDataLoading) {
+    return <Loader />;
+  }
+
+  return (
     <Background>
       <div className="employeeBackbuttonAlign">
         <BackButton variant="white" style={{ borderBottom: "none" }} />
@@ -218,7 +203,6 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
         config={config}
         defaultValues={defaultValue}
         label={propsConfig.texts.submitButtonLabel}
-        // secondaryActionLabel={propsConfig.texts.secondaryButtonLabel}
         onSecondayActionClick={onForgotPassword}
         heading={propsConfig.texts.header}
         className="loginFormStyleEmployee"
@@ -234,11 +218,16 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
 };
 
 Login.propTypes = {
-  loginParams: PropTypes.any,
-};
-
-Login.defaultProps = {
-  loginParams: null,
+  config: PropTypes.shape({
+    inputs: PropTypes.array,
+    texts: PropTypes.shape({
+      submitButtonLabel: PropTypes.string,
+      header: PropTypes.string,
+    }),
+  }),
+  t: PropTypes.func.isRequired,
+  isDisabled: PropTypes.bool,
+  tenantsData: PropTypes.array,
 };
 
 export default Login;

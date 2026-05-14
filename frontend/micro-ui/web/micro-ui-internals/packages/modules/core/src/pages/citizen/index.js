@@ -1,5 +1,6 @@
 import { BackButton, CitizenHomeCard, CitizenInfoLabel } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo } from "react";
+import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 import ErrorBoundary from "../../components/ErrorBoundaries";
@@ -16,9 +17,26 @@ import Login from "./Login";
 import Search from "./SearchApp";
 import StaticDynamicCard from "./StaticDynamicComponent/StaticDynamicCard";
 
-const getTenants = (codes, tenants) => {
-  return tenants.filter((tenant) => codes.map((item) => item.code).includes(tenant.code));
+const getTenants = (codes, tenants) =>
+  tenants.filter((tenant) => codes.map((item) => item.code).includes(tenant.code));
+
+const EmptyComponent = () => null;
+
+const EmptyIcon = () => <span />;
+
+const ObpsInfo = ({ t }) => (
+  <CitizenInfoLabel
+    style={{ margin: "0px", padding: "10px" }}
+    info={t("CS_FILE_APPLICATION_INFO_LABEL")}
+    text={t(`BPA_CITIZEN_HOME_STAKEHOLDER_INCLUDES_INFO_LABEL`)}
+  />
+);
+
+ObpsInfo.propTypes = {
+  t: PropTypes.func.isRequired,
 };
+
+const buildObpsInfoComponent = (t) => () => <ObpsInfo t={t} />;
 
 const Home = ({
   stateInfo,
@@ -114,13 +132,11 @@ const Home = ({
   });
 
   const ModuleLevelLinkHomePages = modules.map(({ code, bannerImage }) => {
-    let Links = Digit.ComponentRegistryService.getComponent(`${code}Links`) || (() => <React.Fragment />);
-    let mdmsDataObj = isLinkDataFetched ? processLinkData(linkData, code, t) : undefined;
+    const Links = Digit.ComponentRegistryService.getComponent(`${code}Links`) || EmptyComponent;
+    const mdmsDataObj = isLinkDataFetched ? processLinkData(linkData, code, t) : undefined;
 
     if (mdmsDataObj?.header === "ACTION_TEST_WS") {
-      mdmsDataObj?.links.sort((a, b) => {
-        return b.orderNumber - a.orderNumber;
-      });
+      mdmsDataObj?.links.sort((a, b) => b.orderNumber - a.orderNumber);
     }
     return (
       <React.Fragment key={code}>
@@ -134,18 +150,8 @@ const Home = ({
                 <CitizenHomeCard
                   header={t(mdmsDataObj?.header)}
                   links={mdmsDataObj?.links}
-                  Icon={() => <span />}
-                  Info={
-                    code === "OBPS"
-                      ? () => (
-                          <CitizenInfoLabel
-                            style={{ margin: "0px", padding: "10px" }}
-                            info={t("CS_FILE_APPLICATION_INFO_LABEL")}
-                            text={t(`BPA_CITIZEN_HOME_STAKEHOLDER_INCLUDES_INFO_LABEL`)}
-                          />
-                        )
-                      : null
-                  }
+                  Icon={EmptyIcon}
+                  Info={code === "OBPS" ? buildObpsInfoComponent(t) : null}
                   isInfo={code === "OBPS"}
                 />
               )}
@@ -236,6 +242,23 @@ const Home = ({
       </div>
     </div>
   );
+};
+
+Home.propTypes = {
+  stateInfo: PropTypes.object,
+  userDetails: PropTypes.object,
+  CITIZEN: PropTypes.any,
+  cityDetails: PropTypes.object,
+  mobileView: PropTypes.bool,
+  handleUserDropdownSelection: PropTypes.func,
+  logoUrl: PropTypes.string,
+  DSO: PropTypes.any,
+  stateCode: PropTypes.string,
+  modules: PropTypes.array,
+  appTenants: PropTypes.array,
+  sourceUrl: PropTypes.string,
+  pathname: PropTypes.string,
+  initData: PropTypes.object,
 };
 
 export default Home;
