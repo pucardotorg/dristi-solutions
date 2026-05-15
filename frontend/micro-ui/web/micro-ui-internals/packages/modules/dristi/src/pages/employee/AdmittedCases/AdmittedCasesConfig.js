@@ -1,23 +1,7 @@
-// default values of search input component
-const defaultSearchValues = {
-  owner: {},
-  parties: {},
-  hearingType: {},
-  orderType: {},
-  status: {},
-  orderNumber: "",
-  applicationType: {},
-  applicationCMPNumber: "",
-  artifactType: {},
-  artifactNumber: "",
-};
-
-const defaultOrderSearchValues = {
-  parties: "",
-  status: "",
-  id: "",
-  type: "",
-};
+import {
+  admittedCasesDefaultSearchValues as defaultSearchValues,
+  admittedCasesOrderSearchValues as defaultOrderSearchValues,
+} from "./shared/admittedCasesSearchShared";
 
 export const TabSearchconfigNew = {
   tenantId: "mz",

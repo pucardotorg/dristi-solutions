@@ -1,3 +1,9 @@
+import {
+  submissionAdditionalCommentsTextAreaField,
+  submissionAdditionalCommentsTextAreaSection,
+  submissionAdditionalCommentsFormatterSection,
+} from "./submissionsCreateConfigShared";
+
 export const submissionTypeConfig = [
   {
     body: [
@@ -239,32 +245,7 @@ export const configsRescheduleRequest = [
       },
     ],
   },
-  {
-    body: [
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        schemaKeyPath: "applicationDetails.additionalComments",
-        transformer: "customTextArea",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  submissionAdditionalCommentsTextAreaSection,
 ];
 
 export const configsCheckoutRequest = [
@@ -639,32 +620,7 @@ export const configsExtensionSubmissionDeadline = [
       },
     ],
   },
-  {
-    body: [
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        schemaKeyPath: "applicationDetails.additionalComments",
-        transformer: "customTextArea",
-        key: "comments",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  submissionAdditionalCommentsTextAreaSection,
 ];
 
 export const configsDocumentSubmission = [
@@ -968,31 +924,7 @@ export const configsProductionOfDocuments = [
       },
     ],
   },
-  {
-    body: [
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomFormatterTextArea",
-        schemaKeyPath: "applicationDetails.additionalComments",
-        transformer: "customTextArea",
-        key: "comments",
-        isMandatory: false,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  submissionAdditionalCommentsFormatterSection,
 ];
 
 export const configsCaseWithdrawal = [
@@ -1129,31 +1061,7 @@ export const configsCaseWithdrawal = [
       },
     ],
   },
-  {
-    body: [
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomFormatterTextArea",
-        schemaKeyPath: "applicationDetails.additionalComments",
-        transformer: "customTextArea",
-        key: "comments",
-        isMandatory: false,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  submissionAdditionalCommentsFormatterSection,
 ];
 
 export const configsCaseTransfer = [
@@ -1295,31 +1203,7 @@ export const configsCaseTransfer = [
       },
     ],
   },
-  {
-    body: [
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomFormatterTextArea",
-        key: "comments",
-        schemaKeyPath: "applicationDetails.additionalComments",
-        transformer: "customTextArea",
-        isMandatory: false,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  submissionAdditionalCommentsFormatterSection,
 ];
 
 export const configsSettlement = [
@@ -1433,31 +1317,7 @@ export const configsSettlement = [
       },
     ],
   },
-  {
-    body: [
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomFormatterTextArea",
-        schemaKeyPath: "applicationDetails.additionalComments",
-        transformer: "customTextArea",
-        key: "comments",
-        isMandatory: false,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  submissionAdditionalCommentsFormatterSection,
 ];
 
 export const configsOthers = [
@@ -1626,28 +1486,7 @@ export const requestForBail = [
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
       },
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        schemaKeyPath: "applicationDetails.additionalComments",
-        transformer: "customTextArea",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
+      submissionAdditionalCommentsTextAreaField,
       {
         label: "DO_YOU_WANT_TO_ADD_SURETY",
         key: "addSurety",
