@@ -179,6 +179,12 @@ public class Configuration {
     @Value("${task.join.case.rejected.topic}")
     private String taskJoinCaseRejectedTopic;
 
+    @Value("${kafka.topics.hearing.update}")
+    private String hearingUpdateTopic;
+
+    @Value("${bulk.reschedule.topic}")
+    private String bulkRescheduleTopic;
+
     @Value("${egov.idgen.taskNumber}")
     private String taskNumber;
 
