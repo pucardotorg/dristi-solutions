@@ -132,7 +132,9 @@ export const TabLitigantSearchConfig = {
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: {},
+          criteria: {
+            lifecycleStatus: "ACTIVE",
+          },
         },
         masterName: "commonUiConfig",
         moduleName: "homeLitigantUiConfig",
@@ -367,7 +369,7 @@ export const TabLitigantSearchConfig = {
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: { outcome: [] },
+          criteria: { outcome: [], lifecycleStatus: "ACTIVE" },
         },
         masterName: "commonUiConfig",
         moduleName: "homeLitigantUiConfig",
@@ -520,7 +522,7 @@ export const TabLitigantSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            isLPRCase: true,
+            lifecycleStatus: "LPR",
           },
         },
         masterName: "commonUiConfig",
