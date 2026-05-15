@@ -1,6 +1,16 @@
 import {
   admittedCasesDefaultSearchValues as defaultSearchValues,
+  admittedCasesDocumentsResultColumns,
+  admittedCasesDocumentsSearchFields,
+  admittedCasesHearingsResultColumns,
+  admittedCasesHearingsSearchFields,
   admittedCasesOrderSearchValues as defaultOrderSearchValues,
+  admittedCasesOrdersResultColumns,
+  admittedCasesOrdersSearchFields,
+  admittedCasesSubmissionsResultColumns,
+  admittedCasesSubmissionsSearchFields,
+  buildAdmittedCasesSearchResult,
+  buildAdmittedCasesSearchSection,
 } from "./shared/admittedCasesSearchShared";
 
 export const TabSearchconfigNew = {
@@ -46,105 +56,8 @@ export const TabSearchconfigNew = {
         searchFormJsonPath: "requestBody.HearingList",
       },
       sections: {
-        search: {
-          uiConfig: {
-            formClassName: "custom-both-clear-search",
-            primaryLabel: "ES_COMMON_SEARCH",
-            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
-            minReqFields: 0,
-            defaultValues: defaultSearchValues,
-            fields: [
-              {
-                label: "TYPE",
-                isMandatory: false,
-                key: "hearingType",
-                type: "dropdown",
-                populators: {
-                  name: "hearingType",
-                  optionsKey: "type",
-                  options: [],
-                },
-              },
-              // {
-              //   label: "Stage",
-              //   isMandatory: false,
-              //   key: "stage",
-              //   type: "dropdown",
-              //   populators: {
-              //     name: "stage",
-              //     optionsKey: "value",
-              //     mdmsConfig: {
-              //       masterName: "Stage",
-              //       moduleName: "case",
-              //       // localePrefix: "SUBMISSION_TYPE",
-              //     },
-              //   },
-              // },
-              // {
-              //   label: "Parties",
-              //   isMandatory: false,
-              //   key: "parties",
-              //   type: "dropdown",
-              //   populators: {
-              //     name: "parties",
-              //   },
-              // },
-              // {
-              //   label: "Order ID",
-              //   isMandatory: false,
-              //   key: "orderNumber",
-              //   type: "text",
-              //   populators: {
-              //     name: "orderNumber",
-              //   },
-              // },
-            ],
-          },
-          show: true,
-        },
-        searchResult: {
-          tenantId: Digit.ULBService.getCurrentTenantId(),
-          uiConfig: {
-            columns: [
-              {
-                label: "HEARING_TYPE",
-                jsonPath: "hearingType",
-                additionalCustomization: true,
-              },
-              // {
-              //   label: "Stage",
-              //   jsonPath: "",
-              // },
-              {
-                label: "PARTIES",
-                jsonPath: "attendees",
-                additionalCustomization: true,
-              },
-              {
-                label: "STATUS",
-                jsonPath: "status",
-                additionalCustomization: true,
-              },
-              {
-                label: "DATE",
-                jsonPath: "startTime",
-                additionalCustomization: true,
-              },
-              // {
-              //   label: "Date Added",
-              //   jsonPath: "auditDetails.createdTime",
-              //   additionalCustomization: true,
-              // },
-              {
-                label: "CS_ACTIONS",
-                additionalCustomization: true,
-              },
-            ],
-            enableColumnSort: true,
-            resultsJsonPath: "HearingList",
-          },
-          show: true,
-        },
+        search: buildAdmittedCasesSearchSection(admittedCasesHearingsSearchFields, defaultSearchValues),
+        searchResult: buildAdmittedCasesSearchResult(admittedCasesHearingsResultColumns, "HearingList"),
       },
     },
     {
@@ -176,109 +89,8 @@ export const TabSearchconfigNew = {
         tableFormJsonPath: "requestBody.inbox",
       },
       sections: {
-        search: {
-          uiConfig: {
-            formClassName: "custom-both-clear-search",
-            primaryLabel: "ES_COMMON_SEARCH",
-            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
-            minReqFields: 0,
-            defaultValues: defaultOrderSearchValues,
-            fields: [
-              {
-                label: "TYPE",
-                isMandatory: false,
-                key: "type",
-                type: "dropdown",
-                populators: {
-                  name: "type",
-                  optionsKey: "type",
-                  options: [],
-                },
-              },
-              {
-                label: "STATUS",
-                isMandatory: false,
-                key: "status",
-                type: "dropdown",
-                populators: {
-                  name: "status",
-                  optionsKey: "type",
-                  mdmsConfig: {
-                    masterName: "OrderStatus",
-                    moduleName: "Order",
-                    // localePrefix: "SUBMISSION_TYPE",
-                    select: `(data) => {
-                      return data['Order'].OrderStatus
-                      ?.filter(item => !['ABATED', 'PENDINGSTAMPING'].includes(item.code))
-                        ?.map((item) => {
-                          return item;
-                        })
-                        .sort((a, b) => (a.type || "").localeCompare(b.type || ""));
-                    }`,
-                  },
-                },
-              },
-              {
-                label: "PARTIES",
-                isMandatory: false,
-                key: "parties",
-                type: "dropdown",
-                populators: {},
-              },
-              {
-                label: "SEARCH_ID",
-                isMandatory: false,
-                key: "id",
-                type: "text",
-                populators: {
-                  name: "id",
-                },
-              },
-            ],
-          },
-
-          show: true,
-        },
-        searchResult: {
-          tenantId: Digit.ULBService.getCurrentTenantId(),
-          uiConfig: {
-            columns: [
-              {
-                label: "ORDER_TITLE",
-                jsonPath: "businessObject.orderNotification.title",
-                additionalCustomization: true,
-              },
-              {
-                label: "NOTIFICATION_ORDER_ID",
-                jsonPath: "businessObject.orderNotification.id",
-              },
-              {
-                label: "PARTIES",
-                jsonPath: "businessObject.orderNotification.parties",
-                additionalCustomization: true,
-              },
-              {
-                label: "STATUS",
-                jsonPath: "businessObject.orderNotification.status",
-                additionalCustomization: true,
-              },
-              {
-                label: "DATE_ISSUED",
-                jsonPath: "businessObject.orderNotification.date",
-                additionalCustomization: true,
-              },
-              {
-                label: "CS_ACTIONS",
-                jsonPath: "businessObject.orderNotification",
-                additionalCustomization: true,
-              },
-            ],
-
-            enableColumnSort: true,
-            resultsJsonPath: "items",
-          },
-          show: true,
-        },
+        search: buildAdmittedCasesSearchSection(admittedCasesOrdersSearchFields, defaultOrderSearchValues),
+        searchResult: buildAdmittedCasesSearchResult(admittedCasesOrdersResultColumns, "items"),
       },
     },
     {
@@ -308,126 +120,8 @@ export const TabSearchconfigNew = {
         searchFormJsonPath: "requestBody.Individual",
       },
       sections: {
-        search: {
-          uiConfig: {
-            formClassName: "custom-both-clear-search",
-            primaryLabel: "ES_COMMON_SEARCH",
-            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
-            minReqFields: 0,
-            defaultValues: defaultSearchValues,
-            fields: [
-              {
-                label: "TYPE",
-                isMandatory: false,
-                key: "applicationType",
-                type: "dropdown",
-                populators: {
-                  name: "applicationType",
-                  optionsKey: "type",
-                  options: [],
-                },
-              },
-              // {
-              //   label: "Stage",
-              //   isMandatory: false,
-              //   key: "stage",
-              //   type: "dropdown",
-              //   populators: {
-              //     name: "stage",
-              //     optionsKey: "value",
-              //     mdmsConfig: {
-              //       masterName: "Stage",
-              //       moduleName: "case",
-              //       // localePrefix: "SUBMISSION_TYPE",
-              //     },
-              //   },
-              // },
-              {
-                label: "STATUS",
-                isMandatory: false,
-                key: "status",
-                type: "dropdown",
-                populators: {
-                  name: "status",
-                  optionsKey: "type",
-                  mdmsConfig: {
-                    masterName: "ApplicationStatus",
-                    moduleName: "Application",
-                    // localePrefix: "SUBMISSION_TYPE",
-                    select: `(data) => {
-                      return data['Application'].ApplicationStatus
-                        ?.map((item) => {
-                          return item;
-                        })
-                        .sort((a, b) => (a.type || "").localeCompare(b.type || ""));
-                    }`,
-                  },
-                },
-              },
-              {
-                label: "SEARCH_SUBMISSION_ID",
-                isMandatory: false,
-                key: "applicationCMPNumber",
-                type: "text",
-                populators: {
-                  name: "applicationCMPNumber",
-                },
-              },
-            ],
-          },
-
-          show: true,
-        },
-        searchResult: {
-          tenantId: Digit.ULBService.getCurrentTenantId(),
-          uiConfig: {
-            columns: [
-              {
-                label: "SUBMISSION_TYPE",
-                jsonPath: "applicationType",
-                additionalCustomization: true,
-              },
-              {
-                label: "SUBMISSION_ID",
-                jsonPath: "applicationCMPNumber",
-                additionalCustomization: true,
-              },
-              // {
-              //   label: "Stage",
-              //   jsonPath: "",
-              // },
-              {
-                label: "STATUS",
-                jsonPath: "status",
-                additionalCustomization: true,
-              },
-              {
-                label: "OWNER",
-                jsonPath: "additionalDetails.owner",
-                additionalCustomization: true,
-              },
-              {
-                label: "DATE_ADDED",
-                jsonPath: "auditDetails.createdTime",
-                additionalCustomization: true,
-              },
-              {
-                label: "DOCUMENT_TEXT",
-                jsonPath: "documents",
-                additionalCustomization: true,
-              },
-              {
-                label: "CS_ACTIONS",
-                jsonPath: "applicationDraftDelete",
-                additionalCustomization: true,
-              },
-            ],
-
-            enableColumnSort: true,
-            resultsJsonPath: "applicationList",
-          },
-          show: true,
-        },
+        search: buildAdmittedCasesSearchSection(admittedCasesSubmissionsSearchFields, defaultSearchValues),
+        searchResult: buildAdmittedCasesSearchResult(admittedCasesSubmissionsResultColumns, "applicationList"),
       },
     },
     {
@@ -457,131 +151,8 @@ export const TabSearchconfigNew = {
         searchFormJsonPath: "requestBody.Individual",
       },
       sections: {
-        search: {
-          uiConfig: {
-            formClassName: "custom-both-clear-search",
-            primaryLabel: "ES_COMMON_SEARCH",
-            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
-            minReqFields: 0,
-            defaultValues: defaultSearchValues,
-            fields: [
-              {
-                label: "TYPE",
-                isMandatory: false,
-                key: "artifactType",
-                type: "dropdown",
-                populators: {
-                  name: "artifactType",
-                  optionsKey: "name",
-                  mdmsConfig: {
-                    masterName: "EvidenceType",
-                    moduleName: "Evidence",
-                    localePrefix: "EVIDENCE_TYPE",
-                    select:
-                      "(data) => {return data['Evidence'].EvidenceType?.map((item) => {return { ...item, name: item.subtype && item.subtype.trim() !== '' ? `${item.type}_${item.subtype}` : item.type };});}",
-                    // localePrefix: "SUBMISSION_TYPE",
-                  },
-                },
-              },
-              // customDefaultPagination: {
-              //   searchForm: {},
-              //   filterForm: {},
-              //   tableForm: {
-              //     limit: 10,
-              //     offset: 0,
-              //   },
-              // },
-              // {
-              //   label: "Stage",
-              //   isMandatory: false,
-              //   key: "stage",
-              //   type: "dropdown",
-              //   populators: {
-              //     name: "stage",
-              //     optionsKey: "value",
-              //     mdmsConfig: {
-              //       masterName: "Stage",
-              //       moduleName: "case",
-              //       // localePrefix: "SUBMISSION_TYPE",
-              //     },
-              //   },
-              // },
-              // {
-              //   label: "Status",
-              //   isMandatory: false,
-              //   key: "status",
-              //   type: "dropdown",
-              //   populators: {
-              //     name: "status",
-              //     optionsKey: "value",
-              //     mdmsConfig: {
-              //       masterName: "Status",
-              //       moduleName: "case",
-              //       // localePrefix: "SUBMISSION_TYPE",
-              //     },
-              //   },
-              // },
-              {
-                label: "SEARCH_ARTIFACT_NUMBER",
-                isMandatory: false,
-                key: "artifactNumber",
-                type: "text",
-                populators: {
-                  name: "artifactNumber",
-                },
-              },
-            ],
-          },
-
-          show: true,
-        },
-        searchResult: {
-          tenantId: Digit.ULBService.getCurrentTenantId(),
-          uiConfig: {
-            columns: [
-              {
-                label: "FILING_NAME",
-                jsonPath: "artifactType",
-                additionalCustomization: true,
-              },
-              {
-                label: "FILING_ID",
-                jsonPath: "artifactNumber",
-              },
-              {
-                label: "EVIDENCE_NUMBER",
-                jsonPath: "evidenceNumber",
-                additionalCustomization: true,
-              },
-              {
-                label: "TYPE",
-                additionalCustomization: true,
-              },
-              {
-                label: "STATUS",
-                additionalCustomization: true,
-              },
-              {
-                label: "REPRESENTATIVES",
-                jsonPath: "sourceType",
-                additionalCustomization: true,
-              },
-              // {
-              //   label: "FILE",
-              //   jsonPath: "file",
-              //   additionalCustomization: true,
-              // },
-              {
-                label: "CS_ACTIONS",
-                additionalCustomization: true,
-              },
-            ],
-
-            enableColumnSort: true,
-            resultsJsonPath: "artifacts",
-          },
-          show: true,
-        },
+        search: buildAdmittedCasesSearchSection(admittedCasesDocumentsSearchFields, defaultSearchValues),
+        searchResult: buildAdmittedCasesSearchResult(admittedCasesDocumentsResultColumns, "artifacts"),
       },
     },
     // {
