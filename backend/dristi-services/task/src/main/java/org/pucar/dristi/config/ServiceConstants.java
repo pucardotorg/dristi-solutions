@@ -153,6 +153,7 @@ public class ServiceConstants {
     public static final String PENDING_ENVELOPE_SUBMISSION = "PENDING_ENVELOPE_SUBMISSION";
     public static final String MANUAL = "MANUAL_";
 
+    public static final String WARRANT_ISSUED="WARRANT_ISSUED";
     public static final String ISSUE_WARRANT = "ISSUE_WARRANT";
     public static final String WARRANT_REISSUE = "WARRANT_REISSUE";
     public static final String WARRANT_REISSUE_ICOPS = "WARRANT_REISSUE_ICOPS";
@@ -160,6 +161,10 @@ public class ServiceConstants {
     public static final String CREATE = "CREATE";
     public static final String CREATE_WITH_OUT_PAYMENT = "CREATE_WITH_OUT_PAYMENT";
     public static final String REISSUE_WITH_NEW_WARRANT = "REISSUE_WITH_NEW_WARRANT";
+    public static final String EXPIRED = "EXPIRED";
+    public static final String SCHEDULED = "SCHEDULED";
+    public static final String UPDATE_DATE = "UPDATE_DATE";
+    public static final String RESCHEDULE_ONGOING = "RESCHEDULE_ONGOING";
 
     public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
     public static final String APPLICATION_DETAILS_PATH = "$.application.applicationDetails.taskNumber";

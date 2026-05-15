@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,7 +47,7 @@ public class WarrantReissueService {
         log.info("Handling hearing reschedule for filingNumber: {}, orderId: {}", filingNumber, orderId);
 
         // 1. Fetch all ACTIVE warrants for this case
-        List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, orderId);
+        List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, orderId, false);
         if (activeWarrants.isEmpty()) {
             log.info("No active warrants for filing: {}", filingNumber);
             return;
@@ -92,44 +93,50 @@ public class WarrantReissueService {
      * Handles Scenario 2: Hearing Completed and New Hearing Scheduled
      * Terminates existing active warrants and creates new warrants.
      */
-    public void handleHearingCompletedAndNewHearingScheduled(RequestInfo requestInfo, String filingNumber, Long newHearingDate, String orderId) {
-        log.info("Handling hearing completed and new hearing scheduled for filingNumber: {}, orderId: {}", filingNumber, orderId);
+    public void handleHearingCompletedAndNewHearingScheduled(RequestInfo requestInfo, String filingNumber, Long newHearingDate, String newOrderId) {
+        log.info("Handling hearing completed and new hearing scheduled for filingNumber: {}, newOrderId: {}", filingNumber, newOrderId);
 
-        // Fetch all ACTIVE warrants for this case
-        List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, orderId);
+        // Fetch all ACTIVE warrants and warrants EXPIRED today for this case
+        // We pass null for orderId because we want to find the OLD warrants, which are not linked to the NEW orderId
+        List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, null, true);
         if (activeWarrants.isEmpty()) {
-            log.info("No active warrants for filing: {}", filingNumber);
+            log.info("No active or recently expired warrants for filing: {}", filingNumber);
             return;
         }
 
         for (Task warrant : activeWarrants) {
             String currentState = warrant.getStatus();
             boolean isIcops = isIcopsDeliveryChannel(warrant);
+            boolean isAlreadyExpired = EXPIRED.equalsIgnoreCase(currentState);
 
-            // 1. Terminate old warrant
-            WorkflowObject terminateWorkflow = new WorkflowObject();
-            terminateWorkflow.setAction(REISSUE_WITH_NEW_WARRANT);
-            warrant.setWorkflow(terminateWorkflow);
-            setAdditionalDetail(warrant, "previousState", currentState);
+            if (!isAlreadyExpired) {
+                // 1. Terminate old warrant
+                WorkflowObject terminateWorkflow = new WorkflowObject();
+                terminateWorkflow.setAction(REISSUE_WITH_NEW_WARRANT);
+                warrant.setWorkflow(terminateWorkflow);
+                setAdditionalDetail(warrant, "previousState", currentState);
 
-            TaskRequest terminateRequest = TaskRequest.builder()
-                    .requestInfo(requestInfo)
-                    .task(warrant)
-                    .build();
+                TaskRequest terminateRequest = TaskRequest.builder()
+                        .requestInfo(requestInfo)
+                        .task(warrant)
+                        .build();
 
-            try {
-                taskService.updateTask(terminateRequest);
-                log.info("Terminated old warrant: {}", warrant.getTaskNumber());
-            } catch (Exception e) {
-                log.error("Error terminating warrant: {}", warrant.getTaskNumber(), e);
-                continue; // Skip creating new warrant if termination failed
+                try {
+                    taskService.updateTask(terminateRequest);
+                    log.info("Terminated old warrant: {}", warrant.getTaskNumber());
+                } catch (Exception e) {
+                    log.error("Error terminating warrant: {}", warrant.getTaskNumber(), e);
+                    continue; // Skip creating new warrant if termination failed
+                }
+            } else {
+                log.info("Warrant {} is already EXPIRED, skipping termination.", warrant.getTaskNumber());
             }
 
-            // 2. Create new warrant
-            Task newWarrant = cloneWarrantForReissue(warrant, newHearingDate);
+            // 2. Create new warrant using createTask
+            Task newWarrant = cloneWarrantForReissue(warrant, newHearingDate, newOrderId);
             WorkflowObject createWorkflow = new WorkflowObject();
             
-            if (isIcops && !PENDING_PAYMENT.equalsIgnoreCase(currentState)) {
+            if (isIcops && !PENDING_PAYMENT.equalsIgnoreCase(currentState) && !isAlreadyExpired) {
                 createWorkflow.setAction(CREATE_WITH_OUT_PAYMENT);
             } else {
                 createWorkflow.setAction(CREATE);
@@ -150,7 +157,7 @@ public class WarrantReissueService {
         }
     }
 
-    private Task cloneWarrantForReissue(Task oldWarrant, Long newHearingDate) {
+    private Task cloneWarrantForReissue(Task oldWarrant, Long newHearingDate, String newOrderId) {
         Task newWarrant = new Task();
         newWarrant.setTenantId(oldWarrant.getTenantId());
         newWarrant.setFilingNumber(oldWarrant.getFilingNumber());
@@ -163,6 +170,14 @@ public class WarrantReissueService {
         newWarrant.setCourtId(oldWarrant.getCourtId());
         newWarrant.setCnrNumber(oldWarrant.getCnrNumber());
         newWarrant.setCaseTitle(oldWarrant.getCaseTitle());
+
+        if (newOrderId != null) {
+            try {
+                newWarrant.setOrderId(UUID.fromString(newOrderId));
+            } catch (Exception e) {
+                log.warn("Invalid newOrderId format: {}", newOrderId);
+            }
+        }
 
         try {
             if (oldWarrant.getTaskDetails() != null) {
@@ -200,7 +215,7 @@ public class WarrantReissueService {
         return newWarrant;
     }
 
-    private List<Task> fetchActiveWarrants(RequestInfo requestInfo, String filingNumber, String orderId) {
+    private List<Task> fetchActiveWarrants(RequestInfo requestInfo, String filingNumber, String orderId, boolean includeExpiredToday) {
         TaskCriteria criteria = TaskCriteria.builder()
                 .filingNumber(filingNumber)
                 .taskType(WARRANT)
@@ -229,9 +244,37 @@ public class WarrantReissueService {
                 WARRANT_REISSUED.equalsIgnoreCase(status) ||
                 WARRANT_SENT.equalsIgnoreCase(status) ) {
                 activeWarrants.add(task);
+            } else if (includeExpiredToday && EXPIRED.equalsIgnoreCase(status)) {
+                Long oldHearingStartTime = getHearingDateFromTask(task);
+                if (task.getAuditDetails() != null && task.getAuditDetails().getLastModifiedTime() != null && oldHearingStartTime != null) {
+                    long lastModifiedTime = task.getAuditDetails().getLastModifiedTime();
+                    Calendar cal1 = Calendar.getInstance();
+                    cal1.setTimeInMillis(oldHearingStartTime);
+                    Calendar cal2 = Calendar.getInstance();
+                    cal2.setTimeInMillis(lastModifiedTime);
+                    boolean isSameDay = cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                            cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR);
+                    if (isSameDay) {
+                        activeWarrants.add(task);
+                    }
+                }
             }
         }
         return activeWarrants;
+    }
+
+    private Long getHearingDateFromTask(Task task) {
+        try {
+            if (task.getTaskDetails() != null) {
+                JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
+                if (taskDetails.has("caseDetails") && taskDetails.get("caseDetails").has("hearingDate")) {
+                    return taskDetails.get("caseDetails").get("hearingDate").asLong();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not extract hearingDate from task: {}", task.getTaskNumber());
+        }
+        return null;
     }
 
     private boolean isIcopsDeliveryChannel(Task task) {
