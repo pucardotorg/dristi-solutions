@@ -160,6 +160,9 @@ function EFilingCases({ path }) {
   const setFormDataValue = useRef(null);
   const clearFormDataErrors = useRef(null);
 
+  // Refs map for all FormComposerV2 instances — enables multi-form validation
+  const formRefsMap = useRef({});
+
   const urlParams = new URLSearchParams(window.location.search);
   const selected = urlParams.get("selected") || sideMenuConfig?.[0]?.children?.[0]?.key;
   const caseId = urlParams.get("caseId");
@@ -2219,6 +2222,34 @@ function EFilingCases({ path }) {
     }
   };
 
+  /**
+   * Triggers react-hook-form validation on ALL form instances in the current page.
+   * Returns true only if every enabled form passes validation.
+   * Used by FormComposerV2's validateAllForms prop for multi-form validation.
+   */
+  const validateAllForms = useCallback(async () => {
+    const refs = formRefsMap.current;
+    const indices = Object.keys(refs);
+    if (indices.length === 0) return true;
+
+    // Use handleSubmit (not trigger) on each form so formState.isSubmitted is set to true.
+    // This enables RHF's reValidateMode:'onChange', allowing errors to auto-clear
+    // when the user corrects a field value after a failed validation.
+    const results = await Promise.all(
+      indices
+        .filter((idx) => refs[idx]?.current?.handleSubmit && formdata?.[idx]?.isenabled)
+        .map((idx) => {
+          return new Promise((resolve) => {
+            refs[idx].current.handleSubmit(
+              () => resolve(true),
+              () => resolve(false)
+            )();
+          });
+        })
+    );
+    return results.every((isValid) => isValid === true);
+  }, [formdata]);
+
   const onSubmit = async (action, isCaseLocked = false, isWarning = false) => {
     if (isDisableAllFieldsMode) {
       history.push(homepagePath);
@@ -3345,6 +3376,9 @@ function EFilingCases({ path }) {
                     className={`${pageConfig.className} ${getFormClassName()}`}
                     noBreakLine
                     submitIcon={<RightArrow />}
+                    formRef={formRefsMap.current[index] || (formRefsMap.current[index] = { current: null })}
+                    validateAllForms={validateAllForms}
+                    allFormRefs={formRefsMap}
                   />
                 </div>
               ) : null;
