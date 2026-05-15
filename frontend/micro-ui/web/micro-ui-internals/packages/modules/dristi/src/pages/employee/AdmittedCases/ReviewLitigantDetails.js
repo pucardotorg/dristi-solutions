@@ -2,7 +2,8 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
-import { FormComposerV2, Loader } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";

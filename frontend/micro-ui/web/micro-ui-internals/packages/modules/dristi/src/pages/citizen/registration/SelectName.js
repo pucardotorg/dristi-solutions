@@ -1,4 +1,4 @@
-import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useEffect, useMemo } from "react";
 import { getFileByFileStore } from "../../../Utils";
 
