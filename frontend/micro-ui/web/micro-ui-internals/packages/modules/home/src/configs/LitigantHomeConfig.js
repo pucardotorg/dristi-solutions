@@ -336,7 +336,7 @@ export const TabLitigantSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "status",
+                jsonPath: "stage",
                 additionalCustomization: true,
               },
               {
@@ -346,7 +346,7 @@ export const TabLitigantSearchConfig = {
               },
               {
                 label: "CS_LAST_EDITED",
-                jsonPath: "auditDetails.lastModifiedTime",
+                jsonPath: "lastModifiedTime",
                 additionalCustomization: true,
               },
             ],
