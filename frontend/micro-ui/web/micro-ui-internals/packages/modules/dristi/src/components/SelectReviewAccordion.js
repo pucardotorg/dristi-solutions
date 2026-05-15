@@ -29,7 +29,7 @@ const extractValue = (data, key) => {
   const keyParts = key.split(".");
   let value = data;
   keyParts.forEach((part) => {
-    if (value && value.hasOwnProperty(part)) {
+    if (value != null && typeof value === "object" && Object.hasOwn(value, part)) {
       value = value[part];
     } else {
       value = undefined;
@@ -38,8 +38,38 @@ const extractValue = (data, key) => {
   return value;
 };
 
+function ReviewSectionIcon({ icon }) {
+  switch (icon) {
+    case "RespondentDetailsIcon":
+      return <RespondentDetailsIcon />;
+    case "ComplainantDetailsIcon":
+      return <RespondentDetailsIcon />;
+    case "ChequeDetailsIcon":
+      return <ChequeDetailsIcon />;
+    case "DebtLiabilityIcon":
+      return <DebtLiabilityIcon />;
+    case "DemandDetailsNoticeIcon":
+      return <DemandDetailsNoticeIcon />;
+    case "PrayerSwornIcon":
+      return <PrayerSwornIcon />;
+    case "WitnessDetailsIcon":
+      return <RespondentDetailsIcon />;
+    case "AdvocateDetailsIcon":
+      return <DemandDetailsNoticeIcon />;
+    case "PaymentDetailsIcon":
+      return <DemandDetailsNoticeIcon />;
+    default:
+      return <RespondentDetailsIcon />;
+  }
+}
+
+ReviewSectionIcon.propTypes = {
+  icon: PropTypes.string,
+};
+
 function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, formState, control, setError }) {
-  const roles = Digit.UserService.getUser()?.info?.roles;
+  const Digit = globalThis.Digit ?? {};
+  const roles = Digit.UserService?.getUser()?.info?.roles;
   const isScrutiny = useMemo(() => roles?.some((role) => role.code === "CASE_REVIEWER"), [roles]);
   const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
   const isPrevScrutiny = config?.isPrevScrutiny || false;
@@ -51,7 +81,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
   const [systemError, setSystemError] = useState("");
   const [showImageModal, setShowImageModal] = useState({ openModal: false, imageInfo: {} });
   const popupAnchor = useRef();
-  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const tenantId = Digit.ULBService?.getCurrentTenantId?.();
   const [formDataLoad, setFormDataLoad] = useState(true);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const isCitizen = useMemo(() => (userInfo?.type === "CITIZEN" ? true : false), [userInfo]);
@@ -174,30 +204,6 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
     }
   }
 
-  const Icon = ({ icon }) => {
-    switch (icon) {
-      case "RespondentDetailsIcon":
-        return <RespondentDetailsIcon />;
-      case "ComplainantDetailsIcon":
-        return <RespondentDetailsIcon />;
-      case "ChequeDetailsIcon":
-        return <ChequeDetailsIcon />;
-      case "DebtLiabilityIcon":
-        return <DebtLiabilityIcon />;
-      case "DemandDetailsNoticeIcon":
-        return <DemandDetailsNoticeIcon />;
-      case "PrayerSwornIcon":
-        return <PrayerSwornIcon />;
-      case "WitnessDetailsIcon":
-        return <RespondentDetailsIcon />;
-      case "AdvocateDetailsIcon":
-        return <DemandDetailsNoticeIcon />;
-      case "PaymentDetailsIcon":
-        return <DemandDetailsNoticeIcon />;
-      default:
-        return <RespondentDetailsIcon />;
-    }
-  };
   const handleOpenPopup = (e, configKey, name, index = null, fieldName, inputlist = [], fileName = null) => {
     setValue(
       "scrutinyMessage",
@@ -344,16 +350,13 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
       },
     };
 
-    if (fieldObj[fieldName].hasOwnProperty("isWarning")) {
+    if (Object.hasOwn(fieldObj[fieldName], "isWarning")) {
       fieldObj[fieldName].isWarning = !fieldObj[fieldName].isWarning;
     } else {
       fieldObj[fieldName].isWarning = false;
     }
 
     inputlist.forEach((key) => {
-      const existingField = fieldObj[key] || {};
-      const isCheckedPresent = existingField.hasOwnProperty("isWarning");
-
       fieldObj[key] = {
         [type ? type : "FSOError"]: trimmedError,
         fileName,
@@ -394,10 +397,8 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
         const fieldInputData = config.populators.inputs.find((input) => input.name === page)?.data?.[0]?.data?.[field];
         const existingField = get(scrutinyMessage, ["form", index, field], {});
 
-        if (fieldInputData && !existingField.hasOwnProperty("isWarning")) {
-          if (!existingField.hasOwnProperty("isWarning")) {
-            existingField.isWarning = true;
-          }
+        if (fieldInputData && !Object.hasOwn(existingField, "isWarning")) {
+          existingField.isWarning = true;
 
           set(
             scrutinyMessage,
@@ -477,16 +478,28 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
   }, [ocrDataList, formData, formDataLoad, groupedByDocumentType, onSelect]);
 
   let showFlagIcon = isScrutiny ? true : false;
+  const accordionTitleButtonStyle = {
+    alignItems: "center",
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    display: "flex",
+    font: "inherit",
+    justifyContent: "space-between",
+    padding: 0,
+    textAlign: "left",
+    width: "100%",
+  };
   return (
-    <div className="accordion-wrapper" onClick={() => {}}>
-      <div className={`accordion-title ${isOpen ? "open" : ""}`} onClick={() => setOpen(!isOpen)}>
+    <div className="accordion-wrapper">
+      <button type="button" className={`accordion-title ${isOpen ? "open" : ""}`} onClick={() => setOpen(!isOpen)} style={accordionTitleButtonStyle}>
         <span>
           {config?.number}. {t(config?.label)}
         </span>
         <span className="reverse-arrow">
           <CustomArrowDownIcon />
         </span>
-      </div>
+      </button>
       {isOpen && (
         <div style={{ maxHeight: "fit-content" }} className={`accordion-item`}>
           <div className="accordion-content">
@@ -504,48 +517,59 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
               }
 
               return (
-                <div className={`content-item ${bgclassname}`}>
+                <div key={`section-${input.name}-${index}`} className={`content-item ${bgclassname}`}>
                   <div className="item-header">
                     <div className="header-left">
-                      {input?.icon && <Icon icon={input?.icon} />}
+                      {input?.icon && <ReviewSectionIcon icon={input?.icon} />}
                       <span>{t(input?.label)}</span>
                     </div>
                     {input?.data?.length === 0 && (
                       <span style={{ fontFamily: "Roboto", fontSize: "14px", fontWeight: 400 }}>{t(input?.noDataText)}</span>
                     )}
                     {input?.isEditingAllowed && !isScrutiny && !isJudge && (isCaseReAssigned || isDraftInProgress) && (
-                      <div
+                      <button
+                        type="button"
                         className="header-right"
-                        style={{ display: "contents" }}
-                        onClick={(e) => {
+                        style={{ display: "contents", border: "none", background: "transparent", padding: 0, cursor: "pointer" }}
+                        aria-label={t("CS_CLICK_TO_EDIT")}
+                        onClick={() => {
                           history.push(`?caseId=${caseId}&selected=${input?.key}`);
                         }}
                       >
                         <EditPencilIcon />
-                      </div>
+                      </button>
                     )}
                     {showFlagIcon && input?.data?.length > 0 && (
-                      <div
-                        style={{ cursor: "pointer" }}
+                      <button
+                        type="button"
+                        style={{ cursor: "pointer", background: "none", border: "none", padding: 0 }}
+                        aria-label={t("CS_CLICK_TO_EDIT")}
                         onClick={(e) => {
                           handleOpenPopup(e, config.key, input?.name);
                         }}
-                        key={index}
                       >
                         {sectionError ? (
                           <React.Fragment>
-                            <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
+                            <span
+                              style={{ color: "#77787B", position: "relative" }}
+                              data-tip
+                              data-for={`scrutiny-flag-${config.key}-${input.name}`}
+                            >
                               {" "}
                               <EditPencilIcon />
                             </span>
-                            <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
+                            <ReactTooltip
+                              id={`scrutiny-flag-${config.key}-${input.name}`}
+                              place="bottom"
+                              content={t("CS_CLICK_TO_EDIT") || ""}
+                            >
                               {t("CS_CLICK_TO_EDIT")}
                             </ReactTooltip>
                           </React.Fragment>
                         ) : (
                           <FlagIcon />
                         )}
-                      </div>
+                      </button>
                     )}
                   </div>
                   {sectionError && isScrutiny && (
@@ -629,7 +653,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
                           config={updatedConfig}
                           titleIndex={index + 1}
                           data={item?.data}
-                          key={index}
+                          key={`${input.name}-${index}`}
                           dataIndex={index}
                           t={t}
                           handleOpenPopup={handleOpenPopup}
@@ -770,6 +794,12 @@ SelectReviewAccordion.propTypes = {
   config: PropTypes.shape({
     isPrevScrutiny: PropTypes.bool,
     key: PropTypes.string.isRequired,
+    label: PropTypes.string,
+    number: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    populators: PropTypes.shape({
+      inputs: PropTypes.array,
+    }),
+    textAreaMaxLength: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   }).isRequired,
   control: PropTypes.any,
   errors: PropTypes.object,

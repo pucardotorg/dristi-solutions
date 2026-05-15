@@ -1,8 +1,32 @@
+import PropTypes from "prop-types";
 import React, { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
 import { CardLabelError } from "@egovernments/digit-ui-react-components";
 import { isEmptyObject } from "../Utils";
 import isEqual from "lodash/isEqual";
+
+function GroupedSelectGroupLabel({ label, translate }) {
+  if (!label) return null;
+  return <div style={{ fontWeight: "bold", padding: "4px 8px" }}>{translate(label)}</div>;
+}
+
+GroupedSelectGroupLabel.propTypes = {
+  label: PropTypes.string,
+  translate: PropTypes.func.isRequired,
+};
+
+const populatorShape = PropTypes.shape({
+  name: PropTypes.string,
+  options: PropTypes.array,
+  optionsKey: PropTypes.string,
+  valueKey: PropTypes.string,
+  styles: PropTypes.object,
+  dropdownStyle: PropTypes.object,
+  optionsCustomStyle: PropTypes.shape({
+    height: PropTypes.string,
+  }),
+  errorStyle: PropTypes.object,
+});
 
 function SelectCustomGroupedDropdown({ t, config, formData = {}, onSelect, errors }) {
   const name = config?.populators?.name || config?.key;
@@ -16,7 +40,7 @@ function SelectCustomGroupedDropdown({ t, config, formData = {}, onSelect, error
     if (!isEqual(formData?.[name], selectedOption)) {
       setSelectedOption(formData?.[name]);
     }
-  }, [formData]);
+  }, [formData, name]);
 
   const handleChange = (selected) => {
     setSelectedOption(selected);
@@ -74,7 +98,7 @@ function SelectCustomGroupedDropdown({ t, config, formData = {}, onSelect, error
           }),
         }}
         isSearchable={false}
-        formatGroupLabel={(data) => (data.label ? <div style={{ fontWeight: "bold", padding: "4px 8px" }}>{t(data.label)}</div> : null)}
+        formatGroupLabel={(data) => <GroupedSelectGroupLabel label={data.label} translate={t} />}
       />
 
       {errors?.[name] && (
@@ -83,5 +107,21 @@ function SelectCustomGroupedDropdown({ t, config, formData = {}, onSelect, error
     </div>
   );
 }
+
+SelectCustomGroupedDropdown.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    disable: PropTypes.bool,
+    populators: populatorShape,
+  }).isRequired,
+  formData: PropTypes.object,
+  onSelect: PropTypes.func.isRequired,
+  errors: PropTypes.objectOf(
+    PropTypes.shape({
+      msg: PropTypes.string,
+    })
+  ),
+};
 
 export default SelectCustomGroupedDropdown;

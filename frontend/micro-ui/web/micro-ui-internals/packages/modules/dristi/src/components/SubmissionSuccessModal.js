@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import React from "react";
 import Modal from "./Modal";
 import CustomSubmitModal from "./CustomSubmitModal";
@@ -14,5 +15,10 @@ function SubmissionSuccessModal({ t, handleBack }) {
     </Modal>
   );
 }
+
+SubmissionSuccessModal.propTypes = {
+  t: PropTypes.func.isRequired,
+  handleBack: PropTypes.func.isRequired,
+};
 
 export default SubmissionSuccessModal;

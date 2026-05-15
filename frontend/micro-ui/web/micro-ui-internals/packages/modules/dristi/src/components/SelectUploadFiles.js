@@ -1,4 +1,5 @@
 import { CardLabelError, UploadIcon } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React, { useMemo, useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
@@ -43,21 +44,17 @@ const textAreaJSX = (value, t, input, handleChange, error, disabled) => {
 };
 function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setError }) {
   const checkIfTextPresent = () => {
-    if (!formData) {
+    if (!formData || Object.keys(formData).length === 0) {
       return true;
     }
-    if (Object.keys(formData).length === 0) {
+    const keyData = formData?.[config.key];
+    if (!keyData || Object.keys(keyData).length === 0) {
       return true;
     }
-    if (Object.keys(formData?.[config.key] || {}).length === 0) {
+    if (keyData?.text) {
       return true;
-    } else if (formData?.[config.key]?.text) {
-      return true;
-    } else if (formData && !formData?.[config.key]?.text && formData?.[config.key]?.document && formData?.[config.key]?.document.length === 0) {
-      return true;
-    } else {
-      return false;
     }
+    return Boolean(!keyData?.text && keyData?.document?.length === 0);
   };
 
   const checkIfFilesPresent = () => {
@@ -149,15 +146,6 @@ function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setErro
     onSelect(config.key, data, { shouldValidate: true });
   };
 
-  const dragDropJSX = (
-    <div className="drag-drop-container">
-      <UploadIcon />
-      <p className="drag-drop-text">
-        {t("WBH_DRAG_DROP")} <text className="browse-text">{t("WBH_BULK_BROWSE_FILES")}</text>
-      </p>
-    </div>
-  );
-
   const openModal = () => {
     setShowModal(true);
     onSelect(config.key, { ...formData[config.key], document: [] });
@@ -192,28 +180,28 @@ function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setErro
     const formDataCopy = structuredClone(formData);
     delete formDataCopy[config.key]?.document;
     onSelect(config.key, { ...formDataCopy[config.key], [input.name]: data.target.value }, { shouldValidate: true });
-    return;
   };
 
   return inputs.map((input) => {
     if (input.type === "TextAreaComponent" && showTextArea) {
       return (
-        <div className="text-area-and-upload">
-          {textAreaJSX(formData?.[config.key]?.text || "", t, input, handleTextChange, errors[config.key], config?.disable)}
+        <div className="text-area-and-upload" key={`${input?.name}-text`}>
+          {textAreaJSX(formData?.[config.key]?.text || "", t, input, handleTextChange, errors?.[config.key], config?.disable)}
           {!isFileAdded && (
             <div className="text-upload-file-main">
               <p>{t("CS_WANT_TO_UPLOAD")}</p>
-              <span
+              <button
+                type="button"
                 onClick={() => {
-                  if (config?.disable) {
-                    return;
+                  if (!config?.disable) {
+                    openModal();
                   }
-                  openModal();
                 }}
-                style={{ textDecoration: "underline", color: "#007E7E" }}
+                style={{ textDecoration: "underline", color: "#007E7E", background: "none", border: "none", padding: 0, font: "inherit", cursor: config?.disable ? "not-allowed" : "pointer" }}
+                disabled={Boolean(config?.disable)}
               >
                 {t("WBH_BULK_BROWSE_FILES")}
-              </span>
+              </button>
             </div>
           )}
         </div>
@@ -227,7 +215,7 @@ function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setErro
       }
       const showFileUploader = currentValue.length ? input?.isMultipleUpload : false;
       return (
-        <div>
+        <div key={`${input?.name}-files`}>
           {isFileAdded && (
             <div className="drag-drop-visible-main">
               <div className="drag-drop-heading-main">
@@ -263,13 +251,20 @@ function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setErro
                       }}
                       name="file"
                       types={input?.fileTypes}
-                      children={dragDropJSX}
                       key={input?.name}
-                      onTypeError={(file) => {
+                      onTypeError={(_file) => {
                         const fileTypeError = t("CS_FILE_TYPE_ERROR");
                         setError((prev) => ({ ...prev, [config.key]: fileTypeError }));
                       }}
-                    />
+                    >
+                      <div className="drag-drop-container">
+                        <UploadIcon />
+                        <p className="drag-drop-text">
+                          {t("WBH_DRAG_DROP")}{" "}
+                          <span className="browse-text">{t("WBH_BULK_BROWSE_FILES")}</span>
+                        </p>
+                      </div>
+                    </FileUploader>
                   </div>
                   <div className="upload-guidelines-div">
                     <p>{t(input?.uploadGuidelines)}</p>
@@ -297,7 +292,7 @@ function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setErro
                   t={t}
                   module="works"
                   getFormState={(fileData) => getFileStoreData(fileData, input)}
-                  showHintBelow={input?.showHintBelow ? true : false}
+                  showHintBelow={Boolean(input?.showHintBelow)}
                   setuploadedstate={formData?.[config.key]?.[input.name] || []}
                   allowedMaxSizeInMB={input?.maxFileSize}
                   maxFilesAllowed={input.maxFilesAllowed || "1"}
@@ -319,12 +314,27 @@ function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setErro
               </div>
             </Modal>
           )}
-          {errors[config.key] && <CardLabelError>{t(errors[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>}
+          {errors?.[config.key] && <CardLabelError>{t(errors[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>}
         </div>
       );
     }
     return null;
   });
 }
+
+SelectUploadFiles.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    disable: PropTypes.bool,
+    populators: PropTypes.shape({
+      inputs: PropTypes.array,
+    }),
+  }).isRequired,
+  formData: PropTypes.object,
+  onSelect: PropTypes.func.isRequired,
+  errors: PropTypes.object,
+  setError: PropTypes.func.isRequired,
+};
 
 export default SelectUploadFiles;
