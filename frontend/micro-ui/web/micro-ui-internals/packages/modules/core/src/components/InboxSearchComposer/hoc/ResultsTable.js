@@ -138,6 +138,10 @@ const ResultsTable = ({ tableContainerClass, config,data,isLoading,isFetching,fu
     setDefaultValues()
   }, [session])
 
+  useEffect(() => {
+    reset(state.tableForm);
+  }, [state.tableForm])
+
     const isMobile = window.Digit.Utils.browser.isMobile();
     const [searchQuery, onSearch] = useState("");
     const debouncedValue = config?.debouncedValue || 1000;
