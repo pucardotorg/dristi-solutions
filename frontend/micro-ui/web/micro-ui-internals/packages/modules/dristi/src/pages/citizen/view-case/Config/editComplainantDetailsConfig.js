@@ -1,3 +1,10 @@
+import {
+  complainantStandardNameFields,
+  editProfileTypeOfAddressInput,
+  fileCaseAddressLineInputs,
+  verificationDisableConfigFields,
+} from "../../../../configs/shared/partyFormFieldsShared";
+
 const editComplainantDetailsFormConfig = [
   {
     body: [
@@ -98,19 +105,7 @@ const editComplainantDetailsFormConfig = [
         updateLabelOn: "complainantType.showCompanyDetails",
         componentInFront: "+91",
         disableConfigKey: "individualDetails",
-        disableConfigFields: [
-          "firstName",
-          "middleName",
-          "lastName",
-          "pincode",
-          "pincode",
-          "state",
-          "district",
-          "city",
-          "locality",
-          "addressDetails",
-          "dateOfBirth",
-        ],
+        disableConfigFields: verificationDisableConfigFields,
         isVerifiedOtpDisabledKey: "isDuplicateNumber",
       },
     ],
@@ -148,64 +143,7 @@ const editComplainantDetailsFormConfig = [
   },
   {
     body: [
-      {
-        type: "text",
-        label: "FIRST_NAME",
-        populators: {
-          name: "firstName",
-          error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
-          validation: {
-            title: "",
-            pattern: {
-              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              masterName: "commonUiConfig",
-              moduleName: "patternValidation",
-              patternType: "userName",
-            },
-            minLength: 1,
-            patternType: "Name",
-          },
-        },
-        isMandatory: true,
-      },
-      {
-        type: "text",
-        label: "MIDDLE_NAME",
-        populators: {
-          name: "middleName",
-          validation: {
-            title: "",
-            pattern: {
-              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              masterName: "commonUiConfig",
-              moduleName: "patternValidation",
-              patternType: "userName",
-            },
-            patternType: "Name",
-          },
-        },
-        isMandatory: false,
-        labelChildren: "optional",
-      },
-      {
-        type: "text",
-        label: "LAST_NAME",
-        populators: {
-          name: "lastName",
-          validation: {
-            title: "",
-            pattern: {
-              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              masterName: "commonUiConfig",
-              moduleName: "patternValidation",
-              patternType: "userName",
-            },
-            patternType: "Name",
-          },
-        },
-        isMandatory: false,
-        labelChildren: "optional",
-      },
+      ...complainantStandardNameFields,
       {
         type: "text",
         label: "AGE",
@@ -352,99 +290,7 @@ const editComplainantDetailsFormConfig = [
           withoutLabel: true,
         },
         populators: {
-          inputs: [
-            {
-              name: "typeOfAddress",
-              type: "Radio",
-              label: "CS_TYPE_OF_ADDRESS",
-              options: [],
-              showOptional: true,
-            },
-            {
-              name: "pincode",
-              type: "text",
-              label: "PINCODE",
-              validation: {
-                max: "999999",
-                title: "",
-                errMsg: "ADDRESS_PINCODE_INVALID",
-                pattern: "[0-9]+",
-                maxlength: 6,
-                minlength: 6,
-                isRequired: true,
-                patternType: "Pincode",
-              },
-              isMandatory: true,
-              inputFieldClassName: "user-details-form-style",
-            },
-            {
-              name: "state",
-              type: "text",
-              label: "STATE",
-              validation: {
-                title: "",
-                errMsg: "CORE_COMMON_APPLICANT_STATE_INVALID",
-                pattern: {
-                  masterName: "commonUiConfig",
-                  moduleName: "patternValidation",
-                  patternType: "name",
-                },
-                isRequired: true,
-                patternType: "Name",
-              },
-              isMandatory: true,
-              inputFieldClassName: "user-details-form-style",
-            },
-            {
-              name: "district",
-              type: "text",
-              label: "DISTRICT",
-              validation: {
-                title: "",
-                errMsg: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
-                pattern: {
-                  masterName: "commonUiConfig",
-                  moduleName: "patternValidation",
-                  patternType: "name",
-                },
-                isRequired: true,
-                patternType: "Name",
-              },
-              isMandatory: true,
-              inputFieldClassName: "user-details-form-style",
-            },
-            {
-              name: "city",
-              type: "text",
-              label: "CITY/TOWN",
-              validation: {
-                errMsg: "CORE_COMMON_APPLICANT_CITY_INVALID",
-                isRequired: true,
-                patternType: "Name",
-              },
-              isMandatory: true,
-              inputFieldClassName: "user-details-form-style",
-            },
-            {
-              name: "locality",
-              type: "text",
-              label: "ADDRESS",
-              validation: {
-                errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
-                pattern: {
-                  masterName: "commonUiConfig",
-                  moduleName: "patternValidation",
-                  patternType: "address",
-                },
-                maxlength: 256,
-                minlength: 2,
-                isRequired: true,
-              },
-              isMandatory: true,
-              isFormatRequired: true,
-              inputFieldClassName: "user-details-form-style",
-            },
-          ],
+          inputs: [editProfileTypeOfAddressInput, ...fileCaseAddressLineInputs],
           validation: {},
         },
         withoutLabel: true,

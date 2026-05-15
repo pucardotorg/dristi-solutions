@@ -1,3 +1,5 @@
+import { respondentEditNameFields } from "../../../../configs/shared/partyFormFieldsShared";
+
 const editRespondentFormconfig = [
   {
     body: [
@@ -121,81 +123,7 @@ const editRespondentFormconfig = [
     },
   },
   {
-    body: [
-      {
-        type: "text",
-        label: "FIRST_NAME",
-        populators: {
-          name: "respondentFirstName",
-          error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
-          validation: {
-            title: "",
-            pattern: {
-              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              masterName: "commonUiConfig",
-              moduleName: "patternValidation",
-              patternType: "userName",
-            },
-            minLength: 1,
-            patternType: "Name",
-          },
-        },
-        isMandatory: true,
-      },
-      {
-        type: "text",
-        label: "MIDDLE_NAME",
-        populators: {
-          name: "respondentMiddleName",
-          validation: {
-            title: "",
-            pattern: {
-              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              masterName: "commonUiConfig",
-              moduleName: "patternValidation",
-              patternType: "userName",
-            },
-            patternType: "Name",
-          },
-        },
-        isMandatory: false,
-        labelChildren: "optional",
-      },
-      {
-        type: "text",
-        label: "LAST_NAME",
-        populators: {
-          name: "respondentLastName",
-          validation: {
-            title: "",
-            pattern: {
-              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              masterName: "commonUiConfig",
-              moduleName: "patternValidation",
-              patternType: "userName",
-            },
-            patternType: "Name",
-          },
-        },
-        isMandatory: false,
-        labelChildren: "optional",
-      },
-      {
-        type: "text",
-        label: "AGE",
-        populators: {
-          name: "respondentAge",
-          validation: {
-            maxLength: 3,
-            minLength: 2,
-            pattern: "[0-9]+",
-            patternType: "Number",
-          },
-        },
-        isMandatory: false,
-        labelChildren: "optional",
-      },
-    ],
+    body: [...respondentEditNameFields],
     head: "CS_RESPONDENT_NAME",
     updateLabel: {
       key: "head",
