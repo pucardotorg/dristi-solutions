@@ -262,17 +262,28 @@ const InboxSearchComposer = ({configs,headerLabel,additionalConfig,onFormValueCh
                     configs?.sections?.searchResult?.show &&
                         <div className={`results-table-wrapper ${configs?.sections?.searchResult?.uiConfig?.resultsWrapperClassName}`} style={data?.[configs?.sections?.searchResult?.uiConfig?.resultsJsonPath]?.length > 0 ? (!(isLoading || isFetching) ?{ overflowX: "auto" }: {}) : {  }} >
                             <MediaQuery minWidth={426}>
-                    {/* configs?.sections?.searchResult?.show &&  
-                        <div style={data?.[configs?.sections?.searchResult?.uiConfig?.resultsJsonPath]?.length > 0 ? (!(isLoading || isFetching) ?{ overflowX: "scroll", borderRadius : "4px" }: {}) : {  }} > */}
-
-                            <ResultsTable 
-                                config={configs?.sections?.searchResult?.uiConfig} 
-                                data={data} 
-                                isLoading={isLoading} 
-                                isFetching={isFetching} 
-                                fullConfig={configs}
-                                additionalConfig={additionalConfig}
-                                />
+                            {additionalConfig?.resultsTable?.customComponent
+                                ? React.createElement(additionalConfig.resultsTable.customComponent, {
+                                    config: configs?.sections?.searchResult?.uiConfig,
+                                    data: data,
+                                    isLoading: isLoading,
+                                    isFetching: isFetching,
+                                    fullConfig: configs,
+                                    additionalConfig: additionalConfig,
+                                    state: state,
+                                    dispatch: dispatch,
+                                })
+                                : (
+                                <ResultsTable
+                                    config={configs?.sections?.searchResult?.uiConfig}
+                                    data={data}
+                                    isLoading={isLoading}
+                                    isFetching={isFetching}
+                                    fullConfig={configs}
+                                    additionalConfig={additionalConfig}
+                                    />
+                                )
+                            }
                             </MediaQuery>
                             <MediaQuery maxWidth={426}>
                             <MobileSearchResults

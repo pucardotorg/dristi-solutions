@@ -23,6 +23,7 @@ import SelectAdvocateModal from "./SelectAdvocateModal";
 import { extractedSeniorAdvocates } from "../../utils";
 import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import CaseCardGrid from "../../components/CaseCardGrid";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -689,15 +690,6 @@ const HomeView = () => {
               style={{ width: individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? "100vw" : "70vw" }}
             >
               <div className="home-header-wrapper">
-                <UpcomingHearings
-                  handleNavigate={handleNavigate}
-                  individualData={individualData}
-                  attendeeIndividualId={selectedSeniorAdvocate?.individualId}
-                  userInfoType={userInfoType}
-                  advocateId={selectedSeniorAdvocate?.id}
-                  selectedSeniorAdvocate={selectedSeniorAdvocate}
-                  t={t}
-                />
                 {(viewDashBoards || viewADiary) && (
                   <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
                     {viewDashBoards && (
@@ -772,6 +764,7 @@ const HomeView = () => {
                       additionalConfig={{
                         resultsTable: {
                           onClickRow: onRowClick,
+                          customComponent: CaseCardGrid,
                         },
                       }}
                     />
@@ -789,6 +782,15 @@ const HomeView = () => {
           (isCitizenReferredInAnyCase || (selectedSeniorAdvocate?.id && (userType === "ADVOCATE_CLERK" || userType === "ADVOCATE")))) ||
           userInfoType === "employee") && (
           <div className="right-side" style={{ width: "30vw" }}>
+            <UpcomingHearings
+              handleNavigate={handleNavigate}
+              individualData={individualData}
+              attendeeIndividualId={selectedSeniorAdvocate?.individualId}
+              userInfoType={userInfoType}
+              advocateId={selectedSeniorAdvocate?.id}
+              selectedSeniorAdvocate={selectedSeniorAdvocate}
+              t={t}
+            />
             <TasksComponent
               taskType={taskType}
               setTaskType={setTaskType}
