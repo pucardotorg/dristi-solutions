@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import PropTypes from "prop-types";
 import { SearchIconSvg } from "@egovernments/digit-ui-react-components";
 import { Loader } from "@googlemaps/js-api-loader";
 
@@ -214,31 +215,36 @@ const mapStyles = [
   },
 ];
 
-const setLocationText = (location, onChange, isPlaceRequired = false, index, inputRef) => {
+const setLocationText = (location, onChange, index, inputRef, isPlaceRequired = false) => {
   const geocoder = new window.google.maps.Geocoder();
+  const handleGeocodeResults = (results, status) => {
+    if (status !== "OK" || !results[0]) {
+      return;
+    }
+    const pincode = GetPinCode(results[0]);
+    const infoWindowContent = inputRef.current;
+    if (!infoWindowContent) {
+      return;
+    }
+    infoWindowContent.value = getName(results[0]);
+    if (!onChange) {
+      return;
+    }
+    if (isPlaceRequired) {
+      onChange(pincode, results[0], { longitude: location.lng, latitude: location.lat }, infoWindowContent.value);
+    } else {
+      onChange(pincode, results[0], { longitude: location.lng, latitude: location.lat });
+    }
+  };
   geocoder.geocode(
     {
       location,
     },
-    function (results, status) {
-      if (status === "OK") {
-        if (results[0]) {
-          let pincode = GetPinCode(results[0]);
-          const infoWindowContent = inputRef.current;
-          if (infoWindowContent) {
-            infoWindowContent.value = getName(results[0]);
-            if (onChange) {
-              if (isPlaceRequired) onChange(pincode, results[0], { longitude: location.lng, latitude: location.lat }, infoWindowContent.value);
-              else onChange(pincode, results[0], { longitude: location.lng, latitude: location.lat });
-            }
-          }
-        }
-      }
-    }
+    handleGeocodeResults
   );
 };
 
-const onMarkerDragged = (marker, onChange, isPlaceRequired = false, index, inputRef) => {
+const onMarkerDragged = (marker, onChange, index, inputRef, isPlaceRequired = false) => {
   if (!marker) return;
   const { latLng } = marker;
   const currLat = latLng.lat();
@@ -247,11 +253,10 @@ const onMarkerDragged = (marker, onChange, isPlaceRequired = false, index, input
     lat: currLat,
     lng: currLang,
   };
-  if (isPlaceRequired) setLocationText(location, onChange, true, index, inputRef);
-  else setLocationText(location, onChange, false, index, inputRef);
+  setLocationText(location, onChange, index, inputRef, isPlaceRequired);
 };
 
-const initAutocomplete = (onChange, position, isPlaceRequired = false, index, inputRef, mapRef) => {
+const initAutocomplete = (onChange, position, index, inputRef, mapRef, isPlaceRequired = false) => {
   const coordinates = {
     lat: parseFloat(position?.lat),
     lng: parseFloat(position?.lng),
@@ -290,12 +295,12 @@ const initAutocomplete = (onChange, position, isPlaceRequired = false, index, in
       clickable: true,
     }),
   ];
-  if (isPlaceRequired) setLocationText(position, onChange, true, index);
-  else setLocationText(position, onChange, false, index);
+  if (isPlaceRequired) setLocationText(position, onChange, index, inputRef, true);
+  else setLocationText(position, onChange, index, inputRef, false);
 
   // Listen for the event fired when the user selects a prediction and retrieve
   // more details for that place.
-  markers[0].addListener("dragend", (marker) => onMarkerDragged(marker, onChange, isPlaceRequired, index, inputRef));
+  markers[0].addListener("dragend", (marker) => onMarkerDragged(marker, onChange, index, inputRef, isPlaceRequired));
   searchBox.addListener("place_changed", () => {
     const place = searchBox.getPlace();
 
@@ -338,7 +343,7 @@ const initAutocomplete = (onChange, position, isPlaceRequired = false, index, in
         clickable: true,
       })
     );
-    markers[0].addListener("dragend", (marker) => onMarkerDragged(marker, onChange, isPlaceRequired, index, inputRef));
+    markers[0].addListener("dragend", (marker) => onMarkerDragged(marker, onChange, index, inputRef, isPlaceRequired));
     if (place.geometry.viewport) {
       // Only geocodes have viewport.
       bounds.union(place.geometry.viewport);
@@ -366,10 +371,10 @@ const LocationSearch = (props) => {
         initAutocomplete(
           props.onChange,
           { lat: position.coords.latitude, lng: position.coords.longitude },
-          props.isPlaceRequired,
           props?.index,
           inputRef,
-          mapRef
+          mapRef,
+          props.isPlaceRequired
         );
       };
       const getLatLngError = (error) => {
@@ -381,7 +386,7 @@ const LocationSearch = (props) => {
             ...defaultCoordinates,
           };
         }
-        initAutocomplete(props.onChange, defaultLatLong, props.isPlaceRequired, props?.index, inputRef, mapRef);
+        initAutocomplete(props.onChange, defaultLatLong, props?.index, inputRef, mapRef, props.isPlaceRequired);
       };
 
       const initMaps = () => {
@@ -410,6 +415,24 @@ const LocationSearch = (props) => {
       <div ref={mapRef} className="map"></div>
     </div>
   );
+};
+
+LocationSearch.propTypes = {
+  setCoordinateData: PropTypes.func.isRequired,
+  isAutoFilledDisabled: PropTypes.bool,
+  onChange: PropTypes.func,
+  isPlaceRequired: PropTypes.bool,
+  index: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  isPTDefault: PropTypes.bool,
+  PTdefaultcoord: PropTypes.shape({
+    defaultConfig: PropTypes.object,
+  }),
+  position: PropTypes.shape({
+    latitude: PropTypes.number,
+    longitude: PropTypes.number,
+  }),
+  disable: PropTypes.bool,
+  locationStyle: PropTypes.object,
 };
 
 export default LocationSearch;

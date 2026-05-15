@@ -40,12 +40,18 @@ const InputCard = ({
 };
 
 InputCard.propTypes = {
-  text: PropTypes.object,
+  t: PropTypes.func,
+  children: PropTypes.node,
+  texts: PropTypes.object,
   submit: PropTypes.bool,
+  inputs: PropTypes.array,
+  inputRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape({ current: PropTypes.any })]),
   onNext: PropTypes.func,
   onSkip: PropTypes.func,
+  isDisable: PropTypes.bool,
   onAdd: PropTypes.func,
-  t: PropTypes.func,
+  isMultipleAllow: PropTypes.bool,
+  cardStyle: PropTypes.object,
 };
 
 InputCard.defaultProps = {

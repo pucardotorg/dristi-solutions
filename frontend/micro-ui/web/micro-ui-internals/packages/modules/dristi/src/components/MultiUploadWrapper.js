@@ -1,4 +1,5 @@
 import React, { useEffect, useReducer, useState } from "react";
+import PropTypes from "prop-types";
 import UploadFile from "./UploadFile";
 import isEqual from "lodash/isEqual";
 import { EXTENSION_TO_MIME } from "../Utils/constants";
@@ -50,7 +51,6 @@ const fileValidationStatus = (file, regex, maxSize, t, notSupportedError, maxFil
 const checkIfAllValidFiles = (files, regex, maxSize, t, maxFilesAllowed, state, notSupportedError, maxFileErrorMessage) => {
   if (!files.length || !regex || !maxSize) return [{}, false];
 
-  const uploadedFiles = state.length + 1;
   if (maxFilesAllowed && files.length > maxFilesAllowed)
     return [[{ valid: false, name: files[0]?.name?.substring(0, 15), error: t(`FILE_LIMIT_EXCEEDED`) }], true];
 
@@ -68,6 +68,7 @@ const checkIfAllValidFiles = (files, regex, maxSize, t, maxFilesAllowed, state, 
 };
 
 // can use react hook form to set validations @neeraj-egov
+// NOSONAR S107 - Digit composer passes many individual props
 const MultiUploadWrapper = ({
   t,
   module = "PGR",
@@ -224,6 +225,32 @@ const MultiUploadWrapper = ({
       </span>
     </div>
   );
+};
+
+MultiUploadWrapper.propTypes = {
+  t: PropTypes.func.isRequired,
+  module: PropTypes.string,
+  tenantId: PropTypes.string,
+  getFormState: PropTypes.func,
+  requestSpecifcFileRemoval: PropTypes.any,
+  extraStyleName: PropTypes.string,
+  setuploadedstate: PropTypes.array,
+  showHintBelow: PropTypes.bool,
+  hintText: PropTypes.string,
+  allowedFileTypesRegex: PropTypes.instanceOf(RegExp),
+  allowedMaxSizeInMB: PropTypes.number,
+  acceptFiles: PropTypes.string,
+  maxFilesAllowed: PropTypes.number,
+  customClass: PropTypes.string,
+  customErrorMsg: PropTypes.string,
+  containerStyles: PropTypes.object,
+  noteMsg: PropTypes.string,
+  notSupportedError: PropTypes.string,
+  maxFileErrorMessage: PropTypes.string,
+  displayName: PropTypes.string,
+  disable: PropTypes.bool,
+  uploadDivStyle: PropTypes.object,
+  multiple: PropTypes.bool,
 };
 
 export default MultiUploadWrapper;

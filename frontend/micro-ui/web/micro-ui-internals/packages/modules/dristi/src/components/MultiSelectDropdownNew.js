@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
+import PropTypes from "prop-types";
 
 const ArrowDown2 = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black" class="cp" width="24px" height="24px">
@@ -21,6 +22,10 @@ const CheckBoxIcon = ({ checked }) => (
     {checked && <path d="M5 10L8.5 13.5L15 6.5" stroke="white" strokeWidth="2" fill="none" />}
   </svg>
 );
+
+CheckBoxIcon.propTypes = {
+  checked: PropTypes.bool,
+};
 
 export const MultiSelectDropdownNew = React.memo(
   ({
@@ -119,6 +124,7 @@ export const MultiSelectDropdownNew = React.memo(
             })}
             <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #E3E3E3", padding: "10px 12px" }}>
               <button
+                type="button"
                 onClick={handleReset}
                 style={{
                   border: "1px solid teal",
@@ -134,6 +140,7 @@ export const MultiSelectDropdownNew = React.memo(
                 {t("Reset")}
               </button>
               <button
+                type="button"
                 onClick={handleConfirm}
                 style={{
                   border: "none",
@@ -155,3 +162,16 @@ export const MultiSelectDropdownNew = React.memo(
     );
   }
 );
+
+MultiSelectDropdownNew.propTypes = {
+  options: PropTypes.array,
+  optionsKey: PropTypes.string,
+  displayKey: PropTypes.string,
+  onConfirm: PropTypes.func,
+  onSelect: PropTypes.func,
+  defaultLabel: PropTypes.string,
+  t: PropTypes.func,
+  disable: PropTypes.bool,
+  active: PropTypes.bool,
+  setActive: PropTypes.func,
+};

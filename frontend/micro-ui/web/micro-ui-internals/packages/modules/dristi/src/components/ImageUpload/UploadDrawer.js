@@ -38,7 +38,10 @@ function UploadDrawer({ setProfilePic, closeDrawer, userType, removeProfilePic, 
 
   return (
     <React.Fragment>
-      <div
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onOverlayBodyClick}
         style={{
           position: "fixed",
           top: "0",
@@ -48,10 +51,11 @@ function UploadDrawer({ setProfilePic, closeDrawer, userType, removeProfilePic, 
           width: "100%",
           height: "100vh",
           backgroundColor: "rgba(0,0,0,.5)",
-          // zIndex: "9998",
+          border: "none",
+          padding: 0,
+          cursor: "pointer",
         }}
-        onClick={onOverlayBodyClick}
-      ></div>
+      />
       <div
         style={{
           width: "100%",
@@ -70,21 +74,20 @@ function UploadDrawer({ setProfilePic, closeDrawer, userType, removeProfilePic, 
         <div
           style={{ display: "flex", flex: "1", flexDirection: "column", width: "100%", justifyContent: "center", alignItems: "center", gap: "8px 0" }}
         >
-          <label htmlFor="file" style={{ cursor: "pointer" }}>
-            {" "}
+          <label htmlFor="file" style={{ cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
             <GalleryIcon />
+            <span>Gallery</span>
           </label>
-          <label style={{ cursor: "pointer" }}> Gallery</label>
           <input type="file" id="file" accept="image/*, .png, .jpeg, .jpg" onChange={selectfile} style={{ display: "none" }} />
         </div>
 
         <div
           style={{ display: "flex", flex: "1", width: "100%", justifyContent: "center", alignItems: "center", flexDirection: "column", gap: "8px 0" }}
         >
-          <button type="button" onClick={removeimg}>
+          <button type="button" onClick={removeimg} aria-label="Remove">
             <RemoveIcon />
           </button>
-          <label style={{ cursor: "pointer" }}>Remove</label>
+          <span>Remove</span>
         </div>
       </div>
     </React.Fragment>

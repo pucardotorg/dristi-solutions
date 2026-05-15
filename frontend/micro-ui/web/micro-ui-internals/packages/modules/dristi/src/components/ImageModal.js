@@ -26,6 +26,23 @@ ImageModalHeading.propTypes = {
   onClose: PropTypes.func.isRequired,
 };
 
+const imageInfoPropType = PropTypes.shape({
+  disableScrutiny: PropTypes.bool,
+  enableScrutinyField: PropTypes.bool,
+  dataError: PropTypes.object,
+  inputlist: PropTypes.array,
+  configKey: PropTypes.string,
+  name: PropTypes.string,
+  index: PropTypes.number,
+  fieldName: PropTypes.string,
+  data: PropTypes.shape({
+    fileStore: PropTypes.string,
+    fileName: PropTypes.string,
+    documentName: PropTypes.string,
+    docViewerStyle: PropTypes.object,
+  }),
+});
+
 export const ImageModal = ({
   imageInfo,
   handleCloseModal,
@@ -170,7 +187,7 @@ export const ImageModal = ({
 };
 
 ImageModal.propTypes = {
-  imageInfo: PropTypes.object,
+  imageInfo: imageInfoPropType,
   handleCloseModal: PropTypes.func.isRequired,
   handleOpenPopup: PropTypes.func.isRequired,
   t: PropTypes.func.isRequired,
