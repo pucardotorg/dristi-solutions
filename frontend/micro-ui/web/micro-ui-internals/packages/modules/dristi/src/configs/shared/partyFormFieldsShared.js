@@ -580,3 +580,457 @@ export const respondentPersonalDetailsNoteStep = {
     respondentType: ["commonFields"],
   },
 };
+
+export const respondentTypeFormStep = {
+  body: [
+    {
+      key: "respondentType",
+      type: "radio",
+      populators: {
+        type: "radioButton",
+        error: "CORE_REQUIRED_FIELD_ERROR",
+        label: "SELECT_RESPONDENT_TYPE",
+        required: false,
+        mdmsConfig: {
+          select: "(data) => {return data['case'].ComplainantRespondentType?.map((item) => {return item;});}",
+          masterName: "ComplainantRespondentType",
+          moduleName: "case",
+        },
+        optionsKey: "code",
+        isDependent: true,
+        isMandatory: true,
+      },
+      isMandatory: true,
+      withoutLabel: true,
+    },
+  ],
+  head: "CS_RESPONDENT_TYPE",
+};
+
+export const respondentEntityTypeFormStep = {
+  body: [
+    {
+      key: "respondentTypeOfEntity",
+      type: "dropdown",
+      label: "TYPE_OF_ENTITY",
+      populators: {
+        name: "respondentTypeOfEntity",
+        type: "radioButton",
+        error: "CORE_REQUIRED_FIELD_ERROR",
+        label: "SELECT_RESPONDENT_TYPE",
+        styles: {
+          maxWidth: "100%",
+          marginBottom: "10px",
+        },
+        required: false,
+        mdmsConfig: {
+          select: "(data) => {return data['case'].TypeOfEntity?.map((item) => {return item;});}",
+          masterName: "TypeOfEntity",
+          moduleName: "case",
+        },
+        optionsKey: "code",
+        isMandatory: true,
+      },
+      isMandatory: true,
+    },
+  ],
+  dependentKey: {
+    respondentType: ["showCompanyDetails"],
+  },
+};
+
+const buildCompanyDocumentDragDropInput = (isEditProfile) => {
+  const base = {
+    name: "document",
+    type: "DragDropComponent",
+    isOptional: "CS_IS_OPTIONAL",
+    documentHeader: "COMPANY_DOCUMENT_DETAILS",
+    isMultipleUpload: true,
+    documentHeaderStyle: {
+      textAlign: "start",
+    },
+  };
+  if (isEditProfile) {
+    return {
+      ...base,
+      fileTypes: ["JPG", "JPEG", "PDF", "PNG"],
+      isMandatory: false,
+      maxFileSize: 10,
+      uploadGuidelines: "UPLOAD_DOC_10",
+      maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
+    };
+  }
+  return base;
+};
+
+export const buildRespondentCompanyDetailStep = (isEditProfile = false) => ({
+  body: [
+    {
+      key: "respondentCompanyName",
+      type: "text",
+      label: "company_Name",
+      populators: {
+        name: "respondentCompanyName",
+        title: "FIRST_TERMS_AND_CONDITIONS",
+        styles: {
+          minWidth: "100%",
+        },
+        validation: {
+          title: "",
+          pattern: {
+            message: "CORE_COMMON_NON_NUMERIC_TYPE_IN",
+            masterName: "commonUiConfig",
+            moduleName: "patternValidation",
+            patternType: "nonNumericString",
+          },
+          minLength: 1,
+          patternType: "Name",
+        },
+        customStyle: {
+          minWidth: "100%",
+        },
+        labelStyles: {
+          padding: "8px",
+        },
+      },
+      isMandatory: true,
+    },
+    {
+      key: "companyDetailsUpload",
+      type: "component",
+      label: "COMPANY_DOCUMENT_DETAILS",
+      component: "SelectCustomDragDrop",
+      populators: {
+        inputs: [buildCompanyDocumentDragDropInput(isEditProfile)],
+      },
+      isMandatory: false,
+      withoutLabel: true,
+    },
+  ],
+  head: "CS_RESPONDENT_COMPANY_DETAIL",
+  dependentKey: {
+    respondentType: ["showCompanyDetails"],
+  },
+});
+
+export const buildRespondentNameFormStep = (nameFields) => ({
+  body: [...nameFields],
+  head: "CS_RESPONDENT_NAME",
+  updateLabel: {
+    key: "head",
+    value: "CS_COMMON_ENTITY_DETAIL",
+  },
+  defaultLabel: {
+    key: "head",
+    value: "CS_RESPONDENT_NAME",
+  },
+  dependentKey: {
+    respondentType: ["commonFields"],
+  },
+  updateLabelOn: "respondentType.showCompanyDetails",
+});
+
+export const respondentDesignationFormStep = {
+  body: [
+    {
+      type: "text",
+      label: "DESIGNATION",
+      populators: {
+        name: "respondentDesignation",
+        error: "CORE_REQUIRED_FIELD_ERROR",
+        validation: {
+          title: "",
+          pattern: {
+            message: "CORE_COMMON_APPLICANT_NAME_INVALID",
+            masterName: "commonUiConfig",
+            moduleName: "patternValidation",
+            patternType: "userName",
+          },
+          patternType: "Name",
+        },
+      },
+      isMandatory: false,
+      labelChildren: "optional",
+    },
+  ],
+  dependentKey: {
+    respondentType: ["showCompanyDetails"],
+  },
+};
+
+export const respondentInquiryAffidavitUploadStep = {
+  body: [
+    {
+      key: "inquiryAffidavitFileUpload",
+      type: "component",
+      label: "AFFIDAVIT_UNDER_SECTION_225_BNSS",
+      component: "SelectCustomDragDrop",
+      populators: {
+        inputs: [
+          {
+            name: "document",
+            type: "DragDropComponent",
+            isOptional: "CS_IS_OPTIONAL",
+            documentHeader: "AFFIDAVIT_UNDER_SECTION_225_BNSS",
+            isMultipleUpload: true,
+            infoTooltipMessage: "AFFIDAVIT_UNDER_SECTION_225_BNSS_TOOLTIP_MSG",
+          },
+        ],
+      },
+      withoutLabel: true,
+    },
+  ],
+  dependentKey: {
+    respondentType: ["commonFields"],
+  },
+};
+
+export const editRespondentProfileChangeSteps = [
+  {
+    body: [
+      {
+        key: "reasonDetailsSeparator",
+        type: "component",
+        sublabel: "REQUEST_DETAILS",
+        component: "OrSeparator",
+        populators: {
+          inputs: [],
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "comments",
+        withoutLabel: true,
+        isMandatory: false,
+        isInfinite: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "COMMENTS",
+              type: "TextAreaComponent",
+              isOptional: true,
+            },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "reasonForChange",
+        label: "CS_REASON_FOR_CHANGE",
+        withoutLabel: true,
+        isMandatory: true,
+        isInfinite: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "CS_REASON_FOR_CHANGE",
+              type: "TextAreaComponent",
+              errorStyle: {
+                fontSize: "14px",
+                fontWeight: 400,
+                paddingTop: "20px",
+                color: "#d4351c",
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomDragDrop",
+        key: "supportingDocument",
+        isMandatory: false,
+        withoutLabel: true,
+        populators: {
+          inputs: [
+            {
+              name: "document",
+              documentHeader: "SUPPORTING_DOCUMENT",
+              type: "DragDropComponent",
+              isOptional: "CS_IS_OPTIONAL",
+              uploadGuidelines: "UPLOAD_DOC_10",
+              maxFileSize: 10,
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+              isMultipleUpload: false,
+              documentHeaderStyle: {
+                margin: "0px",
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const buildBulkPhoneFormStep = ({
+  head,
+  subHead,
+  mobileInputClassName,
+  useArrayValidation = false,
+}) => ({
+  body: [
+    {
+      key: "phonenumbers",
+      type: "component",
+      label: "CORE_COMMON_PHONE_NUMBER",
+      component: "SelectBulkInputs",
+      populators: {
+        inputs: [
+          {
+            name: "mobileNumber",
+            type: "text",
+            error: "ERR_HRMS_INVALID_MOB_NO",
+            label: "CORE_COMMON_PHONE_NUMBER",
+            ...(mobileInputClassName ? { className: mobileInputClassName } : {}),
+            validation: {
+              ...(useArrayValidation ? { isArray: true } : {}),
+              pattern: {
+                masterName: "commonUiConfig",
+                moduleName: "patternValidation",
+                patternType: "contact",
+              },
+              isNumber: true,
+              required: true,
+              maxLength: 10,
+              minLength: 10,
+            },
+            isMandatory: true,
+            componentInFront: "+91",
+          },
+        ],
+        validation: {},
+      },
+      withoutLabel: true,
+    },
+  ],
+  head,
+  ...(subHead ? { subHead } : {}),
+});
+
+export const buildBulkEmailFormStep = ({ head, emailInputClassName, useArrayValidation = false, maxLength = 150 }) => ({
+  body: [
+    {
+      key: "emails",
+      type: "component",
+      label: "CORE_COMMON_EMAILS",
+      component: "SelectBulkInputs",
+      populators: {
+        inputs: [
+          {
+            name: "emailId",
+            type: "text",
+            error: "ERR_HRMS_INVALID_MOB_NO",
+            label: "CORE_COMMON_EMAILS",
+            ...(emailInputClassName ? { className: emailInputClassName } : {}),
+            validation: {
+              ...(useArrayValidation ? { isArray: true } : {}),
+              pattern: {
+                masterName: "commonUiConfig",
+                moduleName: "patternValidation",
+                patternType: "email",
+              },
+              required: true,
+              ...(maxLength ? { maxLength } : {}),
+            },
+            isMandatory: true,
+          },
+        ],
+        validation: {},
+      },
+      withoutLabel: true,
+    },
+  ],
+  head,
+});
+
+export const witnessPhoneFormStep = buildBulkPhoneFormStep({
+  head: "CS_WITNESS_CONTACT_DETAILS",
+  subHead: "CS_WITNESS_NOTE",
+  mobileInputClassName: "mobile-number",
+  useArrayValidation: false,
+});
+
+export const witnessEmailFormStep = buildBulkEmailFormStep({
+  head: " ",
+  emailInputClassName: "email-address",
+  useArrayValidation: false,
+  maxLength: undefined,
+});
+
+export const witnessAddressLineInputs = [
+  {
+    name: "pincode",
+    type: "text",
+    label: "PINCODE",
+    validation: {
+      max: "9999999",
+      title: "",
+      errMsg: "ADDRESS_PINCODE_INVALID",
+      pattern: "[0-9]+",
+      maxlength: 7,
+      minlength: 6,
+      isRequired: true,
+      patternType: "Pincode",
+    },
+    isMandatory: true,
+  },
+  {
+    name: "state",
+    type: "text",
+    label: "STATE",
+    validation: {
+      isRequired: true,
+    },
+    isMandatory: true,
+  },
+  {
+    name: "district",
+    type: "text",
+    label: "DISTRICT",
+    validation: {
+      isRequired: true,
+    },
+    isMandatory: true,
+  },
+  {
+    name: "city",
+    type: "text",
+    label: "CITY/TOWN",
+    validation: {
+      isRequired: true,
+    },
+    isMandatory: true,
+  },
+];
+
+export const witnessAddressDetailsField = {
+  key: "addressDetails",
+  type: "component",
+  error: "CORE_REQUIRED_FIELD_ERROR",
+  formType: "Witness",
+  required: false,
+  component: "SelectComponentsMulti",
+  populators: {
+    inputs: witnessAddressLineInputs,
+    validation: {},
+  },
+  withoutLabel: true,
+};

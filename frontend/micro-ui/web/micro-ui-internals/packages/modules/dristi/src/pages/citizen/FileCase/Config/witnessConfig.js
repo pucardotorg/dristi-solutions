@@ -1,3 +1,9 @@
+import {
+  witnessAddressDetailsField,
+  witnessEmailFormStep,
+  witnessPhoneFormStep,
+} from "../../../../configs/shared/partyFormFieldsShared";
+
 const witnessFormConfig = [
   {
     body: [
@@ -79,135 +85,10 @@ const witnessFormConfig = [
     ],
     head: "WITNESS_BASIC_DETAILS",
   },
+  witnessPhoneFormStep,
+  witnessEmailFormStep,
   {
-    body: [
-      {
-        key: "phonenumbers",
-        type: "component",
-        label: "CORE_COMMON_PHONE_NUMBER",
-        component: "SelectBulkInputs",
-        populators: {
-          inputs: [
-            {
-              name: "mobileNumber",
-              type: "text",
-              error: "ERR_HRMS_INVALID_MOB_NO",
-              label: "CORE_COMMON_PHONE_NUMBER",
-              className: "mobile-number",
-              validation: {
-                pattern: {
-                  masterName: "commonUiConfig",
-                  moduleName: "patternValidation",
-                  patternType: "contact",
-                },
-                isNumber: true,
-                required: true,
-                maxLength: 10,
-                minLength: 10,
-              },
-              componentInFront: "+91",
-            },
-          ],
-          validation: {},
-        },
-        withoutLabel: true,
-      },
-    ],
-    head: "CS_WITNESS_CONTACT_DETAILS",
-    subHead: "CS_WITNESS_NOTE",
-  },
-  {
-    body: [
-      {
-        key: "emails",
-        type: "component",
-        label: "CORE_COMMON_EMAILS",
-        component: "SelectBulkInputs",
-        populators: {
-          inputs: [
-            {
-              name: "emailId",
-              type: "text",
-              error: "ERR_HRMS_INVALID_MOB_NO",
-              label: "CORE_COMMON_EMAILS",
-              className: "email-address",
-              validation: {
-                pattern: {
-                  masterName: "commonUiConfig",
-                  moduleName: "patternValidation",
-                  patternType: "email",
-                },
-                required: true,
-              },
-            },
-          ],
-          validation: {},
-        },
-        withoutLabel: true,
-      },
-    ],
-    head: " ",
-  },
-  {
-    body: [
-      {
-        key: "addressDetails",
-        type: "component",
-        error: "CORE_REQUIRED_FIELD_ERROR",
-        formType: "Witness",
-        required: false,
-        component: "SelectComponentsMulti",
-        populators: {
-          inputs: [
-            {
-              name: "pincode",
-              type: "text",
-              label: "PINCODE",
-              validation: {
-                max: "9999999",
-                title: "",
-                errMsg: "ADDRESS_PINCODE_INVALID",
-                pattern: "[0-9]+",
-                maxlength: 7,
-                minlength: 6,
-                isRequired: true,
-                patternType: "Pincode",
-              },
-              isMandatory: true,
-            },
-            {
-              name: "state",
-              type: "text",
-              label: "STATE",
-              validation: {
-                isRequired: true,
-              },
-              isMandatory: true,
-            },
-            {
-              name: "district",
-              type: "text",
-              label: "DISTRICT",
-              validation: {
-                isRequired: true,
-              },
-              isMandatory: true,
-            },
-            {
-              name: "city",
-              type: "text",
-              label: "CITY/TOWN",
-              validation: {
-                isRequired: true,
-              },
-              isMandatory: true,
-            },
-          ],
-          validation: {},
-        },
-        withoutLabel: true,
-      },
-    ],
+    body: [witnessAddressDetailsField],
   },
   {
     body: [

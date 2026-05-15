@@ -1,3 +1,10 @@
+import {
+  clearBulkContactTextfieldValues,
+  getComplainantMobileNumbers,
+  getWitnessEmails,
+  getWitnessMobileNumbers,
+  validateRespondentMobileEmailDuplicates,
+} from "../../../configs/shared/profileValidationShared";
 import { DRISTIService } from "../../../services";
 import { cleanString, combineMultipleFiles, documentsTypeMapping, getAuthorizedUuid } from "../../../Utils";
 import { SubmissionWorkflowAction } from "../../../Utils/submissionWorkflow";
@@ -203,76 +210,16 @@ export const editCheckDuplicateMobileEmailValidation = ({
   caseDetails,
   currentDisplayIndex,
 }) => {
-  const complainantMobileNumbersArray =
-    caseDetails?.additionalDetails?.complainantDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.complainantVerification?.mobileNumber) {
-          return true;
-        } else return false;
-      })
-      .map((data) => {
-        return data?.data?.complainantVerification?.mobileNumber;
-      }) || [];
-
-  const witnessMobileNumbersArray =
-    caseDetails?.witnessDetails
-      ?.filter((data) => {
-        if (data?.phonenumbers?.mobileNumber && data?.phonenumbers?.mobileNumber?.length > 0) {
-          return true;
-        } else return false;
-      })
-      ?.map((data) => {
-        return data?.phonenumbers?.mobileNumber;
-      })
-      ?.reduce((acc, curr) => acc.concat(curr), []) || [];
-
-  const witnessEmailsArray =
-    caseDetails?.witnessDetails
-      ?.filter((data) => {
-        if (data?.emails?.emailId && data?.emails?.emailId?.length > 0) {
-          return true;
-        } else return false;
-      })
-      ?.map((data) => {
-        return data?.emails?.emailId;
-      })
-      ?.reduce((acc, curr) => acc.concat(curr), []) || [];
-
   if (selected === "respondentDetails") {
-    const currentMobileNumber = formData?.phonenumbers?.textfieldValue;
-    if (currentMobileNumber && complainantMobileNumbersArray.some((number) => number === currentMobileNumber)) {
-      setError("phonenumbers", { mobileNumber: "RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM" });
-    } else if (currentMobileNumber && witnessMobileNumbersArray.some((number) => number === currentMobileNumber)) {
-      setError("phonenumbers", { mobileNumber: "RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_WITNESS_MOB_NUM" });
-    } else if (
-      formdata &&
-      formdata?.length > 0 &&
-      formData?.phonenumbers?.textfieldValue &&
-      formData?.phonenumbers?.textfieldValue?.length === 10 &&
-      formdata
-        .filter((data) => data.isenabled === true)
-        ?.some((data) => data?.data?.phonenumbers?.mobileNumber?.some((number) => number === formData?.phonenumbers?.textfieldValue))
-    ) {
-      setError("phonenumbers", { mobileNumber: "DUPLICATE_MOBILE_NUMBER_FOR_RESPONDENT" });
-    } else {
-      clearErrors("phonenumbers");
-    }
-
-    const currentEmail = formData?.emails?.textfieldValue;
-    if (currentEmail && witnessEmailsArray.some((email) => email === currentEmail)) {
-      setError("emails", { emailId: "RESPONDENT_EMAIL_CAN_NOT_BE_SAME_AS_WITNESS_EMAIL" });
-    } else if (
-      formdata &&
-      formdata?.length > 0 &&
-      formData?.emails?.textfieldValue &&
-      formdata
-        .filter((data) => data.isenabled === true)
-        ?.some((data) => data?.data?.emails?.emailId?.some((email) => email === formData?.emails?.textfieldValue))
-    ) {
-      setError("emails", { emailId: "DUPLICATE_EMAIL_ID_FOR_RESPONDENT" });
-    } else {
-      clearErrors("emails");
-    }
+    validateRespondentMobileEmailDuplicates({
+      formData,
+      formdata,
+      setError,
+      clearErrors,
+      complainantMobileNumbers: getComplainantMobileNumbers(caseDetails),
+      witnessMobileNumbers: getWitnessMobileNumbers(caseDetails),
+      witnessEmails: getWitnessEmails(caseDetails),
+    });
   }
 };
 
@@ -578,15 +525,7 @@ export const updateProfileData = async ({
         })
     );
     const newFormDataCopy = structuredClone(newFormData);
-    for (let i = 0; i < newFormDataCopy.length; i++) {
-      const obj = newFormDataCopy[i];
-      if (obj?.data?.phonenumbers) {
-        obj.data.phonenumbers.textfieldValue = "";
-      }
-      if (obj?.data?.emails) {
-        obj.data.emails.textfieldValue = "";
-      }
-    }
+    clearBulkContactTextfieldValues(newFormDataCopy);
     const { reasonDetailsSeparator, reasonForChange, supportingDocument, ...remainingFormData } = newFormDataCopy?.[0]?.data || {};
     const currentRespondent = caseDetails?.additionalDetails?.[selected]?.formdata?.find(
       (item, index) => item?.data?.respondentVerification?.individualDetails?.individualId === uniqueId || item?.uniqueId === uniqueId
