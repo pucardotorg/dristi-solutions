@@ -9,7 +9,7 @@
     <java.version>25</java.version>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
-    <jacoco.version>0.8.9</jacoco.version>
+    <jacoco.version>0.8.13</jacoco.version>
     <lombok.version>1.18.38</lombok.version>
 </properties>
     <parent>
