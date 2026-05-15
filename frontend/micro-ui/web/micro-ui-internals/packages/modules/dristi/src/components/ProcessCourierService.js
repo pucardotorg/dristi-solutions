@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
 import isEqual from "lodash/isEqual";
 import CourierService from "./CourierService";
@@ -14,9 +15,10 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
   const [noticeActive, setNoticeActive] = useState(false);
   const [warrantActive, setWarrantActive] = useState(false);
   const [checked, setChecked] = useState(true);
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams = new URLSearchParams(globalThis.location?.search ?? "");
   const caseId = urlParams.get("caseId");
-  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const digit = globalThis.Digit;
+  const tenantId = digit?.ULBService?.getCurrentTenantId();
   const isDisableAllFields = config?.isDisableAllFields || false;
 
   const handleDataChange = (data) => {
@@ -87,7 +89,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
       },
     ];
     handleDataChange({ addressDetails: updatedAddresses });
-    window.location.reload();
+    globalThis.location?.reload?.();
   };
 
   useEffect(() => {
@@ -148,7 +150,6 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
                 type="checkbox"
                 id="consent-checkbox"
                 checked={checked}
-                readOnly
                 style={{ marginRight: "8px", marginTop: "4px" }}
                 onChange={() => setChecked(!checked)}
               />
@@ -162,5 +163,19 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
     </React.Fragment>
   );
 }
+
+ProcessCourierService.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    key: PropTypes.string,
+    isDelayCondonation: PropTypes.any,
+    isDisableAllFields: PropTypes.bool,
+  }).isRequired,
+  onSelect: PropTypes.func.isRequired,
+  formData: PropTypes.object,
+  errors: PropTypes.object,
+  setError: PropTypes.func,
+  clearErrors: PropTypes.func,
+};
 
 export default ProcessCourierService;

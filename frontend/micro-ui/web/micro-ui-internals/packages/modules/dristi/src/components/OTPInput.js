@@ -1,7 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-
-const BACKSPACE = 8;
+import React, { useEffect, useRef, useState } from "react";
 
 const SingleInput = ({ isFocus, onChange, onFocus, value, inputStyle, ...rest }) => {
   const inputRef = useRef();
@@ -13,13 +11,13 @@ const SingleInput = ({ isFocus, onChange, onFocus, value, inputStyle, ...rest })
 
   return (
     <input
-      style={{ width: "70px", margin: "0px", ...(inputStyle ? inputStyle : {}) }}
+      style={{ width: "70px", margin: "0px", ...(inputStyle ?? {}) }}
       className="input-otp"
       maxLength={1}
       onChange={onChange}
       onFocus={onFocus}
       ref={inputRef}
-      value={value ? value : ""}
+      value={value ?? ""}
       {...rest}
       type="text"
       pattern="[0-9]*"
@@ -30,33 +28,45 @@ const SingleInput = ({ isFocus, onChange, onFocus, value, inputStyle, ...rest })
   );
 };
 
-const OTPInput = ({ inputStyle, otpInputStyles, ...props }) => {
+SingleInput.propTypes = {
+  isFocus: PropTypes.bool,
+  onChange: PropTypes.func,
+  onFocus: PropTypes.func,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  inputStyle: PropTypes.object,
+};
+
+const OTPInput = ({ length, inputStyle, otpInputStyles, ...props }) => {
   const [activeInput, setActiveInput] = useState(0);
 
-  const isInputValueValid = (value) => {
-    return typeof value === "string" && value.trim().length === 1;
+  const isInputValueValid = (otpChar) => {
+    return typeof otpChar === "string" && otpChar.trim().length === 1;
   };
 
-  const changeCodeAtFocus = (value) => {
+  const changeCodeAtFocus = (otpChar) => {
     const { onChange } = props;
     const otp = getOtpValue();
-    otp[activeInput] = value[0];
+    otp[activeInput] = otpChar[0] ?? "";
     const otpValue = otp.join("");
     onChange(otpValue);
   };
 
   const focusNextInput = () => {
-    setActiveInput((activeInput) => Math.min(activeInput + 1, props.length - 1));
+    setActiveInput((idx) => {
+      if (!length) return 0;
+      return Math.min(idx + 1, length - 1);
+    });
   };
 
   const focusPrevInput = () => {
-    setActiveInput((activeInput) => Math.max(activeInput - 1, 0));
+    setActiveInput((idx) => Math.max(idx - 1, 0));
   };
 
-  const getOtpValue = () => (props.value ? props.value.toString().split("") : []);
+  const getOtpValue = () =>
+    props.value === undefined || props.value === null ? [] : props.value.toString().split("");
 
   const handleKeyDown = (event) => {
-    if (event.keyCode === BACKSPACE || event.key === "Backspace") {
+    if (event.key === "Backspace") {
       event.preventDefault();
       changeCodeAtFocus("");
       focusPrevInput();
@@ -73,11 +83,11 @@ const OTPInput = ({ inputStyle, otpInputStyles, ...props }) => {
 
   const OTPStack = [];
   const otp = getOtpValue();
-  for (let i = 0; i < props.length; i++) {
+  for (let i = 0; i < length; i++) {
     OTPStack.push(
       <SingleInput
         inputStyle={inputStyle}
-        key={i}
+        key={`otp-slot-${i}`}
         isFocus={activeInput === i}
         onChange={inputChange}
         onKeyDown={handleKeyDown}
@@ -99,6 +109,10 @@ const OTPInput = ({ inputStyle, otpInputStyles, ...props }) => {
 
 OTPInput.propTypes = {
   length: PropTypes.number,
+  inputStyle: PropTypes.object,
+  otpInputStyles: PropTypes.object,
+  onChange: PropTypes.func.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 OTPInput.defaultProps = {

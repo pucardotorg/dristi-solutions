@@ -1,18 +1,16 @@
 import { Loader, UploadIcon } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { CustomAddIcon, FileUploadIcon } from "../icons/svgIndex";
+import { CustomAddIcon, CustomDeleteIcon, FileUploadIcon, FSOErrorIcon } from "../icons/svgIndex";
 
 import Button from "./Button";
 import { advocateCaseFilingStatusTypes, getAuthorizedUuid } from "../Utils";
 import { userTypeOptions } from "../pages/citizen/registration/config";
 import useSearchCaseService from "../hooks/dristi/useSearchCaseService";
-import { CustomDeleteIcon } from "../icons/svgIndex";
 import isEqual from "lodash/isEqual";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import RenderFileCard from "./RenderFileCard";
 import { FileUploader } from "react-drag-drop-files";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-import { FSOErrorIcon } from "../icons/svgIndex";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import SearchableDropdown from "./SearchableDropdown";
 import { EXTENSION_TO_MIME } from "../Utils/constants";
@@ -29,6 +27,11 @@ function ScrutinyInfoAdvocate({ message, t }) {
     </div>
   );
 }
+
+ScrutinyInfoAdvocate.propTypes = {
+  message: PropTypes.string,
+  t: PropTypes.func.isRequired,
+};
 
 function splitNamesPartiallyFromFullName(fullName) {
   const nameParts = fullName?.trim()?.split(/\s+/);
@@ -53,7 +56,7 @@ function splitNamesPartiallyFromFullName(fullName) {
   return {
     firstName: firstName,
     middleName: middleName,
-    lastName: lastName ? lastName : "",
+    lastName: lastName || "",
   };
 }
 
@@ -81,6 +84,25 @@ const DragDropJSX = ({ t, currentValue, error }) => {
     </React.Fragment>
   );
 };
+
+DragDropJSX.propTypes = {
+  t: PropTypes.func.isRequired,
+  currentValue: PropTypes.array,
+  error: PropTypes.shape({
+    msg: PropTypes.string,
+    message: PropTypes.string,
+  }),
+};
+
+DragDropJSX.defaultProps = {
+  currentValue: undefined,
+  error: undefined,
+};
+
+function getReassignPointerEvents(isCaseReAssigned, propertyKey) {
+  if (!isCaseReAssigned || typeof isCaseReAssigned !== "object") return "auto";
+  return Object.hasOwn(isCaseReAssigned, propertyKey) ? "auto" : "none";
+}
 
 function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setError, clearErrors }) {
   const token = window.localStorage.getItem("token");
@@ -338,7 +360,10 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   );
 
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
-  const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
+  const userType = useMemo(() => {
+    const fields = data?.Individual?.[0]?.additionalFields?.fields;
+    return (Array.isArray(fields) ? fields : []).find((obj) => obj.key === "userType")?.value;
+  }, [data?.Individual]);
 
   const { data: searchData, isLoading: isSearchLoading } = Digit.Hooks.dristi.useGetAdvocateClerk(
     {
@@ -356,7 +381,10 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   }, [userType]);
 
   const searchResult = useMemo(() => {
-    return userType === "ADVOCATE" && searchData?.[`${userTypeDetail?.apiDetails?.requestKey}s`]?.[0]?.responseList;
+    const requestKey = userTypeDetail?.apiDetails?.requestKey;
+    if (userType !== "ADVOCATE" || !requestKey) return undefined;
+    const listKey = `${requestKey}s`;
+    return searchData?.[listKey]?.[0]?.responseList;
   }, [searchData, userTypeDetail?.apiDetails?.requestKey, userType]);
 
   const isApprovalPending = useMemo(() => {
@@ -443,10 +471,11 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           individualId,
         };
 
-        const idType = selectedIndividual?.Individual?.[0]?.identifiers[0]?.identifierType || "";
-        const identifierIdDetails = JSON.parse(
-          selectedIndividual?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}"
-        );
+        const selInd = selectedIndividual?.Individual?.[0];
+        const idType = selInd?.identifiers?.[0]?.identifierType || "";
+        const selFields = selInd?.additionalFields?.fields;
+        const identifierIdRaw = (Array.isArray(selFields) ? selFields : []).find((obj) => obj.key === "identifierIdDetails")?.value || "{}";
+        const identifierIdDetails = JSON.parse(identifierIdRaw);
 
         const advocateNameDetails = {
           firstName: splitNamesPartiallyFromFullName(userName)?.firstName,
@@ -465,15 +494,15 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
             : null,
         };
         let newData = structuredClone(advocateAndPipData);
-        if (advData?.length === 0 || Object.keys(advData?.[0] || {})?.length === 0) {
-          const updatedData = [{ advocateBarRegNumberWithName, advocateNameDetails }];
-          newData = { ...advocateAndPipData, multipleAdvocateNameDetails: updatedData, showVakalatNamaUpload: true, showAffidavit: false };
-        } else if (
-          advData?.length === 1 &&
-          advData?.[0]?.advocateBarRegNumberWithName?.individualId &&
-          advData?.[0]?.advocateBarRegNumberWithName?.individualId === individualId &&
-          advData?.[0]?.advocateNameDetails?.advocateMobileNumber !== selectedIndividual?.Individual?.[0]?.mobileNumber
-        ) {
+        const shouldReplacePrimaryAdvocateList =
+          advData?.length === 0 ||
+          Object.keys(advData?.[0] || {})?.length === 0 ||
+          (advData?.length === 1 &&
+            advData?.[0]?.advocateBarRegNumberWithName?.individualId &&
+            advData?.[0]?.advocateBarRegNumberWithName?.individualId === individualId &&
+            advData?.[0]?.advocateNameDetails?.advocateMobileNumber !== selectedIndividual?.Individual?.[0]?.mobileNumber);
+
+        if (shouldReplacePrimaryAdvocateList) {
           const updatedData = [{ advocateBarRegNumberWithName, advocateNameDetails }];
           newData = { ...advocateAndPipData, multipleAdvocateNameDetails: updatedData, showVakalatNamaUpload: true, showAffidavit: false };
         } else if (
@@ -534,10 +563,11 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         updatedData[index].advocateBarRegNumberWithName = value;
         const advIndividualId = value?.individualId || null;
         const advocateIndvidualData = await fetchIndividualInfo(advIndividualId);
-        const identifierIdDetails = JSON.parse(
-          advocateIndvidualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}"
-        );
-        const idType = advocateIndvidualData?.Individual?.[0]?.identifiers[0]?.identifierType || "";
+        const advocateInd = advocateIndvidualData?.Individual?.[0];
+        const advFields = advocateInd?.additionalFields?.fields;
+        const identifierIdRawAdv = (Array.isArray(advFields) ? advFields : []).find((obj) => obj.key === "identifierIdDetails")?.value || "{}";
+        const identifierIdDetails = JSON.parse(identifierIdRawAdv);
+        const idType = advocateInd?.identifiers?.[0]?.identifierType || "";
 
         updatedData[index].advocateNameDetails = {
           firstName: splitNamesPartiallyFromFullName(advocateFullname)?.firstName,
@@ -580,7 +610,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
       onSelect(config.key, newData);
     } else {
       const multipleAdvocateNameDetails = [
-        ...advocateAndPipData?.multipleAdvocateNameDetails,
+        ...(advocateAndPipData?.multipleAdvocateNameDetails || []),
         {
           advocateBarRegNumberWithName: {},
           advocateNameDetails: {},
@@ -621,7 +651,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           ? false
           : Array.isArray(advocateAndPipData?.multipleAdvocateNameDetails) &&
             Object.keys(advocateAndPipData?.multipleAdvocateNameDetails?.[0])?.length !== 0,
-      showAffidavit: value === "YES" ? true : false,
+      showAffidavit: value === "YES",
       vakalatnamaFileUpload: value === "YES" ? null : advocateAndPipData?.vakalatnamaFileUpload,
       pipAffidavitFileUpload: value === "NO" ? null : advocateAndPipData?.pipAffidavitFileUpload,
     };
@@ -675,7 +705,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const handleDeleteFile = (input, index) => {
     let currentValue = (advocateAndPipData && advocateAndPipData[input.fileKey] && advocateAndPipData[input.fileKey][input.name]) || [];
 
-    currentValue.splice(index, 1); // check- TODO: handle clear file error
+    currentValue.splice(index, 1);
     const newData = { ...advocateAndPipData, [input?.fileKey]: { [input?.name]: currentValue } };
     onSelect(config?.key, newData);
     setAdvocateAndPipData(newData);
@@ -757,8 +787,17 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         >
           {radioInput?.options.map((option) => {
             const isChecked = advocateAndPipData?.isComplainantPip?.code === option?.code;
+            let radioBorderColor = "var(--Primary-Pucar-Teal, #007E7E)";
+            if (disableRadio) {
+              radioBorderColor = isChecked ? "#E6E6E6" : "#3D3C3C";
+            }
+            let radioBackground = "transparent";
+            if (isChecked) {
+              radioBackground = disableRadio ? "#E6E6E6" : "var(--Primary-Pucar-Teal, #007E7E)";
+            }
             return (
               <label
+                key={option?.code}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -775,9 +814,9 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                   style={{
                     width: "24px",
                     height: "24px",
-                    border: `1px solid ${disableRadio ? (isChecked ? "#E6E6E6" : "#3D3C3C") : "var(--Primary-Pucar-Teal, #007E7E)"}`,
+                    border: `1px solid ${radioBorderColor}`,
                     borderRadius: "50%",
-                    background: isChecked ? (disableRadio ? "#E6E6E6" : "var(--Primary-Pucar-Teal, #007E7E)") : "transparent",
+                    background: radioBackground,
                     appearance: "none",
                     display: "flex",
                     alignItems: "center",
@@ -808,7 +847,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
       )}
       {!advocateAndPipData?.showAffidavit && (
         <React.Fragment>
-          {isCaseReAssigned && isCaseReAssigned.hasOwnProperty("numberOfAdvocates") && isCaseReAssigned?.numberOfAdvocatesMessage && (
+          {isCaseReAssigned && Object.hasOwn(isCaseReAssigned, "numberOfAdvocates") && isCaseReAssigned?.numberOfAdvocatesMessage && (
             <ScrutinyInfoAdvocate message={isCaseReAssigned?.numberOfAdvocatesMessage} t={t}></ScrutinyInfoAdvocate>
           )}
           <div
@@ -817,7 +856,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
               flexDirection: "row",
               alignItems: "center",
               gap: "30px",
-              pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty("numberOfAdvocates") ? "auto" : "none") : "auto",
+              pointerEvents: getReassignPointerEvents(isCaseReAssigned, "numberOfAdvocates"),
             }}
           >
             <div
@@ -853,14 +892,18 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           </div>
           <div
             className="advocate-details-div"
-            style={{ pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty("numberOfAdvocates") ? "auto" : "none") : "auto" }}
+            style={{ pointerEvents: getReassignPointerEvents(isCaseReAssigned, "numberOfAdvocates") }}
           >
             {Array.isArray(advocateAndPipData?.multipleAdvocateNameDetails) &&
               Object.keys(advocateAndPipData?.multipleAdvocateNameDetails?.[0] || {})?.length !== 0 &&
               advocateAndPipData?.multipleAdvocateNameDetails.map((data, index) => {
+                const rowKey =
+                  data?.advocateBarRegNumberWithName?.advocateId ??
+                  data?.advocateBarRegNumberWithName?.individualId ??
+                  `advocate-${index}`;
                 return (
                   <div
-                    key={index}
+                    key={rowKey}
                     style={{
                       marginBottom: "0px",
                       padding: "0px",
@@ -877,17 +920,22 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                     >
                       <h1 style={{ fontSize: "18px", fontWeight: "bold" }}>Advocate {index + 1}</h1>
                       {isDeleteAllowed(index) && (
-                        <span
+                        <button
+                          type="button"
+                          aria-label={t("CS_REMOVE")}
                           onClick={() => handleDeleteAdvocate(index)}
                           style={{
                             cursor: "pointer",
                             color: "red",
                             display: "flex",
                             alignItems: "center",
+                            background: "none",
+                            border: "none",
+                            padding: 0,
                           }}
                         >
                           <CustomDeleteIcon />
-                        </span>
+                        </button>
                       )}
                     </div>
 
@@ -905,7 +953,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                       {data?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal &&
                         inputs.map((input, i) => {
                           return (
-                            <div style={{ width: "100%", textAlign: "left", marginBottom: "20px" }}>
+                            <div key={`${rowKey}-${input.name}-${i}`} style={{ width: "100%", textAlign: "left", marginBottom: "20px" }}>
                               <label
                                 style={{
                                   fontSize: "14px",
@@ -918,7 +966,6 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                               <input
                                 type="text"
                                 value={data?.advocateNameDetails?.[input.name] || ""}
-                                //   onChange={(e) => handleInputChange(index, input.name, e.target.value)}
                                 style={{
                                   width: "100%",
                                   padding: "10px",
@@ -979,7 +1026,9 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
             />
             <h2>{t(noteInput?.infoHeader)}</h2>
           </div>
-          <div className="custom-note-info-div">{<p>{`${t(noteInput?.infoText)} `}</p>}</div>
+          <div className="custom-note-info-div">
+            <p>{`${t(noteInput?.infoText)} `}</p>
+          </div>
         </div>
       )}
       <div className="fileUpload-div">
@@ -987,38 +1036,55 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           let currentValue = (advocateAndPipData && advocateAndPipData[input.fileKey] && advocateAndPipData[input.fileKey][input.name]) || [];
           let fileErrors = currentValue.map((file) => fileValidator(file, input)); // check file validation
           const showFileUploader = currentValue.length ? input?.isMultipleUpload : true;
-          const showDocument =
-            input?.isDocDependentOn && input?.isDocDependentKey
-              ? formData?.[input?.isDocDependentOn]?.[input?.isDocDependentKey]
-              : !input?.hideDocument;
-          const message =
-            input?.fileKey === "vakalatnamaFileUpload"
-              ? isCaseReAssigned?.vakalatnamaFileUploadMessage
-              : input?.fileKey === "pipAffidavitFileUpload"
-              ? isCaseReAssigned?.pipAffidavitFileUploadMessage
-              : "";
+          let showDocument = !input?.hideDocument;
+          if (input?.isDocDependentOn && input?.isDocDependentKey) {
+            showDocument = formData?.[input?.isDocDependentOn]?.[input?.isDocDependentKey];
+          }
+          let message = "";
+          if (input?.fileKey === "vakalatnamaFileUpload") {
+            message = isCaseReAssigned?.vakalatnamaFileUploadMessage;
+          } else if (input?.fileKey === "pipAffidavitFileUpload") {
+            message = isCaseReAssigned?.pipAffidavitFileUploadMessage;
+          }
+          let fileUploaderTypes = input?.fileTypes;
+          if (input?.fileTypes?.includes("JPG") && !input?.fileTypes.includes("JPEG")) {
+            fileUploaderTypes = [...input.fileTypes, "JPEG"];
+          } else if (input?.fileTypes?.includes("JPEG") && !input?.fileTypes.includes("JPG")) {
+            fileUploaderTypes = [...input.fileTypes, "JPG"];
+          }
+          let uploadGuidelineText = null;
+          if (input?.fileTypes && input?.maxFileSize) {
+            let extensionsText = "";
+            if (input.fileTypes.length > 1) {
+              extensionsText = `${input.fileTypes
+                .slice(0, -1)
+                .map((type) => `.${type.toLowerCase()}`)
+                .join(", ")} ${t("CS_COMMON_OR")} .${input.fileTypes[input.fileTypes.length - 1].toLowerCase()}`;
+            } else {
+              extensionsText = `.${input.fileTypes[0].toLowerCase()}`;
+            }
+            uploadGuidelineText = `${t("CS_COMMON_CHOOSE_FILE")} ${extensionsText}. ${t("CS_MAX_UPLOAD")} ${input.maxFileSize}MB. ${t("UPLOAD_NOTE")}`;
+          }
           return (
             <div
               key={input?.fileKey || input?.name}
-              style={{ pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty(input?.fileKey) ? "auto" : "none") : "auto" }}
+              style={{ pointerEvents: getReassignPointerEvents(isCaseReAssigned, input?.fileKey) }}
             >
               {showDocument && (
                 <div className="drag-drop-visible-main">
                   <div className="drag-drop-heading-main">
-                    {
-                      <div className="drag-drop-heading" style={{ marginLeft: 0 }}>
-                        <h1 className="card-label custom-document-header" style={input?.documentHeaderStyle}>
-                          {t(input?.documentHeader)}
-                        </h1>
+                    <div className="drag-drop-heading" style={{ marginLeft: 0 }}>
+                      <h1 className="card-label custom-document-header" style={input?.documentHeaderStyle}>
+                        {t(input?.documentHeader)}
+                      </h1>
 
-                        {input?.isOptional && <span style={{ color: "#77787B" }}>&nbsp;{`${t(input?.isOptional)}`}</span>}
-                        <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage)} icon />
-                      </div>
-                    }
+                      {input?.isOptional && <span style={{ color: "#77787B" }}>&nbsp;{`${t(input?.isOptional)}`}</span>}
+                      <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage)} icon />
+                    </div>
                     {input.documentSubText && <p className="custom-document-sub-header">{t(input.documentSubText)}</p>}
                   </div>
 
-                  {isCaseReAssigned && isCaseReAssigned.hasOwnProperty(input?.fileKey) && message && (
+                  {isCaseReAssigned && typeof isCaseReAssigned === "object" && Object.hasOwn(isCaseReAssigned, input?.fileKey) && message && (
                     <ScrutinyInfoAdvocate message={message} t={t}></ScrutinyInfoAdvocate>
                   )}
                   {currentValue.map((file, index) => (
@@ -1043,18 +1109,12 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                         handleChange(data, input);
                       }}
                       name="file"
-                      types={
-                        input?.fileTypes.includes("JPG") && !input?.fileTypes.includes("JPEG")
-                          ? [...input?.fileTypes, "JPEG"]
-                          : input?.fileTypes.includes("JPEG") && !input?.fileTypes.includes("JPG")
-                          ? [...input?.fileTypes, "JPG"]
-                          : input?.fileTypes
-                      }
+                      types={fileUploaderTypes}
                       children={
                         <DragDropJSX
                           t={t}
                           currentValue={currentValue}
-                          error={errors?.[config.key]} //check- TODO: handleError
+                          error={errors?.[config.key]}
                         />
                       }
                       key={input?.fileKey}
@@ -1063,20 +1123,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                       }}
                     />
                     <div className="upload-guidelines-div">
-                      {input?.fileTypes && input?.maxFileSize ? (
-                        <p>
-                          {`${t("CS_COMMON_CHOOSE_FILE")} ${
-                            input?.fileTypes.length > 1
-                              ? `${input?.fileTypes
-                                  .slice(0, -1)
-                                  .map((type) => `.${type.toLowerCase()}`)
-                                  .join(", ")} ${t("CS_COMMON_OR")} .${input?.fileTypes[input?.fileTypes.length - 1].toLowerCase()}`
-                              : `.${input?.fileTypes[0].toLowerCase()}`
-                          }. ${t("CS_MAX_UPLOAD")} ${input.maxFileSize}MB. ${t("UPLOAD_NOTE")}`}
-                        </p>
-                      ) : (
-                        <p>{input.uploadGuidelines}</p>
-                      )}
+                      {uploadGuidelineText ? <p>{uploadGuidelineText}</p> : <p>{input.uploadGuidelines}</p>}
                     </div>
                   </div>
                   {input.downloadTemplateText && input.downloadTemplateLink && (
@@ -1125,12 +1172,15 @@ MultipleAdvocatesAndPip.propTypes = {
   clearErrors: PropTypes.func,
   config: PropTypes.shape({
     key: PropTypes.string.isRequired,
+    labelHeading: PropTypes.node,
     populators: PropTypes.shape({
-      inputs: PropTypes.array,
+      inputs: PropTypes.arrayOf(PropTypes.object),
     }),
   }).isRequired,
   errors: PropTypes.object,
-  formData: PropTypes.object,
+  formData: PropTypes.shape({
+    multipleAdvocatesAndPip: PropTypes.object,
+  }),
   onSelect: PropTypes.func.isRequired,
   setError: PropTypes.func,
   t: PropTypes.func.isRequired,
