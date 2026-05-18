@@ -17,6 +17,66 @@ import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosIns
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
 
+/**
+ * Sessionstorage keys this page persists across the e-sign round-trip. The
+ * keys live in a single place so the load/save/clear helpers below stay in
+ * sync; previously each of the three steps inlined its own 6-line block.
+ *
+ * `parse` is the function that converts the raw sessionStorage string back to
+ * the in-memory shape: JSON.parse for objects, parseInt for the stepper, etc.
+ * `defaultValue` is used when the key isn't set.
+ */
+const BULK_RESCHEDULE_SESSION_FIELDS = [
+  { key: "bulkNotificationStepper", parse: (v) => parseInt(v), defaultValue: null },
+  { key: "bulkNotificationFormData", parse: JSON.parse, defaultValue: null },
+  { key: "bulkOldHearingData", parse: JSON.parse, defaultValue: null },
+  { key: "bulkNewHearingData", parse: JSON.parse, defaultValue: [] },
+  { key: "bulkNotificationNumber", parse: JSON.parse, defaultValue: null },
+  { key: "bulkNotificationFileStoreId", parse: JSON.parse, defaultValue: null },
+];
+
+const loadBulkRescheduleSession = () =>
+  BULK_RESCHEDULE_SESSION_FIELDS.reduce((acc, field) => {
+    const raw = sessionStorage.getItem(field.key);
+    acc[field.key] = raw ? field.parse(raw) : field.defaultValue;
+    return acc;
+  }, {});
+
+const clearBulkRescheduleSession = () => {
+  BULK_RESCHEDULE_SESSION_FIELDS.forEach((field) => sessionStorage.removeItem(field.key));
+};
+
+const saveBulkRescheduleSession = ({ stepper, formData, oldHearingData, newHearingData, notificationNumber, fileStoreId }) => {
+  sessionStorage.setItem("bulkNotificationStepper", parseInt(stepper));
+  sessionStorage.setItem("bulkNotificationFormData", JSON.stringify(formData));
+  sessionStorage.setItem("bulkOldHearingData", JSON.stringify(oldHearingData));
+  sessionStorage.setItem("bulkNewHearingData", JSON.stringify(newHearingData));
+  sessionStorage.setItem("bulkNotificationNumber", JSON.stringify(notificationNumber));
+  sessionStorage.setItem("bulkNotificationFileStoreId", JSON.stringify(fileStoreId));
+};
+
+/**
+ * The "Please note - you are signing the NOTIFICATION" callout that appears
+ * in both stepper===3 modals (pre-sign and post-sign). The only delta the two
+ * call sites have is the bottom margin, so we keep that as a prop.
+ */
+const NotificationSignatureInfoCard = ({ t, marginBottom = "16px", extraStyle }) => (
+  <InfoCard
+    variant={"default"}
+    label={t("PLEASE_NOTE")}
+    additionalElements={[
+      <p key="note">
+        {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}
+        <span style={{ fontWeight: "bold" }}>{`${t("NOTIFICATION")}`}</span>
+      </p>,
+    ]}
+    inline
+    style={{ marginBottom, ...extraStyle }}
+    textStyle={{}}
+    className={`custom-info-card`}
+  />
+);
+
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date().setHours(0, 0, 0, 0), selectedSlot = [] }) => {
   const { t } = useTranslation();
@@ -44,25 +104,14 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const pageModule = "en";
   const courtId = localStorage.getItem("courtId");
 
-  const bulkNotificationStepper = sessionStorage.getItem("bulkNotificationStepper")
-    ? parseInt(sessionStorage.getItem("bulkNotificationStepper"))
-    : null;
-
-  const bulkNotificationFormData = sessionStorage.getItem("bulkNotificationFormData")
-    ? JSON.parse(sessionStorage.getItem("bulkNotificationFormData"))
-    : null;
-
-  const bulkOldHearingData = sessionStorage.getItem("bulkOldHearingData") ? JSON.parse(sessionStorage.getItem("bulkOldHearingData")) : null;
-
-  const bulkNewHearingData = sessionStorage.getItem("bulkNewHearingData") ? JSON.parse(sessionStorage.getItem("bulkNewHearingData")) : [];
-
-  const bulkNotificationNumber = sessionStorage.getItem("bulkNotificationNumber")
-    ? JSON.parse(sessionStorage.getItem("bulkNotificationNumber"))
-    : null;
-
-  const bulkNotificationFileStoreId = sessionStorage.getItem("bulkNotificationFileStoreId")
-    ? JSON.parse(sessionStorage.getItem("bulkNotificationFileStoreId"))
-    : null;
+  const {
+    bulkNotificationStepper,
+    bulkNotificationFormData,
+    bulkOldHearingData,
+    bulkNewHearingData,
+    bulkNotificationNumber,
+    bulkNotificationFileStoreId,
+  } = loadBulkRescheduleSession();
 
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const isADiarySigned = history.location?.state?.aDiarySigned;
@@ -141,12 +190,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const clearLocalStorage = () => {
-    sessionStorage.removeItem("bulkNotificationStepper");
-    sessionStorage.removeItem("bulkNotificationFormData");
-    sessionStorage.removeItem("bulkOldHearingData");
-    sessionStorage.removeItem("bulkNewHearingData");
-    sessionStorage.removeItem("bulkNotificationNumber");
-    sessionStorage.removeItem("bulkNotificationFileStoreId");
+    clearBulkRescheduleSession();
     return;
   };
 
@@ -604,31 +648,20 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         >
           <div className="add-signature-main-div">
             <div className="not-signed">
-              <InfoCard
-                variant={"default"}
-                label={t("PLEASE_NOTE")}
-                additionalElements={[
-                  <p key="note">
-                    {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}
-                    <span style={{ fontWeight: "bold" }}>{`${t("NOTIFICATION")}`}</span>
-                  </p>,
-                ]}
-                inline
-                style={{ marginBottom: "10px", backgroundColor: "rgba(0, 0, 0, 0.05)" }}
-                textStyle={{}}
-                className={`custom-info-card`}
-              />
+              <NotificationSignatureInfoCard t={t} marginBottom="10px" extraStyle={{ backgroundColor: "rgba(0, 0, 0, 0.05)" }} />
               <h1>{t("YOUR_SIGNATURE")}</h1>
               <div className="sign-button-wrap">
                 <Button
                   label={t("CS_ESIGN")}
                   onButtonClick={() => {
-                    sessionStorage.setItem("bulkNotificationStepper", parseInt(stepper));
-                    sessionStorage.setItem("bulkNotificationFormData", JSON.stringify(bulkFormData));
-                    sessionStorage.setItem("bulkOldHearingData", JSON.stringify(originalHearingData));
-                    sessionStorage.setItem("bulkNewHearingData", JSON.stringify(newHearingData));
-                    sessionStorage.setItem("bulkNotificationNumber", JSON.stringify(notificationNumber));
-                    sessionStorage.setItem("bulkNotificationFileStoreId", JSON.stringify(notificationFileStoreId));
+                    saveBulkRescheduleSession({
+                      stepper,
+                      formData: bulkFormData,
+                      oldHearingData: originalHearingData,
+                      newHearingData,
+                      notificationNumber,
+                      fileStoreId: notificationFileStoreId,
+                    });
                     handleEsign(name, pageModule, notificationFileStoreId, setShowToast, t, "Signature");
                   }} //as sending null throwing error in esign
                   className="aadhar-sign-in"
@@ -689,20 +722,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
             <Loader />
           ) : (
             <div className="add-signature-main-div">
-              <InfoCard
-                variant={"default"}
-                label={t("PLEASE_NOTE")}
-                additionalElements={[
-                  <p key="note">
-                    {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}
-                    <span style={{ fontWeight: "bold" }}>{`${t("NOTIFICATION")} `}</span>
-                  </p>,
-                ]}
-                inline
-                style={{ marginBottom: "16px" }}
-                textStyle={{}}
-                className={`custom-info-card`}
-              />
+              <NotificationSignatureInfoCard t={t} />
               <div style={{ display: "flex", flexDirection: "row", gap: "16px" }}>
                 <h1
                   style={{

@@ -1,6 +1,7 @@
 import { Loader } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
 import { useRouteMatch } from "react-router-dom";
+import { applyCustomizations, applyHookOverrides } from "./Utils/moduleSetup";
 import AddressComponent from "./components/AddressComponent";
 import SelectComponents from "./components/SelectComponents";
 
@@ -233,50 +234,9 @@ const componentsToRegister = {
   CustomToast,
 };
 
-const overrideHooks = () => {
-  Object.keys(CustomizedHooks).forEach((ele) => {
-    if (ele === "Hooks") {
-      Object.keys(CustomizedHooks[ele]).forEach((hook) => {
-        Object.keys(CustomizedHooks[ele][hook]).forEach((method) => {
-          setupHooks(hook, method, CustomizedHooks[ele][hook][method]);
-        });
-      });
-    } else if (ele === "Utils") {
-      Object.keys(CustomizedHooks[ele]).forEach((hook) => {
-        Object.keys(CustomizedHooks[ele][hook]).forEach((method) => {
-          setupHooks(hook, method, CustomizedHooks[ele][hook][method], false);
-        });
-      });
-    } else {
-      Object.keys(CustomizedHooks[ele]).forEach((method) => {
-        setupLibraries(ele, method, CustomizedHooks[ele][method]);
-      });
-    }
-  });
-};
-
-/* To Overide any existing hook we need to use similar method */
-const setupHooks = (HookName, HookFunction, method, isHook = true) => {
-  window.Digit = window.Digit || {};
-  window.Digit[isHook ? "Hooks" : "Utils"] = window.Digit[isHook ? "Hooks" : "Utils"] || {};
-  window.Digit[isHook ? "Hooks" : "Utils"][HookName] = window.Digit[isHook ? "Hooks" : "Utils"][HookName] || {};
-  window.Digit[isHook ? "Hooks" : "Utils"][HookName][HookFunction] = method;
-};
-/* To Overide any existing libraries  we need to use similar method */
-const setupLibraries = (Library, service, method) => {
-  window.Digit = window.Digit || {};
-  window.Digit[Library] = window.Digit[Library] || {};
-  window.Digit[Library][service] = method;
-};
-
-/* To Overide any existing config/middlewares  we need to use similar method */
-const updateCustomConfigs = () => {
-  setupLibraries("Customizations", "commonUiConfig", { ...window?.Digit?.Customizations?.commonUiConfig, ...UICustomizations });
-};
-
 export const initDRISTIComponents = () => {
-  overrideHooks();
-  updateCustomConfigs();
+  applyHookOverrides(CustomizedHooks);
+  applyCustomizations("commonUiConfig", UICustomizations);
   Object.entries(componentsToRegister).forEach(([key, value]) => {
     Digit.ComponentRegistryService.setComponent(key, value);
   });

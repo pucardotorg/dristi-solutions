@@ -12,6 +12,7 @@ import {
   submissionPoaCommentsSection,
   submissionReasonForApplicationFormatterField,
   submissionReasonForRequestField,
+  submissionAdditionalCommentsTextAreaField,
 } from "./submissionsCreateConfigShared";
 
 export const submissionTypeConfig = [
