@@ -242,6 +242,7 @@ public class ServiceConstants {
 
     public static final String ACCEPT_BAIL = "ACCEPT_BAIL";
     public static final String PUBLISHED = "PUBLISHED";
+    public static final String SCHEDULE_OF_HEARING_DATE = "SCHEDULE_OF_HEARING_DATE";
     public static final String SURETY = "SURETY";
     public static final String BAIL_BOND_COMPLETED = "COMPLETED";
     public static final String EXPIRE = "EXPIRE";

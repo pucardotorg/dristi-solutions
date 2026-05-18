@@ -19,6 +19,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
+import static org.pucar.dristi.config.ServiceConstants.PUBLISHED;
+import static org.pucar.dristi.config.ServiceConstants.SCHEDULE_OF_HEARING_DATE;
+
 @Slf4j
 @Component
 public class OrderUtil {
@@ -105,8 +108,8 @@ public class OrderUtil {
         OrderCriteria orderCriteria = OrderCriteria.builder()
                 .scheduledHearingNumber(hearingId)
                 .tenantId(tenantId)
-                .status("PUBLISHED")
-                .orderType("SCHEDULE_OF_HEARING_DATE")
+                .status(PUBLISHED)
+                .orderType(SCHEDULE_OF_HEARING_DATE)
                 .build();
         OrderSearchRequest orderSearchRequest = OrderSearchRequest.builder()
                 .requestInfo(requestInfo)

@@ -219,6 +219,14 @@ public class IcopsService {
                     .failureMsg("No process found for taskNumber: " + task.getTaskNumber())
                     .build();
         }
+        if (trackers.size() > 1) {
+            log.error("Multiple IcopsTracker records ({}) found for taskNumber: {}; cannot determine correct record",
+                    trackers.size(), task.getTaskNumber());
+            return ChannelMessage.builder()
+                    .acknowledgementStatus("FAILURE")
+                    .failureMsg("Ambiguous process records for taskNumber: " + task.getTaskNumber())
+                    .build();
+        }
         IcopsTracker icopsTracker = trackers.get(0);
 
         String processNextHearingDate = dateStringConverter.convertLongToDate(
@@ -254,7 +262,9 @@ public class IcopsService {
             zone = ZoneId.of("UTC");
         }
         icopsTracker.setReceivedDate(LocalDateTime.now(zone).toString());
-        if (!channelMessage.getAcknowledgementStatus().equalsIgnoreCase("SUCCESS")) {
+        if (channelMessage.getAcknowledgementStatus().equalsIgnoreCase("SUCCESS")) {
+            icopsTracker.setFailureReason(null);
+        } else {
             icopsTracker.setFailureReason(channelMessage.getFailureMsg());
         }
         IcopsRequest icopsRequest = IcopsRequest.builder()

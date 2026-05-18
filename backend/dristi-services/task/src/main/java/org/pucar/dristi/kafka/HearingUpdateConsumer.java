@@ -64,6 +64,10 @@ public class HearingUpdateConsumer {
                 Long startTime = hearing.getStartTime();
                 String orderId = orderUtil.getOrderIdByHearingId(requestInfo, hearing.getHearingId(),
                         hearing.getTenantId());
+                if (orderId == null) {
+                    log.debug("orderId is null for hearingId: {}, tenantId: {}; fetchActiveWarrants will be invoked with null orderId",
+                            hearing.getHearingId(), hearing.getTenantId());
+                }
 
                 String status = hearing.getStatus() != null ? hearing.getStatus() : "";
                 if (SCHEDULED.equalsIgnoreCase(status)) {
@@ -91,6 +95,7 @@ public class HearingUpdateConsumer {
             }
         } catch (Exception e) {
             log.error("Error in HearingUpdateConsumer: ", e);
+            throw new RuntimeException("Failed to process hearing update from topic: " + topic, e);
         }
     }
 
@@ -112,6 +117,10 @@ public class HearingUpdateConsumer {
                     Long startTime = hearing.getStartTime();
                     String orderId = orderUtil.getOrderIdByHearingId(requestInfo, hearing.getHearingId(),
                             hearing.getTenantId());
+                    if (orderId == null) {
+                        log.debug("orderId is null for hearingId: {}, tenantId: {}; fetchActiveWarrants will be invoked with null orderId",
+                                hearing.getHearingId(), hearing.getTenantId());
+                    }
 
                     if (filingNumber != null) {
                         warrantReissueService.handleHearingRescheduled(requestInfo, filingNumber, startTime, orderId);
@@ -123,6 +132,7 @@ public class HearingUpdateConsumer {
             }
         } catch (Exception e) {
             log.error("Error in HearingBulkRescheduleConsumer: ", e);
+            throw new RuntimeException("Failed to process bulk hearing reschedule from topic: " + topic, e);
         }
     }
 
@@ -170,6 +180,7 @@ public class HearingUpdateConsumer {
             }
         } catch (Exception e) {
             log.error("Error in OrderUpdateConsumer: ", e);
+            throw new RuntimeException("Failed to process order update from topic: " + topic, e);
         }
     }
 

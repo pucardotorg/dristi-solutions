@@ -371,13 +371,10 @@ public class WarrantReissueService {
     private void updateHearingDateInTaskDetails(Task task, Long newHearingDate) {
         try {
             ObjectNode taskDetails;
-            if (task.getTaskDetails() == null || !(task.getTaskDetails() instanceof ObjectNode)) {
-                taskDetails = objectMapper.convertValue(task.getTaskDetails(), ObjectNode.class);
-                if (taskDetails == null) {
-                    taskDetails = objectMapper.createObjectNode();
-                }
-            } else {
+            if (task.getTaskDetails() instanceof ObjectNode) {
                 taskDetails = (ObjectNode) task.getTaskDetails();
+            } else {
+                taskDetails = objectMapper.createObjectNode();
             }
 
             ObjectNode caseDetails;
