@@ -1,24 +1,7 @@
-import { Banner, Card, CardLabel, CardText, CloseSvg, Modal, TextArea } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
-import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
+import React from "react";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
-import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
-import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote";
-import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
-import { useTranslation } from "react-i18next";
+import EfilingPaymentResponseBody from "@egovernments/digit-ui-module-dristi/src/components/shared/EfilingPaymentResponseBody";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
-
-const customNoteConfig = {
-  populators: {
-    inputs: [
-      {
-        infoHeader: "CS_COMMON_NOTE",
-        infoText: "PAYMENT_FAILED_NOTE_MSG",
-        infoTooltipMessage: "CS_NOTE_TOOLTIP_CASE_TYPE",
-      },
-    ],
-  },
-};
 
 const mockSubmitModalInfo = {
   header: "CS_PAYMENT_SUCCESSFUL",
@@ -37,85 +20,26 @@ function EFilingPaymentResponse({ setShowModal, header, subHeader, submitModalIn
   const fileStoreId = location.state.state.fileStoreId;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const caseId = location.state.state.caseId;
-  const { t } = useTranslation();
   const { downloadPdf } = useDownloadCasePdf();
-  const commonProps = {
-    whichSvg: "tick",
-    headerStyles: { fontSize: "32px" },
-    style: { minWidth: "100%", marginTop: "10px" },
-  };
-
-  const bannerProps = isSuccess
-    ? {
-        ...commonProps,
-        successful: true,
-        message: t(submitModalInfo?.header),
-      }
-    : {
-        ...commonProps,
-        successful: false,
-        message: t("CS_PAYMENT_FAILED"),
-      };
 
   return (
     <div className=" user-registration">
-      <div className="e-filing-payment" style={{ minHeight: "100%", height: "100%" }}>
-        <Banner {...bannerProps} />
-        {submitModalInfo?.subHeader && isSuccess && <CardLabel className={"e-filing-card-label"}>{t(submitModalInfo?.subHeader)}</CardLabel>}
-        {receiptData ? (
-          <CustomCopyTextDiv
-            t={t}
-            keyStyle={{ margin: "8px 0px" }}
-            valueStyle={{ margin: "8px 0px", fontWeight: 700 }}
-            data={receiptData?.caseInfo}
-            tableDataClassName={"e-filing-table-data-style"}
-            tableValueClassName={"e-filing-table-value-style"}
-          />
-        ) : (
-          <SelectCustomNote t={t} config={customNoteConfig} />
-        )}
-        <div className="button-field" style={{ width: "100%", marginTop: 16 }}>
-          {!fileStoreId && caseId ? (
-            <Button
-              variation={"secondary"}
-              className={"secondary-button-selector"}
-              label={t("Retry Payment")}
-              labelClassName={"secondary-label-selector"}
-              onButtonClick={() => {
-                history.push(`${path}/e-filing-payment?caseId=${caseId}`);
-              }}
-            />
-          ) : (
-            <Button
-              style={{
-                display: "flex",
-                color: "#505A5F",
-                textDecoration: "none",
-                // width: 250,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-              variation={"secondary"}
-              className={"secondary-button-selector"}
-              label={t("CS_PRINT_RECEIPT")}
-              labelClassName={"secondary-label-selector"}
-              onButtonClick={() => {
-                downloadPdf(tenantId, fileStoreId);
-              }}
-            />
-          )}
-
-          <Button
-            className={"tertiary-button-selector"}
-            label={t("CS_GO_TO_HOME")}
-            labelClassName={"tertiary-label-selector"}
-            onButtonClick={() => {
-              history.push(`/${window?.contextPath}/citizen/dristi/home`);
-            }}
-          />
-        </div>
-      </div>
+      <EfilingPaymentResponseBody
+        isSuccess={isSuccess}
+        receiptData={receiptData}
+        fileStoreId={fileStoreId}
+        caseId={caseId}
+        submitModalInfo={submitModalInfo}
+        onRetry={() => {
+          history.push(`${path}/e-filing-payment?caseId=${caseId}`);
+        }}
+        onPrintReceipt={() => {
+          downloadPdf(tenantId, fileStoreId);
+        }}
+        onGoHome={() => {
+          history.push(`/${window?.contextPath}/citizen/dristi/home`);
+        }}
+      />
     </div>
   );
 }
