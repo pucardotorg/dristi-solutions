@@ -1,4 +1,30 @@
-import { orderFormCommentsSection } from "./ordersCreateConfigShared";
+import {
+  orderFormCommentsSection,
+  orderFormAdditionalCommentsAdmitDismissCaseField,
+  orderFormAdditionalCommentsTermsOfBailField,
+  orderFormAttachmentTextField,
+  orderFormBailSummaryCircumstancesRejectField,
+  orderFormBailSummaryCircumstancesRejectSection,
+  orderFormBailSummaryCircumstancesTermsField,
+  orderFormBailSummaryCircumstancesTermsSection,
+  orderFormChargeDaysField,
+  orderFormDistrictField,
+  orderFormGroundsSection,
+  orderFormHearingSummarySection,
+  orderFormLawSectionsSection,
+  orderFormLongPendingCommentsField,
+  orderFormOrderAdditionalNotesSection,
+  orderFormOtherDetailsSection,
+  orderFormOutOfLongPendingCommentsSection,
+  orderFormProclamationTextField,
+  orderFormReasonForAdmitDismissCaseField,
+  orderFormReasonForLitigantDetailsChangeField,
+  orderFormReasonForLitigantDetailsChangeSection,
+  orderFormSentenceSection,
+  orderFormVillageField,
+  orderFormWarrantTextField,
+  orderFormWarrantTextSection,
+} from "./ordersCreateConfigShared";
 
 export const applicationTypeConfig = [
   {
@@ -92,31 +118,7 @@ export const configs = [
         },
       },
     ],
-  },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "orderAdditionalNotes",
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              textAreaSubHeader: "CS_ORDER_ADDITIONAL_NOTES",
-              type: "TextAreaComponent",
-              isOptional: true,
-            },
-          ],
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "", // TO DO: ADD CONFIG IN MDMS
-            localePrefix: "",
-          },
-        },
-      },
-    ],
-  },
+  },orderFormOrderAdditionalNotesSection,
   {
     body: [
       {
@@ -226,29 +228,7 @@ export const configsOrderSection202CRPC = [
         },
       },
     ],
-  },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "lawSections",
-        schemaKeyPath: "orderDetails.sectionOfLaw",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "LAW_SECTIONS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  },orderFormLawSectionsSection,
   {
     body: [
       {
@@ -795,27 +775,7 @@ export const configsScheduleNextHearingDate = [
   //     },
   //   ],
   // },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "hearingSummary",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "HEARING_SUMMARY",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  orderFormHearingSummarySection,
   orderFormCommentsSection,
 ];
 
@@ -1174,31 +1134,7 @@ export const configsCaseTransfer = [
         },
       },
     ],
-  },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "grounds",
-        schemaKeyPath: "orderDetails.grounds",
-        transformer: "customTextArea",
-        isMandatory: true,
-        disable: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "GROUNDS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  },orderFormGroundsSection,
   {
     body: [
       {
@@ -1261,31 +1197,7 @@ export const configsCaseTransferAccept = [
         },
       },
     ],
-  },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "grounds",
-        schemaKeyPath: "orderDetails.grounds",
-        transformer: "customTextArea",
-        isMandatory: true,
-        disable: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "GROUNDS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  },orderFormGroundsSection,
   {
     body: [
       {
@@ -1368,31 +1280,7 @@ export const configsCaseTransferReject = [
         },
       },
     ],
-  },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "grounds",
-        schemaKeyPath: "orderDetails.grounds",
-        transformer: "customTextArea",
-        isMandatory: true,
-        disable: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "GROUNDS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  },orderFormGroundsSection,
   {
     body: [
       {
@@ -1887,28 +1775,7 @@ export const configsOthers = [
         },
       },
     ],
-  },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "otherDetails",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaHeader: "CS_DETAILS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  },orderFormOtherDetailsSection,
 ];
 
 export const configsBail = [
@@ -2227,23 +2094,7 @@ export const configsCreateOrderWarrant = [
           // },
         },
       },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "warrantText",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "warrantText",
-              textAreaSubHeader: "Warrant Text",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
+      orderFormWarrantTextField,
       {
         isMandatory: true,
         type: "component",
@@ -2729,29 +2580,7 @@ export const configsJudgement = [
         },
       },
     ],
-  },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "sentence",
-        schemaKeyPath: "caseDetails.sentence",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "SENTENCE",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  },orderFormSentenceSection,
   // {
   //   body: [
   //     {
@@ -2885,26 +2714,7 @@ export const configsIssueBailReject = [
         type: "text",
         populators: { name: "refApplicationId" },
       },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "bailSummaryCircumstancesReject",
-        schemaKeyPath: "orderDetails.bailSummaryCircumstancesReject",
-        transformer: "customTextArea",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "CS_BAIL_SUMMARY_CIRCUMSTANCES",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: false,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
+      orderFormBailSummaryCircumstancesRejectField,
     ],
   },
 ];
@@ -2928,46 +2738,8 @@ export const configsSetTermBail = [
         component: "SelectEmptyComponent",
         populators: {},
       },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "bailSummaryCircumstancesTerms",
-        isMandatory: true,
-        schemaKeyPath: "orderDetails.bailSummaryCircumstancesTerms",
-        transformer: "customTextArea",
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "CS_BAIL_SUMMARY",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: false,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "additionalCommentsTermsOfBail",
-        isMandatory: true,
-        schemaKeyPath: "orderDetails.additionalCommentsTermsOfBail",
-        transformer: "customTextArea",
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "ADDITIONAL_DOCUMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: false,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
+      orderFormBailSummaryCircumstancesTermsField,
+      orderFormAdditionalCommentsTermsOfBailField,
     ],
   },
 ];
@@ -3067,46 +2839,7 @@ export const configsAdmitDismissCase = [
             },
           ],
         },
-      },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "reasonForAdmitDismissCase",
-        schemaKeyPath: "orderDetails.reasonForAdmitDismissCase",
-        transformer: "customTextArea",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "REASON_ADMIT_DISMISS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "additionalCommentsAdmitDismissCase",
-        schemaKeyPath: "orderDetails.additionalCommentsAdmitDismissCase",
-        transformer: "customTextArea",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "ADMIT_DISMISS_ADDITIONAL_COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              isOptional: true,
-            },
-          ],
-        },
-      },
+      },orderFormReasonForAdmitDismissCaseField,orderFormAdditionalCommentsAdmitDismissCaseField,
     ],
   },
 ];
@@ -3214,25 +2947,7 @@ export const configsApproveRejectLitigantDetailsChange = [
         type: "text",
         populators: { name: "refApplicationId" },
       },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "reasonForLitigantDetailsChange",
-        schemaKeyPath: "orderDetails.reasonForLitigantDetailsChange",
-        transformer: "customTextArea",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "REASON_FOR_LITIGANT_DETAIL_CHANGE",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
+      orderFormReasonForLitigantDetailsChangeField,
     ],
   },
 ];
@@ -3273,25 +2988,7 @@ export const configsCreateOrderProclamation = [
             },
           ],
         },
-      },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "proclamationText",
-        isInfinite: true,
-        // isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "proclamationText",
-              isOptional: true,
-              textAreaSubHeader: "Comments",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
+      },orderFormProclamationTextField,
     ],
   },
 ];
@@ -3359,102 +3056,14 @@ export const configsCreateOrderAttachment = [
             },
           ],
         },
-      },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "chargeDays",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "chargeDays",
-              textAreaSubHeader: "Number of Days for Answering Charge",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "district",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "district",
-              textAreaSubHeader: "Name of Accused District",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "village",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "village",
-              textAreaSubHeader: "Name of Accused Village",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "attachmentText",
-        // isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "attachmentText",
-              isOptional: true,
-              textAreaSubHeader: "Comments",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
+      },orderFormChargeDaysField,orderFormDistrictField,orderFormVillageField,orderFormAttachmentTextField,
     ],
   },
 ];
 
 export const configsMoveCaseToLongPendingRegister = [
   {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "longPendingComments",
-        schemaKeyPath: "orderDetails.comments",
-        transformer: "customTextArea",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "Reason for Moving Case to Long Pending Register",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
+    body: [orderFormLongPendingCommentsField,
       {
         type: "component",
         key: "lprDocuments",
@@ -3485,30 +3094,7 @@ export const configsMoveCaseToLongPendingRegister = [
   },
 ];
 
-export const configsMoveCaseOutOfLongPendingRegister = [
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "outOfLongPendingComments",
-        schemaKeyPath: "orderDetails.comments",
-        transformer: "customTextArea",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "Reason for Moving Case out of Long Pending Register",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+export const configsMoveCaseOutOfLongPendingRegister = [orderFormOutOfLongPendingCommentsSection,
 ];
 
 export const attendeesOptions = [

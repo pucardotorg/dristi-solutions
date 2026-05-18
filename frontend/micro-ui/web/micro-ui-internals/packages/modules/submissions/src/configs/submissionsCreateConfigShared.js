@@ -1,4 +1,4 @@
-/** Repeated application comments textarea blocks in submissionsCreateConfig.js */
+/** Repeated application form blocks in submissionsCreateConfig.js */
 
 const submissionCommentsInput = {
   name: "text",
@@ -74,4 +74,158 @@ export const submissionAdditionalInformationField = {
 
 export const submissionAdditionalInformationSection = {
   body: [submissionAdditionalInformationField],
+};
+
+export const submissionExtensionBenefitSection = {
+  body: [
+    {
+      inline: true,
+      type: "component",
+      component: "SelectCustomTextArea",
+      key: "extensionBenefit",
+      schemaKeyPath: "applicationDetails.benefitOfExtension",
+      transformer: "customTextArea",
+      isMandatory: true,
+      isInfinite: true,
+      populators: {
+        inputs: [
+          {
+            name: "text",
+            textAreaHeader: "EXTENSION_BENEFIT",
+            headerClassName: "dristi-font-big-bold",
+            placeholder: "TYPE_HERE_PLACEHOLDER",
+            type: "TextAreaComponent",
+          },
+        ],
+      },
+    },
+  ],
+};
+
+export const submissionDocumentPurposeSection = {
+  body: [
+    {
+      inline: true,
+      type: "component",
+      component: "SelectCustomTextArea",
+      key: "extensionBenefit",
+      isMandatory: true,
+      isInfinite: true,
+      populators: {
+        inputs: [
+          {
+            name: "text",
+            textAreaHeader: "PURPOSE_FOR_DOCUMENT_SUBMISSION",
+            placeholder: "TYPE_HERE_PLACEHOLDER",
+            type: "TextAreaComponent",
+            textAreaStyle: {
+              fontSize: "16px",
+              fontWeight: 400,
+              marginBottom: 0,
+            },
+          },
+        ],
+        customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+      },
+    },
+  ],
+};
+
+export const submissionAdditionalInformationValidatedField = {
+  inline: true,
+  type: "component",
+  component: "SelectCustomTextArea",
+  key: "additionalInformation",
+  schemaKeyPath: "applicationDetails.additionalInformation",
+  transformer: "customTextArea",
+  isMandatory: false,
+  isInfinite: true,
+  populators: {
+    inputs: [
+      {
+        name: "text",
+        textAreaSubHeader: "ADDITIONAL_INFO",
+        isOptional: true,
+        subHeaderClassName: "dristi-font-big-bold",
+        placeholder: "TYPE_HERE_PLACEHOLDER",
+        type: "TextAreaComponent",
+        textAreaStyle: {
+          fontSize: "16px",
+          fontWeight: 400,
+          marginBottom: 0,
+        },
+      },
+    ],
+    validation: {
+      customValidationFn: {
+        moduleName: "dristiSubmissions",
+        masterName: "alphaNumericValidation",
+      },
+    },
+    customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+  },
+};
+
+export const submissionPoaCommentsSection = {
+  body: [
+    {
+      inline: true,
+      type: "component",
+      component: "SelectCustomTextArea",
+      key: "comments",
+      transformer: "customTextArea",
+      isMandatory: false,
+      isInfinite: true,
+      populators: {
+        inputs: [
+          {
+            name: "text",
+            textAreaSubHeader: "COMMENTS",
+            placeholder: "TYPE_HERE_PLACEHOLDER",
+            isOptional: true,
+            type: "TextAreaComponent",
+          },
+        ],
+      },
+    },
+  ],
+};
+
+export const submissionReasonForRequestField = {
+  inline: true,
+  type: "component",
+  component: "SelectCustomTextArea",
+  key: "reasonForRequest",
+  schemaKeyPath: "applicationDetails.reasonForRequest",
+  transformer: "customTextArea",
+  isMandatory: true,
+  isInfinite: true,
+  withoutLabel: true,
+  populators: {
+    inputs: [
+      {
+        name: "text",
+        textAreaSubHeader: "REASON_FOR_REQUEST",
+        subHeaderClassName: "dristi-font-big-bold",
+        placeholder: "TYPE_HERE_PLACEHOLDER",
+        type: "TextAreaComponent",
+        textAreaStyle: {
+          fontSize: "16px",
+          fontWeight: 400,
+          marginBottom: 0,
+        },
+      },
+    ],
+    validation: {
+      customValidationFn: {
+        moduleName: "dristiSubmissions",
+        masterName: "alphaNumericValidation",
+      },
+    },
+    customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+  },
+};
+
+export const submissionReasonForRequestSection = {
+  body: [submissionReasonForRequestField],
 };

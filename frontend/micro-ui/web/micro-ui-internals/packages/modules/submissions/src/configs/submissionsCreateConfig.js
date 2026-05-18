@@ -2,6 +2,11 @@ import {
   submissionAdditionalCommentsTextAreaField,
   submissionAdditionalCommentsTextAreaSection,
   submissionAdditionalCommentsFormatterSection,
+  submissionAdditionalInformationValidatedField,
+  submissionDocumentPurposeSection,
+  submissionExtensionBenefitSection,
+  submissionPoaCommentsSection,
+  submissionReasonForRequestField,
 } from "./submissionsCreateConfigShared";
 
 export const submissionTypeConfig = [
@@ -595,31 +600,7 @@ export const configsExtensionSubmissionDeadline = [
       },
     ],
   },
-  {
-    body: [
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "extensionBenefit",
-        schemaKeyPath: "applicationDetails.benefitOfExtension",
-        transformer: "customTextArea",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaHeader: "EXTENSION_BENEFIT",
-              headerClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  submissionExtensionBenefitSection,
   submissionAdditionalCommentsTextAreaSection,
 ];
 
@@ -677,34 +658,7 @@ export const configsDocumentSubmission = [
       },
     ],
   },
-  {
-    body: [
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "extensionBenefit",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaHeader: "PURPOSE_FOR_DOCUMENT_SUBMISSION",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-        },
-      },
-    ],
-  },
+  submissionDocumentPurposeSection,
   {
     body: [
       {
@@ -1811,40 +1765,7 @@ export const submitDocsForBail = [
         component: "SelectEmptyComponent",
         populators: {},
       },
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "additionalInformation",
-        schemaKeyPath: "applicationDetails.additionalInformation",
-        transformer: "customTextArea",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "ADDITIONAL_INFO",
-              isOptional: true,
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiSubmissions",
-              masterName: "alphaNumericValidation",
-            },
-          },
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-        },
-      },
+      submissionAdditionalInformationValidatedField,
       {
         type: "component",
         component: "CustomInfo",
@@ -2107,32 +2028,7 @@ export const submitDelayCondonation = [
   },
 ];
 
-export const poaClaimingConfig = [
-  {
-    body: [
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "comments",
-        transformer: "customTextArea",
-        isMandatory: false,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
-];
+export const poaClaimingConfig = [submissionPoaCommentsSection];
 
 export const configsAdvancementOrAdjournment = [
   {
@@ -2255,40 +2151,7 @@ export const configsAdvancementOrAdjournment = [
           ],
         },
       },
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "reasonForRequest",
-        schemaKeyPath: "applicationDetails.reasonForRequest",
-        transformer: "customTextArea",
-        isMandatory: true,
-        isInfinite: true,
-        withoutLabel: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "REASON_FOR_REQUEST",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiSubmissions",
-              masterName: "alphaNumericValidation",
-            },
-          },
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-        },
-      },
+      submissionReasonForRequestField,
       {
         type: "component",
         key: "supportingDocuments",
