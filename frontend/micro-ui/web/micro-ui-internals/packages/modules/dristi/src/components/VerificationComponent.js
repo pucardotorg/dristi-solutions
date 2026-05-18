@@ -1,5 +1,6 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
-import { CardLabel, FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { CardLabel } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useCallback, useMemo, useState } from "react";
 import { idProofVerificationConfig } from "../configs/component";
 import Button from "./Button";

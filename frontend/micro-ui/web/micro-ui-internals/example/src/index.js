@@ -9,6 +9,7 @@ import { initHearingsComponents } from "@egovernments/digit-ui-module-hearings";
 import { initCasesComponents } from "@egovernments/digit-ui-module-cases";
 import { initDRISTIComponents } from "@egovernments/digit-ui-module-dristi";
 import { initHomeComponents } from "@egovernments/digit-ui-module-home";
+import { initCommonComponents } from "@egovernments/digit-ui-module-common";
 
 // import "@egovernments/dristi-ui-css";
 import "dristi-ui-css";
@@ -63,6 +64,7 @@ const initDigitUI = () => {
   setupRequestInterceptor();
   apiMonitor.init();
   initCoreComponents();
+  initCommonComponents();
   initDRISTIComponents();
   initOrdersComponents();
   initHearingsComponents();

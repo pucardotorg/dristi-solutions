@@ -1,4 +1,5 @@
-import { BackButton, FormComposerV2, Header, Loader } from "@egovernments/digit-ui-react-components";
+import { BackButton, Header, Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useEffect, useMemo, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";

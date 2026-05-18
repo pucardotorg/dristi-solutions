@@ -1,6 +1,7 @@
 import { ArrowForward, ArrowRightInbox, Banner, Card, CardText, Modal, TextArea } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState } from "react";
-import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
+import { Toast } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 
 import { modalConfig } from "../../citizen/FileCase/Config/sendBackModalConfig";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";

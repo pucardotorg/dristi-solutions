@@ -132,7 +132,9 @@ export const TabLitigantSearchConfig = {
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: {},
+          criteria: {
+            lifecycleStatus: "ACTIVE",
+          },
         },
         masterName: "commonUiConfig",
         moduleName: "homeLitigantUiConfig",
@@ -334,7 +336,7 @@ export const TabLitigantSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "status",
+                jsonPath: "stage",
                 additionalCustomization: true,
               },
               {
@@ -344,7 +346,7 @@ export const TabLitigantSearchConfig = {
               },
               {
                 label: "CS_LAST_EDITED",
-                jsonPath: "auditDetails.lastModifiedTime",
+                jsonPath: "lastModifiedTime",
                 additionalCustomization: true,
               },
             ],
@@ -367,7 +369,7 @@ export const TabLitigantSearchConfig = {
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: { outcome: [] },
+          criteria: { outcome: [], lifecycleStatus: "ACTIVE" },
         },
         masterName: "commonUiConfig",
         moduleName: "homeLitigantUiConfig",
@@ -520,7 +522,7 @@ export const TabLitigantSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            isLPRCase: true,
+            lifecycleStatus: "LPR",
           },
         },
         masterName: "commonUiConfig",

@@ -1,5 +1,6 @@
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
-import { InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useCallback, useEffect, useMemo, useRef, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
@@ -2039,7 +2040,7 @@ const AdmittedCaseV2 = () => {
         console.error("Error fetching order", error);
         const errorCode = error?.response?.data?.Errors?.[0]?.code;
         const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-        const errorMsg = errorCode === "ORDER_ALREADY_PUBLISHED" ? "ORDER_ALREADY_PUBLISHED" : "CORE_SOMETHING_WENT_WRONG";
+        const errorMsg = errorCode === "ORDER_ALREADY_PUBLISHED" ? "ORDER_ALREADY_PUBLISHED" : "ERROR_CREATING_ORDER";
         setShowToast({
           label: t(errorMsg),
           error: true,
