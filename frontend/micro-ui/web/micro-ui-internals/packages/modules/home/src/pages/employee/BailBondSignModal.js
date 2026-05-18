@@ -164,13 +164,16 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           clearBailBondSessionData();
         } catch (error) {
           console.error("error", error);
-          setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+          setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
+          setShowToast({ label: t(errorCode), error: true, errorId });
         } finally {
           setLoader(false);
         }
       }
     },
-    [formData, uploadDocuments, tenantId]
+    [formData?.uploadSignature?.Signature, uploadDocuments, tenantId, t]
   );
 
   const updateBailBond = async ({ bailBondId, Action, fileStoreId }) => {
