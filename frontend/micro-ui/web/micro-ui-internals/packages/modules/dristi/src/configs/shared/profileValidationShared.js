@@ -150,6 +150,78 @@ export const validateComplainantMobileDuplicates = ({
   }
 };
 
+const getComplainantMobileFromCase = (caseDetails) =>
+  caseDetails?.additionalDetails?.complainantDetails?.formdata?.[0]?.data?.complainantVerification?.mobileNumber;
+
+/** Skip respondent validation when inquiry affidavit not required for address mismatch. */
+export const shouldSkipRespondentInquiryAffidavitValidation = (formData, caseDetails) => {
+  if (!("inquiryAffidavitFileUpload" in formData)) {
+    return false;
+  }
+  const complainant = caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data;
+  return (
+    formData?.addressDetails?.some(
+      (address) =>
+        (address?.addressDetails?.pincode !== complainant?.addressDetails?.pincode &&
+          complainant?.complainantType?.code === "INDIVIDUAL") ||
+        (address?.addressDetails?.pincode !== complainant?.addressCompanyDetails?.pincode &&
+          complainant?.complainantType?.code === "REPRESENTATIVE")
+    ) && !Object.keys(formData?.inquiryAffidavitFileUpload?.document || {}).length
+  );
+};
+
+export const validateRespondentMobileNotSameAsComplainant = ({
+  formData,
+  caseDetails,
+  setShowToast,
+  setFormErrors,
+  clearFormDataErrors,
+  t,
+}) => {
+  const respondentMobile = formData?.phonenumbers?.textfieldValue;
+  const complainantMobile = getComplainantMobileFromCase(caseDetails);
+  if (
+    formData?.phonenumbers?.textfieldValue?.length === 10 &&
+    respondentMobile &&
+    respondentMobile === complainantMobile
+  ) {
+    setShowToast({ label: t("RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM"), error: true });
+    setFormErrors("phonenumbers", { mobileNumber: "RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM" });
+    return true;
+  }
+  clearFormDataErrors("phonenumbers");
+  return false;
+};
+
+export const validateComplainantMobileNotInRespondentList = ({ formData, caseDetails, setShowToast, t }) => {
+  const complainantMobileNumber = formData?.complainantVerification?.mobileNumber;
+  const respondentData = caseDetails?.additionalDetails?.respondentDetails;
+  if (!respondentData || !complainantMobileNumber) {
+    return false;
+  }
+  const respondentMobileNumbers = respondentData?.formdata?.[0]?.data?.phonenumbers?.mobileNumber;
+  if (!respondentMobileNumbers) {
+    return false;
+  }
+  for (let i = 0; i < respondentMobileNumbers.length; i++) {
+    if (respondentMobileNumbers[i] === complainantMobileNumber) {
+      setShowToast({ label: t("CHANGE_RESPONDENT_MOBILE_NUMBER_REGISTERED"), error: true });
+      return true;
+    }
+  }
+  return false;
+};
+
+export const validatePartyAgeField = ({ formData, selected, setFormErrors, clearFormDataErrors, fieldKey }) => {
+  const age = parseInt(formData?.[fieldKey], 10);
+  if (age < 18 || age > 999) {
+    setFormErrors(fieldKey, { message: "ONLY_AGE_ALLOWED" });
+    return true;
+  }
+  clearFormDataErrors(fieldKey);
+  return false;
+};
+
 export const clearBulkContactTextfieldValues = (formDataCopy) => {
   for (let i = 0; i < formDataCopy.length; i++) {
     const obj = formDataCopy[i];

@@ -1,4 +1,9 @@
 import {
+  buildOrderRefApplicationIdField,
+  buildOrderOriginalHearingDateField,
+  buildOrderNewHearingDateField,
+  orderRejectApplicationReferenceFields,
+  orderRescheduleHearingReferenceFields,
   orderFormCommentsSection,
   orderFormAdditionalCommentsAdmitDismissCaseField,
   orderFormAdditionalCommentsTermsOfBailField,
@@ -442,14 +447,7 @@ export const configsOrderMandatorySubmissions = [
 export const configsOrderSubmissionExtension = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField(),
       {
         label: "APPLICATION_STATUS",
         isMandatory: true,
@@ -668,14 +666,7 @@ export const configsScheduleHearingDate = [
 export const configsScheduleNextHearingDate = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField(),
       {
         label: "HEARING_PURPOSE",
         isMandatory: true,
@@ -781,56 +772,14 @@ export const configsScheduleNextHearingDate = [
 
 export const configsRejectRescheduleHeadingDate = [
   {
-    body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
-      {
-        label: "ORIGINAL_HEARING_DATE",
-        isMandatory: true,
-        key: "originalHearingDate",
-        schemaKeyPath: "orderDetails.originalHearingDate",
-        transformer: "date",
-        disable: true,
-        type: "date",
-        populators: {
-          name: "originalHearingDate",
-        },
-      },
-    ],
+    body: [...orderRejectApplicationReferenceFields],
   },
   orderFormCommentsSection,
 ];
 
 export const configsRejectCheckout = [
   {
-    body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
-      {
-        label: "ORIGINAL_HEARING_DATE",
-        isMandatory: true,
-        key: "originalHearingDate",
-        schemaKeyPath: "orderDetails.originalHearingDate",
-        transformer: "date",
-        disable: true,
-        type: "date",
-        populators: {
-          name: "originalHearingDate",
-        },
-      },
-    ],
+    body: [...orderRejectApplicationReferenceFields],
   },
   orderFormCommentsSection,
 ];
@@ -838,15 +787,7 @@ export const configsRejectCheckout = [
 export const configsRescheduleHearingDate = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        schemaKeyPath: "orderDetails.refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField({ withSchemaKeyPath: true }),
       {
         label: "HEARING_PURPOSE",
         isMandatory: true,
@@ -864,87 +805,15 @@ export const configsRescheduleHearingDate = [
           hideInForm: false,
         },
       },
-      {
-        label: "ORIGINAL_HEARING_DATE",
-        isMandatory: false,
-        key: "originalHearingDate",
-        schemaKeyPath: "orderDetails.originalHearingDate",
-        transformer: "date",
-        disable: true,
-        type: "date",
-        populators: {
-          name: "originalHearingDate",
-        },
-      },
-      {
-        label: "NEW_HEARING_DATE",
-        isMandatory: true,
-        key: "newHearingDate",
-        schemaKeyPath: "orderDetails.hearingDate",
-        transformer: "date",
-        type: "date",
-        labelChildren: "OutlinedInfoIcon",
-        tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
-        populators: {
-          name: "newHearingDate",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
-            },
-          },
-        },
-      },
+      buildOrderOriginalHearingDateField({ isMandatory: false }),
+      buildOrderNewHearingDateField(),
     ],
   },
 ];
 
 export const configCheckout = [
   {
-    body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        schemaKeyPath: "orderDetails.refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
-      {
-        label: "ORIGINAL_HEARING_DATE",
-        isMandatory: false,
-        key: "originalHearingDate",
-        schemaKeyPath: "orderDetails.originalHearingDate",
-        transformer: "date",
-        disable: true,
-        type: "date",
-        populators: {
-          name: "originalHearingDate",
-        },
-      },
-      {
-        label: "NEW_HEARING_DATE",
-        isMandatory: true,
-        key: "newHearingDate",
-        schemaKeyPath: "orderDetails.hearingDate",
-        transformer: "date",
-        type: "date",
-        labelChildren: "OutlinedInfoIcon",
-        tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
-        populators: {
-          name: "newHearingDate",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
-            },
-          },
-        },
-      },
-    ],
+    body: [...orderRescheduleHearingReferenceFields],
   },
   orderFormCommentsSection,
 ];
@@ -952,27 +821,8 @@ export const configCheckout = [
 export const configsInitiateRescheduleHearingDate = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        schemaKeyPath: "orderDetails.refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
-      {
-        label: "ORIGINAL_HEARING_DATE",
-        isMandatory: false,
-        key: "originalHearingDate",
-        schemaKeyPath: "orderDetails.originalHearingDate",
-        transformer: "date",
-        disable: true,
-        type: "date",
-        populators: {
-          name: "originalHearingDate",
-        },
-      },
+      buildOrderRefApplicationIdField({ withSchemaKeyPath: true }),
+      buildOrderOriginalHearingDateField({ isMandatory: false }),
     ],
   },
 ];
@@ -980,26 +830,9 @@ export const configsInitiateRescheduleHearingDate = [
 export const configsAssignDateToRescheduledHearing = [
   {
     body: [
-      {
-        label: "NEW_HEARING_DATE",
-        isMandatory: true,
-        key: "newHearingDate",
-        type: "date",
+      buildOrderNewHearingDateField({
         schemaKeyPath: "orderDetails.newHearingDate",
-        transformer: "date",
-        labelChildren: "OutlinedInfoIcon",
-        tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
-        populators: {
-          name: "newHearingDate",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
-            },
-          },
-        },
-      },
+      }),
     ],
   },
   orderFormCommentsSection,
@@ -1008,27 +841,10 @@ export const configsAssignDateToRescheduledHearing = [
 export const configsAssignNewHearingDate = [
   {
     body: [
-      {
-        label: "NEW_HEARING_DATE",
-        isMandatory: true,
-        key: "newHearingDate",
-        type: "date",
+      buildOrderNewHearingDateField({
         schemaKeyPath: "orderDetails.newHearingDate",
-        transformer: "date",
         disable: true,
-        labelChildren: "OutlinedInfoIcon",
-        tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
-        populators: {
-          name: "newHearingDate",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
-            },
-          },
-        },
-      },
+      }),
     ],
   },
 ];
@@ -1069,29 +885,13 @@ export const configsAcceptSubmission = [
 
 export const configRejectSubmission = [
   {
-    body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        disable: true,
-        key: "refApplicationId",
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
-    ],
+    body: [buildOrderRefApplicationIdField()],
   },
 ];
 export const configsVoluntarySubmissionStatus = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField(),
     ],
   },
 ];
@@ -1099,15 +899,7 @@ export const configsVoluntarySubmissionStatus = [
 export const configsCaseTransfer = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        schemaKeyPath: "orderDetails.refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField({ withSchemaKeyPath: true }),
       {
         label: "APPLICATION_STATUS",
         isMandatory: true,
@@ -1162,15 +954,7 @@ export const configsCaseTransfer = [
 export const configsCaseTransferAccept = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        schemaKeyPath: "orderDetails.refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField({ withSchemaKeyPath: true }),
       {
         label: "APPLICATION_STATUS",
         isMandatory: true,
@@ -1245,15 +1029,7 @@ export const configsCaseTransferAccept = [
 export const configsCaseTransferReject = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        schemaKeyPath: "orderDetails.refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField({ withSchemaKeyPath: true }),
       {
         label: "APPLICATION_STATUS",
         isMandatory: true,
@@ -1307,14 +1083,7 @@ export const configsCaseTransferReject = [
 export const configsCaseSettlementAccept = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField(),
       {
         label: "APPLICATION_STATUS",
         isMandatory: true,
@@ -1411,14 +1180,7 @@ export const configsCaseSettlementAccept = [
 export const configsCaseSettlementReject = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField(),
       {
         label: "APPLICATION_STATUS",
         isMandatory: true,
@@ -1608,14 +1370,7 @@ export const configsIssueNotice = [
 export const configsIssueOfWarrants = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField(),
       {
         label: "REASON_FOR_WARRANT",
         isMandatory: true,
@@ -1639,14 +1394,7 @@ export const configsIssueOfWarrants = [
 export const configsCaseWithdrawal = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField(),
       {
         label: "APPLICATION_STATUS",
         isMandatory: false,
@@ -1689,14 +1437,7 @@ export const configsCaseWithdrawal = [
 export const configsCaseWithdrawalAccept = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField(),
       {
         label: "APPLICATION_STATUS",
         isMandatory: false,
@@ -1734,14 +1475,7 @@ export const configsCaseWithdrawalAccept = [
 export const configsCaseWithdrawalReject = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField(),
       {
         label: "APPLICATION_STATUS",
         isMandatory: false,
@@ -1789,14 +1523,7 @@ export const configsBail = [
       },
     },
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField(),
       {
         label: "BAIL_OF",
         isMandatory: true,
@@ -2647,15 +2374,7 @@ export const configsJudgement = [
 export const configsIssueBailAcceptance = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        schemaKeyPath: "orderDetails.refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField({ withSchemaKeyPath: true }),
       {
         label: "BAIL_TYPE",
         isMandatory: true,
@@ -2705,15 +2424,7 @@ export const configsIssueBailAcceptance = [
 export const configsIssueBailReject = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        schemaKeyPath: "orderDetails.refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField({ withSchemaKeyPath: true }),
       orderFormBailSummaryCircumstancesRejectField,
     ],
   },
@@ -2722,15 +2433,7 @@ export const configsIssueBailReject = [
 export const configsSetTermBail = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        schemaKeyPath: "orderDetails.refApplicationId",
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField({ withSchemaKeyPath: true }),
       {
         key: "partyId",
         type: "component",
@@ -2747,15 +2450,7 @@ export const configsSetTermBail = [
 export const configsAcceptRejectDelayCondonation = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        schemaKeyPath: "orderDetails.refApplicationId",
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField({ withSchemaKeyPath: true }),
       {
         label: "IS_DELAY_CONDONATION_ACCEPTED_OR_REJECTED",
         isMandatory: true,
@@ -2939,14 +2634,7 @@ export const configsApproveRejectLitigantDetailsChange = [
           ],
         },
       },
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
+      buildOrderRefApplicationIdField(),
       orderFormReasonForLitigantDetailsChangeField,
     ],
   },
@@ -3403,14 +3091,7 @@ export const configsAbateCase = [
 export const configAcceptReschedulingRequest = [
   {
     body: [
-      {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        type: "text",
-        populators: { name: "refApplicationId", customStyle: { display: "none" } },
-      },
+      buildOrderRefApplicationIdField({ hideInForm: true }),
       {
         label: "REF_APPLICATION_ID",
         isMandatory: false,

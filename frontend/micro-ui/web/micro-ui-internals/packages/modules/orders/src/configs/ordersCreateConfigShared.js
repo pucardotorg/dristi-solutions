@@ -1,4 +1,75 @@
 /**
+ * Repeated order form blocks from ordersCreateConfig.js (PR-B Sonar dedupe).
+ */
+
+export const orderMinTodayDateValidation = {
+  customValidationFn: {
+    moduleName: "dristiOrders",
+    masterName: "minTodayDateValidation",
+  },
+};
+
+export const buildOrderRefApplicationIdField = ({ withSchemaKeyPath = false, hideInForm = false } = {}) => ({
+  label: "REF_APPLICATION_ID",
+  isMandatory: false,
+  key: "refApplicationId",
+  ...(withSchemaKeyPath ? { schemaKeyPath: "orderDetails.refApplicationId" } : {}),
+  disable: true,
+  type: "text",
+  populators: {
+    name: "refApplicationId",
+    ...(hideInForm ? { customStyle: { display: "none" } } : {}),
+  },
+});
+
+export const buildOrderOriginalHearingDateField = ({ isMandatory = false } = {}) => ({
+  label: "ORIGINAL_HEARING_DATE",
+  isMandatory,
+  key: "originalHearingDate",
+  schemaKeyPath: "orderDetails.originalHearingDate",
+  transformer: "date",
+  disable: true,
+  type: "date",
+  populators: {
+    name: "originalHearingDate",
+  },
+});
+
+export const buildOrderNewHearingDateField = ({
+  key = "newHearingDate",
+  label = "NEW_HEARING_DATE",
+  isMandatory = true,
+  schemaKeyPath = "orderDetails.hearingDate",
+  disable,
+} = {}) => ({
+  label,
+  isMandatory,
+  key,
+  schemaKeyPath,
+  transformer: "date",
+  type: "date",
+  ...(disable !== undefined ? { disable } : {}),
+  labelChildren: "OutlinedInfoIcon",
+  tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
+  populators: {
+    name: key,
+    error: "CORE_REQUIRED_FIELD_ERROR",
+    validation: orderMinTodayDateValidation,
+  },
+});
+
+export const orderRejectApplicationReferenceFields = [
+  buildOrderRefApplicationIdField(),
+  buildOrderOriginalHearingDateField({ isMandatory: true }),
+];
+
+export const orderRescheduleHearingReferenceFields = [
+  buildOrderRefApplicationIdField({ withSchemaKeyPath: true }),
+  buildOrderOriginalHearingDateField({ isMandatory: false }),
+  buildOrderNewHearingDateField(),
+];
+
+/**
  * Repeated SelectCustomTextArea sections from ordersCreateConfig.js (Sonar dedupe).
  */
 

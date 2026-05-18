@@ -7,7 +7,10 @@ import {
   getComplainantMobileNumbers,
   getWitnessEmails,
   getWitnessMobileNumbers,
+  shouldSkipRespondentInquiryAffidavitValidation,
+  validateComplainantMobileNotInRespondentList,
   validateRespondentMobileEmailDuplicates,
+  validateRespondentMobileNotSameAsComplainant,
 } from "../../../configs/shared/profileValidationShared";
 import { DRISTIService } from "../../../services";
 import { cleanString, combineMultipleFiles, documentsTypeMapping, getAuthorizedUuid } from "../../../Utils";
@@ -46,18 +49,8 @@ export const editComplainantValidation = ({ formData, t, caseDetails, selected, 
     } else {
       clearFormDataErrors("complainantId");
     }
-    const respondentData = caseDetails?.additionalDetails?.respondentDetails;
-    const complainantMobileNumber = formData?.complainantVerification?.mobileNumber;
-    if (respondentData) {
-      const respondentMobileNumbers = respondentData?.formdata?.[0]?.data?.phonenumbers?.mobileNumber;
-      if (respondentMobileNumbers && complainantMobileNumber) {
-        for (let i = 0; i < respondentMobileNumbers.length; i++) {
-          if (respondentMobileNumbers[i] === complainantMobileNumber) {
-            setShowToast({ label: t("CHANGE_RESPONDENT_MOBILE_NUMBER_REGISTERED"), error: true });
-            return true;
-          }
-        }
-      }
+    if (validateComplainantMobileNotInRespondentList({ formData, caseDetails, setShowToast, t })) {
+      return true;
     }
   } else {
     return false;
@@ -67,21 +60,8 @@ export const editComplainantValidation = ({ formData, t, caseDetails, selected, 
 export const editRespondentValidation = ({ t, formData, selected, caseDetails, setShowToast, setFormErrors, clearFormDataErrors }) => {
   if (selected === "respondentDetails") {
     const formDataCopy = structuredClone(formData);
-    if ("inquiryAffidavitFileUpload" in formDataCopy) {
-      if (
-        formData?.addressDetails?.some(
-          (address) =>
-            (address?.addressDetails?.pincode !==
-              caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.addressDetails?.pincode &&
-              caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.complainantType?.code === "INDIVIDUAL") ||
-            (address?.addressDetails?.pincode !==
-              caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.addressCompanyDetails?.pincode &&
-              caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.complainantType?.code === "REPRESENTATIVE")
-        ) &&
-        !Object.keys(formData?.inquiryAffidavitFileUpload?.document || {}).length
-      ) {
-        return false;
-      }
+    if (shouldSkipRespondentInquiryAffidavitValidation(formData, caseDetails)) {
+      return false;
     }
     if (!formDataCopy?.respondentType?.code) {
       setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
@@ -89,23 +69,14 @@ export const editRespondentValidation = ({ t, formData, selected, caseDetails, s
     }
   }
 
-  const respondentMobileNUmbers = formData?.phonenumbers?.textfieldValue;
-  const complainantMobileNumber = caseDetails?.additionalDetails?.complainantDetails?.formdata?.[0]?.data?.complainantVerification?.mobileNumber;
-  if (
-    formData &&
-    formData?.phonenumbers?.textfieldValue &&
-    formData?.phonenumbers?.textfieldValue?.length === 10 &&
-    respondentMobileNUmbers &&
-    respondentMobileNUmbers &&
-    respondentMobileNUmbers === complainantMobileNumber
-  ) {
-    setShowToast({ label: t("RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM"), error: true });
-    setFormErrors("phonenumbers", { mobileNumber: "RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM" });
-    return true;
-  } else {
-    clearFormDataErrors("phonenumbers");
-    return false;
-  }
+  return validateRespondentMobileNotSameAsComplainant({
+    formData,
+    caseDetails,
+    setShowToast,
+    setFormErrors,
+    clearFormDataErrors,
+    t,
+  });
 };
 
 export const editCheckNameValidation = ({ formData, setValue, selected, reset, index, formdata, clearErrors, formState }) => {

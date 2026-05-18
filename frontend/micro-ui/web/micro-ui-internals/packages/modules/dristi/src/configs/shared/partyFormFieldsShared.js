@@ -1034,3 +1034,524 @@ export const witnessAddressDetailsField = {
   },
   withoutLabel: true,
 };
+
+const complainantTypePopulators = {
+  type: "radioButton",
+  error: "CORE_REQUIRED_FIELD_ERROR",
+  label: "SELECT_COMPLAINANT_TYPE",
+  required: false,
+  mdmsConfig: {
+    select: "(data) => {return data['case'].ComplainantRespondentType?.map((item) => {return item;});}",
+    masterName: "ComplainantRespondentType",
+    moduleName: "case",
+  },
+  optionsKey: "code",
+  customStyle: {
+    gap: "40px",
+    alignItems: "center",
+    flexDirection: "row",
+  },
+  isDependent: true,
+  isMandatory: true,
+};
+
+export const fileCaseComplainantTypeFormStep = {
+  body: [
+    {
+      key: "complainantType",
+      head: "SELECT_COMPLAINANT_TYPE",
+      name: "complainantType",
+      type: "component",
+      notes: {
+        key: "personalDetailsNote",
+        type: "component",
+        component: "SelectCustomNote",
+        populators: {
+          inputs: [
+            {
+              type: "InfoComponent",
+              infoText: "CS_PLEASE_CONTACT_NYAY_MITRA_TEXT",
+              infoHeader: "CS_PLEASE_COMMON_NOTE",
+              infoTooltipMessage: "CS_NOTE_TOOLTIP_RESPONDENT_PERSONAL_DETAILS",
+            },
+          ],
+        },
+        withoutLabel: true,
+      },
+      component: "CustomRadioInfoComponent",
+      populators: complainantTypePopulators,
+      isMandatory: true,
+      withoutLabel: true,
+      resetFormData: true,
+      noteDependentOn: "complainantVerification.individualDetails",
+    },
+  ],
+};
+
+export const editComplainantTypeFormStep = {
+  body: [
+    {
+      key: "complainantType",
+      head: "SELECT_COMPLAINANT_TYPE",
+      name: "complainantType",
+      type: "component",
+      component: "CustomRadioInfoComponent",
+      populators: complainantTypePopulators,
+      isMandatory: true,
+      withoutLabel: true,
+      resetFormData: true,
+      noteDependentOn: "complainantVerification.individualDetails",
+      isProfileEdit: true,
+    },
+  ],
+};
+
+export const complainantEntityTypeFormStep = {
+  body: [
+    {
+      key: "complainantTypeOfEntity",
+      type: "dropdown",
+      label: "TYPE_OF_ENTITY",
+      populators: {
+        name: "complainantTypeOfEntity",
+        type: "radioButton",
+        error: "CORE_REQUIRED_FIELD_ERROR",
+        label: "SELECT_RESPONDENT_TYPE",
+        styles: {
+          maxWidth: "100%",
+          marginBottom: "10px",
+        },
+        required: false,
+        mdmsConfig: {
+          select: "(data) => {return data['case'].TypeOfEntity?.map((item) => {return item;});}",
+          masterName: "TypeOfEntity",
+          moduleName: "case",
+        },
+        optionsKey: "code",
+        isMandatory: true,
+      },
+      isMandatory: true,
+    },
+  ],
+  dependentKey: {
+    complainantType: ["showCompanyDetails"],
+  },
+};
+
+export const complainantVerificationFormStep = {
+  body: [
+    {
+      key: "complainantVerification",
+      name: "mobileNumber",
+      type: "component",
+      error: "ERR_HRMS_INVALID_MOB_NO",
+      label: "CS_COMPLAINANT_MOBILE_NUMBER",
+      component: "VerifyPhoneNumber",
+      populators: {},
+      validation: {
+        pattern: {
+          masterName: "commonUiConfig",
+          moduleName: "patternValidation",
+          patternType: "contact",
+        },
+        required: true,
+        maxLength: 10,
+        minLength: 10,
+      },
+      isMandatory: true,
+      updateLabel: {
+        key: "label",
+        value: "CS_REPRESENTATIVE_MOBILE_NUMBER",
+      },
+      defaultLabel: {
+        key: "label",
+        value: "CS_COMPLAINANT_MOBILE_NUMBER",
+      },
+      withoutLabel: true,
+      updateLabelOn: "complainantType.showCompanyDetails",
+      componentInFront: "+91",
+      disableConfigKey: "individualDetails",
+      disableConfigFields: verificationDisableConfigFields,
+      isVerifiedOtpDisabledKey: "isDuplicateNumber",
+    },
+  ],
+  dependentKey: {
+    complainantType: ["commonFields"],
+  },
+};
+
+export const complainantIdFormStep = {
+  body: [
+    {
+      key: "complainantId",
+      type: "component",
+      component: "VerificationComponent",
+      populators: {
+        name: "complainantId",
+        inputs: [
+          {
+            name: "complainantId",
+            label: "COMPLAINANT_ID",
+            updateLabel: {
+              key: "label",
+              value: "CS_ENTITY_ID",
+            },
+            defaultLabel: {
+              key: "label",
+              value: "COMPLAINANT_ID",
+            },
+            updateLabelOn: "complainantType.showCompanyDetails",
+            verificationOn: "complainantVerification.individualDetails",
+          },
+        ],
+        customStyle: {
+          marginTop: 20,
+        },
+      },
+      isMandatory: true,
+      withoutLabel: true,
+    },
+  ],
+  dependentKey: {
+    complainantType: ["commonFields"],
+  },
+};
+
+const fileCaseComplainantAgeField = {
+  type: "text",
+  label: "AGE",
+  populators: {
+    name: "complainantAge",
+    error: "AGE_VALIDATION",
+    validation: {
+      maxLength: 3,
+      patternType: "Number",
+    },
+  },
+  isMandatory: true,
+};
+
+const editComplainantAgeField = {
+  type: "text",
+  label: "AGE",
+  populators: {
+    name: "complainantAge",
+    error: "AGE_VALIDATION",
+    validation: {
+      maxLength: 3,
+      minLength: 2,
+      pattern: "[0-9]+",
+      patternType: "Number",
+    },
+  },
+  isMandatory: true,
+};
+
+export const buildComplainantNameAgeFormStep = (ageField) => ({
+  body: [...complainantStandardNameFields, ageField],
+  head: "CS_COMMON_COMPLAINANT_DETAIL",
+  updateLabel: {
+    key: "head",
+    value: "CS_COMMON_ENTITY_DETAIL",
+  },
+  defaultLabel: {
+    key: "head",
+    value: "CS_COMMON_COMPLAINANT_DETAIL",
+  },
+  dependentKey: {
+    complainantType: ["commonFields"],
+  },
+  updateLabelOn: "complainantType.showCompanyDetails",
+});
+
+export const fileCaseComplainantNameAgeFormStep = buildComplainantNameAgeFormStep(fileCaseComplainantAgeField);
+export const editComplainantNameAgeFormStep = buildComplainantNameAgeFormStep(editComplainantAgeField);
+
+export const complainantDesignationFormStep = {
+  body: [
+    {
+      type: "text",
+      label: "DESIGNATION",
+      populators: {
+        name: "complainantDesignation",
+        error: "CORE_REQUIRED_FIELD_ERROR",
+        validation: {
+          title: "",
+          pattern: {
+            message: "CORE_COMMON_APPLICANT_NAME_INVALID",
+            masterName: "commonUiConfig",
+            moduleName: "patternValidation",
+            patternType: "userName",
+          },
+          patternType: "Name",
+        },
+      },
+      isMandatory: false,
+      labelChildren: "optional",
+    },
+  ],
+  dependentKey: {
+    complainantType: ["showCompanyDetails"],
+  },
+};
+
+export const buildComplainantCompanyDetailStep = (isEditProfile = false) => ({
+  body: [
+    {
+      key: "complainantCompanyName",
+      type: "text",
+      label: "company_Name",
+      populators: {
+        name: "complainantCompanyName",
+        error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
+        styles: {
+          minWidth: "100%",
+        },
+        validation: {
+          title: "",
+          pattern: {
+            message: "CORE_COMMON_NON_NUMERIC_TYPE_IN",
+            masterName: "commonUiConfig",
+            moduleName: "patternValidation",
+            patternType: "nonNumericString",
+          },
+          minLength: 1,
+          patternType: "Name",
+        },
+        customStyle: {
+          minWidth: "100%",
+        },
+        labelStyles: {
+          padding: "8px",
+        },
+      },
+      isMandatory: true,
+    },
+    {
+      key: "companyDetailsUpload",
+      type: "component",
+      label: "COMPANY_DOCUMENT_DETAILS",
+      component: "SelectCustomDragDrop",
+      populators: {
+        inputs: [buildCompanyDocumentDragDropInput(isEditProfile)],
+      },
+      isMandatory: false,
+      withoutLabel: true,
+    },
+  ],
+  head: "CS_RESPONDENT_COMPANY_DETAIL",
+  dependentKey: {
+    complainantType: ["showCompanyDetails"],
+  },
+});
+
+export const fileCaseComplainantAddressFormStep = {
+  body: [
+    {
+      key: "addressDetails",
+      type: "component",
+      label: "PERMANENT_ADDRESS",
+      notes: fileCaseAddressMatchIdNote,
+      addUUID: true,
+      component: "SelectComponents",
+      populators: {
+        inputs: fileCaseAddressLineInputs,
+        validation: {},
+      },
+      withoutLabel: true,
+    },
+    {
+      key: "currentAddressDetails",
+      type: "component",
+      label: "CURRENT_RESIDENTIAL_ADDRESS",
+      addUUID: true,
+      component: "SelectComponents",
+      populators: {
+        inputs: fileCaseCurrentResidentialAddressInputs,
+        validation: {},
+      },
+      withoutLabel: true,
+    },
+  ],
+  head: "COMPLAINANT_ADDRESS",
+  dependentKey: {
+    complainantType: ["complainantLocation"],
+  },
+};
+
+export const editComplainantAddressFormStep = {
+  body: [
+    {
+      key: "addressDetails",
+      type: "component",
+      addUUID: true,
+      component: "SelectComponents",
+      notes: {
+        key: "personalDetailsNote",
+        type: "component",
+        component: "SelectCustomNote",
+        populators: {
+          inputs: [
+            {
+              type: "InfoComponent",
+              infoText: "CS_ADDRESS_MATCHES_ID_PROOF",
+              infoHeader: "CS_PLEASE_COMMON_NOTE",
+              infoTooltipMessage: "CS_ADDRESS_MATCHES_ID_PROOF",
+            },
+          ],
+        },
+        withoutLabel: true,
+      },
+      populators: {
+        inputs: [editProfileTypeOfAddressInput, ...fileCaseAddressLineInputs],
+        validation: {},
+      },
+      withoutLabel: true,
+    },
+    {
+      key: "currentAddressDetails",
+      type: "component",
+      label: "CURRENT_RESIDENTIAL_ADDRESS",
+      addUUID: true,
+      component: "SelectComponents",
+      populators: {
+        inputs: fileCaseCurrentResidentialAddressInputs,
+        validation: {},
+      },
+      withoutLabel: true,
+    },
+  ],
+  head: "CS_COMPLAINANT_LOCATION",
+  dependentKey: {
+    complainantType: ["complainantLocation"],
+  },
+};
+
+export const fileCaseComplainantCompanyAddressFormStep = {
+  body: [
+    {
+      key: "addressCompanyDetails",
+      type: "component",
+      addUUID: true,
+      component: "SelectComponents",
+      populators: {
+        inputs: fileCaseCompanyAddressLineInputs,
+        validation: {},
+      },
+      withoutLabel: true,
+    },
+  ],
+  head: "CS_COMPANY_LOCATION",
+  dependentKey: {
+    complainantType: ["showCompanyDetails"],
+  },
+};
+
+export const editComplainantCompanyAddressFormStep = {
+  body: [
+    {
+      key: "addressCompanyDetails",
+      type: "component",
+      addUUID: true,
+      component: "SelectComponents",
+      populators: {
+        inputs: [editProfileTypeOfAddressInput, ...fileCaseCompanyAddressLineInputs],
+        validation: {},
+      },
+      withoutLabel: true,
+    },
+  ],
+  head: "CS_COMPANY_LOCATION",
+  dependentKey: {
+    complainantType: ["showCompanyDetails"],
+  },
+};
+
+export const editComplainantProfileChangeSteps = [
+  {
+    body: [
+      {
+        key: "reasonDetailsSeparator",
+        type: "component",
+        sublabel: "REQUEST_DETAILS",
+        component: "OrSeparator",
+        populators: {
+          inputs: [],
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "prayer",
+        withoutLabel: true,
+        isMandatory: false,
+        isInfinite: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "PRAYER",
+              type: "TextAreaComponent",
+              isOptional: true,
+            },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "reasonForChange",
+        label: "CS_REASON_FOR_CHANGE",
+        withoutLabel: true,
+        isMandatory: true,
+        isInfinite: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "CS_REASON_FOR_CHANGE",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomDragDrop",
+        key: "supportingDocument",
+        isMandatory: false,
+        withoutLabel: true,
+        populators: {
+          inputs: [
+            {
+              name: "document",
+              documentHeader: "SUPPORTING_DOCUMENT",
+              type: "DragDropComponent",
+              uploadGuidelines: "UPLOAD_DOC_10",
+              maxFileSize: 10,
+              isOptional: "CS_IS_OPTIONAL",
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+              isMultipleUpload: false,
+              documentHeaderStyle: {
+                margin: "0px",
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
