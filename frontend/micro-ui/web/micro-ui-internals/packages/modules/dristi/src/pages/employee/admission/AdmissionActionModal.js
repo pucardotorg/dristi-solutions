@@ -1,7 +1,7 @@
 import { CardText, Modal } from "@egovernments/digit-ui-react-components";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useMemo, useState } from "react";
-import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 
 import { modalConfig } from "../../citizen/FileCase/Config/admissionActionConfig";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
