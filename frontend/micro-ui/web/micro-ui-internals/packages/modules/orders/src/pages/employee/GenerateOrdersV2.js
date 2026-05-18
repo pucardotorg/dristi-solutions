@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { Header, Button, ActionBar, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
 import { OutlinedInfoIcon, RightArrow } from "../../../../dristi/src/icons/svgIndex";
+import { applyOutlinedInfoLabelChildren } from "@egovernments/digit-ui-module-dristi/src/Utils/labelChildrenUtils";
 import ReactTooltip from "react-tooltip";
 import AddOrderTypeModal from "../../pageComponents/AddOrderTypeModal";
 import AttendanceSection from "../../sections/AttendanceSection";
@@ -932,19 +933,7 @@ const GenerateOrdersV2 = () => {
         return {
           ...config,
           body: config?.body.map((body) => {
-            if (body?.labelChildren === "OutlinedInfoIcon") {
-              body.labelChildren = (
-                <React.Fragment>
-                  <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${body.label}-tooltip`}>
-                    {" "}
-                    <OutlinedInfoIcon />
-                  </span>
-                  <ReactTooltip id={`${body.label}-tooltip`} place="bottom" content={body?.tooltipValue || ""}>
-                    {t(body?.tooltipValue || body.label)}
-                  </ReactTooltip>
-                </React.Fragment>
-              );
-            }
+            applyOutlinedInfoLabelChildren(body, t);
 
             if (body?.populators?.validation?.customValidationFn) {
               const customValidations =

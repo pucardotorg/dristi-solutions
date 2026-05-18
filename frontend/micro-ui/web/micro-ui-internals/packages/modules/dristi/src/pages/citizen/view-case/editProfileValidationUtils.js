@@ -2,6 +2,7 @@ import {
   runEditComplainantNameAgeValidation,
   runRespondentNameAgeValidation,
 } from "../../../configs/shared/nameValidationShared";
+import { uploadProfileDocumentArray } from "../../../configs/shared/profileDocumentUploadShared";
 import {
   clearBulkContactTextfieldValues,
   getComplainantMobileNumbers,
@@ -208,54 +209,29 @@ export const updateProfileData = async ({
 
             documentData.complainantIDProofDocument = { document: [doc] };
           }
-          if (
-            data?.data?.companyDetailsUpload?.document &&
-            Array.isArray(data?.data?.companyDetailsUpload?.document) &&
-            data?.data?.companyDetailsUpload?.document.length > 0
-          ) {
-            documentData.companyDetailsUpload = {};
-            documentData.companyDetailsUpload.document = await Promise.all(
-              data?.data?.companyDetailsUpload?.document?.map(async (document) => {
-                if (document) {
-                  const documentType = documentsTypeMapping["complainantCompanyDetailsUpload"];
-                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
-                  const doc = {
-                    documentType,
-                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
-                    documentName: uploadedData.filename || document?.documentName,
-                    fileName: "Company documents",
-                  };
-                  docList.push(doc);
-                  return doc;
-                }
-              })
-            );
+          const companyDocsUploaded = await uploadProfileDocumentArray({
+            documentArray: data?.data?.companyDetailsUpload?.document,
+            documentType: documentsTypeMapping["complainantCompanyDetailsUpload"],
+            fileName: "Company documents",
+            tenantId,
+            docList,
+            onDocumentUpload,
+          });
+          if (companyDocsUploaded) {
+            documentData.companyDetailsUpload = { document: companyDocsUploaded };
             setFormDataValue("companyDetailsUpload", documentData?.companyDetailsUpload);
           }
 
-          if (
-            data?.data?.supportingDocument?.document &&
-            Array.isArray(data?.data?.supportingDocument?.document) &&
-            data?.data?.supportingDocument?.document.length > 0
-          ) {
-            documentData.supportingDocument = {};
-            documentData.supportingDocument.document = await Promise.all(
-              data?.data?.supportingDocument?.document?.map(async (document) => {
-                if (document) {
-                  const documentType = documentsTypeMapping["supportingDocument"];
-                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
-                  const doc = {
-                    documentType,
-                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
-                    documentName: uploadedData.filename || document?.documentName,
-                    fileName: "supporting Document",
-                  };
-                  docList.push(doc);
-                  return doc;
-                }
-              })
-            );
-
+          const supportingDocsUploaded = await uploadProfileDocumentArray({
+            documentArray: data?.data?.supportingDocument?.document,
+            documentType: documentsTypeMapping["supportingDocument"],
+            fileName: "supporting Document",
+            tenantId,
+            docList,
+            onDocumentUpload,
+          });
+          if (supportingDocsUploaded) {
+            documentData.supportingDocument = { document: supportingDocsUploaded };
             setFormDataValue("supportingDocument", documentData?.supportingDocument);
           }
           const updatedComplainantVerification = structuredClone(data?.data?.complainantVerification);
@@ -321,87 +297,52 @@ export const updateProfileData = async ({
             companyDetailsUpload: null,
             supportingDocument: null,
           };
-          if (
-            data?.data?.inquiryAffidavitFileUpload?.document &&
-            Array.isArray(data?.data?.inquiryAffidavitFileUpload?.document) &&
-            data?.data?.inquiryAffidavitFileUpload?.document.length > 0
-          ) {
-            documentData.inquiryAffidavitFileUpload = {};
-            documentData.inquiryAffidavitFileUpload.document = await Promise.all(
-              data?.data?.inquiryAffidavitFileUpload?.document?.map(async (document) => {
-                if (document) {
-                  const documentType = documentsTypeMapping["inquiryAffidavitFileUpload"];
-                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
-                  if (uploadedData.file?.files?.[0]?.fileStoreId && efilingDocumentKeyAndTypeMapping["inquiryAffidavitFileUpload"]) {
-                    sendDocumentForOcr(
-                      "inquiryAffidavitFileUpload",
-                      uploadedData.file?.files?.[0]?.fileStoreId,
-                      prevCaseDetails?.filingNumber,
-                      tenantId,
-                      document
-                    );
-                  }
-                  const doc = {
-                    documentType,
-                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
-                    documentName: uploadedData.filename || document?.documentName,
-                    fileName: t("AFFIDAVIT_UNDER_225"),
-                  };
-                  docList.push(doc);
-                  return doc;
-                }
-              })
-            );
+          const affidavitDocsUploaded = await uploadProfileDocumentArray({
+            documentArray: data?.data?.inquiryAffidavitFileUpload?.document,
+            documentType: documentsTypeMapping["inquiryAffidavitFileUpload"],
+            fileName: t("AFFIDAVIT_UNDER_225"),
+            tenantId,
+            docList,
+            onDocumentUpload,
+            onUploaded: (uploadedData, document) => {
+              if (uploadedData.file?.files?.[0]?.fileStoreId && efilingDocumentKeyAndTypeMapping["inquiryAffidavitFileUpload"]) {
+                sendDocumentForOcr(
+                  "inquiryAffidavitFileUpload",
+                  uploadedData.file?.files?.[0]?.fileStoreId,
+                  prevCaseDetails?.filingNumber,
+                  tenantId,
+                  document
+                );
+              }
+            },
+          });
+          if (affidavitDocsUploaded) {
+            documentData.inquiryAffidavitFileUpload = { document: affidavitDocsUploaded };
             setFormDataValue("inquiryAffidavitFileUpload", documentData?.inquiryAffidavitFileUpload);
           }
-          if (
-            data?.data?.companyDetailsUpload?.document &&
-            Array.isArray(data?.data?.companyDetailsUpload?.document) &&
-            data?.data?.companyDetailsUpload?.document.length > 0
-          ) {
-            documentData.companyDetailsUpload = {};
-            documentData.companyDetailsUpload.document = await Promise.all(
-              data?.data?.companyDetailsUpload?.document?.map(async (document) => {
-                if (document) {
-                  const documentType = documentsTypeMapping["AccusedCompanyDetailsUpload"];
-                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
-                  const doc = {
-                    documentType,
-                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
-                    documentName: uploadedData.filename || document?.documentName,
-                    fileName: "Company documents",
-                  };
-                  docList.push(doc);
-                  return doc;
-                }
-              })
-            );
+          const respCompanyDocsUploaded = await uploadProfileDocumentArray({
+            documentArray: data?.data?.companyDetailsUpload?.document,
+            documentType: documentsTypeMapping["AccusedCompanyDetailsUpload"],
+            fileName: "Company documents",
+            tenantId,
+            docList,
+            onDocumentUpload,
+          });
+          if (respCompanyDocsUploaded) {
+            documentData.companyDetailsUpload = { document: respCompanyDocsUploaded };
             setFormDataValue("companyDetailsUpload", documentData?.companyDetailsUpload);
           }
 
-          if (
-            data?.data?.supportingDocument?.document &&
-            Array.isArray(data?.data?.supportingDocument?.document) &&
-            data?.data?.supportingDocument?.document.length > 0
-          ) {
-            documentData.supportingDocument = {};
-            documentData.supportingDocument.document = await Promise.all(
-              data?.data?.supportingDocument?.document?.map(async (document) => {
-                if (document) {
-                  const documentType = documentsTypeMapping["supportingDocument"];
-                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
-                  const doc = {
-                    documentType,
-                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
-                    documentName: uploadedData.filename || document?.documentName,
-                    fileName: "supporting Document",
-                  };
-                  docList.push(doc);
-                  return doc;
-                }
-              })
-            );
-
+          const respSupportingDocsUploaded = await uploadProfileDocumentArray({
+            documentArray: data?.data?.supportingDocument?.document,
+            documentType: documentsTypeMapping["supportingDocument"],
+            fileName: "supporting Document",
+            tenantId,
+            docList,
+            onDocumentUpload,
+          });
+          if (respSupportingDocsUploaded) {
+            documentData.supportingDocument = { document: respSupportingDocsUploaded };
             setFormDataValue("supportingDocument", documentData?.supportingDocument);
           }
           return {
