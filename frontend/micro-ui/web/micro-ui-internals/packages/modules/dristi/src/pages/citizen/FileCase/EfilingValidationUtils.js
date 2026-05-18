@@ -1,11 +1,17 @@
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import {
+  runDebtLiabilityNatureValidation,
+  runFileCasePartyNameAgeValidation,
+  runRespondentNameAgeValidation,
+} from "../../../configs/shared/nameValidationShared";
+import {
   clearBulkContactTextfieldValues,
   getComplainantMobileNumbers,
   getRespondentEmails,
   getRespondentMobileNumbers,
   getWitnessEmails,
   getWitnessMobileNumbers,
+  validateComplainantMobileDuplicates,
   validateRespondentMobileEmailDuplicates,
   validateWitnessMobileEmailDuplicates,
 } from "../../../configs/shared/profileValidationShared";
@@ -425,163 +431,13 @@ export const handleIfscAutofill = async ({ ifsc, bankField, branchField, setValu
 
 export const checkNameValidation = ({ formData, setValue, selected, reset, index, formdata, clearErrors, formState }) => {
   if (selected === "respondentDetails") {
-    if (formData?.respondentFirstName || formData?.respondentMiddleName || formData?.respondentLastName || formData?.respondentAge) {
-      const formDataCopy = structuredClone(formData);
-      for (const key in formDataCopy) {
-        if (["respondentFirstName", "respondentMiddleName", "respondentLastName"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-          if (typeof value === "string") {
-            if (value.length > 100) {
-              value = value.slice(0, 100);
-            }
-
-            let updatedValue = formatName(value);
-            if (updatedValue !== oldValue) {
-              const element = document.querySelector(`[name="${key}"]`);
-              const start = element?.selectionStart;
-              const end = element?.selectionEnd;
-              setValue(key, updatedValue);
-              setTimeout(() => {
-                element?.setSelectionRange(start, end);
-              }, 0);
-            }
-          }
-        }
-        if (key === "respondentAge" && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-
-          let updatedValue = value?.replace(/\D/g, "");
-          // Convert to number and restrict value to 150
-          if (updatedValue && parseInt(updatedValue, 10) > 150) {
-            updatedValue = updatedValue.substring(0, updatedValue.length - 1); // Disallow the extra digit
-          }
-          if (updatedValue !== oldValue) {
-            const element = document?.querySelector(`[name="${key}"]`);
-            const start = element?.selectionStart;
-            const end = element?.selectionEnd;
-            setValue(key, updatedValue);
-            setTimeout(() => {
-              element?.setSelectionRange(start, end);
-            }, 0);
-          }
-        }
-      }
-    }
+    runRespondentNameAgeValidation({ formData, setValue, formatName });
   }
   if (selected === "complainantDetails" || selected === "witnessDetails") {
-    if (
-      formData?.firstName ||
-      formData?.middleName ||
-      formData?.lastName ||
-      formData?.witnessDesignation ||
-      formData?.witnessAge ||
-      formData?.complainantAge ||
-      formData?.respondentAge ||
-      formData?.poaAge
-    ) {
-      const formDataCopy = structuredClone(formData);
-      for (const key in formDataCopy) {
-        if (["firstName", "middleName", "lastName", "witnessDesignation"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-          if (typeof value === "string") {
-            if (value.length > 100) {
-              value = value.slice(0, 100);
-            }
-
-            let updatedValue = formatName(value);
-            if (updatedValue !== oldValue) {
-              const element = document.querySelector(`[name="${key}"]`);
-              const start = element?.selectionStart;
-              const end = element?.selectionEnd;
-              setValue(key, updatedValue);
-              setTimeout(() => {
-                element?.setSelectionRange(start, end);
-              }, 0);
-            }
-            if (selected === "witnessDetails") {
-              if (updatedValue !== "" && ["firstName", "witnessDesignation"].includes(key)) {
-                if (formState?.errors?.firstName) {
-                  clearErrors("firstName");
-                }
-                if (formState?.errors?.witnessDesignation) {
-                  clearErrors("witnessDesignation");
-                }
-              }
-            }
-          }
-        }
-        if (["complainantAge", "witnessAge"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-
-          let updatedValue = value?.replace(/\D/g, "");
-          // Convert to number and restrict value to 150
-          if (updatedValue && parseInt(updatedValue, 10) > 150) {
-            updatedValue = updatedValue.substring(0, updatedValue.length - 1); // Disallow the extra digit
-          }
-          if (updatedValue !== oldValue) {
-            const element = document?.querySelector(`[name="${key}"]`);
-            const start = element?.selectionStart;
-            const end = element?.selectionEnd;
-            setValue(key, updatedValue);
-            setTimeout(() => {
-              element?.setSelectionRange(start, end);
-            }, 0);
-          }
-        }
-        if (key === "poaAge" && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-          // keep only digits
-          let updatedValue = value?.replace(/\D/g, "");
-          // Max 3 digits
-          if (updatedValue?.length > 3) {
-            updatedValue = updatedValue.substring(0, 3);
-          }
-          if (updatedValue !== oldValue) {
-            const element = document?.querySelector(`[name="${key}"]`);
-            const start = element?.selectionStart;
-            const end = element?.selectionEnd;
-            setValue(key, updatedValue);
-            setTimeout(() => {
-              element?.setSelectionRange(start, end);
-            }, 0);
-          }
-        }
-      }
-    }
+    runFileCasePartyNameAgeValidation({ formData, setValue, formatName, selected, formState, clearErrors });
   }
-
-  // added for Nature of Debt/liablity
   if (selected === "debtLiabilityDetails") {
-    if (formData?.liabilityNature) {
-      const formDataCopy = structuredClone(formData);
-      for (const key in formDataCopy) {
-        if (["liabilityNature"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-          if (typeof value === "string") {
-            if (value.length > 100) {
-              value = value.slice(0, 100);
-            }
-
-            let updatedValue = formatName(value);
-            if (updatedValue !== oldValue) {
-              const element = document.querySelector(`[name="${key}"]`);
-              const start = element?.selectionStart;
-              const end = element?.selectionEnd;
-              setValue(key, updatedValue);
-              setTimeout(() => {
-                element?.setSelectionRange(start, end);
-              }, 0);
-            }
-          }
-        }
-      }
-    }
+    runDebtLiabilityNatureValidation({ formData, setValue, formatName });
   }
 };
 
@@ -621,32 +477,15 @@ export const checkDuplicateMobileEmailValidation = ({
     });
   }
   if (selected === "complainantDetails") {
-    const currentMobileNumber = formData?.complainantVerification?.mobileNumber;
-    const currentPOAMobileNumber = formData?.poaVerification?.mobileNumber;
-    if (currentMobileNumber && currentPOAMobileNumber && currentMobileNumber === currentPOAMobileNumber) {
-      if (formData?.complainantVerification?.otpNumber && !formData?.poaVerification?.otpNumber) {
-        setError("poaVerification", { mobileNumber: "POA_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM", isDuplicateNumber: true });
-      }
-      if (formData?.poaVerification?.otpNumber && !formData?.complainantVerification?.otpNumber) {
-        setError("complainantVerification", { mobileNumber: "COMPLAINANT_MOB_NUM_CAN_NOT_BE_SAME_AS_POA_MOB_NUM", isDuplicateNumber: true });
-      }
-    } else if (currentMobileNumber && respondentMobileNumbersArray.some((number) => number === currentMobileNumber)) {
-      setError("complainantVerification", { mobileNumber: "COMPLAINANT_MOB_NUM_CAN_NOT_BE_SAME_AS_RESPONDENT_MOB_NUM", isDuplicateNumber: true });
-    } else if (
-      formdata &&
-      formdata?.length > 1 &&
-      formData?.complainantVerification?.mobileNumber &&
-      formData?.complainantVerification?.mobileNumber?.length === 10 &&
-      formdata
-        .filter((data) => data.isenabled === true)
-        .filter((data) => data?.displayindex !== currentDisplayIndex)
-        ?.some((data, idx) => idx !== index && data?.data?.complainantVerification?.mobileNumber === formData?.complainantVerification?.mobileNumber)
-    ) {
-      setError("complainantVerification", { mobileNumber: "DUPLICATE_MOBILE_NUMBER_FOR_COMPLAINANT", isDuplicateNumber: true });
-    } else {
-      clearErrors("complainantVerification");
-      clearErrors("poaVerification");
-    }
+    validateComplainantMobileDuplicates({
+      formData,
+      formdata,
+      index,
+      currentDisplayIndex,
+      setError,
+      clearErrors,
+      respondentMobileNumbers: respondentMobileNumbersArray,
+    });
   }
 };
 

@@ -1,8 +1,6 @@
 import { Banner, CardLabel, Loader } from "@egovernments/digit-ui-react-components";
-import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import Button from "../../../components/Button";
-import { InfoCard } from "@egovernments/digit-ui-components";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
@@ -12,9 +10,8 @@ import usePaymentProcess from "../../../../../home/src/hooks/usePaymentProcess";
 import { getSuffixByBusinessCode } from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import CustomChip from "../../../components/CustomChip";
-import { PrintIcon } from "../../../icons/svgIndex";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import { EfilingPaymentModalBody } from "../../../components/shared/EfilingPaymentModalBody";
 
 const mockSubmitModalInfo = {
   header: "CS_HEADER_FOR_E_FILING_PAYMENT",
@@ -301,87 +298,24 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
         </div>
         {showPaymentModal && (
           <Modal headerBarEnd={<CloseBtn onClick={onCancel} />} formId="modal-action" headerBarMain={<Heading label={t("PENDING_PAYMENT")} />}>
-            <div className="payment-wrapper">
-              <InfoCard
-                variant={"default"}
-                label={t("CS_IMPORTANT_INFORMATION")}
-                additionalElements={[
-                  <div className="info-card-content">
-                    <ul style={{ width: "100%" }}>
-                      <li>
-                        <span>{t("PLEASE_ALLOW_POPUP_PAYMENT")}</span>
-                      </li>
-                      <li>
-                        <span>{t("CS_OFFLINE_PAYMENT_STEP_TEXT")}</span>
-                      </li>
-                      <li>
-                        <span>{t("COURIER_RPAD_NOTE")}</span>
-                      </li>
-                    </ul>
-                  </div>,
-                ]}
-                inline
-                className={"adhaar-verification-info-card"}
-              />
-              <div className="total-payment">
-                {paymentCalculation
-                  ?.filter((item) => item?.isTotalFee)
-                  ?.map((item) => (
-                    <div className={`total-payment-item ${paymentCalculation?.length > 6 ? "has-many-items" : ""}`}>
-                      <span className="total-payment-label">
-                        {item?.key}{" "}
-                        <CustomChip
-                          text={receiptFilstoreId ? t("CS_TASK_PAYMENT_DONE") : t("CS_TASK_PENDING")}
-                          shade={receiptFilstoreId ? "green" : "orange"}
-                          style={{ marginLeft: "6px", fontWeight: "500", padding: "5px 15px" }}
-                        />
-                      </span>
-                      <span className="total-payment-amount">
-                        {item?.currency} {parseFloat(item?.value)?.toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
-              </div>
-              <div className="breakdown-payment">
-                {paymentCalculation
-                  ?.filter((item) => !item.isTotalFee)
-                  ?.map((item) => (
-                    <div className="breakdown-payment-item">
-                      <span>{item?.key}</span>
-                      <span>
-                        {item?.currency} {parseFloat(item?.value)?.toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
-              </div>
-
-              <Button
-                label={receiptFilstoreId ? t("CS_TASK_DOWNLOAD_RECEIPT") : retryPayment ? t("CS_TASK_RETRY_PAYMENT") : t("CS_TASK_PAY_ONLINE")}
-                variation="secondary"
-                className={"pay-online-button"}
-                icon={receiptFilstoreId && <PrintIcon />}
-                onButtonClick={
-                  receiptFilstoreId
-                    ? () =>
-                        downloadPdf(
-                          tenantId,
-                          receiptFilstoreId,
-                          `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Efiling_payment_Receipt`
-                        )
-                    : onTaskPayOnline
-                }
-                isDisabled={paymentLoader || isCaseLocked}
-              />
-            </div>
-            {showToast && (
-              <CustomToast
-                error={showToast?.error}
-                label={showToast?.label}
-                errorId={showToast?.errorId}
-                onClose={() => setShowToast(null)}
-                duration={showToast?.errorId ? 7000 : 5000}
-              />
-            )}
+            <EfilingPaymentModalBody
+              t={t}
+              paymentCalculation={paymentCalculation}
+              receiptFilstoreId={receiptFilstoreId}
+              retryPayment={retryPayment}
+              paymentLoader={paymentLoader}
+              isCaseLocked={isCaseLocked}
+              onTaskPayOnline={onTaskPayOnline}
+              onDownloadReceipt={() =>
+                downloadPdf(
+                  tenantId,
+                  receiptFilstoreId,
+                  `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Efiling_payment_Receipt`
+                )
+              }
+              showToast={showToast}
+              setShowToast={setShowToast}
+            />
           </Modal>
         )}
         {SurveyUI}

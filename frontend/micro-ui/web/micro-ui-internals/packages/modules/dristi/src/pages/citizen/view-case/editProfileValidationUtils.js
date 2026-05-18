@@ -1,4 +1,8 @@
 import {
+  runEditComplainantNameAgeValidation,
+  runRespondentNameAgeValidation,
+} from "../../../configs/shared/nameValidationShared";
+import {
   clearBulkContactTextfieldValues,
   getComplainantMobileNumbers,
   getWitnessEmails,
@@ -106,96 +110,10 @@ export const editRespondentValidation = ({ t, formData, selected, caseDetails, s
 
 export const editCheckNameValidation = ({ formData, setValue, selected, reset, index, formdata, clearErrors, formState }) => {
   if (selected === "respondentDetails") {
-    if (formData?.respondentFirstName || formData?.respondentMiddleName || formData?.respondentLastName || formData?.respondentAge) {
-      const formDataCopy = structuredClone(formData);
-      for (const key in formDataCopy) {
-        if (["respondentFirstName", "respondentMiddleName", "respondentLastName"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-          if (typeof value === "string") {
-            if (value.length > 100) {
-              value = value.slice(0, 100);
-            }
-
-            let updatedValue = formatName(value);
-            if (updatedValue !== oldValue) {
-              const element = document.querySelector(`[name="${key}"]`);
-              const start = element?.selectionStart;
-              const end = element?.selectionEnd;
-              setValue(key, updatedValue);
-              setTimeout(() => {
-                element?.setSelectionRange(start, end);
-              }, 0);
-            }
-          }
-        }
-        if (key === "respondentAge" && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-
-          let updatedValue = value?.replace(/\D/g, "");
-          // Convert to number and restrict value to 150
-          if (updatedValue && parseInt(updatedValue, 10) > 150) {
-            updatedValue = updatedValue.substring(0, updatedValue.length - 1); // Disallow the extra digit
-          }
-          if (updatedValue !== oldValue) {
-            const element = document?.querySelector(`[name="${key}"]`);
-            const start = element?.selectionStart;
-            const end = element?.selectionEnd;
-            setValue(key, updatedValue);
-            setTimeout(() => {
-              element?.setSelectionRange(start, end);
-            }, 0);
-          }
-        }
-      }
-    }
+    runRespondentNameAgeValidation({ formData, setValue, formatName });
   }
   if (selected === "complainantDetails") {
-    if (formData?.firstName || formData?.middleName || formData?.lastName || formData?.complainantAge) {
-      const formDataCopy = structuredClone(formData);
-      for (const key in formDataCopy) {
-        if (["firstName", "middleName", "lastName"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-          if (typeof value === "string") {
-            if (value.length > 100) {
-              value = value.slice(0, 100);
-            }
-
-            let updatedValue = formatName(value);
-            if (updatedValue !== oldValue) {
-              const element = document.querySelector(`[name="${key}"]`);
-              const start = element?.selectionStart;
-              const end = element?.selectionEnd;
-              setValue(key, updatedValue);
-              setTimeout(() => {
-                element?.setSelectionRange(start, end);
-              }, 0);
-            }
-          }
-        }
-        if (["complainantAge"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-
-          let updatedValue = value?.replace(/\D/g, "");
-          // Convert to number and restrict value to 150
-          if (updatedValue && parseInt(updatedValue, 10) > 150) {
-            updatedValue = updatedValue.substring(0, updatedValue.length - 1); // Disallow the extra digit
-          }
-          if (updatedValue !== oldValue) {
-            const element = document?.querySelector(`[name="${key}"]`);
-            const start = element?.selectionStart;
-            const end = element?.selectionEnd;
-            setValue(key, updatedValue);
-            setTimeout(() => {
-              element?.setSelectionRange(start, end);
-            }, 0);
-          }
-        }
-      }
-    }
+    runEditComplainantNameAgeValidation({ formData, setValue, formatName });
   }
 };
 

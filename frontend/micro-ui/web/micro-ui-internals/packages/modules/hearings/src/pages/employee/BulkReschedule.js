@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Banner, Button, CloseSvg, Loader } from "@egovernments/digit-ui-react-components";
+import { Banner, Button, Loader } from "@egovernments/digit-ui-react-components";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { Urls } from "../../hooks/services/Urls";
@@ -17,29 +18,6 @@ import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-const CloseBtn = ({ onClick }) => {
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        paddingRight: "20px",
-        cursor: "pointer",
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-const Heading = ({ label }) => {
-  return (
-    <div className="evidence-title">
-      <h1 className="heading-m">{label}</h1>
-    </div>
-  );
-};
 const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date().setHours(0, 0, 0, 0), selectedSlot = [] }) => {
   const { t } = useTranslation();
   const history = useHistory();

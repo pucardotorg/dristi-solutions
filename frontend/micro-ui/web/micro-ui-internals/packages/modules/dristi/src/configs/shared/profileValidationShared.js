@@ -110,6 +110,46 @@ export const validateWitnessMobileEmailDuplicates = ({
   }
 };
 
+export const validateComplainantMobileDuplicates = ({
+  formData,
+  formdata,
+  index,
+  currentDisplayIndex,
+  setError,
+  clearErrors,
+  respondentMobileNumbers = [],
+}) => {
+  const currentMobileNumber = formData?.complainantVerification?.mobileNumber;
+  const currentPOAMobileNumber = formData?.poaVerification?.mobileNumber;
+  if (currentMobileNumber && currentPOAMobileNumber && currentMobileNumber === currentPOAMobileNumber) {
+    if (formData?.complainantVerification?.otpNumber && !formData?.poaVerification?.otpNumber) {
+      setError("poaVerification", { mobileNumber: "POA_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM", isDuplicateNumber: true });
+    }
+    if (formData?.poaVerification?.otpNumber && !formData?.complainantVerification?.otpNumber) {
+      setError("complainantVerification", { mobileNumber: "COMPLAINANT_MOB_NUM_CAN_NOT_BE_SAME_AS_POA_MOB_NUM", isDuplicateNumber: true });
+    }
+  } else if (currentMobileNumber && respondentMobileNumbers.some((number) => number === currentMobileNumber)) {
+    setError("complainantVerification", { mobileNumber: "COMPLAINANT_MOB_NUM_CAN_NOT_BE_SAME_AS_RESPONDENT_MOB_NUM", isDuplicateNumber: true });
+  } else if (
+    formdata &&
+    formdata?.length > 1 &&
+    formData?.complainantVerification?.mobileNumber &&
+    formData?.complainantVerification?.mobileNumber?.length === 10 &&
+    formdata
+      .filter((data) => data.isenabled === true)
+      .filter((data) => data?.displayindex !== currentDisplayIndex)
+      ?.some(
+        (data, idx) =>
+          idx !== index && data?.data?.complainantVerification?.mobileNumber === formData?.complainantVerification?.mobileNumber
+      )
+  ) {
+    setError("complainantVerification", { mobileNumber: "DUPLICATE_MOBILE_NUMBER_FOR_COMPLAINANT", isDuplicateNumber: true });
+  } else {
+    clearErrors("complainantVerification");
+    clearErrors("poaVerification");
+  }
+};
+
 export const clearBulkContactTextfieldValues = (formDataCopy) => {
   for (let i = 0; i < formDataCopy.length; i++) {
     const obj = formDataCopy[i];
