@@ -1,8 +1,7 @@
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import React, { useState } from "react";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
-import { UploadModal } from "@egovernments/digit-ui-module-common";
-import CustomToast from "../../../components/CustomToast";
+import { UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
 
 const WitnessDepositionSignatureModal = ({
   t,
@@ -23,7 +22,6 @@ const WitnessDepositionSignatureModal = ({
   const [formData, setFormData] = useState({});
   const name = "Signature";
   const [fileUploadError, setFileUploadError] = useState(null);
-  const [showToast, setShowToast] = useState(null);
 
   const onSelect = (key, value) => {
     if (value?.[name] === null) {
@@ -47,10 +45,7 @@ const WitnessDepositionSignatureModal = ({
       } catch (error) {
         console.error("error", error);
         setFormData({});
-        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
-        setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
-        setShowToast({ label: t(errorCode), error: true, errorId });
+        setFileUploadError(getUploadErrorToast(error, t));
       } finally {
         setLoader(false);
       }
@@ -155,15 +150,6 @@ const WitnessDepositionSignatureModal = ({
           downloadedFileName={`${
             caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"
           }_${currentArtifactNumber}_Witness_Deposition_draft`}
-        />
-      )}
-      {showToast && (
-        <CustomToast
-          error={showToast?.error}
-          label={showToast?.label}
-          errorId={showToast?.errorId}
-          onClose={() => setShowToast(null)}
-          duration={showToast?.errorId ? 7000 : 5000}
         />
       )}
     </React.Fragment>

@@ -9,7 +9,7 @@ import { Urls } from "../hooks/services/Urls";
 import useDocumentUpload from "../hooks/orders/useDocumentUpload";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
-import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
 function OrderSignatureModal({
   t,
   order,
@@ -64,12 +64,10 @@ function OrderSignatureModal({
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-        setShowToast({ label: "CS_FILE_UPLOAD_ERROR", error: true, errorId });
         setLoader(false);
         setFormData({});
         setIsSigned(false);
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        setFileUploadError(getUploadErrorToast(error, t));
       } finally {
         setLoader(false);
       }
@@ -169,6 +167,7 @@ function OrderSignatureModal({
           isDisabled={loader}
           isParentLoading={loader}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {showToast && (

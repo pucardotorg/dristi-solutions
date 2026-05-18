@@ -19,7 +19,7 @@ import { Urls } from "../../../../../submissions/src/hooks/services/Urls";
 import useESignOpenApi from "../../../../../submissions/src/hooks/submissions/useESignOpenApi";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
 import CustomToast from "../../../components/CustomToast";
-import { UploadModal } from "@egovernments/digit-ui-module-common";
+import { UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
 
 const MediationFormSignaturePage = () => {
   const { t } = useTranslation();
@@ -290,10 +290,7 @@ const MediationFormSignaturePage = () => {
         console.error("error", error);
         setFormData({});
         setSignatureDocumentId(null);
-        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
-        setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
-        setShowToast({ label: t(errorCode), error: true, errorId });
+        setFileUploadError(getUploadErrorToast(error, t));
       } finally {
         setUploadLoader(false);
       }

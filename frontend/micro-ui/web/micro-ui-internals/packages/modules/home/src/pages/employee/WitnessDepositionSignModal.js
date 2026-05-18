@@ -10,7 +10,7 @@ import { HomeService } from "../../hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { witnessDepositionWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
 import { useLocation } from "react-router-dom/cjs/react-router-dom";
-import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
 
 export const clearWitnessDepositionSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -185,10 +185,7 @@ export const WitnessDepositionSignModal = ({
           clearWitnessDepositionSessionData();
         } catch (error) {
           console.error("error", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-          const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
-          setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
-          setShowToast({ label: t(errorCode), error: true, errorId });
+          setFileUploadError(getUploadErrorToast(error, t));
         } finally {
           setLoader(false);
         }

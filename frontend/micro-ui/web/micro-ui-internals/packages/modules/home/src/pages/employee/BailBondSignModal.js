@@ -11,7 +11,7 @@ import { HomeService } from "../../hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
 
 export const clearBailBondSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -164,10 +164,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           clearBailBondSessionData();
         } catch (error) {
           console.error("error", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-          const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
-          setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
-          setShowToast({ label: t(errorCode), error: true, errorId });
+          setFileUploadError(getUploadErrorToast(error, t));
         } finally {
           setLoader(false);
         }

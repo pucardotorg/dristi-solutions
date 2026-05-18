@@ -24,7 +24,7 @@ import { DateUtils, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/U
 import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS } from "../../utils/constants";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-import { UploadModal } from "@egovernments/digit-ui-module-common";
+import { UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
 
 const defaultSearchValues = {
   eprocess: "",
@@ -1153,10 +1153,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         handleActualBulkSign();
       } catch (error) {
         setBulkSignatureData({});
-        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
-        setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
-        setShowToast({ label: t(errorCode), error: true, errorId });
+        setFileUploadError(getUploadErrorToast(error, t));
       }
     }
   };
@@ -2568,6 +2565,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           isDisabled={isBulkLoading}
           isParentLoading={isBulkLoading}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {showToast && (

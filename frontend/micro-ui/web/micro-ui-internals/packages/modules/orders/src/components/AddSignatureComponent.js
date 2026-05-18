@@ -8,7 +8,7 @@ import { Urls } from "../hooks/services/Urls";
 import useDocumentUpload from "../hooks/orders/useDocumentUpload";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 import { ORDER_TYPES } from "../utils/constants";
-import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
 
 const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData, setSignatureId, signatureId, deliveryChannel }) => {
   const [showToast, setShowToast] = useState(null);
@@ -53,9 +53,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
         console.error("error", error);
         setFormData({});
         handleSigned(false);
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
-        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-        setShowToast({ label: t("CS_FILE_UPLOAD_ERROR"), error: true, errorId });
+        setFileUploadError(getUploadErrorToast(error, t));
       } finally {
         setLoader(false);
       }
@@ -256,6 +254,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
           isDisabled={loader}
           isParentLoading={loader}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {showToast && (
