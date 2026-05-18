@@ -239,4 +239,11 @@ public class ServiceConstants {
 
     public static final String COMPOSITE = "COMPOSITE";
     public static final String INTERMEDIATE = "INTERMEDIATE";
+
+    public static final String ACCEPT_BAIL = "ACCEPT_BAIL";
+    public static final String PUBLISHED = "PUBLISHED";
+    public static final String SURETY = "SURETY";
+    public static final String BAIL_BOND_COMPLETED = "COMPLETED";
+    public static final String EXPIRE = "EXPIRE";
+    public static final String ABANDON = "ABANDON";
 }

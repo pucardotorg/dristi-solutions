@@ -215,6 +215,42 @@ public class WarrantReissueService {
         return newWarrant;
     }
 
+    /**
+     * Handles bail acceptance: abandons all active warrant tasks for the case.
+     * Uses EXPIRE for PENDING_PAYMENT warrants, ABANDON for all other active states.
+     */
+    public void handleBailAccepted(RequestInfo requestInfo, String filingNumber) {
+        log.info("Handling bail accepted for filingNumber: {}", filingNumber);
+
+        List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, null, false);
+        if (activeWarrants.isEmpty()) {
+            log.info("No active warrants to expire for filingNumber: {}", filingNumber);
+            return;
+        }
+
+        for (Task warrant : activeWarrants) {
+            String currentState = warrant.getStatus();
+            WorkflowObject workflow = new WorkflowObject();
+            if (PENDING_PAYMENT.equalsIgnoreCase(currentState)) {
+                workflow.setAction(EXPIRE);
+            } else {
+                workflow.setAction(ABANDON);
+            }
+            warrant.setWorkflow(workflow);
+
+            TaskRequest taskRequest = TaskRequest.builder()
+                    .requestInfo(requestInfo)
+                    .task(warrant)
+                    .build();
+            try {
+                taskService.updateTask(taskRequest);
+                log.info("Expired/abandoned warrant: {} with action: {}", warrant.getTaskNumber(), workflow.getAction());
+            } catch (Exception e) {
+                log.error("Error expiring warrant: {}", warrant.getTaskNumber(), e);
+            }
+        }
+    }
+
     private List<Task> fetchActiveWarrants(RequestInfo requestInfo, String filingNumber, String orderId, boolean includeExpiredToday) {
         TaskCriteria criteria = TaskCriteria.builder()
                 .filingNumber(filingNumber)

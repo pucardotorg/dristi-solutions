@@ -185,6 +185,16 @@ public class Configuration {
     @Value("${bulk.reschedule.topic}")
     private String bulkRescheduleTopic;
 
+    @Value("${kafka.topics.order.update}")
+    private String orderUpdateTopic;
+
+    // BailBond Config
+    @Value("${egov.bailbond.host}")
+    private String bailBondHost;
+
+    @Value("${egov.bailbond.search.path}")
+    private String bailBondSearchPath;
+
     @Value("${egov.idgen.taskNumber}")
     private String taskNumber;
 
