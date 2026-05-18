@@ -75,6 +75,16 @@ public class IcopsService {
 
     public ChannelMessage sendRequestToIcops(TaskRequest taskRequest) throws Exception {
 
+        // If a tracker already exists for this task, the warrant was previously sent to iCoPS.
+        // Use the Update Hearing Date API instead of creating a new process.
+        List<IcopsTracker> existingTrackers = icopsRepository.getIcopsTrackerByTaskNumber(
+                taskRequest.getTask().getTaskNumber());
+        if (!existingTrackers.isEmpty()) {
+            log.info("Existing iCoPS tracker found for taskNumber: {}. Routing to reschedule flow.",
+                    taskRequest.getTask().getTaskNumber());
+            return rescheduleProcess(taskRequest);
+        }
+
         ProcessRequest processRequest = icopsEnrichment.getProcessRequest(taskRequest);
 
         PoliceStationDetails policeStationDetails = taskRequest.getTask().getTaskDetails()
