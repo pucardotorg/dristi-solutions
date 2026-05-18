@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { InboxSearchComposer, SubmitBar, Loader, Banner } from "@egovernments/digit-ui-react-components";
+import { SubmitBar, Loader, Banner } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
@@ -18,10 +19,11 @@ import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
 import ReviewNoticeModal from "../../components/ReviewNoticeModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
-import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS } from "../../utils/constants";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { UploadModal } from "@egovernments/digit-ui-module-common";
 
 const defaultSearchValues = {
   eprocess: "",
@@ -226,7 +228,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   // Initialize download PDF hook
   const { downloadPdf } = useDownloadCasePdf();
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
+  const { uploadDocuments } = useDocumentUpload();
   const history = useHistory();
   const dayInMillisecond = 24 * 3600 * 1000;
   const todayDate = new Date().getTime();
@@ -591,6 +593,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
         }, 1000);
       } catch (error) {
         console.error("Error updating task data:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("HOME_SCREEN_UPDATE_FAILED"), error: true, errorId });
       }
     }
   }, [dayInMillisecond, orderData, orderType, refetch, reload, selectedDelievery, tasksData, tenantId, todayDate]);
@@ -704,6 +708,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
       setNextHearingDate(findNextHearings(response?.HearingList));
     } catch (error) {
       console.error("error :>> ", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ISSUE_IN_FETCH_HEARINGS"), error: true, errorId });
     }
   };
 
@@ -957,6 +963,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
       return { continue: true };
     } catch (error) {
       console.error("Error uploading document:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SEND"), error: true, errorId });
     } finally {
       setIsLoading(false);
       // Reset the flag after a delay to allow re-renders to complete
@@ -1124,25 +1132,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     await Promise.allSettled(requests);
     return responses;
   };
-  const bulkUploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: "Signature",
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["PDF", "PNG", "JPEG", "JPG"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, []);
 
   const onBulkSignatureSelect = (key, value) => {
     if (value?.Signature === null) {
@@ -1156,7 +1145,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setFileUploadError(null);
   };
 
-  const onBulkSignatureSubmit = async () => {
+  const onBulkSignatureSubmit = async (combineResult) => {
     if (bulkSignatureData?.uploadSignature?.Signature?.length > 0) {
       try {
         setShowBulkSignatureModal(false);
@@ -1346,6 +1335,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
           setShowBulkSignSuccessModal(true);
         } catch (e) {
           console.error("Error preparing bulk send after bulk sign:", e);
+          const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SEND"), error: true, errorId });
         }
       });
     } catch (error) {
@@ -1405,7 +1396,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             return s.charAt(0) + s.slice(1).toLowerCase();
           })();
           const caseNumber = (
-            (item?.isLPRCase ? item?.lprNumber : item?.courtCaseNumber) ||
+            (isLPRCase(item) ? item?.lprNumber : item?.courtCaseNumber) ||
             item?.courtCaseNumber ||
             item?.cmpNumber ||
             item?.filingNumber ||
@@ -1584,6 +1575,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       documents={documents}
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
+                      rowData={rowData}
                     />
                   ) : (
                     <CustomStepperSuccess
@@ -1601,6 +1593,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
                       isSubmitting={isSubmitting}
+                      rowData={rowData}
                     />
                   ),
               },
@@ -1717,6 +1710,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       documents={documents}
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
+                      rowData={rowData}
                     />
                   ) : (
                     <CustomStepperSuccess
@@ -1734,6 +1728,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
                       isSubmitting={isSubmitting}
+                      rowData={rowData}
                     />
                   ),
               },
@@ -1787,6 +1782,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           deliveryChannel={deliveryChannel}
           orderType={orderType}
           isSubmitting={isSubmitting}
+          rowData={rowData}
         />
         // <PrintAndSendDocumentComponent
         //   infos={infos}
@@ -2557,17 +2553,17 @@ const ReviewSummonsNoticeAndWarrant = () => {
         />
       )}
       {showBulkSignatureModal && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key="bulkSignature"
           name="Signature"
-          setOpenUploadSignatureModal={setShowBulkSignatureModal}
+          onClose={() => setShowBulkSignatureModal(false)}
           onSelect={onBulkSignatureSelect}
-          config={bulkUploadModalConfig}
           formData={bulkSignatureData}
           onSubmit={onBulkSignatureSubmit}
+          isDisabled={isBulkLoading}
+          isParentLoading={isBulkLoading}
           fileUploadError={fileUploadError}
-          setFileUploadError={setFileUploadError}
         />
       )}
       {showToast && (

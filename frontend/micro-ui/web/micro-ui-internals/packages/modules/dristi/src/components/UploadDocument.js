@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
 import Modal from "./Modal";
-import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import isEqual from "lodash/isEqual";
 import { runComprehensiveSanitizer } from "../Utils";
 import { CloseBtn, Heading } from "./ModalComponents";

@@ -15,13 +15,13 @@ import {
   getSuffixByBusinessCode,
   getUniqueAcronym,
 } from "../../../Utils";
-import UploadSignatureModal from "../../../components/UploadSignatureModal";
 import { Urls } from "../../../hooks";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Modal from "../../../components/Modal";
 import { mergeBreakdowns } from "./EfilingValidationUtils";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import { UploadModal } from "@egovernments/digit-ui-module-common";
 
 const getStyles = () => ({
   container: { display: "flex", flexDirection: "row", marginBottom: "50px" },
@@ -206,26 +206,6 @@ const ComplainantSignature = ({ path }) => {
     return userInfo.roles?.some((role) => role?.code === "ADVOCATE_CLERK_ROLE");
   }, [userInfo.roles]);
 
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
-
   const onSelect = (key, value) => {
     if (value?.[name] === null) {
       setFormData({});
@@ -240,10 +220,11 @@ const ComplainantSignature = ({ path }) => {
     setFileUploadError(null);
   };
 
-  const onSubmit = async () => {
+  const onSubmit = async (combineResult) => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
+        const filesToUpload = combineResult?.combinedFiles || formData?.uploadSignature?.Signature;
+        const uploadedFileId = await uploadDocuments(filesToUpload, tenantId);
         setSignatureDocumentId(uploadedFileId?.[0]?.fileStoreId);
         setUploadDoc(true);
         setDocumentUpload(false);
@@ -465,23 +446,37 @@ const ComplainantSignature = ({ path }) => {
     });
   }, [caseDetails, tenantId]);
 
+  const handlePendingTaskApiError = (error) => {
+    const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+    setShowToast({ label: t("FAILED_TO_UPDATE_PENDING_TASKS"), error: true, errorId });
+    const taggedError = new Error(error?.message || "PENDING_TASK_API_FAILED");
+    taggedError.isPendingTaskError = true;
+    taggedError.originalError = error;
+    taggedError.errorId = errorId;
+    return taggedError;
+  };
+
   const closePendingTask = async ({ status, assignee, closeUploadDoc }) => {
     const entityType = "case-default";
     const filingNumber = caseDetails?.filingNumber;
-    await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-      pendingTask: {
-        entityType,
-        status,
-        referenceId: closeUploadDoc ? `MANUAL_${filingNumber}` : `MANUAL_${filingNumber}_${assignee}`,
-        cnrNumber: caseDetails?.cnrNumber,
-        filingNumber: filingNumber,
-        caseId: caseDetails?.id,
-        caseTitle: caseDetails?.caseTitle,
-        isCompleted: true,
-        additionalDetails: {},
-        tenantId,
-      },
-    });
+    try {
+      await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+        pendingTask: {
+          entityType,
+          status,
+          referenceId: closeUploadDoc ? `MANUAL_${filingNumber}` : `MANUAL_${filingNumber}_${assignee}`,
+          cnrNumber: caseDetails?.cnrNumber,
+          filingNumber: filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
+          isCompleted: true,
+          additionalDetails: {},
+          tenantId,
+        },
+      });
+    } catch (error) {
+      throw handlePendingTaskApiError(error);
+    }
   };
 
   const handleEditCase = async () => {
@@ -570,8 +565,11 @@ const ComplainantSignature = ({ path }) => {
       });
     } catch (error) {
       console.error("Failed to close pending tasks:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-      setShowToast({ label: t("FAILED_TO_CLOSE_PENDING_TASKS"), error: true, errorId });
+      if (!error?.isPendingTaskError) {
+        const sourceError = error?.originalError || error;
+        const errorId = sourceError?.response?.headers?.["x-correlation-id"] || sourceError?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("FAILED_TO_CLOSE_PENDING_TASKS"), error: true, errorId });
+      }
       setLoader(false);
     }
   };
@@ -897,8 +895,10 @@ const ComplainantSignature = ({ path }) => {
         history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculation } });
       } catch (err) {
         console.error("Payment recovery failed:", err);
-        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
-        setShowToast({ label: t("PAYMENT_RECOVERY_FAILED"), error: true, errorId });
+        if (!err?.isPendingTaskError) {
+          const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("PAYMENT_RECOVERY_FAILED"), error: true, errorId });
+        }
         history.replace(`/${window?.contextPath}/${userInfoType}/home/home-pending-task`);
       } finally {
         setLoader(false);
@@ -1007,24 +1007,28 @@ const ComplainantSignature = ({ path }) => {
                   }))
                 : []),
             ];
-            await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-              pendingTask: {
-                name: "Pending Payment",
-                entityType: "case-default",
-                referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-                status: CaseWorkflowState.PENDING_PAYMENT,
-                assignedTo: uuids,
-                assignedRole: ["CASE_CREATOR"],
-                cnrNumber: caseDetails?.cnrNumber,
-                filingNumber: caseDetails?.filingNumber,
-                caseId: caseDetails?.id,
-                caseTitle: caseDetails?.caseTitle,
-                isCompleted: false,
-                stateSla: stateSla.PENDING_PAYMENT * dayInMillisecond + todayDate,
-                additionalDetails: {},
-                tenantId,
-              },
-            });
+            try {
+              await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                pendingTask: {
+                  name: "Pending Payment",
+                  entityType: "case-default",
+                  referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+                  status: CaseWorkflowState.PENDING_PAYMENT,
+                  assignedTo: uuids,
+                  assignedRole: ["CASE_CREATOR"],
+                  cnrNumber: caseDetails?.cnrNumber,
+                  filingNumber: caseDetails?.filingNumber,
+                  caseId: caseDetails?.id,
+                  caseTitle: caseDetails?.caseTitle,
+                  isCompleted: false,
+                  stateSla: stateSla.PENDING_PAYMENT * dayInMillisecond + todayDate,
+                  additionalDetails: {},
+                  tenantId,
+                },
+              });
+            } catch (error) {
+              throw handlePendingTaskApiError(error);
+            }
             let calculation = null;
             if (!res?.cases?.[0]?.additionalDetails?.lastSubmissionConsumerCode) {
               calculation = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
@@ -1057,15 +1061,22 @@ const ComplainantSignature = ({ path }) => {
           }
         })
         .catch((error) => {
-          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-          setShowToast({ label: t("ESIGN_CALLBACK_FAILED"), error: true, errorId });
-          setEsignSuccess(false);
-          throw error;
+          // Pending-task failures already show a specific toast at source.
+          if (error?.isPendingTaskError) {
+            throw error;
+          }
+          const taggedError = new Error(error?.message || "CASE_UPDATE_CALLBACK_FAILED");
+          taggedError.isCaseUpdateCallbackError = true;
+          taggedError.originalError = error;
+          throw taggedError;
         });
     } catch (error) {
       console.error("E-sign process failed:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-      setShowToast({ label: t("ESIGN_PROCESS_FAILED"), error: true, errorId });
+      if (!error?.isPendingTaskError) {
+        const sourceError = error?.originalError || error;
+        const errorId = sourceError?.response?.headers?.["x-correlation-id"] || sourceError?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: error?.isCaseUpdateCallbackError ? t("ESIGN_CALLBACK_FAILED") : t("ESIGN_PROCESS_FAILED"), error: true, errorId });
+      }
       setEsignSuccess(false);
       setLoader(false);
     }
@@ -1362,13 +1373,12 @@ const ComplainantSignature = ({ path }) => {
       </ActionBar>
 
       {isDocumentUpload && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key={name}
           name={name}
-          setOpenUploadSignatureModal={setDocumentUpload}
+          onClose={() => setDocumentUpload(false)}
           onSelect={onSelect}
-          config={uploadModalConfig}
           formData={formData}
           showWarning={true}
           warningText={t("UPLOAD_SIGNED_DOC_WARNING")}

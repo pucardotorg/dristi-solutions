@@ -1,7 +1,8 @@
 import React, { useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { CloseSvg } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import isEqual from "lodash/isEqual";
 import { _getPartiesOptions, CloseBtn, Heading } from "../utils/orderUtils";
 import { generateUUID, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";

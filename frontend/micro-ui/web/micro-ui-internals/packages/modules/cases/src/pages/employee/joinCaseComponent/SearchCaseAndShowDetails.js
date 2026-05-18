@@ -6,7 +6,7 @@ import React, { useMemo } from "react";
 import NameListWithModal from "../../../components/NameListWithModal";
 import { createShorthand } from "../../../utils/joinCaseUtils";
 import { useTranslation } from "react-i18next";
-import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const SearchCaseAndShowDetails = ({
   caseNumber,
@@ -40,7 +40,7 @@ const SearchCaseAndShowDetails = ({
         {
           key: "CASE_NUMBER",
           value:
-            (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+            (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
             caseDetails?.courtCaseNumber ||
             caseDetails?.cmpNumber ||
             caseDetails?.filingNumber,
@@ -63,6 +63,15 @@ const SearchCaseAndShowDetails = ({
     return [];
   }, [caseDetails]);
 
+  const getDisplayNumber = (option, searchTerm) => {
+    if (!searchTerm) return option?.filingNumber;
+    const term = searchTerm.toLowerCase();
+    if (option?.cmpNumber?.toLowerCase().includes(term)) return option?.cmpNumber;
+    if (option?.cnrNumber?.toLowerCase().includes(term)) return option?.cnrNumber;
+    if (option?.courtCaseNumber?.toLowerCase().includes(term)) return option?.courtCaseNumber;
+    return option?.filingNumber;
+  };
+
   return (
     <div className="case-number-input">
       {!caseDetails?.cnrNumber && (
@@ -78,7 +87,7 @@ const SearchCaseAndShowDetails = ({
                 setCaseList([]);
                 let str = e.target.value;
                 if (str) {
-                  str = str.replace(/[^a-zA-Z0-9.-]/g, "");
+                  str = str.replace(/[^a-zA-Z0-9.\/-]/g, "");
                   if (str.length > 50) {
                     str = str.substring(0, 50);
                   }
@@ -93,28 +102,21 @@ const SearchCaseAndShowDetails = ({
               autoFocus={true}
             />
           </div>
-          {caseList?.map((option, index) => (
-            <button
-              key={option?.filingNumber ?? option?.cnrNumber ?? `case-search-result-${index}`}
-              type="button"
-              className="cp profile-dropdown--item display: flex "
-              style={{ background: "transparent", border: "none", width: "100%", textAlign: "left", cursor: "pointer", padding: "8px" }}
-              onClick={() => {
-                onSelect(option);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onSelect(option);
-                }
-              }}
-            >
-              <span> {option?.filingNumber}</span>
-            </button>
-          ))}
-          <p style={{ fontSize: "12px" }}>
-            {t("FILLING_NUMBER_FORMATE_TEXT")} {"KL-<6 digit sequence number>-<YYYY>"}
-          </p>
+          {caseList &&
+            caseList?.map((option, index) => {
+              return (
+                <div
+                  className={`cp profile-dropdown--item display: flex `}
+                  key={index}
+                  onClick={() => {
+                    onSelect(option);
+                  }}
+                >
+                  <span> {getDisplayNumber(option, caseNumber)}</span>
+                </div>
+              );
+            })}
+
         </LabelFieldPair>
       )}
       {errors?.caseNumber && (

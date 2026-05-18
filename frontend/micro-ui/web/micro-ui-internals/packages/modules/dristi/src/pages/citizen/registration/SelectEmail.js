@@ -1,4 +1,5 @@
-import { BreadCrumb, FormComposerV2, Loader } from "@egovernments/digit-ui-react-components";
+import { BreadCrumb, Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";

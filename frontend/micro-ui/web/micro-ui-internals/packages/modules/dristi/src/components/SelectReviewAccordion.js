@@ -530,10 +530,14 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
                       <button
                         type="button"
                         className="header-right"
-                        style={{ display: "contents", border: "none", background: "transparent", padding: 0, cursor: "pointer" }}
-                        aria-label={t("CS_CLICK_TO_EDIT")}
-                        onClick={() => {
-                          history.push(`?caseId=${caseId}&selected=${input?.key}`);
+                        style={{ display: "contents" }}
+                        onClick={(e) => {
+                          history.push({
+                            search: `?caseId=${caseId}&selected=${input?.key}`,
+                            state: {
+                              shouldRefetchCaseDetails: true,
+                            },
+                          });
                         }}
                       >
                         <EditPencilIcon />
@@ -784,6 +788,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
             zIndex: 1000,
             backgroundColor: "grey",
           }}
+          caseDetails={caseDetails}
         />
       )}
     </div>

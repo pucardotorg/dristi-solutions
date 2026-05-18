@@ -188,7 +188,15 @@ const MultiUploadWrapper = ({
     }
   };
 
-  useEffect(() => getFormState(state), [state]);
+  const getFormStateRef = useRef(getFormState);
+
+  useEffect(() => {
+    getFormStateRef.current = getFormState;
+  }, [getFormState]);
+
+  useEffect(() => {
+    getFormStateRef.current?.(state);
+  }, [state]);
 
   useEffect(() => {
     if (requestSpecifcFileRemoval) {

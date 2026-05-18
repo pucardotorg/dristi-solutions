@@ -1,13 +1,8 @@
 const { search_evidence_v2 } = require("../../api");
-const {
-  combineMultipleFilestores,
-} = require("../utils/combineMultipleFilestores");
-const {
-  duplicateExistingFileStore,
-} = require("../utils/duplicateExistingFileStore");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { combineMultipleFilestores } = require("../utils/combineMultipleFilestores");
+const { duplicateExistingFileStore } = require("../utils/duplicateExistingFileStore");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
+const { logger } = require("../../logger");
 
 async function processCourtEvidence(
   courtCase,
@@ -17,6 +12,7 @@ async function processCourtEvidence(
   TEMP_FILES_DIR,
   indexCopy
 ) {
+  logger.info(`[processCourtEvidence] Started | filingNumber: ${courtCase?.filingNumber}`);
   const courtEvidenceDepositionSection = filterCaseBundleBySection(
     caseBundleMaster,
     "courtevidencedepositions"

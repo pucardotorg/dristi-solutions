@@ -1,4 +1,5 @@
-import { CloseSvg, InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { CloseSvg, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { bulkBailBondSignConfig } from "../../configs/BulkBailBondSignConfig";
@@ -225,7 +226,7 @@ function BulkBailBondSignView({ setShowToast = () => {} }) {
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setToast({
         error: true,
-        label: error?.message ? error?.message : t("ERROR_BAIL_BULK_SIGN_MSG"),
+        label: t("ERROR_BAIL_BULK_SIGN_MSG"),
         errorId,
       });
       setShowBulkSignConfirmModal(false);

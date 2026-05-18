@@ -1,4 +1,5 @@
-import { CardLabel, FormComposerV2, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
+import { CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { idProofVerificationConfig } from "../configs/component";

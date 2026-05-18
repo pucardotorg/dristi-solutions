@@ -5,7 +5,8 @@ import HomeHearingsTab from "./HomeHearingsTab";
 import { pendingTaskConfig } from "../../configs/PendingTaskConfig";
 import { HomeService, Urls } from "../../hooks/services";
 import { useHistory } from "react-router-dom";
-import { Loader, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import BulkBailBondSignView from "./BulkBailBondSignView";
 import BailBondModal from "./BailBondModal";
@@ -127,7 +128,11 @@ const MainHomeScreen = () => {
   const rescheduleEvidenceFilingNumber = rescheduleEvidenceSession?.filingNumber;
   const rescheduleEvidenceReferenceId = rescheduleEvidenceSession?.referenceId;
 
-  const { data: rescheduleEvidenceCaseSearchData, isLoading: rescheduleEvidenceCaseLoading } = useCaseDetailSearchService(
+  const {
+    data: rescheduleEvidenceCaseSearchData,
+    isLoading: rescheduleEvidenceCaseLoading,
+    error: rescheduleEvidenceCaseError,
+  } = useCaseDetailSearchService(
     {
       criteria: {
         caseId: rescheduleEvidenceCaseId,
@@ -146,6 +151,7 @@ const MainHomeScreen = () => {
   const {
     data: rescheduleEvidenceApplicationData,
     isLoading: rescheduleEvidenceApplicationLoading,
+    error: rescheduleEvidenceApplicationError,
   } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
@@ -210,10 +216,23 @@ const MainHomeScreen = () => {
     if (rescheduleEvidenceCaseLoading || rescheduleEvidenceApplicationLoading) {
       return;
     }
+    if (rescheduleEvidenceCaseError || rescheduleEvidenceApplicationError) {
+      const isCaseFetchError = Boolean(rescheduleEvidenceCaseError);
+      const error = isCaseFetchError ? rescheduleEvidenceCaseError : rescheduleEvidenceApplicationError;
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      lastRescheduleEvidenceBuildKey.current = "";
+      setShowToast({
+        label: isCaseFetchError ? t("FAILED_TO_FETCH_CASE_DETAILS") : t("FAILED_TO_FETCH_APPLICATION_DETAILS"),
+        error: true,
+        errorId,
+      });
+      setRescheduleEvidenceSession(null);
+      return;
+    }
     const caseLoaded = rescheduleEvidenceCaseSearchData?.cases && Object.keys(rescheduleEvidenceCaseDetails).length > 0;
     if (!caseLoaded) {
       lastRescheduleEvidenceBuildKey.current = "";
-      setShowToast({ label: t("CS_SOMETHING_WENT_WRONG"), error: true });
+      setShowToast({ label: t("FAILED_TO_FETCH_CASE_DETAILS"), error: true });
       setRescheduleEvidenceSession(null);
       return;
     }
@@ -222,7 +241,7 @@ const MainHomeScreen = () => {
     );
     if (!applicationDetails) {
       lastRescheduleEvidenceBuildKey.current = "";
-      setShowToast({ label: t("CS_SOMETHING_WENT_WRONG"), error: true });
+      setShowToast({ label: t("FAILED_TO_FETCH_APPLICATION_DETAILS"), error: true });
       setRescheduleEvidenceSession(null);
       return;
     }
@@ -262,6 +281,8 @@ const MainHomeScreen = () => {
     rescheduleEvidenceReferenceId,
     rescheduleEvidenceCaseLoading,
     rescheduleEvidenceApplicationLoading,
+    rescheduleEvidenceCaseError,
+    rescheduleEvidenceApplicationError,
     rescheduleEvidenceCaseSearchData,
     rescheduleEvidenceCaseDetails,
     rescheduleEvidenceApplicationData,

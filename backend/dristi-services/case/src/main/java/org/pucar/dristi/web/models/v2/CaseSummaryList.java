@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.pucar.dristi.web.models.NatureOfDisposal;
 import org.pucar.dristi.web.models.PendingAdvocateRequest;
+import org.pucar.dristi.web.models.enums.LifecycleStatus;
 
 import java.util.List;
 
@@ -79,6 +80,7 @@ public class CaseSummaryList {
     @JsonProperty("lprNumber")
     private String lprNumber = null;
 
-    @JsonProperty("isLPRCase")
-    private Boolean isLPRCase = false;
+    @JsonProperty("lifecycleStatus")
+    @Builder.Default
+    private LifecycleStatus lifecycleStatus = LifecycleStatus.ACTIVE;
 }

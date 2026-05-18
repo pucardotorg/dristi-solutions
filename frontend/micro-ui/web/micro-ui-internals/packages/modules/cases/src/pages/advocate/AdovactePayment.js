@@ -1,5 +1,7 @@
-import { Button } from "@egovernments/digit-ui-react-components";
-import React from "react";
+import { Button, Header } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
+import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 
 const AdvocatePayment = () => {

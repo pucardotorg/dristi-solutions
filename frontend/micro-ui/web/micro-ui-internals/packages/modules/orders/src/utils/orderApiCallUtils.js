@@ -1,6 +1,7 @@
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { ordersService } from "../hooks/services";
 import { getMediationChangedFlag, getParties } from "./orderUtils";
+import { isLPRCase } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 export const getCourtFee = async (channelId, receiverPincode, taskType, tenantId) => {
   try {
@@ -76,7 +77,7 @@ export const addOrderItem = async (
     }));
 
     const caseNumber =
-      (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+      (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
       caseDetails?.courtCaseNumber ||
       caseDetails?.cmpNumber ||
       caseDetails?.filingNumber;
@@ -159,7 +160,7 @@ export const createOrder = async (order, tenantId, applicationTypeConfigUpdated,
     );
 
     const caseNumber =
-      (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+      (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
       caseDetails?.courtCaseNumber ||
       caseDetails?.cmpNumber ||
       caseDetails?.filingNumber;

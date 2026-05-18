@@ -85,15 +85,11 @@ const ViewPaymentDetails = ({ location, match }) => {
   const summonsPincode = useMemo(() => tasksData?.taskDetails?.respondentDetails?.address?.pincode, [tasksData]);
   const channelId = useMemo(() => extractFeeMedium(tasksData?.taskDetails?.deliveryChannels?.channelName || ""), [tasksData]);
 
-  const { data: paymentDetails, isLoading: isFetchBillLoading } = Digit.Hooks.useFetchBillsForBuissnessService(
-    {
-      tenantId: tenantId,
-      consumerCode: consumerCode,
-      businessService: businessService,
-    },
-    {
-      enabled: Boolean(tenantId && consumerCode),
-    }
+  const { data: paymentDetails, isLoading: isFetchBillLoading } = Digit.Hooks.dristi.useFetchBill(
+    {},
+    { tenantId, consumerCode, businessService },
+    `view-payment-${consumerCode}-${businessService}`,
+    Boolean(tenantId && consumerCode)
   );
   const { data: BillResponse, isLoading: isBillLoading } = Digit.Hooks.dristi.useBillSearch(
     {},

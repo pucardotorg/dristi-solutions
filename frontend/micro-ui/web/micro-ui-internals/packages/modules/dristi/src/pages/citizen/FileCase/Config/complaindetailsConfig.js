@@ -326,17 +326,12 @@ const complainantDetailsFormConfig = [
             {
               name: "document",
               type: "DragDropComponent",
-              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               isOptional: "CS_IS_OPTIONAL",
-              isMandatory: false,
-              maxFileSize: 10,
               documentHeader: "COMPANY_DOCUMENT_DETAILS",
               isMultipleUpload: true,
-              uploadGuidelines: "UPLOAD_DOC_10",
               documentHeaderStyle: {
                 textAlign: "start",
               },
-              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             },
           ],
         },
@@ -597,13 +592,13 @@ const complainantDetailsFormConfig = [
         component: "SelectComponents",
         populators: {
           inputs: [
-            {
-              name: "typeOfAddress",
-              type: "Radio",
-              label: "CS_TYPE_OF_ADDRESS",
-              options: [],
-              showOptional: true,
-            },
+            // {
+            //   name: "typeOfAddress",
+            //   type: "Radio",
+            //   label: "CS_TYPE_OF_ADDRESS",
+            //   options: [],
+            //   showOptional: true,
+            // },
             {
               name: "pincode",
               type: "text",
@@ -1012,16 +1007,12 @@ const complainantDetailsFormConfig = [
             {
               name: "poaDocument",
               type: "DragDropComponent",
-              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               isMandatory: true,
-              maxFileSize: 10,
               documentHeader: "POA_AUTHORIZATION_DOCUMENT",
               isMultipleUpload: true,
-              uploadGuidelines: "UPLOAD_DOC_10",
               documentHeaderStyle: {
                 textAlign: "start",
               },
-              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             },
           ],
         },

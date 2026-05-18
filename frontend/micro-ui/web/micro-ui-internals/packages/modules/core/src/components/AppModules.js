@@ -5,7 +5,6 @@ import { Redirect, Route, Switch, useLocation, useRouteMatch } from "react-route
 import ChangePassword from "../pages/employee/ChangePassword/index";
 import ForgotPassword from "../pages/employee/ForgotPassword/index";
 import { AppHome } from "./Home";
-// import UserProfile from "./userProfile";
 
 const getTenants = (codes, tenants) => {
   return tenants.filter((tenant) => codes?.map?.((item) => item.code).includes(tenant.code));
@@ -49,7 +48,6 @@ export const AppModules = ({ stateCode, userType, modules, appTenants, additiona
         <Route>
           <AppHome userType={userType} modules={modules} additionalComponent={additionalComponent} />
         </Route>
-        {/* <Route path={`${path}/user-profile`}> <UserProfile /></Route> */}
       </Switch>
     </div>
   );

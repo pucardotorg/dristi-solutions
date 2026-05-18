@@ -1,15 +1,10 @@
 const { search_evidence_v2 } = require("../../api");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
-const {
-  duplicateExistingFileStore,
-} = require("../utils/duplicateExistingFileStore");
+const { duplicateExistingFileStore } = require("../utils/duplicateExistingFileStore");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
-const {
-  combineMultipleFilestores,
-} = require("../utils/combineMultipleFilestores");
+const { combineMultipleFilestores } = require("../utils/combineMultipleFilestores");
+const { logger } = require("../../logger");
 
 async function processComplainantEvidence(
   courtCase,
@@ -20,6 +15,7 @@ async function processComplainantEvidence(
   indexCopy,
   messagesMap
 ) {
+  logger.info(`[processComplainantEvidence] Started | filingNumber: ${courtCase?.filingNumber}`);
   const complainantDepositionSection = filterCaseBundleBySection(
     caseBundleMaster,
     "complainantevidencedepositions"

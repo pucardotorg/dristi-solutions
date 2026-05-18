@@ -8,7 +8,7 @@ import { Urls } from "../hooks";
 import AuthenticatedLink from "../Utils/authenticatedLink";
 import { CloseBtn, Heading } from "./ModalComponents";
 import CustomToast from "./CustomToast";
-
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
 function ESignSignatureModal({
   t,
   handleIssueOrder,
@@ -22,7 +22,6 @@ function ESignSignatureModal({
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
   const [formData, setFormData] = useState({}); // storing the file upload data
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const fileStoreId = formUploadData?.SelectUserTypeComponent?.doc?.[0]?.[1]?.fileStoreId?.fileStoreId;
   const pageModule = "ci";
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -33,25 +32,7 @@ function ESignSignatureModal({
   const name = "Signature";
   const [showToast, setShowToast] = useState(null);
 
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
+  const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const onSelect = useCallback((key, value) => {
     if (value?.Signature === null) {
@@ -66,10 +47,11 @@ function ESignSignatureModal({
     setFileUploadError(null);
   }, []);
 
-  const onSubmit = async () => {
+  const onSubmit = async (combineResult) => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
+        const filesToUpload = combineResult?.combinedFiles || formData?.uploadSignature?.Signature;
+        const uploadedFileId = await uploadDocuments(filesToUpload, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
         setOpenUploadSignatureModal(false);
@@ -130,13 +112,12 @@ function ESignSignatureModal({
   if (openUploadSignatureModal) {
     return (
       <React.Fragment>
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key={name}
           name={name}
           setOpenUploadSignatureModal={setOpenUploadSignatureModal}
           onSelect={onSelect}
-          config={uploadModalConfig}
           formData={formData}
           onSubmit={onSubmit}
           fileUploadError={fileUploadError}

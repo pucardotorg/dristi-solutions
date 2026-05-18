@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
 import React, { useState, useEffect, useMemo, useCallback, useRef, useContext } from "react";
 import { useHistory } from "react-router-dom";
-import { Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { Button } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import { rolesToConfigMapping, userTypeOptions, getUnifiedEmployeeConfig, getOnRowClickConfig, litigantConfig } from "../../configs/HomeConfig";
 import UpcomingHearings from "../../components/UpComingHearing";
 import { Loader } from "@egovernments/digit-ui-react-components";

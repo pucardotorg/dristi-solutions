@@ -9,6 +9,7 @@ import SelectCustomNote from "./SelectCustomNote";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { TASK_TYPES, CHANNEL_IDS } from "../Utils/constants";
 import { CloseBtn, Heading } from "./ModalComponents";
+import CustomToast from "./CustomToast";
 
 const InfoIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -42,6 +43,7 @@ function CourierService({
   const [newAddress, setNewAddress] = useState({});
   const [addressErrors, setAddressErrors] = useState({});
   const [showAddAddressModal, setShowAddAddressModalLocal] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [isAddressLoading, setIsAddressLoading] = useState(false);
   const hasSetInitialDefaults = useRef(false);
@@ -94,7 +96,7 @@ function CourierService({
     );
   }, [processCourierData, tenantId, orderType]);
 
-  const { data: breakupResponse, isLoading: isBreakUpLoading } = window?.Digit?.Hooks?.dristi?.useSummonsPaymentBreakUp(
+  const { data: breakupResponse, isLoading: isBreakUpLoading, error: breakUpError } = window?.Digit?.Hooks?.dristi?.useSummonsPaymentBreakUp(
     {
       Criteria: paymentCriteriaList,
     },
@@ -102,6 +104,16 @@ function CourierService({
     `PAYMENT-${processCourierData?.uniqueId}-${processCourierData?.addressDetails?.length}-${paymentCriteriaList?.length > 0}`,
     Boolean(paymentCriteriaList?.length > 0)
   );
+
+  useEffect(() => {
+    if (!breakUpError) return;
+    const errorId = breakUpError?.response?.headers?.["x-correlation-id"] || breakUpError?.response?.headers?.["X-Correlation-Id"];
+    setShowToast({
+      error: true,
+      label: t("FAILED_TO_FETCH_PAYMENT_BREAKUP"),
+      errorId,
+    });
+  }, [breakUpError, t]);
 
   const _getChannelCodeAndDeliveryTime = ({ taskType, channelId }) => {
     if (["NOTICE", "SUMMONS"]?.includes(taskType)) {
@@ -591,6 +603,15 @@ function CourierService({
             </div>
           )}
         </Modal>
+      )}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
     </div>
   );

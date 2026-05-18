@@ -14,6 +14,7 @@ import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/componen
 import BulkRescheduleModal from "../../components/BulkRescheduleModal";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const CloseBtn = ({ onClick }) => {
@@ -46,7 +47,6 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
 
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
@@ -160,25 +160,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     setFileUploadError(null);
   };
 
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
+  const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const clearLocalStorage = () => {
     sessionStorage.removeItem("bulkNotificationStepper");
@@ -556,11 +538,12 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     downloadPdf(tenantId, downloadFileStoreId);
   };
 
-  const onUploadSubmit = async () => {
+  const onUploadSubmit = async (combineResult) => {
     if (signFormData?.uploadSignature?.Signature?.length > 0) {
       try {
         setSignLoader(true);
-        const uploadedFileId = await uploadDocuments(signFormData?.uploadSignature?.Signature, tenantId);
+        const filesToUpload = combineResult?.combinedFiles || signFormData?.uploadSignature?.Signature;
+        const uploadedFileId = await uploadDocuments(filesToUpload, tenantId);
         const newFileStoreId = uploadedFileId?.[0]?.fileStoreId;
         setSignedDocumentUploadID(newFileStoreId);
         setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, newFileStoreId]));
@@ -568,12 +551,12 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
-        setSignLoader(false);
         setSignFormData({});
         setIsSigned(false);
         setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+      } finally {
+        setSignLoader(false);
       }
-      setSignLoader(false);
     }
   };
 
@@ -699,16 +682,16 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       )}
 
       {stepper === 3 && openUploadSignatureModal && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key={name}
           name={name}
-          setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+          onClose={() => setOpenUploadSignatureModal(false)}
           onSelect={onSelect}
-          config={uploadModalConfig}
           formData={signFormData}
           onSubmit={onUploadSubmit}
           isDisabled={issignLoader}
+          isParentLoading={issignLoader}
           fileUploadError={fileUploadError}
           setFileUploadError={setFileUploadError}
         />

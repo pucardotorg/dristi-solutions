@@ -1,5 +1,6 @@
-import { ButtonSelector, FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import PropTypes from "prop-types";
+import { ButtonSelector } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React from "react";
 import { poaApplicationConfig } from "../../../configs/poaApplicationConfig";
 import isEqual from "lodash/isEqual";

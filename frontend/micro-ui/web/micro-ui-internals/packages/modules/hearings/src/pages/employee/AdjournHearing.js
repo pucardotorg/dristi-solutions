@@ -1,4 +1,4 @@
-import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useState } from "react";
 import NextHearingModal from "../../components/NextHearingModal";
 import SummaryModal from "../../components/SummaryModal";

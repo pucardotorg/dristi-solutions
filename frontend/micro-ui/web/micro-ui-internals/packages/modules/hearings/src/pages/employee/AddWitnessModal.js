@@ -1,4 +1,5 @@
-import { Button, FormComposerV2, Loader } from "@egovernments/digit-ui-react-components";
+import { Button, Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";

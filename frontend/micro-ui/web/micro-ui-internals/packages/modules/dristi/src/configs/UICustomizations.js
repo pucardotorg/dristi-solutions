@@ -16,6 +16,7 @@ import {
   getAuthorizedUuid,
   getClerkMembersForPartiesTab,
   getDate,
+  isLPRCase,
   modifiedEvidenceNumber,
   removeInvalidNameParts,
 } from "../Utils";
@@ -1217,7 +1218,9 @@ export const UICustomizations = {
         case "OWNER":
           return removeInvalidNameParts(value);
         case "REPRESENTATIVES":
-          return t(value) || "";
+          const val = value === "COURT" ? "COURT_SOURCE" : value; // Do not change it, it is doen because "COURT" has duplicate localization in different modules which is causing issue.
+          // So we created a new string "COURT_SOURCE" for this.
+          return t(val) || "";
         case "CS_ACTIONS":
           return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="FilingsConfig" />;
         case "EVIDENCE_NUMBER":
@@ -2836,7 +2839,7 @@ export const UICustomizations = {
           return rawTitle ? rawTitle : t("CASE_UNTITLED") || "Case Untitled";
         }
         case "CASE_NUMBER": {
-          const caseNumber = row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
+          const caseNumber = isLPRCase(row) ? row?.lprNumber : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
           return caseNumber || "";
         }
         default:

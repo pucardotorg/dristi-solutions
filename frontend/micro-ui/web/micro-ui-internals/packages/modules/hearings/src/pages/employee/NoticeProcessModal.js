@@ -1,7 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { Modal, CloseSvg, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { Modal, CloseSvg } from "@egovernments/digit-ui-react-components";
 import { useHistory, useLocation } from "react-router-dom";
+import { Modal, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
+import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import { summonsConfig } from "../../configs/SummonsNWarrantConfig";
