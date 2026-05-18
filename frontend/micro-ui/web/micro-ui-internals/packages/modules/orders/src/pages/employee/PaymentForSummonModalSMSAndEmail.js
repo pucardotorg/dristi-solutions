@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -12,22 +12,14 @@ import { Urls } from "../../hooks/services/Urls";
 import { paymentType } from "../../utils/paymentType";
 import { DateUtils, extractFeeMedium, getAuthorizedUuid, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { getFormattedName, getSuffixByDeliveryChannel } from "../../utils";
-import { getAdvocates } from "../../utils/caseUtils";
+import {
+  getViewOrderClickHandler,
+  useCaseLockStatusForPaymentModal,
+  useIsUserAdvocateOnCase,
+} from "./shared/paymentSummonModalShared";
+import { submitModalInfoPostPayment as submitModalInfo } from "./shared/paymentSummonPostReceiptDefaults";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 import { ORDER_TYPES } from "../../utils/constants";
-
-const submitModalInfo = {
-  header: "CS_HEADER_FOR_SUMMON_POST",
-  subHeader: "CS_SUBHEADER_TEXT_FOR_Summon_POST",
-  caseInfo: [
-    {
-      key: "Case Number",
-      value: "FSM-2019-04-23-898898",
-    },
-  ],
-  isArrow: false,
-  showTable: true,
-};
 
 const orderTypeEnum = {
   SUMMONS: "Summons",
@@ -142,36 +134,9 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   }, [caseData]);
 
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
-  const fetchCaseLockStatus = useCallback(async () => {
-    try {
-      const status = await DRISTIService.getCaseLockStatus(
-        {},
-        {
-          uniqueId: caseDetails?.filingNumber,
-          tenantId: tenantId,
-        }
-      );
-      setIsCaseLocked(status?.Lock?.isLocked);
-    } catch (error) {
-      console.error("Error fetching case lock status", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-      setShowToast({ label: t("ERROR_FETCHING_CASE_LOCK_STATUS"), error: true, errorId });
-    }
-  });
-  useEffect(() => {
-    if (caseDetails?.filingNumber) {
-      fetchCaseLockStatus();
-    }
-  }, [caseDetails?.filingNumber]);
+  useCaseLockStatusForPaymentModal(caseDetails, tenantId, t, setIsCaseLocked, setShowToast);
 
-  const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
-  const advocatesUuids = useMemo(() => {
-    if (allAdvocates && typeof allAdvocates === "object") {
-      return Object.values(allAdvocates).flat();
-    }
-    return [];
-  }, [allAdvocates]);
-  const isUserAdv = useMemo(() => advocatesUuids.includes(authorizedUuid), [advocatesUuids, authorizedUuid]);
+  const isUserAdv = useIsUserAdvocateOnCase(caseDetails, authorizedUuid);
 
   const isCaseAdmitted = useMemo(() => caseDetails?.status === "CASE_ADMITTED", [caseDetails]);
 
@@ -669,12 +634,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   }, [hearingsData?.HearingList]);
 
   const links = useMemo(() => {
-    const onViewOrderClick = () => {
-      history.push(
-        `/${window.contextPath}/citizen/dristi/home/view-case?caseId=${caseData?.criteria?.[0]?.responseList?.[0]?.id}&filingNumber=${filingNumber}&tab=Orders`
-      );
-    };
-    return [{ text: "View order", link: "", onClick: onViewOrderClick }];
+    return [{ text: "View order", link: "", onClick: getViewOrderClickHandler({ history, caseData, filingNumber }) }];
   }, [caseData?.criteria, caseId, filingNumber, history]);
 
   const paymentForSummonModalConfig = useMemo(() => {

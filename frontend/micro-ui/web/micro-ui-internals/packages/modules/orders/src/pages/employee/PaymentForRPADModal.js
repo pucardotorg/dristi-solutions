@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { RadioButtons, CardLabel, LabelFieldPair } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
@@ -12,7 +12,12 @@ import { Urls } from "../../hooks/services/Urls";
 import { paymentType } from "../../utils/paymentType";
 import { DateUtils, extractFeeMedium, getAuthorizedUuid, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { getAdvocates } from "../../utils/caseUtils";
+import {
+  formatRespondentAddressLine,
+  getViewOrderClickHandler,
+  useCaseLockStatusForPaymentModal,
+  useIsUserAdvocateOnCase,
+} from "./shared/paymentSummonModalShared";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 import { getPartyNameForInfos } from "../../utils";
 import { CaseWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/caseWorkflow";
@@ -162,42 +167,9 @@ const PaymentForRPADModal = ({ path }) => {
 
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
-  const fetchCaseLockStatus = useCallback(async () => {
-    try {
-      const status = await DRISTIService.getCaseLockStatus(
-        {},
-        {
-          uniqueId: caseDetails?.filingNumber,
-          tenantId: tenantId,
-        }
-      );
-      setIsCaseLocked(status?.Lock?.isLocked);
-    } catch (error) {
-      console.error("Error fetching case lock status", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-      setShowToast({ label: t("ERROR_FETCHING_CASE_LOCK_STATUS"), error: true, errorId });
-    }
-  });
-  useEffect(() => {
-    if (caseDetails?.filingNumber) {
-      fetchCaseLockStatus();
-    }
-  }, [caseDetails?.filingNumber]);
+  useCaseLockStatusForPaymentModal(caseDetails, tenantId, t, setIsCaseLocked, setShowToast);
 
-  const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
-  const advocatesUuids = useMemo(() => {
-    if (allAdvocates && typeof allAdvocates === "object") {
-      return Object.values(allAdvocates).flat();
-    }
-    return [];
-  }, [allAdvocates]);
-  const isUserAdv = useMemo(() => advocatesUuids.includes(authorizedUuid), [advocatesUuids, authorizedUuid]);
-
-  const onViewOrderClick = () => {
-    history.push(
-      `/${window.contextPath}/citizen/dristi/home/view-case?caseId=${caseData?.criteria?.[0]?.responseList?.[0]?.id}&filingNumber=${filingNumber}&tab=Orders`
-    );
-  };
+  const isUserAdv = useIsUserAdvocateOnCase(caseDetails, authorizedUuid);
 
   const todayDate = new Date().getTime();
   const dayInMillisecond = 24 * 3600 * 1000;
@@ -448,12 +420,7 @@ const PaymentForRPADModal = ({ path }) => {
 
   const infos = useMemo(() => {
     const addressDetails = filteredTasks?.[0]?.taskDetails?.respondentDetails?.address;
-    const formattedAddress =
-      typeof addressDetails === "object"
-        ? `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${addressDetails?.state || ""}, ${
-            addressDetails?.pincode || ""
-          }`
-        : addressDetails;
+    const formattedAddress = formatRespondentAddressLine(addressDetails);
     return [
       { key: "Issued to", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },
       { key: "Next Hearing Date", value: DateUtils.getFormattedDate(new Date(hearingsData?.HearingList?.[0]?.startTime), "DD-MM-YYYY") },
@@ -469,7 +436,7 @@ const PaymentForRPADModal = ({ path }) => {
   }, [hearingsData?.HearingList]);
 
   const links = useMemo(() => {
-    return [{ text: "View order", link: "", onClick: onViewOrderClick }];
+    return [{ text: "View order", link: "", onClick: getViewOrderClickHandler({ history, caseData, filingNumber }) }];
   }, [caseData]);
 
   const paymentForSummonModalConfig = useMemo(() => {

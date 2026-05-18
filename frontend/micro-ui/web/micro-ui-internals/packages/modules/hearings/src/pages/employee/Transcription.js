@@ -1,5 +1,4 @@
-import React from "react";
-import { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 const TranscriptComponent = ({ setTranscriptText, isRecording, setIsRecording, activeTab, setWitnessDepositionText }) => {
   const [context, setContext] = useState(null);
