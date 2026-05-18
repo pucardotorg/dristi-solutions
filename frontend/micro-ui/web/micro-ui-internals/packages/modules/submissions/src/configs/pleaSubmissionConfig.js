@@ -1,3 +1,14 @@
+import { buildSubmissionTextAreaField } from "./submissionsCreateConfigShared";
+
+const pleaMagistrateRemarksField = buildSubmissionTextAreaField({
+  key: "magistrateRemarks",
+  isMandatory: true,
+  withoutLabel: true,
+  textAreaSubHeader: "MEGISTRATE_REMARKS",
+  isOptional: false,
+  inputStyle: undefined,
+});
+
 const pleaSubmissionConfig = [
   {
     body: [
@@ -148,25 +159,7 @@ const pleaSubmissionConfig = [
           ],
         },
       },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "magistrateRemarks",
-        isMandatory: true,
-        isInfinite: true,
-        withoutLabel: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "MEGISTRATE_REMARKS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: false,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
+      pleaMagistrateRemarksField,
     ],
   },
 ];

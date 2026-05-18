@@ -1,11 +1,16 @@
 import {
-  submissionAdditionalCommentsTextAreaField,
+  buildSubmissionApplicationContextFields,
   submissionAdditionalCommentsTextAreaSection,
   submissionAdditionalCommentsFormatterSection,
   submissionAdditionalInformationValidatedField,
+  submissionChooseComplainantField,
+  submissionDocumentDragDropSection,
   submissionDocumentPurposeSection,
   submissionExtensionBenefitSection,
+  submissionOthersDetailsFormatterField,
+  submissionOthersDragDropSection,
   submissionPoaCommentsSection,
+  submissionReasonForApplicationFormatterField,
   submissionReasonForRequestField,
 } from "./submissionsCreateConfigShared";
 
@@ -88,110 +93,8 @@ export const applicationTypeConfig = [
 export const configsRescheduleRequest = [
   {
     body: [
-      {
-        inline: true,
-        label: "CHOOSE_COMPLAINANT",
-        isMandatory: true,
-        type: "dropdown",
-        key: "selectComplainant",
-        populators: {
-          optionsKey: "name",
-          styles: { maxWidth: "100%" },
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "REF_ORDER_ID",
-        disable: true,
-        isMandatory: false,
-        key: "refOrderId",
-        type: "text",
-        populators: { name: "refOrderId", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "COURT_NAME",
-        isMandatory: true,
-        key: "courtName",
-        type: "text",
-        populators: { name: "courtName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "CASE_NAME",
-        isMandatory: true,
-        key: "caseName",
-        type: "text",
-        populators: { name: "caseName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "CNR_NUMBER",
-        isMandatory: true,
-        key: "cnrNumber",
-        type: "text",
-        populators: { name: "cnrNumber", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "FILING_NUMBER",
-        isMandatory: true,
-        key: "filingNumber",
-        type: "text",
-        populators: { name: "filingNumber", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "DATE_OF_APPLICATION",
-        disable: true,
-        isMandatory: true,
-        key: "applicationDate",
-        type: "date",
-        populators: { name: "applicationDate" },
-      },
-      {
-        inline: true,
-        label: "APPLICANT_NAME",
-        isMandatory: true,
-        key: "applicantName",
-        type: "text",
-        populators: { name: "applicantName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "PARTY_TYPE",
-        isMandatory: true,
-        type: "dropdown",
-        key: "partyType",
-        populators: {
-          optionsKey: "name",
-          hideInForm: true,
-          options: [
-            {
-              code: "complainant",
-              name: "Complainant",
-            },
-            {
-              code: "respondant",
-              name: "Respondant",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "REPRESENTED_BY",
-        isMandatory: true,
-        key: "representedBy",
-        type: "text",
-        populators: { name: "representedBy", hideInForm: true },
-      },
+      submissionChooseComplainantField,
+      ...buildSubmissionApplicationContextFields({ refOrderIdHideInForm: true }),
       {
         inline: true,
         label: "INITIAL_HEARING_DATE",
@@ -256,110 +159,8 @@ export const configsRescheduleRequest = [
 export const configsCheckoutRequest = [
   {
     body: [
-      {
-        inline: true,
-        label: "CHOOSE_COMPLAINANT",
-        isMandatory: true,
-        type: "dropdown",
-        key: "selectComplainant",
-        populators: {
-          optionsKey: "name",
-          styles: { maxWidth: "100%" },
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "REF_ORDER_ID",
-        disable: true,
-        isMandatory: false,
-        key: "refOrderId",
-        type: "text",
-        populators: { name: "refOrderId" },
-      },
-      {
-        inline: true,
-        label: "COURT_NAME",
-        isMandatory: true,
-        key: "courtName",
-        type: "text",
-        populators: { name: "courtName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "CASE_NAME",
-        isMandatory: true,
-        key: "caseName",
-        type: "text",
-        populators: { name: "caseName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "CNR_NUMBER",
-        isMandatory: true,
-        key: "cnrNumber",
-        type: "text",
-        populators: { name: "cnrNumber", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "FILING_NUMBER",
-        isMandatory: true,
-        key: "filingNumber",
-        type: "text",
-        populators: { name: "filingNumber", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "DATE_OF_APPLICATION",
-        disable: true,
-        isMandatory: true,
-        key: "applicationDate",
-        type: "date",
-        populators: { name: "applicationDate" },
-      },
-      {
-        inline: true,
-        label: "APPLICANT_NAME",
-        isMandatory: true,
-        key: "applicantName",
-        type: "text",
-        populators: { name: "applicantName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "PARTY_TYPE",
-        isMandatory: true,
-        type: "dropdown",
-        key: "partyType",
-        populators: {
-          optionsKey: "name",
-          hideInForm: true,
-          options: [
-            {
-              code: "complainant",
-              name: "Complainant",
-            },
-            {
-              code: "respondant",
-              name: "Respondant",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "REPRESENTED_BY",
-        isMandatory: true,
-        key: "representedBy",
-        type: "text",
-        populators: { name: "representedBy", hideInForm: true },
-      },
+      submissionChooseComplainantField,
+      ...buildSubmissionApplicationContextFields(),
       {
         inline: true,
         label: "INITIAL_HEARING_DATE",
@@ -423,112 +224,8 @@ export const configsCheckoutRequest = [
 export const configsExtensionSubmissionDeadline = [
   {
     body: [
-      {
-        inline: true,
-        label: "CHOOSE_COMPLAINANT",
-        isMandatory: true,
-        type: "dropdown",
-        key: "selectComplainant",
-        populators: {
-          optionsKey: "name",
-          styles: { maxWidth: "100%" },
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "REF_ORDER_ID",
-        isMandatory: false,
-        disable: true,
-        key: "refOrderId",
-        type: "text",
-        populators: { name: "refOrderId" },
-      },
-      {
-        inline: true,
-        label: "COURT_NAME",
-        isMandatory: true,
-        key: "courtName",
-        type: "text",
-        populators: { name: "courtName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "CASE_NAME",
-        isMandatory: true,
-        key: "caseName",
-        type: "text",
-        populators: { name: "caseName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "CNR_NUMBER",
-        isMandatory: true,
-        key: "cnrNumber",
-        type: "text",
-        populators: { name: "cnrNumber", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "FILING_NUMBER",
-        isMandatory: true,
-        key: "filingNumber",
-        type: "text",
-        populators: { name: "filingNumber", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "DATE_OF_APPLICATION",
-        disable: true,
-        isMandatory: true,
-        key: "applicationDate",
-        type: "date",
-        populators: {
-          name: "applicationDate",
-        },
-      },
-      {
-        inline: true,
-        label: "APPLICANT_NAME",
-        isMandatory: true,
-        key: "applicantName",
-        type: "text",
-        populators: { name: "applicantName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "PARTY_TYPE",
-        isMandatory: true,
-        type: "dropdown",
-        key: "partyType",
-        populators: {
-          optionsKey: "name",
-          hideInForm: true,
-          options: [
-            {
-              code: "complainant",
-              name: "Complainant",
-            },
-            {
-              code: "respondant",
-              name: "Respondant",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "REPRESENTED_BY",
-        isMandatory: true,
-        key: "representedBy",
-        type: "text",
-        populators: { name: "representedBy", hideInForm: true },
-      },
+      submissionChooseComplainantField,
+      ...buildSubmissionApplicationContextFields(),
       {
         inline: true,
         label: "DOCUMENT_TYPE",
@@ -607,22 +304,7 @@ export const configsExtensionSubmissionDeadline = [
 export const configsDocumentSubmission = [
   {
     body: [
-      {
-        inline: true,
-        label: "CHOOSE_COMPLAINANT",
-        isMandatory: true,
-        type: "dropdown",
-        key: "selectComplainant",
-        populators: {
-          optionsKey: "name",
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
-        },
-      },
+      submissionChooseComplainantField({ withStyles: false }),
       {
         inline: true,
         label: "DOCUMENT_TYPE",
@@ -659,145 +341,14 @@ export const configsDocumentSubmission = [
     ],
   },
   submissionDocumentPurposeSection,
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomDragDrop",
-        key: "submissionDocuments",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              isMandatory: true,
-              name: "documents",
-              documentHeader: "DOCUMENT",
-              documentHeaderStyle: { fontSize: "16px", fontWeight: 400, marginBottom: 0 },
-              type: "DragDropComponent",
-              maxFileSize: 10,
-              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-              fileTypes: ["TXT", "DOC", "PDF", "DOCX", "PNG", "JPG", "JPEG"],
-              isMultipleUpload: false,
-              uploadGuidelines: "UPLOAD_DOC_10",
-              headerClassName: "dristi-font-bold",
-            },
-          ],
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-        },
-      },
-    ],
-  },
+  submissionDocumentDragDropSection,
 ];
 
 export const configsProductionOfDocuments = [
   {
     body: [
-      {
-        inline: true,
-        label: "CHOOSE_COMPLAINANT",
-        isMandatory: true,
-        type: "dropdown",
-        key: "selectComplainant",
-        populators: {
-          optionsKey: "name",
-          styles: { maxWidth: "100%" },
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "REF_ORDER_ID",
-        isMandatory: false,
-        disable: true,
-        key: "refOrderId",
-        type: "text",
-        populators: { name: "refOrderId" },
-      },
-      {
-        inline: true,
-        label: "COURT_NAME",
-        isMandatory: true,
-        key: "courtName",
-        type: "text",
-        populators: { name: "courtName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "CASE_NAME",
-        isMandatory: true,
-        key: "caseName",
-        type: "text",
-        populators: { name: "caseName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "CNR_NUMBER",
-        isMandatory: true,
-        key: "cnrNumber",
-        type: "text",
-        populators: { name: "cnrNumber", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "FILING_NUMBER",
-        isMandatory: true,
-        key: "filingNumber",
-        type: "text",
-        populators: { name: "filingNumber", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "DATE_OF_APPLICATION",
-        disable: true,
-        isMandatory: true,
-        key: "applicationDate",
-        type: "date",
-        populators: {
-          name: "applicationDate",
-        },
-      },
-      {
-        inline: true,
-        label: "APPLICANT_NAME",
-        isMandatory: true,
-        key: "applicantName",
-        type: "text",
-        populators: { name: "applicantName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "PARTY_TYPE",
-        isMandatory: true,
-        type: "dropdown",
-        key: "partyType",
-        populators: {
-          optionsKey: "name",
-          hideInForm: true,
-          options: [
-            {
-              code: "complainant",
-              name: "Complainant",
-            },
-            {
-              code: "respondant",
-              name: "Respondant",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "REPRESENTED_BY",
-        isMandatory: true,
-        key: "representedBy",
-        type: "text",
-        populators: { name: "representedBy", hideInForm: true },
-      },
+      submissionChooseComplainantField,
+      ...buildSubmissionApplicationContextFields(),
       {
         type: "component",
         component: "AddSubmissionDocument",
@@ -855,27 +406,7 @@ export const configsProductionOfDocuments = [
           ],
         },
       },
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomFormatterTextArea",
-        schemaKeyPath: "applicationDetails.reasonForApplication",
-        transformer: "customTextArea",
-        key: "reasonForApplication",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "REASON_FOR_APPLICATION",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: false,
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
+      submissionReasonForApplicationFormatterField,
     ],
   },
   submissionAdditionalCommentsFormatterSection,
@@ -884,112 +415,8 @@ export const configsProductionOfDocuments = [
 export const configsCaseWithdrawal = [
   {
     body: [
-      {
-        inline: true,
-        label: "CHOOSE_COMPLAINANT",
-        isMandatory: true,
-        type: "dropdown",
-        key: "selectComplainant",
-        populators: {
-          optionsKey: "name",
-          styles: { maxWidth: "100%" },
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "REF_ORDER_ID",
-        isMandatory: false,
-        disable: true,
-        key: "refOrderId",
-        type: "text",
-        populators: { name: "refOrderId" },
-      },
-      {
-        inline: true,
-        label: "COURT_NAME",
-        isMandatory: true,
-        key: "courtName",
-        type: "text",
-        populators: { name: "courtName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "CASE_NAME",
-        isMandatory: true,
-        key: "caseName",
-        type: "text",
-        populators: { name: "caseName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "CNR_NUMBER",
-        isMandatory: true,
-        key: "cnrNumber",
-        type: "text",
-        populators: { name: "cnrNumber", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "FILING_NUMBER",
-        isMandatory: true,
-        key: "filingNumber",
-        type: "text",
-        populators: { name: "filingNumber", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "DATE_OF_APPLICATION",
-        disable: true,
-        isMandatory: true,
-        key: "applicationDate",
-        type: "date",
-        populators: {
-          name: "applicationDate",
-        },
-      },
-      {
-        inline: true,
-        label: "APPLICANT_NAME",
-        isMandatory: true,
-        key: "applicantName",
-        type: "text",
-        populators: { name: "applicantName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "PARTY_TYPE",
-        isMandatory: true,
-        type: "dropdown",
-        key: "partyType",
-        populators: {
-          optionsKey: "name",
-          hideInForm: true,
-          options: [
-            {
-              code: "complainant",
-              name: "Complainant",
-            },
-            {
-              code: "respondant",
-              name: "Respondant",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "REPRESENTED_BY",
-        isMandatory: true,
-        key: "representedBy",
-        type: "text",
-        populators: { name: "representedBy", hideInForm: true },
-      },
+      submissionChooseComplainantField,
+      ...buildSubmissionApplicationContextFields(),
       {
         inline: true,
         label: "REASON_FOR_WITHDRAWAL",
@@ -1021,112 +448,8 @@ export const configsCaseWithdrawal = [
 export const configsCaseTransfer = [
   {
     body: [
-      {
-        inline: true,
-        label: "CHOOSE_COMPLAINANT",
-        isMandatory: true,
-        type: "dropdown",
-        key: "selectComplainant",
-        populators: {
-          optionsKey: "name",
-          styles: { maxWidth: "100%" },
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "REF_ORDER_ID",
-        isMandatory: false,
-        disable: true,
-        key: "refOrderId",
-        type: "text",
-        populators: { name: "refOrderId" },
-      },
-      {
-        inline: true,
-        label: "COURT_NAME",
-        isMandatory: true,
-        key: "courtName",
-        type: "text",
-        populators: { name: "courtName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "CASE_NAME",
-        isMandatory: true,
-        key: "caseName",
-        type: "text",
-        populators: { name: "caseName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "CNR_NUMBER",
-        isMandatory: true,
-        key: "cnrNumber",
-        type: "text",
-        populators: { name: "cnrNumber", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "FILING_NUMBER",
-        isMandatory: true,
-        key: "filingNumber",
-        type: "text",
-        populators: { name: "filingNumber", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "DATE_OF_APPLICATION",
-        disable: true,
-        isMandatory: true,
-        key: "applicationDate",
-        type: "date",
-        populators: {
-          name: "applicationDate",
-        },
-      },
-      {
-        inline: true,
-        label: "APPLICANT_NAME",
-        isMandatory: true,
-        key: "applicantName",
-        type: "text",
-        populators: { name: "applicantName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "PARTY_TYPE",
-        isMandatory: true,
-        type: "dropdown",
-        key: "partyType",
-        populators: {
-          optionsKey: "name",
-          hideInForm: true,
-          options: [
-            {
-              code: "complainant",
-              name: "Complainant",
-            },
-            {
-              code: "respondant",
-              name: "Respondant",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "REPRESENTED_BY",
-        isMandatory: true,
-        key: "representedBy",
-        type: "text",
-        populators: { name: "representedBy", hideInForm: true },
-      },
+      submissionChooseComplainantField,
+      ...buildSubmissionApplicationContextFields(),
       {
         inline: true,
         label: "REQUESTED_COURT",
@@ -1163,112 +486,8 @@ export const configsCaseTransfer = [
 export const configsSettlement = [
   {
     body: [
-      {
-        inline: true,
-        label: "CHOOSE_COMPLAINANT",
-        isMandatory: true,
-        type: "dropdown",
-        key: "selectComplainant",
-        populators: {
-          optionsKey: "name",
-          styles: { maxWidth: "100%" },
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "REF_ORDER_ID",
-        isMandatory: false,
-        disable: true,
-        key: "refOrderId",
-        type: "text",
-        populators: { name: "refOrderId" },
-      },
-      {
-        inline: true,
-        label: "COURT_NAME",
-        isMandatory: true,
-        key: "courtName",
-        type: "text",
-        populators: { name: "courtName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "CASE_NAME",
-        isMandatory: true,
-        key: "caseName",
-        type: "text",
-        populators: { name: "caseName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "CNR_NUMBER",
-        isMandatory: true,
-        key: "cnrNumber",
-        type: "text",
-        populators: { name: "cnrNumber", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "FILING_NUMBER",
-        isMandatory: true,
-        key: "filingNumber",
-        type: "text",
-        populators: { name: "filingNumber", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "DATE_OF_APPLICATION",
-        disable: true,
-        isMandatory: true,
-        key: "applicationDate",
-        type: "date",
-        populators: {
-          name: "applicationDate",
-        },
-      },
-      {
-        inline: true,
-        label: "APPLICANT_NAME",
-        isMandatory: true,
-        key: "applicantName",
-        type: "text",
-        populators: { name: "applicantName", hideInForm: true },
-      },
-      {
-        inline: true,
-        label: "PARTY_TYPE",
-        isMandatory: true,
-        type: "dropdown",
-        key: "partyType",
-        populators: {
-          optionsKey: "name",
-          hideInForm: true,
-          options: [
-            {
-              code: "complainant",
-              name: "Complainant",
-            },
-            {
-              code: "respondant",
-              name: "Respondant",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        label: "REPRESENTED_BY",
-        isMandatory: true,
-        key: "representedBy",
-        type: "text",
-        populators: { name: "representedBy", hideInForm: true },
-      },
+      submissionChooseComplainantField,
+      ...buildSubmissionApplicationContextFields(),
     ],
   },
   submissionAdditionalCommentsFormatterSection,
@@ -1277,23 +496,7 @@ export const configsSettlement = [
 export const configsOthers = [
   {
     body: [
-      {
-        inline: true,
-        label: "CHOOSE_COMPLAINANT",
-        isMandatory: true,
-        type: "dropdown",
-        key: "selectComplainant",
-        populators: {
-          optionsKey: "name",
-          styles: { maxWidth: "100%" },
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
-        },
-      },
+      submissionChooseComplainantField,
       {
         label: "APPLICATION_TITLE",
         isMandatory: true,
@@ -1314,50 +517,7 @@ export const configsOthers = [
     ],
   },
   {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomDragDrop",
-        key: "othersDocument",
-        isMandatory: false,
-        populators: {
-          inputs: [
-            {
-              isMandatory: false,
-              name: "documents",
-              documentHeader: "OTHERS_DOCUMENT",
-              documentHeaderStyle: { fontSize: "19px", fontWeight: 700 },
-              type: "DragDropComponent",
-              maxFileSize: 10,
-              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-              fileTypes: ["PDF", "JPEG", "PNG", "JPG"],
-              uploadGuidelines: "UPLOAD_PDF_JPEG_50",
-              headerClassName: "dristi-font-bold",
-              isOptional: "CS_IS_OPTIONAL",
-            },
-          ],
-        },
-      },
-      {
-        type: "component",
-        component: "SelectCustomFormatterTextArea",
-        schemaKeyPath: "applicationDetails.reasonForApplication",
-        transformer: "customTextArea",
-        key: "applicationDetails",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "DETAILS",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
+    body: [...submissionOthersDragDropSection.body, submissionOthersDetailsFormatterField],
   },
 ];
 
@@ -1741,23 +901,7 @@ export const requestForBail = [
 export const submitDocsForBail = [
   {
     body: [
-      {
-        inline: true,
-        label: "CHOOSE_COMPLAINANT",
-        isMandatory: true,
-        type: "dropdown",
-        key: "selectComplainant",
-        populators: {
-          optionsKey: "name",
-          styles: { maxWidth: "100%" },
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
-        },
-      },
+      submissionChooseComplainantField,
       {
         key: "refOrderId",
         type: "component",
@@ -1866,23 +1010,7 @@ export const submitDocsForBail = [
 export const submitDelayCondonation = [
   {
     body: [
-      {
-        inline: true,
-        label: "CHOOSE_COMPLAINANT",
-        isMandatory: true,
-        type: "dropdown",
-        key: "selectComplainant",
-        populators: {
-          optionsKey: "name",
-          styles: { maxWidth: "100%" },
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
-        },
-      },
+      submissionChooseComplainantField,
       {
         label: "MENTIONED_NO_OF_DELAYS",
         isMandatory: true,
@@ -2042,23 +1170,7 @@ export const configsAdvancementOrAdjournment = [
         schemaKeyPath: "applicationDetails.refHearingId",
         populators: { name: "refHearingId", customStyle: { display: "none" } },
       },
-      {
-        inline: true,
-        label: "CHOOSE_COMPLAINANT",
-        isMandatory: true,
-        type: "dropdown",
-        key: "selectComplainant",
-        populators: {
-          optionsKey: "name",
-          styles: { maxWidth: "100%" },
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
-        },
-      },
+      submissionChooseComplainantField,
       {
         label: "hearing purpose",
         isMandatory: false,
