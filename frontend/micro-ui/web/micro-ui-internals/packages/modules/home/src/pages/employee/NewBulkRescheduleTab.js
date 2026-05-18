@@ -431,7 +431,10 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         console.error("error", error);
         setSignFormData({});
         setIsSigned(false);
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+        setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
+        setShowToast({ label: t(errorCode), error: true, errorId });
       } finally {
         setSignLoader(false);
       }
