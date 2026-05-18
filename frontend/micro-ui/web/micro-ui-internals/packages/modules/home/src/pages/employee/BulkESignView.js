@@ -1,4 +1,4 @@
-import { SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
 import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -9,29 +9,17 @@ import { orderManagementService, ordersService } from "@egovernments/digit-ui-mo
 import { OrderWorkflowAction, OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import OrderBulkReviewModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderBulkReviewModal";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
-import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
-import qs from "qs";
 import { HomeService } from "../../hooks/services";
 import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-
-const parseXml = (xmlString, tagName) => {
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-
-  const element = xmlDoc.getElementsByTagName(tagName)[0];
-  return element ? element.textContent.trim() : null;
-};
-
-const sectionsParentStyle = {
-  height: "50%",
-  display: "flex",
-  flexDirection: "column",
-  gridTemplateColumns: "20% 1fr",
-  gap: "1rem",
-};
+import {
+  buildBulkSignedResponses,
+  BulkSignConfirmModal,
+  BulkSignSubmitBar,
+  bulkSignSectionsParentStyle,
+} from "./shared/bulkSignViewShared";
 
 function BulkESignView() {
   const { t } = useTranslation();
@@ -267,46 +255,27 @@ function BulkESignView() {
     }
   };
 
-  const fetchResponseFromXmlRequest = async (orderRequestList) => {
-    const responses = [];
-
-    const requests = orderRequestList?.map(async (order) => {
-      try {
-        // URL encoding the XML request
-        const formData = qs.stringify({ response: order?.request });
-        const response = await axiosInstance.post(bulkSignUrl, formData, {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          },
-        });
-
-        const data = response?.data;
-
-        if (parseXml(data, "status") !== "failed") {
-          responses.push({
-            orderNumber: order?.orderNumber,
-            signedOrderData: parseXml(data, "data"),
-            signed: true,
-            errorMsg: null,
-            tenantId: tenantId,
-          });
-        } else {
-          responses.push({
-            orderNumber: order?.orderNumber,
-            signedOrderData: parseXml(data, "data"),
-            signed: false,
-            errorMsg: parseXml(data, "error"),
-            tenantId: tenantId,
-          });
-        }
-      } catch (error) {
-        console.error(`Error fetching order ${order?.orderNumber}:`, error?.message);
-      }
+  const fetchResponseFromXmlRequest = (orderRequestList) =>
+    buildBulkSignedResponses({
+      requestList: orderRequestList,
+      bulkSignUrl,
+      buildSuccessResponse: (signedData, order) => ({
+        orderNumber: order?.orderNumber,
+        signedOrderData: signedData,
+        signed: true,
+        errorMsg: null,
+        tenantId,
+      }),
+      buildFailureResponse: (signedData, errorMsg, order) => ({
+        orderNumber: order?.orderNumber,
+        signedOrderData: signedData,
+        signed: false,
+        errorMsg,
+        tenantId,
+      }),
+      logErrorLabel: "Error fetching order",
+      logErrorIdField: "orderNumber",
     });
-
-    await Promise.allSettled(requests);
-    return responses;
-  };
 
   const handleBulkSign = async () => {
     setShowBulkSignConfirmModal(false);
@@ -365,18 +334,14 @@ function BulkESignView() {
         <React.Fragment>
           <div className={"bulk-esign-order-view select"}>
             <div className="header">{t("CS_HOME_ORDERS")}</div>
-            <InboxSearchComposer customStyle={sectionsParentStyle} configs={config} onFormValueChange={onFormValueChange}></InboxSearchComposer>{" "}
+            <InboxSearchComposer customStyle={bulkSignSectionsParentStyle} configs={config} onFormValueChange={onFormValueChange}></InboxSearchComposer>{" "}
           </div>
-          {hasOrderEsignAccess && (
-            <div className="bulk-submit-bar">
-              <SubmitBar
-                label={t("SIGN_SELECTED_ORDERS")}
-                submit="submit"
-                disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
-                onSubmit={() => setShowBulkSignConfirmModal(true)}
-              />
-            </div>
-          )}
+          <BulkSignSubmitBar
+            show={hasOrderEsignAccess}
+            label={t("SIGN_SELECTED_ORDERS")}
+            disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
+            onSubmit={() => setShowBulkSignConfirmModal(true)}
+          />
         </React.Fragment>
       )}
       {showBulkSignAllModal && <OrderBulkReviewModal t={t} history={history} orderDetails={orderDetails} />}
@@ -404,24 +369,16 @@ function BulkESignView() {
           }
         />
       )}
-      {showBulkSignConfirmModal && (
-        <Modal
-          headerBarMain={<Heading label={t("CONFIRM_BULK_SIGN")} />}
-          headerBarEnd={<CloseBtn onClick={() => setShowBulkSignConfirmModal(false)} />}
-          actionCancelLabel={t("CS_BULK_BACK")}
-          actionCancelOnSubmit={() => setShowBulkSignConfirmModal(false)}
-          actionSaveLabel={t("CS_BULK_SIGN_AND_PUBLISH")}
-          actionSaveOnSubmit={() => handleBulkSign()}
-          style={{ height: "40px", background: "#007E7E" }}
-          popupStyles={{ width: "35%" }}
-          className={"review-order-modal"}
-          children={
-            <div className="delete-warning-text">
-              <h3 style={{ margin: "12px 24px" }}>{t("CONFIRM_BULK_SIGN_TEXT")}</h3>
-            </div>
-          }
-        />
-      )}
+      <BulkSignConfirmModal
+        open={showBulkSignConfirmModal}
+        onCancel={() => setShowBulkSignConfirmModal(false)}
+        onConfirm={() => handleBulkSign()}
+        t={t}
+        confirmText="CONFIRM_BULK_SIGN_TEXT"
+        HeadingComponent={Heading}
+        CloseBtnComponent={CloseBtn}
+      />
+      {/* OrderIssueBulkSuccesModal stays here because the success step is a custom flow */}
       {showBulkSignSuccessModal && <OrderIssueBulkSuccesModal t={t} history={history} bulkSignOrderListLength={signedList?.length} />}
       {showToast && (
         <CustomToast

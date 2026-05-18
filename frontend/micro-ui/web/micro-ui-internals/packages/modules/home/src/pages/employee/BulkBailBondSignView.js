@@ -2,20 +2,18 @@ import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { bulkBailBondSignConfig } from "../../configs/BulkBailBondSignConfig";
-import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { BailBondSignModal } from "./BailBondSignModal";
-import qs from "qs";
 import { HomeService } from "../../hooks/services";
 import { numberToWords } from "@egovernments/digit-ui-module-orders/src/utils";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import {
+  buildBulkSignedResponses,
   BulkSignConfirmModal,
   BulkSignLoadingOverlay,
   BulkSignSubmitBar,
   BulkSignSuccessModal,
   bulkSignSectionsParentStyle,
-  parseSignedXml,
 } from "./shared/bulkSignViewShared";
 
 function BulkBailBondSignView({ setShowToast = () => {} }) {
@@ -113,45 +111,27 @@ function BulkBailBondSignView({ setShowToast = () => {} }) {
     ],
   };
 
-  const fetchResponseFromXmlRequest = async (bailBondRequestList) => {
-    const responses = [];
-
-    const requests = bailBondRequestList?.map(async (bailBond) => {
-      try {
-        const formData = qs.stringify({ response: bailBond?.request });
-        const response = await axiosInstance.post(bulkSignUrl, formData, {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          },
-        });
-
-        const data = response?.data;
-
-        if (parseSignedXml(data, "status") !== "failed") {
-          responses.push({
-            bailId: bailBond?.bailId,
-            signedBailData: parseSignedXml(data, "data"),
-            signed: true,
-            errorMsg: null,
-            tenantId: tenantId,
-          });
-        } else {
-          responses.push({
-            bailId: bailBond?.bailId,
-            signedBailData: parseSignedXml(data, "data"),
-            signed: false,
-            errorMsg: parseSignedXml(data, "error"),
-            tenantId: tenantId,
-          });
-        }
-      } catch (error) {
-        console.error(`Error fetching bailBond ${bailBond?.bailId}:`, error?.message);
-      }
+  const fetchResponseFromXmlRequest = (bailBondRequestList) =>
+    buildBulkSignedResponses({
+      requestList: bailBondRequestList,
+      bulkSignUrl,
+      buildSuccessResponse: (signedData, bailBond) => ({
+        bailId: bailBond?.bailId,
+        signedBailData: signedData,
+        signed: true,
+        errorMsg: null,
+        tenantId,
+      }),
+      buildFailureResponse: (signedData, errorMsg, bailBond) => ({
+        bailId: bailBond?.bailId,
+        signedBailData: signedData,
+        signed: false,
+        errorMsg,
+        tenantId,
+      }),
+      logErrorLabel: "Error fetching bailBond",
+      logErrorIdField: "bailId",
     });
-
-    await Promise.allSettled(requests);
-    return responses;
-  };
 
   const handleBulkSign = useCallback(async () => {
     try {

@@ -1,6 +1,38 @@
 import { DateUtils, isLPRCase } from "../../../../Utils";
 import { OrderWorkflowAction } from "../../../../Utils/orderWorkflow";
 
+/**
+ * Shared scaffold for the "create draft order" payload that both helpers in
+ * this file (and the wider AdmittedCases flow) hand to ordersService.createOrder.
+ * It centralises the SAVE_DRAFT workflow + the empty `documents` array, leaving
+ * callers free to pass `orderTitle`, `orderType`, the `formdata`, and any extra
+ * top-level keys.
+ */
+const buildDraftOrderReqBody = ({ tenantId, cnrNumber, filingNumber, orderTitle, orderType, formdata, extraOrderFields = {} }) => ({
+  order: {
+    createdDate: null,
+    tenantId,
+    cnrNumber,
+    filingNumber,
+    statuteSection: { tenantId },
+    orderTitle,
+    orderCategory: "INTERMEDIATE",
+    orderType,
+    status: "",
+    isActive: true,
+    workflow: {
+      action: OrderWorkflowAction.SAVE_DRAFT,
+      comments: "Creating order",
+      assignes: null,
+      rating: null,
+      documents: [{}],
+    },
+    documents: [],
+    additionalDetails: { formdata },
+    ...extraOrderFields,
+  },
+});
+
 // Helper function to handle admit/dismiss case order creation
 export const handleAdmitDismissCaseOrder = async ({
   generateOrder,
@@ -31,39 +63,22 @@ export const handleAdmitDismissCaseOrder = async ({
       },
     };
     if (generateOrder) {
-      const reqbody = {
-        order: {
-          createdDate: null,
-          tenantId,
-          cnrNumber,
-          filingNumber,
-          statuteSection: {
-            tenantId,
-          },
-          orderTitle: t(orderType),
-          orderCategory: "INTERMEDIATE",
-          orderType,
-          status: "",
-          isActive: true,
-          workflow: {
-            action: OrderWorkflowAction.SAVE_DRAFT,
-            comments: "Creating order",
-            assignes: null,
-            rating: null,
-            documents: [{}],
-          },
-          documents: [],
-          additionalDetails: {
-            formdata,
-          },
-          ...(documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
-            orderDetails: {
-              parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }],
-              caseNumber: caseNumber,
-            },
-          }),
-        },
-      };
+      const reqbody = buildDraftOrderReqBody({
+        tenantId,
+        cnrNumber,
+        filingNumber,
+        orderTitle: t(orderType),
+        orderType,
+        formdata,
+        extraOrderFields: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName
+          ? {
+              orderDetails: {
+                parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }],
+                caseNumber,
+              },
+            }
+          : {},
+      });
       try {
         const res = await ordersService.createOrder(reqbody, { tenantId });
         const name = orderType;
@@ -114,41 +129,22 @@ export const handleCaseAdmittedSubmit = async ({
 }) => {
   const dateArr = data.date.split(" ").map((date, i) => (i === 0 ? date.slice(0, date.length - 2) : date));
   const date = new Date(dateArr.join(" "));
-  const reqBody = {
-    order: {
-      createdDate: null,
-      tenantId,
-      cnrNumber,
-      filingNumber: filingNumber,
-      statuteSection: {
-        tenantId,
-      },
-      orderTitle: "SCHEDULE_OF_HEARING_DATE",
-      orderCategory: "INTERMEDIATE",
-      orderType: "SCHEDULE_OF_HEARING_DATE",
-      status: "",
-      isActive: true,
-      workflow: {
-        action: OrderWorkflowAction.SAVE_DRAFT,
-        comments: "Creating order",
-        assignes: null,
-        rating: null,
-        documents: [{}],
-      },
-      documents: [],
-      additionalDetails: {
-        formdata: {
-          hearingDate: DateUtils.getFormattedDate(date).split("-").reverse().join("-"),
-          hearingPurpose: data.purpose,
-          orderType: {
-            code: "SCHEDULE_OF_HEARING_DATE",
-            type: "SCHEDULE_OF_HEARING_DATE",
-            name: "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
-          },
-        },
+  const reqBody = buildDraftOrderReqBody({
+    tenantId,
+    cnrNumber,
+    filingNumber,
+    orderTitle: "SCHEDULE_OF_HEARING_DATE",
+    orderType: "SCHEDULE_OF_HEARING_DATE",
+    formdata: {
+      hearingDate: DateUtils.getFormattedDate(date).split("-").reverse().join("-"),
+      hearingPurpose: data.purpose,
+      orderType: {
+        code: "SCHEDULE_OF_HEARING_DATE",
+        type: "SCHEDULE_OF_HEARING_DATE",
+        name: "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
       },
     },
-  };
+  });
 
   try {
     const res = await ordersService.createOrder(reqBody, { tenantId });

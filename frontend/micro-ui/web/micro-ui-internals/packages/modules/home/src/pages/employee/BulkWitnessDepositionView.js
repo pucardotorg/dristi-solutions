@@ -2,20 +2,18 @@ import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { bulkWitnessDepositionSignConfig } from "../../configs/BulkWitnessDepositionSignConfig";
-import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { WitnessDepositionSignModal } from "./WitnessDepositionSignModal";
-import qs from "qs";
 import { HomeService } from "../../hooks/services";
 import { numberToWords } from "@egovernments/digit-ui-module-orders/src/utils";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import {
+  buildBulkSignedResponses,
   BulkSignConfirmModal,
   BulkSignLoadingOverlay,
   BulkSignSubmitBar,
   BulkSignSuccessModal,
   bulkSignSectionsParentStyle,
-  parseSignedXml,
 } from "./shared/bulkSignViewShared";
 
 function BulkWitnessDepositionView({ setShowToast = () => {} }) {
@@ -123,47 +121,29 @@ function BulkWitnessDepositionView({ setShowToast = () => {} }) {
     ],
   };
 
-  const fetchResponseFromXmlRequest = async (witnessDepositionRequestList) => {
-    const responses = [];
-
-    const requests = witnessDepositionRequestList?.map(async (deposition) => {
-      try {
-        const formData = qs.stringify({ response: deposition?.request });
-        const response = await axiosInstance.post(bulkSignUrl, formData, {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          },
-        });
-
-        const data = response?.data;
-
-        if (parseSignedXml(data, "status") !== "failed") {
-          responses.push({
-            artifactNumber: deposition?.artifactNumber,
-            signedArtifactData: parseSignedXml(data, "data"),
-            isWitnessDeposition: true,
-            signed: true,
-            errorMsg: null,
-            tenantId: tenantId,
-          });
-        } else {
-          responses.push({
-            artifactNumber: deposition?.artifactNumber,
-            signedArtifactData: parseSignedXml(data, "data"),
-            isWitnessDeposition: true,
-            signed: false,
-            errorMsg: parseSignedXml(data, "error"),
-            tenantId: tenantId,
-          });
-        }
-      } catch (error) {
-        console.error(`Error fetching witness deposition ${deposition?.artifactNumber}:`, error?.message);
-      }
+  const fetchResponseFromXmlRequest = (witnessDepositionRequestList) =>
+    buildBulkSignedResponses({
+      requestList: witnessDepositionRequestList,
+      bulkSignUrl,
+      buildSuccessResponse: (signedData, deposition) => ({
+        artifactNumber: deposition?.artifactNumber,
+        signedArtifactData: signedData,
+        isWitnessDeposition: true,
+        signed: true,
+        errorMsg: null,
+        tenantId,
+      }),
+      buildFailureResponse: (signedData, errorMsg, deposition) => ({
+        artifactNumber: deposition?.artifactNumber,
+        signedArtifactData: signedData,
+        isWitnessDeposition: true,
+        signed: false,
+        errorMsg,
+        tenantId,
+      }),
+      logErrorLabel: "Error fetching witness deposition",
+      logErrorIdField: "artifactNumber",
     });
-
-    await Promise.allSettled(requests);
-    return responses;
-  };
 
   const handleBulkSign = useCallback(async () => {
     try {

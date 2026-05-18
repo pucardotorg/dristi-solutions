@@ -10,6 +10,26 @@ import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/au
 import { ORDER_TYPES } from "../utils/constants";
 import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
 
+const yourSignatureHeadingStyle = {
+  margin: 0,
+  fontFamily: "Roboto",
+  fontSize: "24px",
+  fontWeight: 700,
+  lineHeight: "28.13px",
+  textAlign: "left",
+  color: "#3d3c3c",
+};
+
+const signatureLinkButtonStyle = {
+  background: "none",
+  color: "#007e7e",
+  boxShadow: "none",
+  fontFamily: "Roboto",
+  fontSize: "16px",
+  fontWeight: 700,
+  textAlign: "center",
+};
+
 const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData, setSignatureId, signatureId, deliveryChannel }) => {
   const [showToast, setShowToast] = useState(null);
   const { handleEsign, checkSignStatus } = useESign();
@@ -122,33 +142,12 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
 
           {!isSigned ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <h1
-                style={{
-                  margin: 0,
-                  fontFamily: "Roboto",
-                  fontSize: "24px",
-                  fontWeight: 700,
-                  lineHeight: "28.13px",
-                  textAlign: "left",
-                  color: "#3d3c3c",
-                }}
-              >
-                {t("YOUR_SIGNATURE")}
-              </h1>
+              <h1 style={yourSignatureHeadingStyle}>{t("YOUR_SIGNATURE")}</h1>
               <div style={{ display: "flex", gap: "16px" }}>
                 <Button
                   label={t("CS_ESIGN")}
                   onButtonClick={handleClickEsign}
-                  style={{
-                    width: "96px",
-                    background: "none",
-                    color: "#007e7e",
-                    boxShadow: "none",
-                    fontFamily: "Roboto",
-                    fontSize: "16px",
-                    fontWeight: 700,
-                    textAlign: "center",
-                  }}
+                  style={{ width: "96px", ...signatureLinkButtonStyle }}
                 />
                 <Button
                   icon={<FileUploadIcon />}
@@ -156,16 +155,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
                   onButtonClick={() => {
                     setOpenUploadSignatureModal(true);
                   }}
-                  style={{
-                    background: "none",
-                    color: "#007e7e",
-                    border: "none",
-                    boxShadow: "none",
-                    fontFamily: "Roboto",
-                    fontSize: "16px",
-                    fontWeight: 700,
-                    textAlign: "center",
-                  }}
+                  style={{ ...signatureLinkButtonStyle, border: "none" }}
                 />
               </div>
               <div style={{ display: "flex", gap: "8px" }}>
@@ -183,19 +173,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                <h1
-                  style={{
-                    margin: 0,
-                    fontFamily: "Roboto",
-                    fontSize: "24px",
-                    fontWeight: 700,
-                    lineHeight: "28.13px",
-                    textAlign: "left",
-                    color: "#3d3c3c",
-                  }}
-                >
-                  {t("YOUR_SIGNATURE")}
-                </h1>
+                <h1 style={yourSignatureHeadingStyle}>{t("YOUR_SIGNATURE")}</h1>
                 <h2
                   style={{
                     margin: 0,

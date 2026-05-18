@@ -12,6 +12,39 @@ const getLocation = (places, code) => {
   })?.long_name;
   return location ? location : null;
 };
+
+const ADDRESS_RESET_KEYS = ["state", "district", "city", "locality", "coordinates", "pincode"];
+
+/**
+ * Builds the "blank the whole address but keep the pincode" patch that
+ * runs in three places: pincode geocode rejected the response, geocode
+ * call failed, and the user typed a non-6-digit pincode with autoFill.
+ */
+const buildAddressResetPatch = (pincode) =>
+  ADDRESS_RESET_KEYS.reduce((res, curr) => {
+    res[curr] = curr === "pincode" ? pincode : "";
+    return res;
+  }, {});
+
+/**
+ * Joins the plus_code / neighborhood / sublocality_level_1+2 fields a Google
+ * Maps geocode response gives back into a single "locality" string. Returns
+ * "" when none of the parts are present.
+ */
+const buildLocalityFromLocation = (location) =>
+  [
+    getLocation(location, "plus_code"),
+    getLocation(location, "neighborhood"),
+    getLocation(location, "sublocality_level_1"),
+    getLocation(location, "sublocality_level_2"),
+  ]
+    .reduce((result, current) => {
+      if (current) {
+        result.push(current);
+      }
+      return result;
+    }, [])
+    .join(", ");
 const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
   const inputs = useMemo(
     () =>
@@ -41,13 +74,7 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
           ) {
             onSelect(config.key, {
               ...formData[config.key],
-              ...["state", "district", "city", "locality", "coordinates", "pincode"].reduce((res, curr) => {
-                res[curr] = "";
-                if (curr === "pincode") {
-                  res[curr] = value;
-                }
-                return res;
-              }, {}),
+              ...buildAddressResetPatch(value),
             });
           } else {
             const [location] = res.data.results;
@@ -57,20 +84,7 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
               state: getLocation(location, "administrative_area_level_1") || "",
               district: getLocation(location, "administrative_area_level_3") || "",
               city: getLocation(location, "locality") || "",
-              locality: (() => {
-                const plusCode = getLocation(location, "plus_code");
-                const neighborhood = getLocation(location, "neighborhood");
-                const sublocality_level_1 = getLocation(location, "sublocality_level_1");
-                const sublocality_level_2 = getLocation(location, "sublocality_level_2");
-                return [plusCode, neighborhood, sublocality_level_1, sublocality_level_2]
-                  .reduce((result, current) => {
-                    if (current) {
-                      result.push(current);
-                    }
-                    return result;
-                  }, [])
-                  .join(", ");
-              })(),
+              locality: buildLocalityFromLocation(location),
               coordinates: { latitude: location.geometry.location.lat, longitude: location.geometry.location.lng },
             });
             coordinateData.callbackFunc({ lat: location.geometry.location.lat, lng: location.geometry.location.lng });
@@ -79,26 +93,14 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
         .catch(() => {
           onSelect(config.key, {
             ...formData[config.key],
-            ...["state", "district", "city", "locality", "coordinates", "pincode"].reduce((res, curr) => {
-              res[curr] = "";
-              if (curr === "pincode") {
-                res[curr] = value;
-              }
-              return res;
-            }, {}),
+            ...buildAddressResetPatch(value),
           });
         });
       return;
     } else if (input === "pincode" && autoFill === true) {
       onSelect(config.key, {
         ...formData[config.key],
-        ...["state", "district", "city", "locality", "coordinates", "pincode"].reduce((res, curr) => {
-          res[curr] = "";
-          if (curr === "pincode") {
-            res[curr] = value;
-          }
-          return res;
-        }, {}),
+        ...buildAddressResetPatch(value),
       });
       return;
     }
@@ -153,23 +155,7 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
                           : getLocation(location, "administrative_area_level_3") || "",
                       city:
                         formData && isFirstRender && formData[config.key] ? formData[config.key]["city"] : getLocation(location, "locality") || "",
-                      locality:
-                        isFirstRender && formData[config.key]
-                          ? formData[config.key]["locality"]
-                          : (() => {
-                              const plusCode = getLocation(location, "plus_code");
-                              const neighborhood = getLocation(location, "neighborhood");
-                              const sublocality_level_1 = getLocation(location, "sublocality_level_1");
-                              const sublocality_level_2 = getLocation(location, "sublocality_level_2");
-                              return [plusCode, neighborhood, sublocality_level_1, sublocality_level_2]
-                                .reduce((result, current) => {
-                                  if (current) {
-                                    result.push(current);
-                                  }
-                                  return result;
-                                }, [])
-                                .join(", ");
-                            })(),
+                      locality: isFirstRender && formData[config.key] ? formData[config.key]["locality"] : buildLocalityFromLocation(location),
                       coordinates,
                       buildingName: formData && isFirstRender && formData[config.key] ? formData[config.key]["buildingName"] : "",
                       doorNo: formData && isFirstRender && formData[config.key] ? formData[config.key]["doorNo"] : "",
