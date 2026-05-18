@@ -20,7 +20,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .InboxComposerWrapper {
     grid-template-columns: calc(25% - 32px) 75%;
     @apply grid gap-x-8 gap-y-6;
@@ -33,8 +33,6 @@
 
     .wns-search-field {
       width: 30% !important;
-      .field-container {
-      }
     }
     .form-field {
       width: 100% !important;

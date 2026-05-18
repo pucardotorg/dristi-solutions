@@ -1,7 +1,6 @@
 import { CardLabelError } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { isEmptyObject } from "../Utils";
-import isEqual from "lodash/isEqual";
 import "react-quill/dist/quill.snow.css";
 import DOMPurify from "dompurify";
 import ReactQuill from "react-quill";
@@ -185,6 +184,32 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
       ))}
     </React.Fragment>
   );
+};
+
+SelectCustomFormatterTextArea.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    disableScrutinyHeader: PropTypes.bool,
+    populators: PropTypes.shape({
+      inputs: PropTypes.arrayOf(
+        PropTypes.shape({
+          name: PropTypes.string,
+          style: PropTypes.object,
+          textAreaHeader: PropTypes.string,
+          headerClassName: PropTypes.string,
+          textAreaStyle: PropTypes.object,
+          textAreaSubHeader: PropTypes.string,
+          subHeaderClassName: PropTypes.string,
+          isOptional: PropTypes.bool,
+          errorStyle: PropTypes.object,
+        })
+      ),
+    }),
+  }).isRequired,
+  formData: PropTypes.object,
+  onSelect: PropTypes.func.isRequired,
+  errors: PropTypes.object,
 };
 
 export default SelectCustomFormatterTextArea;

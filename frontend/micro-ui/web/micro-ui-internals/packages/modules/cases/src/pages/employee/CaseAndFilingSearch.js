@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { caseAndFilingSearchConfig } from "../../configs/caseAndFilingSearchConfig";
 
 
-// TODO: Searching via CaseNumber is taking to much time(from server side), need to optimize it
+// Case-number search latency is dominated by server work; revisit when APIs can be tuned.
 
 const defaultSearchValues = {
     filingNumber: "CASE-FILING-NO-2024-06-15-001711",

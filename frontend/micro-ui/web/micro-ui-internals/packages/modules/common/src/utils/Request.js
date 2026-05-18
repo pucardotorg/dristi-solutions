@@ -112,7 +112,9 @@ export const Request = async ({
 
   let key = "";
   if (useCache) {
-    key = `${method.toUpperCase()}.${url}.${btoa(escape(JSON.stringify(params, null, 0)))}.${btoa(escape(JSON.stringify(data, null, 0)))}`;
+    key = `${method.toUpperCase()}.${url}.${btoa(encodeURIComponent(JSON.stringify(params, null, 0)))}.${btoa(
+      encodeURIComponent(JSON.stringify(data, null, 0))
+    )}`;
     const value = window.Digit.RequestCache[key];
     if (value) {
       return value;

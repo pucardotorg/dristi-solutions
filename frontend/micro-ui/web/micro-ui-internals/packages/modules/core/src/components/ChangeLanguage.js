@@ -1,4 +1,5 @@
 import { CustomButton, Dropdown } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React, { useState, useMemo } from "react";
 
 const GlobalIcon = () => (
@@ -64,8 +65,8 @@ const ChangeLanguage = ({ isProfileComponent, ...prop }) => {
       <React.Fragment>
         <div style={{ marginBottom: "5px" }}>Language</div>
         <div className="language-selector">
-          {languages.map((language, index) => (
-            <div className="language-button-container" key={index}>
+          {languages.map((language) => (
+            <div className="language-button-container" key={`lang-${language.value}`}>
               <CustomButton
                 selected={language.value === selected}
                 text={language.label}
@@ -77,6 +78,13 @@ const ChangeLanguage = ({ isProfileComponent, ...prop }) => {
       </React.Fragment>
     );
   }
+};
+
+ChangeLanguage.propTypes = {
+  isProfileComponent: PropTypes.bool,
+  dropdown: PropTypes.bool,
+  style: PropTypes.object,
+  dropdownClassName: PropTypes.string,
 };
 
 export default ChangeLanguage;

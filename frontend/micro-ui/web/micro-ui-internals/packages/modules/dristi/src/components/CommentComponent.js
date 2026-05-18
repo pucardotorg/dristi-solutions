@@ -1,12 +1,13 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { FileIcon } from "@egovernments/digit-ui-react-components";
 import useDownloadCasePdf from "../hooks/dristi/useDownloadCasePdf";
 
-function CommentComponent({ key, comment }) {
-  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+function CommentComponent({ comment }) {
+  const tenantId = window?.Digit?.ULBService?.getCurrentTenantId();
   const { downloadPdf } = useDownloadCasePdf();
   return (
-    <div className="comment-body" key={key}>
+    <div className="comment-body">
       <div className="name-logo">
         <div className="comment-avatar">
           <span>{comment?.author?.[0]}</span>
@@ -24,7 +25,8 @@ function CommentComponent({ key, comment }) {
         <p className="comment-text">{comment?.text}</p>
         <p className="comment-text">{comment?.comment}</p>
         {comment?.additionalDetails?.commentDocumentId && (
-          <div
+          <button
+            type="button"
             style={{
               border: "1px solid #bbbbbd",
               color: "#505A5F",
@@ -37,16 +39,32 @@ function CommentComponent({ key, comment }) {
               gap: "7px",
               marginTop: "10px",
               cursor: "pointer",
+              background: "none",
             }}
             onClick={() => downloadPdf(tenantId, comment?.additionalDetails?.commentDocumentId)}
           >
             <FileIcon />
             <span style={{ fontWeight: "bold" }}>{comment?.additionalDetails?.commentDocumentName || "Attached File"}</span>
-          </div>
+          </button>
         )}
       </div>
     </div>
   );
 }
+
+CommentComponent.propTypes = {
+  comment: PropTypes.shape({
+    author: PropTypes.string,
+    timestamp: PropTypes.string,
+    text: PropTypes.string,
+    comment: PropTypes.string,
+    additionalDetails: PropTypes.shape({
+      author: PropTypes.string,
+      timestamp: PropTypes.string,
+      commentDocumentId: PropTypes.string,
+      commentDocumentName: PropTypes.string,
+    }),
+  }),
+};
 
 export default CommentComponent;

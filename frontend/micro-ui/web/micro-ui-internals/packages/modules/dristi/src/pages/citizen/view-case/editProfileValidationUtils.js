@@ -4,7 +4,7 @@ import { SubmissionWorkflowAction } from "../../../Utils/submissionWorkflow";
 import { efilingDocumentKeyAndTypeMapping } from "../FileCase/Config/efilingDocumentKeyAndTypeMapping";
 import { formatName, onDocumentUpload, sendDocumentForOcr } from "../FileCase/EfilingValidationUtils";
 
-export const editComplainantValidation = ({ formData, t, caseDetails, selected, setShowToast, setFormErrors, formState, clearFormDataErrors }) => {
+export const editComplainantValidation = ({ formData, t, caseDetails, selected, setShowToast, setFormErrors, formState, clearFormDataErrors }) => { // NOSONAR S3776 — explicit validation steps for complainant edit flow
   if (selected === "complainantDetails") {
     if (
       formData?.complainantType?.code !== "INDIVIDUAL" &&

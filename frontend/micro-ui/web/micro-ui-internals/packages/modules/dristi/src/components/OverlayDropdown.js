@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
-import { CustomThreeDots, ThreeDots } from "../icons/svgIndex";
+import { ThreeDots } from "../icons/svgIndex";
 
 export const Context = React.createContext();
 
@@ -13,8 +14,9 @@ const OverlayDropdown = ({ column, row, master, module, cutomDropdownItems = [],
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const history = useHistory();
+  const digit = globalThis.Digit ?? window.Digit;
 
-  const dropdownItems = master ? Digit.Customizations[master]?.[module]?.dropDownItems?.(row, column, t) : cutomDropdownItems || [];
+  const dropdownItems = master ? digit?.Customizations?.[master]?.[module]?.dropDownItems?.(row, column, t) : cutomDropdownItems || [];
 
   const filteredDropdownItems = dropdownItems.filter((item) => !item.hide);
 
@@ -56,16 +58,21 @@ const OverlayDropdown = ({ column, row, master, module, cutomDropdownItems = [],
   }, [isDropdownOpen]);
 
   return (
-    <div ref={dropdownRef} style={{ position: position, display: "flex", justifyContent: "center", alignItems: "center", width: "40px", height: 0 }}>
-      <div
+    <div ref={dropdownRef} style={{ position, display: "flex", justifyContent: "center", alignItems: "center", width: "40px", height: 0 }}>
+      <button
+        type="button"
+        aria-expanded={isDropdownOpen}
+        aria-haspopup="true"
         style={{
           cursor: "pointer",
           padding: "10px 20px",
+          background: "none",
+          border: "none",
         }}
         onClick={toggleDropdown}
       >
         <ThreeDots />
-      </div>
+      </button>
 
       {isDropdownOpen && (
         <ul
@@ -83,24 +90,48 @@ const OverlayDropdown = ({ column, row, master, module, cutomDropdownItems = [],
           }}
         >
           {filteredDropdownItems.map((item) => (
-            <li
-              key={item.id}
-              style={{ padding: "10px", cursor: "pointer", color: item.disabled ? "grey" : "black", ...textStyle }}
-              onClick={() => {
-                setIsDropdownOpen(false);
-                return !item.disabled && item.action(history, column, row, item);
-              }}
-            >
-              {t(item.label)}
+            <li key={item.id} style={{ margin: 0, padding: 0, listStyle: "none" }}>
+              <button
+                type="button"
+                disabled={Boolean(item.disabled)}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  cursor: item.disabled ? "not-allowed" : "pointer",
+                  color: item.disabled ? "grey" : "black",
+                  border: "none",
+                  background: "white",
+                  textAlign: "left",
+                  ...textStyle,
+                }}
+                onClick={() => {
+                  setIsDropdownOpen(false);
+                  if (!item.disabled) {
+                    item.action(history, column, row, item);
+                  }
+                }}
+              >
+                {t(item.label)}
+              </button>
             </li>
           ))}
           {Array.isArray(filteredDropdownItems) && filteredDropdownItems.length === 0 && (
-            <p style={{ padding: "5px" }}>{t("ACTIONS_NOT_AVAILABLE")}</p>
+            <li style={{ padding: "5px", listStyle: "none" }}>{t("ACTIONS_NOT_AVAILABLE")}</li>
           )}
         </ul>
       )}
     </div>
   );
+};
+
+OverlayDropdown.propTypes = {
+  column: PropTypes.any,
+  row: PropTypes.any,
+  master: PropTypes.string,
+  module: PropTypes.string,
+  cutomDropdownItems: PropTypes.array,
+  position: PropTypes.string,
+  textStyle: PropTypes.object,
 };
 
 export default OverlayDropdown;

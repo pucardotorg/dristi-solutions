@@ -106,7 +106,7 @@
   }
 }
 
-@screen sm {
+@media (max-width: 425px) {
   .search-wrapper {
     .search-field-wrapper {
       display: flex;

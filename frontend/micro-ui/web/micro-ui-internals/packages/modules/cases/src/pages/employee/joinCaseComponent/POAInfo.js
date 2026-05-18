@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import { ButtonSelector } from "@egovernments/digit-ui-react-components";
 import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React from "react";
@@ -16,11 +17,11 @@ const POAInfo = ({ t, poaJoinedParties, onProceed, goBack, isApiCalled, isDisabl
   };
 
   return (
-    <React.Fragment>
+    <div className="poa-info-screen">
       <div style={{ marginBottom: "1rem", padding: "1.5rem 0 0 2rem" }}>{t("Names of Litigants for whom Power of Attorney is being claimed")}</div>
       <ul style={{ paddingLeft: "4.5rem", listStyleType: "disc", listStylePosition: "outside" }}>
         {poaJoinedParties?.map((poaParty, index) => (
-          <li key={index}>{poaParty?.fullName}</li>
+          <li key={poaParty?.individualId ?? poaParty?.uuid ?? poaParty?.uniqueId ?? `poa-party-${index}`}>{poaParty?.fullName}</li>
         ))}
       </ul>
       <div className="litigant-verification">
@@ -47,8 +48,19 @@ const POAInfo = ({ t, poaJoinedParties, onProceed, goBack, isApiCalled, isDisabl
           />
         </div>
       </div>
-    </React.Fragment>
+    </div>
   );
+};
+
+POAInfo.propTypes = {
+  t: PropTypes.func.isRequired,
+  poaJoinedParties: PropTypes.array,
+  onProceed: PropTypes.func.isRequired,
+  goBack: PropTypes.func.isRequired,
+  isApiCalled: PropTypes.bool,
+  isDisabled: PropTypes.bool,
+  setFormData: PropTypes.func.isRequired,
+  formdata: PropTypes.object,
 };
 
 export default POAInfo;

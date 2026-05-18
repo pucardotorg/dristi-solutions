@@ -1,6 +1,7 @@
 import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useEffect, useState } from "react";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import PropTypes from "prop-types";
+import { useHistory } from "react-router-dom";
 import { getFileByFileStore } from "../../../Utils";
 import CustomToast from "../../../components/CustomToast";
 
@@ -168,5 +169,27 @@ function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pat
       )}
     </div>
   );
-}
+};
+
+UploadIdType.propTypes = {
+  config: PropTypes.array.isRequired,
+  isAdvocateUploading: PropTypes.bool,
+  onAadharChange: PropTypes.func.isRequired,
+  onDocumentUpload: PropTypes.func.isRequired,
+  onFormValueChange: PropTypes.func,
+  params: PropTypes.shape({
+    address: PropTypes.any,
+    indentity: PropTypes.any,
+    uploadedDocument: PropTypes.shape({
+      IdType: PropTypes.string,
+      file: PropTypes.any,
+      filedata: PropTypes.object,
+      filename: PropTypes.string,
+    }),
+    formData: PropTypes.object,
+  }),
+  pathOnRefresh: PropTypes.string.isRequired,
+  t: PropTypes.func.isRequired,
+};
+
 export default UploadIdType;

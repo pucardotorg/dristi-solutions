@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { LabelFieldPair, CardLabel, CustomDropdown, CardLabelError, Button, CardHeader } from "@egovernments/digit-ui-react-components";
 import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
 import OrderTypeControls from "../components/OrderTypeControls";
@@ -156,6 +157,57 @@ const OrderTypeSection = ({
       </LabelFieldPair>
     </React.Fragment>
   );
+};
+
+OrderTypeSection.propTypes = {
+  applicationTypeConfigUpdated: PropTypes.arrayOf(
+    PropTypes.shape({
+      body: PropTypes.arrayOf(
+        PropTypes.shape({
+          populators: PropTypes.object,
+        })
+      ),
+    })
+  ),
+  currentInProgressHearing: PropTypes.any,
+  currentOrder: PropTypes.shape({
+    hearingNumber: PropTypes.any,
+    nextHearingDate: PropTypes.any,
+    purposeOfNextHearing: PropTypes.any,
+  }),
+  errors: PropTypes.objectOf(
+    PropTypes.shape({
+      msg: PropTypes.string,
+    })
+  ),
+  handleAddForm: PropTypes.func.isRequired,
+  handleEditOrder: PropTypes.func.isRequired,
+  handleOrderTypeChange: PropTypes.func.isRequired,
+  isAddItemDisabled: PropTypes.bool,
+  isHearingAvailable: PropTypes.any,
+  nextDateOfHearing: PropTypes.shape({
+    key: PropTypes.string,
+    label: PropTypes.string,
+  }),
+  nextHearingDate: PropTypes.any,
+  orderTypeData: PropTypes.any,
+  purposeOfHearing: PropTypes.any,
+  purposeOfHearingConfig: PropTypes.shape({
+    key: PropTypes.string,
+    label: PropTypes.string,
+    populators: PropTypes.object,
+  }),
+  purposeOfHearingData: PropTypes.arrayOf(PropTypes.object),
+  setCompositeOrderIndex: PropTypes.func.isRequired,
+  setCurrentOrder: PropTypes.func.isRequired,
+  setDeleteOrderItemIndex: PropTypes.func.isRequired,
+  setErrors: PropTypes.func.isRequired,
+  setNextHearingDate: PropTypes.func.isRequired,
+  setOrderType: PropTypes.func.isRequired,
+  setPurposeOfHearing: PropTypes.func.isRequired,
+  setSkipScheduling: PropTypes.func.isRequired,
+  skipScheduling: PropTypes.bool,
+  t: PropTypes.func.isRequired,
 };
 
 export default OrderTypeSection;

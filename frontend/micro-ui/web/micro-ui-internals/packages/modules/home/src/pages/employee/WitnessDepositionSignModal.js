@@ -69,7 +69,7 @@ export const WitnessDepositionSignModal = ({
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const { handleEsign, checkSignStatus, showToast: apiErrorToast, setShowToast: setApiErrorToast, CustomToast } = Digit.Hooks.orders.useESign();
+  const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
 
   const [isSigned, setIsSigned] = useState(false);
 

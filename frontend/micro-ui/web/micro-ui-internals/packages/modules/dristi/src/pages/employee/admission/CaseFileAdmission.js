@@ -23,7 +23,6 @@ import AdmissionActionModal from "./AdmissionActionModal";
 import {
   advocateCaseFilingStatusTypes,
   DateUtils,
-  getAuthorizedUuid,
   getCaseEditAllowedAssignees,
   getFilingType,
   runComprehensiveSanitizer,
@@ -115,8 +114,6 @@ function CaseFileAdmission({ t, path }) {
   const [isLoader, setLoader] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
   const courtId = localStorage.getItem("courtId");
-  const userUuid = userInfo?.uuid;
-  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const { data: caseFetchResponse, isLoading, refetch } = useSearchCaseService(
     {

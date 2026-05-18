@@ -27,7 +27,7 @@ body {
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .h1 {
     margin-left: 0;
     @apply text-heading-l-dt;

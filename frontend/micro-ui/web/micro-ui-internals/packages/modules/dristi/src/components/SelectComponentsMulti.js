@@ -1,11 +1,17 @@
 import isEqual from "lodash/isEqual";
+import PropTypes from "prop-types";
 import React, { useEffect, useMemo, useState } from "react";
 import { generateUUID } from "../Utils";
 import { ReactComponent as CrossIcon } from "../images/cross.svg";
 import Button from "./Button";
 import LocationComponent from "./LocationComponent";
-import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import GeoLocationComponent from "./GeoLocationComponent";
+
+/** Disallow digits and unsafe punctuation; curly quotes (U+201C–U+2019) forbidden; brackets via escapes S6535-friendly. */
+const APPLICANT_NAME_FIELD_PATTERN =
+  /^[^0-9$"'<>?\\~!@#%^()+={}\x5b\x5d*,/:;\u201c\u201d\u2018\u2019]{1,50}$/i;
+const APPLICANT_ADDRESS_FIELD_PATTERN =
+  /^[^"'<>?\\~`!@$%^()={}\x5b\x5d*:;\u201c\u201d\u2018\u2019]{2,256}$/i;
 
 const witnessAddressConfig = {
   type: "component",
@@ -39,7 +45,7 @@ const witnessAddressConfig = {
         type: "text",
         name: "state",
         validation: {
-          pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+          pattern: APPLICANT_NAME_FIELD_PATTERN,
           errMsg: "CORE_COMMON_APPLICANT_STATE_INVALID",
           patternType: "Name",
           title: "",
@@ -50,7 +56,7 @@ const witnessAddressConfig = {
         type: "text",
         name: "district",
         validation: {
-          pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+          pattern: APPLICANT_NAME_FIELD_PATTERN,
           errMsg: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
           patternType: "Name",
           title: "",
@@ -72,7 +78,7 @@ const witnessAddressConfig = {
         validation: {
           minlength: 2,
           maxlength: 256,
-          pattern: /^[^\$\"<>?\\\\~`!@$%^()={}\[\]*:;“”‘’]{2,256}$/i,
+          pattern: APPLICANT_ADDRESS_FIELD_PATTERN,
           errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
         },
       },
@@ -122,7 +128,7 @@ const selectCompMultiConfig = {
         name: "state",
         validation: {
           isRequired: true,
-          pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+          pattern: APPLICANT_NAME_FIELD_PATTERN,
           errMsg: "CORE_COMMON_APPLICANT_STATE_INVALID",
           patternType: "Name",
           title: "",
@@ -135,7 +141,7 @@ const selectCompMultiConfig = {
         name: "district",
         validation: {
           isRequired: true,
-          pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+          pattern: APPLICANT_NAME_FIELD_PATTERN,
           errMsg: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
           patternType: "Name",
           title: "",
@@ -161,7 +167,7 @@ const selectCompMultiConfig = {
         validation: {
           minlength: 2,
           maxlength: 256,
-          pattern: /^[^\$\"<>?\\\\~`!@$%^()={}\[\]*:;“”‘’]{2,256}$/i,
+          pattern: APPLICANT_ADDRESS_FIELD_PATTERN,
           errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
         },
       },
@@ -184,7 +190,7 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
     }
   }, [config?.key, formData, locationData]);
 
-  const { isLoading: isTypeOfAddressData, data: typeOfAddressData } = Digit.Hooks.useCustomMDMS(
+  const { data: typeOfAddressData } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "case",
     [{ name: "TypeOfAddress" }],
@@ -205,9 +211,14 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
     return updatedConfig;
   }, [typeOfAddressData, config]);
 
-  const addressLabel = useMemo(() => {
-    return formData?.respondentType?.code;
-  }, [formData?.respondentType]);
+  const addressLabel = useMemo(() => formData?.respondentType?.code, [formData?.respondentType]);
+
+  const addressHeadingLabel = useMemo(() => {
+    if (addressLabel === "INDIVIDUAL") return t("CS_RESPONDENT_ADDRESS_DETAIL");
+    if (addressLabel === "REPRESENTATIVE") return t("CS_COMPANY_LOCATION");
+    if (config?.formType === "Witness") return t("CS_COMMON_ADDRESS_WITNESS");
+    return t("CS_COMMON_ADDRESS_DETAIL");
+  }, [addressLabel, config?.formType, t]);
 
   const handleAdd = () => {
     setLocationData((locationData) => {
@@ -243,21 +254,15 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
           <div key={data.id}>
             <div style={{ display: "flex", gap: "4px", justifyContent: "space-between", alignItems: "center" }}>
               <b>
-                <h1>{` ${
-                  addressLabel == "INDIVIDUAL"
-                    ? t("CS_RESPONDENT_ADDRESS_DETAIL")
-                    : addressLabel == "REPRESENTATIVE"
-                    ? t("CS_COMPANY_LOCATION")
-                    : config?.formType == "Witness"
-                    ? t("CS_COMMON_ADDRESS_WITNESS")
-                    : t("CS_COMMON_ADDRESS_DETAIL")
-                } ${index + 1}`}</h1>
+                <h1>{` ${addressHeadingLabel} ${index + 1}`}</h1>
               </b>
               {(config?.state === "DRAFT_IN_PROGRESS" ||
                 index >= config?.addressLength ||
                 config?.isJudgeSendBack ||
                 config?.formType === "Witness") && (
-                <span
+                <button
+                  type="button"
+                  aria-label={t("CS_REMOVE")}
                   onClick={() => {
                     if (
                       !config?.disable &&
@@ -269,10 +274,14 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
                       handleDeleteLocation(data.id);
                     }
                   }}
-                  style={locationData.length === 1 ? { display: "none" } : {}}
+                  style={
+                    locationData.length === 1
+                      ? { display: "none", background: "none", border: "none", padding: 0, cursor: "pointer" }
+                      : { background: "none", border: "none", padding: 0, cursor: "pointer" }
+                  }
                 >
-                  <CrossIcon></CrossIcon>
-                </span>
+                  <CrossIcon />
+                </button>
               )}
             </div>
             <LocationComponent
@@ -308,9 +317,8 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
             )}
           </div>
         ))}
-      {!(config?.removeAddLocationButton === true) && (
+      {config?.removeAddLocationButton !== true && (
         <Button
-          // isDisabled={config?.disable || (config?.state && config?.state !== CaseWorkflowState.DRAFT_IN_PROGRESS)}
           className={"add-location-btn"}
           label={t("ADD_LOCATION")}
           style={{ alignItems: "center", margin: "10px 0px" }}
@@ -321,6 +329,26 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
       )}
     </div>
   );
+};
+
+SelectComponentsMulti.propTypes = {
+  clearErrors: PropTypes.func,
+  config: PropTypes.shape({
+    addressLength: PropTypes.number,
+    disable: PropTypes.bool,
+    formType: PropTypes.string,
+    geoLocationConfig: PropTypes.object,
+    isJudgeSendBack: PropTypes.bool,
+    isPoliceStationComponent: PropTypes.bool,
+    key: PropTypes.string.isRequired,
+    removeAddLocationButton: PropTypes.bool,
+    state: PropTypes.string,
+  }).isRequired,
+  errors: PropTypes.object,
+  formData: PropTypes.object,
+  onSelect: PropTypes.func.isRequired,
+  setError: PropTypes.func,
+  t: PropTypes.func.isRequired,
 };
 
 export default SelectComponentsMulti;

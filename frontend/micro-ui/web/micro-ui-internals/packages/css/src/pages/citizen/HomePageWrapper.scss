@@ -21,7 +21,7 @@
     padding: 40px 15px 0 15px;
   }
 
-  @screen dt {
+  @media (min-width: 780px) {
     .ServicesSection {
       @apply flex flex-wrap;
       padding: 40px 15px 0 15px;
@@ -73,7 +73,7 @@
   @media (min-width: 780px) {
     display: flex;
     width: calc(100% - 219px);
-    height: calc(100%-30px);
+    height: calc(100% - 30px);
   }
 }
 
@@ -112,7 +112,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .HomePageWrapper {
     width: 100%;
     .BannerWithSearch {

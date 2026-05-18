@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { Redirect, Route, Switch, useLocation, useRouteMatch, useHistory } from "react-router-dom";
 import { AppModules } from "../../components/AppModules";
@@ -157,6 +158,23 @@ const EmployeeApp = ({
       </Switch>
     </div>
   );
+};
+
+EmployeeApp.propTypes = {
+  stateInfo: PropTypes.object,
+  userDetails: PropTypes.object,
+  CITIZEN: PropTypes.bool,
+  cityDetails: PropTypes.object,
+  mobileView: PropTypes.bool,
+  handleUserDropdownSelection: PropTypes.func,
+  logoUrl: PropTypes.string,
+  DSO: PropTypes.bool,
+  stateCode: PropTypes.string,
+  modules: PropTypes.array,
+  appTenants: PropTypes.array,
+  sourceUrl: PropTypes.string,
+  pathname: PropTypes.string,
+  initData: PropTypes.object,
 };
 
 export default EmployeeApp;

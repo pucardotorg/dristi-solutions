@@ -1,5 +1,7 @@
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 import { Button, CloseSvg, Loader, TextInput } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
+import { Button, CloseSvg, Loader, TextInput } from "@egovernments/digit-ui-react-components";
 import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
@@ -194,6 +196,38 @@ const BulkRescheduleModal = ({
       </Modal>
     </React.Fragment>
   );
+};
+
+BulkRescheduleModal.propTypes = {
+  Loading: PropTypes.bool,
+  bulkFormData: PropTypes.shape({
+    fromDate: PropTypes.number,
+    reason: PropTypes.string,
+    slotIds: PropTypes.arrayOf(PropTypes.object),
+    toDate: PropTypes.number,
+  }),
+  bulkFromDate: PropTypes.any,
+  bulkHearingsCount: PropTypes.number,
+  bulkToDate: PropTypes.any,
+  currentDiaryEntry: PropTypes.object,
+  defaultValues: PropTypes.object,
+  handleUpdateBusinessOfDayEntry: PropTypes.func,
+  isADiarySigned: PropTypes.bool,
+  isBulkRescheduleDisabled: PropTypes.bool,
+  modifiedConfig: PropTypes.array.isRequired,
+  newHearingData: PropTypes.array,
+  onCancel: PropTypes.func.isRequired,
+  onFormValueChange: PropTypes.func.isRequired,
+  onSumbitReschedule: PropTypes.func.isRequired,
+  setBusinessOfTheDay: PropTypes.func,
+  setNewHearingData: PropTypes.func.isRequired,
+  setShowToast: PropTypes.func.isRequired,
+  showToast: PropTypes.shape({
+    error: PropTypes.bool,
+    errorId: PropTypes.string,
+    label: PropTypes.string,
+  }),
+  t: PropTypes.func.isRequired,
 };
 
 export default BulkRescheduleModal;

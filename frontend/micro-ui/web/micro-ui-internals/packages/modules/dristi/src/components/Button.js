@@ -58,7 +58,7 @@ Button.propTypes = {
   /**
    * ButtonSelector content
    */
-  label: PropTypes.string.isRequired,
+  label: PropTypes.string,
   /**
    * button border theme
    */
@@ -70,7 +70,7 @@ Button.propTypes = {
   /**
    * click handler
    */
-  onButtonClick: PropTypes.func.isRequired,
+  onButtonClick: PropTypes.func,
   /**
    * Custom classname
    */

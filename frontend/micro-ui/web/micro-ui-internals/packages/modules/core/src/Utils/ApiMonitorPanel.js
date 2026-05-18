@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 
 /* ---------- STYLES ---------- */
 
@@ -64,6 +65,14 @@ const styles = {
   },
 };
 
+function buildTableRowKey(row, columns) {
+  return columns
+    .map(function (col) {
+      return String(col) + ":" + String(row[col] ?? "");
+    })
+    .join("|");
+}
+
 /* ---------- TABLE HELPER ---------- */
 
 function Table({ columns, data }) {
@@ -93,7 +102,10 @@ function Table({ columns, data }) {
           columns.map(function (col) {
             return React.createElement(
               "th",
-              { key: col, style: { padding: "8px", textAlign: "left", borderBottom: "2px solid #e2e8f0", color: "black" } },
+              {
+                key: col,
+                style: { padding: "8px", textAlign: "left", borderBottom: "2px solid #e2e8f0", color: "black" },
+              },
               col
             );
           })
@@ -102,15 +114,15 @@ function Table({ columns, data }) {
       React.createElement(
         "tbody",
         null,
-        data.map(function (row, i) {
+        data.map(function (row) {
           return React.createElement(
             "tr",
-            { key: i, style: {} },
+            { key: buildTableRowKey(row, columns), style: {} },
             columns.map(function (col) {
               return React.createElement(
                 "td",
                 { key: col, style: { padding: "8px", borderBottom: "0.5px solid rgba(226, 232, 240, 0.2)" } },
-                row[col] !== undefined ? row[col] : "-"
+                row[col] === undefined ? "-" : row[col]
               );
             })
           );
@@ -120,11 +132,186 @@ function Table({ columns, data }) {
   );
 }
 
+Table.propTypes = {
+  columns: PropTypes.arrayOf(PropTypes.string).isRequired,
+  data: PropTypes.arrayOf(PropTypes.object).isRequired,
+};
+
+function renderStatsTables(stats, statsTab) {
+  if (!stats) return null;
+
+  if (statsTab === "overview") {
+    return React.createElement(Table, {
+      columns: [
+        "urlPath",
+        "totalCalls",
+        "uniqueEndpoints",
+        "totalNetworkTime",
+        "totalRequestSizeKB",
+        "totalResponseSizeKB",
+        "totalErrors",
+      ],
+      data: [stats.summary || {}],
+    });
+  }
+
+  if (statsTab === "byPage") {
+    return React.createElement(Table, {
+      columns: ["page", "callCount", "uniqueEndpoints", "totalSizeKB", "avgResponseSizeKB"],
+      data: stats.byPage || [],
+    });
+  }
+
+  if (statsTab === "heaviest") {
+    return React.createElement(Table, {
+      columns: ["endpoint", "callCount", "totalSizeKB", "avgApiLatency", "maxDuration"],
+      data: stats.heaviestEndpoints || [],
+    });
+  }
+
+  if (statsTab === "slowest") {
+    return React.createElement(Table, {
+      columns: ["endpoint", "callCount", "avgApiLatency", "maxDuration"],
+      data: stats.slowestEndpoints || [],
+    });
+  }
+
+  if (statsTab === "mostCalled") {
+    return React.createElement(Table, {
+      columns: ["endpoint", "callCount", "avgApiLatency"],
+      data: stats.mostCalledEndpoints || [],
+    });
+  }
+
+  return React.createElement("pre", null, JSON.stringify(stats, null, 2));
+}
+
+function renderCallsTab({ calls, selected, setSelected }) {
+  return React.createElement(
+    "div",
+    { style: styles.body },
+    React.createElement(
+      "div",
+      { style: styles.list },
+      calls.map(function (call) {
+        return React.createElement(
+          "div",
+          {
+            key: call.id,
+            style: styles.row,
+            onClick: function () {
+              setSelected(call);
+            },
+          },
+          React.createElement("div", null, React.createElement("strong", null, call.method), " ", call.endpoint),
+          React.createElement("div", { style: styles.badge(call.status) }, call.status || "PENDING", " · ", call.duration || "-", "ms")
+        );
+      })
+    ),
+    React.createElement(
+      "div",
+      { style: styles.details },
+      selected ? React.createElement("pre", null, JSON.stringify(selected, null, 2)) : React.createElement("div", null, "Select a request")
+    )
+  );
+}
+
+function renderStatsTab(stats, statsTab, setStatsTab) {
+  return React.createElement(
+    "div",
+    { style: styles.details },
+    React.createElement(
+      "div",
+      { style: styles.tabs },
+      ["overview", "slowest", "mostCalled", "raw"].map(function (t) {
+        return React.createElement(
+          "div",
+          {
+            key: t,
+            style: styles.tab(statsTab === t),
+            onClick: function () {
+              setStatsTab(t);
+            },
+          },
+          t.toUpperCase()
+        );
+      })
+    ),
+    renderStatsTables(stats, statsTab)
+  );
+}
+
+function renderControlsTab() {
+  return React.createElement(
+    "div",
+    { style: styles.details },
+    React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: function () {
+          window.apiMonitor.start();
+        },
+      },
+      "▶ Start"
+    ),
+    " ",
+    React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: function () {
+          window.apiMonitor.stop();
+        },
+      },
+      "⏸ Stop"
+    ),
+    " ",
+    React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: function () {
+          window.apiMonitor.clear();
+        },
+      },
+      "🗑 Clear"
+    )
+  );
+}
+
+function renderExportTab() {
+  return React.createElement(
+    "div",
+    { style: styles.details },
+    React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: function () {
+          window.apiMonitor.downloadReport();
+        },
+      },
+      "⬇ JSON"
+    ),
+    " ",
+    React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: function () {
+          window.apiMonitor.downloadCSV();
+        },
+      },
+      "⬇ CSV"
+    )
+  );
+}
+
 /* ---------- MAIN COMPONENT ---------- */
 
 function ApiMonitorPanel() {
-  // Initialize state from localStorage for persistence across refreshes
-  const [open, setOpen] = useState(() => {
+  const [open, setOpen] = useState(function () {
     const savedState = localStorage.getItem("apiMonitorPanelOpen");
     return savedState === "true";
   });
@@ -134,8 +321,7 @@ function ApiMonitorPanel() {
   const [stats, setStats] = useState(null);
   const [selected, setSelected] = useState(null);
 
-  // Save panel state to localStorage whenever it changes
-  useEffect(() => {
+  useEffect(function () {
     localStorage.setItem("apiMonitorPanelOpen", open.toString());
   }, [open]);
 
@@ -161,6 +347,7 @@ function ApiMonitorPanel() {
     return React.createElement(
       "button",
       {
+        type: "button",
         onClick: function () {
           setOpen(true);
         },
@@ -179,194 +366,53 @@ function ApiMonitorPanel() {
       },
       "API"
     );
-  } else {
-    return React.createElement(
-      "div",
-      { style: styles.panel },
+  }
 
-      /* ---------- HEADER ---------- */
-      React.createElement(
-        "div",
-        { style: styles.header },
-        React.createElement("strong", null, "📡 API Monitor"),
-        React.createElement(
+  let mainContent;
+  if (tab === "calls") {
+    mainContent = renderCallsTab({ calls, selected, setSelected });
+  } else if (tab === "stats") {
+    mainContent = renderStatsTab(stats, statsTab, setStatsTab);
+  } else if (tab === "controls") {
+    mainContent = renderControlsTab();
+  } else {
+    mainContent = renderExportTab();
+  }
+
+  const headerEl = React.createElement(
+    "div",
+    { style: styles.header },
+    React.createElement("strong", null, "📡 API Monitor"),
+    React.createElement(
+      "div",
+      { style: styles.tabs },
+      ["stats", "calls", "export"].map(function (t) {
+        return React.createElement(
           "div",
-          { style: styles.tabs },
-          ["stats", "calls", "export"].map(function (t) {
-            return React.createElement(
-              "div",
-              {
-                key: t,
-                style: styles.tab(tab === t),
-                onClick: function () {
-                  setTab(t);
-                },
-              },
-              t.toUpperCase()
-            );
-          })
-        ),
-        React.createElement(
-          "button",
           {
+            key: t,
+            style: styles.tab(tab === t),
             onClick: function () {
-              setOpen(false);
+              setTab(t);
             },
           },
-          "Close"
-        )
-      ),
+          t.toUpperCase()
+        );
+      })
+    ),
+    React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: function () {
+          setOpen(false);
+        },
+      },
+      "Close"
+    )
+  );
 
-      /* ---------- CALLS TAB ---------- */
-      tab === "calls"
-        ? React.createElement(
-            "div",
-            { style: styles.body },
-            React.createElement(
-              "div",
-              { style: styles.list },
-              calls.map(function (call) {
-                return React.createElement(
-                  "div",
-                  {
-                    key: call.id,
-                    style: styles.row,
-                    onClick: function () {
-                      setSelected(call);
-                    },
-                  },
-                  React.createElement("div", null, React.createElement("strong", null, call.method), " ", call.endpoint),
-                  React.createElement("div", { style: styles.badge(call.status) }, call.status || "PENDING", " · ", call.duration || "-", "ms")
-                );
-              })
-            ),
-            React.createElement(
-              "div",
-              { style: styles.details },
-              selected ? React.createElement("pre", null, JSON.stringify(selected, null, 2)) : React.createElement("div", null, "Select a request")
-            )
-          )
-        : /* ---------- STATS TAB ---------- */
-        tab === "stats"
-        ? React.createElement(
-            "div",
-            { style: styles.details },
-
-            React.createElement(
-              "div",
-              { style: styles.tabs },
-              ["overview", "slowest", "mostCalled", "raw"].map(function (t) {
-                return React.createElement(
-                  "div",
-                  {
-                    key: t,
-                    style: styles.tab(statsTab === t),
-                    onClick: function () {
-                      setStatsTab(t);
-                    },
-                  },
-                  t.toUpperCase()
-                );
-              })
-            ),
-
-            stats &&
-              (statsTab === "overview"
-                ? React.createElement(Table, {
-                    columns: [
-                      "urlPath",
-                      "totalCalls",
-                      "uniqueEndpoints",
-                      "totalNetworkTime",
-                      "totalRequestSizeKB",
-                      "totalResponseSizeKB",
-                      "totalErrors",
-                    ],
-                    data: [stats.summary || {}],
-                  })
-                : statsTab === "byPage"
-                ? React.createElement(Table, {
-                    columns: ["page", "callCount", "uniqueEndpoints", "totalSizeKB", "avgResponseSizeKB"],
-                    data: stats.byPage,
-                  })
-                : statsTab === "heaviest"
-                ? React.createElement(Table, {
-                    columns: ["endpoint", "callCount", "totalSizeKB", "avgApiLatency", "maxDuration"],
-                    data: stats.heaviestEndpoints,
-                  })
-                : statsTab === "slowest"
-                ? React.createElement(Table, {
-                    columns: ["endpoint", "callCount", "avgApiLatency", "maxDuration"],
-                    data: stats.slowestEndpoints,
-                  })
-                : statsTab === "mostCalled"
-                ? React.createElement(Table, {
-                    columns: ["endpoint", "callCount", "avgApiLatency"],
-                    data: stats.mostCalledEndpoints,
-                  })
-                : React.createElement("pre", null, JSON.stringify(stats, null, 2)))
-          )
-        : /* ---------- CONTROLS TAB ---------- */
-        tab === "controls"
-        ? React.createElement(
-            "div",
-            { style: styles.details },
-            React.createElement(
-              "button",
-              {
-                onClick: function () {
-                  window.apiMonitor.start();
-                },
-              },
-              "▶ Start"
-            ),
-            " ",
-            React.createElement(
-              "button",
-              {
-                onClick: function () {
-                  window.apiMonitor.stop();
-                },
-              },
-              "⏸ Stop"
-            ),
-            " ",
-            React.createElement(
-              "button",
-              {
-                onClick: function () {
-                  window.apiMonitor.clear();
-                },
-              },
-              "🗑 Clear"
-            )
-          )
-        : /* ---------- EXPORT TAB ---------- */
-          React.createElement(
-            "div",
-            { style: styles.details },
-            React.createElement(
-              "button",
-              {
-                onClick: function () {
-                  window.apiMonitor.downloadReport();
-                },
-              },
-              "⬇ JSON"
-            ),
-            " ",
-            React.createElement(
-              "button",
-              {
-                onClick: function () {
-                  window.apiMonitor.downloadCSV();
-                },
-              },
-              "⬇ CSV"
-            )
-          )
-    );
-  }
+  return React.createElement("div", { style: styles.panel }, headerEl, mainContent);
 }
 
 export default ApiMonitorPanel;

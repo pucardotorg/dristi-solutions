@@ -1,6 +1,6 @@
 import { Loader } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React, { useEffect, useMemo, useState } from "react";
-import { ReactComponent as CrossIcon } from "../images/cross.svg";
 import Button from "./Button";
 import { removeInvalidNameParts } from "../Utils";
 import { userTypeOptions } from "../pages/citizen/registration/config";
@@ -55,7 +55,7 @@ function MultipleAdvocateNameDetails({ t, config, onSelect, formData, errors, se
     [config?.populators?.inputs]
   );
 
-  const [advocatesData, setAdvocatesData] = useState(formData?.[config?.key] ? formData?.[config?.key] : [{}]);
+  const [advocatesData, setAdvocatesData] = useState(formData?.[config?.key] ?? [{}]);
 
   useEffect(() => {
     if (Array.isArray(formData?.MultipleAdvocateNameDetails) && !isEqual(advocatesData, formData?.MultipleAdvocateNameDetails)) {
@@ -65,7 +65,7 @@ function MultipleAdvocateNameDetails({ t, config, onSelect, formData, errors, se
 
   const [isApproved, setIsApproved] = useState(false);
 
-  const { data: caseData, refetch: refetchCaseData, isCaseLoading } = useSearchCaseService(
+  const { data: caseData, isCaseLoading } = useSearchCaseService(
     {
       criteria: [
         {
@@ -115,7 +115,7 @@ function MultipleAdvocateNameDetails({ t, config, onSelect, formData, errors, se
     });
   }, [allAdvocatesList]);
 
-  const { data, isLoading, refetch } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data, isLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
         userUuid: [userInfo?.uuid],
@@ -130,7 +130,7 @@ function MultipleAdvocateNameDetails({ t, config, onSelect, formData, errors, se
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
   const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
 
-  const { data: searchData, isLoading: isSearchLoading } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
+  const { data: searchData } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
     {
       criteria: [{ individualId }],
       tenantId,
@@ -437,8 +437,17 @@ function MultipleAdvocateNameDetails({ t, config, onSelect, formData, errors, se
       </div>
     );
   };
+  SearchableDropdown.propTypes = {
+    value: PropTypes.shape({
+      advocateId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      barRegistrationNumberOriginal: PropTypes.string,
+      individualId: PropTypes.string,
+    }),
+    onChange: PropTypes.func.isRequired,
+    disabled: PropTypes.bool,
+  };
 
-  if (isAllAdvocateSearchLoading || isCaseLoading || isAllAdvocateSearchLoading) {
+  if (isAllAdvocateSearchLoading || isCaseLoading) {
     return <Loader></Loader>;
   }
 
@@ -465,17 +474,22 @@ function MultipleAdvocateNameDetails({ t, config, onSelect, formData, errors, se
             >
               <h1 style={{ fontSize: "18px", fontWeight: "bold" }}>Advocate {index + 1}</h1>
               {advocatesData?.[index]?.advocateBarRegNumberWithName?.individualId !== individualId && (
-                <span
+                <button
+                  type="button"
                   onClick={() => handleDeleteAdvocate(index)}
                   style={{
                     cursor: "pointer",
                     color: "red",
                     display: "flex",
                     alignItems: "center",
+                    background: "none",
+                    border: "none",
+                    padding: 0,
                   }}
+                  aria-label={t("CS_REMOVE")}
                 >
                   <CustomDeleteIcon />
-                </span>
+                </button>
               )}
             </div>
 
@@ -487,9 +501,9 @@ function MultipleAdvocateNameDetails({ t, config, onSelect, formData, errors, se
                 disabled={data?.advocateBarRegNumberWithName?.individualId === individualId}
               />
 
-              {inputs.map((input, index) => {
+              {inputs.map((input, inputIdx) => {
                 return (
-                  <div style={{ width: "100%", textAlign: "left", marginBottom: "20px" }}>
+                  <div key={`${index}-${input.name}-${inputIdx}`} style={{ width: "100%", textAlign: "left", marginBottom: "20px" }}>
                     <label
                       style={{
                         fontSize: "14px",
@@ -536,5 +550,41 @@ function MultipleAdvocateNameDetails({ t, config, onSelect, formData, errors, se
     </div>
   );
 }
+
+const advocateFormEntryPropType = PropTypes.shape({
+  advocateBarRegNumberWithName: PropTypes.shape({
+    individualId: PropTypes.string,
+    advocateId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    barRegistrationNumberOriginal: PropTypes.string,
+  }),
+  advocateNameDetails: PropTypes.object,
+});
+
+MultipleAdvocateNameDetails.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    key: PropTypes.string,
+    populators: PropTypes.shape({
+      inputs: PropTypes.arrayOf(
+        PropTypes.shape({
+          label: PropTypes.string,
+          name: PropTypes.string,
+        })
+      ),
+    }),
+  }).isRequired,
+  onSelect: PropTypes.func.isRequired,
+  formData: PropTypes.shape({
+    MultipleAdvocateNameDetails: PropTypes.arrayOf(advocateFormEntryPropType),
+    advocateBarRegNumberWithName: PropTypes.object,
+    boxComplainant: PropTypes.shape({
+      index: PropTypes.number,
+      showVakalatNamaUpload: PropTypes.bool,
+    }),
+  }),
+  errors: PropTypes.object,
+  setError: PropTypes.func,
+  clearErrors: PropTypes.func,
+};
 
 export default MultipleAdvocateNameDetails;

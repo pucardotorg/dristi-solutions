@@ -1,10 +1,47 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import Modal from "./Modal";
-import { FlagIcon, LeftArrow } from "../icons/svgIndex";
+import { FlagIcon, LeftArrow, ZoomInIcon, ZoomOutIcon, RotateIcon, DownloadIcon } from "../icons/svgIndex";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
-import { ZoomInIcon, ZoomOutIcon, RotateIcon, DownloadIcon } from "../icons/svgIndex";
 import useDownloadCasePdf from "../hooks/dristi/useDownloadCasePdf";
+
+function ImageModalHeading({ label, fileName, onClose }) {
+  return (
+    <div className="heading-main">
+      <button type="button" className="heading-back-error" onClick={onClose} style={{ background: "none", border: "none", padding: 0 }}>
+        <LeftArrow />
+      </button>
+      <div className="heading-title">
+        <h1 className="heading-m">{label}</h1>
+        <p>{fileName}</p>
+      </div>
+    </div>
+  );
+}
+
+ImageModalHeading.propTypes = {
+  label: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+  fileName: PropTypes.string,
+  onClose: PropTypes.func.isRequired,
+};
+
+const imageInfoPropType = PropTypes.shape({
+  disableScrutiny: PropTypes.bool,
+  enableScrutinyField: PropTypes.bool,
+  dataError: PropTypes.object,
+  inputlist: PropTypes.array,
+  configKey: PropTypes.string,
+  name: PropTypes.string,
+  index: PropTypes.number,
+  fieldName: PropTypes.string,
+  data: PropTypes.shape({
+    fileStore: PropTypes.string,
+    fileName: PropTypes.string,
+    documentName: PropTypes.string,
+    docViewerStyle: PropTypes.object,
+  }),
+});
 
 export const ImageModal = ({
   imageInfo,
@@ -60,27 +97,15 @@ export const ImageModal = ({
     setRotation((prevRotation) => (prevRotation + 90) % 360);
   };
 
-  const Heading = (props) => {
-    return (
-      <div className="heading-main">
-        <div className="heading-back-error" onClick={handleCloseModal}>
-          <LeftArrow />
-        </div>
-        <div className="heading-title">
-          <h1 className="heading-m">{props.label}</h1>
-          <p>{props.fileName}</p>
-        </div>
-      </div>
-    );
-  };
   const HeaderBarEnd = () => {
     return (
       <React.Fragment>
         {showFlagNew && (
-          <div
+          <button
+            type="button"
             ref={anchorRef}
             className="flag-icon"
-            onClick={(e) => {
+            onClick={() => {
               handleOpenPopup(
                 null,
                 imageInfo?.configKey,
@@ -91,12 +116,14 @@ export const ImageModal = ({
                 imageInfo?.data?.fileName
               );
             }}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
           >
             <FlagIcon />
-          </div>
+          </button>
         )}
 
-        <div
+        <button
+          type="button"
           className="close-icon"
           onClick={(e) => {
             e.stopPropagation();
@@ -109,22 +136,22 @@ export const ImageModal = ({
               handleLocalDownload(selectedDocs[0]);
             }
           }}
-          style={{ cursor: "pointer" }}
+          style={{ cursor: "pointer", background: "none", border: "none", padding: 0 }}
         >
           <DownloadIcon size={20} />
-        </div>
-        <div className="close-icon" onClick={zoomIn} style={{ cursor: "pointer" }}>
+        </button>
+        <button type="button" className="close-icon" onClick={zoomIn} style={{ cursor: "pointer", background: "none", border: "none", padding: 0 }}>
           <ZoomInIcon size={20} />
-        </div>
-        <div className="close-icon" onClick={zoomOut} style={{ cursor: "pointer" }}>
+        </button>
+        <button type="button" className="close-icon" onClick={zoomOut} style={{ cursor: "pointer", background: "none", border: "none", padding: 0 }}>
           <ZoomOutIcon size={20} />
-        </div>
-        <div className="close-icon" onClick={rotate} style={{ cursor: "pointer" }}>
+        </button>
+        <button type="button" className="close-icon" onClick={rotate} style={{ cursor: "pointer", background: "none", border: "none", padding: 0 }}>
           <RotateIcon size={20} />
-        </div>
-        <div className="close-icon" onClick={handleCloseModal} style={{ cursor: "pointer" }}>
+        </button>
+        <button type="button" className="close-icon" onClick={handleCloseModal} style={{ cursor: "pointer", background: "none", border: "none", padding: 0 }}>
           <CloseSvg />
-        </div>
+        </button>
       </React.Fragment>
     );
   };
@@ -133,9 +160,10 @@ export const ImageModal = ({
       headerBarEnd={<HeaderBarEnd />}
       formId="modal-action"
       headerBarMain={
-        <Heading
+        <ImageModalHeading
           label={imageInfo?.data?.fileName ? t(imageInfo?.data?.fileName) : selectedDocs?.[0]?.name}
           fileName={imageInfo?.data?.documentName}
+          onClose={handleCloseModal}
         />
       }
       className="view-image-modal"
@@ -160,6 +188,19 @@ export const ImageModal = ({
       />
     </Modal>
   );
+};
+
+ImageModal.propTypes = {
+  imageInfo: imageInfoPropType,
+  handleCloseModal: PropTypes.func.isRequired,
+  handleOpenPopup: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired,
+  anchorRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape({ current: PropTypes.any })]),
+  showFlag: PropTypes.bool,
+  isPrevScrutiny: PropTypes.bool,
+  selectedDocs: PropTypes.array,
+  headerBarMainStyle: PropTypes.object,
+  popupModuleMianStyles: PropTypes.object,
 };
 
 export default ImageModal;

@@ -189,7 +189,7 @@ export const validateAndFormatFields = ({ formData, setValue, clearErrors, field
   const formDataCopy = structuredClone(formData);
 
   fieldConfigs?.forEach(({ key, maxLength, formatter }) => {
-    if (!Object.prototype.hasOwnProperty.call(formDataCopy, key)) return;
+    if (!Object.hasOwn(formDataCopy, key)) return;
 
     const oldValue = formDataCopy[key];
     let value = oldValue;

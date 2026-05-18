@@ -1,5 +1,6 @@
-import { Card, CardLabel, CardText, SubmitBar } from "@egovernments/digit-ui-react-components";
 import React from "react";
+import PropTypes from "prop-types";
+import { Card, CardLabel, CardText, SubmitBar } from "@egovernments/digit-ui-react-components";
 
 const CustomCard = ({ Icon, label, style, onClick, subLabel, buttonLabel, className }) => {
   return (
@@ -25,6 +26,16 @@ const CustomCard = ({ Icon, label, style, onClick, subLabel, buttonLabel, classN
       {Icon ? Icon : null}
     </Card>
   );
+};
+
+CustomCard.propTypes = {
+  Icon: PropTypes.node,
+  label: PropTypes.string,
+  style: PropTypes.object,
+  onClick: PropTypes.func,
+  subLabel: PropTypes.string,
+  buttonLabel: PropTypes.string,
+  className: PropTypes.string,
 };
 
 export default CustomCard;

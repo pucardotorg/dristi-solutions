@@ -1,15 +1,26 @@
+import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
 import Modal from "./Modal";
 import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import isEqual from "lodash/isEqual";
 import { runComprehensiveSanitizer } from "../Utils";
 import { CloseBtn, Heading } from "./ModalComponents";
+
 const UploadDocument = ({ config, t, handleCancelUpload, handleUploadProceed, formUploadData, setData }) => {
   const [isDisable, setIsDisable] = useState(true);
-  const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-    runComprehensiveSanitizer({ formData, setValue });
-    if (!isEqual(formData, formUploadData)) {
-      setData(formData);
+  const onFormValueChange = (
+    setValue,
+    nextFormData,
+    _formState,
+    _reset,
+    _setError,
+    _clearErrors,
+    _trigger,
+    _getValues
+  ) => {
+    runComprehensiveSanitizer({ formData: nextFormData, setValue });
+    if (!isEqual(nextFormData, formUploadData)) {
+      setData(nextFormData);
     }
   };
 
@@ -43,6 +54,15 @@ const UploadDocument = ({ config, t, handleCancelUpload, handleUploadProceed, fo
       </div>
     </Modal>
   );
+};
+
+UploadDocument.propTypes = {
+  config: PropTypes.object.isRequired,
+  t: PropTypes.func.isRequired,
+  handleCancelUpload: PropTypes.func.isRequired,
+  handleUploadProceed: PropTypes.func.isRequired,
+  formUploadData: PropTypes.object,
+  setData: PropTypes.func.isRequired,
 };
 
 export default UploadDocument;

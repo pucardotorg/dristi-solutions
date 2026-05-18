@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import Modal from "./Modal";
 import CustomSubmitModal from "../pages/citizen/FileCase/admission/CustomSubmitModal";
 
@@ -29,5 +30,14 @@ function CorrectionsSubmitModal({ t, filingNumber, handleGoToHome, downloadPdf, 
     </Modal>
   );
 }
+
+CorrectionsSubmitModal.propTypes = {
+  t: PropTypes.func,
+  filingNumber: PropTypes.string,
+  handleGoToHome: PropTypes.func,
+  downloadPdf: PropTypes.func,
+  caseDetails: PropTypes.object,
+  tenantId: PropTypes.string,
+};
 
 export default CorrectionsSubmitModal;

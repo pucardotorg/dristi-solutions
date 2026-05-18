@@ -1,8 +1,27 @@
 import React, { useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { Loader, LabelFieldPair, CardLabelError, CardText, CardHeader } from "@egovernments/digit-ui-react-components";
 import RadioButtons from "./RadioButton";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import get from "lodash/get";
+
+const getShowDependentFields = (input, formData, config) => {
+  if (input.isDependentOn && !formData?.[config.key]) {
+    return false;
+  }
+  if (formData?.[config.key]?.[input.isDependentOn]) {
+    return (
+      formData?.[config.key] &&
+      Array.isArray(input.dependentKey[input.isDependentOn]) &&
+      input.dependentKey[input.isDependentOn].reduce((res, curr) => {
+        if (!res) return res;
+        res = formData[config.key][input.isDependentOn][curr];
+        return res;
+      }, true)
+    );
+  }
+  return true;
+};
 
 const CustomRadioCard = ({ t, config, onSelect, formData = {}, errors, label }) => {
   const Digit = window.Digit || {};
@@ -20,24 +39,11 @@ const CustomRadioCard = ({ t, config, onSelect, formData = {}, errors, label }) 
   if (isLoading) return <Loader />;
   return (
     <div>
-      {inputs?.map((input, index) => {
+      {inputs?.map((input) => {
         let currentValue = (formData && formData[config.key] && formData[config.key][input.name]) || "";
-
-        const showDependentFields =
-          Boolean(input.isDependentOn) && !Boolean(formData && formData[config.key])
-            ? false
-            : Boolean(formData && formData[config.key] && formData[config.key][input.isDependentOn])
-            ? formData &&
-              formData[config.key] &&
-              Array.isArray(input.dependentKey[input.isDependentOn]) &&
-              input.dependentKey[input.isDependentOn].reduce((res, curr) => {
-                if (!res) return res;
-                res = formData[config.key][input.isDependentOn][curr];
-                return res;
-              }, true)
-            : true;
+        const showDependentFields = getShowDependentFields(input, formData, config);
         return (
-          <React.Fragment key={index}>
+          <React.Fragment key={input.name}>
             {errors[input.name] && <CardLabelError>{t(input.error)}</CardLabelError>}
 
             {showDependentFields && (
@@ -56,12 +62,12 @@ const CustomRadioCard = ({ t, config, onSelect, formData = {}, errors, label }) 
                     options={input?.options || idTypeData || []}
                     key={input.name}
                     optionsKey={input?.optionsKey}
-                    value={formData && formData[config.key] ? formData[config.key][input.name] : undefined}
+                    value={formData?.[config.key]?.[input.name]}
                     onSelect={(e) => {
                       setValue(e, input.name, input);
                     }}
-                    selectedOption={formData && formData[config.key] ? formData[config.key][input.name] : undefined}
-                    defaultValue={formData && formData[config.key] ? formData[config.key][input.name] : undefined}
+                    selectedOption={formData?.[config.key]?.[input.name]}
+                    defaultValue={formData?.[config.key]?.[input.name]}
                     t={t}
                     errorStyle={errors?.[input.name]}
                     disabled={input?.disable}
@@ -85,6 +91,20 @@ const CustomRadioCard = ({ t, config, onSelect, formData = {}, errors, label }) 
       })}
     </div>
   );
+};
+
+CustomRadioCard.propTypes = {
+  t: PropTypes.func,
+  config: PropTypes.shape({
+    key: PropTypes.string,
+    populators: PropTypes.shape({
+      inputs: PropTypes.array,
+    }),
+  }),
+  onSelect: PropTypes.func,
+  formData: PropTypes.object,
+  errors: PropTypes.object,
+  label: PropTypes.string,
 };
 
 export default CustomRadioCard;

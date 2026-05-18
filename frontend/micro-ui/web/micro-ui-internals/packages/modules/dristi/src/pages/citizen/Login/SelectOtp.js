@@ -4,7 +4,6 @@ import useInterval from "../../../hooks/useInterval";
 import OTPInput from "../../../components/OTPInput";
 import FormStep from "../../../components/FormStep";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
-import { CloseIconWhite } from "../../../icons/svgIndex";
 import Modal from "../../../components/Modal";
 import { maskEmail } from "../../../Utils";
 import { CloseBtn } from "../../../components/ModalComponents";

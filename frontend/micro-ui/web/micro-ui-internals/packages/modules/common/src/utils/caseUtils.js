@@ -1,13 +1,15 @@
 export const getAllAssignees = (caseDetails, getAdvocates = true, getLitigent = true) => {
-  if (Array.isArray(caseDetails?.representatives || []) && caseDetails?.representatives?.length > 0) {
-    return caseDetails?.representatives
+  const representatives = caseDetails?.representatives;
+  if (representatives?.length > 0) {
+    return representatives
       ?.reduce((res, curr) => {
-        if (getAdvocates && curr && curr?.additionalDetails?.uuid) {
+        if (getAdvocates && curr?.additionalDetails?.uuid) {
           res.push(curr?.additionalDetails?.uuid);
         }
-        if (getLitigent && curr && curr?.representing && Array.isArray(curr?.representing || []) && curr?.representing?.length > 0) {
-          const representingUuids = curr?.representing?.reduce((result, current) => {
-            if (current && current?.additionalDetails?.uuid) {
+        const representing = curr?.representing;
+        if (getLitigent && representing?.length > 0) {
+          const representingUuids = representing?.reduce((result, current) => {
+            if (current?.additionalDetails?.uuid) {
               result.push(current?.additionalDetails?.uuid);
             }
             return result;
@@ -17,10 +19,13 @@ export const getAllAssignees = (caseDetails, getAdvocates = true, getLitigent = 
         return res;
       }, [])
       ?.flat();
-  } else if (Array.isArray(caseDetails?.litigants || []) && caseDetails?.litigants?.length > 0) {
-    return caseDetails?.litigants
+  }
+
+  const litigants = caseDetails?.litigants;
+  if (litigants?.length > 0) {
+    return litigants
       ?.reduce((res, curr) => {
-        if (curr && curr?.additionalDetails?.uuid) {
+        if (curr?.additionalDetails?.uuid) {
           res.push(curr?.additionalDetails?.uuid);
         }
         return res;

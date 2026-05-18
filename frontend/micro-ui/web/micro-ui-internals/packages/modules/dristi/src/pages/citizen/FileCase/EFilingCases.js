@@ -255,7 +255,7 @@ function EFilingCases({ path }) {
     Boolean(caseId)
   );
 
-  const { data: individualData, isIndividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data: individualData, isIndividualLoading } = Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
         userUuid: [userInfo?.uuid],

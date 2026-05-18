@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import React, { useMemo } from "react";
 
 export const ArrowDownIcon = () => {
@@ -14,7 +15,7 @@ export const UpDownArrowIcon = () => (
   </svg>
 );
 
-function CustomSortComponent({ t, config, onSelect, formData = {}, errors }) {
+function CustomSortComponent({ t, config, onSelect, formData = {}, errors: _errors }) {
   const Icon = useMemo(() => {
     switch (config?.icon) {
       case "ArrowDownIcon":
@@ -25,59 +26,82 @@ function CustomSortComponent({ t, config, onSelect, formData = {}, errors }) {
         return ArrowDownIcon;
     }
   }, [config?.icon]);
+
+  const isDescOrder = formData?.[config.key]?.order === "desc" || formData?.[config.key] === "DESC";
+
+  const handleSortClick = () => {
+    let payload;
+    if (config?.paymentInbox) {
+      payload = formData?.[config.key] === "DESC" ? "ASC" : "DESC";
+    } else {
+      payload = {
+        sortBy: config.sortBy,
+        order: formData?.[config.key]?.order === "desc" ? "asc" : "desc",
+      };
+    }
+    onSelect(config.key, payload);
+  };
+
   return (
     <div className="select-signature-main" style={{ justifyContent: "center", alignItems: "center", flexDirection: "row", maxWidth: "100%" }}>
-      <React.Fragment>
-        <button
-          className="custom-sort-button"
-          style={{
-            height: 40,
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            fontSize: 16,
-            justifyContent: "center",
-            backgroundColor: "#fff",
-            border: "1px solid black",
-          }}
-          onClick={() =>
-            onSelect(
-              config.key,
-              config?.paymentInbox
-                ? formData?.[config.key] === "DESC"
-                  ? "ASC"
-                  : "DESC"
-                : { sortBy: config.sortBy, order: formData?.[config.key]?.order === "desc" ? "asc" : "desc" }
-            )
-          }
-        >
-          <span className="custom-sort-name">{t(config.name)} </span>
-          {config?.showAdditionalText ? (
-            <span className="custom-sort-text">
-              &nbsp;
-              {formData?.[config.key]?.order === "desc" || formData?.[config.key] === "DESC" ? t(config?.descText) : t(config?.ascText)}
-            </span>
-          ) : (
-            ""
-          )}
-          {config?.showIcon && Icon && (
-            <div
-              className="custom-sort-icon"
-              style={{
-                marginLeft: 16,
-                transform: formData?.[config.key]?.order === "desc" || formData?.[config.key] === "DESC" ? "rotate(0deg)" : "rotate(180deg)",
-                transition: "transform 0.3s",
-              }}
-            >
-              <React.Fragment>
-                <Icon />
-              </React.Fragment>
-            </div>
-          )}
-        </button>
-      </React.Fragment>
+      <button
+        type="button"
+        className="custom-sort-button"
+        style={{
+          height: 40,
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          fontSize: 16,
+          justifyContent: "center",
+          backgroundColor: "#fff",
+          border: "1px solid black",
+        }}
+        onClick={handleSortClick}
+      >
+        <span className="custom-sort-name">{t(config.name)} </span>
+        {config?.showAdditionalText ? (
+          <span className="custom-sort-text">
+            &nbsp;
+            {isDescOrder ? t(config?.descText) : t(config?.ascText)}
+          </span>
+        ) : null}
+        {config?.showIcon && Icon && (
+          <span
+            className="custom-sort-icon"
+            style={{
+              display: "inline-flex",
+              marginLeft: 16,
+              transform: isDescOrder ? "rotate(0deg)" : "rotate(180deg)",
+              transition: "transform 0.3s",
+            }}
+          >
+            <Icon />
+          </span>
+        )}
+      </button>
     </div>
   );
 }
+
+const sortConfigPropType = PropTypes.shape({
+  key: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  icon: PropTypes.string,
+  paymentInbox: PropTypes.bool,
+  sortBy: PropTypes.string,
+  showAdditionalText: PropTypes.bool,
+  descText: PropTypes.string,
+  ascText: PropTypes.string,
+  showIcon: PropTypes.bool,
+});
+
+CustomSortComponent.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: sortConfigPropType.isRequired,
+  onSelect: PropTypes.func.isRequired,
+  formData: PropTypes.object,
+  errors: PropTypes.object,
+};
 
 export default CustomSortComponent;

@@ -63,7 +63,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .digit-banner-success-wrap {
     header {
       @apply text-heading-xl-dt;

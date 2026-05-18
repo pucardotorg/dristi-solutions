@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Dropdown, LabelFieldPair, CardLabel, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Dropdown, LabelFieldPair, CardLabel, Loader } from "@egovernments/digit-ui-react-components";
 import { LeftArrow, CustomAddIcon, CustomDeleteIcon } from "../../../icons/svgIndex";
 import Button from "../../../components/Button";
 import isEmpty from "lodash/isEmpty";

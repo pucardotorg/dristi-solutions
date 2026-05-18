@@ -1,4 +1,5 @@
 import React, { useEffect, useReducer, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { ArrowDown, CheckSvg } from "../icons/svgIndex";
 import RemoveableTag from "./RemoveableTag";
@@ -301,6 +302,27 @@ const MultiSelectDropdown = ({
       ) : null}
     </div>
   );
+};
+
+MultiSelectDropdown.propTypes = {
+  options: PropTypes.array,
+  optionsKey: PropTypes.string,
+  selected: PropTypes.array,
+  onSelect: PropTypes.func.isRequired,
+  defaultLabel: PropTypes.string,
+  defaultUnit: PropTypes.string,
+  BlockNumber: PropTypes.number,
+  isOBPSMultiple: PropTypes.bool,
+  props: PropTypes.object,
+  isPropsNeeded: PropTypes.bool,
+  ServerStyle: PropTypes.object,
+  isSurvey: PropTypes.bool,
+  placeholder: PropTypes.string,
+  disable: PropTypes.bool,
+  config: PropTypes.object,
+  customLabel: PropTypes.string,
+  parentRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape({ current: PropTypes.any })]),
+  isOpenAbove: PropTypes.bool,
 };
 
 export default MultiSelectDropdown;

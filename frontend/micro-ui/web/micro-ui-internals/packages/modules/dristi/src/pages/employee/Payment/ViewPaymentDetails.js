@@ -62,8 +62,6 @@ const ViewPaymentDetails = ({ location, match }) => {
     paymentType,
     courtId,
   } = window?.Digit.Hooks.useQueryParams();
-  const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
-
   const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
   const [tasksData, setTasksData] = useState(null);
   const [genericTaskData, setGenericTaskData] = useState(null);

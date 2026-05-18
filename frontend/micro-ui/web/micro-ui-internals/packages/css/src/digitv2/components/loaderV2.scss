@@ -45,15 +45,13 @@
 }
 
 .digit-ldio-pjg92h09b2o div {
+  box-sizing: content-box;
   position: absolute;
   width: 52px;
   height: 52px;
   border: 12px solid theme(colors.secondary);
   border-top-color: transparent;
   border-radius: 50%;
-}
-
-.digit-ldio-pjg92h09b2o div {
   animation: digit-ldio-pjg92h09b2o 1s linear infinite;
   top: 50px;
   left: 50px;
@@ -74,8 +72,4 @@
   transform: translateZ(0) scale(0.48);
   backface-visibility: hidden;
   transform-origin: 0 0;
-}
-
-.digit-ldio-pjg92h09b2o div {
-  box-sizing: content-box;
 }

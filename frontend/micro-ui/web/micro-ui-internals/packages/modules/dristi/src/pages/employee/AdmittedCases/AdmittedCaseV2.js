@@ -457,7 +457,7 @@ const AdmittedCaseV2 = () => {
     allAdvocates,
     authorizedUuid,
   ]);
-  const { data: applicationData, isLoading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+  const { data: applicationData } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
         filingNumber,
@@ -1136,7 +1136,9 @@ const AdmittedCaseV2 = () => {
 
   useEffect(() => {
     if (show || !location.state?.submissionEvidenceModal) return;
-    const { submissionEvidenceModal: _omit, ...rest } = location.state || {};
+    const prevState = location.state || {};
+    const rest = { ...prevState };
+    delete rest.submissionEvidenceModal;
     history.replace({
       pathname: location.pathname,
       search: location.search,
@@ -2619,12 +2621,7 @@ const AdmittedCaseV2 = () => {
             onTabChange(0, {}, "Documents");
             setDocumentCounter((prev) => prev + 1);
           }}
-          onSubmit={(action) => {
-            if (action === "end-hearing") {
-              // Handle end hearing action
-            } else if (action === "view-cause-list") {
-              // Handle view cause list action
-            }
+          onSubmit={() => {
             setShowWitnessModal({ show: false, artifactNumber: null });
           }}
           attendees={currentActiveHearing?.attendees}

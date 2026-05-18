@@ -1,6 +1,9 @@
-import React from 'react'
+import PropTypes from "prop-types";
+import React from "react";
 
-const OrSeparator = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) => {
+function OrSeparator(props) {
+  const { t, config } = props;
+
   return (
     <div style={{ display: "flex", alignItems: "center", margin: "10px 0" }}>
       <div style={{ flexGrow: 1, height: "1px", backgroundColor: "#ccc" }}></div>
@@ -8,7 +11,18 @@ const OrSeparator = ({ t, config, onSelect, formData = {}, errors, setError, cle
       <div style={{ flexGrow: 1, height: "1px", backgroundColor: "#ccc" }}></div>
     </div>
   );
+}
+
+OrSeparator.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    sublabel: PropTypes.string,
+  }),
+  setError: PropTypes.func,
+  clearErrors: PropTypes.func,
+  onSelect: PropTypes.func,
+  formData: PropTypes.object,
+  errors: PropTypes.object,
 };
 
 export default OrSeparator;
-  

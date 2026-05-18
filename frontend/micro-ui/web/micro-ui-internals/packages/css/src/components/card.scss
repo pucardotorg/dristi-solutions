@@ -58,7 +58,6 @@
 
 .field-container {
   @apply flex  items-center;
-  /*@apply flex  justify-center items-center;*/
 }
 
 .employeeCard {
@@ -176,7 +175,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .submit-bar,
   .submit-bar-disabled {
     width: 240px;
@@ -209,9 +208,6 @@
   }
 
   .employeeCard {
-  /*  TODO need to revisit that we need mx-md NABEEL/ANIL
-     @apply mb-md mx-md !important;
-    */
     @apply mb-md !important;
     &.filter {
       margin-left: auto;
@@ -299,9 +295,6 @@
       margin-right: auto;
     }
 
-    .header-content {
-    }
-
     .header-end {
       margin-left: auto;
     }
@@ -338,8 +331,6 @@
     margin-left: 0;
     margin-right: 24px;
     margin-bottom: 24px;
-  }
-  .info-banner-wrap-citizen-override {
   }
   .oc-aknowledgement-screen {
     width: auto;

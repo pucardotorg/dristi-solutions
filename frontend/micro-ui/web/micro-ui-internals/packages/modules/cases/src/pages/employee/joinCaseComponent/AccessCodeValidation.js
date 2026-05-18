@@ -1,6 +1,7 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
 import CustomCaseInfoDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCaseInfoDiv";
 import { CardLabel, CardLabelError, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -77,11 +78,20 @@ const AccessCodeValidation = ({ caseDetails, validationCode, setValidationCode, 
             autoFocus={true}
           />
           {errors?.validationCode && <CardLabelError> {t(errors?.validationCode?.message)} </CardLabelError>}
-          {}
         </div>
       </LabelFieldPair>
     </div>
   );
+};
+
+AccessCodeValidation.propTypes = {
+  caseDetails: PropTypes.object,
+  validationCode: PropTypes.string,
+  setValidationCode: PropTypes.func.isRequired,
+  setIsDisabled: PropTypes.func.isRequired,
+  errors: PropTypes.object,
+  setErrors: PropTypes.func.isRequired,
+  setIsVerified: PropTypes.func.isRequired,
 };
 
 export default AccessCodeValidation;

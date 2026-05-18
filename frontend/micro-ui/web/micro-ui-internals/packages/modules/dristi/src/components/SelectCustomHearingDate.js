@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { EditPencilIcon } from "../icons/svgIndex";
@@ -37,14 +38,22 @@ const Chip = ({ label, isSelected, handleClick, icon }) => {
     minWidth: "150px",
     fontWeight: isSelected ? "700" : "400",
     gap: "10px",
+    font: "inherit",
   };
 
   return (
-    <div style={chipStyle} onClick={handleClick}>
+    <button type="button" style={chipStyle} onClick={handleClick}>
       {formatToUI(label)}
       {icon && <span>{icon}</span>}
-    </div>
+    </button>
   );
+};
+
+Chip.propTypes = {
+  label: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  isSelected: PropTypes.bool,
+  handleClick: PropTypes.func.isRequired,
+  icon: PropTypes.node,
 };
 function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors }) {
   const [showPicker, setShowPicker] = useState(false);
@@ -124,10 +133,18 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
       <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", borderRadius: "4px", paddingTop: "10px", backgroundColor: "#FBFAFA" }}>
         {suggestedDates.map((date, index) => {
           const internalDate = internalSuggestedDates[index];
-          return <Chip key={index} label={date} isSelected={selectedValue === internalDate} handleClick={() => handleChipClick(date)} />;
+          return (
+            <Chip
+              key={internalDate || `${String(date)}-${String(index)}`}
+              label={date}
+              isSelected={selectedValue === internalDate}
+              handleClick={() => handleChipClick(date)}
+            />
+          );
         })}
 
         <Chip
+          key="select-custom-date"
           label={isCustomDateSelected ? formatToUI(selectedValue) : t("SELECT_ANOTHER_DATE")}
           isSelected={isCustomDateSelected}
           handleClick={() => setShowPicker(true)}
@@ -170,5 +187,20 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
     </div>
   );
 }
+
+SelectCustomHearingDate.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    label: PropTypes.string,
+    withoutLabel: PropTypes.bool,
+    populators: PropTypes.shape({
+      inputs: PropTypes.array,
+    }),
+  }).isRequired,
+  onSelect: PropTypes.func.isRequired,
+  formData: PropTypes.object,
+  errors: PropTypes.object,
+};
 
 export default SelectCustomHearingDate;

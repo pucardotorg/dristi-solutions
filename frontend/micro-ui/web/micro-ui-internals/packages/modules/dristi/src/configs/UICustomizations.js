@@ -1724,7 +1724,7 @@ export const UICustomizations = {
             <Link
               to={`/${window?.contextPath}/ui/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`}
             >
-              {value ? value : "-"}
+              {value || "-"}
             </Link>
           );
         default:
@@ -2051,7 +2051,7 @@ export const UICustomizations = {
                 state: { homeActiveTab: row?.tab },
               }}
             >
-              {value ? value : "-"}
+              {value || "-"}
             </Link>
           );
         }
@@ -2376,10 +2376,10 @@ export const UICustomizations = {
                 state: { homeActiveTab: row?.tab },
               }}
             >
-              {value ? value : "-"}
+              {value || "-"}
             </Link>
           ) : row?.tab === "RESCHEDULE_REQUEST" ? (
-            <span style={{ cursor: "pointer", textDecoration: "underline" }}>{value ? value : "-"}</span>
+            <span style={{ cursor: "pointer", textDecoration: "underline" }}>{value || "-"}</span>
           ) : ["BAIL_BOND_STATUS", "NOTICE_SUMMONS_MANAGEMENT"]?.includes(row?.tab) ? (
             <OrderName rowData={row} colData={column} value={value} />
           ) : (
@@ -2391,7 +2391,7 @@ export const UICustomizations = {
                 state: { homeActiveTab: row?.tab },
               }}
             >
-              {value ? value : "-"}
+              {value || "-"}
             </Link>
           );
         }
@@ -2592,7 +2592,7 @@ export const UICustomizations = {
       switch (key) {
         case "PENDING_CASE_NAME":
           return row?.substage === CaseWorkflowState.FILING ? (
-            <span>{value ? value : "-"}</span>
+            <span>{value || "-"}</span>
           ) : (
             <Link
               style={{ color: "black", textDecoration: "underline" }}
@@ -2602,7 +2602,7 @@ export const UICustomizations = {
                 state: { homeActiveTab: row?.tab },
               }}
             >
-              {value ? value : "-"}
+              {value || "-"}
             </Link>
           );
         case "CASE_TYPE":

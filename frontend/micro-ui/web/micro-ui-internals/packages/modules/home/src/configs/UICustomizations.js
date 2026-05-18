@@ -424,6 +424,13 @@ export const UICustomizations = {
       const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
       const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.name || stageForm?.code || "";
       const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
+      let stageSpread = {};
+      if (selectedStage) {
+        stageSpread = { stage: [selectedStage] };
+      } else if (requestCriteria?.body?.criteria?.stage) {
+        stageSpread = { stage: requestCriteria.body.criteria.stage };
+      }
+
       const criteria = {
         ...requestCriteria?.body?.criteria,
         ...requestCriteria?.state?.searchForm,
@@ -440,11 +447,7 @@ export const UICustomizations = {
         ...(requestCriteria?.state?.searchForm?.outcome?.outcome && {
           outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
         }),
-        ...(selectedStage
-          ? { stage: [selectedStage] }
-          : requestCriteria?.body?.criteria?.stage
-          ? { stage: requestCriteria.body.criteria.stage }
-          : {}),
+        ...stageSpread,
         substage: undefined,
         ...(selectedSecondaryStage ? { secondaryStage: [selectedSecondaryStage] } : { secondaryStage: undefined }),
         pagination: {

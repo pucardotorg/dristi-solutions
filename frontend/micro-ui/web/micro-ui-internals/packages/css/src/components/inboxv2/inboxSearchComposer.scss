@@ -138,7 +138,7 @@
   }
 }
 
-@screen sm {
+@media (max-width: 425px) {
   .employee-main-application-details-for-modal {
     padding: 0 !important;
   }

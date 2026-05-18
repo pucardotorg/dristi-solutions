@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import React, { useCallback, useContext, useState } from "react";
 
 const ToastContext = React.createContext({
@@ -14,31 +15,47 @@ export function ToastProvider({ children }) {
   return <ToastContext.Provider value={{ message, setMessage, type, setType }}>{children}</ToastContext.Provider>;
 }
 
+ToastProvider.propTypes = {
+  children: PropTypes.node,
+};
+
 export function useToast() {
   const { message, setMessage, type, setType } = useContext(ToastContext);
+
+  const toast = useCallback((nextMessage, timeout, nextType) => {
+    setMessage(nextMessage);
+    setType(nextType);
+    setTimeout(() => {
+      setMessage(null);
+      setType(null);
+    }, timeout);
+  }, [setMessage, setType]);
+
+  const success = useCallback(
+    (nextMessage, timeout = 3000) => {
+      toast(nextMessage, timeout, "success");
+    },
+    [toast]
+  );
+
+  const error = useCallback(
+    (nextMessage, timeout = 3000) => {
+      toast(nextMessage, timeout, "error");
+    },
+    [toast]
+  );
+
+  const info = useCallback(
+    (nextMessage, timeout = 3000) => {
+      toast(nextMessage, timeout, "info");
+    },
+    [toast]
+  );
 
   const done = useCallback(() => {
     setMessage(null);
     setType(null);
-  }, []);
-
-  const toast = useCallback((message, timeout, type) => {
-    setMessage(message);
-    setType(type);
-    setTimeout(() => done(), timeout);
-  }, []);
-
-  const success = useCallback((message, timeout = 3000) => {
-    toast(message, timeout, "success");
-  }, []);
-  
-  const error = useCallback((message, timeout = 3000) => {
-    toast(message, timeout, "error");
-  }, []);
-
-  const info = useCallback((message, timeout = 3000) => {
-    toast(message, timeout, "info");
-  }, []);
+  }, [setMessage, setType]);
 
   return {
     toastMessage: message,

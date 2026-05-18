@@ -11,7 +11,7 @@ export const VerifyMultipartyLitigantConfig = [
         populators: {
           name: "firstName",
           error: "Required",
-          validation: { pattern: /^[A-Za-z]+$/i },
+          validation: { pattern: /^[a-z]+$/i },
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
       },
@@ -151,7 +151,7 @@ export const VerifyPoaClaiming = [
         populators: {
           name: "firstName",
           error: "Required",
-          validation: { pattern: /^[A-Za-z]+$/i },
+          validation: { pattern: /^[a-z]+$/i },
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
       },

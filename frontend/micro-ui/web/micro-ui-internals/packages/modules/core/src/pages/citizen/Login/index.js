@@ -1,5 +1,6 @@
-import { AppContainer, BreadCrumb, Toast } from "@egovernments/digit-ui-react-components";
+import { AppContainer, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { Route, Switch, useHistory, useLocation, useRouteMatch } from "react-router-dom";
 import { loginSteps } from "./config";
@@ -14,7 +15,7 @@ const DEFAULT_REDIRECT_URL = `/${window?.contextPath}/citizen/dristi/home/login`
 
 /* set citizen details to enable backward compatiable */
 const setCitizenDetail = (userObject, token, tenantId) => {
-  let locale = JSON.parse(sessionStorage.getItem("Digit.initData"))?.value?.selectedLanguage;
+  const locale = JSON.parse(sessionStorage.getItem("Digit.initData"))?.value?.selectedLanguage;
   localStorage.setItem("Citizen.tenant-id", tenantId);
   localStorage.setItem("tenant-id", tenantId);
   localStorage.setItem("citizen.userRequestObject", JSON.stringify(userObject));
@@ -26,23 +27,19 @@ const setCitizenDetail = (userObject, token, tenantId) => {
   localStorage.setItem("Citizen.user-info", JSON.stringify(userObject));
 };
 
-const getFromLocation = (state, searchParams) => {
-  return state?.from || searchParams?.from || DEFAULT_REDIRECT_URL;
-};
+const getFromLocation = (state, searchParams) => state?.from || searchParams?.from || DEFAULT_REDIRECT_URL;
 
 const Login = ({ stateCode, isUserRegistered = true }) => {
   const { t } = useTranslation();
   const location = useLocation();
-  const { path, url } = useRouteMatch();
+  const { path } = useRouteMatch();
   const history = useHistory();
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const [isOtpValid, setIsOtpValid] = useState(true);
-  const [tokens, setTokens] = useState(null);
   const [params, setParmas] = useState({});
   const [errorTO, setErrorTO] = useState(null);
   const searchParams = Digit.Hooks.useQueryParams();
-  const [canSubmitName, setCanSubmitName] = useState(false);
   const [canSubmitOtp, setCanSubmitOtp] = useState(true);
   const [canSubmitNo, setCanSubmitNo] = useState(true);
 
@@ -59,7 +56,7 @@ const Login = ({ stateCode, isUserRegistered = true }) => {
       setErrorTO(errorTimeout);
     }
     return () => {
-      errorTimeout && clearTimeout(errorTimeout);
+      if (errorTimeout) clearTimeout(errorTimeout);
     };
   }, [error]);
 
@@ -104,6 +101,38 @@ const Login = ({ stateCode, isUserRegistered = true }) => {
     setParmas({ ...params, mobileNumber: value });
   };
 
+  const sendOtp = async (data) => {
+    try {
+      const res = await Digit.UserService.sendOtp(data, stateCode);
+      return [res, null];
+    } catch (err) {
+      return [null, err];
+    }
+  };
+
+  const handleRegisteredLogin = async (data) => {
+    const [, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
+    setCanSubmitNo(true);
+    if (!err) {
+      history.replace(`${path}/otp`, { from: getFromLocation(location.state, searchParams), role: location.state?.role });
+      return;
+    }
+    if (!(location.state && location.state.role === "FSM_DSO")) {
+      history.push(`/${window?.contextPath}/citizen/register/name`, { from: getFromLocation(location.state, searchParams), data });
+    }
+    if (location.state?.role) {
+      setError(location.state?.role === "FSM_DSO" ? t("ES_ERROR_DSO_LOGIN") : "User not registered.");
+    }
+  };
+
+  const handleUnregisteredLogin = async (data) => {
+    const [, err] = await sendOtp({ otp: { ...data, ...TYPE_REGISTER } });
+    setCanSubmitNo(true);
+    if (!err) {
+      history.replace(`${path}/otp`, { from: getFromLocation(location.state, searchParams) });
+    }
+  };
+
   const selectMobileNumber = async (mobileNumber) => {
     setCanSubmitNo(false);
     setParmas({ ...params, ...mobileNumber });
@@ -113,29 +142,9 @@ const Login = ({ stateCode, isUserRegistered = true }) => {
       userType: getUserType(),
     };
     if (isUserRegistered) {
-      const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
-      if (!err) {
-        setCanSubmitNo(true);
-        history.replace(`${path}/otp`, { from: getFromLocation(location.state, searchParams), role: location.state?.role });
-        return;
-      } else {
-        setCanSubmitNo(true);
-        if (!(location.state && location.state.role === "FSM_DSO")) {
-          history.push(`/${window?.contextPath}/citizen/register/name`, { from: getFromLocation(location.state, searchParams), data: data });
-        }
-      }
-      if (location.state?.role) {
-        setCanSubmitNo(true);
-        setError(location.state?.role === "FSM_DSO" ? t("ES_ERROR_DSO_LOGIN") : "User not registered.");
-      }
+      await handleRegisteredLogin(data);
     } else {
-      const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_REGISTER } });
-      if (!err) {
-        setCanSubmitNo(true);
-        history.replace(`${path}/otp`, { from: getFromLocation(location.state, searchParams) });
-        return;
-      }
-      setCanSubmitNo(true);
+      await handleUnregisteredLogin(data);
     }
   };
 
@@ -151,11 +160,11 @@ const Login = ({ stateCode, isUserRegistered = true }) => {
           tenantId: stateCode,
           userType: getUserType(),
         };
-        const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
+        const { UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
 
         if (location.state?.role) {
           const roleInfo = info.roles.find((userRole) => userRole.code === location.state.role);
-          if (!roleInfo || !roleInfo.code) {
+          if (!roleInfo?.code) {
             setError(t("ES_ERROR_USER_NOT_PERMITTED"));
             setTimeout(() => history.replace(DEFAULT_REDIRECT_URL), 5000);
             return;
@@ -166,7 +175,7 @@ const Login = ({ stateCode, isUserRegistered = true }) => {
         }
 
         setUser({ info, ...tokens });
-      } else if (!isUserRegistered) {
+      } else {
         const requestData = {
           name: name || DEFAULT_USER,
           username: mobileNumber,
@@ -174,7 +183,7 @@ const Login = ({ stateCode, isUserRegistered = true }) => {
           tenantId: stateCode,
         };
 
-        const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.registerUser(requestData, stateCode);
+        const { UserRequest: info, ...tokens } = await Digit.UserService.registerUser(requestData, stateCode);
 
         if (window?.globalConfigs?.getConfig("ENABLE_SINGLEINSTANCE")) {
           info.tenantId = Digit.ULBService.getStateId();
@@ -195,20 +204,8 @@ const Login = ({ stateCode, isUserRegistered = true }) => {
       tenantId: stateCode,
       userType: getUserType(),
     };
-    if (!isUserRegistered) {
-      const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_REGISTER } });
-    } else if (isUserRegistered) {
-      const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
-    }
-  };
-
-  const sendOtp = async (data) => {
-    try {
-      const res = await Digit.UserService.sendOtp(data, stateCode);
-      return [res, null];
-    } catch (err) {
-      return [null, err];
-    }
+    const otpType = isUserRegistered ? TYPE_LOGIN : TYPE_REGISTER;
+    await sendOtp({ otp: { ...data, ...otpType } });
   };
 
   const handleRememberMeChange = () => {
@@ -264,6 +261,11 @@ const Login = ({ stateCode, isUserRegistered = true }) => {
       </Switch>
     </div>
   );
+};
+
+Login.propTypes = {
+  stateCode: PropTypes.string,
+  isUserRegistered: PropTypes.bool,
 };
 
 export default Login;

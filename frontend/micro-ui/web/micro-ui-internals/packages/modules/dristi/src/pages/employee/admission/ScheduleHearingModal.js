@@ -250,6 +250,12 @@ function ScheduleHearing({
     if (status !== "OPTOUT") {
       const dateArr = data.date.split(" ").map((date, i) => (i === 0 ? date.slice(0, date.length - 2) : date));
       const date = new Date(dateArr.join(" "));
+      const padDatePart = (part) => {
+        const n = Number(part);
+        if (Number.isNaN(n)) return String(part);
+        if (n < 10) return `0${n}`;
+        return String(n);
+      };
       const reqBody = {
         order: {
           createdDate: null,
@@ -274,9 +280,7 @@ function ScheduleHearing({
           documents: [],
           additionalDetails: {
             formdata: {
-              hearingDate: `${dateArr[2]}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
-                dateArr[0] < 9 ? `0${dateArr[0]}` : dateArr[0]
-              }`,
+              hearingDate: `${dateArr[2]}-${padDatePart(date.getMonth() + 1)}-${padDatePart(dateArr[0])}`,
               hearingPurpose: data.purpose,
               orderType: {
                 code: "SCHEDULE_OF_HEARING_DATE",
