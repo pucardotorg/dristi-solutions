@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
 import { Button, Loader } from "@egovernments/digit-ui-react-components";
 import { FileDownloadIcon, FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 import { Banner } from "@egovernments/digit-ui-react-components";
 import { Urls } from "../../hooks";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { buildUploadModalConfig, SIGNATURE_UPLOAD_CONFIG, UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
+import { SignModalCloseBtn, SignModalHeading } from "./shared/signModalChrome";
 
 export const clearDigitalDocumentSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -176,23 +176,6 @@ export const DigitalDocumentSignModal = ({
     selectedDigitizedDocument?.documentNumber,
     selectedDigitizedDocument?.businessObject?.digitalizedDocumentDetails?.documentNumber,
   ]);
-
-  const CloseBtn = useCallback((props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  }, []);
-
-  const Heading = useCallback((props) => {
-    return (
-      <div className="evidence-title">
-        <h1 className="heading-m">{props.label}</h1>
-        {props.status && <CustomChip text={props.status} shade={"green"} />}
-      </div>
-    );
-  }, []);
 
   const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
@@ -525,8 +508,8 @@ export const DigitalDocumentSignModal = ({
       )}
       {stepper === 0 && (
         <Modal
-          headerBarEnd={<CloseBtn onClick={handleCancel} />}
-          headerBarMain={<Heading label={t(effectiveRowData?.type)} status={t(effectiveRowData?.status)} />}
+          headerBarEnd={<SignModalCloseBtn onClick={handleCancel} />}
+          headerBarMain={<SignModalHeading label={t(effectiveRowData?.type)} status={t(effectiveRowData?.status)} />}
           popupStyles={{ width: "70vw", minHeight: "75vh", maxheight: "90vh" }}
           actionCancelLabel={t("CS_COMMON_DOWNLOAD")}
           actionCancelOnSubmit={handleDownload}
@@ -552,8 +535,8 @@ export const DigitalDocumentSignModal = ({
       {/* to select e-sign or upload */}
       {stepper === 1 && !openUploadSignatureModal && !isSigned && (
         <Modal
-          headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
-          headerBarEnd={<CloseBtn onClick={handleCancel} />}
+          headerBarMain={<SignModalHeading label={t("ADD_SIGNATURE")} />}
+          headerBarEnd={<SignModalCloseBtn onClick={handleCancel} />}
           actionCancelLabel={t("CS_COMMON_BACK")}
           actionCancelOnSubmit={handleCancel}
           actionSaveLabel={t("CS_COMMON_SUBMIT")}
@@ -617,8 +600,8 @@ export const DigitalDocumentSignModal = ({
       {/* after signing showing signed modal */}
       {stepper === 1 && !openUploadSignatureModal && isSigned && (
         <Modal
-          headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
-          headerBarEnd={<CloseBtn onClick={handleCancel} />}
+          headerBarMain={<SignModalHeading label={t("ADD_SIGNATURE")} />}
+          headerBarEnd={<SignModalCloseBtn onClick={handleCancel} />}
           actionCancelLabel={t("CS_COMMON_BACK")}
           actionCancelOnSubmit={handleCancel}
           actionSaveLabel={t("SUBMIT_BUTTON")}
@@ -710,8 +693,8 @@ export const DigitalDocumentSignModal = ({
 
       {isEditModal && (
         <Modal
-          headerBarMain={<Heading label={`${t("EDIT_DIGITILIZATION_MODAL_HEADER")} ${t(effectiveRowData?.type)}`} />}
-          headerBarEnd={<CloseBtn onClick={() => setIsEditModal(false)} />}
+          headerBarMain={<SignModalHeading label={`${t("EDIT_DIGITILIZATION_MODAL_HEADER")} ${t(effectiveRowData?.type)}`} />}
+          headerBarEnd={<SignModalCloseBtn onClick={() => setIsEditModal(false)} />}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
           actionCancelOnSubmit={() => setIsEditModal(false)}
           actionSaveLabel={t("CONFIRM")}

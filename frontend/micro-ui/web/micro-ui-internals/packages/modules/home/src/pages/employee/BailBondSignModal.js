@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
 import { Button, Loader } from "@egovernments/digit-ui-react-components";
 import { FileDownloadIcon, FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
@@ -12,6 +12,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
+import { SignModalCloseBtn, SignModalHeading } from "./shared/signModalChrome";
 
 export const clearBailBondSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -119,22 +120,6 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
     };
     fetchBailBondData();
   }, [queryStrings.bailId, tenantId, courtId, selectedBailBond?.bailId, selectedBailBond?.businessObject?.bailDetails?.bailId, filingNumber]);
-
-  const CloseBtn = useCallback((props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  }, []);
-
-  const Heading = useCallback((props) => {
-    return (
-      <div className="evidence-title">
-        <h1 className="heading-m">{props.label}</h1>
-      </div>
-    );
-  }, []);
 
   const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
@@ -396,9 +381,9 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       )}
       {stepper === 0 && (
         <Modal
-          headerBarEnd={<CloseBtn onClick={handleCancel} />}
+          headerBarEnd={<SignModalCloseBtn onClick={handleCancel} />}
           headerBarMain={
-            <Heading
+            <SignModalHeading
               label={
                 bailBondLoader
                   ? t(" ")
@@ -433,8 +418,8 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       {/* to select e-sign or upload */}
       {stepper === 1 && !openUploadSignatureModal && !isSigned && (
         <Modal
-          headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
-          headerBarEnd={<CloseBtn onClick={handleCancel} />}
+          headerBarMain={<SignModalHeading label={t("ADD_SIGNATURE")} />}
+          headerBarEnd={<SignModalCloseBtn onClick={handleCancel} />}
           actionCancelLabel={t("CS_COMMON_BACK")}
           actionCancelOnSubmit={handleCancel}
           actionSaveLabel={t("CS_COMMON_SUBMIT")}
@@ -500,8 +485,8 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       {/* after signing showing signed modal */}
       {stepper === 1 && !openUploadSignatureModal && isSigned && (
         <Modal
-          headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
-          headerBarEnd={<CloseBtn onClick={handleCancel} />}
+          headerBarMain={<SignModalHeading label={t("ADD_SIGNATURE")} />}
+          headerBarEnd={<SignModalCloseBtn onClick={handleCancel} />}
           actionCancelLabel={t("CS_COMMON_BACK")}
           actionCancelOnSubmit={handleCancel}
           actionSaveLabel={t("SUBMIT_BUTTON")}
@@ -592,8 +577,8 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
 
       {isRejectModalOpen && (
         <Modal
-          headerBarMain={<Heading label={t("REJECT_BAIL_BOND")} />}
-          headerBarEnd={<CloseBtn onClick={() => setIsRejectModalOpen(false)} />}
+          headerBarMain={<SignModalHeading label={t("REJECT_BAIL_BOND")} />}
+          headerBarEnd={<SignModalCloseBtn onClick={() => setIsRejectModalOpen(false)} />}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
           actionCancelOnSubmit={() => setIsRejectModalOpen(false)}
           actionSaveLabel={t("CONFIRM")}

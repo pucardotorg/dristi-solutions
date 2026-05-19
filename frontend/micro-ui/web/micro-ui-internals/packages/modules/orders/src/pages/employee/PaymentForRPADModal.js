@@ -1,10 +1,8 @@
 import React, { useMemo, useState } from "react";
-import { RadioButtons, CardLabel, LabelFieldPair } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { InfoCard, Loader } from "@egovernments/digit-ui-components";
-import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
+import { Loader } from "@egovernments/digit-ui-components";
 import DocumentModal from "../../components/DocumentModal";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { ordersService } from "../../hooks/services";
@@ -14,12 +12,11 @@ import { DateUtils, extractFeeMedium, getAuthorizedUuid, getTaskType } from "@eg
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import {
   formatRespondentAddressLine,
-  getPaymentModalDeliveryNoteDeadlineFormatted,
   getViewOrderClickHandler,
+  PaymentSummonFeeSelectionComponent,
   useCaseLockStatusForPaymentModal,
   useIsUserAdvocateOnCase,
 } from "./shared/paymentSummonModalShared";
-import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 import { getPartyNameForInfos } from "../../utils";
 import { CaseWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/caseWorkflow";
 import { ORDER_TYPES } from "../../utils/constants";
@@ -36,90 +33,6 @@ const submitModalInfo = {
   ],
   isArrow: false,
   showTable: true,
-};
-
-const PaymentForSummonComponent = ({
-  infos,
-  links,
-  feeOptions,
-  orderDate,
-  paymentLoader,
-  orderType,
-  isUserAdv,
-  isCaseLocked = false,
-  payOnlineButtonTitle = null,
-}) => {
-  const { t } = useTranslation();
-  const CustomErrorTooltip = window?.Digit?.ComponentRegistryService?.getComponent("CustomErrorTooltip");
-
-  const [selectedOption, setSelectedOption] = useState(modeOptions[0]);
-
-  return (
-    <div className="payment-for-summon">
-      <InfoCard
-        variant={"warning"}
-        label={"Complete in 2 days"}
-        additionalElements={[
-          <p>
-            {t(orderType === ORDER_TYPES.SUMMONS ? "SUMMON_DELIVERY_NOTE" : "NOTICE_DELIVERY_NOTE")}{" "}
-            <span style={{ fontWeight: "bold" }}>{getPaymentModalDeliveryNoteDeadlineFormatted()}</span> {t("ON_TIME_DELIVERY")}
-          </p>,
-        ]}
-        inline
-        textStyle={{}}
-        className={`custom-info-card warning`}
-      />
-      <ApplicationInfoComponent infos={infos} links={links} />
-      <LabelFieldPair className="case-label-field-pair">
-        <div className="join-case-tooltip-wrapper">
-          <CardLabel className="case-input-label">{t("Select preferred mode of RPAD to pay")}</CardLabel>
-          <CustomErrorTooltip message={t("Select date")} showTooltip={true} icon />
-        </div>
-        <RadioButtons
-          additionalWrapperClass="mode-of-post-pay"
-          options={modeOptions}
-          selectedOption={selectedOption}
-          optionsKey={"label"}
-          onSelect={(value) => setSelectedOption(value)}
-          disabled={paymentLoader}
-        />
-      </LabelFieldPair>
-      {selectedOption?.value && (
-        <div className="summon-payment-action-table">
-          {feeOptions[selectedOption?.value]?.map((action, index) => (
-            <div className={`${index === 0 ? "header-row" : "action-row"}`}>
-              <div className="payment-label">{t(action?.label)}</div>
-              <div className="payment-amount">{action?.action !== "offline-process" && action?.amount ? `Rs. ${action?.amount}/-` : "-"}</div>
-              {isUserAdv && (
-                <div className="payment-action">
-                  {index === 0 ? (
-                    t(action?.action)
-                  ) : action?.action !== "offline-process" ? (
-                    <ButtonSelector
-                      style={{ border: "1px solid" }}
-                      label={t(action.action)}
-                      onSubmit={action.onClick}
-                      isDisabled={paymentLoader || isCaseLocked}
-                      title={isCaseLocked ? t(payOnlineButtonTitle) : ""}
-                      textStyles={{ margin: "0px" }}
-                    />
-                  ) : (
-                    <p className="offline-process-text">
-                      {t("THIS_OFFLINE_TEXT")}
-                      <span className="learn-more-text">
-                        {t("LEARN_MORE")}
-                        <p className="text-tooltip">{orderType === ORDER_TYPES.SUMMONS ? t("SUMMONS_LEARN_MORE") : t("NOTICE_LEARN_MORE")}</p>
-                      </span>
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 };
 
 const PaymentForRPADModal = ({ path }) => {
@@ -421,10 +334,6 @@ const PaymentForRPADModal = ({ path }) => {
     ];
   }, [compositeItem, filteredTasks, hearingsData?.HearingList, orderDetails, orderType]);
 
-  const orderDate = useMemo(() => {
-    return hearingsData?.HearingList?.[0]?.startTime;
-  }, [hearingsData?.HearingList]);
-
   const links = useMemo(() => {
     return [{ text: "View order", link: "", onClick: getViewOrderClickHandler({ history, caseData, filingNumber }) }];
   }, [caseData]);
@@ -444,21 +353,23 @@ const PaymentForRPADModal = ({ path }) => {
       payOnlineButtonTitle: payOnlineButtonTitle,
       className: "payment-modal",
       modalBody: (
-        <PaymentForSummonComponent
+        <PaymentSummonFeeSelectionComponent
           infos={infos}
           links={links}
           feeOptions={feeOptions}
-          orderDate={orderDate}
           paymentLoader={paymentLoader}
-          isCaseAdmitted={isCaseAdmitted}
           orderType={orderType}
           isUserAdv={isUserAdv}
           isCaseLocked={isCaseLocked}
           payOnlineButtonTitle={payOnlineButtonTitle}
+          modeOptions={modeOptions}
+          modeSelectionLabelKey="Select preferred mode of RPAD to pay"
+          showOfflinePaymentInfoCardLabel={false}
+          offlineHelpVariant="rpad-tooltips"
         />
       ),
     };
-  }, [orderType, infos, links, feeOptions, orderDate, paymentLoader, isCaseAdmitted, isUserAdv, history]);
+  }, [orderType, infos, links, feeOptions, paymentLoader, isUserAdv, isCaseLocked, payOnlineButtonTitle, history]);
 
   if (isOrdersLoading || !orderData || isSummonsBreakUpLoading || isCourtBillLoading || isTaskLoading || isHearingLoading) {
     return <Loader />;
