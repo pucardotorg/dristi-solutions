@@ -14,6 +14,7 @@ import { paymentType } from "../../utils/paymentType";
 import { DateUtils, extractFeeMedium, getAuthorizedUuid, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import {
   formatRespondentAddressLine,
+  getPaymentModalDeliveryNoteDeadlineFormatted,
   getViewOrderClickHandler,
   useCaseLockStatusForPaymentModal,
   useIsUserAdvocateOnCase,
@@ -42,17 +43,6 @@ const PaymentForSummonComponent = ({
 
   const [selectedOption, setSelectedOption] = useState(modeOptions[0]);
 
-  const getDateWithMonthName = (orderDate) => {
-    let today = new Date();
-    today.setDate(today.getDate() + 15);
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    let dd = String(today.getDate()).padStart(2, "0");
-    let mm = monthNames[today.getMonth()];
-    let yyyy = today.getFullYear();
-    let formattedDate = `${dd} ${mm} ${yyyy}`;
-    return formattedDate; // Output: formatted date 15 days from now with month name
-  };
-
   return (
     <div className="payment-for-summon">
       <InfoCard
@@ -61,7 +51,7 @@ const PaymentForSummonComponent = ({
         additionalElements={[
           <p>
             {t(orderType === ORDER_TYPES.SUMMONS ? "SUMMON_DELIVERY_NOTE" : "NOTICE_DELIVERY_NOTE")}{" "}
-            <span style={{ fontWeight: "bold" }}>{getDateWithMonthName(orderDate)}</span> {t("ON_TIME_DELIVERY")}
+            <span style={{ fontWeight: "bold" }}>{getPaymentModalDeliveryNoteDeadlineFormatted()}</span> {t("ON_TIME_DELIVERY")}
           </p>,
         ]}
         inline

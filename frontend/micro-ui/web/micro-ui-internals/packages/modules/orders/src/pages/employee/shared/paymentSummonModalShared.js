@@ -54,6 +54,17 @@ export const useCaseLockStatusForPaymentModal = (caseDetails, tenantId, t, setIs
   }, [caseDetails?.filingNumber]);
 };
 
+/** Same display string as the legacy inline helper in RPAD / post-payment summon modals (15 days ahead, short month name). */
+export const getPaymentModalDeliveryNoteDeadlineFormatted = () => {
+  const today = new Date();
+  today.setDate(today.getDate() + 15);
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const dd = String(today.getDate()).padStart(2, "0");
+  const mm = monthNames[today.getMonth()];
+  const yyyy = today.getFullYear();
+  return `${dd} ${mm} ${yyyy}`;
+};
+
 /** Same history.push target as both modals' "View order" link. */
 export const getViewOrderClickHandler = ({ history, caseData, filingNumber }) => () => {
   history.push(
