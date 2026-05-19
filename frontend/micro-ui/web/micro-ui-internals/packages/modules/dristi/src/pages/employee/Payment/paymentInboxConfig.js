@@ -1,9 +1,17 @@
-const defaultSearchValues = {
-  caseTitleFilingNumber: "",
-  sortOrder: "DESC",
-  caseType: "",
-  paymentType: "",
-};
+import {
+  buildPaymentInboxBillingApiDetails,
+  buildPaymentInboxCaseTypeField,
+  buildPaymentInboxPaymentTypeField,
+  buildPaymentInboxSearchResultColumnsPaid,
+  buildPaymentInboxSearchResultColumnsPending,
+  PAYMENT_INBOX_CASE_TITLE_FIELD,
+  PAYMENT_INBOX_COLUMN_CASE_NAME_ID,
+  PAYMENT_INBOX_DEFAULT_SEARCH_VALUES,
+  PAYMENT_INBOX_MDMS_PAID_MAP,
+  PAYMENT_INBOX_MDMS_PENDING_FILTER,
+  PAYMENT_INBOX_PAID_TAB_DEFAULT_VALUES,
+  PAYMENT_INBOX_SORT_FIELD,
+} from "../../../configs/shared/paymentInboxBillingShared";
 
 export const paymentTabInboxConfig = {
   tenantId: "pg",
@@ -13,27 +21,7 @@ export const paymentTabInboxConfig = {
     {
       label: "PENDING",
       type: "search",
-      apiDetails: {
-        serviceName: "/inbox/v2/index/_search",
-        requestParam: {},
-        requestBody: {
-          inbox: {
-            processSearchCriteria: {
-              businessService: ["billing"],
-              moduleName: "Billing service",
-            },
-            moduleSearchCriteria: {
-              billStatus: "ACTIVE",
-            },
-          },
-        },
-        minParametersForSearchForm: 0,
-        masterName: "commonUiConfig",
-        moduleName: "paymentInboxConfig",
-        searchFormJsonPath: "requestBody.inbox.moduleSearchCriteria",
-        filterFormJsonPath: "requestBody.inbox.moduleSearchCriteria",
-        tableFormJsonPath: "requestBody.inbox",
-      },
+      apiDetails: buildPaymentInboxBillingApiDetails("ACTIVE"),
       sections: {
         search: {
           uiConfig: {
@@ -41,79 +29,12 @@ export const paymentTabInboxConfig = {
             primaryLabel: "ES_COMMON_SEARCH",
             secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
             minReqFields: 0,
-            defaultValues: defaultSearchValues,
+            defaultValues: PAYMENT_INBOX_DEFAULT_SEARCH_VALUES,
             fields: [
-              {
-                type: "component",
-                component: "CustomSortComponent",
-                isMandatory: false,
-                disable: false,
-                name: "SORT_BY",
-                key: "sortOrder",
-                paymentInbox: true,
-                ascText: "OLDEST_TO_NEWEST",
-                descText: "NEWEST_TO_OLDEST",
-                showAdditionalText: true,
-                showIcon: true,
-                icon: "UpDownArrowIcon",
-                populators: {},
-              },
-              {
-                label: "CASE_TYPE",
-                isMandatory: false,
-                key: "caseType",
-                type: "dropdown",
-                disable: false,
-                populators: {
-                  name: "caseType",
-                  options: ["Negotiable Instruments Act 1881"],
-                  styles: {
-                    maxWidth: "300px",
-                    minWidth: "200px",
-                  },
-                  optionsCustomStyle: {
-                    overflowX: "hidden",
-                  },
-                },
-              },
-              {
-                label: "NYAY_PAYMENT_TYPE",
-                isMandatory: false,
-                key: "paymentType",
-                type: "dropdown",
-                disable: false,
-                populators: {
-                  name: "paymentType",
-                  mdmsConfig: {
-                    masterName: "paymentType",
-                    moduleName: "payment",
-                    select:
-                      "(data) => {return data['payment'].paymentType?.filter((item) => item?.paymentType !== `Warrant Court Fee`).map((item) => {return item?.paymentType;});}",
-                  },
-                  styles: {
-                    maxWidth: "300px",
-                    minWidth: "200px",
-                  },
-                  optionsCustomStyle: {
-                    overflowX: "hidden",
-                  },
-                },
-              },
-              {
-                label: "CASE_ID_TITLE",
-                type: "text",
-                isMandatory: false,
-                disable: false,
-                populators: {
-                  name: "caseTitleFilingNumber",
-                  // placeholder: "CASE_ID_TITLE",
-                  error: "BR_PATTERN_ERR_MSG",
-                  validation: {
-                    pattern: {},
-                    minlength: 1,
-                  },
-                },
-              },
+              PAYMENT_INBOX_SORT_FIELD,
+              buildPaymentInboxCaseTypeField(),
+              buildPaymentInboxPaymentTypeField(PAYMENT_INBOX_MDMS_PENDING_FILTER),
+              PAYMENT_INBOX_CASE_TITLE_FIELD,
             ],
           },
           children: {},
@@ -123,40 +44,7 @@ export const paymentTabInboxConfig = {
           tenantId: Digit.ULBService.getCurrentTenantId(),
           label: "",
           uiConfig: {
-            columns: [
-              {
-                label: "CASE_NAME_ID",
-                jsonPath: "businessObject.billDetails.caseTitleFilingNumber",
-                additionalCustomization: true,
-              },
-              {
-                label: "CS_STAGE",
-                jsonPath: "businessObject.billDetails.stage",
-              },
-              {
-                label: "NYAY_PAYMENT_TYPE",
-                jsonPath: "businessObject.billDetails.paymentType",
-              },
-              {
-                label: "AMOUNT_DUE",
-                jsonPath: "businessObject.billDetails.amount",
-                additionalCustomization: true,
-              },
-              // {
-              //   label: "CASE_TYPE",
-              //   jsonPath: "businessObject.billDetails.caseType",
-              // },
-              {
-                label: "PAYMENT_GENERATED_DATE",
-                jsonPath: "businessObject.billDetails.paymentCreatedDate",
-                additionalCustomization: true,
-              },
-              {
-                label: "ACTION",
-                jsonPath: "businessObject.billDetails.id",
-                additionalCustomization: true,
-              },
-            ],
+            columns: buildPaymentInboxSearchResultColumnsPending([PAYMENT_INBOX_COLUMN_CASE_NAME_ID]),
             enableColumnSort: true,
             resultsJsonPath: "items",
           },
@@ -167,27 +55,7 @@ export const paymentTabInboxConfig = {
     {
       label: "PAID",
       type: "search",
-      apiDetails: {
-        serviceName: "/inbox/v2/index/_search",
-        requestParam: {},
-        requestBody: {
-          inbox: {
-            processSearchCriteria: {
-              businessService: ["billing"],
-              moduleName: "Billing service",
-            },
-            moduleSearchCriteria: {
-              billStatus: "PAID",
-            },
-          },
-        },
-        minParametersForSearchForm: 0,
-        masterName: "commonUiConfig",
-        moduleName: "paymentInboxConfig",
-        searchFormJsonPath: "requestBody.inbox.moduleSearchCriteria",
-        filterFormJsonPath: "requestBody.inbox.moduleSearchCriteria",
-        tableFormJsonPath: "requestBody.inbox",
-      },
+      apiDetails: buildPaymentInboxBillingApiDetails("PAID"),
       sections: {
         search: {
           uiConfig: {
@@ -195,81 +63,12 @@ export const paymentTabInboxConfig = {
             primaryLabel: "ES_COMMON_SEARCH",
             secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
             minReqFields: 0,
-            defaultValues: {
-              caseTitleFilingNumber: "",
-              sortOrder: "DESC",
-            },
+            defaultValues: PAYMENT_INBOX_PAID_TAB_DEFAULT_VALUES,
             fields: [
-              {
-                type: "component",
-                component: "CustomSortComponent",
-                isMandatory: false,
-                disable: false,
-                name: "SORT_BY",
-                key: "sortOrder",
-                paymentInbox: true,
-                ascText: "OLDEST_TO_NEWEST",
-                descText: "NEWEST_TO_OLDEST",
-                showAdditionalText: true,
-                showIcon: true,
-                icon: "UpDownArrowIcon",
-                populators: {},
-              },
-              {
-                label: "CASE_TYPE",
-                isMandatory: false,
-                key: "caseType",
-                type: "dropdown",
-                disable: false,
-                populators: {
-                  name: "caseType",
-                  options: ["Negotiable Instruments Act 1881"],
-                  styles: {
-                    maxWidth: "300px",
-                    minWidth: "200px",
-                  },
-                  optionsCustomStyle: {
-                    overflowX: "hidden",
-                  },
-                },
-              },
-              {
-                label: "NYAY_PAYMENT_TYPE",
-                isMandatory: false,
-                key: "paymentType",
-                type: "dropdown",
-                disable: false,
-                populators: {
-                  name: "paymentType",
-                  mdmsConfig: {
-                    masterName: "paymentType",
-                    moduleName: "payment",
-                    select: "(data) => {return data['payment'].paymentType?.map((item) => {return item?.paymentType;});}",
-                  },
-                  styles: {
-                    maxWidth: "300px",
-                    minWidth: "200px",
-                  },
-                  optionsCustomStyle: {
-                    overflowX: "hidden",
-                  },
-                },
-              },
-              {
-                label: "CASE_ID_TITLE",
-                type: "text",
-                isMandatory: false,
-                disable: false,
-                populators: {
-                  name: "caseTitleFilingNumber",
-                  // placeholder: "CASE_ID_TITLE",
-                  error: "BR_PATTERN_ERR_MSG",
-                  validation: {
-                    pattern: {},
-                    minlength: 1,
-                  },
-                },
-              },
+              PAYMENT_INBOX_SORT_FIELD,
+              buildPaymentInboxCaseTypeField(),
+              buildPaymentInboxPaymentTypeField(PAYMENT_INBOX_MDMS_PAID_MAP),
+              PAYMENT_INBOX_CASE_TITLE_FIELD,
             ],
           },
           children: {},
@@ -279,45 +78,7 @@ export const paymentTabInboxConfig = {
           tenantId: Digit.ULBService.getCurrentTenantId(),
           label: "",
           uiConfig: {
-            columns: [
-              {
-                label: "CASE_NAME_ID",
-                jsonPath: "businessObject.billDetails.caseTitleFilingNumber",
-                additionalCustomization: true,
-              },
-              {
-                label: "CS_STAGE",
-                jsonPath: "businessObject.billDetails.stage",
-              },
-              {
-                label: "NYAY_PAYMENT_TYPE",
-                jsonPath: "businessObject.billDetails.paymentType",
-              },
-              {
-                label: "AMOUNT_DUE",
-                jsonPath: "businessObject.billDetails.amount",
-                additionalCustomization: true,
-              },
-              // {
-              //   label: "CASE_TYPE",
-              //   jsonPath: "businessObject.billDetails.caseType",
-              // },
-              {
-                label: "PAYMENT_GENERATED_DATE",
-                jsonPath: "businessObject.billDetails.paymentCreatedDate",
-                additionalCustomization: true,
-              },
-              {
-                label: "PAYMENT_COMPLETED_DATE",
-                jsonPath: "businessObject.billDetails.paymentCompletedDate",
-                additionalCustomization: true,
-              },
-              {
-                label: "ACTION",
-                jsonPath: "businessObject.billDetails.id",
-                additionalCustomization: true,
-              },
-            ],
+            columns: buildPaymentInboxSearchResultColumnsPaid([PAYMENT_INBOX_COLUMN_CASE_NAME_ID]),
             enableColumnSort: true,
             resultsJsonPath: "items",
           },
