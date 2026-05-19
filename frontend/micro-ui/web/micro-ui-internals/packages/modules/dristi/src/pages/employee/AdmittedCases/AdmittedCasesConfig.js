@@ -308,6 +308,7 @@ export const TabSearchconfigNew = {
 
             enableColumnSort: true,
             resultsJsonPath: "criteria.responseList.parties",
+            manualPagination: false,
           },
           show: true,
         },
