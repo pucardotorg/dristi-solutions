@@ -14,6 +14,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 public class OthersSection implements CaseBundleSection {
 
+    private static final List<String> DEFAULT_DOCTYPE_ORDER = List.of("MEDIATION");
+
     @Override
     public String getOrder() {
         return "16";
@@ -24,30 +26,47 @@ public class OthersSection implements CaseBundleSection {
 
         if (data == null || data.getDigitalDocs() == null) return null;
 
+        List<String> doctypeOrder = data.getSectionDoctypeOrder() != null
+                ? data.getSectionDoctypeOrder().getOrDefault("others", List.of())
+                : List.of();
+
+        if (doctypeOrder.isEmpty()) {
+            doctypeOrder = DEFAULT_DOCTYPE_ORDER;
+        }
+
         List<CaseBundleNode> result = new ArrayList<>();
 
-        AtomicInteger medIdx = new AtomicInteger(1);
-        List<CaseBundleNode> mediationNodes = data.getDigitalDocs().stream()
-                .filter(Objects::nonNull)
-                .filter(doc -> doc.getType() == TypeEnum.MEDIATION)
-                .map(doc -> {
-                    String fs = BundleSectionUtils.digitalizedFileStoreId(doc);
-                    if (fs == null) return null;
-                    int idx = medIdx.getAndIncrement();
-                    return CaseBundleNode.builder()
-                            .id("mediation-" + doc.getId())
-                            .title("MEDIATION_FORM " + idx)
-                            .fileStoreId(fs)
-                            .build();
-                })
-                .filter(Objects::nonNull)
-                .toList();
+        for (String doctype : doctypeOrder) {
+            TypeEnum type;
+            try {
+                type = TypeEnum.valueOf(doctype);
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
 
-        if (!mediationNodes.isEmpty()) {
+            AtomicInteger idx = new AtomicInteger(1);
+            List<CaseBundleNode> nodes = data.getDigitalDocs().stream()
+                    .filter(Objects::nonNull)
+                    .filter(doc -> doc.getType() == type)
+                    .map(doc -> {
+                        String fs = BundleSectionUtils.digitalizedFileStoreId(doc);
+                        if (fs == null) return null;
+                        int i = idx.getAndIncrement();
+                        return CaseBundleNode.builder()
+                                .id(type.name().toLowerCase() + "-" + doc.getId())
+                                .title(type.name() + "_FORM " + i)
+                                .fileStoreId(fs)
+                                .build();
+                    })
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            if (nodes.isEmpty()) continue;
+
             result.add(CaseBundleNode.builder()
-                    .id("mediation-group")
-                    .title("MEDIATION_FORM")
-                    .children(mediationNodes)
+                    .id(type.name().toLowerCase() + "-group")
+                    .title(type.name() + "_FORM")
+                    .children(nodes)
                     .build());
         }
 

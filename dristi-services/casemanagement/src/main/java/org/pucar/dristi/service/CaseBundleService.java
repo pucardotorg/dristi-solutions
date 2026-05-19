@@ -327,6 +327,18 @@ public class CaseBundleService {
         return fileStoreId;
     }
 
+    public void updateContentLastModifiedForAllBundles() {
+        String url = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_update_by_query";
+        String request = String.format(ES_UPDATE_CONTENT_LAST_MODIFIED_QUERY, System.currentTimeMillis());
+        try {
+            esRepository.fetchDocuments(url, request);
+            log.info("Updated contentLastModified for all case bundle documents in index: {}", configuration.getCaseBundleIndex());
+        } catch (Exception e) {
+            log.error("Error updating contentLastModified for all case bundle documents", e);
+            throw new CustomException("ES_UPDATE_ALL_ERROR", "Error updating contentLastModified for all case bundle documents");
+        }
+    }
+
     private JsonNode processCaseBundle(CaseBundleRequest caseBundleRequest, JsonNode indexJson, String caseId, String tenantId) {
         List<String> curFileStore = extractFileStore(indexJson);
         ProcessCaseBundlePdfRequest processCaseBundlePdfRequest = new ProcessCaseBundlePdfRequest();

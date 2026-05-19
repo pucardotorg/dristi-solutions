@@ -10,6 +10,7 @@ import org.pucar.dristi.web.models.taskManagement.TaskManagement;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Getter
 @Builder
@@ -34,5 +35,13 @@ public class BundleData {
     private final List<DigitalizedDocument> digitalDocs;
 
     private final Map<String, List<Document>> documentsGroupedByType;
+
+    private final Map<String, String> sectionOrders;
+
+    private final Set<String> inactiveSections;
+
+    private final Map<String, String> sectionSortFields;
+
+    private final Map<String, List<String>> sectionDoctypeOrder;
 
 }

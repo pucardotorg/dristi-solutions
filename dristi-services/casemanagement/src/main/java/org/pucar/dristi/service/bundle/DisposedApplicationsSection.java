@@ -33,9 +33,16 @@ public class DisposedApplicationsSection implements CaseBundleSection {
 
         List<Order> allOrders = data.getOrders() != null ? data.getOrders() : List.of();
 
-        List<CaseBundleNode> children = data.getApplications().stream()
+        String sortField = data.getSectionSortFields() != null ? data.getSectionSortFields().get("applications") : null;
+
+        List<Application> filteredApps = data.getApplications().stream()
                 .filter(Objects::nonNull)
                 .filter(app -> app.getStatus() != null && DISPOSED_STATUSES.contains(app.getStatus().toUpperCase()))
+                .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
+
+        BundleSectionUtils.sortApplications(filteredApps, sortField);
+
+        List<CaseBundleNode> children = filteredApps.stream()
                 .map(app -> toNode(app, allOrders))
                 .filter(Objects::nonNull)
                 .toList();

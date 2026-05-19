@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -28,6 +29,8 @@ public class MandatorySubmissionsSection implements CaseBundleSection {
 
         if (data == null || data.getOrders() == null) return null;
 
+        String sortField = data.getSectionSortFields() != null ? data.getSectionSortFields().get("mandatorysubmissions") : null;
+
         List<Order> mandatoryOrders = data.getOrders().stream()
                 .filter(Objects::nonNull)
                 .filter(o -> "MANDATORY_SUBMISSIONS_RESPONSES".equalsIgnoreCase(o.getOrderType()))
@@ -40,8 +43,10 @@ public class MandatorySubmissionsSection implements CaseBundleSection {
                 .filter(Objects::nonNull)
                 .filter(a -> "COMPLETED".equalsIgnoreCase(a.getStatus()))
                 .filter(a -> "PRODUCTION_DOCUMENTS".equalsIgnoreCase(a.getApplicationType()))
-                .toList()
-                : List.of();
+                .collect(Collectors.toCollection(ArrayList::new))
+                : new ArrayList<>();
+
+        BundleSectionUtils.sortApplications(completedApps, sortField);
 
         List<CaseBundleNode> children = new ArrayList<>();
         int applicationCounter = 0;

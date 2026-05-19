@@ -25,9 +25,12 @@ public class OrdersSection implements CaseBundleSection {
     public CaseBundleNode build(BundleData data) {
         if (data == null || data.getOrders() == null || data.getOrders().isEmpty()) return null;
 
+        String sortField = data.getSectionSortFields() != null ? data.getSectionSortFields().get("orders") : null;
+        List<Order> sortedOrders = BundleSectionUtils.sortOrders(new ArrayList<>(data.getOrders()), sortField);
+
         List<CaseBundleNode> children = new ArrayList<>();
         int idx = 0;
-        for (Order order : data.getOrders()) {
+        for (Order order : sortedOrders) {
             if (order == null || order.getDocuments() == null) continue;
 
             String fileStoreId = order.getDocuments().stream()

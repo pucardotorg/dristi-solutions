@@ -35,9 +35,16 @@ public class PendingApplicationsSection implements CaseBundleSection {
         if (data == null || data.getApplications() == null)
             return null;
 
-        List<CaseBundleNode> children = data.getApplications().stream()
+        String sortField = data.getSectionSortFields() != null ? data.getSectionSortFields().get("pendingapplications") : null;
+
+        List<Application> filteredApps = data.getApplications().stream()
                 .filter(Objects::nonNull)
                 .filter(app -> app.getStatus() != null && PENDING_STATUSES.contains(app.getStatus().toUpperCase()))
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+
+        BundleSectionUtils.sortApplications(filteredApps, sortField);
+
+        List<CaseBundleNode> children = filteredApps.stream()
                 .map(this::toNode)
                 .filter(Objects::nonNull)
                 .toList();

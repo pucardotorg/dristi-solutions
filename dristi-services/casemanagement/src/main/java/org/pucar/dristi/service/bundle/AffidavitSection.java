@@ -8,10 +8,21 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Component
 public class AffidavitSection implements CaseBundleSection {
+
+    private static final List<String> DEFAULT_DOCTYPE_ORDER = List.of(
+            "case.affidavit.223bnss",
+            "case.affidavit.225bnss"
+    );
+
+    private static final Map<String, String> DOCTYPE_TITLES = Map.of(
+            "case.affidavit.223bnss", "AFFIDAVIT_UNDER_SECTION_223_BNSS",
+            "case.affidavit.225bnss", "AFFIDAVIT_UNDER_225"
+    );
 
     @Override
     public String getOrder() {
@@ -24,47 +35,50 @@ public class AffidavitSection implements CaseBundleSection {
         if (data == null || data.getCases() == null || data.getCases().getDocuments() == null)
             return null;
 
-        List<Document> docs = data.getCases().getDocuments();
+        List<String> doctypeOrder = data.getSectionDoctypeOrder() != null
+                ? data.getSectionDoctypeOrder().getOrDefault("affidavit", List.of())
+                : List.of();
 
-        Document affidavit223 = docs.stream()
-                .filter(Objects::nonNull)
-                .filter(d -> "case.affidavit.223bnss".equalsIgnoreCase(d.getDocumentType()))
-                .filter(d -> d.getFileStore() != null)
-                .findFirst()
-                .orElse(null);
-
-        List<Document> affidavit225List = docs.stream()
-                .filter(Objects::nonNull)
-                .filter(d -> "case.affidavit.225bnss".equalsIgnoreCase(d.getDocumentType()))
-                .filter(d -> d.getFileStore() != null)
-                .toList();
-
-        List<CaseBundleNode> children = new ArrayList<>();
-
-        if (affidavit223 != null) {
-            children.add(CaseBundleNode.builder()
-                    .id("affidavit-223bnss")
-                    .title("AFFIDAVIT_UNDER_SECTION_223_BNSS")
-                    .fileStoreId(affidavit223.getFileStore())
-                    .build());
+        if (doctypeOrder.isEmpty()) {
+            doctypeOrder = DEFAULT_DOCTYPE_ORDER;
         }
 
-        if (!affidavit225List.isEmpty()) {
-            List<CaseBundleNode> subChildren = new ArrayList<>();
-            for (int i = 0; i < affidavit225List.size(); i++) {
-                Document d = affidavit225List.get(i);
-                subChildren.add(CaseBundleNode.builder()
-                        .id("affidavit-225-" + (i + 1))
-                        .title("AFFIDAVIT " + (i + 1))
-                        .fileStoreId(d.getFileStore())
+        List<Document> allDocs = data.getCases().getDocuments();
+        List<CaseBundleNode> children = new ArrayList<>();
+
+        for (String doctype : doctypeOrder) {
+            List<Document> matching = allDocs.stream()
+                    .filter(Objects::nonNull)
+                    .filter(d -> doctype.equalsIgnoreCase(d.getDocumentType()))
+                    .filter(d -> d.getFileStore() != null)
+                    .toList();
+
+            if (matching.isEmpty()) continue;
+
+            String title = DOCTYPE_TITLES.getOrDefault(doctype, doctype);
+            String idBase = "affidavit-" + doctype.replace(".", "-");
+
+            if (matching.size() == 1) {
+                children.add(CaseBundleNode.builder()
+                        .id(idBase)
+                        .title(title)
+                        .fileStoreId(matching.get(0).getFileStore())
+                        .build());
+            } else {
+                List<CaseBundleNode> subChildren = new ArrayList<>();
+                for (int i = 0; i < matching.size(); i++) {
+                    subChildren.add(CaseBundleNode.builder()
+                            .id(idBase + "-" + (i + 1))
+                            .title("AFFIDAVIT " + (i + 1))
+                            .fileStoreId(matching.get(i).getFileStore())
+                            .build());
+                }
+                children.add(CaseBundleNode.builder()
+                        .id(idBase)
+                        .title(title)
+                        .children(subChildren)
                         .build());
             }
-
-            children.add(CaseBundleNode.builder()
-                    .id("affidavit-225bnss")
-                    .title("AFFIDAVIT_UNDER_225")
-                    .children(subChildren)
-                    .build());
         }
 
         if (children.isEmpty()) return null;

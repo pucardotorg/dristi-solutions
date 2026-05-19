@@ -8,7 +8,6 @@ import org.pucar.dristi.web.models.CourtCase;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,6 +29,8 @@ public class InitialFilingSection implements CaseBundleSection {
             Map.entry("case.docs", "OTHERS_DOCUMENT")
     );
 
+    private static final List<String> DEFAULT_DOCTYPE_ORDER = new ArrayList<>(CASE_FILE_LABELS.keySet());
+
     @Override
     public String getOrder() {
         return "03";
@@ -41,52 +42,50 @@ public class InitialFilingSection implements CaseBundleSection {
         if (data == null || data.getCases() == null || data.getCases().getDocuments() == null)
             return null;
 
-        List<CaseBundleNode> children = new ArrayList<>();
+        List<String> doctypeOrder = data.getSectionDoctypeOrder() != null
+                ? data.getSectionDoctypeOrder().getOrDefault("filings", List.of())
+                : List.of();
 
-        CourtCase courtCase = data.getCases();
-        Map<String, List<Document>> byType = new LinkedHashMap<>();
-        for (Document doc : courtCase.getDocuments()) {
-            if (doc == null || doc.getDocumentType() == null || doc.getFileStore() == null) continue;
-            
-            // Only include documents that are defined in CASE_FILE_LABELS
-            if (!isIncludedDocumentType(doc.getDocumentType())) continue;
-            
-            byType.computeIfAbsent(doc.getDocumentType(), k -> new ArrayList<>()).add(doc);
+        if (doctypeOrder.isEmpty()) {
+            doctypeOrder = DEFAULT_DOCTYPE_ORDER;
         }
 
-        for (Map.Entry<String, List<Document>> entry : byType.entrySet()) {
-            String documentType = entry.getKey();
-            List<Document> docs = entry.getValue();
-            if (docs == null || docs.isEmpty()) continue;
+        CourtCase courtCase = data.getCases();
+        List<CaseBundleNode> children = new ArrayList<>();
 
-            String label = getLabelForDocumentType(documentType);
+        for (String doctype : doctypeOrder) {
+            if (!isIncludedDocumentType(doctype)) continue;
 
-            if (docs.size() == 1) {
+            List<Document> matching = courtCase.getDocuments().stream()
+                    .filter(Objects::nonNull)
+                    .filter(d -> d.getDocumentType() != null && d.getDocumentType().equalsIgnoreCase(doctype))
+                    .filter(d -> d.getFileStore() != null)
+                    .toList();
+
+            if (matching.isEmpty()) continue;
+
+            String label = getLabelForDocumentType(doctype);
+
+            if (matching.size() == 1) {
                 children.add(CaseBundleNode.builder()
-                        .id(documentType)
+                        .id(doctype)
                         .title(label)
-                        .fileStoreId(docs.get(0).getFileStore())
+                        .fileStoreId(matching.get(0).getFileStore())
                         .build());
             } else {
                 List<CaseBundleNode> subChildren = new ArrayList<>();
-                for (int i = 0; i < docs.size(); i++) {
-                    Document d = docs.get(i);
-                    if (d == null || d.getFileStore() == null) continue;
+                for (int i = 0; i < matching.size(); i++) {
                     subChildren.add(CaseBundleNode.builder()
-                            .id(documentType + "-" + (i + 1))
+                            .id(doctype + "-" + (i + 1))
                             .title(label + " " + (i + 1))
-                            .fileStoreId(d.getFileStore())
+                            .fileStoreId(matching.get(i).getFileStore())
                             .build());
                 }
-
-                subChildren = subChildren.stream().filter(Objects::nonNull).toList();
-                if (!subChildren.isEmpty()) {
-                    children.add(CaseBundleNode.builder()
-                            .id(documentType)
-                            .title(label)
-                            .children(subChildren)
-                            .build());
-                }
+                children.add(CaseBundleNode.builder()
+                        .id(doctype)
+                        .title(label)
+                        .children(subChildren)
+                        .build());
             }
         }
 

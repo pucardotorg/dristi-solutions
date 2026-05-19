@@ -9,5 +9,9 @@ public interface CaseBundleSection {
 
     String getOrder();
 
+    default String getSectionKey() {
+        return getClass().getSimpleName();
+    }
+
     CaseBundleNode build(BundleData data);
 }

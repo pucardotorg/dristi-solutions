@@ -1,9 +1,12 @@
 package org.pucar.dristi.service.bundle;
 
 import org.egov.common.contract.models.Document;
+import org.pucar.dristi.web.models.Application;
 import org.pucar.dristi.web.models.Artifact;
 import org.pucar.dristi.web.models.digitalizeddocument.DigitalizedDocument;
+import org.pucar.dristi.web.models.order.Order;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -136,5 +139,111 @@ public class BundleSectionUtils {
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(null);
+    }
+
+    public static List<Order> sortOrders(List<Order> orders, String sortField) {
+        if (orders == null || orders.isEmpty() || sortField == null || sortField.isBlank()) {
+            return orders;
+        }
+
+        Comparator<Order> comparator = getOrderComparator(sortField);
+        if (comparator != null) {
+            orders.sort(comparator);
+        }
+        return orders;
+    }
+
+    private static Comparator<Order> getOrderComparator(String sortField) {
+        return switch (sortField.toLowerCase()) {
+            case "createddate", "created_date" -> Comparator.comparing(
+                    Order::getCreatedDate,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+            case "createdtime", "created_time" -> Comparator.comparing(
+                    o -> o.getAuditDetails() != null ? o.getAuditDetails().getCreatedTime() : null,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+            case "lastmodifiedtime", "last_modified_time" -> Comparator.comparing(
+                    o -> o.getAuditDetails() != null ? o.getAuditDetails().getLastModifiedTime() : null,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+            case "ordernumber", "order_number" -> Comparator.comparing(
+                    Order::getOrderNumber,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+            default -> null;
+        };
+    }
+
+    public static List<Artifact> sortArtifacts(List<Artifact> artifacts, String sortField) {
+        if (artifacts == null || artifacts.isEmpty() || sortField == null || sortField.isBlank()) {
+            return artifacts;
+        }
+
+        Comparator<Artifact> comparator = getArtifactComparator(sortField);
+        if (comparator != null) {
+            artifacts.sort(comparator);
+        }
+        return artifacts;
+    }
+
+    private static Comparator<Artifact> getArtifactComparator(String sortField) {
+        return switch (sortField.toLowerCase()) {
+            case "createddate", "created_date" -> Comparator.comparing(
+                    Artifact::getCreatedDate,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+            case "createdtime", "created_time" -> Comparator.comparing(
+                    a -> a.getAuditdetails() != null ? a.getAuditdetails().getCreatedTime() : null,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+            case "lastmodifiedtime", "last_modified_time" -> Comparator.comparing(
+                    a -> a.getAuditdetails() != null ? a.getAuditdetails().getLastModifiedTime() : null,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+            case "artifacttype", "artifact_type" -> Comparator.comparing(
+                    Artifact::getArtifactType,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+            default -> null;
+        };
+    }
+
+    public static List<Application> sortApplications(List<Application> applications, String sortField) {
+        if (applications == null || applications.isEmpty() || sortField == null || sortField.isBlank()) {
+            return applications;
+        }
+
+        Comparator<Application> comparator = getApplicationComparator(sortField);
+        if (comparator != null) {
+            applications.sort(comparator);
+        }
+        return applications;
+    }
+
+    private static Comparator<Application> getApplicationComparator(String sortField) {
+        return switch (sortField.toLowerCase()) {
+            case "createddate", "created_date" -> Comparator.comparing(
+                    Application::getCreatedDate,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+            case "createdtime", "created_time" -> Comparator.comparing(
+                    a -> a.getAuditDetails() != null ? a.getAuditDetails().getCreatedTime() : null,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+            case "lastmodifiedtime", "last_modified_time" -> Comparator.comparing(
+                    a -> a.getAuditDetails() != null ? a.getAuditDetails().getLastModifiedTime() : null,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+            case "applicationnumber", "application_number" -> Comparator.comparing(
+                    Application::getApplicationNumber,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+            case "applicationtype", "application_type" -> Comparator.comparing(
+                    Application::getApplicationType,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+            default -> null;
+        };
     }
 }
