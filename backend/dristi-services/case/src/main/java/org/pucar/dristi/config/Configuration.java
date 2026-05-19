@@ -329,7 +329,7 @@ public class Configuration {
 	@Value("${user.oauth.url}")
 	private String userOauthUrl;
 
-	@Value("${spring.redis.timeout}")
+	@Value("${spring.data.redis.timeout}")
 	private Long redisTimeout;
 
 	//	Models for encryption decryption in MDMS

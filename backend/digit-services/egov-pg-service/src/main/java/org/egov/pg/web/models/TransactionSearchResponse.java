@@ -1,9 +1,10 @@
 package org.egov.pg.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.Valid;
 import lombok.*;
 import org.egov.pg.models.Transaction;
+
+import jakarta.validation.Valid;
 import java.util.List;
 
 @Getter

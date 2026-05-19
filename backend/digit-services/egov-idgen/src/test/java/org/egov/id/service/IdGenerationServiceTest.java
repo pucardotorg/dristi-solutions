@@ -7,158 +7,80 @@ import org.egov.id.model.ResponseInfoFactory;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
-@RunWith(SpringJUnit4ClassRunner.class)
-@ExtendWith(SpringExtension.class)
 
+@ExtendWith(MockitoExtension.class)
 class IdGenerationServiceTest {
 
+    @Mock
+    private ResponseInfoFactory responseInfoFactory;
 
-    @MockBean
-    ResponseInfoFactory responseInfoFactory;
+    @Mock
+    private JdbcTemplate jdbcTemplate;
+
+    @Mock
+    private MdmsService mdmsService;
+
+    @InjectMocks
+    private IdGenerationService idGenerationService;
 
     @Test
-    void testGenerateIdResponse() throws Exception {
+    void testGenerateIdResponse_EmptyRequest() {
+        IdGenerationRequest request = new IdGenerationRequest();
+        request.setIdRequests(new ArrayList<>());
+        request.setRequestInfo(new RequestInfo());
 
-        IdGenerationService idGenerationService = new IdGenerationService();
-
-        ArrayList<IdRequest> idRequestList = new ArrayList<>();
-        idRequestList.add(new IdRequest());
-
-        IdGenerationRequest idGenerationRequest = new IdGenerationRequest();
-        idGenerationRequest.setIdRequests(idRequestList);
-        assertThrows(CustomException.class, () -> idGenerationService.generateIdResponse(idGenerationRequest));
+        assertThrows(CustomException.class, () -> idGenerationService.generateIdResponse(request));
     }
 
     @Test
-    void testGenerateIdResponse3() throws Exception {
+    void testGenerateIdResponse_TenantIdNull() throws Exception {
+        IdRequest idRequest = new IdRequest();
+        idRequest.setIdName("IdName");
+        idRequest.setTenantId(null);
+        idRequest.setFormat("TEST-[city]");
+        idRequest.setCount(1);
 
-        IdGenerationService idGenerationService = new IdGenerationService();
+        IdGenerationRequest request = new IdGenerationRequest();
+        request.setIdRequests(Collections.singletonList(idRequest));
+        request.setRequestInfo(new RequestInfo());
 
-        ArrayList<IdRequest> idRequestList = new ArrayList<>();
-        idRequestList.add(new IdRequest());
-        IdGenerationRequest idGenerationRequest = new IdGenerationRequest();
-        idGenerationRequest.setIdRequests(idRequestList);
-        assertThrows(CustomException.class, () -> idGenerationService.generateIdResponse(idGenerationRequest));
-
+        assertThrows(CustomException.class, () -> idGenerationService.generateIdResponse(request));
     }
 
     @Test
-    void testGenerateIdResponse4() throws Exception {
-        IdGenerationService idGenerationService = new IdGenerationService();
+    void testGenerateIdResponse_IdNameNull() {
+        IdRequest idRequest = new IdRequest();
+        idRequest.setIdName(null);
+        idRequest.setTenantId("pb.amritsar");
+        idRequest.setCount(1);
 
-        ArrayList<IdRequest> idRequestList = new ArrayList<>();
-        idRequestList.add(new IdRequest());
+        IdGenerationRequest request = new IdGenerationRequest();
+        request.setIdRequests(Collections.singletonList(idRequest));
+        request.setRequestInfo(new RequestInfo());
 
-        IdGenerationRequest idGenerationRequest = new IdGenerationRequest();
-        idGenerationRequest.setIdRequests(idRequestList);
-        assertThrows(CustomException.class, () -> idGenerationService.generateIdResponse(idGenerationRequest));
+        assertThrows(CustomException.class, () -> idGenerationService.generateIdResponse(request));
     }
 
     @Test
-    void testGenerateIdResponseWithArguments() throws Exception {
+    void testGenerateIdResponse_NullCount() {
+        IdRequest idRequest = new IdRequest();
+        idRequest.setIdName("IdName");
+        idRequest.setTenantId("pb.amritsar");
+        idRequest.setCount(null);
 
-        IdGenerationService idGenerationService = new IdGenerationService();
+        IdGenerationRequest request = new IdGenerationRequest();
+        request.setIdRequests(Collections.singletonList(idRequest));
+        request.setRequestInfo(new RequestInfo());
 
-        ArrayList<IdRequest> idRequestList = new ArrayList<>();
-        idRequestList.add(new IdRequest());
-
-        IdRequest idRequest = new IdRequest("Id Name", "42", "Format", 3,true);
-        idRequest.setFormat("\\[(.*?)\\]");
-
-        ArrayList<IdRequest> idRequestList1 = new ArrayList<>();
-        idRequestList1.add(idRequest);
-        IdGenerationRequest idGenerationRequest = mock(IdGenerationRequest.class);
-        when(idGenerationRequest.getIdRequests()).thenReturn(idRequestList1);
-        when(idGenerationRequest.getRequestInfo()).thenReturn(new RequestInfo());
-        doNothing().when(idGenerationRequest).setIdRequests((List<IdRequest>) any());
-        idGenerationRequest.setIdRequests(idRequestList);
-        assertThrows(CustomException.class, () -> idGenerationService.generateIdResponse(idGenerationRequest));
-        verify(idGenerationRequest).getIdRequests();
-        verify(idGenerationRequest).getRequestInfo();
-        verify(idGenerationRequest).setIdRequests((List<IdRequest>) any());
+        assertThrows(CustomException.class, () -> idGenerationService.generateIdResponse(request));
     }
-
-    @Test
-    void testGenerateIdResponseTenantIdNull() throws Exception {
-
-        IdGenerationService idGenerationService = new IdGenerationService();
-
-        ArrayList<IdRequest> idRequestList = new ArrayList<>();
-        idRequestList.add(new IdRequest());
-
-        IdRequest idRequest = new IdRequest("Id Name", null, "Format", 3,true);
-        idRequest.setFormat("\\[(.*?)\\]");
-
-        ArrayList<IdRequest> idRequestList1 = new ArrayList<>();
-        idRequestList1.add(idRequest);
-        IdGenerationRequest idGenerationRequest = mock(IdGenerationRequest.class);
-        when(idGenerationRequest.getIdRequests()).thenReturn(idRequestList1);
-        when(idGenerationRequest.getRequestInfo()).thenReturn(new RequestInfo());
-        doNothing().when(idGenerationRequest).setIdRequests((List<IdRequest>) any());
-        idGenerationRequest.setIdRequests(idRequestList);
-        assertThrows(CustomException.class, () -> idGenerationService.generateIdResponse(idGenerationRequest));
-        verify(idGenerationRequest).getIdRequests();
-        verify(idGenerationRequest).getRequestInfo();
-        verify(idGenerationRequest).setIdRequests((List<IdRequest>) any());
-    }
-
-    @Test
-    void testGenerateIdResponseNullCount() throws Exception {
-
-        IdGenerationService idGenerationService = new IdGenerationService();
-
-        ArrayList<IdRequest> idRequestList = new ArrayList<>();
-        idRequestList.add(new IdRequest());
-
-        IdRequest idRequest = new IdRequest("Id Name", "42", "Format", null,true);
-        idRequest.setFormat("\\[(.*?)\\]");
-
-        ArrayList<IdRequest> idRequestList1 = new ArrayList<>();
-        idRequestList1.add(idRequest);
-        IdGenerationRequest idGenerationRequest = mock(IdGenerationRequest.class);
-        when(idGenerationRequest.getIdRequests()).thenReturn(idRequestList1);
-        when(idGenerationRequest.getRequestInfo()).thenReturn(new RequestInfo());
-        doNothing().when(idGenerationRequest).setIdRequests((List<IdRequest>) any());
-        idGenerationRequest.setIdRequests(idRequestList);
-        assertThrows(CustomException.class, () -> idGenerationService.generateIdResponse(idGenerationRequest));
-        verify(idGenerationRequest).getIdRequests();
-        verify(idGenerationRequest).getRequestInfo();
-        verify(idGenerationRequest).setIdRequests((List<IdRequest>) any());
-    }
-
-    @Test
-    void testGenerateIdResponseIdnull() throws Exception {
-
-        IdGenerationService idGenerationService = new IdGenerationService();
-
-        ArrayList<IdRequest> idRequestList = new ArrayList<>();
-        idRequestList.add(new IdRequest());
-
-        IdRequest idRequest = new IdRequest(null, "42", "Format", 3,true);
-        idRequest.setFormat("\\[(.*?)\\]");
-
-        ArrayList<IdRequest> idRequestList1 = new ArrayList<>();
-        idRequestList1.add(idRequest);
-        IdGenerationRequest idGenerationRequest = mock(IdGenerationRequest.class);
-        when(idGenerationRequest.getIdRequests()).thenReturn(idRequestList1);
-        when(idGenerationRequest.getRequestInfo()).thenReturn(new RequestInfo());
-        doNothing().when(idGenerationRequest).setIdRequests((List<IdRequest>) any());
-        idGenerationRequest.setIdRequests(idRequestList);
-        assertThrows(CustomException.class, () -> idGenerationService.generateIdResponse(idGenerationRequest));
-        verify(idGenerationRequest).getIdRequests();
-        verify(idGenerationRequest).getRequestInfo();
-        verify(idGenerationRequest).setIdRequests((List<IdRequest>) any());
-    }
-
 }
-

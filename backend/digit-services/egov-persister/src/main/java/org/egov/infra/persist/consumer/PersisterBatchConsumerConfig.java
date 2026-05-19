@@ -40,8 +40,8 @@ import java.util.Set;
         matchIfMissing = false)
 public class PersisterBatchConsumerConfig {
 
-    /*@Autowired
-    private StoppingErrorHandler stoppingErrorHandler;*/
+    @Autowired
+    private StoppingErrorHandler stoppingErrorHandler;
 
     @Autowired
     private BatchMessageListener indexerMessageListener;
@@ -95,7 +95,7 @@ public class PersisterBatchConsumerConfig {
         factory.setConcurrency(3);
         factory.getContainerProperties().setPollTimeout(30000);
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.BATCH);
-        factory.setCommonErrorHandler(kafkaConsumerErrorHandler);
+    factory.setCommonErrorHandler(stoppingErrorHandler);
 
 
         // BATCH PROPERTY

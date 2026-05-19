@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class MessageRequest {
 
-	private RequestInfo RequestInfo;
+	private RequestInfo requestInfo;
 
 	private MessageSearchCriteria messageSearchCriteria;
 }

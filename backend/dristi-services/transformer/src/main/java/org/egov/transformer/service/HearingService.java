@@ -1,7 +1,6 @@
 package org.egov.transformer.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
@@ -14,6 +13,7 @@ import org.egov.transformer.util.AdvocateUtil;
 import org.egov.transformer.util.InboxUtil;
 import org.egov.transformer.util.JsonUtil;
 import org.egov.transformer.util.MdmsUtil;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

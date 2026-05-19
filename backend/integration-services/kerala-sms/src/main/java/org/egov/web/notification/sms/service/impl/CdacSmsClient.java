@@ -5,7 +5,6 @@ package org.egov.web.notification.sms.service.impl;
  */
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.egov.web.notification.sms.config.SMSProperties;
 import org.egov.web.notification.sms.models.Sms;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -132,7 +131,6 @@ public class CdacSmsClient {
         String templateId = sms.getTemplateId();
 
         String responseString = "";
-        SSLConnectionSocketFactory scf;
 
         String encryptedPassword = "";
 
