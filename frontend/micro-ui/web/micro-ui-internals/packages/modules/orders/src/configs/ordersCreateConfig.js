@@ -29,6 +29,7 @@ import {
   orderFormVillageField,
   orderFormWarrantTextField,
   orderFormWarrantTextSection,
+  orderFormDateForHearingDisabledMaxValidation,
 } from "./ordersCreateConfigShared";
 
 export const applicationTypeConfig = [
@@ -1256,26 +1257,7 @@ export const configsCaseSettlementReject = [
 export const configsIssueSummons = [
   {
     body: [
-      {
-        type: "date",
-        label: "Date for Hearing",
-        key: "dateForHearing",
-        schemaKeyPath: "orderDetails.hearingDate",
-        transformer: "date",
-        labelChildren: "OutlinedInfoIcon",
-        isMandatory: true,
-        disable: true,
-        populators: {
-          name: "dateForHearing",
-          validation: {
-            max: {
-              patternType: "date",
-              masterName: "commonUiConfig",
-              moduleName: "maxDateValidation",
-            },
-          },
-        },
-      },
+      orderFormDateForHearingDisabledMaxValidation,
       {
         isMandatory: true,
         type: "component",
@@ -1302,26 +1284,7 @@ export const configsIssueSummons = [
 export const configsIssueNotice = [
   {
     body: [
-      {
-        type: "date",
-        label: "Date for Hearing",
-        key: "dateForHearing",
-        schemaKeyPath: "orderDetails.hearingDate",
-        transformer: "date",
-        labelChildren: "OutlinedInfoIcon",
-        isMandatory: true,
-        disable: true,
-        populators: {
-          name: "dateForHearing",
-          validation: {
-            max: {
-              patternType: "date",
-              masterName: "commonUiConfig",
-              moduleName: "maxDateValidation",
-            },
-          },
-        },
-      },
+      orderFormDateForHearingDisabledMaxValidation,
       {
         isMandatory: true,
         type: "dropdown",

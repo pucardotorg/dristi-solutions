@@ -2,6 +2,7 @@ import get from "lodash/get";
 import set from "lodash/set";
 import { getFormattedName } from "../utils";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { schemaToFormMdmsMatch } from "./schemaToFormMdmsShared";
 
 //create functions here based on module name set in mdms(eg->SearchProjectConfig)
 //how to call these -> Digit?.Customizations?.[masterName]?.[moduleName]
@@ -43,53 +44,13 @@ export const UICustomizations = {
         formToSchema: (option) => {
           return option?.code;
         },
-        schemaToForm: async (value, mdmsConfig) => {
-          if (mdmsConfig && mdmsConfig.moduleName && mdmsConfig.masterName) {
-            // fetch mdms by criteria
-            const mdmsData = await Digit.MDMSService.getDataByCriteria(
-              Digit.ULBService.getCurrentTenantId(),
-              { details: { moduleDetails: [{ moduleName: mdmsConfig.moduleName, masterDetails: [{ name: mdmsConfig.masterName }] }] } },
-              mdmsConfig.moduleName
-            );
-
-            const select = mdmsConfig?.select
-              ? Digit.Utils.createFunction(mdmsConfig?.select)
-              : (data) => {
-                  const optionsData = get(data, `${mdmsConfig?.moduleName}.${mdmsConfig?.masterName}`, []);
-                  return optionsData
-                    .filter((opt) => (opt?.hasOwnProperty("active") ? opt.active : true))
-                    .map((opt) => ({ ...opt, name: `${mdmsConfig?.localePrefix}_${Digit.Utils.locale.getTransformedLocale(opt.code)}` }));
-                };
-
-            return select(mdmsData).find((option) => option.code === value);
-          }
-        },
+        schemaToForm: async (value, mdmsConfig) => schemaToFormMdmsMatch(value, mdmsConfig, "code"),
       },
       adrDropDown: {
         formToSchema: (option) => {
           return option?.name;
         },
-        schemaToForm: async (value, mdmsConfig) => {
-          if (mdmsConfig && mdmsConfig.moduleName && mdmsConfig.masterName) {
-            // fetch mdms by criteria
-            const mdmsData = await Digit.MDMSService.getDataByCriteria(
-              Digit.ULBService.getCurrentTenantId(),
-              { details: { moduleDetails: [{ moduleName: mdmsConfig.moduleName, masterDetails: [{ name: mdmsConfig.masterName }] }] } },
-              mdmsConfig.moduleName
-            );
-
-            const select = mdmsConfig?.select
-              ? Digit.Utils.createFunction(mdmsConfig?.select)
-              : (data) => {
-                  const optionsData = get(data, `${mdmsConfig?.moduleName}.${mdmsConfig?.masterName}`, []);
-                  return optionsData
-                    .filter((opt) => (opt?.hasOwnProperty("active") ? opt.active : true))
-                    .map((opt) => ({ ...opt, name: `${mdmsConfig?.localePrefix}_${Digit.Utils.locale.getTransformedLocale(opt.code)}` }));
-                };
-
-            return select(mdmsData).find((option) => option.name === value);
-          }
-        },
+        schemaToForm: async (value, mdmsConfig) => schemaToFormMdmsMatch(value, mdmsConfig, "name"),
       },
       date: {
         formToSchema: (dateString) => {
@@ -264,27 +225,7 @@ export const UICustomizations = {
         formToSchema: (option) => {
           return option?.code;
         },
-        schemaToForm: async (value, mdmsConfig) => {
-          if (mdmsConfig && mdmsConfig.moduleName && mdmsConfig.masterName) {
-            // fetch mdms by criteria
-            const mdmsData = await Digit.MDMSService.getDataByCriteria(
-              Digit.ULBService.getCurrentTenantId(),
-              { details: { moduleDetails: [{ moduleName: mdmsConfig.moduleName, masterDetails: [{ name: mdmsConfig.masterName }] }] } },
-              mdmsConfig.moduleName
-            );
-
-            const select = mdmsConfig?.select
-              ? Digit.Utils.createFunction(mdmsConfig?.select)
-              : (data) => {
-                  const optionsData = get(data, `${mdmsConfig?.moduleName}.${mdmsConfig?.masterName}`, []);
-                  return optionsData
-                    .filter((opt) => (opt?.hasOwnProperty("active") ? opt.active : true))
-                    .map((opt) => ({ ...opt, name: `${mdmsConfig?.localePrefix}_${Digit.Utils.locale.getTransformedLocale(opt.code)}` }));
-                };
-
-            return select(mdmsData).find((option) => option.code === value);
-          }
-        },
+        schemaToForm: async (value, mdmsConfig) => schemaToFormMdmsMatch(value, mdmsConfig, "code"),
       },
       date: {
         formToSchema: (dateString) => {

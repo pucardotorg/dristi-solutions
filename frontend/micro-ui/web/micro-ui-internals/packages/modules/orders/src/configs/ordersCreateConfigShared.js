@@ -344,3 +344,25 @@ export const orderFormOutOfLongPendingCommentsSection = buildOrderFormTextAreaSe
   isMandatory: true,
   textAreaSubHeader: "Reason for Moving Case out of Long Pending Register",
 });
+
+/** Shared by configsIssueSummons and configsIssueNotice (issue-order forms). */
+export const orderFormDateForHearingDisabledMaxValidation = {
+  type: "date",
+  label: "Date for Hearing",
+  key: "dateForHearing",
+  schemaKeyPath: "orderDetails.hearingDate",
+  transformer: "date",
+  labelChildren: "OutlinedInfoIcon",
+  isMandatory: true,
+  disable: true,
+  populators: {
+    name: "dateForHearing",
+    validation: {
+      max: {
+        patternType: "date",
+        masterName: "commonUiConfig",
+        moduleName: "maxDateValidation",
+      },
+    },
+  },
+};
