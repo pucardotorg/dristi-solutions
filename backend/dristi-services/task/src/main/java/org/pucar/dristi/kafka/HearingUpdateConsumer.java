@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.pucar.dristi.service.PaymentUpdateService;
 import org.pucar.dristi.service.WarrantReissueService;
 import org.pucar.dristi.util.BailBondUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import org.pucar.dristi.web.models.order.Order;
 import org.pucar.dristi.web.models.order.OrderRequest;
 import org.pucar.dristi.util.OrderUtil;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -32,14 +34,16 @@ public class HearingUpdateConsumer {
     private final ObjectMapper objectMapper;
     private final OrderUtil orderUtil;
     private final BailBondUtil bailBondUtil;
+    private final PaymentUpdateService paymentUpdateService;
 
     @Autowired
     public HearingUpdateConsumer(WarrantReissueService warrantReissueService, ObjectMapper objectMapper,
-            OrderUtil orderUtil, BailBondUtil bailBondUtil) {
+            OrderUtil orderUtil, BailBondUtil bailBondUtil, PaymentUpdateService paymentUpdateService) {
         this.warrantReissueService = warrantReissueService;
         this.objectMapper = objectMapper;
         this.orderUtil = orderUtil;
         this.bailBondUtil = bailBondUtil;
+        this.paymentUpdateService = paymentUpdateService;
     }
 
     // Listens to hearing updates to trigger in-place warrant reschedule or warrant reissue
@@ -144,43 +148,56 @@ public class HearingUpdateConsumer {
             OrderRequest payload = objectMapper.convertValue(record, OrderRequest.class);
 
             Order order = payload.getOrder();
-            if (order == null || !PUBLISHED.equalsIgnoreCase(order.getStatus()) || !ACCEPT_BAIL.equalsIgnoreCase(order.getOrderType())) {
+            if (order == null || !PUBLISHED.equalsIgnoreCase(order.getStatus())) {
                 return;
             }
 
             String filingNumber = order.getFilingNumber();
             if (filingNumber == null) {
-                log.warn("filingNumber is null in ACCEPT_BAIL order update");
+                log.warn("filingNumber is null in order update");
                 return;
             }
 
             RequestInfo requestInfo = payload.getRequestInfo();
-            JsonNode formdata = extractFormdata(order);
 
-            String bailTypeCode = "";
-            boolean requestBailBond = false;
-            if (formdata != null) {
-                if (formdata.has("bailType") && formdata.get("bailType").has("code")) {
-                    bailTypeCode = formdata.get("bailType").get("code").asText("");
+            if (ACCEPT_BAIL.equalsIgnoreCase(order.getOrderType())) {
+                processAcceptBailOrder(requestInfo, filingNumber, order);
+            } else if (COMPOSITE.equalsIgnoreCase(order.getOrderCategory())) {
+                for (Order subOrder : paymentUpdateService.getItemListFormCompositeItem(order)) {
+                    if (ACCEPT_BAIL.equalsIgnoreCase(subOrder.getOrderType())) {
+                        processAcceptBailOrder(requestInfo, filingNumber, subOrder);
+                    }
                 }
-                if (formdata.has("requestBailBond")) {
-                    requestBailBond = formdata.get("requestBailBond").asBoolean(false);
-                }
-            }
-
-            if (SURETY.equalsIgnoreCase(bailTypeCode) && requestBailBond) {
-                String bailStatus = bailBondUtil.fetchBailStatusByFilingNumber(requestInfo, filingNumber, order.getTenantId());
-                if (BAIL_BOND_COMPLETED.equalsIgnoreCase(bailStatus)) {
-                    warrantReissueService.handleBailAccepted(requestInfo, filingNumber);
-                } else {
-                    log.info("Bail-bond not completed yet for filingNumber: {}, status: {}", filingNumber, bailStatus);
-                }
-            } else {
-                warrantReissueService.handleBailAccepted(requestInfo, filingNumber);
             }
         } catch (Exception e) {
             log.error("Error in OrderUpdateConsumer: ", e);
             throw new RuntimeException("Failed to process order update from topic: " + topic, e);
+        }
+    }
+
+    private void processAcceptBailOrder(RequestInfo requestInfo, String filingNumber, Order order) {
+        JsonNode formdata = extractFormdata(order);
+
+        String bailTypeCode = "";
+        boolean requestBailBond = false;
+        if (formdata != null) {
+            if (formdata.has("bailType") && formdata.get("bailType").has("code")) {
+                bailTypeCode = formdata.get("bailType").get("code").asText("");
+            }
+            if (formdata.has("requestBailBond")) {
+                requestBailBond = formdata.get("requestBailBond").asBoolean(false);
+            }
+        }
+
+        if (SURETY.equalsIgnoreCase(bailTypeCode) && requestBailBond) {
+            String bailStatus = bailBondUtil.fetchBailStatusByFilingNumber(requestInfo, filingNumber, order.getTenantId());
+            if (BAIL_BOND_COMPLETED.equalsIgnoreCase(bailStatus)) {
+                warrantReissueService.handleBailAccepted(requestInfo, filingNumber);
+            } else {
+                log.info("Bail-bond not completed yet for filingNumber: {}, status: {}", filingNumber, bailStatus);
+            }
+        } else {
+            warrantReissueService.handleBailAccepted(requestInfo, filingNumber);
         }
     }
 
