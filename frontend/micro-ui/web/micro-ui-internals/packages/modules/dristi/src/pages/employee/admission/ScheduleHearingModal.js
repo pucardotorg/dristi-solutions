@@ -9,33 +9,16 @@ import { HomeService } from "../../../../../home/src/hooks/services";
 import { Urls } from "../../../hooks";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { Heading } from "../../../components/ModalComponents";
-const Close = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <g clip-path="url(#clip0_4124_3214)">
-      <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z" fill="#0A0A0A" />
-    </g>
-    <defs>
-      <clipPath id="clip0_4124_3214">
-        <rect width="24" height="24" fill="white" />
-      </clipPath>
-    </defs>
-  </svg>
-);
-
-const CloseBtn = (props) => {
-  return (
-    <div style={{ padding: "10px", cursor: "pointer" }} onClick={props.onClick}>
-      <Close />
-    </div>
-  );
-};
-
-const customDateConfig = {
-  headModal: "CS_SELECT_CUSTOM_DATE",
-  label: "CS_HEARINGS_SCHEDULED",
-  showBottomBar: true,
-  buttonText: "CS_COMMON_CONFIRM",
-};
+import {
+  SCHEDULE_HEARING_CUSTOM_DATE_CONFIG,
+  ScheduleHearingCloseBtn,
+  buildScheduleHearingDraftOrderRequest,
+  createScheduleHearingDateClickHandler,
+  extractSchedulerOptOutLimitUnit,
+  getSuggestedDatesFromRescheduleResponse,
+  scheduleHearingDateToEpoch,
+  useSyncNextFiveHearingDates,
+} from "../shared/scheduleHearingShared";
 
 function ScheduleHearing({
   config = {
@@ -66,62 +49,15 @@ function ScheduleHearing({
     {
       SearchCriteria: {
         tenantId: Digit.ULBService.getCurrentTenantId(),
-        fromDate: dateToEpoch(new Date(new Date().setDate(new Date().getDate() + 1))),
+        fromDate: scheduleHearingDateToEpoch(new Date(new Date().setDate(new Date().getDate() + 1))),
       },
     },
     {},
     "",
     true
   );
-  const [nextFiveDates, setNextFiveDates] = useState([]);
+  const [nextFiveDates] = useSyncNextFiveHearingDates(availableDateResponse);
 
-  const convertAvailableDatesToDateObjects = (availableDates) => {
-    return availableDates.map((dateInfo) => ({
-      ...dateInfo,
-      date: new Date(dateInfo.date / 1),
-    }));
-  };
-
-  const getNextNDates = (n, availableDates) => {
-    const datesArray = [];
-
-    for (let i = 0; i < n; i++) {
-      if (i < availableDates?.length) {
-        const dateObject = availableDates[i].date;
-        datesArray.push(formatDateInMonth(dateObject));
-      } else {
-        break;
-      }
-    }
-    return datesArray;
-  };
-
-  function dateToEpoch(date) {
-    return Math.floor(new Date(date).getTime());
-  }
-  useEffect(() => {
-    if (availableDateResponse?.AvailableDates) {
-      const availableDatesWithDateObjects = convertAvailableDatesToDateObjects(availableDateResponse?.AvailableDates);
-      const nextDates = getNextNDates(5, availableDatesWithDateObjects);
-      setNextFiveDates(nextDates);
-    }
-  }, [availableDateResponse]);
-  const getSuggestedDates = (dateResponse) => {
-    if (dateResponse?.Hearings?.[0]?.suggestedDates) {
-      return dateResponse.Hearings[0].suggestedDates;
-    }
-    return [];
-  };
-
-  const extractUnitValue = (OptOutLimit) => {
-    const configArray = OptOutLimit?.["SCHEDULER-CONFIG"]?.config;
-    if (Array.isArray(configArray)) {
-      const configItem = configArray.find((item) => item.identifier === "OPT_OUT_SELECTION_LIMIT");
-      return configItem ? configItem.unit : null;
-    }
-
-    return null;
-  };
   const fetchBasicUserInfo = async () => {
     const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
       {
@@ -189,7 +125,7 @@ function ScheduleHearing({
     !!referenceId
   );
 
-  const nextFourDates = status === "OPTOUT" ? getSuggestedDates(dateResponse) : nextFiveDates;
+  const nextFourDates = status === "OPTOUT" ? getSuggestedDatesFromRescheduleResponse(dateResponse) : nextFiveDates;
 
   const { data: OptOutLimit } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -204,28 +140,18 @@ function ScheduleHearing({
     }
   );
 
-  const handleClickDate = (label) => {
-    if (status === "OPTOUT") {
-      const newSelectedChip = selectedChip.includes(label) ? null : label;
-      setSelectedChip((prevSelectedChip) => {
-        if (newSelectedChip === null) {
-          return prevSelectedChip.filter((chip) => chip !== label);
-        }
-        if (prevSelectedChip.length >= OptOutLimitValue) {
-          return prevSelectedChip;
-        }
-
-        return [...prevSelectedChip, newSelectedChip];
-      });
-    } else {
-      const newSelectedChip = selectedChip === label ? null : label;
-      setSelectedChip(newSelectedChip);
-      setScheduleHearingParam({
-        ...scheduleHearingParams,
-        date: newSelectedChip,
-      });
-    }
-  };
+  const handleClickDate = useMemo(
+    () =>
+      createScheduleHearingDateClickHandler({
+        status,
+        selectedChip,
+        setSelectedChip,
+        setScheduleHearingParam,
+        scheduleHearingParams,
+        OptOutLimitValue,
+      }),
+    [status, selectedChip, scheduleHearingParams, OptOutLimitValue]
+  );
 
   const showCustomDateModal = () => {
     setModalInfo({ ...modalInfo, showDate: true });
@@ -248,45 +174,12 @@ function ScheduleHearing({
 
   const handleSubmit = async (data) => {
     if (status !== "OPTOUT") {
-      const dateArr = data.date.split(" ").map((date, i) => (i === 0 ? date.slice(0, date.length - 2) : date));
-      const date = new Date(dateArr.join(" "));
-      const reqBody = {
-        order: {
-          createdDate: null,
-          tenantId,
-          cnrNumber,
-          filingNumber: filingNumber,
-          statuteSection: {
-            tenantId,
-          },
-          orderTitle: "SCHEDULE_OF_HEARING_DATE",
-          orderCategory: "INTERMEDIATE",
-          orderType: "SCHEDULE_OF_HEARING_DATE",
-          status: "",
-          isActive: true,
-          workflow: {
-            action: OrderWorkflowAction.SAVE_DRAFT,
-            comments: "Creating order",
-            assignes: null,
-            rating: null,
-            documents: [{}],
-          },
-          documents: [],
-          additionalDetails: {
-            formdata: {
-              hearingDate: `${dateArr[2]}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
-                dateArr[0] < 9 ? `0${dateArr[0]}` : dateArr[0]
-              }`,
-              hearingPurpose: data.purpose,
-              orderType: {
-                code: "SCHEDULE_OF_HEARING_DATE",
-                type: "SCHEDULE_OF_HEARING_DATE",
-                name: "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
-              },
-            },
-          },
-        },
-      };
+      const reqBody = buildScheduleHearingDraftOrderRequest(data, {
+        tenantId,
+        cnrNumber,
+        filingNumber,
+        OrderWorkflowAction,
+      });
 
       try {
         setIsSubmitDisabled(true);
@@ -367,7 +260,7 @@ function ScheduleHearing({
   };
 
   useEffect(() => {
-    if (OptOutLimit) setOptOutLimitValue(extractUnitValue(OptOutLimit));
+    if (OptOutLimit) setOptOutLimitValue(extractSchedulerOptOutLimitUnit(OptOutLimit));
   }, [OptOutLimit]);
 
   if (isLoading) {
@@ -377,7 +270,7 @@ function ScheduleHearing({
   return (
     <Modal
       headerBarMain={<Heading label={status === "OPTOUT" ? t("SELECT_OPT_OUT_DATES") : t(config.headModal)} />}
-      headerBarEnd={<CloseBtn onClick={handleClose} />}
+      headerBarEnd={<ScheduleHearingCloseBtn onClick={handleClose} />}
       hideSubmit={true}
       popupStyles={{
         maxWidth: "650px",
@@ -439,13 +332,15 @@ function ScheduleHearing({
         )}
         {modalInfo?.showDate && (
           <Modal
-            headerBarMain={<Heading label={t(customDateConfig.headModal)} />}
-            headerBarEnd={<CloseBtn onClick={() => setModalInfo({ ...modalInfo, page: 0, showDate: false, showCustomDate: false })} />}
+            headerBarMain={<Heading label={t(SCHEDULE_HEARING_CUSTOM_DATE_CONFIG.headModal)} />}
+            headerBarEnd={
+              <ScheduleHearingCloseBtn onClick={() => setModalInfo({ ...modalInfo, page: 0, showDate: false, showCustomDate: false })} />
+            }
             hideSubmit={true}
             popmoduleClassName={"custom-date-selector-modal"}
           >
             <CustomCalendar
-              config={customDateConfig}
+              config={SCHEDULE_HEARING_CUSTOM_DATE_CONFIG}
               t={t}
               onCalendarConfirm={onCalendarConfirm}
               handleSelect={handleSelect}

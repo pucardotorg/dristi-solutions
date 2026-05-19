@@ -52,6 +52,39 @@ const badgeStyle = {
   textAlign: "center",
 };
 
+/** Renders the small flag/edit icon shown next to a scrutinizable field. */
+const ScrutinyFlagIcon = ({ hasError, t }) => {
+  if (hasError) {
+    return (
+      <React.Fragment>
+        <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
+          {" "}
+          <EditPencilIcon />
+        </span>
+        <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
+          {t("CS_CLICK_TO_EDIT")}
+        </ReactTooltip>
+      </React.Fragment>
+    );
+  }
+  return <FlagIcon />;
+};
+
+/** Renders the scrutiny error banner shown under a field when error exists. */
+const ScrutinyErrorBanner = ({ error, isScrutiny, bgclassname, t }) => {
+  if (!error || !isScrutiny) return null;
+  return (
+    <div className="scrutiny-error input">
+      {bgclassname === "preverror" ? (
+        <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
+      ) : (
+        <FlagIcon isError={true} />
+      )}
+      {error}
+    </div>
+  );
+};
+
 const convertToIndianCurrency = (amount, locale, currency) => {
   if (typeof amount !== "number" && typeof amount !== "string") return "";
 
@@ -202,32 +235,11 @@ const CustomReviewCardRow = ({
                   }}
                   key={dataIndex}
                 >
-                  {dataError && isScrutiny && !isWarning ? (
-                    <React.Fragment>
-                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
-                        {" "}
-                        <EditPencilIcon />
-                      </span>
-                      <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
-                        {t("CS_CLICK_TO_EDIT")}
-                      </ReactTooltip>
-                    </React.Fragment>
-                  ) : (
-                    <FlagIcon />
-                  )}
+                  <ScrutinyFlagIcon hasError={dataError && isScrutiny && !isWarning} t={t} />
                 </div>
               )}
             </div>
-            {dataError && isScrutiny && (
-              <div className="scrutiny-error input">
-                {bgclassname === "preverror" ? (
-                  <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
-                ) : (
-                  <FlagIcon isError={true} />
-                )}
-                {dataError}
-              </div>
-            )}
+            <ScrutinyErrorBanner error={dataError} isScrutiny={isScrutiny} bgclassname={bgclassname} t={t} />
           </div>
         );
       case "title":
@@ -276,33 +288,11 @@ const CustomReviewCardRow = ({
                   key={dataIndex}
                 >
                   {/* {badgeType && <div>{extractValue(data, badgeType)}</div>} */}
-                  {titleError ? (
-                    <React.Fragment>
-                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
-                        {" "}
-                        <EditPencilIcon />
-                      </span>
-                      <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
-                        {t("CS_CLICK_TO_EDIT")}
-                      </ReactTooltip>
-                    </React.Fragment>
-                  ) : (
-                    <FlagIcon />
-                  )}
+                  <ScrutinyFlagIcon hasError={titleError} t={t} />
                 </div>
               )}
             </div>
-            {titleError && isScrutiny && (
-              <div className="scrutiny-error input">
-                {bgclassname === "preverror" ? (
-                  <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
-                ) : (
-                  <FlagIcon isError={true} />
-                )}
-
-                {titleError}
-              </div>
-            )}
+            <ScrutinyErrorBanner error={titleError} isScrutiny={isScrutiny} bgclassname={bgclassname} t={t} />
           </div>
         );
       case "witnessTitle":
@@ -360,33 +350,11 @@ const CustomReviewCardRow = ({
                   key={dataIndex}
                 >
                   {/* {badgeType && <div>{extractValue(data, badgeType)}</div>} */}
-                  {witnessTitleError ? (
-                    <React.Fragment>
-                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
-                        {" "}
-                        <EditPencilIcon />
-                      </span>
-                      <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
-                        {t("CS_CLICK_TO_EDIT")}
-                      </ReactTooltip>
-                    </React.Fragment>
-                  ) : (
-                    <FlagIcon />
-                  )}
+                  <ScrutinyFlagIcon hasError={witnessTitleError} t={t} />
                 </div>
               )}
             </div>
-            {witnessTitleError && isScrutiny && (
-              <div className="scrutiny-error input">
-                {bgclassname === "preverror" ? (
-                  <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
-                ) : (
-                  <FlagIcon isError={true} />
-                )}
-
-                {witnessTitleError}
-              </div>
-            )}
+            <ScrutinyErrorBanner error={witnessTitleError} isScrutiny={isScrutiny} bgclassname={bgclassname} t={t} />
           </div>
         );
 
@@ -425,33 +393,11 @@ const CustomReviewCardRow = ({
                   }}
                   key={dataIndex}
                 >
-                  {textTitle ? (
-                    <React.Fragment>
-                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
-                        {" "}
-                        <EditPencilIcon />
-                      </span>
-                      <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
-                        {t("CS_CLICK_TO_EDIT")}
-                      </ReactTooltip>
-                    </React.Fragment>
-                  ) : (
-                    <FlagIcon />
-                  )}
+                  <ScrutinyFlagIcon hasError={textTitle} t={t} />
                 </div>
               )}
             </div>
-            {textTitle && isScrutiny && (
-              <div className="scrutiny-error input">
-                {bgclassname === "preverror" ? (
-                  <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
-                ) : (
-                  <FlagIcon isError={true} />
-                )}
-
-                {textTitle}
-              </div>
-            )}
+            <ScrutinyErrorBanner error={textTitle} isScrutiny={isScrutiny} bgclassname={bgclassname} t={t} />
           </div>
         );
 
@@ -495,32 +441,11 @@ const CustomReviewCardRow = ({
                   }}
                   key={dataIndex}
                 >
-                  {dataError && isScrutiny ? (
-                    <React.Fragment>
-                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
-                        {" "}
-                        <EditPencilIcon />
-                      </span>
-                      <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
-                        {t("CS_CLICK_TO_EDIT")}
-                      </ReactTooltip>
-                    </React.Fragment>
-                  ) : (
-                    <FlagIcon />
-                  )}
+                  <ScrutinyFlagIcon hasError={dataError && isScrutiny} t={t} />
                 </div>
               )}
             </div>
-            {dataError && isScrutiny && (
-              <div className="scrutiny-error input">
-                {bgclassname === "preverror" ? (
-                  <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
-                ) : (
-                  <FlagIcon isError={true} />
-                )}
-                {dataError}
-              </div>
-            )}
+            <ScrutinyErrorBanner error={dataError} isScrutiny={isScrutiny} bgclassname={bgclassname} t={t} />
           </div>
         );
       case "formattedText":
@@ -563,33 +488,12 @@ const CustomReviewCardRow = ({
                   }}
                   key={dataIndex}
                 >
-                  {dataError && isScrutiny ? (
-                    <React.Fragment>
-                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
-                        {" "}
-                        <EditPencilIcon />
-                      </span>
-                      <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
-                        {t("CS_CLICK_TO_EDIT")}
-                      </ReactTooltip>
-                    </React.Fragment>
-                  ) : (
-                    <FlagIcon />
-                  )}
+                  <ScrutinyFlagIcon hasError={dataError && isScrutiny} t={t} />
                 </div>
               )}
             </div>
 
-            {dataError && isScrutiny && (
-              <div className="scrutiny-error input">
-                {bgclassname === "preverror" ? (
-                  <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
-                ) : (
-                  <FlagIcon isError={true} />
-                )}
-                {dataError}
-              </div>
-            )}
+            <ScrutinyErrorBanner error={dataError} isScrutiny={isScrutiny} bgclassname={bgclassname} t={t} />
           </div>
         );
       case "infoBox":
@@ -638,32 +542,11 @@ const CustomReviewCardRow = ({
                   }}
                   key={dataIndex}
                 >
-                  {dataError && isScrutiny ? (
-                    <React.Fragment>
-                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
-                        {" "}
-                        <EditPencilIcon />
-                      </span>
-                      <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
-                        {t("CS_CLICK_TO_EDIT")}
-                      </ReactTooltip>
-                    </React.Fragment>
-                  ) : (
-                    <FlagIcon />
-                  )}
+                  <ScrutinyFlagIcon hasError={dataError && isScrutiny} t={t} />
                 </div>
               )}
             </div>
-            {dataError && isScrutiny && (
-              <div className="scrutiny-error input">
-                {bgclassname === "preverror" ? (
-                  <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
-                ) : (
-                  <FlagIcon isError={true} />
-                )}
-                {dataError}
-              </div>
-            )}
+            <ScrutinyErrorBanner error={dataError} isScrutiny={isScrutiny} bgclassname={bgclassname} t={t} />
           </div>
         );
       case "phonenumber":
@@ -689,32 +572,11 @@ const CustomReviewCardRow = ({
                   }}
                   key={dataIndex}
                 >
-                  {dataError && isScrutiny ? (
-                    <React.Fragment>
-                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
-                        {" "}
-                        <EditPencilIcon />
-                      </span>
-                      <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
-                        {t("CS_CLICK_TO_EDIT")}
-                      </ReactTooltip>
-                    </React.Fragment>
-                  ) : (
-                    <FlagIcon />
-                  )}
+                  <ScrutinyFlagIcon hasError={dataError && isScrutiny} t={t} />
                 </div>
               )}
             </div>
-            {dataError && isScrutiny && (
-              <div className="scrutiny-error input">
-                {bgclassname === "preverror" ? (
-                  <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
-                ) : (
-                  <FlagIcon isError={true} />
-                )}
-                {dataError}
-              </div>
-            )}
+            <ScrutinyErrorBanner error={dataError} isScrutiny={isScrutiny} bgclassname={bgclassname} t={t} />
           </div>
         );
       case "image":
@@ -893,20 +755,7 @@ const CustomReviewCardRow = ({
                   }}
                   key={dataIndex}
                 >
-                  {isScrutiny &&
-                    (FSOErrors?.length > 0 ? (
-                      <React.Fragment>
-                        <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
-                          {" "}
-                          <EditPencilIcon />
-                        </span>
-                        <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
-                          {t("CS_CLICK_TO_EDIT")}
-                        </ReactTooltip>
-                      </React.Fragment>
-                    ) : (
-                      <FlagIcon />
-                    ))}
+                  {isScrutiny && <ScrutinyFlagIcon hasError={FSOErrors?.length > 0} t={t} />}
                 </div>
               )}
             </div>
@@ -1046,32 +895,11 @@ const CustomReviewCardRow = ({
                   }}
                   key={dataIndex}
                 >
-                  {dataError && isScrutiny ? (
-                    <React.Fragment>
-                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
-                        {" "}
-                        <EditPencilIcon />
-                      </span>
-                      <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
-                        {t("CS_CLICK_TO_EDIT")}
-                      </ReactTooltip>
-                    </React.Fragment>
-                  ) : (
-                    <FlagIcon />
-                  )}
+                  <ScrutinyFlagIcon hasError={dataError && isScrutiny} t={t} />
                 </div>
               )}
             </div>
-            {dataError && isScrutiny && (
-              <div className="scrutiny-error input">
-                {bgclassname === "preverror" ? (
-                  <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
-                ) : (
-                  <FlagIcon isError={true} />
-                )}
-                {dataError}
-              </div>
-            )}
+            <ScrutinyErrorBanner error={dataError} isScrutiny={isScrutiny} bgclassname={bgclassname} t={t} />
           </div>
         );
       default:
@@ -1092,19 +920,7 @@ const CustomReviewCardRow = ({
                   }}
                   key={dataIndex}
                 >
-                  {dataError && isScrutiny ? (
-                    <React.Fragment>
-                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
-                        {" "}
-                        <EditPencilIcon />
-                      </span>
-                      <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
-                        {t("CS_CLICK_TO_EDIT")}
-                      </ReactTooltip>
-                    </React.Fragment>
-                  ) : (
-                    <FlagIcon />
-                  )}
+                  <ScrutinyFlagIcon hasError={dataError && isScrutiny} t={t} />
                 </div>
               )}
             </div>

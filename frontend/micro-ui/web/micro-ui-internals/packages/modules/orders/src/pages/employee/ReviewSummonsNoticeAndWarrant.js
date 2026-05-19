@@ -24,7 +24,8 @@ import { DateUtils, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/U
 import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS } from "../../utils/constants";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-import { UploadModal } from "@egovernments/digit-ui-module-common";
+import { UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
+import { parseTaskDetails } from "@egovernments/digit-ui-module-home/src/configs/uiCustomizationsTaskDetailsShared";
 
 const defaultSearchValues = {
   eprocess: "",
@@ -37,19 +38,6 @@ const sectionsParentStyle = {
   flexDirection: "column",
   gridTemplateColumns: "20% 1fr",
   gap: "1rem",
-};
-
-const handleTaskDetails = (taskDetails) => {
-  try {
-    if (typeof taskDetails === "string") {
-      const cleanedDetails = taskDetails.replace(/\\n/g, "").replace(/\\/g, "");
-      return JSON.parse(cleanedDetails);
-    }
-    return taskDetails;
-  } catch (error) {
-    console.error("Failed to parse taskDetails:", error);
-    return null;
-  }
 };
 
 export const getJudgeDefaultConfig = (courtId) => {
@@ -716,7 +704,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const infos = useMemo(() => {
     if (rowData?.taskDetails || nextHearingDate) {
-      const caseDetails = handleTaskDetails(rowData?.taskDetails);
+      const caseDetails = parseTaskDetails(rowData?.taskDetails);
       return [
         { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
         {
@@ -748,7 +736,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const sentInfos = useMemo(() => {
     if (rowData?.taskDetails || nextHearingDate) {
-      const caseDetails = handleTaskDetails(rowData?.taskDetails);
+      const caseDetails = parseTaskDetails(rowData?.taskDetails);
       return [
         { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
         { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
@@ -765,7 +753,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const ReviewInfo = useMemo(() => {
     if (rowData?.taskDetails || nextHearingDate) {
-      const caseDetails = handleTaskDetails(rowData?.taskDetails);
+      const caseDetails = parseTaskDetails(rowData?.taskDetails);
       return [
         { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
@@ -1153,10 +1141,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         handleActualBulkSign();
       } catch (error) {
         setBulkSignatureData({});
-        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
-        setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
-        setShowToast({ label: t(errorCode), error: true, errorId });
+        setFileUploadError(getUploadErrorToast(error, t));
       }
     }
   };
@@ -1858,8 +1843,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setShowActionModal(true);
     setStep(0);
     setIsSigned(isLastSigned ? true : props?.original?.documentStatus === "SIGN_PENDING" ? false : true);
-    setDeliveryChannel(handleTaskDetails(props?.original?.taskDetails)?.deliveryChannels?.channelName);
-    // setTaskDetails(handleTaskDetails(props?.original?.taskDetails));
+    setDeliveryChannel(parseTaskDetails(props?.original?.taskDetails)?.deliveryChannels?.channelName);
+    // setTaskDetails(parseTaskDetails(props?.original?.taskDetails));
   };
 
   useEffect(() => {
@@ -2568,6 +2553,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           isDisabled={isBulkLoading}
           isParentLoading={isBulkLoading}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {showToast && (

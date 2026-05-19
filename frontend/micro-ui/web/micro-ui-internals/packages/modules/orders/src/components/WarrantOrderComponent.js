@@ -2,59 +2,17 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import useSearchCaseService from "../../../dristi/src/hooks/dristi/useSearchCaseService";
 import { Button, Dropdown } from "@egovernments/digit-ui-react-components";
 import isEqual from "lodash/isEqual";
-import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { getFormattedName } from "../utils";
 import WarrantRenderDeliveryChannels from "./WarrantRenderDeliveryChannels";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 import { ORDER_TYPES } from "../utils/constants";
-
-// Helper function to compare addresses without police station data
-const compareAddressValues = (value1, value2) => {
-  // Create copies without geoLocationDetails.policeStation
-  const compareValue1 = {
-    ...value1,
-    geoLocationDetails: value1?.geoLocationDetails
-      ? {
-          ...value1.geoLocationDetails,
-          policeStation: undefined,
-        }
-      : {
-          policeStation: undefined,
-        },
-  };
-  const compareValue2 = {
-    ...value2,
-    geoLocationDetails: value2?.geoLocationDetails
-      ? {
-          ...value2.geoLocationDetails,
-          policeStation: undefined,
-        }
-      : {
-          policeStation: undefined,
-        },
-  };
-  return JSON.stringify(compareValue1) === JSON.stringify(compareValue2);
-};
-
-const getUserOptions = (userList, t, displayPartyType) => {
-  return userList?.map((user) => {
-    const { firstName, middleName, lastName, partyType, witnessDesignation } = user?.data || {};
-    const isWitness = partyType?.toLowerCase() === "witness";
-
-    const partyTypeLabel = partyType ? `(${t(displayPartyType[partyType.toLowerCase()])})` : "";
-
-    // Witness formatting logic
-    let label = "";
-    if (isWitness) {
-      label = getFormattedName(firstName, middleName, witnessDesignation, partyTypeLabel);
-    } else {
-      // Default formatting for non-witness users
-      label = getFormattedName(firstName, middleName, lastName, null, partyTypeLabel);
-    }
-
-    return { label, value: user };
-  });
-};
+import {
+  compareAddressValuesForOrderChannels as compareAddressValues,
+  fetchRespondentPincodeHubForOrder,
+  getOrderPartyUserOptions as getUserOptions,
+  mapAddressDetailsForPartyChannels as mapAddressDetails,
+  orderPartyDisplayTypeLabels as displayPartyType,
+} from "./shared/orderPartyDeliveryShared";
 
 const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -112,18 +70,6 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   //     uuid: allAdvocates[item?.additionalDetails?.uuid],
   //   };
   // }) || []
-
-  const mapAddressDetails = (addressDetails, isIndividualData = false) => {
-    return addressDetails?.map((address) => ({
-      locality: address?.addressDetails?.locality || address?.street || "",
-      city: address?.addressDetails?.city || address?.city || "",
-      district: address?.addressDetails?.district || address?.addressLine2 || "",
-      pincode: address?.addressDetails?.pincode || address?.pincode || "",
-      address: isIndividualData ? undefined : address?.addressDetails,
-      id: address?.id,
-      ...(address?.geoLocationDetails && { geoLocationDetails: address.geoLocationDetails }),
-    }));
-  };
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -266,13 +212,6 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
     });
   };
 
-  const displayPartyType = {
-    complainant: "COMPLAINANT_ATTENDEE",
-    respondent: "RESPONDENT_ATTENDEE",
-    witness: "WITNESS_ATTENDEE",
-    advocate: "ADVOCATE_ATTENDEE",
-  };
-
   const selectedParty = useMemo(() => {
     const partyData = formData?.[config.key]?.party?.data || {};
     const { firstName = "", middleName = "", lastName = "", partyType, witnessDesignation = "" } = partyData;
@@ -292,22 +231,7 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const { address, phone_numbers, email } = useMemo(() => party?.data || {}, [party?.data]);
 
   const getRespondentPincodeDetails = useCallback(
-    async (pincode) => {
-      const pincodeData = await DRISTIService.getrepondentPincodeDetails(
-        {
-          Criteria: {
-            pincode: [pincode],
-          },
-
-          tenantId,
-        },
-        {}
-      );
-      if (pincodeData?.PostalHubs && Array.isArray(pincodeData.PostalHubs) && Boolean(pincodeData.PostalHubs.length)) {
-        return pincodeData.PostalHubs?.[0];
-      }
-      return null;
-    },
+    async (pincode) => fetchRespondentPincodeHubForOrder(tenantId, pincode),
     [tenantId]
   );
 

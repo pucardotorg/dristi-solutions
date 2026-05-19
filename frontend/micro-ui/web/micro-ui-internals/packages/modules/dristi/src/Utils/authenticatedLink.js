@@ -1,38 +1,14 @@
 import React from "react";
-import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { downloadBlobFromAuthenticatedUrl } from "./downloadBlobFromUrl";
 
 const AuthenticatedLink = ({ t, uri, displayFilename = false, pdf = false, name = "downloadedFile" }) => {
   const handleClick = (e) => {
     e.preventDefault();
-
     const authToken = localStorage.getItem("token");
-    axiosInstance
-      .get(uri, {
-        headers: {
-          "auth-token": `${authToken}`,
-        },
-        responseType: "blob",
-      })
-      .then((response) => {
-        if (response.status === 200) {
-          const blob = new Blob([response.data], { type: pdf ? "application/pdf" : "application/octet-stream" });
-          const mimeType = response.data.type || "application/octet-stream";
-          const extension = mimeType.includes("/") ? mimeType.split("/")[1] : "bin";
-          const blobUrl = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = blobUrl;
-          link.download = `${name}.${extension}`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(blobUrl);
-        } else {
-          console.error("Failed to fetch the PDF:", response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error("Error during the API request:", error);
-      });
+    downloadBlobFromAuthenticatedUrl(uri, name, {
+      pdf,
+      headers: { "auth-token": `${authToken}` },
+    });
   };
 
   return (
@@ -41,7 +17,6 @@ const AuthenticatedLink = ({ t, uri, displayFilename = false, pdf = false, name 
       style={{
         display: "flex",
         color: "#007e7e",
-        // width: 250,
         maxWidth: "250px",
         whiteSpace: "nowrap",
         overflow: "hidden",

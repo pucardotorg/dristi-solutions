@@ -1,95 +1,21 @@
 import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
-import React, { useEffect, useMemo } from "react";
-import { getFileByFileStore } from "../../../Utils";
+import React, { useMemo } from "react";
+import { sanitizeRegistrationNameFieldsOnChange, useUserRegistrationSessionRestore } from "./shared/registrationFlowShared";
 
 const SelectName = ({ config, t, onSubmit, isDisabled, params, history, value, isUserLoggedIn, pathOnRefresh, isLitigantPartialRegistered }) => {
   if (!params?.mobileNumber && !isUserLoggedIn) {
     history.push(`/${window?.contextPath}/citizen/dristi/home/login`);
   }
 
-  useEffect(() => {
-    const handleRedirect = async () => {
-      if (!params?.isSkip && !params?.email) {
-        const storedParams = sessionStorage.getItem("userRegistrationParams");
-        let newParams = storedParams ? JSON.parse(storedParams) : params;
+  useUserRegistrationSessionRestore({
+    params,
+    history,
+    pathOnRefresh,
+    shouldRestore: (p) => !p?.isSkip && !p?.email,
+    effectDeps: [params?.address],
+  });
 
-        const fileStoreId = newParams?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId;
-        const filename = newParams?.uploadedDocument?.filename;
-
-        const barCouncilFileStoreId = newParams?.formData?.clientDetails?.barCouncilId?.[1]?.fileStoreId;
-        const barCouncilFilename = newParams?.formData?.clientDetails?.barCouncilId?.[0];
-
-        if (barCouncilFileStoreId && barCouncilFilename) {
-          const barCouncilUri = `${
-            window.location.origin
-          }/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${barCouncilFileStoreId}`;
-          const barCouncilFile = await getFileByFileStore(barCouncilUri, barCouncilFilename);
-
-          newParams = {
-            ...newParams,
-            formData: {
-              ...newParams.formData,
-              clientDetails: {
-                ...newParams.formData.clientDetails,
-                barCouncilId: [
-                  [
-                    barCouncilFilename,
-                    {
-                      file: barCouncilFile,
-                      fileStoreId: barCouncilFileStoreId,
-                    },
-                  ],
-                ],
-              },
-            },
-          };
-        }
-
-        if (fileStoreId && filename) {
-          const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${fileStoreId}`;
-          const file = await getFileByFileStore(uri, filename);
-
-          newParams = {
-            ...newParams,
-            uploadedDocument: {
-              ...newParams.uploadedDocument,
-              file,
-            },
-          };
-        }
-
-        sessionStorage.removeItem("userRegistrationParams");
-        history.push(pathOnRefresh, { newParams });
-      }
-    };
-
-    handleRedirect();
-  }, [params?.address, params, history, pathOnRefresh]);
-
-  const onFormValueChange = (setValue, formData, formState) => {
-    const formDataCopy = structuredClone(formData);
-    for (const key in formDataCopy) {
-      if (Object.hasOwnProperty.call(formDataCopy, key)) {
-        const oldValue = formDataCopy[key];
-        let value = oldValue;
-        if (typeof value === "string") {
-          let updatedValue = value
-            .replace(/[^a-zA-Z\s]/g, "")
-            .trimStart()
-            .replace(/ +/g, " ");
-          if (updatedValue !== oldValue) {
-            const element = document.querySelector(`[name="${key}"]`);
-            const start = element?.selectionStart;
-            const end = element?.selectionEnd;
-            setValue(key, updatedValue);
-            setTimeout(() => {
-              element?.setSelectionRange(start, end);
-            }, 0);
-          }
-        }
-      }
-    }
-  };
+  const onFormValueChange = (setValue, formData) => sanitizeRegistrationNameFieldsOnChange(setValue, formData);
 
   const modifiedFormConfig = useMemo(() => {
     const applyUiChanges = (config) => ({

@@ -3,37 +3,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ReactComponent as CrossIcon } from "../images/cross.svg";
 import Button from "./Button";
 import { removeInvalidNameParts } from "../Utils";
+import { splitNamesPartiallyFromFullName } from "../Utils/advocateNameUtils";
 import { userTypeOptions } from "../pages/citizen/registration/config";
 import useSearchCaseService from "../hooks/dristi/useSearchCaseService";
 import { CustomDeleteIcon } from "../icons/svgIndex";
 import isEqual from "lodash/isEqual";
-
-function splitNamesPartiallyFromFullName(fullName) {
-  const nameParts = fullName?.trim()?.split(/\s+/);
-
-  let firstName = "";
-  let middleName = "";
-  let lastName = "";
-
-  const numParts = nameParts?.length;
-
-  if (numParts === 1) {
-    firstName = nameParts?.[0];
-  } else if (numParts === 2) {
-    firstName = nameParts?.[0];
-    lastName = nameParts?.[1];
-  } else if (numParts >= 3) {
-    firstName = nameParts?.[0];
-    lastName = nameParts?.[numParts - 1];
-    middleName = nameParts?.slice(1, numParts - 1)?.join(" ");
-  }
-
-  return {
-    firstName: firstName,
-    middleName: middleName,
-    lastName: lastName ? lastName : "",
-  };
-}
 
 function MultipleAdvocateNameDetails({ t, config, onSelect, formData, errors, setError, clearErrors }) {
   const token = window.localStorage.getItem("token");

@@ -15,6 +15,7 @@ import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { ReactComponent as InfoIcon } from "../../../icons/info.svg";
 import { CustomAddIcon, CustomArrowDownIcon, CustomDeleteIcon, RightArrow, WarningInfoRedIcon } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
+import { applyOutlinedInfoLabelChildren } from "../../../Utils/labelChildrenUtils";
 import { sideMenuConfig } from "./Config";
 import EditFieldsModal from "./EditFieldsModal";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
@@ -1238,19 +1239,7 @@ function EFilingCases({ path }) {
                 body.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
               }
 
-              if (body?.labelChildren === "OutlinedInfoIcon") {
-                body.labelChildren = (
-                  <React.Fragment>
-                    <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${body.label}-tooltip`}>
-                      {" "}
-                      <OutlinedInfoIcon />
-                    </span>
-                    <ReactTooltip id={`${body.label}-tooltip`} place="bottom" content={body?.tooltipValue || ""}>
-                      {t(body?.tooltipValue || body.label)}
-                    </ReactTooltip>
-                  </React.Fragment>
-                );
-              }
+              applyOutlinedInfoLabelChildren(body, t);
 
               if ("inputs" in body?.populators && Array.isArray(body?.populators.inputs)) {
                 return {
@@ -1426,19 +1415,7 @@ function EFilingCases({ path }) {
                 body.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
               }
 
-              if (body?.labelChildren === "OutlinedInfoIcon") {
-                body.labelChildren = (
-                  <React.Fragment>
-                    <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${body.label}-tooltip`}>
-                      {" "}
-                      <OutlinedInfoIcon />
-                    </span>
-                    <ReactTooltip id={`${body.label}-tooltip`} place="bottom" content={body?.tooltipValue || ""}>
-                      {t(body?.tooltipValue || body.label)}
-                    </ReactTooltip>
-                  </React.Fragment>
-                );
-              }
+              applyOutlinedInfoLabelChildren(body, t);
               if (
                 body?.validation?.pattern &&
                 body?.validation?.pattern?.moduleName &&
@@ -1681,19 +1658,7 @@ function EFilingCases({ path }) {
                   modifiedFormComponent.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
                 }
                 modifiedFormComponent.state = state;
-                if (modifiedFormComponent?.labelChildren === "OutlinedInfoIcon") {
-                  modifiedFormComponent.labelChildren = (
-                    <React.Fragment>
-                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${modifiedFormComponent.label}-tooltip`}>
-                        {" "}
-                        <OutlinedInfoIcon />
-                      </span>
-                      <ReactTooltip id={`${modifiedFormComponent.label}-tooltip`} place="bottom" content={modifiedFormComponent?.tooltipValue || ""}>
-                        {t(modifiedFormComponent?.tooltipValue || modifiedFormComponent.label)}
-                      </ReactTooltip>
-                    </React.Fragment>
-                  );
-                }
+                applyOutlinedInfoLabelChildren(modifiedFormComponent, t);
 
                 if (
                   !isDraftInProgress &&

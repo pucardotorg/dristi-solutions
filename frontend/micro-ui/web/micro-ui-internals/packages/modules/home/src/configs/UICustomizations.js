@@ -12,39 +12,14 @@ import { DateUtils, modifiedEvidenceNumber, isLPRCase } from "@egovernments/digi
 import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
 import PencilIconEdit from "@egovernments/digit-ui-module-dristi/src/components/PencilIconEdit";
 import EditDeleteModal from "@egovernments/digit-ui-module-dristi/src/components/EditDeleteModal";
-
-const customColumnStyle = { whiteSpace: "nowrap" };
-
-const handleTaskDetails = (taskDetails) => {
-  try {
-    // Check if taskDetails is a string
-    if (typeof taskDetails === "string") {
-      // First, remove escape characters like backslashes if present
-      const cleanedDetails = taskDetails.replace(/\\n/g, "").replace(/\\/g, "");
-
-      // Try parsing the cleaned string as JSON
-      const parsed = JSON.parse(cleanedDetails);
-
-      // If the parsed result is a string, try parsing it again
-      if (typeof parsed === "string") {
-        try {
-          return JSON.parse(parsed);
-        } catch (e) {
-          return parsed;
-        }
-      }
-
-      // Return the parsed object if it's already a valid JSON object
-      return parsed;
-    }
-
-    // If taskDetails is not a string, return it as it is
-    return taskDetails;
-  } catch (error) {
-    console.error("Failed to parse taskDetails:", error);
-    return null;
-  }
-};
+import {
+  buildCasesSearchAdditionalCustomizations,
+  casesSearchDateRangeCustomValidationCheck,
+  casesSearchNoOpPreProcess,
+  casesSearchStandardAdditionalValidations,
+  casesSearchStandardMobileDetailsOnClick,
+} from "@egovernments/digit-ui-module-cases/src/configs/uiCustomizationsShared";
+import { parseTaskDetails } from "./uiCustomizationsTaskDetailsShared";
 
 export const UICustomizations = {
   EpostTrackingUiConfig: {
@@ -124,63 +99,11 @@ export const UICustomizations = {
     },
   },
   SearchHearingsConfig: {
-    customValidationCheck: (data) => {
-      const { createdFrom, createdTo } = data;
-      if ((createdFrom === "" && createdTo !== "") || (createdFrom !== "" && createdTo === ""))
-        return { warning: true, label: "ES_COMMON_ENTER_DATE_RANGE" };
-
-      return false;
-    },
-    preProcess: (data) => {
-      return data;
-    },
-    additionalCustomizations: (row, key, column, value, t, searchResult) => {
-      switch (key) {
-        case "MASTERS_WAGESEEKER_ID":
-          return (
-            <span className="link">
-              <Link to={`/${window.contextPath}/employee/masters/view-wageseeker?tenantId=${row?.tenantId}&individualId=${value}`}>
-                {String(value ? (column.translate ? t(column.prefix ? `${column.prefix}${value}` : value) : value) : t("ES_COMMON_NA"))}
-              </Link>
-            </span>
-          );
-
-        case "MASTERS_SOCIAL_CATEGORY":
-          return value ? <span style={customColumnStyle}>{String(t(`MASTERS_${value}`))}</span> : t("ES_COMMON_NA");
-
-        case "CORE_COMMON_PROFILE_CITY":
-          return value ? <span style={customColumnStyle}>{String(t(Digit.Utils.locale.getCityLocale(value)))}</span> : t("ES_COMMON_NA");
-
-        case "MASTERS_WARD":
-          return value ? (
-            <span style={customColumnStyle}>{String(t(Digit.Utils.locale.getMohallaLocale(value, row?.tenantId)))}</span>
-          ) : (
-            t("ES_COMMON_NA")
-          );
-
-        case "MASTERS_LOCALITY":
-          return value ? (
-            <span style={customColumnStyle}>{String(t(Digit.Utils.locale.getMohallaLocale(value, row?.tenantId)))}</span>
-          ) : (
-            t("ES_COMMON_NA")
-          );
-        default:
-          return t("ES_COMMON_NA");
-      }
-    },
-    MobileDetailsOnClick: (row, tenantId) => {
-      let link;
-      Object.keys(row).map((key) => {
-        if (key === "MASTERS_WAGESEEKER_ID")
-          link = `/${window.contextPath}/employee/masters/view-wageseeker?tenantId=${tenantId}&wageseekerId=${row[key]}`;
-      });
-      return link;
-    },
-    additionalValidations: (type, data, keys) => {
-      if (type === "date") {
-        return data[keys.start] && data[keys.end] ? () => new Date(data[keys.start]).getTime() <= new Date(data[keys.end]).getTime() : true;
-      }
-    },
+    customValidationCheck: casesSearchDateRangeCustomValidationCheck,
+    preProcess: casesSearchNoOpPreProcess,
+    additionalCustomizations: buildCasesSearchAdditionalCustomizations(),
+    MobileDetailsOnClick: casesSearchStandardMobileDetailsOnClick,
+    additionalValidations: casesSearchStandardAdditionalValidations,
   },
   homeLitigantUiConfig: {
     customValidationCheck: (data) => {
@@ -291,19 +214,8 @@ export const UICustomizations = {
           return t("ES_COMMON_NA");
       }
     },
-    MobileDetailsOnClick: (row, tenantId) => {
-      let link;
-      Object.keys(row).map((key) => {
-        if (key === "MASTERS_WAGESEEKER_ID")
-          link = `/${window.contextPath}/employee/masters/view-wageseeker?tenantId=${tenantId}&wageseekerId=${row[key]}`;
-      });
-      return link;
-    },
-    additionalValidations: (type, data, keys) => {
-      if (type === "date") {
-        return data[keys.start] && data[keys.end] ? () => new Date(data[keys.start]).getTime() <= new Date(data[keys.end]).getTime() : true;
-      }
-    },
+    MobileDetailsOnClick: casesSearchStandardMobileDetailsOnClick,
+    additionalValidations: casesSearchStandardAdditionalValidations,
   },
   homeFSOUiConfig: {
     customValidationCheck: (data) => {
@@ -390,19 +302,8 @@ export const UICustomizations = {
           return t("ES_COMMON_NA");
       }
     },
-    MobileDetailsOnClick: (row, tenantId) => {
-      let link;
-      Object.keys(row).map((key) => {
-        if (key === "MASTERS_WAGESEEKER_ID")
-          link = `/${window.contextPath}/employee/masters/view-wageseeker?tenantId=${tenantId}&wageseekerId=${row[key]}`;
-      });
-      return link;
-    },
-    additionalValidations: (type, data, keys) => {
-      if (type === "date") {
-        return data[keys.start] && data[keys.end] ? () => new Date(data[keys.start]).getTime() <= new Date(data[keys.end]).getTime() : true;
-      }
-    },
+    MobileDetailsOnClick: casesSearchStandardMobileDetailsOnClick,
+    additionalValidations: casesSearchStandardAdditionalValidations,
   },
   homeJudgeUIConfig: {
     customValidationCheck: (data) => {
@@ -509,19 +410,8 @@ export const UICustomizations = {
           return t("ES_COMMON_NA");
       }
     },
-    MobileDetailsOnClick: (row, tenantId) => {
-      let link;
-      Object.keys(row).map((key) => {
-        if (key === "MASTERS_WAGESEEKER_ID")
-          link = `/${window.contextPath}/employee/masters/view-wageseeker?tenantId=${tenantId}&wageseekerId=${row[key]}`;
-      });
-      return link;
-    },
-    additionalValidations: (type, data, keys) => {
-      if (type === "date") {
-        return data[keys.start] && data[keys.end] ? () => new Date(data[keys.start]).getTime() <= new Date(data[keys.end]).getTime() : true;
-      }
-    },
+    MobileDetailsOnClick: casesSearchStandardMobileDetailsOnClick,
+    additionalValidations: casesSearchStandardAdditionalValidations,
   },
   reviewSummonWarrantNotice: {
     preProcess: (requestCriteria, additionalDetails) => {
@@ -605,7 +495,7 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
-      const taskDetails = handleTaskDetails(row?.taskDetails);
+      const taskDetails = parseTaskDetails(row?.taskDetails);
       const delieveryDate = formatNoticeDeliveryDate(taskDetails?.deliveryChannels?.statusChangeDate || row?.createdDate);
       const hearingDate = formatNoticeDeliveryDate(taskDetails?.caseDetails?.hearingDate);
       const activeTab = searchResult?.additionalDetails?.activeTab || "";

@@ -1,31 +1,20 @@
-import { CloseSvg, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
 import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { bulkWitnessDepositionSignConfig } from "../../configs/BulkWitnessDepositionSignConfig";
-import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { WitnessDepositionSignModal } from "./WitnessDepositionSignModal";
-import qs from "qs";
 import { HomeService } from "../../hooks/services";
 import { numberToWords } from "@egovernments/digit-ui-module-orders/src/utils";
-import { Banner } from "@egovernments/digit-ui-react-components";
-import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-const parseXml = (xmlString, tagName) => {
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-
-  const element = xmlDoc.getElementsByTagName(tagName)[0];
-  return element ? element.textContent.trim() : null;
-};
-const sectionsParentStyle = {
-  height: "50%",
-  display: "flex",
-  flexDirection: "column",
-  gridTemplateColumns: "20% 1fr",
-  gap: "1rem",
-};
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import {
+  buildBulkSignedResponses,
+  BulkSignConfirmModal,
+  BulkSignLoadingOverlay,
+  BulkSignSubmitBar,
+  BulkSignSuccessModal,
+  bulkSignSectionsParentStyle,
+} from "./shared/bulkSignViewShared";
 
 function BulkWitnessDepositionView({ setShowToast = () => {} }) {
   const { t } = useTranslation();
@@ -121,80 +110,40 @@ function BulkWitnessDepositionView({ setShowToast = () => {} }) {
     };
   }, [needConfigRefresh]);
 
-  const getFormattedDate = () => {
-    const currentDate = new Date();
-    const year = String(currentDate.getFullYear());
-    const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-    const day = String(currentDate.getDate()).padStart(2, "0");
-    return `${day}/${month}/${year}`;
-  };
-
   const witnessDepositionModalInfo = {
-    header: `${t("YOU_HAVE_SUCCESSFULLY_ISSUED_BULK_WITNESS_DEPOSITION")} ${numberToWords(successCount)} ${t("ISSUE_WITNESS_DEPOSITION")} `, //NEED TO CHANGE COUNT
+    header: `${t("YOU_HAVE_SUCCESSFULLY_ISSUED_BULK_WITNESS_DEPOSITION")} ${numberToWords(successCount)} ${t("ISSUE_WITNESS_DEPOSITION")} `,
     caseInfo: [
       {
         key: t("WITNESS_DEPOSITION_ISSUE_DATE"),
-        value: getFormattedDate(),
+        value: DateUtils.getFormattedDate(new Date(), "DD-MM-YYYY", "/"),
         copyData: false,
       },
     ],
   };
 
-  const Heading = useCallback((props) => <span className="heading-m">{props.label}</span>, []);
-
-  const CloseBtn = useCallback(
-    (props) => (
-      <div onClick={props.onClick}>
-        <span className="icon-circle">
-          <CloseSvg />
-        </span>{" "}
-      </div>
-    ),
-    []
-  );
-
-  const fetchResponseFromXmlRequest = async (witnessDepositionRequestList) => {
-    const responses = [];
-
-    const requests = witnessDepositionRequestList?.map(async (deposition) => {
-      try {
-        // URL encoding the XML request
-        const formData = qs.stringify({ response: deposition?.request });
-        const response = await axiosInstance.post(bulkSignUrl, formData, {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          },
-        });
-
-        const data = response?.data;
-
-        if (parseXml(data, "status") !== "failed") {
-          responses.push({
-            artifactNumber: deposition?.artifactNumber,
-            signedArtifactData: parseXml(data, "data"),
-            isWitnessDeposition: true,
-            signed: true,
-            errorMsg: null,
-            tenantId: tenantId,
-          });
-        } else {
-          responses.push({
-            artifactNumber: deposition?.artifactNumber,
-            signedArtifactData: parseXml(data, "data"),
-            isWitnessDeposition: true,
-            signed: false,
-            errorMsg: parseXml(data, "error"),
-            tenantId: tenantId,
-          });
-        }
-      } catch (error) {
-        console.error(`Error fetching witness deposition ${deposition?.artifactNumber}:`, error?.message);
-      }
+  const fetchResponseFromXmlRequest = (witnessDepositionRequestList) =>
+    buildBulkSignedResponses({
+      requestList: witnessDepositionRequestList,
+      bulkSignUrl,
+      buildSuccessResponse: (signedData, deposition) => ({
+        artifactNumber: deposition?.artifactNumber,
+        signedArtifactData: signedData,
+        isWitnessDeposition: true,
+        signed: true,
+        errorMsg: null,
+        tenantId,
+      }),
+      buildFailureResponse: (signedData, errorMsg, deposition) => ({
+        artifactNumber: deposition?.artifactNumber,
+        signedArtifactData: signedData,
+        isWitnessDeposition: true,
+        signed: false,
+        errorMsg,
+        tenantId,
+      }),
+      logErrorLabel: "Error fetching witness deposition",
+      logErrorIdField: "artifactNumber",
     });
-
-    await Promise.allSettled(requests);
-    return responses;
-  };
 
   const handleBulkSign = useCallback(async () => {
     try {
@@ -253,67 +202,33 @@ function BulkWitnessDepositionView({ setShowToast = () => {} }) {
         key={`witness-deposition-${counter}`}
         pageSizeLimit={sessionStorage.getItem("bulkWitnessDepositionSignlimit") || 10}
         configs={config}
-        customStyle={sectionsParentStyle}
+        customStyle={bulkSignSectionsParentStyle}
       />
     );
   }, [config, counter]);
 
   return (
     <React.Fragment>
-      {isLoading && (
-        <div
-          style={{
-            width: "100vw",
-            height: "100vh",
-            zIndex: "10001",
-            position: "fixed",
-            right: "0",
-            display: "flex",
-            top: "0",
-            background: "rgb(234 234 245 / 50%)",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          className="submit-loader"
-        >
-          <Loader />
-        </div>
-      )}
+      <BulkSignLoadingOverlay show={isLoading} />
       <React.Fragment>
-        {/* bulk-esign-order-view */}
         <div className={"bulk-esign-order-view select"}>
           <div className="header">{t("BULK_WITNESS_DEPOSITION_SIGN")}</div>
           {MemoInboxSearchComposer}
         </div>
-        {hasEvidenceEsignAccess && (
-          <div className="bulk-submit-bar">
-            <SubmitBar
-              label={t("SIGN_SELECTED_WITNESS_DEPOSITIONS")}
-              submit="submit"
-              disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
-              onSubmit={() => setShowBulkSignConfirmModal(true)}
-            />
-          </div>
-        )}
-      </React.Fragment>
-      {showBulkSignConfirmModal && (
-        <Modal
-          headerBarMain={<Heading label={t("CONFIRM_BULK_SIGN")} />}
-          headerBarEnd={<CloseBtn onClick={() => setShowBulkSignConfirmModal(false)} />}
-          actionCancelLabel={t("CS_BULK_BACK")}
-          actionCancelOnSubmit={() => setShowBulkSignConfirmModal(false)}
-          actionSaveLabel={t("CS_BULK_SIGN_AND_PUBLISH")}
-          actionSaveOnSubmit={() => handleBulkSign()}
-          style={{ height: "40px", background: "#007E7E" }}
-          popupStyles={{ width: "35%" }}
-          className={"review-order-modal"}
-          children={
-            <div className="delete-warning-text">
-              <h3 style={{ margin: "12px 24px" }}>{t("CONFIRM_BULK_WITNESS_DEPOSITION_SIGN_TEXT")}</h3>
-            </div>
-          }
+        <BulkSignSubmitBar
+          show={hasEvidenceEsignAccess}
+          label={t("SIGN_SELECTED_WITNESS_DEPOSITIONS")}
+          disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
+          onSubmit={() => setShowBulkSignConfirmModal(true)}
         />
-      )}
+      </React.Fragment>
+      <BulkSignConfirmModal
+        open={showBulkSignConfirmModal}
+        onCancel={() => setShowBulkSignConfirmModal(false)}
+        onConfirm={() => handleBulkSign()}
+        t={t}
+        confirmText="CONFIRM_BULK_WITNESS_DEPOSITION_SIGN_TEXT"
+      />
       {showBulkSignModal && (
         <WitnessDepositionSignModal
           selectedWitnessDeposition={selectedWitnessDeposition}
@@ -323,34 +238,15 @@ function BulkWitnessDepositionView({ setShowToast = () => {} }) {
           setShowToast={setToast}
         />
       )}
-      {showBulkSignSuccessModal && (
-        <Modal
-          actionSaveLabel={t("BULK_SUCCESS_CLOSE")}
-          actionSaveOnSubmit={() => {
-            setShowBulkSignSuccessModal(false);
-            setCounter((prev) => parseInt(prev) + 1);
-          }}
-          className={"orders-issue-bulk-success-modal"}
-        >
-          <div>
-            <Banner
-              whichSvg={"tick"}
-              successful={true}
-              message={witnessDepositionModalInfo?.header}
-              headerStyles={{ fontSize: "32px" }}
-              style={{ minWidth: "100%" }}
-            ></Banner>
-            {
-              <CustomCopyTextDiv
-                t={t}
-                keyStyle={{ margin: "8px 0px" }}
-                valueStyle={{ margin: "8px 0px", fontWeight: 700 }}
-                data={witnessDepositionModalInfo?.caseInfo}
-              />
-            }
-          </div>
-        </Modal>
-      )}
+      <BulkSignSuccessModal
+        open={showBulkSignSuccessModal}
+        onClose={() => {
+          setShowBulkSignSuccessModal(false);
+          setCounter((prev) => parseInt(prev) + 1);
+        }}
+        modalInfo={witnessDepositionModalInfo}
+        t={t}
+      />
       {toast && (
         <CustomToast
           error={toast?.error}

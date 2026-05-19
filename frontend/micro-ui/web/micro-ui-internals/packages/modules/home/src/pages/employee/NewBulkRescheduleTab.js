@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Banner, Button, CardLabel, CloseSvg, Dropdown, LabelFieldPair, Loader } from "@egovernments/digit-ui-react-components";
-import { InfoCard } from "@egovernments/digit-ui-components";
-import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
-import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
+import { Banner, Button, CardLabel, Dropdown, LabelFieldPair, Loader } from "@egovernments/digit-ui-react-components";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 import NewBulkRescheduleTable from "./NewBulkRescheduleTable";
@@ -13,32 +11,17 @@ import get from "lodash/get";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
+import {
+  loadBulkRescheduleSession,
+  clearBulkRescheduleSession,
+  saveBulkRescheduleSession,
+  bulkRescheduleSignatureOnSelect,
+  BulkNotificationSignatureModals,
+} from "@egovernments/digit-ui-module-hearings/src/pages/employee/shared/bulkRescheduleShared";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-const CloseBtn = ({ onClick }) => {
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        paddingRight: "20px",
-        cursor: "pointer",
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-const Heading = ({ label }) => {
-  return (
-    <div className="evidence-title">
-      <h1 className="heading-m">{label}</h1>
-    </div>
-  );
-};
+
 const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().setHours(0, 0, 0, 0), selectedSlot = [] }) => {
   const { t } = useTranslation();
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
@@ -63,27 +46,15 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const judgeId = localStorage.getItem("judgeId");
   const courtId = localStorage.getItem("courtId");
 
-  const bulkNotificationStepper = sessionStorage.getItem("bulkNotificationStepper")
-    ? parseInt(sessionStorage.getItem("bulkNotificationStepper"))
-    : null;
-
-  const bulkNotificationFormData = sessionStorage.getItem("bulkNotificationFormData")
-    ? JSON.parse(sessionStorage.getItem("bulkNotificationFormData"))
-    : null;
-
-  const bulkOldHearingData = sessionStorage.getItem("bulkOldHearingData") ? JSON.parse(sessionStorage.getItem("bulkOldHearingData")) : null;
-
-  const bulkNewHearingData = sessionStorage.getItem("bulkNewHearingData") ? JSON.parse(sessionStorage.getItem("bulkNewHearingData")) : [];
-
-  const bulkNotificationNumber = sessionStorage.getItem("bulkNotificationNumber")
-    ? JSON.parse(sessionStorage.getItem("bulkNotificationNumber"))
-    : null;
-
-  const bulkNotificationFileStoreId = sessionStorage.getItem("bulkNotificationFileStoreId")
-    ? JSON.parse(sessionStorage.getItem("bulkNotificationFileStoreId"))
-    : null;
-
-  const bulkAllHearingsData = sessionStorage.getItem("bulkAllHearingsData") ? JSON.parse(sessionStorage.getItem("bulkAllHearingsData")) : null;
+  const {
+    bulkNotificationStepper,
+    bulkNotificationFormData,
+    bulkOldHearingData,
+    bulkNewHearingData,
+    bulkNotificationNumber,
+    bulkNotificationFileStoreId,
+    bulkAllHearingsData,
+  } = loadBulkRescheduleSession({ includeHomeFields: true });
 
   const [signFormData, setSignFormData] = useState({});
   const [newHearingData, setNewHearingData] = useState(bulkNewHearingData);
@@ -167,30 +138,12 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     return filteredHearings?.length || 0;
   }, [hearingDetails]);
 
-  const onSelect = (key, value) => {
-    if (value?.Signature === null) {
-      setSignFormData({});
-      setIsSigned(false);
-    } else {
-      setSignFormData((prevData) => ({
-        ...prevData,
-        [key]: value,
-      }));
-    }
-    setFileUploadError(null);
-  };
+  const onSelect = bulkRescheduleSignatureOnSelect(setSignFormData, setIsSigned, setFileUploadError);
 
   const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const clearLocalStorage = () => {
-    sessionStorage.removeItem("bulkNotificationStepper");
-    sessionStorage.removeItem("bulkNotificationFormData");
-    sessionStorage.removeItem("bulkOldHearingData");
-    sessionStorage.removeItem("bulkNewHearingData");
-    sessionStorage.removeItem("bulkAllHearingsData");
-    sessionStorage.removeItem("bulkNotificationNumber");
-    sessionStorage.removeItem("bulkNotificationFileStoreId");
-    sessionStorage.removeItem("homeActiveTab");
+    clearBulkRescheduleSession({ includeHomeFields: true });
     return;
   };
 
@@ -431,10 +384,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         console.error("error", error);
         setSignFormData({});
         setIsSigned(false);
-        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
-        setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
-        setShowToast({ label: t(errorCode), error: true, errorId });
+        setFileUploadError(getUploadErrorToast(error, t));
       } finally {
         setSignLoader(false);
       }
@@ -556,152 +506,38 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
           )}
         </Modal>
       )}
-      {stepper === 3 && !openUploadSignatureModal && !isSigned && (
-        <Modal
-          headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
-          headerBarEnd={<CloseBtn onClick={onCancel} />}
-          actionCancelLabel={t("CS_COMMON_BACK")}
-          actionCancelOnSubmit={onCancel}
-          actionSaveLabel={t("CS_COMMON_SUBMIT")}
-          isDisabled={!isSigned}
-          actionSaveOnSubmit={uploadSignedPdf}
-          className="add-signature-modal"
-        >
-          <div className="add-signature-main-div">
-            <div className="not-signed">
-              <InfoCard
-                variant={"default"}
-                label={t("PLEASE_NOTE")}
-                additionalElements={[
-                  <p key="note">
-                    {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}
-                    <span style={{ fontWeight: "bold" }}>{`${t("NOTIFICATION")}`}</span>
-                  </p>,
-                ]}
-                inline
-                style={{ marginBottom: "10px", backgroundColor: "rgba(0, 0, 0, 0.05)" }}
-                textStyle={{}}
-                className={`custom-info-card`}
-              />
-              <h1>{t("YOUR_SIGNATURE")}</h1>
-              <div className="sign-button-wrap">
-                <Button
-                  label={t("CS_ESIGN")}
-                  onButtonClick={() => {
-                    sessionStorage.setItem("bulkNotificationStepper", parseInt(stepper));
-                    sessionStorage.setItem("bulkNotificationFormData", JSON.stringify(bulkFormData));
-                    sessionStorage.setItem("bulkOldHearingData", JSON.stringify(originalHearingData));
-                    sessionStorage.setItem("bulkAllHearingsData", JSON.stringify(allHearings));
-                    sessionStorage.setItem("bulkNewHearingData", JSON.stringify(newHearingData));
-                    sessionStorage.setItem("bulkNotificationNumber", JSON.stringify(notificationNumber));
-                    sessionStorage.setItem("bulkNotificationFileStoreId", JSON.stringify(notificationFileStoreId));
-                    sessionStorage.setItem("homeActiveTab", "CS_HOME_BULK_RESCHEDULE");
-                    handleEsign(name, pageModule, notificationFileStoreId, setShowToast, t, "Signature");
-                  }} //as sending null throwing error in esign
-                  className="aadhar-sign-in"
-                  labelClassName="aadhar-sign-in"
-                />
-                <Button
-                  icon={<FileUploadIcon />}
-                  label={t("UPLOAD_DIGITAL_SIGN_CERTI")}
-                  onButtonClick={() => {
-                    setOpenUploadSignatureModal(true);
-                  }}
-                  className="upload-signature"
-                  labelClassName="upload-signature-label"
-                />
-              </div>
-              <div className="donwload-submission">
-                <h2>{t("DOWNLOAD_NOTIFICATION_TEXT")}</h2>
-                <AuthenticatedLink
-                  uri={uri}
-                  style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}
-                  displayFilename={"CLICK_HERE"}
-                  t={t}
-                  pdf={true}
-                />
-              </div>
-            </div>
-          </div>
-        </Modal>
-      )}
-      {stepper === 3 && openUploadSignatureModal && (
-        <UploadModal
-          t={t}
-          key={name}
-          name={name}
-          onClose={() => setOpenUploadSignatureModal(false)}
-          onSelect={onSelect}
-          formData={signFormData}
-          onSubmit={onUploadSubmit}
-          isDisabled={issignLoader}
-          isParentLoading={issignLoader}
-          fileUploadError={fileUploadError}
-        />
-      )}
-      {stepper === 3 && !openUploadSignatureModal && isSigned && (
-        <Modal
-          headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
-          headerBarEnd={<CloseBtn onClick={onCancel} />}
-          actionCancelLabel={t("CS_COMMON_BACK")}
-          actionCancelOnSubmit={onCancel}
-          actionSaveLabel={t("SUBMIT_BUTTON")}
-          actionSaveOnSubmit={uploadSignedPdf}
-          className="add-signature-modal"
-        >
-          {loader ? (
-            <Loader />
-          ) : (
-            <div className="add-signature-main-div">
-              <InfoCard
-                variant={"default"}
-                label={t("PLEASE_NOTE")}
-                additionalElements={[
-                  <p key="note">
-                    {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}
-                    <span style={{ fontWeight: "bold" }}>{`${t("NOTIFICATION")} `}</span>
-                  </p>,
-                ]}
-                inline
-                style={{ marginBottom: "16px" }}
-                textStyle={{}}
-                className={`custom-info-card`}
-              />
-              <div style={{ display: "flex", flexDirection: "row", gap: "16px" }}>
-                <h1
-                  style={{
-                    margin: 0,
-                    fontFamily: "Roboto",
-                    fontSize: "24px",
-                    fontWeight: 700,
-                    lineHeight: "28.13px",
-                    textAlign: "left",
-                    color: "#3d3c3c",
-                  }}
-                >
-                  {t("YOUR_SIGNATURE")}
-                </h1>
-                <h2
-                  style={{
-                    margin: 0,
-                    fontFamily: "Roboto",
-                    fontSize: "14px",
-                    fontWeight: 400,
-                    lineHeight: "16.41px",
-                    textAlign: "center",
-                    color: "#00703c",
-                    padding: "6px",
-                    backgroundColor: "#e4f2e4",
-                    borderRadius: "999px",
-                  }}
-                >
-                  {t("SIGNED")}
-                </h2>
-              </div>
-            </div>
-          )}
-        </Modal>
-      )}
+      <BulkNotificationSignatureModals
+        stepper={stepper}
+        t={t}
+        Modal={Modal}
+        onCancel={onCancel}
+        openUploadSignatureModal={openUploadSignatureModal}
+        setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+        isSigned={isSigned}
+        uploadSignedPdf={uploadSignedPdf}
+        onBeforeEsign={() => {
+          saveBulkRescheduleSession({
+            stepper,
+            formData: bulkFormData,
+            oldHearingData: originalHearingData,
+            newHearingData,
+            notificationNumber,
+            fileStoreId: notificationFileStoreId,
+            allHearingsData: allHearings,
+            homeActiveTab: "CS_HOME_BULK_RESCHEDULE",
+          });
+          handleEsign(name, pageModule, notificationFileStoreId, setShowToast, t, "Signature");
+        }}
+        uri={uri}
+        name={name}
+        signFormData={signFormData}
+        onSelect={onSelect}
+        onUploadSubmit={onUploadSubmit}
+        issignLoader={issignLoader}
+        fileUploadError={fileUploadError}
+        setFileUploadError={setFileUploadError}
+        isLoading={loader}
+      />
       {stepper === 4 && (
         <Modal
           actionCancelLabel={t("CS_COMMON_DOWNLOAD")}

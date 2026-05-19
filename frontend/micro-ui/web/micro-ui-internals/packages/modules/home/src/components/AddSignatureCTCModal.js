@@ -5,7 +5,7 @@ import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { downloadPdfFromBlob } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
 
 const AddSignatureCTCModal = ({
   t,
@@ -56,10 +56,8 @@ const AddSignatureCTCModal = ({
         console.error("error", error);
         setLoader(false);
         setFormData({});
-        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-        setShowToast({ label: t("CS_ESIGN_ERROR"), error: true, errorId });
         setIsSigned(false);
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        setFileUploadError(getUploadErrorToast(error, t));
       }
       setLoader(false);
     }
@@ -168,6 +166,7 @@ const AddSignatureCTCModal = ({
         onSubmit={onSubmit}
         isDisabled={loader}
         fileUploadError={fileUploadError}
+        setFileUploadError={setFileUploadError}
       />
       {showToast && (
         <CustomToast

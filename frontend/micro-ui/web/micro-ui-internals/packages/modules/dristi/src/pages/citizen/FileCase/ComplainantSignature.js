@@ -21,7 +21,7 @@ import Modal from "../../../components/Modal";
 import { mergeBreakdowns } from "./EfilingValidationUtils";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
-import { UploadModal } from "@egovernments/digit-ui-module-common";
+import { UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
 
 const getStyles = () => ({
   container: { display: "flex", flexDirection: "row", marginBottom: "50px" },
@@ -231,10 +231,7 @@ const ComplainantSignature = ({ path }) => {
       } catch (error) {
         console.error("error", error);
         setFormData({});
-        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
-        setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
-        setShowToast({ label: t(errorCode), error: true, errorId });
+        setFileUploadError(getUploadErrorToast(error, t));
       }
     }
   };

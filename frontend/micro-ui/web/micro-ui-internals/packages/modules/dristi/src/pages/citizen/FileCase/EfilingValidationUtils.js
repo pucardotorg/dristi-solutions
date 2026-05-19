@@ -1,4 +1,30 @@
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
+import {
+  runDebtLiabilityNatureValidation,
+  runFileCasePartyNameAgeValidation,
+  runRespondentNameAgeValidation,
+} from "../../../configs/shared/nameValidationShared";
+import { uploadProfileDocumentArray } from "../../../configs/shared/profileDocumentUploadShared";
+import {
+  clearBulkContactTextfieldValues,
+  getComplainantMobileNumbers,
+  getRespondentEmails,
+  getRespondentMobileNumbers,
+  getWitnessEmails,
+  getWitnessMobileNumbers,
+  shouldSkipRespondentInquiryAffidavitValidation,
+  validateComplainantMobileDuplicates,
+  validateComplainantMobileNotInRespondentList,
+  validatePartyAgeField,
+  validateRespondentMobileEmailDuplicates,
+  validateRespondentMobileNotSameAsComplainant,
+  validateWitnessMobileEmailDuplicates,
+} from "../../../configs/shared/profileValidationShared";
+import {
+  runChequeFieldsSanitization,
+  runChequeIfscAndNumericSanitization,
+  runDebtLiabilityTotalAmountSanitization,
+} from "../../../configs/shared/validationSanitizationShared";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
 import {
@@ -267,100 +293,7 @@ export const runGenericTextSanitizer = ({ formData, setValue }) => {
 
 export const checkIfscValidation = ({ formData, setValue, selected }) => {
   if (selected === "chequeDetails") {
-    const chequeData = structuredClone(formData?.chequeDetails || {});
-
-    for (const key in chequeData) {
-      switch (key) {
-        case "payeeIfsc":
-        case "payerIfsc":
-          if (Object.hasOwnProperty.call(chequeData, key)) {
-            const oldValue = chequeData[key];
-            let value = oldValue;
-
-            if (typeof value === "string") {
-              let updatedValue = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-              if (updatedValue?.length > 11) {
-                updatedValue = updatedValue.substring(0, 11);
-              }
-
-              if (updatedValue?.length < 5) {
-                updatedValue = value.toUpperCase().replace(/[^A-Z]/g, "");
-              }
-
-              if (updatedValue?.length >= 5) {
-                updatedValue = updatedValue.slice(0, 4).replace(/[^A-Z]/g, "") + "0" + updatedValue.slice(5);
-              }
-
-              if (updatedValue?.length === 11) {
-                updatedValue = updatedValue.slice(0, 4) + "0" + updatedValue.slice(5, 11).replace(/[^A-Z0-9]/g, "");
-              }
-
-              if (updatedValue !== oldValue) {
-                const element = document.querySelector(`[name="${key}"]`);
-                const start = element?.selectionStart;
-                const end = element?.selectionEnd;
-                setValue(`chequeDetails.${key}`, updatedValue);
-                setTimeout(() => {
-                  element?.setSelectionRange(start, end);
-                }, 0);
-              }
-            }
-          }
-          break;
-        default:
-          break;
-      }
-    }
-
-    const formDataCopy = structuredClone(formData);
-
-    for (const key in formDataCopy) {
-      switch (key) {
-        case "chequeAmount":
-          if (Object.hasOwnProperty.call(formDataCopy, key)) {
-            const oldValue = formDataCopy[key];
-            let value = oldValue;
-
-            let updatedValue = value?.replace(/\D/g, "");
-            if (updatedValue?.length > 12) {
-              updatedValue = updatedValue.substring(0, 12);
-            }
-
-            if (updatedValue !== oldValue) {
-              const element = document?.querySelector(`[name="${key}"]`);
-              const start = element?.selectionStart;
-              const end = element?.selectionEnd;
-              setValue(key, updatedValue);
-              setTimeout(() => {
-                element?.setSelectionRange(start, end);
-              }, 0);
-            }
-          }
-          break;
-        case "chequeNumber":
-          if (Object.hasOwnProperty.call(formDataCopy, key)) {
-            const oldValue = formDataCopy[key];
-            let value = oldValue;
-
-            let updatedValue = value?.replace(/\D/g, "");
-            if (updatedValue?.length > 6) {
-              updatedValue = updatedValue?.substring(0, 6);
-            }
-            if (updatedValue !== oldValue) {
-              const element = document?.querySelector(`[name="${key}"]`);
-              const start = element?.selectionStart;
-              const end = element?.selectionEnd;
-              setValue(key, updatedValue);
-              setTimeout(() => {
-                element?.setSelectionRange(start, end);
-              }, 0);
-            }
-          }
-          break;
-        default:
-          break;
-      }
-    }
+    runChequeIfscAndNumericSanitization({ formData, setValue });
   }
 };
 
@@ -415,163 +348,13 @@ export const handleIfscAutofill = async ({ ifsc, bankField, branchField, setValu
 
 export const checkNameValidation = ({ formData, setValue, selected, reset, index, formdata, clearErrors, formState }) => {
   if (selected === "respondentDetails") {
-    if (formData?.respondentFirstName || formData?.respondentMiddleName || formData?.respondentLastName || formData?.respondentAge) {
-      const formDataCopy = structuredClone(formData);
-      for (const key in formDataCopy) {
-        if (["respondentFirstName", "respondentMiddleName", "respondentLastName"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-          if (typeof value === "string") {
-            if (value.length > 100) {
-              value = value.slice(0, 100);
-            }
-
-            let updatedValue = formatName(value);
-            if (updatedValue !== oldValue) {
-              const element = document.querySelector(`[name="${key}"]`);
-              const start = element?.selectionStart;
-              const end = element?.selectionEnd;
-              setValue(key, updatedValue);
-              setTimeout(() => {
-                element?.setSelectionRange(start, end);
-              }, 0);
-            }
-          }
-        }
-        if (key === "respondentAge" && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-
-          let updatedValue = value?.replace(/\D/g, "");
-          // Convert to number and restrict value to 150
-          if (updatedValue && parseInt(updatedValue, 10) > 150) {
-            updatedValue = updatedValue.substring(0, updatedValue.length - 1); // Disallow the extra digit
-          }
-          if (updatedValue !== oldValue) {
-            const element = document?.querySelector(`[name="${key}"]`);
-            const start = element?.selectionStart;
-            const end = element?.selectionEnd;
-            setValue(key, updatedValue);
-            setTimeout(() => {
-              element?.setSelectionRange(start, end);
-            }, 0);
-          }
-        }
-      }
-    }
+    runRespondentNameAgeValidation({ formData, setValue, formatName });
   }
   if (selected === "complainantDetails" || selected === "witnessDetails") {
-    if (
-      formData?.firstName ||
-      formData?.middleName ||
-      formData?.lastName ||
-      formData?.witnessDesignation ||
-      formData?.witnessAge ||
-      formData?.complainantAge ||
-      formData?.respondentAge ||
-      formData?.poaAge
-    ) {
-      const formDataCopy = structuredClone(formData);
-      for (const key in formDataCopy) {
-        if (["firstName", "middleName", "lastName", "witnessDesignation"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-          if (typeof value === "string") {
-            if (value.length > 100) {
-              value = value.slice(0, 100);
-            }
-
-            let updatedValue = formatName(value);
-            if (updatedValue !== oldValue) {
-              const element = document.querySelector(`[name="${key}"]`);
-              const start = element?.selectionStart;
-              const end = element?.selectionEnd;
-              setValue(key, updatedValue);
-              setTimeout(() => {
-                element?.setSelectionRange(start, end);
-              }, 0);
-            }
-            if (selected === "witnessDetails") {
-              if (updatedValue !== "" && ["firstName", "witnessDesignation"].includes(key)) {
-                if (formState?.errors?.firstName) {
-                  clearErrors("firstName");
-                }
-                if (formState?.errors?.witnessDesignation) {
-                  clearErrors("witnessDesignation");
-                }
-              }
-            }
-          }
-        }
-        if (["complainantAge", "witnessAge"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-
-          let updatedValue = value?.replace(/\D/g, "");
-          // Convert to number and restrict value to 150
-          if (updatedValue && parseInt(updatedValue, 10) > 150) {
-            updatedValue = updatedValue.substring(0, updatedValue.length - 1); // Disallow the extra digit
-          }
-          if (updatedValue !== oldValue) {
-            const element = document?.querySelector(`[name="${key}"]`);
-            const start = element?.selectionStart;
-            const end = element?.selectionEnd;
-            setValue(key, updatedValue);
-            setTimeout(() => {
-              element?.setSelectionRange(start, end);
-            }, 0);
-          }
-        }
-        if (key === "poaAge" && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-          // keep only digits
-          let updatedValue = value?.replace(/\D/g, "");
-          // Max 3 digits
-          if (updatedValue?.length > 3) {
-            updatedValue = updatedValue.substring(0, 3);
-          }
-          if (updatedValue !== oldValue) {
-            const element = document?.querySelector(`[name="${key}"]`);
-            const start = element?.selectionStart;
-            const end = element?.selectionEnd;
-            setValue(key, updatedValue);
-            setTimeout(() => {
-              element?.setSelectionRange(start, end);
-            }, 0);
-          }
-        }
-      }
-    }
+    runFileCasePartyNameAgeValidation({ formData, setValue, formatName, selected, formState, clearErrors });
   }
-
-  // added for Nature of Debt/liablity
   if (selected === "debtLiabilityDetails") {
-    if (formData?.liabilityNature) {
-      const formDataCopy = structuredClone(formData);
-      for (const key in formDataCopy) {
-        if (["liabilityNature"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-          if (typeof value === "string") {
-            if (value.length > 100) {
-              value = value.slice(0, 100);
-            }
-
-            let updatedValue = formatName(value);
-            if (updatedValue !== oldValue) {
-              const element = document.querySelector(`[name="${key}"]`);
-              const start = element?.selectionStart;
-              const end = element?.selectionEnd;
-              setValue(key, updatedValue);
-              setTimeout(() => {
-                element?.setSelectionRange(start, end);
-              }, 0);
-            }
-          }
-        }
-      }
-    }
+    runDebtLiabilityNatureValidation({ formData, setValue, formatName });
   }
 };
 
@@ -586,263 +369,56 @@ export const checkDuplicateMobileEmailValidation = ({
   caseDetails,
   currentDisplayIndex,
 }) => {
-  const complainantMobileNumbersArray =
-    caseDetails?.additionalDetails?.complainantDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.complainantVerification?.mobileNumber) {
-          return true;
-        } else return false;
-      })
-      .map((data) => {
-        return data?.data?.complainantVerification?.mobileNumber;
-      }) || [];
-  const respondentMobileNumbersArray =
-    caseDetails?.additionalDetails?.respondentDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber?.length > 0) {
-          return true;
-        } else return false;
-      })
-      .map((data) => {
-        return data?.data?.phonenumbers?.mobileNumber;
-      })
-      .reduce((acc, curr) => acc.concat(curr), []) || [];
-
-  const witnessMobileNumbersArray =
-    caseDetails?.witnessDetails
-      ?.filter((data) => {
-        if (data?.phonenumbers?.mobileNumber && data?.phonenumbers?.mobileNumber?.length > 0) {
-          return true;
-        } else return false;
-      })
-      ?.map((data) => {
-        return data?.phonenumbers?.mobileNumber;
-      })
-      ?.reduce((acc, curr) => acc.concat(curr), []) || [];
-
-  const respondentEmailsArray =
-    caseDetails?.additionalDetails?.respondentDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId?.length > 0) {
-          return true;
-        } else return false;
-      })
-      .map((data) => {
-        return data?.data?.emails?.emailId;
-      })
-      .reduce((acc, curr) => acc.concat(curr), []) || [];
-
-  const witnessEmailsArray =
-    caseDetails?.witnessDetails
-      ?.filter((data) => {
-        if (data?.emails?.emailId && data?.emails?.emailId?.length > 0) {
-          return true;
-        } else return false;
-      })
-      ?.map((data) => {
-        return data?.emails?.emailId;
-      })
-      .reduce((acc, curr) => acc.concat(curr), []) || [];
+  const complainantMobileNumbersArray = getComplainantMobileNumbers(caseDetails);
+  const respondentMobileNumbersArray = getRespondentMobileNumbers(caseDetails);
 
   if (selected === "respondentDetails") {
-    const currentMobileNumber = formData?.phonenumbers?.textfieldValue;
-    if (currentMobileNumber && complainantMobileNumbersArray.some((number) => number === currentMobileNumber)) {
-      setError("phonenumbers", { mobileNumber: "RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM" });
-    } else if (currentMobileNumber && witnessMobileNumbersArray.some((number) => number === currentMobileNumber)) {
-      setError("phonenumbers", { mobileNumber: "RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_WITNESS_MOB_NUM" });
-    } else if (
-      formdata &&
-      formdata?.length > 0 &&
-      formData?.phonenumbers?.textfieldValue &&
-      formData?.phonenumbers?.textfieldValue?.length === 10 &&
-      formdata
-        .filter((data) => data.isenabled === true)
-        ?.some((data) => data?.data?.phonenumbers?.mobileNumber?.some((number) => number === formData?.phonenumbers?.textfieldValue))
-    ) {
-      setError("phonenumbers", { mobileNumber: "DUPLICATE_MOBILE_NUMBER_FOR_RESPONDENT" });
-    } else {
-      clearErrors("phonenumbers");
-    }
-
-    const currentEmail = formData?.emails?.textfieldValue;
-    if (currentEmail && witnessEmailsArray.some((email) => email === currentEmail)) {
-      setError("emails", { emailId: "RESPONDENT_EMAIL_CAN_NOT_BE_SAME_AS_WITNESS_EMAIL" });
-    } else if (
-      formdata &&
-      formdata?.length > 0 &&
-      formData?.emails?.textfieldValue &&
-      formdata
-        .filter((data) => data.isenabled === true)
-        ?.some((data) => data?.data?.emails?.emailId?.some((email) => email === formData?.emails?.textfieldValue))
-    ) {
-      setError("emails", { emailId: "DUPLICATE_EMAIL_ID_FOR_RESPONDENT" });
-    } else {
-      clearErrors("emails");
-    }
+    validateRespondentMobileEmailDuplicates({
+      formData,
+      formdata,
+      setError,
+      clearErrors,
+      complainantMobileNumbers: complainantMobileNumbersArray,
+      witnessMobileNumbers: getWitnessMobileNumbers(caseDetails),
+      witnessEmails: getWitnessEmails(caseDetails),
+    });
   }
   if (selected === "witnessDetails") {
-    const currentMobileNumber = formData?.phonenumbers?.textfieldValue;
-    if (currentMobileNumber && respondentMobileNumbersArray.some((number) => number === currentMobileNumber)) {
-      setError("phonenumbers", { mobileNumber: "WITNESS_MOB_NUM_CAN_NOT_BE_SAME_AS_RESPONDENT_MOB_NUM" });
-    } else if (
-      formdata &&
-      formdata?.length > 0 &&
-      formData?.phonenumbers?.textfieldValue &&
-      formData?.phonenumbers?.textfieldValue?.length === 10 &&
-      formdata
-        .filter((data) => data.isenabled === true)
-        ?.some((data) => data?.data?.phonenumbers?.mobileNumber?.some((number) => number === formData?.phonenumbers?.textfieldValue))
-    ) {
-      setError("phonenumbers", { mobileNumber: "DUPLICATE_MOBILE_NUMBER_FOR_WITNESS" });
-    } else {
-      clearErrors("phonenumbers");
-    }
-
-    const currentEmail = formData?.emails?.textfieldValue;
-    if (currentEmail && respondentEmailsArray.some((email) => email === currentEmail)) {
-      setError("emails", { emailId: "WITNESS_EMAIL_CAN_NOT_BE_SAME_AS_RESPONDENT_EMAIL" });
-    } else if (
-      formdata &&
-      formdata?.length > 0 &&
-      formData?.emails?.textfieldValue &&
-      formdata
-        .filter((data) => data.isenabled === true)
-        ?.some((data) => data?.data?.emails?.emailId?.some((email) => email === formData?.emails?.textfieldValue))
-    ) {
-      setError("emails", { emailId: "DUPLICATE_EMAIL_ID_FOR_WITNESS" });
-    } else {
-      clearErrors("emails");
-    }
+    validateWitnessMobileEmailDuplicates({
+      formData,
+      formdata,
+      setError,
+      clearErrors,
+      respondentMobileNumbers: respondentMobileNumbersArray,
+      respondentEmails: getRespondentEmails(caseDetails),
+    });
   }
   if (selected === "complainantDetails") {
-    const currentMobileNumber = formData?.complainantVerification?.mobileNumber;
-    const currentPOAMobileNumber = formData?.poaVerification?.mobileNumber;
-    if (currentMobileNumber && currentPOAMobileNumber && currentMobileNumber === currentPOAMobileNumber) {
-      if (formData?.complainantVerification?.otpNumber && !formData?.poaVerification?.otpNumber) {
-        setError("poaVerification", { mobileNumber: "POA_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM", isDuplicateNumber: true });
-      }
-      if (formData?.poaVerification?.otpNumber && !formData?.complainantVerification?.otpNumber) {
-        setError("complainantVerification", { mobileNumber: "COMPLAINANT_MOB_NUM_CAN_NOT_BE_SAME_AS_POA_MOB_NUM", isDuplicateNumber: true });
-      }
-    } else if (currentMobileNumber && respondentMobileNumbersArray.some((number) => number === currentMobileNumber)) {
-      setError("complainantVerification", { mobileNumber: "COMPLAINANT_MOB_NUM_CAN_NOT_BE_SAME_AS_RESPONDENT_MOB_NUM", isDuplicateNumber: true });
-    } else if (
-      formdata &&
-      formdata?.length > 1 &&
-      formData?.complainantVerification?.mobileNumber &&
-      formData?.complainantVerification?.mobileNumber?.length === 10 &&
-      formdata
-        .filter((data) => data.isenabled === true)
-        .filter((data) => data?.displayindex !== currentDisplayIndex)
-        ?.some((data, idx) => idx !== index && data?.data?.complainantVerification?.mobileNumber === formData?.complainantVerification?.mobileNumber)
-    ) {
-      setError("complainantVerification", { mobileNumber: "DUPLICATE_MOBILE_NUMBER_FOR_COMPLAINANT", isDuplicateNumber: true });
-    } else {
-      clearErrors("complainantVerification");
-      clearErrors("poaVerification");
-    }
+    validateComplainantMobileDuplicates({
+      formData,
+      formdata,
+      index,
+      currentDisplayIndex,
+      setError,
+      clearErrors,
+      respondentMobileNumbers: respondentMobileNumbersArray,
+    });
   }
 };
 
 export const checkOnlyCharInCheque = ({ formData, setValue, selected }) => {
   if (selected === "chequeDetails") {
-    if (
-      formData?.chequeSignatoryName ||
-      formData?.payeeBankName ||
-      formData?.payeeBranchName ||
-      formData?.payerBankName ||
-      formData?.payerBranchName ||
-      formData?.name
-    ) {
-      const formDataCopy = structuredClone(formData);
-      for (const key in formDataCopy) {
-        if (Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-          if (key === "chequeSignatoryName" || key === "name") {
-            if (typeof value === "string") {
-              if (value.length > 100) {
-                value = value.slice(0, 100);
-              }
-
-              let updatedValue = formatName(value);
-              if (updatedValue !== oldValue) {
-                const element = document.querySelector(`[name="${key}"]`);
-                const start = element?.selectionStart;
-                const end = element?.selectionEnd;
-                setValue(key, updatedValue);
-                setTimeout(() => {
-                  element?.setSelectionRange(start, end);
-                }, 0);
-              }
-            }
-          } else if (key === "payeeBankName" || key === "payeeBranchName" || key === "payerBankName" || key === "payerBranchName") {
-            if (typeof value === "string") {
-              if (value.length > 200) {
-                value = value.slice(0, 200);
-              }
-
-              let updatedValue = formatName(value);
-              if (updatedValue !== oldValue) {
-                const element = document.querySelector(`[name="${key}"]`);
-                const start = element?.selectionStart;
-                const end = element?.selectionEnd;
-                setValue(key, updatedValue);
-                setTimeout(() => {
-                  element?.setSelectionRange(start, end);
-                }, 0);
-              }
-            }
-          }
-        }
-      }
-    }
+    runChequeFieldsSanitization({ formData, setValue, formatName });
   } else if (selected === "debtLiabilityDetails") {
-    if (formData?.totalAmount) {
-      const formDataCopy = structuredClone(formData);
-      for (const key in formDataCopy) {
-        if (Object.hasOwnProperty.call(formDataCopy, key) && key === "totalAmount") {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-          if (typeof value === "string") {
-            if (value.length > 12) {
-              value = value.slice(0, 12);
-            }
-
-            if (value !== oldValue) {
-              const element = document.querySelector(`[name="${key}"]`);
-              const start = element?.selectionStart;
-              const end = element?.selectionEnd;
-              setValue(key, value);
-              setTimeout(() => {
-                element?.setSelectionRange(start, end);
-              }, 0);
-            }
-          }
-        }
-      }
-    }
+    runDebtLiabilityTotalAmountSanitization({ formData, setValue });
   }
 };
 
 export const respondentValidation = ({ t, formData, selected, caseDetails, setShowToast, setFormErrors, clearFormDataErrors }) => {
   if (selected === "respondentDetails") {
     const formDataCopy = structuredClone(formData);
-    if ("inquiryAffidavitFileUpload" in formDataCopy) {
-      if (
-        formData?.addressDetails?.some(
-          (address) =>
-            (address?.addressDetails?.pincode !==
-              caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.addressDetails?.pincode &&
-              caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.complainantType?.code === "INDIVIDUAL") ||
-            (address?.addressDetails?.pincode !==
-              caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.addressCompanyDetails?.pincode &&
-              caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.complainantType?.code === "REPRESENTATIVE")
-        ) &&
-        !Object.keys(formData?.inquiryAffidavitFileUpload?.document || {}).length
-      ) {
-        return false;
-      }
+    if (shouldSkipRespondentInquiryAffidavitValidation(formData, caseDetails)) {
+      return false;
     }
     if (!formDataCopy?.respondentType?.code) {
       setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
@@ -850,23 +426,14 @@ export const respondentValidation = ({ t, formData, selected, caseDetails, setSh
     }
   }
 
-  const respondentMobileNUmbers = formData?.phonenumbers?.textfieldValue;
-  const complainantMobileNumber = caseDetails?.additionalDetails?.complainantDetails?.formdata?.[0]?.data?.complainantVerification?.mobileNumber;
-  if (
-    formData &&
-    formData?.phonenumbers?.textfieldValue &&
-    formData?.phonenumbers?.textfieldValue?.length === 10 &&
-    respondentMobileNUmbers &&
-    respondentMobileNUmbers &&
-    respondentMobileNUmbers === complainantMobileNumber
-  ) {
-    setShowToast({ label: t("RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM"), error: true });
-    setFormErrors("phonenumbers", { mobileNumber: "RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM" });
-    return true;
-  } else {
-    clearFormDataErrors("phonenumbers");
-    return false;
-  }
+  return validateRespondentMobileNotSameAsComplainant({
+    formData,
+    caseDetails,
+    setShowToast,
+    setFormErrors,
+    clearFormDataErrors,
+    t,
+  });
 };
 
 export const demandNoticeFileValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
@@ -1106,18 +673,8 @@ export const complainantValidation = ({
     } else {
       clearFormDataErrors("complainantVerification");
     }
-    const respondentData = caseDetails?.additionalDetails?.respondentDetails;
-    const complainantMobileNumber = formData?.complainantVerification?.mobileNumber;
-    if (respondentData) {
-      const respondentMobileNumbers = respondentData?.formdata?.[0]?.data?.phonenumbers?.mobileNumber;
-      if (respondentMobileNumbers && complainantMobileNumber) {
-        for (let i = 0; i < respondentMobileNumbers.length; i++) {
-          if (respondentMobileNumbers[i] === complainantMobileNumber) {
-            setShowToast({ label: t("CHANGE_RESPONDENT_MOBILE_NUMBER_REGISTERED"), error: true });
-            return true;
-          }
-        }
-      }
+    if (validateComplainantMobileNotInRespondentList({ formData, caseDetails, setShowToast, t })) {
+      return true;
     }
   } else {
     return false;
@@ -1146,27 +703,14 @@ export const accusedAddressValidation = ({ t, formData, selected, setShowToast, 
 };
 
 export const ageValidation = ({ formData, selected, setFormErrors, clearFormDataErrors }) => {
-  if (selected === "poaAge") {
-    const poaAge = parseInt(formData?.poaAge, 10);
-    if (poaAge < 18 || poaAge > 999) {
-      setFormErrors("poaAge", { message: "ONLY_AGE_ALLOWED" });
-      return true;
-    }
-    clearFormDataErrors("poaAge");
-  } else if (selected === "complainantAge") {
-    const complainantAge = parseInt(formData?.complainantAge, 10);
-    if (complainantAge < 18 || complainantAge > 999) {
-      setFormErrors("complainantAge", { message: "ONLY_AGE_ALLOWED" });
-      return true;
-    }
-    clearFormDataErrors("complainantAge");
-  } else if (selected === "respondentAge") {
-    const respondentAge = parseInt(formData?.respondentAge, 10);
-    if (respondentAge < 18 || respondentAge > 999) {
-      setFormErrors("respondentAge", { message: "ONLY_AGE_ALLOWED" });
-      return true;
-    }
-    clearFormDataErrors("respondentAge");
+  const ageFieldBySelected = {
+    poaAge: "poaAge",
+    complainantAge: "complainantAge",
+    respondentAge: "respondentAge",
+  };
+  const fieldKey = ageFieldBySelected[selected];
+  if (fieldKey) {
+    return validatePartyAgeField({ formData, selected, setFormErrors, clearFormDataErrors, fieldKey });
   }
 };
 
@@ -2686,61 +2230,39 @@ export const updateCaseDetails = async ({
             inquiryAffidavitFileUpload: null,
             companyDetailsUpload: null,
           };
-          if (
-            data?.data?.inquiryAffidavitFileUpload?.document &&
-            Array.isArray(data?.data?.inquiryAffidavitFileUpload?.document) &&
-            data?.data?.inquiryAffidavitFileUpload?.document.length > 0
-          ) {
-            documentData.inquiryAffidavitFileUpload = {};
-            documentData.inquiryAffidavitFileUpload.document = await Promise.all(
-              data?.data?.inquiryAffidavitFileUpload?.document?.map(async (document) => {
-                if (document) {
-                  const documentType = documentsTypeMapping["inquiryAffidavitFileUpload"];
-                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
-                  if (uploadedData.file?.files?.[0]?.fileStoreId && efilingDocumentKeyAndTypeMapping["inquiryAffidavitFileUpload"]) {
-                    sendDocumentForOcr(
-                      "inquiryAffidavitFileUpload",
-                      uploadedData.file?.files?.[0]?.fileStoreId,
-                      prevCaseDetails?.filingNumber,
-                      tenantId,
-                      document
-                    );
-                  }
-                  const doc = {
-                    documentType,
-                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
-                    documentName: uploadedData.filename || document?.documentName,
-                    fileName: t("AFFIDAVIT_UNDER_225"),
-                  };
-                  docList.push(doc);
-                  return doc;
-                }
-              })
-            );
+          const affidavitDocsUploaded = await uploadProfileDocumentArray({
+            documentArray: data?.data?.inquiryAffidavitFileUpload?.document,
+            documentType: documentsTypeMapping["inquiryAffidavitFileUpload"],
+            fileName: t("AFFIDAVIT_UNDER_225"),
+            tenantId,
+            docList,
+            onDocumentUpload,
+            onUploaded: (uploadedData, document) => {
+              if (uploadedData.file?.files?.[0]?.fileStoreId && efilingDocumentKeyAndTypeMapping["inquiryAffidavitFileUpload"]) {
+                sendDocumentForOcr(
+                  "inquiryAffidavitFileUpload",
+                  uploadedData.file?.files?.[0]?.fileStoreId,
+                  prevCaseDetails?.filingNumber,
+                  tenantId,
+                  document
+                );
+              }
+            },
+          });
+          if (affidavitDocsUploaded) {
+            documentData.inquiryAffidavitFileUpload = { document: affidavitDocsUploaded };
             setFormDataValue("inquiryAffidavitFileUpload", documentData?.inquiryAffidavitFileUpload);
           }
-          if (
-            data?.data?.companyDetailsUpload?.document &&
-            Array.isArray(data?.data?.companyDetailsUpload?.document) &&
-            data?.data?.companyDetailsUpload?.document.length > 0
-          ) {
-            documentData.companyDetailsUpload = {};
-            documentData.companyDetailsUpload.document = await Promise.all(
-              data?.data?.companyDetailsUpload?.document?.map(async (document) => {
-                if (document) {
-                  const documentType = documentsTypeMapping["AccusedCompanyDetailsUpload"];
-                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
-                  const doc = {
-                    documentType,
-                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
-                    documentName: uploadedData.filename || document?.documentName,
-                    fileName: "Company documents",
-                  };
-                  docList.push(doc);
-                  return doc;
-                }
-              })
-            );
+          const respCompanyDocsUploaded = await uploadProfileDocumentArray({
+            documentArray: data?.data?.companyDetailsUpload?.document,
+            documentType: documentsTypeMapping["AccusedCompanyDetailsUpload"],
+            fileName: "Company documents",
+            tenantId,
+            docList,
+            onDocumentUpload,
+          });
+          if (respCompanyDocsUploaded) {
+            documentData.companyDetailsUpload = { document: respCompanyDocsUploaded };
             setFormDataValue("companyDetailsUpload", documentData?.companyDetailsUpload);
           }
           const respondentDocTypes = [documentsTypeMapping["inquiryAffidavitFileUpload"], documentsTypeMapping["AccusedCompanyDetailsUpload"]];
@@ -2759,15 +2281,7 @@ export const updateCaseDetails = async ({
         })
     );
     const newFormDataCopy = structuredClone(newFormData);
-    for (let i = 0; i < newFormDataCopy.length; i++) {
-      const obj = newFormDataCopy[i];
-      if (obj?.data?.phonenumbers) {
-        obj.data.phonenumbers.textfieldValue = "";
-      }
-      if (obj?.data?.emails) {
-        obj.data.emails.textfieldValue = "";
-      }
-    }
+    clearBulkContactTextfieldValues(newFormDataCopy);
     data.additionalDetails = {
       ...caseDetails.additionalDetails,
       respondentDetails: {
@@ -2957,16 +2471,11 @@ export const updateCaseDetails = async ({
   }
   if (selected === "witnessDetails") {
     const newFormDataCopy = structuredClone(updatedFormData.filter((item) => item.isenabled));
+    clearBulkContactTextfieldValues(newFormDataCopy);
 
     for (let i = 0; i < newFormDataCopy.length; i++) {
       const obj = newFormDataCopy[i];
 
-      if (obj?.data?.phonenumbers) {
-        obj.data.phonenumbers.textfieldValue = "";
-      }
-      if (obj?.data?.emails) {
-        obj.data.emails.textfieldValue = "";
-      }
       if (!obj?.uniqueId) {
         obj.uniqueId = generateUUID();
       }

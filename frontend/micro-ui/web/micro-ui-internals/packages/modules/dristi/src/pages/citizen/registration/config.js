@@ -127,6 +127,137 @@ export const userTypeOptions = [
   },
 ];
 
+const registrationAddressInputs = [
+  {
+    label: "PINCODE",
+    type: "text",
+    name: "pincode",
+    validation: {
+      minlength: 6,
+      maxlength: 6,
+      patternType: "Pincode",
+      pattern: "[0-9]+",
+      max: "9999999",
+      errMsg: "ADDRESS_PINCODE_INVALID",
+      isRequired: true,
+      title: "",
+    },
+    isMandatory: true,
+  },
+  {
+    label: "STATE",
+    type: "text",
+    name: "state",
+    validation: {
+      isRequired: true,
+      pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+      errMsg: "CORE_COMMON_APPLICANT_STATE_INVALID",
+      patternType: "Name",
+      title: "",
+    },
+    isMandatory: true,
+  },
+  {
+    label: "DISTRICT",
+    type: "text",
+    name: "district",
+    validation: {
+      isRequired: true,
+      pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+      errMsg: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
+      patternType: "Name",
+      title: "",
+    },
+    isMandatory: true,
+  },
+  {
+    label: "CITY/TOWN",
+    type: "text",
+    name: "city",
+    validation: {
+      isRequired: true,
+    },
+    isMandatory: true,
+  },
+  {
+    label: "LOCALITY",
+    type: "text",
+    name: "locality",
+    validation: {
+      isRequired: true,
+      minlength: 2,
+      maxlength: 256,
+    },
+    isMandatory: true,
+  },
+  {
+    label: "BUILDING_NAME",
+    type: "text",
+    name: "buildingName",
+    validation: {
+      errMsg: "ADDRESS_BUILDING_NAME_INVALID",
+      minlength: 1,
+      title: "",
+    },
+  },
+  {
+    label: "DOOR_NUMBER",
+    type: "text",
+    name: "doorNo",
+    validation: {
+      errMsg: "DOOR_NUMBER_ERROR_MESSAGE",
+      pattern: /^[^\$\"'<>?~`!@$%^={}\[\]*:;“”‘’]{0,100}$/i,
+      minlength: 1,
+      maxlength: 16,
+      title: "",
+    },
+  },
+];
+
+const buildAdvocateClerkSection = ({ regNumberLabel, regNumberPattern, regNumberErrMsg, barCouncilLabel }) => [
+  {
+    body: [
+      {
+        type: "component",
+        component: "AdvocateDetailComponent",
+        key: "clientDetails",
+        populators: {
+          inputs: [
+            {
+              label: regNumberLabel,
+              type: "text",
+              name: "barRegistrationNumber",
+              validation: {
+                isRequired: true,
+                ...(regNumberPattern ? { pattern: regNumberPattern } : {}),
+                errMsg: regNumberErrMsg,
+                maxlength: 20,
+                minlength: 1,
+              },
+              isMandatory: true,
+              isDependentOn: "selectUserType",
+              clearFields: { stateRegnNumber: "" },
+              dependentKey: { selectUserType: ["showBarDetails", "hasBarRegistrationNo"] },
+            },
+            {
+              label: barCouncilLabel,
+              type: "documentUpload",
+              name: "barCouncilId",
+              validation: {
+                isRequired: true,
+              },
+              isMandatory: true,
+              allowedFileTypes: /(.*?)(png|jpeg|jpg|pdf)$/i,
+              isDependentOn: "selectUserType",
+              dependentKey: { selectUserType: ["showBarDetails"] },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
 export const newConfig = [
   {
     body: [
@@ -196,92 +327,7 @@ export const newConfig = [
         // withoutLabel: true,
         populators: {
           customStyle: { paddingBottom: "15px" },
-          inputs: [
-            {
-              label: "PINCODE",
-              type: "text",
-              name: "pincode",
-              validation: {
-                minlength: 6,
-                maxlength: 6,
-                patternType: "Pincode",
-                pattern: "[0-9]+",
-                max: "9999999",
-                errMsg: "ADDRESS_PINCODE_INVALID",
-                isRequired: true,
-                title: "",
-              },
-              isMandatory: true,
-            },
-            {
-              label: "STATE",
-              type: "text",
-              name: "state",
-              validation: {
-                isRequired: true,
-                pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
-                errMsg: "CORE_COMMON_APPLICANT_STATE_INVALID",
-                patternType: "Name",
-                title: "",
-              },
-              isMandatory: true,
-            },
-            {
-              label: "DISTRICT",
-              type: "text",
-              name: "district",
-              validation: {
-                isRequired: true,
-                pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
-                errMsg: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
-                patternType: "Name",
-                title: "",
-              },
-              isMandatory: true,
-            },
-            {
-              label: "CITY/TOWN",
-              type: "text",
-              name: "city",
-              validation: {
-                isRequired: true,
-              },
-              isMandatory: true,
-            },
-            {
-              label: "LOCALITY",
-              type: "text",
-              name: "locality",
-              validation: {
-                isRequired: true,
-                minlength: 2,
-                maxlength: 256,
-              },
-              isMandatory: true,
-            },
-            {
-              label: "BUILDING_NAME",
-              type: "text",
-              name: "buildingName",
-              validation: {
-                errMsg: "ADDRESS_BUILDING_NAME_INVALID",
-                minlength: 1,
-                title: "",
-              },
-            },
-            {
-              label: "DOOR_NUMBER",
-              type: "text",
-              name: "doorNo",
-              validation: {
-                errMsg: "DOOR_NUMBER_ERROR_MESSAGE",
-                pattern: /^[^\$\"'<>?~`!@$%^={}\[\]*:;“”‘’]{0,100}$/i,
-                minlength: 1,
-                maxlength: 16,
-                title: "",
-              },
-            },
-          ],
+          inputs: registrationAddressInputs,
           validation: {},
         },
       },
@@ -316,92 +362,7 @@ export const newConfig = [
         label: "CURRENT_ADDRESS",
         // withoutLabel: true,
         populators: {
-          inputs: [
-            {
-              label: "PINCODE",
-              type: "text",
-              name: "pincode",
-              validation: {
-                minlength: 6,
-                maxlength: 6,
-                patternType: "Pincode",
-                pattern: "[0-9]+",
-                max: "9999999",
-                errMsg: "ADDRESS_PINCODE_INVALID",
-                isRequired: true,
-                title: "",
-              },
-              isMandatory: true,
-            },
-            {
-              label: "STATE",
-              type: "text",
-              name: "state",
-              validation: {
-                isRequired: true,
-                pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
-                errMsg: "CORE_COMMON_APPLICANT_STATE_INVALID",
-                patternType: "Name",
-                title: "",
-              },
-              isMandatory: true,
-            },
-            {
-              label: "DISTRICT",
-              type: "text",
-              name: "district",
-              validation: {
-                isRequired: true,
-                pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
-                errMsg: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
-                patternType: "Name",
-                title: "",
-              },
-              isMandatory: true,
-            },
-            {
-              label: "CITY/TOWN",
-              type: "text",
-              name: "city",
-              validation: {
-                isRequired: true,
-              },
-              isMandatory: true,
-            },
-            {
-              label: "LOCALITY",
-              type: "text",
-              name: "locality",
-              validation: {
-                isRequired: true,
-                minlength: 2,
-                maxlength: 256,
-              },
-              isMandatory: true,
-            },
-            {
-              label: "BUILDING_NAME",
-              type: "text",
-              name: "buildingName",
-              validation: {
-                errMsg: "ADDRESS_BUILDING_NAME_INVALID",
-                minlength: 1,
-                title: "",
-              },
-            },
-            {
-              label: "DOOR_NUMBER",
-              type: "text",
-              name: "doorNo",
-              validation: {
-                errMsg: "DOOR_NUMBER_ERROR_MESSAGE",
-                pattern: /^[^\$\"'<>?~`!@$%^={}\[\]*:;“”‘’]{0,100}$/i,
-                minlength: 1,
-                maxlength: 16,
-                title: "",
-              },
-            },
-          ],
+          inputs: registrationAddressInputs,
           validation: {},
         },
       },
@@ -735,93 +696,16 @@ export const termsAndConditionConfig = [
   },
 ];
 
-export const advocateClerkConfig = [
-  {
-    body: [
-      {
-        type: "component",
-        component: "AdvocateDetailComponent",
-        key: "clientDetails",
-        // header: "Verify your identity",
-        // withoutLabel: true,
-        // subLabel: "Before diving in, we'll need to verify your identity for account setup",
-        populators: {
-          inputs: [
-            {
-              label: "BAR_REGISTRATION_NUMBER",
-              type: "text",
-              name: "barRegistrationNumber",
-              validation: {
-                isRequired: true,
-                pattern: "^K/\\d{1,6}/\\d{4}$",
-                errMsg: "BAR_REGISTRATION_NUMBER_INVALID_PATTERN",
-                maxlength: 20,
-                minlength: 1,
-              },
-              isMandatory: true,
-              isDependentOn: "selectUserType",
-              clearFields: { stateRegnNumber: "" },
-              dependentKey: { selectUserType: ["showBarDetails", "hasBarRegistrationNo"] },
-            },
+export const advocateClerkConfig = buildAdvocateClerkSection({
+  regNumberLabel: "BAR_REGISTRATION_NUMBER",
+  regNumberPattern: "^K/\\d{1,6}/\\d{4}$",
+  regNumberErrMsg: "BAR_REGISTRATION_NUMBER_INVALID_PATTERN",
+  barCouncilLabel: "BAR_COUNCIL_ID",
+});
 
-            {
-              label: "BAR_COUNCIL_ID",
-              type: "documentUpload",
-              name: "barCouncilId",
-              validation: {
-                isRequired: true,
-              },
-              isMandatory: true,
-              allowedFileTypes: /(.*?)(png|jpeg|jpg|pdf)$/i,
-              isDependentOn: "selectUserType",
-              dependentKey: { selectUserType: ["showBarDetails"] },
-            },
-          ],
-        },
-      },
-    ],
-  },
-];
-
-export const advocateClerkVerificationConfig = [
-  {
-    body: [
-      {
-        type: "component",
-        component: "AdvocateDetailComponent",
-        key: "clientDetails",
-        populators: {
-          inputs: [
-            {
-              label: "CLERK_REGISTRATION_NUMBER",
-              type: "text",
-              name: "barRegistrationNumber",
-              validation: {
-                isRequired: true,
-                errMsg: "CLERK_REGISTRATION_NUMBER_INVALID_PATTERN",
-                maxlength: 20,
-                minlength: 1,
-              },
-              isMandatory: true,
-              isDependentOn: "selectUserType",
-              clearFields: { stateRegnNumber: "" },
-              dependentKey: { selectUserType: ["showBarDetails", "hasBarRegistrationNo"] },
-            },
-            {
-              label: "CLERK_ID_DOCUMENT",
-              type: "documentUpload",
-              name: "barCouncilId",
-              validation: {
-                isRequired: true,
-              },
-              isMandatory: true,
-              allowedFileTypes: /(.*?)(png|jpeg|jpg|pdf)$/i,
-              isDependentOn: "selectUserType",
-              dependentKey: { selectUserType: ["showBarDetails"] },
-            },
-          ],
-        },
-      },
-    ],
-  },
-];
+export const advocateClerkVerificationConfig = buildAdvocateClerkSection({
+  regNumberLabel: "CLERK_REGISTRATION_NUMBER",
+  regNumberPattern: undefined,
+  regNumberErrMsg: "CLERK_REGISTRATION_NUMBER_INVALID_PATTERN",
+  barCouncilLabel: "CLERK_ID_DOCUMENT",
+});

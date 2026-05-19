@@ -5,26 +5,10 @@ import { useTranslation } from "react-i18next";
 import { bulkIssueCTCConfig } from "../../configs/BulkIssueCTCConfig";
 import IssueCTCModal from "./IssueCTCModal";
 import AddSignatureCTCModal from "../../components/AddSignatureCTCModal";
-import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { HomeService } from "../../hooks/services";
-import qs from "qs";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-
-const parseXml = (xmlString, tagName) => {
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-  const element = xmlDoc.getElementsByTagName(tagName)[0];
-  return element ? element.textContent.trim() : null;
-};
-
-const sectionsParentStyle = {
-  height: "50%",
-  display: "flex",
-  flexDirection: "column",
-  gridTemplateColumns: "20% 1fr",
-  gap: "1rem",
-};
+import { buildBulkSignedResponses, bulkSignSectionsParentStyle } from "./shared/bulkSignViewShared";
 
 const BulkIssueCTC = () => {
   const { t } = useTranslation();
@@ -307,52 +291,34 @@ const BulkIssueCTC = () => {
     };
   }, [config]);
 
-  const fetchResponseFromXmlRequest = async (docRequestList) => {
-    const responses = [];
+  const fetchResponseFromXmlRequest = (docRequestList) => {
     const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
-
-    const requests = docRequestList?.map(async (docRequest) => {
-      try {
-        const formData = qs.stringify({ response: docRequest?.request });
-        const response = await axiosInstance.post(bulkSignUrl, formData, {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          },
-        });
-
-        const data = response?.data;
-        const status = parseXml(data, "status");
-
-        if (status !== "failed") {
-          responses.push({
-            docId: docRequest?.docId,
-            signedDocData: parseXml(data, "data"),
-            signed: true,
-            tenantId: tenantId,
-            ctcApplicationNumber: docRequest?.ctcApplicationNumber,
-            filingNumber: docRequest?.filingNumber,
-            courtId: docRequest?.courtId || courtId,
-            errorMsg: null,
-          });
-        } else {
-          responses.push({
-            docId: docRequest?.docId,
-            signedDocData: parseXml(data, "data"),
-            signed: false,
-            tenantId: tenantId,
-            ctcApplicationNumber: docRequest?.ctcApplicationNumber,
-            filingNumber: docRequest?.filingNumber,
-            courtId: docRequest?.courtId || courtId,
-            errorMsg: parseXml(data, "error"),
-          });
-        }
-      } catch (error) {
-        console.error(`Error fetching document ${docRequest?.docId}:`, error?.message);
-      }
+    return buildBulkSignedResponses({
+      requestList: docRequestList,
+      bulkSignUrl,
+      buildSuccessResponse: (signedData, docRequest) => ({
+        docId: docRequest?.docId,
+        signedDocData: signedData,
+        signed: true,
+        tenantId,
+        ctcApplicationNumber: docRequest?.ctcApplicationNumber,
+        filingNumber: docRequest?.filingNumber,
+        courtId: docRequest?.courtId || courtId,
+        errorMsg: null,
+      }),
+      buildFailureResponse: (signedData, errorMsg, docRequest) => ({
+        docId: docRequest?.docId,
+        signedDocData: signedData,
+        signed: false,
+        tenantId,
+        ctcApplicationNumber: docRequest?.ctcApplicationNumber,
+        filingNumber: docRequest?.filingNumber,
+        courtId: docRequest?.courtId || courtId,
+        errorMsg,
+      }),
+      logErrorLabel: "Error fetching document",
+      logErrorIdField: "docId",
     });
-
-    await Promise.allSettled(requests);
-    return responses;
   };
 
   const handleBulkIssue = async () => {
@@ -530,7 +496,7 @@ const BulkIssueCTC = () => {
             {" "}
             <InboxSearchComposer
               key={`update_key_${refreshKey}`}
-              customStyle={sectionsParentStyle}
+              customStyle={bulkSignSectionsParentStyle}
               configs={config}
               onFormValueChange={onFormValueChange}
             ></InboxSearchComposer>{" "}

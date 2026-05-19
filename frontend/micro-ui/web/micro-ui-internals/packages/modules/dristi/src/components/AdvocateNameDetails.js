@@ -3,33 +3,7 @@ import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useEffect, useMemo, useState } from "react";
 import { idProofVerificationConfig } from "../configs/component";
 import { userTypeOptions } from "../pages/citizen/registration/config";
-
-function splitNamesPartiallyFromFullName(fullName) {
-  const nameParts = fullName?.trim()?.split(/\s+/);
-
-  let firstName = "";
-  let middleName = "";
-  let lastName = "";
-
-  const numParts = nameParts?.length;
-
-  if (numParts === 1) {
-    firstName = nameParts?.[0];
-  } else if (numParts === 2) {
-    firstName = nameParts?.[0];
-    lastName = nameParts?.[1];
-  } else if (numParts >= 3) {
-    firstName = nameParts?.[0];
-    lastName = nameParts?.[numParts - 1];
-    middleName = nameParts?.slice(1, numParts - 1)?.join(" ");
-  }
-
-  return {
-    firstName: firstName,
-    middleName: middleName,
-    lastName: lastName ? lastName : "",
-  };
-}
+import { splitNamesPartiallyFromFullName } from "../Utils/advocateNameUtils";
 
 function AdvocateNameDetails({ t, config, onSelect, formData = {}, errors, register }) {
   const [advocateName, setAdvocateName] = useState({ firstName: "", middleName: "", lastName: "" });

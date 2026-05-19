@@ -1,6 +1,7 @@
 import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
 import React, { useRef, useCallback, useMemo, useState } from "react";
 import { buildUploadModalConfig, SIGNATURE_UPLOAD_CONFIG } from "../utils/fileConfig";
+
 // import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 // import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
@@ -103,6 +104,8 @@ function UploadModal({
   uploadGuidelines = null,
   fileStoreId,
   isParentLoading = false,
+  fileUploadError = null,
+  setFileUploadError,
 }) {
   const [errors, setErrors] = useState({});
   const combineAndSelectRef = useRef(null);
@@ -115,6 +118,7 @@ function UploadModal({
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const SelectCustomDragDrop = window?.Digit?.ComponentRegistryService?.getComponent("SelectCustomDragDrop");
+  const CustomToast = window?.Digit?.ComponentRegistryService?.getComponent("CustomToast");
   const uri = fileStoreId ? `${window.location.origin}/filestore/v1/files/id?tenantId=${tenantId}&fileStoreId=${fileStoreId}` : null;
 
   const CloseBtn = useCallback(
@@ -134,8 +138,11 @@ function UploadModal({
     );
   };
 
+  const clearFileUploadError = () => setFileUploadError?.(null);
+
   const handleCancel = () => {
     onSelect(internalConfig.key, { ...formData[internalConfig.key], [name]: null });
+    clearFileUploadError();
     onClose();
   };
 
@@ -163,110 +170,124 @@ function UploadModal({
   const isSubmitDisabled =
     isLoading || isParentLoading || isDisabled || !hasFiles || formData?.uploadSignature === undefined || Object.keys(errors).length > 0;
 
+  const uploadErrorToast =
+    fileUploadError && typeof fileUploadError === "object" ? fileUploadError : fileUploadError ? { label: t(fileUploadError), error: true } : null;
+
   return (
-    <Modal
-      headerBarEnd={<CloseBtn onClick={handleCancel} />}
-      headerBarMain={<Heading label={t(title)} />}
-      actionSaveLabel={t(submitLabel)}
-      actionSaveOnSubmit={handleSubmit}
-      isDisabled={isSubmitDisabled}
-      // className={"add-signature-modal"}
-      className="upload-signature-modal"
-      submitTextClassName="upload-signature-button"
-    >
-      <div className="add-signature-main-div" style={{ padding: "0 10px 10px 10px" }}>
-        {(isLoading || isParentLoading) && (
-          <div
-            style={{
-              width: "100vw",
-              height: "100vh",
-              zIndex: "9999999999999",
-              position: "fixed",
-              right: "0",
-              display: "flex",
-              top: "0",
-              background: "rgb(234 234 245 / 50%)",
-              alignItems: "center",
-              justifyContent: "center",
+    <React.Fragment>
+      <Modal
+        headerBarEnd={<CloseBtn onClick={handleCancel} />}
+        headerBarMain={<Heading label={t(title)} />}
+        actionSaveLabel={t(submitLabel)}
+        actionSaveOnSubmit={handleSubmit}
+        isDisabled={isSubmitDisabled}
+        // className={"add-signature-modal"}
+        className="upload-signature-modal"
+        submitTextClassName="upload-signature-button"
+      >
+        <div className="add-signature-main-div" style={{ padding: "0 10px 10px 10px" }}>
+          {(isLoading || isParentLoading) && (
+            <div
+              style={{
+                width: "100vw",
+                height: "100vh",
+                zIndex: "9999999999999",
+                position: "fixed",
+                right: "0",
+                display: "flex",
+                top: "0",
+                background: "rgb(234 234 245 / 50%)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              className="submit-loader"
+            >
+              <Loader />
+            </div>
+          )}
+          {warningText && (
+            <InfoCard
+              variant={"default"}
+              label={t(warningHeader || "")}
+              additionalElements={[<p key="note">{t(warningText)}</p>]}
+              inline
+              textStyle={{}}
+              className={`custom-info-card`}
+            />
+          )}
+          {infoText && (
+            <InfoCard
+              variant={"default"}
+              label={t(infoHeader || "")}
+              additionalElements={[<p key="note">{t(infoText)}</p>]}
+              inline
+              textStyle={{}}
+              className={`custom-info-card`}
+            />
+          )}
+          {additionalText && (
+            <InfoCard
+              variant={"default"}
+              label={t(infoHeader || "")}
+              additionalElements={[<p key="note">{t(additionalText)}</p>]}
+              inline
+              textStyle={{}}
+              className={`custom-info-card`}
+            />
+          )}
+          <SelectCustomDragDrop
+            onSelect={onSelect}
+            t={t}
+            config={internalConfig}
+            formData={formData}
+            errors={errors}
+            setError={(k, v) => setErrors((prev) => ({ ...prev, [k]: v }))}
+            clearErrors={(k) => {
+              setErrors((prev) => {
+                const e = { ...prev };
+                delete e[k];
+                return e;
+              });
             }}
-            className="submit-loader"
-          >
-            <Loader />
+            combineAndSelectRef={combineAndSelectRef}
+          />
+        </div>
+        {showDownloadText && fileStoreId && (
+          <div className="donwload-submission" style={{ display: "flex", alignItems: "center" }}>
+            <h2>{t("WANT_TO_UNSIGNED_DOWNLOAD")}</h2>
+            {onCustomDownload ? (
+              <span
+                onClick={onCustomDownload}
+                style={{
+                  display: "flex",
+                  color: "#007e7e",
+                  maxWidth: "250px",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  marginLeft: "5px",
+                }}
+              >
+                {t("CLICK_HERE")}
+              </span>
+            ) : (
+              <AuthenticatedLink uri={uri} t={t} displayFilename={"CLICK_HERE"} pdf={true} />
+            )}
           </div>
         )}
-        {warningText && (
-          <InfoCard
-            variant={"default"}
-            label={t(warningHeader || "")}
-            additionalElements={[<p key="note">{t(warningText)}</p>]}
-            inline
-            textStyle={{}}
-            className={`custom-info-card`}
-          />
-        )}
-        {infoText && (
-          <InfoCard
-            variant={"default"}
-            label={t(infoHeader || "")}
-            additionalElements={[<p key="note">{t(infoText)}</p>]}
-            inline
-            textStyle={{}}
-            className={`custom-info-card`}
-          />
-        )}
-        {additionalText && (
-          <InfoCard
-            variant={"default"}
-            label={t(infoHeader || "")}
-            additionalElements={[<p key="note">{t(additionalText)}</p>]}
-            inline
-            textStyle={{}}
-            className={`custom-info-card`}
-          />
-        )}
-        <SelectCustomDragDrop
-          onSelect={onSelect}
-          t={t}
-          config={internalConfig}
-          formData={formData}
-          errors={errors}
-          setError={(k, v) => setErrors((prev) => ({ ...prev, [k]: v }))}
-          clearErrors={(k) => {
-            setErrors((prev) => {
-              const e = { ...prev };
-              delete e[k];
-              return e;
-            });
-          }}
-          combineAndSelectRef={combineAndSelectRef}
+      </Modal>
+      {uploadErrorToast && CustomToast && (
+        <CustomToast
+          error={uploadErrorToast?.error}
+          label={uploadErrorToast?.label}
+          errorId={uploadErrorToast?.errorId}
+          onClose={clearFileUploadError}
+          duration={uploadErrorToast?.errorId ? 7000 : 5000}
         />
-      </div>
-      {showDownloadText && fileStoreId && (
-        <div className="donwload-submission" style={{ display: "flex", alignItems: "center" }}>
-          <h2>{t("WANT_TO_UNSIGNED_DOWNLOAD")}</h2>
-          {onCustomDownload ? (
-            <span
-              onClick={onCustomDownload}
-              style={{
-                display: "flex",
-                color: "#007e7e",
-                maxWidth: "250px",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                cursor: "pointer",
-                textDecoration: "underline",
-                marginLeft: "5px",
-              }}
-            >
-              {t("CLICK_HERE")}
-            </span>
-          ) : (
-            <AuthenticatedLink uri={uri} t={t} displayFilename={"CLICK_HERE"} pdf={true} />
-          )}
-        </div>
       )}
-    </Modal>
+    </React.Fragment>
   );
 }
 

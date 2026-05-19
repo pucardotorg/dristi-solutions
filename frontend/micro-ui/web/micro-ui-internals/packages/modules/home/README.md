@@ -54,11 +54,7 @@ src/
 │   ├── UpComingHearing.js             # Upcoming hearings widget
 │   └── custom_dropdown.js            # Custom dropdown component
 ├── configs/                           # 23 config files
-│   ├── BenchHomeConfig.js             # Bench officer home config
-│   ├── CourtRoomHomeConfig.js         # Court room home config
-│   ├── FSOHomeConfig.js               # FSO home config
 │   ├── HomeConfig.js                  # General home config
-│   ├── JudgeHomeConfig.js             # Judge home config
 │   ├── LitigantHomeConfig.js          # Litigant home config
 │   ├── PendingTaskConfig.js           # Pending task display config
 │   ├── ScrutinyPendingTaskConfig.js   # Scrutiny pending task config
@@ -308,7 +304,6 @@ Bulk Signing Flow:
 ## ⚙️ Configuration
 
 - **23 config files** covering role-based home screens, bulk signing, pending tasks, and form configurations
-- **Role-specific configs:** `JudgeHomeConfig.js`, `LitigantHomeConfig.js`, `BenchHomeConfig.js`, `CourtRoomHomeConfig.js`, `FSOHomeConfig.js`
 - **Bulk signing configs:** `BulkSignConfig.js`, `BulkBailBondSignConfig.js`, `BulkEvidenceSignConfig.js`, `BulkWitnessDepositionSignConfig.js`, `BulkADiarySignConfig.js`
 - **Module codes loaded:** `["home", "common", "workflow", "orders"]`
 - **URL params:** `result` and `filestoreId` query params are captured for e-sign callback handling

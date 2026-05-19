@@ -16,7 +16,8 @@
    "peerDependencies": {
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-router-dom": "5.3.0"
+    "react-router-dom": "5.3.0",
+    "react-i18next": "11.16.2"
   },
   "dependencies": {
      "@egovernments/digit-ui-react-components": "1.9.0",

@@ -1,3 +1,18 @@
+import { buildSubmissionFormatterTextAreaField } from "./submissionsCreateConfigShared";
+
+const submissionDocumentReasonForFilingField = buildSubmissionFormatterTextAreaField({
+  key: "reasonForFiling",
+  textAreaHeader: "REASON_FOR_FILING",
+  populatorsCustomStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+});
+
+submissionDocumentReasonForFilingField.populators.validation = {
+  customValidationFn: {
+    moduleName: "dristiSubmissions",
+    masterName: "alphaNumericValidation",
+  },
+};
+
 const submissionDocumentConfig = [
   {
     body: [
@@ -57,35 +72,7 @@ const submissionDocumentConfig = [
           ],
         },
       },
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomFormatterTextArea",
-        key: "reasonForFiling",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaHeader: "REASON_FOR_FILING",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiSubmissions",
-              masterName: "alphaNumericValidation",
-            },
-          },
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-        },
-      },
+      submissionDocumentReasonForFilingField,
     ],
   },
 ];

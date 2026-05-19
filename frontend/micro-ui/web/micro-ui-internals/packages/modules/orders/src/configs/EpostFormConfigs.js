@@ -1,3 +1,8 @@
+import {
+  epostCurrentStatusField,
+  epostRemarksTextAreaField,
+} from "./shared/epostFormShared";
+
 export const printAndSendDocumentsConfig = [
   {
     body: [
@@ -22,146 +27,32 @@ export const printAndSendDocumentsConfig = [
   },
 ];
 
+const buildStatusUpdateBody = (dateLabel) => [
+  {
+    body: [
+      epostCurrentStatusField,
+      {
+        type: "date",
+        label: dateLabel,
+        key: "dateOfDelivery",
+        populators: {
+          name: "dateOfDelivery",
+        },
+      },
+    ],
+  },
+];
+
 export const updateEPostConfig = (status) => {
   if (status === "DELIVERED") {
-    return [
-      {
-        body: [
-          {
-            isMandatory: true,
-            type: "dropdown",
-            key: "currentStatus",
-            label: "Current Status",
-            disable: false,
-            populators: {
-              name: "currentStatus",
-              optionsKey: "name",
-              options: [
-                {
-                  code: "IN_TRANSIT",
-                  name: "In Transit",
-                  isEnabled: true,
-                },
-                {
-                  code: "NOT_DELIVERED",
-                  name: "Not Delivered",
-                  isEnabled: true,
-                },
-                {
-                  code: "DELIVERED",
-                  name: "Delivered",
-                  isEnabled: true,
-                },
-                {
-                  code: "NOT_UPDATED",
-                  name: "Not Updated",
-                  isEnabled: true,
-                },
-              ],
-            },
-          },
-          {
-            type: "date",
-            label: "Date of Delivery",
-            key: "dateOfDelivery",
-            populators: {
-              name: "dateOfDelivery",
-            },
-          },
-        ],
-      },
-    ];
+    return buildStatusUpdateBody("Date of Delivery");
   }
 
   if (status === "NOT_DELIVERED") {
-    return [
-      {
-        body: [
-          {
-            isMandatory: true,
-            type: "dropdown",
-            key: "currentStatus",
-            label: "Current Status",
-            disable: false,
-            populators: {
-              name: "currentStatus",
-              optionsKey: "name",
-              options: [
-                {
-                  code: "IN_TRANSIT",
-                  name: "In Transit",
-                  isEnabled: true,
-                },
-                {
-                  code: "NOT_DELIVERED",
-                  name: "Not Delivered",
-                  isEnabled: true,
-                },
-                {
-                  code: "DELIVERED",
-                  name: "Delivered",
-                  isEnabled: true,
-                },
-                {
-                  code: "NOT_UPDATED",
-                  name: "Not Updated",
-                  isEnabled: true,
-                },
-              ],
-            },
-          },
-          {
-            type: "date",
-            label: "Date of Delivery Attempted",
-            key: "dateOfDelivery",
-            populators: {
-              name: "dateOfDelivery",
-            },
-          },
-        ],
-      },
-    ];
+    return buildStatusUpdateBody("Date of Delivery Attempted");
   }
 
-  return [
-    {
-      body: [
-        {
-          isMandatory: true,
-          type: "dropdown",
-          key: "currentStatus",
-          label: "Current Status",
-          disable: false,
-          populators: {
-            name: "currentStatus",
-            optionsKey: "name",
-            options: [
-              {
-                code: "IN_TRANSIT",
-                name: "In Transit",
-                isEnabled: true,
-              },
-              {
-                code: "NOT_DELIVERED",
-                name: "Not Delivered",
-                isEnabled: true,
-              },
-              {
-                code: "DELIVERED",
-                name: "Delivered",
-                isEnabled: true,
-              },
-              {
-                code: "NOT_UPDATED",
-                name: "Not Updated",
-                isEnabled: true,
-              },
-            ],
-          },
-        },
-      ],
-    },
-  ];
+  return [{ body: [epostCurrentStatusField] }];
 };
 
 export const updateEpostStatusPendingConfig = [
@@ -193,27 +84,7 @@ export const updateEpostStatusPendingConfig = [
           },
         },
       },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "remarks",
-        isMandatory: false,
-        withoutLabel: true,
-        // label: "ADDITIONAL_REMARKS",
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              textAreaHeader: "ADDITIONAL_REMARKS",
-              isOptional: true,
-              type: "TextAreaComponent",
-              maxLength: 300,
-            },
-          ],
-        },
-      },
+      epostRemarksTextAreaField,
     ],
   },
 ];
@@ -254,27 +125,7 @@ export const updateEpostStatusConfig = [
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
       },
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "remarks",
-        isMandatory: false,
-        withoutLabel: true,
-        // label: "ADDITIONAL_REMARKS",
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              textAreaHeader: "ADDITIONAL_REMARKS",
-              isOptional: true,
-              type: "TextAreaComponent",
-              maxLength: 300,
-            },
-          ],
-        },
-      },
+      epostRemarksTextAreaField,
     ],
   },
 ];

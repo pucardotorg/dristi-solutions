@@ -1,15 +1,15 @@
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import React, { useState } from "react";
+import React from "react";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import { ModalIndiaPhoneInputRow } from "./IndiaPhoneInputRow";
+
 const GenericNumberInputModal = ({ t, handleClose, handleSubmit, mobileNumber, setMobileNumber, error, setError, header }) => {
   const handleMobileNumberChange = (e) => {
     const value = e.target.value;
 
-    // Allow only numeric input and limit to 10 characters
     if (/^[0-9]*$/.test(value) && value.length <= 10) {
       setMobileNumber(value);
 
-      // Clear error when user starts typing valid input
       if (error) {
         setError("");
       }
@@ -29,69 +29,12 @@ const GenericNumberInputModal = ({ t, handleClose, handleSubmit, mobileNumber, s
         popupStyles={{ borderRadius: "4px" }}
       >
         <div style={{ padding: "20px 0" }}>
-          <div style={{ marginBottom: "16px" }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "8px",
-                fontSize: "16px",
-                fontWeight: "400",
-                color: "#0B0C0C",
-              }}
-            >
-              Phone Number
-            </label>
-            <div
-              style={{
-                display: "flex",
-                border: "1px solid #D6D5D4",
-                borderRadius: "4px",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  backgroundColor: "#F6F6F6",
-                  padding: "12px 16px",
-                  borderRight: "1px solid #D6D5D4",
-                  display: "flex",
-                  alignItems: "center",
-                  fontSize: "16px",
-                  color: "#0B0C0C",
-                  justifyContent: "center",
-                }}
-              >
-                +91
-              </div>
-              <input
-                type="tel"
-                value={mobileNumber}
-                onChange={handleMobileNumberChange}
-                placeholder="Ex. 1234567890"
-                style={{
-                  flex: 1,
-                  padding: "12px 16px",
-                  border: "none",
-                  outline: "none",
-                  fontSize: "16px",
-                  color: "#0B0C0C",
-                }}
-                maxLength={10}
-              />
-            </div>
-            {error && (
-              <div
-                style={{
-                  marginTop: "8px",
-                  fontSize: "14px",
-                  color: "#D4351C",
-                  fontWeight: "400",
-                }}
-              >
-                {t(error)}
-              </div>
-            )}
-          </div>
+          <ModalIndiaPhoneInputRow
+            mobileNumber={mobileNumber}
+            onMobileNumberChange={handleMobileNumberChange}
+            error={error}
+            errorMessage={error ? t(error) : null}
+          />
         </div>
       </Modal>
     </React.Fragment>

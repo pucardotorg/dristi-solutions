@@ -1,35 +1,12 @@
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
-import { Button, CloseSvg, Loader, TextInput } from "@egovernments/digit-ui-react-components";
+import { Button, Loader, TextInput } from "@egovernments/digit-ui-react-components";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
 import { hearingService } from "../hooks/services";
 import BulkRescheduleTable from "./BulkRescheduleTable";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-
-const CloseBtn = ({ onClick }) => {
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        paddingRight: "20px",
-        cursor: "pointer",
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-const Heading = ({ label }) => {
-  return (
-    <div className="evidence-title">
-      <h1 className="heading-m">{label}</h1>
-    </div>
-  );
-};
 
 const BulkRescheduleModal = ({
   t,

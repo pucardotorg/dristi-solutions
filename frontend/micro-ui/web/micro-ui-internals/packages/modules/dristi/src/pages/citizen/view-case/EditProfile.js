@@ -24,6 +24,7 @@ import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
 import CustomToast from "../../../components/CustomToast";
+import { applyOptionalLabelChildren, applyOutlinedInfoLabelChildren } from "../../../Utils/labelChildrenUtils";
 const EditProfile = ({ path }) => {
   const { t } = useTranslation();
   const history = useHistory();
@@ -178,22 +179,9 @@ const EditProfile = ({ path }) => {
           return {
             ...config,
             body: config?.body.map((body) => {
-              if (body?.labelChildren === "optional" && Object.keys(caseDetails?.additionalDetails?.scrutiny?.data || {}).length === 0) {
-                body.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
-              }
-
-              if (body?.labelChildren === "OutlinedInfoIcon" && Object.keys(caseDetails?.additionalDetails?.scrutiny?.data || {}).length === 0) {
-                body.labelChildren = (
-                  <React.Fragment>
-                    <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${body.label}-tooltip`}>
-                      {" "}
-                      <OutlinedInfoIcon />
-                    </span>
-                    <ReactTooltip id={`${body.label}-tooltip`} place="bottom" content={body?.tooltipValue || ""}>
-                      {t(body?.tooltipValue || body.label)}
-                    </ReactTooltip>
-                  </React.Fragment>
-                );
+              if (Object.keys(caseDetails?.additionalDetails?.scrutiny?.data || {}).length === 0) {
+                applyOptionalLabelChildren(body, t);
+                applyOutlinedInfoLabelChildren(body, t);
               }
 
               if ("inputs" in body?.populators && Array.isArray(body?.populators.inputs)) {
@@ -327,22 +315,9 @@ const EditProfile = ({ path }) => {
               } else {
                 body.withoutLabelFieldPair = false;
               }
-              if (body?.labelChildren === "optional" && Object.keys(caseDetails?.additionalDetails?.scrutiny?.data || {}).length === 0) {
-                body.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
-              }
-
-              if (body?.labelChildren === "OutlinedInfoIcon" && Object.keys(caseDetails?.additionalDetails?.scrutiny?.data || {}).length === 0) {
-                body.labelChildren = (
-                  <React.Fragment>
-                    <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${body.label}-tooltip`}>
-                      {" "}
-                      <OutlinedInfoIcon />
-                    </span>
-                    <ReactTooltip id={`${body.label}-tooltip`} place="bottom" content={body?.tooltipValue || ""}>
-                      {t(body?.tooltipValue || body.label)}
-                    </ReactTooltip>
-                  </React.Fragment>
-                );
+              if (Object.keys(caseDetails?.additionalDetails?.scrutiny?.data || {}).length === 0) {
+                applyOptionalLabelChildren(body, t);
+                applyOutlinedInfoLabelChildren(body, t);
               }
               if (
                 body?.validation?.pattern &&

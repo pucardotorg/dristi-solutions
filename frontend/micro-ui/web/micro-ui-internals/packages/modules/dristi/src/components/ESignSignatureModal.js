@@ -7,7 +7,7 @@ import { Urls } from "../hooks";
 import AuthenticatedLink from "../Utils/authenticatedLink";
 import { CloseBtn, Heading } from "./ModalComponents";
 import CustomToast from "./CustomToast";
-import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
 function ESignSignatureModal({
   t,
   handleIssueOrder,
@@ -57,10 +57,8 @@ function ESignSignatureModal({
       } catch (error) {
         console.error("error", error);
         setFormData({});
-        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-        setShowToast({ label: t("CS_ESIGN_ERROR"), error: true, errorId });
         setIsSigned(false);
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        setFileUploadError(getUploadErrorToast(error, t));
       }
     }
   };
@@ -193,6 +191,7 @@ function ESignSignatureModal({
         formData={formData}
         onSubmit={onSubmit}
         fileUploadError={fileUploadError}
+        setFileUploadError={setFileUploadError}
       />
       {showToast && (
         <CustomToast

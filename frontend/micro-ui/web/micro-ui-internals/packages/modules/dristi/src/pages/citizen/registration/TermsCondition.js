@@ -3,7 +3,7 @@ import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getUserDetails, setCitizenDetail } from "../../../hooks/useGetAccessToken";
-import { getFileByFileStore } from "../../../Utils";
+import { USER_REGISTRATION_PARAMS_SESSION_KEY, useUserRegistrationSessionRestore } from "./shared/registrationFlowShared";
 
 const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -286,67 +286,16 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
         }
       }
     }
-    sessionStorage.removeItem("userRegistrationParams");
+    sessionStorage.removeItem(USER_REGISTRATION_PARAMS_SESSION_KEY);
   };
 
-  useEffect(() => {
-    const handleRedirect = async () => {
-      if (!params?.IndividualPayload && showSuccess === false) {
-        const storedParams = sessionStorage.getItem("userRegistrationParams");
-        let newParams = storedParams ? JSON.parse(storedParams) : params;
-
-        const fileStoreId = newParams?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId;
-        const filename = newParams?.uploadedDocument?.filename;
-
-        const barCouncilFileStoreId = newParams?.formData?.clientDetails?.barCouncilId?.[1]?.fileStoreId;
-        const barCouncilFilename = newParams?.formData?.clientDetails?.barCouncilId?.[0];
-
-        if (barCouncilFileStoreId && barCouncilFilename) {
-          const barCouncilUri = `${
-            window.location.origin
-          }/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${barCouncilFileStoreId}`;
-          const barCouncilFile = await getFileByFileStore(barCouncilUri, barCouncilFilename);
-
-          newParams = {
-            ...newParams,
-            formData: {
-              ...newParams.formData,
-              clientDetails: {
-                ...newParams.formData.clientDetails,
-                barCouncilId: [
-                  [
-                    barCouncilFilename,
-                    {
-                      file: barCouncilFile,
-                      fileStoreId: barCouncilFileStoreId,
-                    },
-                  ],
-                ],
-              },
-            },
-          };
-        }
-
-        if (fileStoreId && filename) {
-          const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${fileStoreId}`;
-          const file = await getFileByFileStore(uri, filename);
-
-          newParams = {
-            ...newParams,
-            uploadedDocument: {
-              ...newParams.uploadedDocument,
-              file,
-            },
-          };
-        }
-
-        sessionStorage.removeItem("userRegistrationParams");
-        history.push(pathOnRefresh, { newParams });
-      }
-    };
-
-    handleRedirect();
-  }, [params?.address, params, history, pathOnRefresh, showSuccess]);
+  useUserRegistrationSessionRestore({
+    params,
+    history,
+    pathOnRefresh,
+    shouldRestore: (p) => !p?.IndividualPayload && showSuccess === false,
+    effectDeps: [params?.address, showSuccess],
+  });
 
   if (isLoading) {
     return <Loader />;

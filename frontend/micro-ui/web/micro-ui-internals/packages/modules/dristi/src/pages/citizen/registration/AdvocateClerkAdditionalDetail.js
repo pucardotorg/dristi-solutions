@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { advocateClerkConfig, advocateClerkVerificationConfig } from "./config";
-import { getFileByFileStore } from "../../../Utils";
+import { mapStateRegnToBarRegistration, useUserRegistrationSessionRestore } from "./shared/registrationFlowShared";
 
 const headerStyle = {
   fontFamily: "Roboto",
@@ -199,69 +199,14 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
     return formData;
   }, [params?.formData, params?.stateRegnNumber, params?.advocate?.stateRegnNumber]);
 
-  useEffect(() => {
-    const handleRedirect = async () => {
-      if (!params?.IndividualPayload) {
-        const storedParams = sessionStorage.getItem("userRegistrationParams");
-        let newParams = storedParams ? JSON.parse(storedParams) : params;
-
-        const fileStoreId = newParams?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId;
-        const filename = newParams?.uploadedDocument?.filename;
-
-        const barCouncilFileStoreId = newParams?.formData?.clientDetails?.barCouncilId?.[1]?.fileStoreId;
-        const barCouncilFilename = newParams?.formData?.clientDetails?.barCouncilId?.[0];
-
-        // Map stateRegnNumber to barRegistrationNumber if needed
-        if (newParams?.formData?.clientDetails?.stateRegnNumber && !newParams?.formData?.clientDetails?.barRegistrationNumber) {
-          newParams.formData.clientDetails.barRegistrationNumber = newParams.formData.clientDetails.stateRegnNumber;
-        }
-
-        if (barCouncilFileStoreId && barCouncilFilename) {
-          const barCouncilUri = `${
-            window.location.origin
-          }/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${barCouncilFileStoreId}`;
-          const barCouncilFile = await getFileByFileStore(barCouncilUri, barCouncilFilename);
-
-          newParams = {
-            ...newParams,
-            formData: {
-              ...newParams.formData,
-              clientDetails: {
-                ...newParams.formData.clientDetails,
-                barCouncilId: [
-                  [
-                    barCouncilFilename,
-                    {
-                      file: barCouncilFile,
-                      fileStoreId: barCouncilFileStoreId,
-                    },
-                  ],
-                ],
-              },
-            },
-          };
-        }
-
-        if (fileStoreId && filename) {
-          const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${fileStoreId}`;
-          const file = await getFileByFileStore(uri, filename);
-
-          newParams = {
-            ...newParams,
-            uploadedDocument: {
-              ...newParams.uploadedDocument,
-              file,
-            },
-          };
-        }
-
-        sessionStorage.removeItem("userRegistrationParams");
-        history.push(pathOnRefresh, { newParams });
-      }
-    };
-
-    handleRedirect();
-  }, [params, history, pathOnRefresh, Digit.ULBService]);
+  useUserRegistrationSessionRestore({
+    params,
+    history,
+    pathOnRefresh,
+    shouldRestore: (p) => !p?.IndividualPayload,
+    transformParams: mapStateRegnToBarRegistration,
+    effectDeps: [Digit.ULBService],
+  });
 
   return (
     <div className="advocate-additional-details">

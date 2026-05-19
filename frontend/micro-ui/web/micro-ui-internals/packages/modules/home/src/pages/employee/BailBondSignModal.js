@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
 import { Button, Loader } from "@egovernments/digit-ui-react-components";
 import { FileDownloadIcon, FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
@@ -11,7 +11,9 @@ import { HomeService } from "../../hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
+import { SignModalCloseBtn, SignModalHeading } from "./shared/signModalChrome";
+import { DocumentSignaturePickerModal, DocumentSignatureSignedModal } from "./shared/documentSignFlowShared";
 
 export const clearBailBondSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -120,22 +122,6 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
     fetchBailBondData();
   }, [queryStrings.bailId, tenantId, courtId, selectedBailBond?.bailId, selectedBailBond?.businessObject?.bailDetails?.bailId, filingNumber]);
 
-  const CloseBtn = useCallback((props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  }, []);
-
-  const Heading = useCallback((props) => {
-    return (
-      <div className="evidence-title">
-        <h1 className="heading-m">{props.label}</h1>
-      </div>
-    );
-  }, []);
-
   const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const onSelect = (key, value) => {
@@ -164,10 +150,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           clearBailBondSessionData();
         } catch (error) {
           console.error("error", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-          const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
-          setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
-          setShowToast({ label: t(errorCode), error: true, errorId });
+          setFileUploadError(getUploadErrorToast(error, t));
         } finally {
           setLoader(false);
         }
@@ -399,9 +382,9 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       )}
       {stepper === 0 && (
         <Modal
-          headerBarEnd={<CloseBtn onClick={handleCancel} />}
+          headerBarEnd={<SignModalCloseBtn onClick={handleCancel} />}
           headerBarMain={
-            <Heading
+            <SignModalHeading
               label={
                 bailBondLoader
                   ? t(" ")
@@ -435,53 +418,17 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       )}
       {/* to select e-sign or upload */}
       {stepper === 1 && !openUploadSignatureModal && !isSigned && (
-        <Modal
-          headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
-          headerBarEnd={<CloseBtn onClick={handleCancel} />}
-          actionCancelLabel={t("CS_COMMON_BACK")}
-          actionCancelOnSubmit={handleCancel}
-          actionSaveLabel={t("CS_COMMON_SUBMIT")}
-          isDisabled={!isSigned}
-          actionSaveOnSubmit={() => {}}
-          className="add-signature-modal"
-        >
-          <div className="add-signature-main-div">
-            <div className="not-signed">
-              <InfoCard
-                variant={"default"}
-                label={t("PLEASE_NOTE")}
-                additionalElements={[<p key="note">{t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE_BAIL_BOND")}</p>]}
-                inline
-                textStyle={{}}
-                className={`custom-info-card`}
-              />
-              <h1>{t("YOUR_SIGNATURE")}</h1>
-              <div className="sign-button-wrap">
-                <Button label={t("CS_ESIGN")} onButtonClick={onESignClick} className="aadhar-sign-in" labelClassName="aadhar-sign-in" />
-                <Button
-                  icon={<FileUploadIcon />}
-                  label={t("UPLOAD_DIGITAL_SIGN_CERTI")}
-                  onButtonClick={() => {
-                    setOpenUploadSignatureModal(true);
-                  }}
-                  className="upload-signature"
-                  labelClassName="upload-signature-label"
-                />
-              </div>
-              <div className="donwload-submission">
-                <h2>{t("DOWNLOAD_BAILBOND_TEXT")}</h2>
-                <AuthenticatedLink
-                  uri={uri}
-                  style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}
-                  displayFilename={"CLICK_HERE"}
-                  t={t}
-                  pdf={true}
-                  name={`${effectiveRowData?.bailId}_Bail_Bond`}
-                />
-              </div>
-            </div>
-          </div>
-        </Modal>
+        <DocumentSignaturePickerModal
+          Modal={Modal}
+          t={t}
+          onCancel={handleCancel}
+          noteElement={<p key="note">{t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE_BAIL_BOND")}</p>}
+          onESignClick={onESignClick}
+          onOpenUpload={() => setOpenUploadSignatureModal(true)}
+          downloadHeadingKey="DOWNLOAD_BAILBOND_TEXT"
+          uri={uri}
+          downloadFileName={`${effectiveRowData?.bailId}_Bail_Bond`}
+        />
       )}
       {/* upload doc modal */}
       {stepper === 1 && openUploadSignatureModal && (
@@ -502,57 +449,13 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       )}
       {/* after signing showing signed modal */}
       {stepper === 1 && !openUploadSignatureModal && isSigned && (
-        <Modal
-          headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
-          headerBarEnd={<CloseBtn onClick={handleCancel} />}
-          actionCancelLabel={t("CS_COMMON_BACK")}
-          actionCancelOnSubmit={handleCancel}
-          actionSaveLabel={t("SUBMIT_BUTTON")}
-          actionSaveOnSubmit={uploadSignedPdf}
-          className="add-signature-modal"
-        >
-          <div className="add-signature-main-div">
-            <InfoCard
-              variant={"default"}
-              label={t("PLEASE_NOTE")}
-              additionalElements={[<p key="note">{t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE_BAIL_BOND")}</p>]}
-              inline
-              textStyle={{}}
-              className={`custom-info-card`}
-            />
-            <div style={{ display: "flex", flexDirection: "row", gap: "16px" }}>
-              <h1
-                style={{
-                  margin: 0,
-                  fontFamily: "Roboto",
-                  fontSize: "24px",
-                  fontWeight: 700,
-                  lineHeight: "28.13px",
-                  textAlign: "left",
-                  color: "#3d3c3c",
-                }}
-              >
-                {t("YOUR_SIGNATURE")}
-              </h1>
-              <h2
-                style={{
-                  margin: 0,
-                  fontFamily: "Roboto",
-                  fontSize: "14px",
-                  fontWeight: 400,
-                  lineHeight: "16.41px",
-                  textAlign: "center",
-                  color: "#00703c",
-                  padding: "6px",
-                  backgroundColor: "#e4f2e4",
-                  borderRadius: "999px",
-                }}
-              >
-                {t("SIGNED")}
-              </h2>
-            </div>
-          </div>
-        </Modal>
+        <DocumentSignatureSignedModal
+          Modal={Modal}
+          t={t}
+          onCancel={handleCancel}
+          onSubmit={uploadSignedPdf}
+          noteElement={<p key="note">{t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE_BAIL_BOND")}</p>}
+        />
       )}
       {stepper === 2 && (
         <Modal
@@ -595,8 +498,8 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
 
       {isRejectModalOpen && (
         <Modal
-          headerBarMain={<Heading label={t("REJECT_BAIL_BOND")} />}
-          headerBarEnd={<CloseBtn onClick={() => setIsRejectModalOpen(false)} />}
+          headerBarMain={<SignModalHeading label={t("REJECT_BAIL_BOND")} />}
+          headerBarEnd={<SignModalCloseBtn onClick={() => setIsRejectModalOpen(false)} />}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
           actionCancelOnSubmit={() => setIsRejectModalOpen(false)}
           actionSaveLabel={t("CONFIRM")}

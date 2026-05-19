@@ -8,14 +8,7 @@ import RejectCTCApplicationReasonModal from "../../components/RejectCTCApplicati
 import GenericPreviewModal from "@egovernments/digit-ui-module-dristi/src/components/GenericPreviewModal";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
-
-const sectionsParentStyle = {
-  height: "50%",
-  display: "flex",
-  flexDirection: "column",
-  gridTemplateColumns: "20% 1fr",
-  gap: "1rem",
-};
+import { bulkSignSectionsParentStyle as sectionsParentStyle } from "./shared/bulkSignViewShared";
 
 const CTCApplications = ({ refetch }) => {
   const { t } = useTranslation();
