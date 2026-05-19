@@ -345,6 +345,75 @@ export const orderFormOutOfLongPendingCommentsSection = buildOrderFormTextAreaSe
   textAreaSubHeader: "Reason for Moving Case out of Long Pending Register",
 });
 
+export const orderAlphaNumericInputValidation = {
+  customValidationFn: {
+    moduleName: "dristiOrders",
+    masterName: "alphaNumericInputTextValidation",
+  },
+};
+
+export const buildOrderAlphaNumericTextField = ({ label, key, disable, schemaKeyPath } = {}) => ({
+  label,
+  isMandatory: true,
+  key,
+  ...(schemaKeyPath ? { schemaKeyPath } : {}),
+  ...(disable !== undefined ? { disable } : {}),
+  type: "text",
+  populators: {
+    name: key,
+    error: "CS_ALPHANUMERIC_ALLOWED",
+    validation: orderAlphaNumericInputValidation,
+  },
+});
+
+export const buildOrderFormApplicationStatusField = ({ isMandatory = true } = {}) => ({
+  label: "APPLICATION_STATUS",
+  isMandatory,
+  key: "applicationStatus",
+  schemaKeyPath: "orderDetails.applicationStatus",
+  type: "text",
+  disable: true,
+  populators: { name: "applicationStatus" },
+});
+
+export const orderFormApplicationStatusField = buildOrderFormApplicationStatusField();
+
+const orderNatureOfDisposalMdmsSelect =
+  "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}";
+
+export const orderFormNatureOfDisposalField = {
+  label: "NATURE_OF_DISPOSAL",
+  isMandatory: true,
+  key: "natureOfDisposal",
+  schemaKeyPath: "orderDetails.natureOfDisposal",
+  transformer: "mdmsDropdown",
+  type: "dropdown",
+  populators: {
+    name: "natureOfDisposal",
+    optionsKey: "name",
+    error: "CORE_REQUIRED_FIELD_ERROR",
+    styles: { maxWidth: "100%" },
+    required: true,
+    isMandatory: true,
+    mdmsConfig: {
+      moduleName: "Order",
+      masterName: "natureOfDisposal",
+      select: orderNatureOfDisposalMdmsSelect,
+    },
+  },
+};
+
+export const orderFormTransferSeekedToField = buildOrderAlphaNumericTextField({
+  label: "TRANSFER_SEEKED_TO",
+  key: "transferSeekedTo",
+});
+
+export const orderFormCaseTransferredToField = buildOrderAlphaNumericTextField({
+  label: "CASE_TRANSFERRED_TO",
+  key: "caseTransferredTo",
+  disable: false,
+});
+
 /** Shared by configsIssueSummons and configsIssueNotice (issue-order forms). */
 export const orderFormDateForHearingDisabledMaxValidation = {
   type: "date",

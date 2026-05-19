@@ -1,111 +1,19 @@
 import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { getFileByFileStore } from "../../../Utils";
 import CustomToast from "../../../components/CustomToast";
+import { useUserRegistrationSessionRestore, validateRegistrationMandatoryFormData } from "./shared/registrationFlowShared";
 
 function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pathOnRefresh, isAdvocateUploading, onFormValueChange }) {
   const [showToast, setShowToast] = useState(false);
   const history = useHistory();
-  const validateFormData = (data) => {
-    let isValid = true;
-    config.forEach((curr) => {
-      if (!isValid) return;
-      if (!(curr.body[0].key in data) || !data[curr.body[0].key]) {
-        isValid = false;
-      }
-      curr.body[0].populators.inputs.forEach((input) => {
-        if (!isValid) return;
-        if (Array.isArray(input.name)) return;
-        if (input.disableMandatoryFieldFor) {
-          if (input.disableMandatoryFieldFor.some((field) => !data[curr.body[0].key][field]) && data[curr.body[0].key][input.name]) {
-            if (Array.isArray(data[curr.body[0].key][input.name]) && data[curr.body[0].key][input.name].length === 0) {
-              isValid = false;
-            }
-            if ((input?.isMandatory && !(input.name in data[curr.body[0].key])) || !data[curr.body[0].key][input.name]) {
-              isValid = false;
-            }
-            return;
-          } else {
-            if (
-              (input?.isMandatory && !(input.name in data[curr.body[0].key])) ||
-              (!data[curr.body[0].key][input.name] && !input.disableMandatoryFieldFor.some((field) => data[curr.body[0].key][field]))
-            ) {
-              isValid = false;
-            }
-          }
-          return;
-        } else {
-          if (Array.isArray(data[curr.body[0].key][input.name]) && data[curr.body[0].key][input.name].length === 0) {
-            isValid = false;
-          }
-          if (input?.isMandatory && !(input.name in data[curr.body[0].key])) {
-            isValid = false;
-          }
-        }
-      });
-    });
-    return isValid;
-  };
-
-  useEffect(() => {
-    const handleRedirect = async () => {
-      if (!isAdvocateUploading && !params?.indentity) {
-        const storedParams = sessionStorage.getItem("userRegistrationParams");
-        let newParams = storedParams ? JSON.parse(storedParams) : params;
-
-        const fileStoreId = newParams?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId;
-        const filename = newParams?.uploadedDocument?.filename;
-
-        const barCouncilFileStoreId = newParams?.formData?.clientDetails?.barCouncilId?.[1]?.fileStoreId;
-        const barCouncilFilename = newParams?.formData?.clientDetails?.barCouncilId?.[0];
-
-        if (barCouncilFileStoreId && barCouncilFilename) {
-          const barCouncilUri = `${
-            window.location.origin
-          }/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${barCouncilFileStoreId}`;
-          const barCouncilFile = await getFileByFileStore(barCouncilUri, barCouncilFilename);
-
-          newParams = {
-            ...newParams,
-            formData: {
-              ...newParams.formData,
-              clientDetails: {
-                ...newParams.formData?.clientDetails,
-                barCouncilId: [
-                  [
-                    barCouncilFilename,
-                    {
-                      file: barCouncilFile,
-                      fileStoreId: barCouncilFileStoreId,
-                    },
-                  ],
-                ],
-              },
-            },
-          };
-        }
-
-        if (fileStoreId && filename) {
-          const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${fileStoreId}`;
-          const file = await getFileByFileStore(uri, filename);
-
-          newParams = {
-            ...newParams,
-            uploadedDocument: {
-              ...newParams.uploadedDocument,
-              file,
-            },
-          };
-        }
-
-        sessionStorage.removeItem("userRegistrationParams");
-        history.push(pathOnRefresh, { newParams });
-      }
-    };
-
-    handleRedirect();
-  }, [params?.address, params, history, pathOnRefresh, isAdvocateUploading]);
+  useUserRegistrationSessionRestore({
+    params,
+    history,
+    pathOnRefresh,
+    shouldRestore: (p) => !isAdvocateUploading && !p?.indentity,
+    effectDeps: [params?.address, isAdvocateUploading],
+  });
 
   return (
     <div className="advocate-additional-details upload-id">
@@ -136,7 +44,7 @@ function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pat
           if (isAdvocateUploading) {
             return;
           }
-          if (!validateFormData(data)) {
+          if (!validateRegistrationMandatoryFormData(config, data)) {
             setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
           } else if (data?.SelectUserTypeComponent?.aadharNumber) {
             onAadharChange(data?.SelectUserTypeComponent?.aadharNumber);

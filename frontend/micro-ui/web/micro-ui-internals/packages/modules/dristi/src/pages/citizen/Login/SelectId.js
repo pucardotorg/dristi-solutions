@@ -1,42 +1,13 @@
 import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-import React, { useEffect, useState } from "react";
-import { getFileByFileStore } from "../../../Utils";
+import React, { useState } from "react";
+import { createRegistrationPatternValidationOnChange, useUserRegistrationSessionRestore } from "../registration/shared/registrationFlowShared";
 
 function SelectId({ config, t, params, history, onSelect, pathOnRefresh }) {
   const [showToast, setShowToast] = useState(null);
   const [isDisabled, setIsDisabled] = useState(false);
 
-  const onFormValueChange = (setValue, formData, formState) => {
-    let isDisabled = false;
-    config.forEach((curr) => {
-      if (isDisabled) return;
-      if (!(curr.body[0].key in formData) || !formData[curr.body[0].key]) {
-        return;
-      }
-      curr.body[0].populators.inputs.forEach((input) => {
-        if (isDisabled) return;
-        if (Array.isArray(input.name)) return;
-        if (
-          formData[curr.body[0].key][input.name] &&
-          formData[curr.body[0].key][input.name].length > 0 &&
-          !["documentUpload", "radioButton"].includes(input.type) &&
-          input.validation &&
-          !formData[curr.body[0].key][input.name].match(Digit.Utils.getPattern(input.validation.patternType) || input.validation.pattern)
-        ) {
-          isDisabled = true;
-        }
-        if (Array.isArray(formData[curr.body[0].key][input.name]) && formData[curr.body[0].key][input.name].length === 0) {
-          isDisabled = true;
-        }
-      });
-    });
-    if (isDisabled) {
-      setIsDisabled(isDisabled);
-    } else {
-      setIsDisabled(false);
-    }
-  };
+  const onFormValueChange = createRegistrationPatternValidationOnChange(config, setIsDisabled);
 
   const validateFormData = (data) => {
     let isValid = true;

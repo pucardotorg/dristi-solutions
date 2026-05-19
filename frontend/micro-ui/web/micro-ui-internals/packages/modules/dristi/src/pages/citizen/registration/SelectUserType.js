@@ -1,8 +1,12 @@
 import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { getFileByFileStore } from "../../../Utils";
+import {
+  createRegistrationPatternValidationOnChange,
+  useUserRegistrationSessionRestore,
+  validateRegistrationMandatoryFormData,
+} from "./shared/registrationFlowShared";
 
 const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRefresh }) => {
   const Digit = window.Digit || {};
@@ -10,47 +14,6 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
   const history = useHistory();
   const [showToast, setShowToast] = useState(null);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-
-  const validateFormData = (data) => {
-    let isValid = true;
-    config.forEach((curr) => {
-      if (!isValid) return;
-      if (!(curr.body[0].key in data) || !data[curr.body[0].key]) {
-        isValid = false;
-      }
-      curr.body[0].populators.inputs.forEach((input) => {
-        if (!isValid) return;
-        if (Array.isArray(input.name)) return;
-        if (input.disableMandatoryFieldFor) {
-          if (input.disableMandatoryFieldFor.some((field) => !data[curr.body[0].key][field]) && data[curr.body[0].key][input.name]) {
-            if (Array.isArray(data[curr.body[0].key][input.name]) && data[curr.body[0].key][input.name].length === 0) {
-              isValid = false;
-            }
-            if ((input?.isMandatory && !(input.name in data[curr.body[0].key])) || !data[curr.body[0].key][input.name]) {
-              isValid = false;
-            }
-            return;
-          } else {
-            if (
-              (input?.isMandatory && !(input.name in data[curr.body[0].key])) ||
-              (!data[curr.body[0].key][input.name] && !input.disableMandatoryFieldFor.some((field) => data[curr.body[0].key][field]))
-            ) {
-              isValid = false;
-            }
-          }
-          return;
-        } else {
-          if (Array.isArray(data[curr.body[0].key][input.name]) && data[curr.body[0].key][input.name].length === 0) {
-            isValid = false;
-          }
-          if (input?.isMandatory && !(input.name in data[curr.body[0].key])) {
-            isValid = false;
-          }
-        }
-      });
-    });
-    return isValid;
-  };
 
   const updatedConfig = useMemo(() => {
     return config.map((section) => ({
@@ -73,36 +36,7 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
   }, [config, params]);
 
   const [isDisabled, setIsDisabled] = useState(false);
-  const onFormValueChange = (setValue, formData, formState) => {
-    let isDisabled = false;
-    config.forEach((curr) => {
-      if (isDisabled) return;
-      if (!(curr.body[0].key in formData) || !formData[curr.body[0].key]) {
-        return;
-      }
-      curr.body[0].populators.inputs.forEach((input) => {
-        if (isDisabled) return;
-        if (Array.isArray(input.name)) return;
-        if (
-          formData[curr.body[0].key][input.name] &&
-          formData[curr.body[0].key][input.name].length > 0 &&
-          !["documentUpload", "radioButton"].includes(input.type) &&
-          input.validation &&
-          !formData[curr.body[0].key][input.name].match(Digit.Utils.getPattern(input.validation.patternType) || input.validation.pattern)
-        ) {
-          isDisabled = true;
-        }
-        if (Array.isArray(formData[curr.body[0].key][input.name]) && formData[curr.body[0].key][input.name].length === 0) {
-          isDisabled = true;
-        }
-      });
-    });
-    if (isDisabled) {
-      setIsDisabled(isDisabled);
-    } else {
-      setIsDisabled(false);
-    }
-  };
+  const onFormValueChange = createRegistrationPatternValidationOnChange(config, setIsDisabled);
   const onSubmit = async (userType) => {
     const data = params;
     const userTypeSelcted = userType?.clientDetails?.selectUserType?.code;
@@ -276,64 +210,13 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
     }
   };
 
-  useEffect(() => {
-    const handleRedirect = async () => {
-      if (!params?.indentity && !params?.Individual?.[0]?.additionalFields) {
-        const storedParams = sessionStorage.getItem("userRegistrationParams");
-        let newParams = storedParams ? JSON.parse(storedParams) : params;
-
-        const fileStoreId = newParams?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId;
-        const filename = newParams?.uploadedDocument?.filename;
-
-        const barCouncilFileStoreId = newParams?.formData?.clientDetails?.barCouncilId?.[1]?.fileStoreId;
-        const barCouncilFilename = newParams?.formData?.clientDetails?.barCouncilId?.[0];
-
-        if (barCouncilFileStoreId && barCouncilFilename) {
-          const barCouncilUri = `${
-            window.location.origin
-          }/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${barCouncilFileStoreId}`;
-          const barCouncilFile = await getFileByFileStore(barCouncilUri, barCouncilFilename);
-
-          newParams = {
-            ...newParams,
-            formData: {
-              ...newParams.formData,
-              clientDetails: {
-                ...newParams.formData.clientDetails,
-                barCouncilId: [
-                  [
-                    barCouncilFilename,
-                    {
-                      file: barCouncilFile,
-                      fileStoreId: barCouncilFileStoreId,
-                    },
-                  ],
-                ],
-              },
-            },
-          };
-        }
-
-        if (fileStoreId && filename) {
-          const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${fileStoreId}`;
-          const file = await getFileByFileStore(uri, filename);
-
-          newParams = {
-            ...newParams,
-            uploadedDocument: {
-              ...newParams.uploadedDocument,
-              file,
-            },
-          };
-        }
-
-        sessionStorage.removeItem("userRegistrationParams");
-        history.push(pathOnRefresh, { newParams });
-      }
-    };
-
-    handleRedirect();
-  }, [params?.address, params, history, pathOnRefresh, Digit.ULBService]);
+  useUserRegistrationSessionRestore({
+    params,
+    history,
+    pathOnRefresh,
+    shouldRestore: (p) => !p?.indentity && !p?.Individual?.[0]?.additionalFields,
+    effectDeps: [params?.address, Digit.ULBService],
+  });
 
   return (
     <div className="select-user">
@@ -344,7 +227,7 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
         inline
         label={t("CS_COMMON_CONTINUE")}
         onSubmit={(props) => {
-          if (!validateFormData(props)) {
+          if (!validateRegistrationMandatoryFormData(config, props)) {
             setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true, errorId: null });
           } else {
             onSubmit(props);

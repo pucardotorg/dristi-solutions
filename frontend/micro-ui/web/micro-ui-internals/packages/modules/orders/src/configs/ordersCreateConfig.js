@@ -30,6 +30,11 @@ import {
   orderFormWarrantTextField,
   orderFormWarrantTextSection,
   orderFormDateForHearingDisabledMaxValidation,
+  orderFormApplicationStatusField,
+  buildOrderFormApplicationStatusField,
+  orderFormNatureOfDisposalField,
+  orderFormTransferSeekedToField,
+  orderFormCaseTransferredToField,
 } from "./ordersCreateConfigShared";
 
 export const applicationTypeConfig = [
@@ -449,15 +454,7 @@ export const configsOrderSubmissionExtension = [
   {
     body: [
       buildOrderRefApplicationIdField(),
-      {
-        label: "APPLICATION_STATUS",
-        isMandatory: true,
-        key: "applicationStatus",
-        schemaKeyPath: "orderDetails.applicationStatus",
-        type: "text",
-        disable: true,
-        populators: { name: "applicationStatus" },
-      },
+      orderFormApplicationStatusField,
       {
         label: "EXTENSION_DOCUMENT_NAME",
         isMandatory: false,
@@ -901,52 +898,13 @@ export const configsCaseTransfer = [
   {
     body: [
       buildOrderRefApplicationIdField({ withSchemaKeyPath: true }),
-      {
-        label: "APPLICATION_STATUS",
-        isMandatory: true,
-        key: "applicationStatus",
-        schemaKeyPath: "orderDetails.applicationStatus",
-        type: "text",
-        disable: true,
-        populators: { name: "applicationStatus" },
-      },
-      {
-        label: "TRANSFER_SEEKED_TO",
-        isMandatory: true,
-        key: "transferSeekedTo",
-        type: "text",
-        populators: {
-          name: "transferSeekedTo",
-          error: "CS_ALPHANUMERIC_ALLOWED",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "alphaNumericInputTextValidation",
-            },
-          },
-        },
-      },
+      orderFormApplicationStatusField,
+      orderFormTransferSeekedToField,
     ],
   },orderFormGroundsSection,
   {
     body: [
-      {
-        label: "CASE_TRANSFERRED_TO",
-        isMandatory: true,
-        key: "caseTransferredTo",
-        disable: false,
-        type: "text",
-        populators: {
-          name: "caseTransferredTo",
-          error: "CS_ALPHANUMERIC_ALLOWED",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "alphaNumericInputTextValidation",
-            },
-          },
-        },
-      },
+      orderFormCaseTransferredToField,
     ],
   },
   orderFormCommentsSection,
@@ -956,73 +914,14 @@ export const configsCaseTransferAccept = [
   {
     body: [
       buildOrderRefApplicationIdField({ withSchemaKeyPath: true }),
-      {
-        label: "APPLICATION_STATUS",
-        isMandatory: true,
-        key: "applicationStatus",
-        schemaKeyPath: "orderDetails.applicationStatus",
-        type: "text",
-        disable: true,
-        populators: { name: "applicationStatus" },
-      },
-      {
-        label: "TRANSFER_SEEKED_TO",
-        isMandatory: true,
-        key: "transferSeekedTo",
-        type: "text",
-        populators: {
-          name: "transferSeekedTo",
-          error: "CS_ALPHANUMERIC_ALLOWED",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "alphaNumericInputTextValidation",
-            },
-          },
-        },
-      },
+      orderFormApplicationStatusField,
+      orderFormTransferSeekedToField,
     ],
   },orderFormGroundsSection,
   {
     body: [
-      {
-        label: "CASE_TRANSFERRED_TO",
-        isMandatory: true,
-        key: "caseTransferredTo",
-        disable: false,
-        type: "text",
-        populators: {
-          name: "caseTransferredTo",
-          error: "CS_ALPHANUMERIC_ALLOWED",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "alphaNumericInputTextValidation",
-            },
-          },
-        },
-      },
-      {
-        label: "NATURE_OF_DISPOSAL",
-        isMandatory: true,
-        key: "natureOfDisposal",
-        schemaKeyPath: "orderDetails.natureOfDisposal",
-        transformer: "mdmsDropdown",
-        type: "dropdown",
-        populators: {
-          name: "natureOfDisposal",
-          optionsKey: "name",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%" },
-          required: true,
-          isMandatory: true,
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "natureOfDisposal",
-            select: "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
-          },
-        },
-      },
+      orderFormCaseTransferredToField,
+      orderFormNatureOfDisposalField,
     ],
   },
 ];
@@ -1031,52 +930,13 @@ export const configsCaseTransferReject = [
   {
     body: [
       buildOrderRefApplicationIdField({ withSchemaKeyPath: true }),
-      {
-        label: "APPLICATION_STATUS",
-        isMandatory: true,
-        key: "applicationStatus",
-        schemaKeyPath: "orderDetails.applicationStatus",
-        type: "text",
-        disable: true,
-        populators: { name: "applicationStatus" },
-      },
-      {
-        label: "TRANSFER_SEEKED_TO",
-        isMandatory: true,
-        key: "transferSeekedTo",
-        type: "text",
-        populators: {
-          name: "transferSeekedTo",
-          error: "CS_ALPHANUMERIC_ALLOWED",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "alphaNumericInputTextValidation",
-            },
-          },
-        },
-      },
+      orderFormApplicationStatusField,
+      orderFormTransferSeekedToField,
     ],
   },orderFormGroundsSection,
   {
     body: [
-      {
-        label: "CASE_TRANSFERRED_TO",
-        isMandatory: true,
-        key: "caseTransferredTo",
-        disable: false,
-        type: "text",
-        populators: {
-          name: "caseTransferredTo",
-          error: "CS_ALPHANUMERIC_ALLOWED",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "alphaNumericInputTextValidation",
-            },
-          },
-        },
-      },
+      orderFormCaseTransferredToField,
     ],
   },
 ];
@@ -1085,15 +945,7 @@ export const configsCaseSettlementAccept = [
   {
     body: [
       buildOrderRefApplicationIdField(),
-      {
-        label: "APPLICATION_STATUS",
-        isMandatory: true,
-        key: "applicationStatus",
-        schemaKeyPath: "orderDetails.applicationStatus",
-        type: "text",
-        disable: true,
-        populators: { name: "applicationStatus" },
-      },
+      orderFormApplicationStatusField,
       {
         label: "SETTLEMENT_AGREEMENT_DATE",
         isMandatory: true,
@@ -1153,27 +1005,7 @@ export const configsCaseSettlementAccept = [
           ],
         },
       },
-      {
-        label: "NATURE_OF_DISPOSAL",
-        isMandatory: true,
-        key: "natureOfDisposal",
-        schemaKeyPath: "orderDetails.natureOfDisposal",
-        transformer: "mdmsDropdown",
-        type: "dropdown",
-        populators: {
-          name: "natureOfDisposal",
-          optionsKey: "name",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%" },
-          required: true,
-          isMandatory: true,
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "natureOfDisposal",
-            select: "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
-          },
-        },
-      },
+      orderFormNatureOfDisposalField,
     ],
   },
 ];
@@ -1182,15 +1014,7 @@ export const configsCaseSettlementReject = [
   {
     body: [
       buildOrderRefApplicationIdField(),
-      {
-        label: "APPLICATION_STATUS",
-        isMandatory: true,
-        key: "applicationStatus",
-        schemaKeyPath: "orderDetails.applicationStatus",
-        type: "text",
-        disable: true,
-        populators: { name: "applicationStatus" },
-      },
+      orderFormApplicationStatusField,
       {
         label: "SETTLEMENT_AGREEMENT_DATE",
         isMandatory: true,
@@ -1358,15 +1182,7 @@ export const configsCaseWithdrawal = [
   {
     body: [
       buildOrderRefApplicationIdField(),
-      {
-        label: "APPLICATION_STATUS",
-        isMandatory: false,
-        key: "applicationStatus",
-        schemaKeyPath: "orderDetails.applicationStatus",
-        disable: true,
-        type: "text",
-        populators: { name: "applicationStatus" },
-      },
+      buildOrderFormApplicationStatusField({ isMandatory: false }),
       {
         label: "APPLICATION_ON_BEHALF_OF",
         isMandatory: false,
@@ -1401,36 +1217,8 @@ export const configsCaseWithdrawalAccept = [
   {
     body: [
       buildOrderRefApplicationIdField(),
-      {
-        label: "APPLICATION_STATUS",
-        isMandatory: false,
-        key: "applicationStatus",
-        schemaKeyPath: "orderDetails.applicationStatus",
-        disable: true,
-        type: "text",
-        populators: { name: "applicationStatus" },
-      },
-      {
-        label: "NATURE_OF_DISPOSAL",
-        isMandatory: true,
-        key: "natureOfDisposal",
-        schemaKeyPath: "orderDetails.natureOfDisposal",
-        transformer: "mdmsDropdown",
-        type: "dropdown",
-        populators: {
-          name: "natureOfDisposal",
-          optionsKey: "name",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%" },
-          required: true,
-          isMandatory: true,
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "natureOfDisposal",
-            select: "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
-          },
-        },
-      },
+      buildOrderFormApplicationStatusField({ isMandatory: false }),
+      orderFormNatureOfDisposalField,
     ],
   },
 ];
@@ -1439,15 +1227,7 @@ export const configsCaseWithdrawalReject = [
   {
     body: [
       buildOrderRefApplicationIdField(),
-      {
-        label: "APPLICATION_STATUS",
-        isMandatory: false,
-        key: "applicationStatus",
-        schemaKeyPath: "orderDetails.applicationStatus",
-        disable: true,
-        type: "text",
-        populators: { name: "applicationStatus" },
-      },
+      buildOrderFormApplicationStatusField({ isMandatory: false }),
     ],
   },
 ];
@@ -1517,15 +1297,7 @@ export const configsBail = [
           },
         },
       },
-      {
-        label: "APPLICATION_STATUS",
-        isMandatory: true,
-        key: "applicationStatus",
-        schemaKeyPath: "orderDetails.applicationStatus",
-        type: "text",
-        disable: true,
-        populators: { name: "applicationStatus" },
-      },
+      orderFormApplicationStatusField,
       {
         type: "component",
         component: "AddSubmissionDocument",
@@ -2248,27 +2020,7 @@ export const configsJudgement = [
           },
         },
       },
-      {
-        label: "NATURE_OF_DISPOSAL",
-        isMandatory: true,
-        key: "natureOfDisposal",
-        schemaKeyPath: "orderDetails.natureOfDisposal",
-        transformer: "mdmsDropdown",
-        type: "dropdown",
-        populators: {
-          name: "natureOfDisposal",
-          optionsKey: "name",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%" },
-          required: true,
-          isMandatory: true,
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "natureOfDisposal",
-            select: "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
-          },
-        },
-      },
+      orderFormNatureOfDisposalField,
     ],
   },orderFormSentenceSection,
   // {
@@ -2544,27 +2296,7 @@ export const configsAdmitCase = [
 export const configsDismissCase = [
   {
     body: [
-      {
-        label: "NATURE_OF_DISPOSAL",
-        isMandatory: true,
-        key: "natureOfDisposal",
-        schemaKeyPath: "orderDetails.natureOfDisposal",
-        transformer: "mdmsDropdown",
-        type: "dropdown",
-        populators: {
-          name: "natureOfDisposal",
-          optionsKey: "name",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%" },
-          required: true,
-          isMandatory: true,
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "natureOfDisposal",
-            select: "(data) => {return data['Order'].natureOfDisposal?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
-          },
-        },
-      },
+      orderFormNatureOfDisposalField,
     ],
   },
 ];
