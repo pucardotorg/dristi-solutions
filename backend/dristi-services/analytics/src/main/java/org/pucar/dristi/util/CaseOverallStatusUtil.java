@@ -95,6 +95,9 @@ public class CaseOverallStatusUtil {
             } else if (config.getHearingBusinessServiceList().contains(entityType)) {
                 return processHearingCaseOverallStatus(request, referenceId, action, tenantId);
             } else if (config.getOrderBusinessServiceList().contains(entityType)) {
+                if(!"E-SIGN".equalsIgnoreCase(action)){
+                    return null;
+                }
                 return processOrderOverallStatus(request, referenceId, status, tenantId);
             } else if (config.getApplicationBusinessServiceList().contains(entityType)) {
                 return processApplicationSecondaryStageUpdate(request, referenceId, status, action, tenantId);
