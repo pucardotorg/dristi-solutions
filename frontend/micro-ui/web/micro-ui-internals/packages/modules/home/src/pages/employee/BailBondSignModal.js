@@ -13,6 +13,7 @@ import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Util
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
 import { SignModalCloseBtn, SignModalHeading } from "./shared/signModalChrome";
+import { DocumentSignaturePickerModal, DocumentSignatureSignedModal } from "./shared/documentSignFlowShared";
 
 export const clearBailBondSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -417,53 +418,17 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       )}
       {/* to select e-sign or upload */}
       {stepper === 1 && !openUploadSignatureModal && !isSigned && (
-        <Modal
-          headerBarMain={<SignModalHeading label={t("ADD_SIGNATURE")} />}
-          headerBarEnd={<SignModalCloseBtn onClick={handleCancel} />}
-          actionCancelLabel={t("CS_COMMON_BACK")}
-          actionCancelOnSubmit={handleCancel}
-          actionSaveLabel={t("CS_COMMON_SUBMIT")}
-          isDisabled={!isSigned}
-          actionSaveOnSubmit={() => {}}
-          className="add-signature-modal"
-        >
-          <div className="add-signature-main-div">
-            <div className="not-signed">
-              <InfoCard
-                variant={"default"}
-                label={t("PLEASE_NOTE")}
-                additionalElements={[<p key="note">{t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE_BAIL_BOND")}</p>]}
-                inline
-                textStyle={{}}
-                className={`custom-info-card`}
-              />
-              <h1>{t("YOUR_SIGNATURE")}</h1>
-              <div className="sign-button-wrap">
-                <Button label={t("CS_ESIGN")} onButtonClick={onESignClick} className="aadhar-sign-in" labelClassName="aadhar-sign-in" />
-                <Button
-                  icon={<FileUploadIcon />}
-                  label={t("UPLOAD_DIGITAL_SIGN_CERTI")}
-                  onButtonClick={() => {
-                    setOpenUploadSignatureModal(true);
-                  }}
-                  className="upload-signature"
-                  labelClassName="upload-signature-label"
-                />
-              </div>
-              <div className="donwload-submission">
-                <h2>{t("DOWNLOAD_BAILBOND_TEXT")}</h2>
-                <AuthenticatedLink
-                  uri={uri}
-                  style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}
-                  displayFilename={"CLICK_HERE"}
-                  t={t}
-                  pdf={true}
-                  name={`${effectiveRowData?.bailId}_Bail_Bond`}
-                />
-              </div>
-            </div>
-          </div>
-        </Modal>
+        <DocumentSignaturePickerModal
+          Modal={Modal}
+          t={t}
+          onCancel={handleCancel}
+          noteElement={<p key="note">{t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE_BAIL_BOND")}</p>}
+          onESignClick={onESignClick}
+          onOpenUpload={() => setOpenUploadSignatureModal(true)}
+          downloadHeadingKey="DOWNLOAD_BAILBOND_TEXT"
+          uri={uri}
+          downloadFileName={`${effectiveRowData?.bailId}_Bail_Bond`}
+        />
       )}
       {/* upload doc modal */}
       {stepper === 1 && openUploadSignatureModal && (
@@ -484,57 +449,13 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       )}
       {/* after signing showing signed modal */}
       {stepper === 1 && !openUploadSignatureModal && isSigned && (
-        <Modal
-          headerBarMain={<SignModalHeading label={t("ADD_SIGNATURE")} />}
-          headerBarEnd={<SignModalCloseBtn onClick={handleCancel} />}
-          actionCancelLabel={t("CS_COMMON_BACK")}
-          actionCancelOnSubmit={handleCancel}
-          actionSaveLabel={t("SUBMIT_BUTTON")}
-          actionSaveOnSubmit={uploadSignedPdf}
-          className="add-signature-modal"
-        >
-          <div className="add-signature-main-div">
-            <InfoCard
-              variant={"default"}
-              label={t("PLEASE_NOTE")}
-              additionalElements={[<p key="note">{t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE_BAIL_BOND")}</p>]}
-              inline
-              textStyle={{}}
-              className={`custom-info-card`}
-            />
-            <div style={{ display: "flex", flexDirection: "row", gap: "16px" }}>
-              <h1
-                style={{
-                  margin: 0,
-                  fontFamily: "Roboto",
-                  fontSize: "24px",
-                  fontWeight: 700,
-                  lineHeight: "28.13px",
-                  textAlign: "left",
-                  color: "#3d3c3c",
-                }}
-              >
-                {t("YOUR_SIGNATURE")}
-              </h1>
-              <h2
-                style={{
-                  margin: 0,
-                  fontFamily: "Roboto",
-                  fontSize: "14px",
-                  fontWeight: 400,
-                  lineHeight: "16.41px",
-                  textAlign: "center",
-                  color: "#00703c",
-                  padding: "6px",
-                  backgroundColor: "#e4f2e4",
-                  borderRadius: "999px",
-                }}
-              >
-                {t("SIGNED")}
-              </h2>
-            </div>
-          </div>
-        </Modal>
+        <DocumentSignatureSignedModal
+          Modal={Modal}
+          t={t}
+          onCancel={handleCancel}
+          onSubmit={uploadSignedPdf}
+          noteElement={<p key="note">{t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE_BAIL_BOND")}</p>}
+        />
       )}
       {stepper === 2 && (
         <Modal

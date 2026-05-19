@@ -15,67 +15,14 @@ import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/componen
 import BulkRescheduleModal from "../../components/BulkRescheduleModal";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
-
-/**
- * Sessionstorage keys this page persists across the e-sign round-trip. The
- * keys live in a single place so the load/save/clear helpers below stay in
- * sync; previously each of the three steps inlined its own 6-line block.
- *
- * `parse` is the function that converts the raw sessionStorage string back to
- * the in-memory shape: JSON.parse for objects, parseInt for the stepper, etc.
- * `defaultValue` is used when the key isn't set.
- */
-const BULK_RESCHEDULE_SESSION_FIELDS = [
-  { key: "bulkNotificationStepper", parse: (v) => parseInt(v), defaultValue: null },
-  { key: "bulkNotificationFormData", parse: JSON.parse, defaultValue: null },
-  { key: "bulkOldHearingData", parse: JSON.parse, defaultValue: null },
-  { key: "bulkNewHearingData", parse: JSON.parse, defaultValue: [] },
-  { key: "bulkNotificationNumber", parse: JSON.parse, defaultValue: null },
-  { key: "bulkNotificationFileStoreId", parse: JSON.parse, defaultValue: null },
-];
-
-const loadBulkRescheduleSession = () =>
-  BULK_RESCHEDULE_SESSION_FIELDS.reduce((acc, field) => {
-    const raw = sessionStorage.getItem(field.key);
-    acc[field.key] = raw ? field.parse(raw) : field.defaultValue;
-    return acc;
-  }, {});
-
-const clearBulkRescheduleSession = () => {
-  BULK_RESCHEDULE_SESSION_FIELDS.forEach((field) => sessionStorage.removeItem(field.key));
-};
-
-const saveBulkRescheduleSession = ({ stepper, formData, oldHearingData, newHearingData, notificationNumber, fileStoreId }) => {
-  sessionStorage.setItem("bulkNotificationStepper", parseInt(stepper));
-  sessionStorage.setItem("bulkNotificationFormData", JSON.stringify(formData));
-  sessionStorage.setItem("bulkOldHearingData", JSON.stringify(oldHearingData));
-  sessionStorage.setItem("bulkNewHearingData", JSON.stringify(newHearingData));
-  sessionStorage.setItem("bulkNotificationNumber", JSON.stringify(notificationNumber));
-  sessionStorage.setItem("bulkNotificationFileStoreId", JSON.stringify(fileStoreId));
-};
-
-/**
- * The "Please note - you are signing the NOTIFICATION" callout that appears
- * in both stepper===3 modals (pre-sign and post-sign). The only delta the two
- * call sites have is the bottom margin, so we keep that as a prop.
- */
-const NotificationSignatureInfoCard = ({ t, marginBottom = "16px", extraStyle }) => (
-  <InfoCard
-    variant={"default"}
-    label={t("PLEASE_NOTE")}
-    additionalElements={[
-      <p key="note">
-        {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}
-        <span style={{ fontWeight: "bold" }}>{`${t("NOTIFICATION")}`}</span>
-      </p>,
-    ]}
-    inline
-    style={{ marginBottom, ...extraStyle }}
-    textStyle={{}}
-    className={`custom-info-card`}
-  />
-);
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, getUploadErrorToast } from "@egovernments/digit-ui-module-common";
+import {
+  loadBulkRescheduleSession,
+  clearBulkRescheduleSession,
+  saveBulkRescheduleSession,
+  bulkRescheduleSignatureOnSelect,
+  BulkNotificationSignatureModals,
+} from "./shared/bulkRescheduleShared";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date().setHours(0, 0, 0, 0), selectedSlot = [] }) => {
@@ -174,18 +121,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     return filteredHearings?.length || 0;
   }, [hearingDetails]);
 
-  const onSelect = (key, value) => {
-    if (value?.Signature === null) {
-      setSignFormData({});
-      setIsSigned(false);
-    } else {
-      setSignFormData((prevData) => ({
-        ...prevData,
-        [key]: value,
-      }));
-    }
-    setFileUploadError(null);
-  };
+  const onSelect = bulkRescheduleSignatureOnSelect(setSignFormData, setIsSigned, setFileUploadError);
 
   const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
@@ -635,129 +571,36 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           )}
         </Modal>
       )}
-      {stepper === 3 && !openUploadSignatureModal && !isSigned && (
-        <Modal
-          headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
-          headerBarEnd={<CloseBtn onClick={onCancel} />}
-          actionCancelLabel={t("CS_COMMON_BACK")}
-          actionCancelOnSubmit={onCancel}
-          actionSaveLabel={t("CS_COMMON_SUBMIT")}
-          isDisabled={!isSigned}
-          actionSaveOnSubmit={uploadSignedPdf}
-          className="add-signature-modal"
-        >
-          <div className="add-signature-main-div">
-            <div className="not-signed">
-              <NotificationSignatureInfoCard t={t} marginBottom="10px" extraStyle={{ backgroundColor: "rgba(0, 0, 0, 0.05)" }} />
-              <h1>{t("YOUR_SIGNATURE")}</h1>
-              <div className="sign-button-wrap">
-                <Button
-                  label={t("CS_ESIGN")}
-                  onButtonClick={() => {
-                    saveBulkRescheduleSession({
-                      stepper,
-                      formData: bulkFormData,
-                      oldHearingData: originalHearingData,
-                      newHearingData,
-                      notificationNumber,
-                      fileStoreId: notificationFileStoreId,
-                    });
-                    handleEsign(name, pageModule, notificationFileStoreId, setShowToast, t, "Signature");
-                  }} //as sending null throwing error in esign
-                  className="aadhar-sign-in"
-                  labelClassName="aadhar-sign-in"
-                />
-                <Button
-                  icon={<FileUploadIcon />}
-                  label={t("UPLOAD_DIGITAL_SIGN_CERTI")}
-                  onButtonClick={() => {
-                    setOpenUploadSignatureModal(true);
-                  }}
-                  className="upload-signature"
-                  labelClassName="upload-signature-label"
-                />
-              </div>
-              <div className="donwload-submission">
-                <h2>{t("DOWNLOAD_NOTIFICATION_TEXT")}</h2>
-                <AuthenticatedLink
-                  uri={uri}
-                  style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}
-                  displayFilename={"CLICK_HERE"}
-                  t={t}
-                  pdf={true}
-                />
-              </div>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {stepper === 3 && openUploadSignatureModal && (
-        <UploadModal
-          t={t}
-          key={name}
-          name={name}
-          onClose={() => setOpenUploadSignatureModal(false)}
-          onSelect={onSelect}
-          formData={signFormData}
-          onSubmit={onUploadSubmit}
-          isDisabled={issignLoader}
-          isParentLoading={issignLoader}
-          fileUploadError={fileUploadError}
-          setFileUploadError={setFileUploadError}
-        />
-      )}
-
-      {stepper === 3 && !openUploadSignatureModal && isSigned && (
-        <Modal
-          headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
-          headerBarEnd={<CloseBtn onClick={onCancel} />}
-          actionCancelLabel={t("CS_COMMON_BACK")}
-          actionCancelOnSubmit={onCancel}
-          actionSaveLabel={t("SUBMIT_BUTTON")}
-          actionSaveOnSubmit={uploadSignedPdf}
-          className="add-signature-modal"
-        >
-          {Loading ? (
-            <Loader />
-          ) : (
-            <div className="add-signature-main-div">
-              <NotificationSignatureInfoCard t={t} />
-              <div style={{ display: "flex", flexDirection: "row", gap: "16px" }}>
-                <h1
-                  style={{
-                    margin: 0,
-                    fontFamily: "Roboto",
-                    fontSize: "24px",
-                    fontWeight: 700,
-                    lineHeight: "28.13px",
-                    textAlign: "left",
-                    color: "#3d3c3c",
-                  }}
-                >
-                  {t("YOUR_SIGNATURE")}
-                </h1>
-                <h2
-                  style={{
-                    margin: 0,
-                    fontFamily: "Roboto",
-                    fontSize: "14px",
-                    fontWeight: 400,
-                    lineHeight: "16.41px",
-                    textAlign: "center",
-                    color: "#00703c",
-                    padding: "6px",
-                    backgroundColor: "#e4f2e4",
-                    borderRadius: "999px",
-                  }}
-                >
-                  {t("SIGNED")}
-                </h2>
-              </div>
-            </div>
-          )}
-        </Modal>
-      )}
+      <BulkNotificationSignatureModals
+        stepper={stepper}
+        t={t}
+        Modal={Modal}
+        onCancel={onCancel}
+        openUploadSignatureModal={openUploadSignatureModal}
+        setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+        isSigned={isSigned}
+        uploadSignedPdf={uploadSignedPdf}
+        onBeforeEsign={() => {
+          saveBulkRescheduleSession({
+            stepper,
+            formData: bulkFormData,
+            oldHearingData: originalHearingData,
+            newHearingData,
+            notificationNumber,
+            fileStoreId: notificationFileStoreId,
+          });
+          handleEsign(name, pageModule, notificationFileStoreId, setShowToast, t, "Signature");
+        }}
+        uri={uri}
+        name={name}
+        signFormData={signFormData}
+        onSelect={onSelect}
+        onUploadSubmit={onUploadSubmit}
+        issignLoader={issignLoader}
+        fileUploadError={fileUploadError}
+        setFileUploadError={setFileUploadError}
+        isLoading={Loading}
+      />
       {stepper === 4 && (
         <Modal
           actionCancelLabel={t("CS_COMMON_DOWNLOAD")}
