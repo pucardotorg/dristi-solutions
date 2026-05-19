@@ -26,6 +26,13 @@ import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/comp
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { UploadModal } from "@egovernments/digit-ui-module-common";
 
+const parseXml = (xmlString, tagName) => {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+  const element = xmlDoc.getElementsByTagName(tagName)[0];
+  return element ? element.textContent.trim() : null;
+};
+
 const defaultSearchValues = {
   eprocess: "",
   caseId: "",
@@ -1086,53 +1093,47 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
   }, [tenantId, rowData?.taskNumber, t]);
 
-  // XML parsing utility from BulkESignView
-  const parseXml = (xmlString, tagName) => {
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-    const element = xmlDoc.getElementsByTagName(tagName)[0];
-    return element ? element.textContent.trim() : null;
-  };
+  const fetchResponseFromXmlRequest = useCallback(
+    async (orderRequestList) => {
+      const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
+      const responses = [];
 
-  const fetchResponseFromXmlRequest = async (orderRequestList) => {
-    const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
-    const responses = [];
-
-    const requests = orderRequestList?.map(async (order) => {
-      try {
-        const formData = qs.stringify({ response: order?.request });
-        const response = await axiosInstance.post(bulkSignUrl, formData, {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          },
-        });
-
-        const data = response?.data;
-        if (parseXml(data, "status") !== "failed") {
-          responses.push({
-            taskNumber: order?.taskNumber || order?.orderNumber,
-            signedTaskData: parseXml(data, "data"),
-            signed: true,
-            errorMsg: null,
-            tenantId: tenantId,
+      for (const order of orderRequestList || []) {
+        try {
+          const formData = qs.stringify({ response: order?.request });
+          const response = await axiosInstance.post(bulkSignUrl, formData, {
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            },
           });
-        } else {
-          responses.push({
-            taskNumber: order?.taskNumber || order?.orderNumber,
-            signedTaskData: parseXml(data, "data"),
-            signed: false,
-            errorMsg: parseXml(data, "error"),
-            tenantId: tenantId,
-          });
+
+          const data = response?.data;
+          if (parseXml(data, "status") !== "failed") {
+            responses.push({
+              taskNumber: order?.taskNumber || order?.orderNumber,
+              signedTaskData: parseXml(data, "data"),
+              signed: true,
+              errorMsg: null,
+              tenantId: tenantId,
+            });
+          } else {
+            responses.push({
+              taskNumber: order?.taskNumber || order?.orderNumber,
+              signedTaskData: parseXml(data, "data"),
+              signed: false,
+              errorMsg: parseXml(data, "error"),
+              tenantId: tenantId,
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching order ${order?.orderNumber}:`, error?.message);
         }
-      } catch (error) {
-        console.error(`Error fetching order ${order?.orderNumber}:`, error?.message);
       }
-    });
 
-    await Promise.allSettled(requests);
-    return responses;
-  };
+      return responses;
+    },
+    [tenantId]
+  );
 
   const onBulkSignatureSelect = (key, value) => {
     if (value?.Signature === null) {

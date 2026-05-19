@@ -311,7 +311,7 @@ const BulkIssueCTC = () => {
     const responses = [];
     const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
 
-    const requests = docRequestList?.map(async (docRequest) => {
+    for (const docRequest of docRequestList || []) {
       try {
         const formData = qs.stringify({ response: docRequest?.request });
         const response = await axiosInstance.post(bulkSignUrl, formData, {
@@ -349,9 +349,8 @@ const BulkIssueCTC = () => {
       } catch (error) {
         console.error(`Error fetching document ${docRequest?.docId}:`, error?.message);
       }
-    });
+    }
 
-    await Promise.allSettled(requests);
     return responses;
   };
 

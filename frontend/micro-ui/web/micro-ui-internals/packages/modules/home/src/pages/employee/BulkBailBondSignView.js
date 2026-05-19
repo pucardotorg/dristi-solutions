@@ -146,7 +146,7 @@ function BulkBailBondSignView({ setShowToast = () => {} }) {
   const fetchResponseFromXmlRequest = async (bailBondRequestList) => {
     const responses = [];
 
-    const requests = bailBondRequestList?.map(async (bailBond) => {
+    for (const bailBond of bailBondRequestList || []) {
       try {
         // URL encoding the XML request
         const formData = qs.stringify({ response: bailBond?.request });
@@ -178,9 +178,8 @@ function BulkBailBondSignView({ setShowToast = () => {} }) {
       } catch (error) {
         console.error(`Error fetching bailBond ${bailBond?.bailId}:`, error?.message);
       }
-    });
+    }
 
-    await Promise.allSettled(requests);
     return responses;
   };
 
