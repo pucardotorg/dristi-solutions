@@ -1,5 +1,5 @@
 import { BackButton, Dropdown, Loader, Toast } from "@egovernments/digit-ui-react-components";
-import { FormComposer, FormComposerV2 } from "../../../components/FormComposer";
+import { FormComposerV2 } from "../../../components/FormComposer";
 import PropTypes from "prop-types";
 import React, { useEffect, useState, useMemo } from "react";
 import { useHistory } from "react-router-dom";

@@ -1,5 +1,5 @@
 import { BackButton, Dropdown, Loader, Toast } from "@egovernments/digit-ui-react-components";
-import { FormComposer } from "../../../components/FormComposer";
+import { FormComposerV2 } from "../../../components/FormComposer";
 import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
@@ -100,7 +100,7 @@ const ForgotPassword = ({ config: propsConfig, t }) => {
       <div className="employeeBackbuttonAlign">
         <BackButton variant="white" style={{ borderBottom: "none" }} />
       </div>
-      <FormComposer
+      <FormComposerV2
         onSubmit={onForgotPassword}
         noBoxShadow
         inline
@@ -116,7 +116,7 @@ const ForgotPassword = ({ config: propsConfig, t }) => {
         className="employeeForgotPassword"
       >
         <Header />
-      </FormComposer>
+      </FormComposerV2>
       {showToast && <Toast error={true} label={t(showToast)} onClose={closeToast} />}
     </Background>
   );

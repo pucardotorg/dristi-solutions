@@ -19,37 +19,7 @@ import {
   casesSearchStandardAdditionalValidations,
   casesSearchStandardMobileDetailsOnClick,
 } from "@egovernments/digit-ui-module-cases/src/configs/uiCustomizationsShared";
-
-const handleTaskDetails = (taskDetails) => {
-  try {
-    // Check if taskDetails is a string
-    if (typeof taskDetails === "string") {
-      // First, remove escape characters like backslashes if present
-      const cleanedDetails = taskDetails.replace(/\\n/g, "").replace(/\\/g, "");
-
-      // Try parsing the cleaned string as JSON
-      const parsed = JSON.parse(cleanedDetails);
-
-      // If the parsed result is a string, try parsing it again
-      if (typeof parsed === "string") {
-        try {
-          return JSON.parse(parsed);
-        } catch (e) {
-          return parsed;
-        }
-      }
-
-      // Return the parsed object if it's already a valid JSON object
-      return parsed;
-    }
-
-    // If taskDetails is not a string, return it as it is
-    return taskDetails;
-  } catch (error) {
-    console.error("Failed to parse taskDetails:", error);
-    return null;
-  }
-};
+import { parseTaskDetails } from "./uiCustomizationsTaskDetailsShared";
 
 export const UICustomizations = {
   EpostTrackingUiConfig: {
@@ -525,7 +495,7 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
-      const taskDetails = handleTaskDetails(row?.taskDetails);
+      const taskDetails = parseTaskDetails(row?.taskDetails);
       const delieveryDate = formatNoticeDeliveryDate(taskDetails?.deliveryChannels?.statusChangeDate || row?.createdDate);
       const hearingDate = formatNoticeDeliveryDate(taskDetails?.caseDetails?.hearingDate);
       const activeTab = searchResult?.additionalDetails?.activeTab || "";

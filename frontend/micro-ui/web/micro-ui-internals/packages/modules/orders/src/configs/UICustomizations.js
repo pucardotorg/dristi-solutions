@@ -1,369 +1,141 @@
 import get from "lodash/get";
-import set from "lodash/set";
 import { getFormattedName } from "../utils";
-import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { schemaToFormMdmsMatch } from "./schemaToFormMdmsShared";
+import {
+  orderFormAdrDropdownTransformer,
+  orderFormCustomDateTransformer,
+  orderFormCustomDropdownTransformer,
+  orderFormCustomTextAreaTransformer,
+  orderFormDateTransformer,
+  orderFormDefaultTransformer,
+  orderFormMdmsDropdownTransformer,
+  orderFormToSchema,
+  orderSchemaToForm,
+} from "./orderFormSchemaUtilsShared";
 
-//create functions here based on module name set in mdms(eg->SearchProjectConfig)
-//how to call these -> Digit?.Customizations?.[masterName]?.[moduleName]
-// these functions will act as middlewares
-// var Digit = window.Digit || {};
+const orderFormSharedTransformers = {
+  mdmsDropdown: orderFormMdmsDropdownTransformer,
+  adrDropDown: orderFormAdrDropdownTransformer,
+  date: orderFormDateTransformer,
+  customDate: orderFormCustomDateTransformer,
+  customDropdown: orderFormCustomDropdownTransformer,
+  customTextArea: orderFormCustomTextAreaTransformer,
+  default: orderFormDefaultTransformer,
+};
+
+const orderFormTransformers = {
+  ...orderFormSharedTransformers,
+  summonsOrderPartyName: {
+    formToSchema: (value) => {
+      try {
+        const isWitness = value?.party?.data?.partyType?.toLowerCase() === "witness";
+        const partyTypeLabel = isWitness ? "(witness)" : null;
+        return getFormattedName(
+          value?.party?.data?.firstName,
+          value?.party?.data?.middleName,
+          value?.party?.data?.lastName,
+          isWitness ? value?.party?.data?.witnessDesignation : null,
+          partyTypeLabel
+        );
+      } catch (error) {
+        console.error("Error in parsing party name", error);
+        return;
+      }
+    },
+    schemaToForm: () => {
+      throw new Error("Not implemented");
+    },
+  },
+  noticeOrderPartyName: {
+    formToSchema: (value) => {
+      try {
+        if (!Array?.isArray(value?.party) || value?.party?.length === 0) return [];
+
+        return value?.party?.map((p) => {
+          const isWitness = p?.data?.partyType?.toLowerCase() === "witness";
+          const partyTypeLabel = isWitness ? "(witness)" : null;
+
+          return getFormattedName(
+            p?.data?.firstName,
+            p?.data?.middleName,
+            p?.data?.lastName,
+            isWitness ? p?.data?.witnessDesignation : null,
+            partyTypeLabel
+          );
+        });
+      } catch (error) {
+        console.error("Error in parsing party name", error);
+        return [];
+      }
+    },
+  },
+};
+
+const applicationFormTransformers = {
+  ...orderFormSharedTransformers,
+  applicationDocuments: {
+    formToSchema: (obj) => {
+      return (
+        obj?.submissionDocuments?.map((item) => ({
+          fileName: item?.document?.additionalDetails?.name,
+          fileStore: item?.document?.fileStore,
+          documentType: item?.documentType?.code,
+          documentTitle: item?.documentTitle,
+        })) ||
+        obj?.map((item) => ({
+          fileName: item?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails?.name,
+          fileStore: item?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
+          documentType: item?.documentType?.code,
+          documentTitle: item?.documentTitle,
+        })) ||
+        []
+      );
+    },
+    schemaToForm: (arr) => {
+      const submissionDocuments =
+        arr.map((item) => ({
+          document: {
+            fileStore: item?.fileStore,
+            additionalDetails: { name: item?.fileName },
+          },
+          documentType: {
+            code: item?.documentType,
+          },
+          documentTitle: item?.documentTitle,
+        })) || [];
+      return { submissionDocuments };
+    },
+  },
+};
 
 export const UICustomizations = {
-  minTodayDateValidation: () => {
-    return {
-      min: new Date().toISOString().split("T")[0],
-    };
-  },
-  maxTodayDateValidation: () => {
-    return {
-      max: new Date().toISOString().split("T")[0],
-    };
-  },
+  minTodayDateValidation: () => ({
+    min: new Date().toISOString().split("T")[0],
+  }),
+  maxTodayDateValidation: () => ({
+    max: new Date().toISOString().split("T")[0],
+  }),
 
-  orderTitleValidation: () => {
-    return {
-      pattern: /^(\b\w+\b\s*){0,15}$/i,
-    };
-  },
+  orderTitleValidation: () => ({
+    pattern: /^(\b\w+\b\s*){0,15}$/i,
+  }),
 
-  alphaNumericValidation: () => {
-    return {
-      pattern: /[^a-zA-Z0-9\s]/g,
-    };
-  },
+  alphaNumericValidation: () => ({
+    pattern: /[^a-zA-Z0-9\s]/g,
+  }),
 
-  alphaNumericInputTextValidation: () => {
-    return {
-      pattern: /^[a-zA-Z0-9 ]+$/i,
-    };
-  },
+  alphaNumericInputTextValidation: () => ({
+    pattern: /^[a-zA-Z0-9 ]+$/i,
+  }),
+
   OrderFormSchemaUtils: {
-    transformers: {
-      mdmsDropdown: {
-        formToSchema: (option) => {
-          return option?.code;
-        },
-        schemaToForm: async (value, mdmsConfig) => schemaToFormMdmsMatch(value, mdmsConfig, "code"),
-      },
-      adrDropDown: {
-        formToSchema: (option) => {
-          return option?.name;
-        },
-        schemaToForm: async (value, mdmsConfig) => schemaToFormMdmsMatch(value, mdmsConfig, "name"),
-      },
-      date: {
-        formToSchema: (dateString) => {
-          return dateString ? new Date(dateString).getTime() : null;
-        },
-        schemaToForm: (date) => {
-          return date ? new Date(date).toISOString().split("T")[0] : null;
-        },
-      },
-      customDate: {
-        formToSchema: (dateString) => {
-          return dateString ? DateUtils.getFormattedDate(new Date(dateString), "DD-MM-YYYY") : null;
-        },
-        schemaToForm: (date) => {
-          return date ? new Date(date).toISOString().split("T")[0] : null;
-        },
-      },
-      customDropdown: {
-        formToSchema: (optionOrOptions) => {
-          if (Array.isArray(optionOrOptions)) {
-            return optionOrOptions.map((party) => party.name);
-          } else {
-            return optionOrOptions?.name;
-          }
-        },
-        schemaToForm: (value) => {
-          if (Array.isArray(value)) {
-            return value.map((party) => ({ name: party }));
-          } else {
-            return { name: value };
-          }
-        },
-      },
-      summonsOrderPartyName: {
-        formToSchema: (value) => {
-          try {
-            const isWitness = value?.party?.data?.partyType?.toLowerCase() === "witness";
-            const partyTypeLabel = isWitness ? "(witness)" : null;
-            return getFormattedName(
-              value?.party?.data?.firstName,
-              value?.party?.data?.middleName,
-              value?.party?.data?.lastName,
-              isWitness ? value?.party?.data?.witnessDesignation : null,
-              partyTypeLabel
-            );
-          } catch (error) {
-            console.error("Error in parsing party name", error);
-            return;
-          }
-        },
-        schemaToForm: (value) => {
-          throw new Error("Not implemented");
-        },
-      },
-      noticeOrderPartyName: {
-        formToSchema: (value) => {
-          try {
-            if (!Array?.isArray(value?.party) || value?.party?.length === 0) return [];
-
-            return value?.party?.map((p) => {
-              const isWitness = p?.data?.partyType?.toLowerCase() === "witness";
-              const partyTypeLabel = isWitness ? "(witness)" : null;
-
-              return getFormattedName(
-                p?.data?.firstName,
-                p?.data?.middleName,
-                p?.data?.lastName,
-                isWitness ? p?.data?.witnessDesignation : null,
-                partyTypeLabel
-              );
-            });
-          } catch (error) {
-            console.error("Error in parsing party name", error);
-            return [];
-          }
-        },
-      },
-      customTextArea: {
-        formToSchema: (obj) => {
-          return obj?.text || "";
-        },
-        schemaToForm: (text) => {
-          return { text: text || "" };
-        },
-      },
-      default: {
-        formToSchema: (obj) => {
-          return obj;
-        },
-        schemaToForm: (obj) => {
-          return obj;
-        },
-      },
-    },
-    formToSchema: (formData, formConfig) => {
-      const transformedFormData = {};
-      formConfig.forEach((section) => {
-        section.body.forEach((field) => {
-          const schemaKeyPath = field.schemaKeyPath;
-          if (!schemaKeyPath) {
-            return;
-          }
-          if (typeof schemaKeyPath === "string") {
-            const transformer = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.transformers[field.transformer]?.formToSchema;
-            set(transformedFormData, schemaKeyPath, transformer ? transformer(get(formData, field.key)) : get(formData, field.key));
-            return;
-          } else if (typeof schemaKeyPath === "object") {
-            // the schemaKeyPath is an object with multiple keys with value of {value: value , transformer: transformer} and above needs to be applied for each key
-            Object.entries(schemaKeyPath).forEach(([key, value]) => {
-              const transformer = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.transformers[value.transformer]?.formToSchema;
-              set(
-                transformedFormData,
-                value.value,
-                transformer ? transformer(get(formData, [field.key, key].join("."))) : get(formData, [field.key, key].join("."))
-              );
-            });
-          }
-        });
-      });
-      return transformedFormData;
-    },
-    schemaToForm: async (schemaData, formConfig) => {
-      // reverses the formToSchema transformation
-      const transformedSchemaData = {};
-      const usedMdmsMasters = {};
-      formConfig.forEach((section) => {
-        section.body.forEach((field) => {
-          if (field.populators?.mdmsConfig) {
-            usedMdmsMasters[field.populators.mdmsConfig.moduleName] = usedMdmsMasters[field.populators.mdmsConfig.moduleName] || [];
-            usedMdmsMasters[field.populators.mdmsConfig.moduleName].push(field.populators.mdmsConfig.masterName);
-          }
-        });
-      });
-      const mdmsValuesFetchPromises = [];
-      for (const moduleName in usedMdmsMasters) {
-        const promise = await Digit.MDMSService.getDataByCriteria(
-          Digit.ULBService.getCurrentTenantId(),
-          { details: { moduleDetails: [{ moduleName, masterDetails: usedMdmsMasters[moduleName].map((masterName) => ({ name: masterName })) }] } },
-          moduleName
-        );
-        mdmsValuesFetchPromises.push(promise);
-      }
-      await Promise.all(mdmsValuesFetchPromises);
-
-      const transformPromises = [];
-      formConfig.forEach((section) => {
-        section.body.forEach(async (field) => {
-          const schemaKeyPath = field.schemaKeyPath || field.key;
-          if (!schemaKeyPath || field.populators.hideInForm) {
-            return;
-          }
-          const transformer = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.transformers[field.transformer]?.schemaToForm;
-
-          if (transformer) {
-            const transformedValue = await transformer(get(schemaData, schemaKeyPath), field.populators?.mdmsConfig);
-            transformPromises.push(transformedValue);
-            set(transformedSchemaData, field.key, transformedValue);
-          } else {
-            set(transformedSchemaData, field.key, get(schemaData, schemaKeyPath));
-          }
-        });
-      });
-      await Promise.all(transformPromises);
-
-      return transformedSchemaData;
-    },
+    transformers: orderFormTransformers,
+    formToSchema: (formData, formConfig) => orderFormToSchema(formData, formConfig, orderFormTransformers),
+    schemaToForm: (schemaData, formConfig) => orderSchemaToForm(schemaData, formConfig, orderFormTransformers),
   },
 
   ApplicationFormSchemaUtils: {
-    transformers: {
-      mdmsDropdown: {
-        formToSchema: (option) => {
-          return option?.code;
-        },
-        schemaToForm: async (value, mdmsConfig) => schemaToFormMdmsMatch(value, mdmsConfig, "code"),
-      },
-      date: {
-        formToSchema: (dateString) => {
-          return dateString ? new Date(dateString).getTime() : null;
-        },
-        schemaToForm: (date) => {
-          return date ? new Date(date).toISOString().split("T")[0] : null;
-        },
-      },
-      customDropdown: {
-        formToSchema: (optionOrOptions) => {
-          if (Array.isArray(optionOrOptions)) {
-            return optionOrOptions.map((party) => party.name);
-          } else {
-            return optionOrOptions?.name;
-          }
-        },
-        schemaToForm: (value) => {
-          if (Array.isArray(value)) {
-            return value.map((party) => ({ name: party }));
-          } else {
-            return { name: value };
-          }
-        },
-      },
-      customTextArea: {
-        formToSchema: (obj) => {
-          return obj?.text || "";
-        },
-        schemaToForm: (text) => {
-          return { text: text || "" };
-        },
-      },
-      applicationDocuments: {
-        formToSchema: (obj) => {
-          return (
-            obj?.submissionDocuments?.map((item) => ({
-              fileName: item?.document?.additionalDetails?.name,
-              fileStore: item?.document?.fileStore,
-              documentType: item?.documentType?.code,
-              documentTitle: item?.documentTitle,
-            })) ||
-            obj?.map((item) => ({
-              fileName: item?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails?.name,
-              fileStore: item?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
-              documentType: item?.documentType?.code,
-              documentTitle: item?.documentTitle,
-            })) ||
-            []
-          );
-        },
-        schemaToForm: (arr) => {
-          const submissionDocuments =
-            arr.map((item) => ({
-              document: {
-                fileStore: item?.fileStore,
-                additionalDetails: { name: item?.fileName },
-              },
-              documentType: {
-                code: item?.documentType,
-              },
-              documentTitle: item?.documentTitle,
-            })) || [];
-          return { submissionDocuments };
-        },
-      },
-    },
-    formToSchema: (formData, formConfig) => {
-      const transformedFormData = {};
-      formConfig.forEach((section) => {
-        section.body.forEach((field) => {
-          const schemaKeyPath = field.schemaKeyPath;
-          if (!schemaKeyPath) {
-            return;
-          }
-          if (typeof schemaKeyPath === "string") {
-            const transformer = Digit.Customizations.dristiOrders.ApplicationFormSchemaUtils.transformers[field.transformer]?.formToSchema;
-            set(transformedFormData, schemaKeyPath, transformer ? transformer(get(formData, field.key)) : get(formData, field.key));
-            return;
-          } else if (typeof schemaKeyPath === "object") {
-            // the schemaKeyPath is an object with multiple keys with value of {value: value , transformer: transformer} and above needs to be applied for each key
-            Object.entries(schemaKeyPath).forEach(([key, value]) => {
-              const transformer = Digit.Customizations.dristiOrders.ApplicationFormSchemaUtils.transformers[value.transformer]?.formToSchema;
-              set(
-                transformedFormData,
-                value.value,
-                transformer ? transformer(get(formData, [field.key, key].join("."))) : get(formData, [field.key, key].join("."))
-              );
-            });
-          }
-        });
-      });
-      return transformedFormData;
-    },
-    schemaToForm: async (schemaData, formConfig) => {
-      // reverses the formToSchema transformation
-      const transformedSchemaData = {};
-      const usedMdmsMasters = {};
-      formConfig.forEach((section) => {
-        section.body.forEach((field) => {
-          if (field.populators?.mdmsConfig) {
-            usedMdmsMasters[field.populators.mdmsConfig.moduleName] = usedMdmsMasters[field.populators.mdmsConfig.moduleName] || [];
-            usedMdmsMasters[field.populators.mdmsConfig.moduleName].push(field.populators.mdmsConfig.masterName);
-          }
-        });
-      });
-      const mdmsValuesFetchPromises = [];
-      for (const moduleName in usedMdmsMasters) {
-        const promise = await Digit.MDMSService.getDataByCriteria(
-          Digit.ULBService.getCurrentTenantId(),
-          { details: { moduleDetails: [{ moduleName, masterDetails: usedMdmsMasters[moduleName].map((masterName) => ({ name: masterName })) }] } },
-          moduleName
-        );
-        mdmsValuesFetchPromises.push(promise);
-      }
-      await Promise.all(mdmsValuesFetchPromises);
-
-      const transformPromises = [];
-      formConfig.forEach((section) => {
-        section.body.forEach(async (field) => {
-          const schemaKeyPath = field.schemaKeyPath || field.key;
-          if (!schemaKeyPath || field.populators.hideInForm) {
-            return;
-          }
-          const transformer = Digit.Customizations.dristiOrders.ApplicationFormSchemaUtils.transformers[field.transformer]?.schemaToForm;
-
-          if (transformer) {
-            const transformedValue = await transformer(get(schemaData, schemaKeyPath), field.populators?.mdmsConfig);
-            transformPromises.push(transformedValue);
-            set(transformedSchemaData, field.key, transformedValue);
-          } else {
-            set(transformedSchemaData, field.key, get(schemaData, schemaKeyPath));
-          }
-        });
-      });
-      await Promise.all(transformPromises);
-
-      return transformedSchemaData;
-    },
+    transformers: applicationFormTransformers,
+    formToSchema: (formData, formConfig) => orderFormToSchema(formData, formConfig, applicationFormTransformers),
+    schemaToForm: (schemaData, formConfig) => orderSchemaToForm(schemaData, formConfig, applicationFormTransformers),
   },
 };

@@ -27,6 +27,11 @@ import { OrderWorkflowState } from "../Utils/orderWorkflow";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import { buildStandardInboxWorkflow } from "./uiCustomizationsWorkflowShared";
+import {
+  buildAdvocateBarRegistrationGetNames,
+  mapAdvocateForBarRegistrationJoinCase,
+  mapAdvocateForBarRegistrationSearch,
+} from "./uiCustomizationsAdvocateShared";
 
 export const getSelectedAdvocate = () => {
   try {
@@ -184,75 +189,10 @@ export const UICustomizations = {
       return inboxModuleNameMap;
     }
   },
-  getAdvocateNameUsingBarRegistrationNumber: {
-    getNames: () => {
-      return {
-        url: "/advocate/v1/status/_search",
-        params: { status: "ACTIVE", tenantId: window?.Digit.ULBService.getStateId(), offset: 0, limit: 1000 },
-        body: {
-          tenantId: window?.Digit.ULBService.getStateId(),
-        },
-        config: {
-          select: (data) => {
-            return data.advocates.map((adv) => {
-              return {
-                icon: (
-                  <span className="icon" style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span className="icon">{adv?.barRegistrationNumber}</span>
-                    <span className="icon" style={{ justifyContent: "end" }}>
-                      {removeInvalidNameParts(adv?.additionalDetails?.username)}
-                    </span>
-                  </span>
-                ),
-                barRegistrationNumber: `${adv?.barRegistrationNumber} (${removeInvalidNameParts(adv?.additionalDetails?.username)})`,
-                advocateName: removeInvalidNameParts(adv?.additionalDetails?.username),
-                advocateId: adv?.id,
-                barRegistrationNumberOriginal: adv?.barRegistrationNumber,
-                advocateUuid: adv?.auditDetails?.createdBy,
-                individualId: adv?.individualId,
-              };
-            });
-          },
-        },
-      };
-    },
-  },
-  getAdvocateNameUsingBarRegistrationNumberJoinCase: {
-    getNames: (props) => {
-      const removeOptions = props?.removeOptions ? props?.removeOptions : [];
-      const removeOptionsKey = props?.removeOptionsKey || "";
-      return {
-        url: "/advocate/v1/status/_search",
-        params: { status: "ACTIVE", tenantId: window?.Digit.ULBService.getStateId(), offset: 0, limit: 1000 },
-        body: {
-          tenantId: window?.Digit.ULBService.getStateId(),
-        },
-        config: {
-          select: (data) => {
-            return data.advocates
-              .filter((adv) => !removeOptions?.includes(adv?.[removeOptionsKey]))
-              .map((adv) => {
-                return {
-                  icon: (
-                    <span className="icon" style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span className="icon">{adv?.barRegistrationNumber}</span>
-                      <span className="icon" style={{ justifyContent: "end" }}>
-                        {removeInvalidNameParts(adv?.additionalDetails?.username)}
-                      </span>
-                    </span>
-                  ),
-                  barRegistrationNumber: `${adv?.barRegistrationNumber}`,
-                  advocateName: removeInvalidNameParts(adv?.additionalDetails?.username),
-                  advocateId: adv?.id,
-                  barRegistrationNumberOriginal: adv?.barRegistrationNumber,
-                  data: adv,
-                };
-              });
-          },
-        },
-      };
-    },
-  },
+  getAdvocateNameUsingBarRegistrationNumber: buildAdvocateBarRegistrationGetNames(mapAdvocateForBarRegistrationSearch),
+  getAdvocateNameUsingBarRegistrationNumberJoinCase: buildAdvocateBarRegistrationGetNames(mapAdvocateForBarRegistrationJoinCase, {
+    filterAdvocates: true,
+  }),
   registrationRequestsConfig: {
     customValidationCheck: (data) => {
       return !data?.applicationNumber_WILDCARD.trim() ? { label: "Please enter a valid application Number", error: true } : false;

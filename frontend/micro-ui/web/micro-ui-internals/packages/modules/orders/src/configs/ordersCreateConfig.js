@@ -35,6 +35,7 @@ import {
   orderFormNatureOfDisposalField,
   orderFormTransferSeekedToField,
   orderFormCaseTransferredToField,
+  orderMinTodayDateValidation,
 } from "./ordersCreateConfigShared";
 
 export const applicationTypeConfig = [
@@ -254,12 +255,7 @@ export const configsOrderSection202CRPC = [
         populators: {
           name: "responseRequiredBy",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
-            },
-          },
+          validation: orderMinTodayDateValidation,
         },
       },
     ],
@@ -347,12 +343,7 @@ export const configsOrderMandatorySubmissions = [
           name: "submissionDeadline",
           error: "CORE_REQUIRED_FIELD_ERROR",
           styles: { maxWidth: "100%" },
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
-            },
-          },
+          validation: orderMinTodayDateValidation,
         },
       },
       {
@@ -488,12 +479,7 @@ export const configsOrderSubmissionExtension = [
         populators: {
           name: "newSubmissionDate",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
-            },
-          },
+          validation: orderMinTodayDateValidation,
         },
       },
     ],
@@ -534,12 +520,7 @@ export const configsOrderTranferToADR = [
         populators: {
           name: "dateOfEndADR",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
-            },
-          },
+          validation: orderMinTodayDateValidation,
         },
       },
       {
@@ -629,12 +610,7 @@ export const configsScheduleHearingDate = [
         populators: {
           name: "hearingDate",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
-            },
-          },
+          validation: orderMinTodayDateValidation,
         },
       },
     ],
@@ -694,12 +670,7 @@ export const configsScheduleNextHearingDate = [
         populators: {
           name: "hearingDate",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
-            },
-          },
+          validation: orderMinTodayDateValidation,
         },
       },
       {
@@ -901,7 +872,8 @@ export const configsCaseTransfer = [
       orderFormApplicationStatusField,
       orderFormTransferSeekedToField,
     ],
-  },orderFormGroundsSection,
+  },
+  orderFormGroundsSection,
   {
     body: [
       orderFormCaseTransferredToField,
@@ -917,7 +889,8 @@ export const configsCaseTransferAccept = [
       orderFormApplicationStatusField,
       orderFormTransferSeekedToField,
     ],
-  },orderFormGroundsSection,
+  },
+  orderFormGroundsSection,
   {
     body: [
       orderFormCaseTransferredToField,
@@ -933,7 +906,8 @@ export const configsCaseTransferReject = [
       orderFormApplicationStatusField,
       orderFormTransferSeekedToField,
     ],
-  },orderFormGroundsSection,
+  },
+  orderFormGroundsSection,
   {
     body: [
       orderFormCaseTransferredToField,
@@ -2634,12 +2608,7 @@ export const configsCost = [
         populators: {
           name: "deadline",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
-            },
-          },
+          validation: orderMinTodayDateValidation,
         },
       },
     ],
@@ -2738,12 +2707,7 @@ export const configsWitnessBatta = [
         populators: {
           name: "deadline",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
-            },
-          },
+          validation: orderMinTodayDateValidation,
         },
       },
     ],
@@ -2796,18 +2760,7 @@ export const configAcceptReschedulingRequest = [
         schemaKeyPath: "orderDetails.originalHearingPurpose",
         populators: { name: "originalHearingPurpose", customStyle: { display: "none" } },
       },
-      {
-        label: "CURRENT_HEARING_DATE",
-        isMandatory: true,
-        key: "originalHearingDate",
-        schemaKeyPath: "orderDetails.originalHearingDate",
-        transformer: "date",
-        disable: true,
-        type: "date",
-        populators: {
-          name: "originalHearingDate",
-        },
-      },
+      buildOrderOriginalHearingDateField({ isMandatory: true }),
       {
         label: "PURPOSE_OF_NEXT_HEARING",
         isMandatory: true,

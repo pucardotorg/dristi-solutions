@@ -1,5 +1,5 @@
 import { BackButton, CardSubHeader, CardText, Toast } from "@egovernments/digit-ui-react-components";
-import { FormComposer } from "../../../components/FormComposer";
+import { FormComposerV2 } from "../../../components/FormComposer";
 import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
@@ -110,7 +110,7 @@ const ChangePasswordComponent = ({ config: propsConfig, t }) => {
       <div className="employeeBackbuttonAlign">
         <BackButton variant="white" style={{ borderBottom: "none" }} />
       </div>
-      <FormComposer
+      <FormComposerV2
         onSubmit={onChangePassword}
         noBoxShadow
         inline
@@ -142,7 +142,7 @@ const ChangePasswordComponent = ({ config: propsConfig, t }) => {
             {t("CORE_OTP_RESEND")}
           </div>
         </div> */}
-      </FormComposer>
+      </FormComposerV2>
       {showToast && <Toast error={true} label={t(showToast)} onClose={closeToast} />}
     </Background>
   );
