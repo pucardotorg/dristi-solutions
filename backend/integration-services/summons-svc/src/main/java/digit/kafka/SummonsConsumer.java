@@ -100,6 +100,33 @@ public class SummonsConsumer {
         }
     }
 
+    @KafkaListener(topics = {"${kafka.topic.update.task.application}"})
+    @Async
+    public void listenForWarrantReissue(final HashMap<String, Object> record, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            TaskRequest taskRequest = objectMapper.convertValue(record, TaskRequest.class);
+            String taskType = taskRequest.getTask().getTaskType();
+            String action = taskRequest.getTask().getWorkflow() != null
+                    ? taskRequest.getTask().getWorkflow().getAction() : null;
+
+            boolean isWarrantReissue = WARRANT.equalsIgnoreCase(taskType)
+                    && (WARRANT_REISSUE.equalsIgnoreCase(action) || WARRANT_REISSUE_ICOPS.equalsIgnoreCase(action));
+
+            if (isWarrantReissue) {
+                try {
+                    log.info("Regenerating warrant PDF for reissue: taskNumber={}, action={}",
+                            taskRequest.getTask().getTaskNumber(), action);
+                    summonsService.generateSummonsDocument(taskRequest);
+                } catch (Exception e) {
+                    log.error("Error regenerating warrant PDF for reissue: taskNumber={}",
+                            taskRequest.getTask().getTaskNumber(), e);
+                }
+            }
+        } catch (final Exception e) {
+            log.error("Error while listening to warrant reissue update: {}: ", record, e);
+        }
+    }
+
     @KafkaListener(topics = {"${kafka.topic.issue.summons.application}"})
     @Async
     public void listenForSendSummons(final HashMap<String, Object> record, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {

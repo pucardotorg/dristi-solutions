@@ -233,6 +233,9 @@ public class Configuration {
     @Value(("${kafka.topic.save.task.application}"))
     private String saveTaskApplicationTopic;
 
+    @Value("${kafka.topic.update.task.application}")
+    private String updateTaskApplicationTopic;
+
     @Value("${kafka.topic.insert.summons}")
     private String insertSummonsTopic;
 

@@ -126,7 +126,6 @@ public class ServiceConstants {
     public static final String NOTICE_NOT_DELIVERED = "NOTICE_NOT_DELIVERED";
     public static final String SUMMONS_DELIVERED = "SUMMONS_DELIVERED";
     public static final String SUMMONS_NOT_DELIVERED = "SUMMONS_NOT_DELIVERED";
-    public static final String WARRANT_ISSUED = "WARRANT_ISSUED";
     public static final String WARRANT_ISSUE_SUCCESS = "WARRANT_ISSUE_SUCCESS";
     public static final String EXECUTED = "EXECUTED";
     public static final String WARRANT_DELIVERED = "WARRANT_DELIVERED";
@@ -150,8 +149,23 @@ public class ServiceConstants {
 
     public static final String CHANNEL_CODE = "channelCode";
     public static final String RPAD = "RPAD";
+    public static final String POLICE = "POLICE";
     public static final String PENDING_ENVELOPE_SUBMISSION = "PENDING_ENVELOPE_SUBMISSION";
     public static final String MANUAL = "MANUAL_";
+
+    public static final String WARRANT_ISSUED="WARRANT_ISSUED";
+    public static final String ISSUE_WARRANT = "ISSUE_WARRANT";
+    public static final String WARRANT_REISSUE = "WARRANT_REISSUE";
+    public static final String WARRANT_REISSUE_ICOPS = "WARRANT_REISSUE_ICOPS";
+    public static final String WARRANT_REISSUED = "WARRANT_REISSUED";
+    public static final String CREATE = "CREATE";
+    public static final String CREATE_WITH_OUT_PAYMENT = "CREATE_WITH_OUT_PAYMENT";
+    public static final String REISSUE_WITH_NEW_WARRANT = "REISSUE_WITH_NEW_WARRANT";
+    public static final String EXPIRED = "EXPIRED";
+    public static final String SCHEDULED = "SCHEDULED";
+    public static final String UPDATE_DATE = "UPDATE_DATE";
+    public static final String RESCHEDULE_ONGOING = "RESCHEDULE_ONGOING";
+
     public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
     public static final String APPLICATION_DETAILS_PATH = "$.application.applicationDetails.taskNumber";
     public static final String APPLICATION_TYPE_PATH = "$.application.applicationType";
@@ -225,4 +239,12 @@ public class ServiceConstants {
 
     public static final String COMPOSITE = "COMPOSITE";
     public static final String INTERMEDIATE = "INTERMEDIATE";
+
+    public static final String ACCEPT_BAIL = "ACCEPT_BAIL";
+    public static final String PUBLISHED = "PUBLISHED";
+    public static final String SCHEDULE_OF_HEARING_DATE = "SCHEDULE_OF_HEARING_DATE";
+    public static final String SURETY = "SURETY";
+    public static final String BAIL_BOND_COMPLETED = "COMPLETED";
+    public static final String EXPIRE = "EXPIRE";
+    public static final String ABANDON = "ABANDON";
 }

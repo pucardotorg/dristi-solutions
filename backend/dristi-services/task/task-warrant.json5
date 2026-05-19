@@ -1,0 +1,261 @@
+{
+  "BusinessServices": [
+    {
+      "tenantId": "kl",
+      "businessService": "task-warrant",
+      "business": "task",
+      "businessServiceSla": 4320000000,
+      "states": [
+        {
+          "state": null,
+          "applicationStatus": null,
+          "docUploadRequired": true,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "CREATE",
+              "nextState": "PENDING_PAYMENT",
+              "roles": ["TASK_CREATOR", "SYSTEM", "SYSTEM_ADMIN"],
+              "active": true
+            },
+            {
+              "action": "CREATE_WITH_OUT_PAYMENT",
+              "nextState": "ISSUE_WARRANT",
+              "roles": ["TASK_CREATOR", "SYSTEM", "SYSTEM_ADMIN"],
+              "active": true
+            }
+          ]
+        },
+        {
+          "state": "PENDING_PAYMENT",
+          "applicationStatus": "INWORKFLOW",
+          "sla": 172800000,
+          "docUploadRequired": true,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "MAKE_PAYMENT",
+              "nextState": "ISSUE_WARRANT",
+              "roles": ["TASK_CREATOR", "SYSTEM", "CITIZEN", "SYSTEM_ADMIN"],
+              "active": true
+            },
+            {
+              "action": "EXPIRE",
+              "nextState": "EXPIRED",
+              "roles": ["TASK_CREATOR", "SYSTEM", "CITIZEN", "SYSTEM_ADMIN"],
+              "active": true
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": ["SYSTEM", "SYSTEM_ADMIN"],
+              "active": true
+            },
+            //New actions added for warrant reissue
+            {
+              "action": "WARRANT_REISSUE",
+              "nextState": "PENDING_PAYMENT",
+              "roles": ["SYSTEM"],
+              "active": true,
+              "note": "Scenario 1: Hearing rescheduled - update hearing date, warrant stays active"
+            },
+            {
+              "action": "REISSUE_WITH_NEW_WARRANT",
+              "nextState": "WARRANT_REISSUED_WITH_NEW_WARRANT",
+              "roles": ["SYSTEM"],
+              "active": true,
+              "note": "Scenario 2: Hearing completed and new hearing scheduled..",
+            }
+          ]
+        },
+        {
+          "state": "ISSUE_WARRANT",
+          "applicationStatus": "INWORKFLOW",
+          "sla": 388000000,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "SEND",
+              "nextState": "WARRANT_SENT",
+              "roles": ["TASK_EDITOR", "SYSTEM", "SYSTEM_ADMIN"],
+              "active": true
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": ["SYSTEM", "SYSTEM_ADMIN"],
+              "active": true
+            },
+            //New actions added for warrant reissue
+            {
+              "action": "WARRANT_REISSUE",
+              "nextState": "PENDING_PAYMENT", //for only non icops channels
+              "roles": ["SYSTEM"],
+              "active": true,
+              "note": "Scenario 1: Hearing rescheduled - regenerate document with new hearing date, return to ISSUE_WARRANT"
+            },
+            {
+              "action": "WARRANT_REISSUE_ICOPS",
+              "nextState": "WARRANT_REISSUED", //for icops channels
+              "roles": ["SYSTEM"],
+              "active": true,
+              "note": "Scenario 1: Hearing rescheduled - regenerate document with new hearing date, return to ISSUE_WARRANT"
+            },
+            {
+              "action": "REISSUE_WITH_NEW_WARRANT",
+              "nextState": "WARRANT_REISSUED_WITH_NEW_WARRANT",
+              "roles": ["SYSTEM"],
+              "active": true,
+              "note": "Scenario 2: Hearing completed and new hearing scheduled..",
+            }
+          ]
+        },
+        //WARRANT_REISSUED as new state similar to ISSUE_WARRANT
+        {
+          "state": "WARRANT_REISSUED",
+          "actions": [
+            {
+              "action": "SEND",
+              "nextState": "WARRANT_SENT",
+              "roles": ["TASK_EDITOR", "SYSTEM", "SYSTEM_ADMIN"],
+              "active": true
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": ["SYSTEM", "SYSTEM_ADMIN"],
+              "active": true
+            },
+            //New actions added for warrant reissue
+            {
+              "action": "WARRANT_REISSUE",
+              "nextState": "PENDING_PAYMENT", //for only non icops channels
+              "roles": ["SYSTEM"],
+              "active": true,
+              "note": "Scenario 1: Hearing rescheduled - regenerate document with new hearing date, return to ISSUE_WARRANT"
+            },
+            {
+              "action": "WARRANT_REISSUE_ICOPS",
+              "nextState": "WARRANT_REISSUED", //for icops channels
+              "roles": ["SYSTEM"],
+              "active": true,
+              "note": "Scenario 1: Hearing rescheduled - regenerate document with new hearing date, return to ISSUE_WARRANT"
+            },
+            {
+              "action": "REISSUE_WITH_NEW_WARRANT",
+              "nextState": "WARRANT_REISSUED_WITH_NEW_WARRANT",
+              "roles": ["SYSTEM"],
+              "active": true,
+              "note": "Scenario 2: Hearing completed and new hearing scheduled..",
+            }
+          ]
+        },
+        {
+          "state": "WARRANT_SENT",
+          "applicationStatus": "INWORKFLOW",
+          "sla": 3888000000,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "DELIVERED",
+              "nextState": "EXECUTED",
+              "roles": ["TASK_EDITOR", "SYSTEM", "SYSTEM_ADMIN"],
+              "active": true
+            },
+            {
+              "action": "NOT_DELIVERED",
+              "nextState": "NOT_EXECUTED",
+              "roles": ["TASK_EDITOR", "SYSTEM", "SYSTEM_ADMIN", "AUTO_ESCALATE"],
+              "active": true
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": ["SYSTEM", "SYSTEM_ADMIN"],
+              "active": true
+            },
+            //New actions added for warrant reissue
+            {
+              "action": "WARRANT_REISSUE",
+              "nextState": "PENDING_PAYMENT", //for only non icops channels
+              "roles": ["SYSTEM"],
+              "active": true,
+              "note": "Scenario 1: Hearing rescheduled - regenerate document with new hearing date, return to ISSUE_WARRANT"
+            },
+            {
+              "action": "WARRANT_REISSUE_ICOPS",
+              "nextState": "WARRANT_REISSUED", //for icops channels
+              "roles": ["SYSTEM"],
+              "active": true,
+              "note": "Scenario 1: Hearing rescheduled - regenerate document with new hearing date, return to ISSUE_WARRANT"
+            },
+            {
+              "action": "REISSUE_WITH_NEW_WARRANT",
+              "nextState": "WARRANT_REISSUED_WITH_NEW_WARRANT",
+              "roles": ["SYSTEM"],
+              "active": true,
+              "note": "Scenario 2: Hearing completed and new hearing scheduled..",
+            }
+          ]
+        },
+        {
+          "state": "EXECUTED",
+          "applicationStatus": "ACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": null
+        },
+        {
+          "state": "NOT_EXECUTED",
+          "applicationStatus": "ACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": null
+        },
+        {
+          "state": "ABATED",
+          "applicationStatus": "INACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": null
+        },
+        {
+          "state": "EXPIRED",
+          "applicationStatus": "INACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": null
+        },
+        //New state added for warrant reissue
+        {
+          "state": "WARRANT_REISSUED_WITH_NEW_WARRANT",
+          "applicationStatus": "INACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": null,
+          "note": "Terminal (Scenario 2): Old warrant closed when new hearing order published. Hidden from CMO sign/process tabs."
+        }
+      ]
+    }
+  ]
+}
