@@ -1,4 +1,4 @@
-import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";

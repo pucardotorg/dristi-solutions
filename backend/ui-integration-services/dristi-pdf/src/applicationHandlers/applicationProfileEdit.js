@@ -263,6 +263,15 @@ async function applicationProfileEdit(
         ? oldData?.data?.respondentTypeOfEntity?.name
         : oldData?.data?.complainantTypeOfEntity?.name;
 
+    const newCompanyName =
+      partyType === "respondent"
+        ? newData?.respondentCompanyName
+        : newData?.complainantCompanyName;
+    const newEntityType =
+      partyType === "respondent"
+        ? newData?.respondentTypeOfEntity?.name
+        : newData?.complainantTypeOfEntity?.name;
+
     const { complainantList, accusedList } = getComplaintAndAccusedList(
       courtCase || {},
     );
@@ -301,6 +310,8 @@ async function applicationProfileEdit(
             showAddress(oldData?.data?.addressDetails) || [],
           currentResedentialAddress:
             showAddress(oldData?.data?.currentAddressDetails) || [],
+          currentAddressCompanyDetails:
+            showAddress(oldData?.data?.addressCompanyDetails) || [],
           isEntity: currentDetailsLitigantTypeCode !== "INDIVIDUAL",
           currentCompanyName: currentCompanyName || "",
           currentEntityType: currentEntityType || "",
@@ -313,6 +324,10 @@ async function applicationProfileEdit(
           newPermanentAddress: showAddress(newData?.addressDetails) || [],
           newResedentialAddress:
             showAddress(newData?.currentAddressDetails) || [],
+          newAddressCompanyDetails:
+            showAddress(newData?.addressCompanyDetails) || [],
+          newCompanyName: newCompanyName || "",
+          newEntityType: newEntityType || "",
           applicationTitle: "APPLICATION FOR EDITING LITIGANT DETAILS",
           petitionerName: getNameByUuid(application?.asUser, courtCase),
           complainantList: complainantList,

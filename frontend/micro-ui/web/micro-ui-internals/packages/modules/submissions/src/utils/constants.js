@@ -26,3 +26,5 @@ export const ORDER_CATEGORIES = {
   COMPOSITE: "COMPOSITE",
   SINGLE: "SINGLE",
 };
+
+export { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig } from "@egovernments/digit-ui-module-common";

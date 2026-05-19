@@ -19,6 +19,7 @@ import { Urls } from "../../../../../submissions/src/hooks/services/Urls";
 import useESignOpenApi from "../../../../../submissions/src/hooks/submissions/useESignOpenApi";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
 import CustomToast from "../../../components/CustomToast";
+import { UploadModal } from "@egovernments/digit-ui-module-common";
 
 const MediationFormSignaturePage = () => {
   const { t } = useTranslation();
@@ -55,7 +56,6 @@ const MediationFormSignaturePage = () => {
   const [isEsignSuccess, setEsignSuccess] = useState(false);
   const isUpdatingRef = useRef(false);
   const { downloadPdf } = useDownloadCasePdf();
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [showSkipConfirmModal, setShowSkipConfirmModal] = useState(false);
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const [selectedParty, setSelectedParty] = useState(() => {
@@ -78,26 +78,6 @@ const MediationFormSignaturePage = () => {
 
   const pageModule = isUserLoggedIn ? (isCitizen ? "ci" : "en") : "ci";
   const [esignMobileNumber, setEsignMobileNumber] = useState("");
-
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
 
   const {
     data: digitizedDocumentsOpenData,
@@ -297,11 +277,12 @@ const MediationFormSignaturePage = () => {
     setFileUploadError(null);
   };
 
-  const onSubmit = async () => {
+  const onSubmit = async (combineResult) => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
         setUploadLoader(true);
-        const uploadedFile = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
+        const filesToUpload = combineResult?.combinedFiles || formData?.uploadSignature?.Signature;
+        const uploadedFile = await uploadDocuments(filesToUpload, tenantId);
         const uploadedFileStoreId = uploadedFile?.[0]?.fileStoreId;
         setSignatureDocumentId(uploadedFileStoreId);
         await updateMediationDocument(MediationWorkflowAction.UPLOAD, uploadedFileStoreId);
@@ -309,7 +290,10 @@ const MediationFormSignaturePage = () => {
         console.error("error", error);
         setFormData({});
         setSignatureDocumentId(null);
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+        setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
+        setShowToast({ label: t(errorCode), error: true, errorId });
       } finally {
         setUploadLoader(false);
       }
@@ -732,16 +716,16 @@ const MediationFormSignaturePage = () => {
         </Modal>
       )}
       {showUploadSignatureModal && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key={name}
           name={name}
-          setOpenUploadSignatureModal={setShowUploadSignatureModal}
+          onClose={() => setShowUploadSignatureModal(false)}
           onSelect={onSelect}
-          config={uploadModalConfig}
           formData={formData}
           onSubmit={onSubmit}
           isDisabled={uploadLoader}
+          isParentLoading={uploadLoader}
           fileUploadError={fileUploadError}
           setFileUploadError={setFileUploadError}
           downloadedFileName={`${digitalizationServiceDetails?.mediationDetails?.mediationId}_mediation`}
