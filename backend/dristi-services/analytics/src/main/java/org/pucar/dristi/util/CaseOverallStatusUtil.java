@@ -657,14 +657,11 @@ public class CaseOverallStatusUtil {
         if (MOVE_CASE_TO_LONG_PENDING_REGISTER.equalsIgnoreCase(orderType)) {
             String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
             caseStageTrackingUtil.transitionStage(filingNumber, caseId, tenantId, currentCaseStage, "Long Pending Register");
-            // Publish stage change so the persisted case stage is updated downstream (Kafka -> case service / indexer)
-            CaseOverallStatus lprStatus = new CaseOverallStatus(filingNumber, tenantId, "Long Pending Register");
-            publishToCaseOverallStatus(lprStatus, request, caseObject);
             if (caseObject instanceof JSONObject) {
                 ((JSONObject) caseObject).put("stage", "Long Pending Register");
             }
-            log.info("ended stage '{}', started stage '{}' for filingNumber: {}", currentCaseStage, "Long Pending Register", filingNumber);
             currentCaseStage = "Long Pending Register";
+            log.info("ended stage '{}', started stage '{}' for filingNumber: {}", currentCaseStage, "Long Pending Register", filingNumber);
         }
 
         CaseOverallStatus finalCaseOverallStatus = null;
