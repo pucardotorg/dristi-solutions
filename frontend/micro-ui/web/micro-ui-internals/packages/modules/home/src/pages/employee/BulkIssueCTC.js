@@ -436,6 +436,7 @@ const BulkIssueCTC = () => {
       await HomeService.updateCTCDocs(payload, { tenantId });
 
       sessionStorage.removeItem("fileStoreId");
+      sessionStorage.removeItem("fileStoreUnsigned");
       setShowSignatureModal(false);
       setSelectedRowData(null);
 
@@ -458,10 +459,10 @@ const BulkIssueCTC = () => {
   const handleIssueDocuments = async () => {
     const localStorageID = sessionStorage.getItem("fileStoreId");
     const signedId = localStorageID || signedDocumentUploadId;
-    const originalId =
-      selectedRowData?.businessObject?.fileStoreId || selectedRowData?.affidavitDocument?.fileStore || selectedRowData?.documents?.[0]?.fileStore;
-    if (!signedId || signedId === originalId) {
+    if (!signedId || signedId === sessionStorage.getItem("fileStoreUnsigned")) {
       setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+      sessionStorage.removeItem("fileStoreUnsigned");
+      sessionStorage.removeItem("fileStoreId");
       return;
     }
 
@@ -571,6 +572,7 @@ const BulkIssueCTC = () => {
           handleGoBackSignatureModal={async () => {
             sessionStorage.removeItem("ctcSignState");
             sessionStorage.removeItem("fileStoreId");
+            sessionStorage.removeItem("fileStoreUnsigned");
             if (!(selectedRowData?.businessObject?.downloadedDocument instanceof Blob)) {
               await handleRowClick(selectedRowData);
               setShowSignatureModal(false);

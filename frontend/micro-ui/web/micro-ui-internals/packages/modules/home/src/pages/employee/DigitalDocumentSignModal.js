@@ -379,8 +379,10 @@ export const DigitalDocumentSignModal = ({
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const newFilestore = digitalDocumentSignedPdf || localStorageID;
-      if (!newFilestore || newFilestore === selectedDigitalDocumentFilestoreid) {
+      if (!newFilestore || newFilestore === sessionStorage.getItem("fileStoreUnsigned")) {
         setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+        sessionStorage.removeItem("fileStoreUnsigned");
+        sessionStorage.removeItem("fileStoreId");
         return;
       }
 
@@ -391,6 +393,7 @@ export const DigitalDocumentSignModal = ({
       });
       setDigitalDocumentSignedPdf(newFilestore);
       sessionStorage.removeItem("fileStoreId");
+      sessionStorage.removeItem("fileStoreUnsigned");
     } catch (error) {
       console.error("Error :", error);
       setIsSigned(false);
@@ -499,6 +502,7 @@ export const DigitalDocumentSignModal = ({
   useEffect(() => {
     const clearFileStoreId = () => {
       sessionStorage.removeItem("fileStoreId");
+      sessionStorage.removeItem("fileStoreUnsigned");
     };
     window.addEventListener("beforeunload", clearFileStoreId);
     window.addEventListener("popstate", clearFileStoreId);

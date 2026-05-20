@@ -726,8 +726,11 @@ const MarkAsEvidence = ({
       } else if (stepper === 1 && isSigned) {
         if (!mockESignEnabled) {
           const signedFileStore = sessionStorage.getItem("fileStoreId");
-          if (!signedFileStore || signedFileStore === sealFileStoreId) {
+          const unsignedFileStore = sessionStorage.getItem("fileStoreUnsigned");
+          if (!signedFileStore || signedFileStore === unsignedFileStore) {
             setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+            sessionStorage.removeItem("fileStoreUnsigned");
+            sessionStorage.removeItem("fileStoreId");
             return;
           }
         }
@@ -786,6 +789,7 @@ const MarkAsEvidence = ({
 
             clearEvidenceSessionData();
             sessionStorage.removeItem("fileStoreId");
+            sessionStorage.removeItem("fileStoreUnsigned");
           } else {
             setStepper(1);
             setIsSigned(false);
@@ -873,6 +877,7 @@ const MarkAsEvidence = ({
       if (paginatedData?.offset) sessionStorage.setItem("bulkMarkAsEvidenceOffset", paginatedData?.offset);
 
       sessionStorage.removeItem("fileStoreId");
+      sessionStorage.removeItem("fileStoreUnsigned");
       handleEsign(name, pageModule, file, setShowToast, t, "Judge/Magistrate");
     } catch (error) {
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];

@@ -946,8 +946,10 @@ const ComplainantSignature = ({ path }) => {
     let tempDocList = [...caseDocList];
     const isSignedDocumentsPresent = tempDocList?.some((doc) => doc?.documentType === "case.complaint.signed");
     if (isSignedDocumentsPresent) tempDocList = tempDocList?.filter((doc) => doc?.documentType !== "case.complaint.unsigned");
-    if (!mockESignEnabled && (!signatureDocumentId || signatureDocumentId === caseDetails?.additionalDetails?.signedCaseDocument)) {
+    if (!mockESignEnabled && (!signatureDocumentId || signatureDocumentId === sessionStorage.getItem("fileStoreUnsigned"))) {
       setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+      sessionStorage.removeItem("fileStoreUnsigned");
+      sessionStorage.removeItem("fileStoreId");
       setLoader(false);
       return;
     }
@@ -1121,6 +1123,7 @@ const ComplainantSignature = ({ path }) => {
     sessionStorage.removeItem("isSignSuccess");
     localStorage.removeItem("signStatus");
     sessionStorage.removeItem("fileStoreId");
+    sessionStorage.removeItem("fileStoreUnsigned");
   };
 
   useEffect(() => {

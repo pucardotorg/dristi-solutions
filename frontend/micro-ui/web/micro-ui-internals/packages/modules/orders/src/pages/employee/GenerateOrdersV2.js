@@ -1554,8 +1554,10 @@ const GenerateOrdersV2 = () => {
 
       if (!mockESignEnabled && isSigning) {
         const effectiveSignedId = signedDoucumentUploadedID || localStorageID;
-        if (!effectiveSignedId || effectiveSignedId === orderPdfFileStoreID) {
+        if (!effectiveSignedId || effectiveSignedId === sessionStorage.getItem("fileStoreUnsigned")) {
           setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+          sessionStorage.removeItem("fileStoreUnsigned");
+          sessionStorage.removeItem("fileStoreId");
           return null;
         }
       }
@@ -2455,6 +2457,7 @@ const GenerateOrdersV2 = () => {
 
   const handleGoBackSignatureModal = () => {
     sessionStorage.removeItem("fileStoreId");
+    sessionStorage.removeItem("fileStoreUnsigned");
     sessionStorage.removeItem("businessOfTheDay");
     setSignedDocumentUploadID("");
     setFileStoreIds((prev) => {
@@ -2497,6 +2500,7 @@ const GenerateOrdersV2 = () => {
 
   const handleClose = async () => {
     sessionStorage.removeItem("fileStoreId");
+    sessionStorage.removeItem("fileStoreUnsigned");
     if (successModalActionSaveLabel === t("CS_COMMON_CLOSE")) {
       setShowSuccessModal(false);
       history.replace(
@@ -2519,6 +2523,7 @@ const GenerateOrdersV2 = () => {
 
   const handleCloseSuccessModal = () => {
     sessionStorage.removeItem("fileStoreId");
+    sessionStorage.removeItem("fileStoreUnsigned");
     setShowSuccessModal(false);
     history.replace(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
       from: "orderSuccessModal",

@@ -181,8 +181,10 @@ const BailBondSignaturePage = () => {
     // TODO: Update call with Signed FileStore
     try {
       const fileStoreId = sessionStorage.getItem("fileStoreId");
-      if (!fileStoreId || fileStoreId === bailBondDetails?.documents?.[0]?.fileStore) {
+      if (!fileStoreId || fileStoreId === sessionStorage.getItem("fileStoreUnsigned")) {
         setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+        sessionStorage.removeItem("fileStoreUnsigned");
+        sessionStorage.removeItem("fileStoreId");
         return;
       }
       const payload = {
@@ -192,6 +194,7 @@ const BailBondSignaturePage = () => {
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
+      sessionStorage.removeItem("fileStoreUnsigned");
       await submissionService.updateOpenBailBond(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);
@@ -274,6 +277,7 @@ const BailBondSignaturePage = () => {
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
+      sessionStorage.removeItem("fileStoreUnsigned");
       await submissionService.updateOpenBailBond(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);

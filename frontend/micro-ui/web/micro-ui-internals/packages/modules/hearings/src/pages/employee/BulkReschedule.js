@@ -188,8 +188,10 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       });
 
       const newFileStoreId = signedDocumentUploadID || localStorageID;
-      if (!newFileStoreId || newFileStoreId === notificationFileStoreId) {
+      if (!newFileStoreId || newFileStoreId === sessionStorage.getItem("fileStoreUnsigned")) {
         setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+        sessionStorage.removeItem("fileStoreUnsigned");
+        sessionStorage.removeItem("fileStoreId");
         setLoader(false);
         return;
       }
@@ -776,6 +778,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           actionSaveOnSubmit={async () => {
             setSignedDocumentUploadID("");
             sessionStorage.removeItem("fileStoreId");
+            sessionStorage.removeItem("fileStoreUnsigned");
             setStepper(0);
             await refetch();
           }}

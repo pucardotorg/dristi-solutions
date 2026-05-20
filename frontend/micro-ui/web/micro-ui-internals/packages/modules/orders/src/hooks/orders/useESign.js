@@ -11,6 +11,7 @@ const useESign = () => {
       try {
         const newSignStatuses = [...parsedObj, { name: name, isSigned: true }];
         sessionStorage.setItem("signStatus", JSON.stringify(newSignStatuses));
+        sessionStorage.setItem("fileStoreUnsigned", fileStoreId);
         const eSignResponse = await Digit.DRISTIService.eSignService({
           ESignParameter: {
             uidToken: "3456565",

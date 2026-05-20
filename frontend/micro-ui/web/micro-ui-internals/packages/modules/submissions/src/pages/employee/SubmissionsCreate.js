@@ -1447,8 +1447,10 @@ const SubmissionsCreate = ({ path }) => {
 
       if (!mockESignEnabled && action === SubmissionWorkflowAction.ESIGN) {
         const effectiveSignedId = sessionStorage.getItem("fileStoreId");
-        if (!effectiveSignedId || effectiveSignedId === applicationPdfFileStoreId) {
+        if (!effectiveSignedId || effectiveSignedId === sessionStorage.getItem("fileStoreUnsigned")) {
           setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+          sessionStorage.removeItem("fileStoreUnsigned");
+          sessionStorage.removeItem("fileStoreId");
           return null;
         }
       }
@@ -1481,6 +1483,7 @@ const SubmissionsCreate = ({ path }) => {
           : null;
 
       sessionStorage.removeItem("fileStoreId");
+      sessionStorage.removeItem("fileStoreUnsigned");
       const reqBody = {
         application: {
           ...applicationDetails,
@@ -1924,6 +1927,7 @@ const SubmissionsCreate = ({ path }) => {
     setShowsignatureModal(false);
     setShowReviewModal(true);
     sessionStorage.removeItem("fileStoreId");
+    sessionStorage.removeItem("fileStoreUnsigned");
   };
 
   const handleSkipPayment = () => {
