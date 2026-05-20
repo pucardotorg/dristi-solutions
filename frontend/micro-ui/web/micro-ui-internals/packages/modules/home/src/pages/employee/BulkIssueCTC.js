@@ -457,13 +457,20 @@ const BulkIssueCTC = () => {
 
   const handleIssueDocuments = async () => {
     const localStorageID = sessionStorage.getItem("fileStoreId");
+    const signedId = localStorageID || signedDocumentUploadId;
+    const originalId =
+      selectedRowData?.businessObject?.fileStoreId || selectedRowData?.affidavitDocument?.fileStore || selectedRowData?.documents?.[0]?.fileStore;
+    if (!signedId || signedId === originalId) {
+      setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+      return;
+    }
 
     await handleCTCDocumentAction({
       action: "ISSUE",
       documents: [
         {
           documentType: "SIGNED_CTC_APPLICATION",
-          fileStore: localStorageID || signedDocumentUploadId,
+          fileStore: signedId,
         },
       ],
       successMessage: "CTC_DOCUMENT_ISSUED_SUCCESSFULLY",

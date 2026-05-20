@@ -871,6 +871,15 @@ const ReviewSummonsNoticeAndWarrant = () => {
       } else {
         localStorageID = sessionStorage.getItem("fileStoreId");
       }
+
+      if (!mockESignEnabled) {
+        const effectiveSignedId = signatureId || localStorageID;
+        if (!effectiveSignedId || effectiveSignedId === rowData?.documents?.[0]?.fileStore) {
+          setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+          return { continue: false };
+        }
+      }
+
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
 
       if (currentConfig?.label === "PENDING_RPAD_COLLECTION") {

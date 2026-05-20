@@ -946,6 +946,11 @@ const ComplainantSignature = ({ path }) => {
     let tempDocList = [...caseDocList];
     const isSignedDocumentsPresent = tempDocList?.some((doc) => doc?.documentType === "case.complaint.signed");
     if (isSignedDocumentsPresent) tempDocList = tempDocList?.filter((doc) => doc?.documentType !== "case.complaint.unsigned");
+    if (!mockESignEnabled && (!signatureDocumentId || signatureDocumentId === caseDetails?.additionalDetails?.signedCaseDocument)) {
+      setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+      setLoader(false);
+      return;
+    }
     try {
       await DRISTIService.caseUpdateService(
         {
