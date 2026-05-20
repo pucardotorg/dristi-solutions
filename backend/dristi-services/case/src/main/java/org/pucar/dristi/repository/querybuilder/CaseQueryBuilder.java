@@ -36,7 +36,7 @@ public class CaseQueryBuilder {
     private static final String ORDERBY_CLAUSE = " ORDER BY cases.{orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY cases.createdtime DESC ";
 
-    private static final String DOCUMENT_SELECT_QUERY_CASE = "SELECT DISTINCT ON (doc.filestore) " + "doc.id AS id, " + "doc.documenttype AS documenttype, " + "doc.filestore AS filestore, " + "doc.documentuid AS documentuid, " + "doc.additionaldetails AS docadditionaldetails, " + "doc.case_id AS case_id, " + "doc.isactive AS isactive, " + "doc.linked_case_id AS linked_case_id, " + "doc.litigant_id AS litigant_id, " + "doc.representative_id AS representative_id, " + "doc.representing_id AS representing_id, " + "doc.poaholder_id AS poaholder_id ";
+    private static final String DOCUMENT_SELECT_QUERY_CASE = "SELECT doc.id AS id, " + "doc.documenttype AS documenttype, " + "doc.filestore AS filestore, " + "doc.documentuid AS documentuid, " + "doc.additionaldetails AS docadditionaldetails, " + "doc.case_id AS case_id, " + "doc.isactive AS isactive, " + "doc.linked_case_id AS linked_case_id, " + "doc.litigant_id AS litigant_id, " + "doc.representative_id AS representative_id, " + "doc.representing_id AS representing_id, " + "doc.poaholder_id AS poaholder_id ";
     private static final String FROM_DOCUMENTS_TABLE = " FROM dristi_case_document doc";
 
     private static final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
