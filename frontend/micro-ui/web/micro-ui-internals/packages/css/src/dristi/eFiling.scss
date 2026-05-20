@@ -2399,3 +2399,10 @@
   margin-left: 12px;
   cursor: pointer;
 }
+
+
+.doc-viewer-card{
+  height: calc(100vh - 154px);
+  margin-bottom: 16px;
+  max-width: 100% !important;
+}
