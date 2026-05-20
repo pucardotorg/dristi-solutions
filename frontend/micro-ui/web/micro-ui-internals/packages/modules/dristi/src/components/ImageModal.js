@@ -157,6 +157,7 @@ export const ImageModal = ({
         showDownloadOption={false}
         style={{ transform: `rotate(${rotation}deg)`, transition: "transform 0.2s ease" }}
         pdfZoom={zoom}
+        docViewerCardClassName="doc-viewer-card"
       />
     </Modal>
   );
