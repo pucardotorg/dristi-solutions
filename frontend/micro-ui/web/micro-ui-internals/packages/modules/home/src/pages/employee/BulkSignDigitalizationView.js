@@ -193,7 +193,7 @@ function BulkSignDigitalizationView() {
   const fetchResponseFromXmlRequest = async (documentRequestList) => {
     const responses = [];
 
-    const requests = documentRequestList?.map(async (document) => {
+    for (const document of documentRequestList || []) {
       try {
         // URL encoding the XML request
         const formData = qs.stringify({ response: document?.request });
@@ -225,9 +225,8 @@ function BulkSignDigitalizationView() {
       } catch (error) {
         console.error(`Error fetching document ${document?.documentNumber}:`, error?.message);
       }
-    });
+    }
 
-    await Promise.allSettled(requests);
     return responses;
   };
 

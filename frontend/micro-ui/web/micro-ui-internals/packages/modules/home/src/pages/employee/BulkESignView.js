@@ -270,7 +270,7 @@ function BulkESignView() {
   const fetchResponseFromXmlRequest = async (orderRequestList) => {
     const responses = [];
 
-    const requests = orderRequestList?.map(async (order) => {
+    for (const order of orderRequestList || []) {
       try {
         // URL encoding the XML request
         const formData = qs.stringify({ response: order?.request });
@@ -302,9 +302,8 @@ function BulkESignView() {
       } catch (error) {
         console.error(`Error fetching order ${order?.orderNumber}:`, error?.message);
       }
-    });
+    }
 
-    await Promise.allSettled(requests);
     return responses;
   };
 

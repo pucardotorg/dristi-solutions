@@ -263,6 +263,7 @@ const ResultsTable = ({ tableContainerClass, config,data,isLoading,isFetching,fu
                 onClickRow={additionalConfig?.resultsTable?.onClickRow}
                 manualPagination={config.manualPagination}
                 noColumnBorder={config?.noColumnBorder}
+                hideFirstLastNavigation={config?.hideFirstLastNavigation}
             />}
         </div>
     )
