@@ -7,6 +7,7 @@ const {
   duplicateExistingFileStore,
 } = require("../utils/duplicateExistingFileStore");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 async function processAdditionalFilings(
   courtCase,
@@ -17,6 +18,7 @@ async function processAdditionalFilings(
   indexCopy,
   messagesMap
 ) {
+  logger.info(`[processAdditionalFilings] Started | filingNumber: ${courtCase?.filingNumber}`);
   const additionalFilingsSection = filterCaseBundleBySection(
     caseBundleMaster,
     "additionalfilings"
@@ -37,6 +39,7 @@ async function processAdditionalFilings(
 
   if (additionalFilingsSection?.length !== 0) {
     const section = additionalFilingsSection[0];
+    logger.info(`[processAdditionalFilings] search_evidence_v2 | filingType: DIRECT`);
     const directDocs = await search_evidence_v2(
       tenantId,
       requestInfo,
@@ -58,6 +61,7 @@ async function processAdditionalFilings(
 
     const directList = directDocs?.data?.artifacts;
 
+    logger.info(`[processAdditionalFilings] search_evidence_v2 | filingType: APPLICATION`);
     const applicationDocs = await search_evidence_v2(
       tenantId,
       requestInfo,
@@ -192,6 +196,7 @@ async function processAdditionalFilings(
   } else {
     additionalFilingsIndexSection.lineItems = [];
   }
+  logger.info(`[processAdditionalFilings] Completed | lineItems: ${additionalFilingsIndexSection?.lineItems?.length || 0}`);
 }
 
 module.exports = {

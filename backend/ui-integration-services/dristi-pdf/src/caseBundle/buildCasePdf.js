@@ -5,6 +5,7 @@ const path = require("path");
 const {
   convertFileStoreToDocument,
 } = require("./utils/convertFileStoreToDocument");
+const { logger } = require("../logger");
 
 /**
  * @typedef CaseBundleMaster
@@ -20,10 +21,12 @@ const {
  */
 
 async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
+  logger.info(`[buildCasePdf] Started | caseNumber: ${caseNumber}, tenantId: ${tenantId}`);
   try {
     /**
      * @type {CaseBundleMaster[]}
      */
+    logger.info(`[buildCasePdf] Fetching MDMS case_bundle_master | tenantId: ${tenantId}`);
     const caseBundleDesign = await search_mdms(
       null,
       "CaseManagement.case_bundle_master",
@@ -36,6 +39,7 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
     if (!caseBundleDesign || caseBundleDesign.length === 0) {
       throw new Error("No case bundle design found in MDMS.");
     }
+    logger.info(`[buildCasePdf] MDMS design fetched | sections: ${caseBundleDesign.length}`);
 
     // Create a new PDF document to merge all sections
     const mergedPdf = await PDFDocument.create();
@@ -43,7 +47,7 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
     // Iterate through sections in the index
     for (const section of index.sections) {
       if (!section || !section.name) {
-        console.warn("Skipping section with no name");
+        logger.warn("[buildCasePdf] Skipping section with no name");
         continue;
       }
 
@@ -52,23 +56,26 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
       );
 
       if (!sectionConfig) {
-        console.warn(`Section '${section.name}' is not enabled in the design`);
+        logger.warn(`[buildCasePdf] Section '${section.name}' is not enabled in the design`);
         continue;
       }
 
       if (!section.lineItems || section.lineItems.length === 0) {
-        console.warn(`Section '${section.name}' has no line items.`);
+        logger.warn(`[buildCasePdf] Section '${section.name}' has no line items`);
         continue;
       }
+
+      logger.info(`[buildCasePdf] Processing section: '${section.name}' | lineItems: ${section.lineItems.length}`);
 
       // Process each line item
       for (const item of section.lineItems) {
         if (!item || !item.fileStoreId || !item.content) {
-          console.warn("Skipping invalid line item");
+          logger.warn(`[buildCasePdf] Skipping invalid line item | section: '${section.name}'`);
           continue;
         }
 
         try {
+          logger.info(`[buildCasePdf] Fetching fileStore | section: '${section.name}', fileStoreId: ${item.fileStoreId}`);
           // Fetch PDF from fileStoreId
           const itemPdf = await convertFileStoreToDocument(
             tenantId,
@@ -95,8 +102,8 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
           );
           copiedPages.forEach((page) => mergedPdf.addPage(page));
         } catch (error) {
-          console.error(
-            `Error processing fileStoreId '${item.fileStoreId}': ${error.message}`
+          logger.error(
+            `[buildCasePdf] Error processing fileStoreId '${item.fileStoreId}' | section: '${section.name}' | error: ${error.message}`
           );
         }
       }
@@ -128,10 +135,12 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
     const filePath = path.join(directoryPath, tempFileName);
 
     try {
+      logger.info(`[buildCasePdf] Saving merged PDF | totalPages: ${mergedPages.length}`);
       // Save the merged PDF
       const pdfBytes = await mergedPdf.save();
       fs.writeFileSync(filePath, pdfBytes);
 
+      logger.info(`[buildCasePdf] Uploading to fileStore | tenantId: ${tenantId}`);
       // Upload the merged PDF and update the index
       const fileStoreResponse = await create_file(
         filePath,
@@ -144,6 +153,7 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
       index.fileStoreId = fileStoreId;
       index.pdfCreatedDate = Date.now();
 
+      logger.info(`[buildCasePdf] Completed | caseNumber: ${caseNumber}, fileStoreId: ${fileStoreId}, pageCount: ${mergedPages.length}`);
       return { ...index, pageCount: mergedPages.length };
     } finally {
       // Ensure cleanup of the temporary file
@@ -152,7 +162,7 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
       }
     }
   } catch (error) {
-    console.error("Error processing case bundle:", error.message);
+    logger.error(`[buildCasePdf] Failed | caseNumber: ${caseNumber}, tenantId: ${tenantId} | error: ${error.message}`);
     throw error;
   }
 }

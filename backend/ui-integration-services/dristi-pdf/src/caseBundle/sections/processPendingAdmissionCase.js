@@ -33,7 +33,10 @@ async function processPendingAdmissionCase({
   requestInfo,
   TEMP_FILES_DIR,
 }) {
+  logger.info(`[CaseBundle] processPendingAdmissionCase started | caseId: ${caseId}, tenantId: ${tenantId}`);
   const indexCopy = cloneDeep(index);
+
+  logger.info(`[CaseBundle] Fetching MDMS case_bundle_master | tenantId: ${tenantId}`);
   const caseBundleMaster = await search_mdms(
     null,
     "CaseManagement.case_bundle_master",
@@ -42,7 +45,9 @@ async function processPendingAdmissionCase({
   ).then((mdmsRes) => {
     return mdmsRes.data.mdms.filter((x) => x.isActive).map((x) => x.data);
   });
+  logger.info(`[CaseBundle] MDMS case_bundle_master fetched | sections: ${caseBundleMaster.length}`);
 
+  logger.info(`[CaseBundle] Fetching case | caseId: ${caseId}`);
   const caseResponse = await search_case_v2(
     [
       {
@@ -54,9 +59,13 @@ async function processPendingAdmissionCase({
   );
   logger.info("recd case response", JSON.stringify(caseResponse?.data));
   const courtCase = caseResponse?.data?.criteria[0]?.responseList[0];
+  logger.info(`[CaseBundle] Case fetched | caseId: ${caseId}, filingNumber: ${courtCase?.filingNumber}`);
 
-  console.debug(caseBundleMaster);
+  logger.debug(
+    `[CaseBundle] case_bundle_master active sections: ${caseBundleMaster.map((s) => s.name).join(", ")}`
+  );
 
+  logger.info(`[CaseBundle] Fetching localization messages | tenantId: ${tenantId}`);
   const resMessage = await search_message(
     tenantId,
     "rainmaker-case,rainmaker-orders,rainmaker-submissions,rainmaker-hearings,rainmaker-home,rainmaker-common",
@@ -69,8 +78,10 @@ async function processPendingAdmissionCase({
     messages?.length > 0
       ? Object.fromEntries(messages.map(({ code, message }) => [code, message]))
       : {};
+  logger.info(`[CaseBundle] Localization messages fetched | count: ${messages.length}`);
 
   // Create an array of promises for all processing functions
+  logger.info("[CaseBundle] Starting group: complaintPromises (titlepage, complaint, pendingapplications)");
   const complaintPromises = [
     processTitlePageSection(
       courtCase,
@@ -100,7 +111,9 @@ async function processPendingAdmissionCase({
   ];
 
   await Promise.all(complaintPromises);
+  logger.info("[CaseBundle] Completed group: complaintPromises");
 
+  logger.info("[CaseBundle] Starting group: filingPromises (filings, affidavit, vakalat, additionalfilings)");
   const filingPromises = [
     processFilingsSection(
       courtCase,
@@ -139,7 +152,9 @@ async function processPendingAdmissionCase({
   ];
 
   await Promise.all(filingPromises);
+  logger.info("[CaseBundle] Completed group: filingPromises");
 
+  logger.info("[CaseBundle] Starting group: processingPromises (mandatorysubmissions, complainantevidence, accusedevidence, courtevidence, applications)");
   const processingPromises = [
     processMandatorySubmissions(
       courtCase,
@@ -188,7 +203,9 @@ async function processPendingAdmissionCase({
   ];
 
   await Promise.all(processingPromises);
+  logger.info("[CaseBundle] Completed group: processingPromises");
 
+  logger.info("[CaseBundle] Starting group: finalPromises (baildocument, processes)");
   const finalPromises = [
     processBailDocuments(
       courtCase,
@@ -210,7 +227,9 @@ async function processPendingAdmissionCase({
   ];
 
   await Promise.all(finalPromises);
+  logger.info("[CaseBundle] Completed group: finalPromises");
 
+  logger.info("[CaseBundle] Starting group: orderPromises (paymentreceipts, digitalizedDocuments, orders)");
   const orderPromises = [
     processPaymentReceipts(
       courtCase,
@@ -239,7 +258,9 @@ async function processPendingAdmissionCase({
   ];
 
   await Promise.all(orderPromises);
+  logger.info("[CaseBundle] Completed group: orderPromises");
 
+  logger.info("[CaseBundle] Starting group: othersPromises (others)");
   const othersPromises = [
     processOthersSection(
       courtCase,
@@ -252,10 +273,12 @@ async function processPendingAdmissionCase({
   ];
 
   await Promise.all(othersPromises);
+  logger.info("[CaseBundle] Completed group: othersPromises");
 
   indexCopy.isRegistered = true;
   indexCopy.contentLastModified = Date.now();
 
+  logger.info(`[CaseBundle] processPendingAdmissionCase completed | caseId: ${caseId}`);
   return indexCopy;
 }
 

@@ -6,6 +6,7 @@ const {
   filterCaseBundleBySection,
 } = require("../utils/filterCaseBundleBySection");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 async function processVakalatSection(
   courtCase,
@@ -16,7 +17,7 @@ async function processVakalatSection(
   indexCopy,
   messagesMap
 ) {
-  // update vakalatnamas
+  logger.info(`[processVakalatSection] Started | filingNumber: ${courtCase?.filingNumber}`);
   const vakalatnamaSection = filterCaseBundleBySection(
     caseBundleMaster,
     "vakalat"
@@ -156,8 +157,10 @@ async function processVakalatSection(
       })
     );
     vakalatsIndexSection.lineItems = vakalatLineItems?.filter(Boolean);
+    logger.info(`[processVakalatSection] Completed | lineItems: ${vakalatsIndexSection.lineItems?.length || 0}`);
   } else {
     vakalatsIndexSection.lineItems = [];
+    logger.info(`[processVakalatSection] Skipped | section not active in MDMS`);
   }
 }
 

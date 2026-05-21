@@ -11,6 +11,7 @@ const {
   combineMultipleFilestores,
 } = require("../utils/combineMultipleFilestores");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 async function processBailDocuments(
   courtCase,
@@ -21,6 +22,7 @@ async function processBailDocuments(
   indexCopy,
   messagesMap
 ) {
+  logger.info(`[processBailDocuments] Started | filingNumber: ${courtCase?.filingNumber}`);
   const bailApplicationSection = filterCaseBundleBySection(
     caseBundleMaster,
     "baildocument"
@@ -44,6 +46,7 @@ async function processBailDocuments(
   if (bailApplicationSection?.length !== 0) {
     const section = bailApplicationSection[0];
 
+    logger.info(`[processBailDocuments] search_application_v2 | applicationType: REQUEST_FOR_BAIL`);
     const bailApplications = await search_application_v2(
       tenantId,
       requestInfo,
@@ -334,6 +337,7 @@ async function processBailDocuments(
     const section = bailBondSection[0];
     const bailBondLineItems = [];
 
+    logger.info(`[processBailDocuments] search_bailBond_v2`);
     const bailBond = await search_bailBond_v2(
       tenantId,
       requestInfo,
@@ -497,6 +501,12 @@ async function processBailDocuments(
     );
     bailDocumentIndexSection.lineItems = [];
   }
+  const bailDocumentIndexSection = indexCopy.sections?.find(
+    (section) => section.name === "baildocument"
+  );
+  logger.info(
+    `[processBailDocuments] Completed | lineItems: ${bailDocumentIndexSection?.lineItems?.length || 0}`
+  );
 }
 
 module.exports = {

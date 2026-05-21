@@ -3,6 +3,7 @@ const {
 } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 async function processComplaintSection(
   courtCase,
@@ -12,6 +13,7 @@ async function processComplaintSection(
   TEMP_FILES_DIR,
   indexCopy
 ) {
+  logger.info(`[processComplaintSection] Started | filingNumber: ${courtCase?.filingNumber}`);
   const complaintSection = filterCaseBundleBySection(
     caseBundleMaster,
     "complaint"
@@ -33,12 +35,14 @@ async function processComplaintSection(
       (doc) => doc.documentType === "case.complaint.signed"
     )?.fileStore;
     if (!complaintFileStoreId) {
+      logger.error(`[processComplaintSection] No case.complaint.signed document found`);
       throw new Error("no case complaint");
     }
 
     let complaintNewFileStoreId = complaintFileStoreId;
 
     if (section.docketpagerequired === "yes") {
+      logger.info(`[processComplaintSection] applyDocketToDocument | fileStoreId: ${complaintFileStoreId}`);
       const complainant = courtCase.litigants?.find((litigant) =>
         litigant.partyType.includes("complainant.primary")
       );
@@ -85,6 +89,9 @@ async function processComplaintSection(
       content: "complaint",
       sortParam: null,
     };
+    logger.info(`[processComplaintSection] Completed | fileStoreId: ${complaintNewFileStoreId}`);
+  } else {
+    logger.info(`[processComplaintSection] Skipped | section not active in MDMS`);
   }
 }
 

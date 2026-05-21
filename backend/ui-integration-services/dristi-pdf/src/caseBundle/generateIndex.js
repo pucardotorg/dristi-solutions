@@ -12,7 +12,7 @@ if (!fs.existsSync(TEMP_FILES_DIR)) {
 }
 
 async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
-  logger.info(`Processing caseId: ${caseId}, state: ${state}`);
+  logger.info(`[CaseBundle] processCaseBundle started | caseId: ${caseId}, tenantId: ${tenantId}, state: ${state}`);
 
   let updatedIndex;
 
@@ -24,6 +24,7 @@ async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
     TEMP_FILES_DIR,
   });
 
+  logger.info(`[CaseBundle] processCaseBundle completed | caseId: ${caseId}, updatedIndex: ${JSON.stringify(updatedIndex)}`);
   return updatedIndex;
 }
 

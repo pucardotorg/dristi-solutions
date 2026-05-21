@@ -7,6 +7,7 @@ const {
   combineMultipleFilestores,
 } = require("../utils/combineMultipleFilestores");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 async function processMandatorySubmissions(
   courtCase,
@@ -17,6 +18,7 @@ async function processMandatorySubmissions(
   indexCopy,
   messagesMap
 ) {
+  logger.info(`[processMandatorySubmissions] Started | filingNumber: ${courtCase?.filingNumber}`);
   const mandatorySubmissionsSection = filterCaseBundleBySection(
     caseBundleMaster,
     "mandatorysubmissions"
@@ -36,6 +38,7 @@ async function processMandatorySubmissions(
   if (mandatorySubmissionsSection?.length !== 0) {
     const section = mandatorySubmissionsSection[0];
 
+    logger.info(`[processMandatorySubmissions] search_order_v2 | orderType: MANDATORY_SUBMISSIONS_RESPONSES`);
     const resOrder = await search_order_v2(
       tenantId,
       requestInfo,
@@ -58,6 +61,7 @@ async function processMandatorySubmissions(
     if (orderList?.length !== 0) {
       await Promise.all(
         orderList?.map(async (order) => {
+          logger.info(`[processMandatorySubmissions] search_application_v2 | applicationType: PRODUCTION_DOCUMENTS`);
           const productionOfDocumentApplications = await search_application_v2(
             tenantId,
             requestInfo,
@@ -219,6 +223,7 @@ async function processMandatorySubmissions(
   );
   mandatorySubmissionsIndexSection.lineItems =
     mandatorySubmissionsLineItems?.filter(Boolean);
+  logger.info(`[processMandatorySubmissions] Completed | lineItems: ${mandatorySubmissionsIndexSection.lineItems?.length || 0}`);
 }
 
 module.exports = {

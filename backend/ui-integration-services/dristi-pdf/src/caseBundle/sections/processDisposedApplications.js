@@ -10,6 +10,7 @@ const {
   duplicateExistingFileStore,
 } = require("../utils/duplicateExistingFileStore");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 const extractNumber = (cmpNumber) => {
   const parts = cmpNumber.split("/");
@@ -25,6 +26,7 @@ async function processDisposedApplications(
   indexCopy,
   messagesMap
 ) {
+  logger.info(`[processDisposedApplications] Started | filingNumber: ${courtCase?.filingNumber}`);
   const applicationSection = filterCaseBundleBySection(
     caseBundleMaster,
     "applications"
@@ -55,6 +57,7 @@ async function processDisposedApplications(
 
   if (applicationSection?.length !== 0) {
     const section = applicationSection[0];
+    logger.info(`[processDisposedApplications] search_application_v2 | status: COMPLETED`);
     const completedApplications = await search_application_v2(
       tenantId,
       requestInfo,
@@ -382,6 +385,9 @@ async function processDisposedApplications(
   } else {
     applicationsIndexSection.lineItems = [];
   }
+  logger.info(
+    `[processDisposedApplications] Completed | lineItems: ${applicationsIndexSection?.lineItems?.length || 0}`
+  );
 }
 
 module.exports = {

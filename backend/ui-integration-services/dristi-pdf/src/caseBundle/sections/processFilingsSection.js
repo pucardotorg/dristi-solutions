@@ -13,8 +13,7 @@ async function processFilingsSection(
   TEMP_FILES_DIR,
   indexCopy
 ) {
-  // move to filings section of case complaint
-  logger.info(caseBundleMaster);
+  logger.info(`[processFilingsSection] Started | filingNumber: ${courtCase?.filingNumber}`);
   const sectionPosition = indexCopy.sections?.findIndex(
     (s) => s.name === "filings"
   );
@@ -94,6 +93,7 @@ async function processFilingsSection(
     (section) => section.name === "filings"
   );
   filingsIndexSection.lineItems = filingsLineItems?.filter(Boolean);
+  logger.info(`[processFilingsSection] Completed | lineItems: ${filingsIndexSection.lineItems?.length || 0}`);
 }
 
 module.exports = {
