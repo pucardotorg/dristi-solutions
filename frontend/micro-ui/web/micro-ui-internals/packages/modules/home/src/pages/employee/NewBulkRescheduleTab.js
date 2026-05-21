@@ -211,10 +211,8 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       });
 
       const newFileStoreId = signedDocumentUploadID || localStorageID;
-      if (!newFileStoreId || newFileStoreId === sessionStorage.getItem("fileStoreUnsigned")) {
+      if (!newFileStoreId || newFileStoreId === notificationFileStoreId) {
         setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
-        sessionStorage.removeItem("fileStoreUnsigned");
-        sessionStorage.removeItem("fileStoreId");
         return;
       }
       fileStoreIds.delete(newFileStoreId);
@@ -716,7 +714,6 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
           actionSaveOnSubmit={async () => {
             setSignedDocumentUploadID("");
             sessionStorage.removeItem("fileStoreId");
-            sessionStorage.removeItem("fileStoreUnsigned");
             setStepper(0);
             await refetch();
             await handleBulkHearingSearch(bulkFormData);

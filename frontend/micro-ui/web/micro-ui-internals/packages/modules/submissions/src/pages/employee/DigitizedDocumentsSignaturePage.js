@@ -239,10 +239,8 @@ const DigitizedDocumentsSignaturePage = () => {
     // TODO: Update call with Signed FileStore
     try {
       const fileStoreId = sessionStorage.getItem("fileStoreId");
-      if (!fileStoreId || fileStoreId === sessionStorage.getItem("fileStoreUnsigned")) {
+      if (!fileStoreId || fileStoreId === digitizedDocumentsDetails?.documents?.[0]?.fileStore) {
         setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
-        sessionStorage.removeItem("fileStoreUnsigned");
-        sessionStorage.removeItem("fileStoreId");
         return;
       }
       const payload = {
@@ -252,7 +250,6 @@ const DigitizedDocumentsSignaturePage = () => {
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
-      sessionStorage.removeItem("fileStoreUnsigned");
       await submissionService.updateOpenDigitizedDocument(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);
@@ -269,7 +266,6 @@ const DigitizedDocumentsSignaturePage = () => {
   const handleCloseSuccessModal = () => {
     sessionStorage.removeItem("isAuthorised");
     sessionStorage.removeItem("fileStoreId");
-    sessionStorage.removeItem("fileStoreUnsigned");
     if (isUserLoggedIn) {
       history.replace(`/${window?.contextPath}/citizen/dristi/home`);
     } else {
@@ -327,7 +323,6 @@ const DigitizedDocumentsSignaturePage = () => {
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
-      sessionStorage.removeItem("fileStoreUnsigned");
       await submissionService.updateOpenDigitizedDocument(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);

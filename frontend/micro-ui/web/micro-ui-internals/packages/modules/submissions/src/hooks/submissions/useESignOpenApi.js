@@ -12,7 +12,6 @@ const useESignOpenApi = () => {
       try {
         const newSignStatuses = [...parsedObj, { name: name, isSigned: true }];
         sessionStorage.setItem("signStatus", JSON.stringify(newSignStatuses));
-        sessionStorage.setItem("fileStoreUnsigned", fileStoreId);
 
         const eSignResponse = await Digit.DRISTIService.eSignOpenService(Url, {
           fileStoreId: fileStoreId,

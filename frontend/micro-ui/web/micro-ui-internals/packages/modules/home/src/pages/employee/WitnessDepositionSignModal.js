@@ -268,8 +268,6 @@ export const WitnessDepositionSignModal = ({
 
   const handleCancel = useCallback(() => {
     sessionStorage.removeItem("fileStoreId");
-    sessionStorage.removeItem("fileStoreUnsigned");
-
     if (parseInt(stepper) === 0) {
       setShowBulkSignModal(false);
       if (queryStrings?.artifactNumber) {
@@ -338,10 +336,8 @@ export const WitnessDepositionSignModal = ({
         const localStorageID = sessionStorage.getItem("fileStoreId");
         newFilestore = witnessDepositionSignedPdf || localStorageID;
       }
-      if (!mockESignEnabled && (!newFilestore || newFilestore === sessionStorage.getItem("fileStoreUnsigned"))) {
+      if (!mockESignEnabled && (!newFilestore || newFilestore === selectedWitnessDepositionFilestoreid)) {
         setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
-        sessionStorage.removeItem("fileStoreUnsigned");
-        sessionStorage.removeItem("fileStoreId");
         return;
       }
       // fileStoreIds.delete(newFilestore);
@@ -358,7 +354,6 @@ export const WitnessDepositionSignModal = ({
       });
       setWitnessDepositionSignedPdf(newFilestore);
       sessionStorage.removeItem("fileStoreId");
-      sessionStorage.removeItem("fileStoreUnsigned");
     } catch (error) {
       console.error("Error :", error);
       setIsSigned(false);

@@ -254,7 +254,6 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
 
   const handleCancel = useCallback(() => {
     sessionStorage.removeItem("fileStoreId");
-    sessionStorage.removeItem("fileStoreUnsigned");
     if (parseInt(stepper) === 0) {
       setShowBulkSignModal(false);
       if (queryStrings?.bailId) {
@@ -317,10 +316,8 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const newFilestore = bailBondSignedPdf || localStorageID;
-      if (!newFilestore || newFilestore === sessionStorage.getItem("fileStoreUnsigned")) {
+      if (!newFilestore || newFilestore === selectedBailBondFilestoreid) {
         setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
-        sessionStorage.removeItem("fileStoreUnsigned");
-        sessionStorage.removeItem("fileStoreId");
         return;
       }
       // fileStoreIds.delete(newFilestore);
@@ -334,7 +331,6 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       });
       setBailBondSignedPdf(newFilestore);
       sessionStorage.removeItem("fileStoreId");
-      sessionStorage.removeItem("fileStoreUnsigned");
     } catch (error) {
       console.error("Error :", error);
       setIsSigned(false);

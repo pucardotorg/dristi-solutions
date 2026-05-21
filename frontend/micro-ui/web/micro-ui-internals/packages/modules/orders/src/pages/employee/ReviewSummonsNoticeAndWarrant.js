@@ -874,10 +874,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
       if (!mockESignEnabled) {
         const effectiveSignedId = signatureId || localStorageID;
-        if (!effectiveSignedId || effectiveSignedId === sessionStorage.getItem("fileStoreUnsigned")) {
+        if (!effectiveSignedId || effectiveSignedId === rowData?.documents?.[0]?.fileStore) {
           setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
-          sessionStorage.removeItem("fileStoreUnsigned");
-          sessionStorage.removeItem("fileStoreId");
           return { continue: false };
         }
       }
@@ -912,7 +910,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
             }
           : null;
       sessionStorage.removeItem("fileStoreId");
-      sessionStorage.removeItem("fileStoreUnsigned");
       sessionStorage.removeItem("homeActiveTab");
       sessionStorage.setItem("SignedFileStoreID", documentsFile?.fileStore);
 

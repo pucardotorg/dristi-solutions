@@ -273,7 +273,6 @@ function BulkSignADiaryView() {
       setSignedDocumentUploadID("");
       setFormData({});
       sessionStorage.removeItem("fileStoreId");
-      sessionStorage.removeItem("fileStoreUnsigned");
     }
     setStepper(parseInt(stepper) - 1);
   };
@@ -354,10 +353,8 @@ function BulkSignADiaryView() {
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const newFilestore = signedDocumentUploadID || localStorageID;
-      if (!newFilestore || newFilestore === sessionStorage.getItem("fileStoreUnsigned")) {
+      if (!newFilestore || newFilestore === ADiarypdf) {
         setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
-        sessionStorage.removeItem("fileStoreUnsigned");
-        sessionStorage.removeItem("fileStoreId");
         return;
       }
       fileStoreIds.delete(newFilestore);
@@ -393,7 +390,6 @@ function BulkSignADiaryView() {
       setIsSelectedDataSigned(true);
       setADiarypdf(signedDocumentUploadID || localStorageID);
       sessionStorage.removeItem("fileStoreId");
-      sessionStorage.removeItem("fileStoreUnsigned");
       sessionStorage.removeItem("adiarypdf");
       sessionStorage.removeItem("adiaryStepper");
       sessionStorage.removeItem("diaryDateFilter");
@@ -402,7 +398,6 @@ function BulkSignADiaryView() {
       setIsSigned(false);
       setSignedDocumentUploadID("");
       sessionStorage.removeItem("fileStoreId");
-      sessionStorage.removeItem("fileStoreUnsigned");
       setIsSelectedDataSigned(false);
     }
   };

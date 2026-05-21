@@ -138,10 +138,8 @@ const WitnessDepositionSignaturePage = () => {
     // TODO: Update call with Signed FileStore
     try {
       const fileStoreId = sessionStorage.getItem("fileStoreId");
-      if (!fileStoreId || fileStoreId === sessionStorage.getItem("fileStoreUnsigned")) {
+      if (!fileStoreId || fileStoreId === witnessDepositionDetails?.file?.fileStore) {
         setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
-        sessionStorage.removeItem("fileStoreUnsigned");
-        sessionStorage.removeItem("fileStoreId");
         return;
       }
       const payload = {
@@ -152,7 +150,6 @@ const WitnessDepositionSignaturePage = () => {
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
-      sessionStorage.removeItem("fileStoreUnsigned");
       await submissionService.updateOpenWitnessDeposition(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);
@@ -169,7 +166,6 @@ const WitnessDepositionSignaturePage = () => {
   const handleCloseSuccessModal = () => {
     sessionStorage.removeItem("isAuthorised");
     sessionStorage.removeItem("fileStoreId");
-    sessionStorage.removeItem("fileStoreUnsigned");
     history.replace(`/${window?.contextPath}/citizen/dristi/home`);
   };
 
@@ -211,7 +207,6 @@ const WitnessDepositionSignaturePage = () => {
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
-      sessionStorage.removeItem("fileStoreUnsigned");
       await submissionService.updateOpenWitnessDeposition(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);
