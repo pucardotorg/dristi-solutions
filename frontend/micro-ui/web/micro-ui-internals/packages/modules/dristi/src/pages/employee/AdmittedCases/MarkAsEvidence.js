@@ -724,12 +724,12 @@ const MarkAsEvidence = ({
           });
         }
       } else if (stepper === 1 && isSigned) {
-        if (!mockESignEnabled && sessionStorage.getItem("fileStoreId") === null) {
-          setShowToast({
-            label: t("EVIDENCE_UPDATE_ERROR_MESSAGE"),
-            error: true,
-          });
-          return;
+        if (!mockESignEnabled) {
+          const signedFileStore = sessionStorage.getItem("fileStoreId");
+          if (!signedFileStore || signedFileStore === sealFileStoreId) {
+            setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+            return;
+          }
         }
         let fileStore = "";
         if (mockESignEnabled) {

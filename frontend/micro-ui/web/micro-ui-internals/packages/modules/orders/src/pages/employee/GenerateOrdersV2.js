@@ -1552,6 +1552,14 @@ const GenerateOrdersV2 = () => {
         localStorageID = orderPdfFileStoreID;
       }
 
+      if (!mockESignEnabled && isSigning) {
+        const effectiveSignedId = signedDoucumentUploadedID || localStorageID;
+        if (!effectiveSignedId || effectiveSignedId === orderPdfFileStoreID) {
+          setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+          return null;
+        }
+      }
+
       const fileExtension = signedOrderPdfFileName && signedDoucumentUploadedID ? getSafeFileExtension(signedOrderPdfFileName) : "pdf";
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID

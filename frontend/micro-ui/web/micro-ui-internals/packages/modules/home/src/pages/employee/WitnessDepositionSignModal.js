@@ -336,6 +336,10 @@ export const WitnessDepositionSignModal = ({
         const localStorageID = sessionStorage.getItem("fileStoreId");
         newFilestore = witnessDepositionSignedPdf || localStorageID;
       }
+      if (!mockESignEnabled && (!newFilestore || newFilestore === selectedWitnessDepositionFilestoreid)) {
+        setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+        return;
+      }
       // fileStoreIds.delete(newFilestore);
       // if (ADiarypdf) {
       //   fileStoreIds.delete(ADiarypdf);
