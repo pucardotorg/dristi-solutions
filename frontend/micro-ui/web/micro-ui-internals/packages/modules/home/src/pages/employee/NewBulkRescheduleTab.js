@@ -235,6 +235,10 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       });
 
       const newFileStoreId = signedDocumentUploadID || localStorageID;
+      if (!newFileStoreId || newFileStoreId === notificationFileStoreId) {
+        showToast("error", t("UPDATE_FAILED_ERROR"), 5000);
+        return;
+      }
       fileStoreIds.delete(newFileStoreId);
       await hearingService?.updateNotification({
         notification: {

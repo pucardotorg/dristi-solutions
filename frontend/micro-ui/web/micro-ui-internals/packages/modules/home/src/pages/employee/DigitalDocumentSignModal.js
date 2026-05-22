@@ -388,6 +388,9 @@ export const DigitalDocumentSignModal = ({
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const newFilestore = digitalDocumentSignedPdf || localStorageID;
+      if (!newFilestore || newFilestore === selectedDigitalDocumentFilestoreid) {
+        return;
+      }
 
       await updateDigitalDocument({
         documentNumber: effectiveRowData?.businessObject?.digitalizedDocumentDetails?.documentNumber || effectiveRowData?.documentNumber,
