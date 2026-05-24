@@ -1,0 +1,616 @@
+{
+    "responseInfo": null,
+    "totalCount": 14,
+    "nearingSlaCount": 0,
+    "statusMap": [],
+    "items": [
+        {
+            "ProcessInstance": null,
+            "businessObject": {
+                "orderNotification": {
+                    "id": "KL-000576-2026-OR4",
+                    "tenantId": "kl",
+                    "type": "ACCEPT_BAIL",
+                    "courtId": "KLKM52",
+                    "parties": [
+                        {
+                            "partyName": "Bindhu G (Complainant)",
+                            "partyType": "complainant",
+                            "counselName": ""
+                        },
+                        {
+                            "partyName": "Gireesh C (Accused)",
+                            "partyType": "respondent",
+                            "counselName": ""
+                        },
+                        {
+                            "partyName": "The Manager State Bank Of Indian Puthoor (Witness)",
+                            "partyType": "witness",
+                            "counselName": ""
+                        },
+                        {
+                            "partyName": "The Manager Indian Bank Puthoor (Witness)",
+                            "partyType": "witness",
+                            "counselName": ""
+                        }
+                    ],
+                    "status": "PENDING_BULK_E-SIGN",
+                    "date": 0,
+                    "entityType": "Order",
+                    "title": "Bail",
+                    "filingNumbers": [
+                        "KL-000576-2026"
+                    ],
+                    "caseNumbers": [
+                        "KL-000576-2026"
+                    ],
+                    "judgeIds": [],
+                    "documents": [
+                        {
+                            "documentType": "UNSIGNED",
+                            "documentUid": null,
+                            "fileStore": "1c38598d-7384-49d1-a46d-0ab9d894bdfb",
+                            "id": "f3d6d777-b12a-4030-ad2b-14cb5c35168b",
+                            "additionalDetails": {
+                                "name": "Order: Bail.pdf"
+                            }
+                        }
+                    ],
+                    "createdTime": 1778911866221,
+                    "lastModifiedTime": 1778931323215,
+                    "caseTitle": "Bindhu vs Gireesh , ST/286/2026",
+                    "caseSTNumber": "ST/286/2026",
+                    "businessOfTheDay": "Present: Complainant's Advocate, Accused, Accused Advocate. Absent: Complainant. Accused present. Accused filed bail application. Bail granted. Sureties are present. Accused is released on bail on executing bond for Rs.30,000/- with two solvent sureties each for the like sum. Particulars of offences u/s.138 of Negotiable Instruments Act were read over and explained to the accused to which he pleaded not guilty and claimed to be tried. After hearing both parties due to the amount involved in this case the court is of the view that the case is to be tried as Summons case. For the appearance of the parties. 12.06.2026.. Purpose of Next Hearing: Appearance. Date of Next Hearing: 12-06-2026."
+                }
+            },
+            "serviceObject": null
+        },
+        {
+            "ProcessInstance": null,
+            "businessObject": {
+                "orderNotification": {
+                    "id": "KL-000552-2026-OR4",
+                    "tenantId": "kl",
+                    "type": null,
+                    "courtId": "KLKM52",
+                    "parties": [
+                        {
+                            "partyName": "Sreelekshmi A (Complainant)",
+                            "partyType": "complainant",
+                            "counselName": ""
+                        },
+                        {
+                            "partyName": "Preetha P Chandra (Accused)",
+                            "partyType": "respondent",
+                            "counselName": ""
+                        }
+                    ],
+                    "status": "PENDING_BULK_E-SIGN",
+                    "date": 0,
+                    "entityType": "Order",
+                    "title": "Schedule of Next Hearing Date",
+                    "filingNumbers": [
+                        "KL-000552-2026"
+                    ],
+                    "caseNumbers": [
+                        "KL-000552-2026"
+                    ],
+                    "judgeIds": [],
+                    "documents": [
+                        {
+                            "documentType": "UNSIGNED",
+                            "documentUid": null,
+                            "fileStore": "98dc08b0-4760-4801-adc5-847882f35178",
+                            "id": "02315f75-2258-42a6-9caa-fe6efe3a6dbd",
+                            "additionalDetails": {
+                                "name": "Order: .pdf"
+                            }
+                        }
+                    ],
+                    "createdTime": 1779171148756,
+                    "lastModifiedTime": 1779188017172,
+                    "caseTitle": "Sreelekshmi A vs Preetha Chandra , CMP/279/2026",
+                    "caseSTNumber": "CMP/279/2026",
+                    "businessOfTheDay": "Present: Accused Advocate. Absent: Complainant, Complainant's Advocate, Accused. For hearing. 01.06.2026.. Purpose of Next Hearing: Delay Condonation. Date of Next Hearing: 01-06-2026."
+                }
+            },
+            "serviceObject": null
+        },
+        {
+            "ProcessInstance": null,
+            "businessObject": {
+                "orderNotification": {
+                    "id": "KL-000736-2026-OR6",
+                    "tenantId": "kl",
+                    "type": "ACCEPTANCE_REJECTION_DCA",
+                    "courtId": "KLKM52",
+                    "parties": [
+                        {
+                            "partyName": "Akhil S (Complainant)",
+                            "partyType": "complainant",
+                            "counselName": ""
+                        },
+                        {
+                            "partyName": "MINI T (PoA Holder)",
+                            "partyType": "poaHolder",
+                            "counselName": ""
+                        },
+                        {
+                            "partyName": "SHAHUL HAMEED (Accused)",
+                            "partyType": "respondent",
+                            "counselName": ""
+                        }
+                    ],
+                    "status": "PENDING_BULK_E-SIGN",
+                    "date": 1778869800000,
+                    "entityType": "Order",
+                    "title": "Order for Acceptance/Rejection of Delay Condonation",
+                    "filingNumbers": [
+                        "KL-000736-2026"
+                    ],
+                    "caseNumbers": [
+                        "KL-000736-2026"
+                    ],
+                    "judgeIds": [],
+                    "documents": [
+                        {
+                            "documentType": "UNSIGNED",
+                            "documentUid": null,
+                            "fileStore": "0cfa1dea-dd83-4213-b6b2-0b257a2aaece",
+                            "id": "c0620be0-a1a8-41e8-8e63-1d9d29b9d8bf",
+                            "additionalDetails": {
+                                "name": "Order: Order for Acceptance/Rejection of Delay Condonation.pdf"
+                            }
+                        }
+                    ],
+                    "createdTime": 1778927665303,
+                    "lastModifiedTime": 1778933225492,
+                    "caseTitle": "Akhil S vs SHAHUL HAMEED , CMP/432/2026",
+                    "caseSTNumber": "CMP/432/2026",
+                    "businessOfTheDay": "Delay is condoned."
+                }
+            },
+            "serviceObject": null
+        },
+        {
+            "ProcessInstance": null,
+            "businessObject": {
+                "orderNotification": {
+                    "id": "KL-001041-2026-OR1",
+                    "tenantId": "kl",
+                    "type": "SCHEDULE_OF_HEARING_DATE",
+                    "courtId": "KLKM52",
+                    "parties": [],
+                    "status": "PENDING_BULK_E-SIGN",
+                    "date": 1778869800000,
+                    "entityType": "Order",
+                    "title": "Schedule of Hearing Date",
+                    "filingNumbers": [
+                        "KL-001041-2026"
+                    ],
+                    "caseNumbers": [
+                        "KL-001041-2026"
+                    ],
+                    "judgeIds": [],
+                    "documents": [
+                        {
+                            "documentType": "UNSIGNED",
+                            "documentUid": null,
+                            "fileStore": "963c19e2-b3d8-4787-b1fb-b7aa7168a641",
+                            "id": "d2e81f3b-6c28-43c9-b1ae-c770ad649e09",
+                            "additionalDetails": {
+                                "name": "Order: Schedule of Hearing Date.pdf"
+                            }
+                        }
+                    ],
+                    "createdTime": 1778929460229,
+                    "lastModifiedTime": 1779091803913,
+                    "caseTitle": "Stephin Angel vs Christopher David , CMP/694/2026",
+                    "caseSTNumber": "CMP/694/2026",
+                    "businessOfTheDay": "For hearing on delay. 02.06.2026.."
+                }
+            },
+            "serviceObject": null
+        },
+        {
+            "ProcessInstance": null,
+            "businessObject": {
+                "orderNotification": {
+                    "id": "KL-001115-2026-OR1",
+                    "tenantId": "kl",
+                    "type": "COMPOSITE",
+                    "courtId": "KLKM52",
+                    "parties": [],
+                    "status": "PENDING_BULK_E-SIGN",
+                    "date": 1778869800000,
+                    "entityType": "Order",
+                    "title": "Schedule of Hearing Date and Other Items",
+                    "filingNumbers": [
+                        "KL-001115-2026"
+                    ],
+                    "caseNumbers": [
+                        "KL-001115-2026"
+                    ],
+                    "judgeIds": [],
+                    "documents": [
+                        {
+                            "documentType": "UNSIGNED",
+                            "documentUid": null,
+                            "fileStore": "64a8ef9f-6521-4025-ac62-65c8d2dde04f",
+                            "id": "ffd6971f-daba-446f-9a52-57ee4c869676",
+                            "additionalDetails": {
+                                "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+                            }
+                        }
+                    ],
+                    "createdTime": 1778929754654,
+                    "lastModifiedTime": 1778929797666,
+                    "caseTitle": "Paravur Akshaya Nidhi Ltd vs Salini L , CMP/698/2026",
+                    "caseSTNumber": "CMP/698/2026",
+                    "businessOfTheDay": "No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons.29.06.2026.."
+                }
+            },
+            "serviceObject": null
+        },
+        {
+            "ProcessInstance": null,
+            "businessObject": {
+                "orderNotification": {
+                    "id": "KL-000994-2026-OR2",
+                    "tenantId": "kl",
+                    "type": "COMPOSITE",
+                    "courtId": "KLKM52",
+                    "parties": [],
+                    "status": "PENDING_BULK_E-SIGN",
+                    "date": 1778869800000,
+                    "entityType": "Order",
+                    "title": "Schedule of Hearing Date and Other Items",
+                    "filingNumbers": [
+                        "KL-000994-2026"
+                    ],
+                    "caseNumbers": [
+                        "KL-000994-2026"
+                    ],
+                    "judgeIds": [],
+                    "documents": [
+                        {
+                            "documentType": "UNSIGNED",
+                            "documentUid": null,
+                            "fileStore": "601950be-2557-4fd2-967d-61a821d14772",
+                            "id": "93c41eb1-ee2a-470d-abb2-16e650350c87",
+                            "additionalDetails": {
+                                "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+                            }
+                        }
+                    ],
+                    "createdTime": 1778929913423,
+                    "lastModifiedTime": 1778929966301,
+                    "caseTitle": "ANI vs Sheela , CMP/699/2026",
+                    "caseSTNumber": "CMP/699/2026",
+                    "businessOfTheDay": "Issue DCA notice to accused. Take steps. For return of notice. 16.06.2026.."
+                }
+            },
+            "serviceObject": null
+        },
+        {
+            "ProcessInstance": null,
+            "businessObject": {
+                "orderNotification": {
+                    "id": "KL-001071-2026-OR1",
+                    "tenantId": "kl",
+                    "type": "COMPOSITE",
+                    "courtId": "KLKM52",
+                    "parties": [],
+                    "status": "PENDING_BULK_E-SIGN",
+                    "date": 1778869800000,
+                    "entityType": "Order",
+                    "title": "Schedule of Hearing Date and Other Items",
+                    "filingNumbers": [
+                        "KL-001071-2026"
+                    ],
+                    "caseNumbers": [
+                        "KL-001071-2026"
+                    ],
+                    "judgeIds": [],
+                    "documents": [
+                        {
+                            "documentType": "UNSIGNED",
+                            "documentUid": null,
+                            "fileStore": "747b76ae-08b9-4bb6-87ce-3c6375d96281",
+                            "id": "c605d3bc-f64c-49c3-a8ac-9076e918b3dd",
+                            "additionalDetails": {
+                                "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+                            }
+                        }
+                    ],
+                    "createdTime": 1778930007071,
+                    "lastModifiedTime": 1778930072404,
+                    "caseTitle": "Nibu Jacob Varkey vs Anilal V S , CMP/700/2026",
+                    "caseSTNumber": "CMP/700/2026",
+                    "businessOfTheDay": "Issue DCA notice to accused. Take steps. For return of notice. 18.06.2026.."
+                }
+            },
+            "serviceObject": null
+        },
+        {
+            "ProcessInstance": null,
+            "businessObject": {
+                "orderNotification": {
+                    "id": "KL-001116-2026-OR1",
+                    "tenantId": "kl",
+                    "type": "COMPOSITE",
+                    "courtId": "KLKM52",
+                    "parties": [],
+                    "status": "PENDING_BULK_E-SIGN",
+                    "date": 1778869800000,
+                    "entityType": "Order",
+                    "title": "Schedule of Hearing Date and Other Items",
+                    "filingNumbers": [
+                        "KL-001116-2026"
+                    ],
+                    "caseNumbers": [
+                        "KL-001116-2026"
+                    ],
+                    "judgeIds": [],
+                    "documents": [
+                        {
+                            "documentType": "UNSIGNED",
+                            "documentUid": null,
+                            "fileStore": "1587605c-7fb8-4905-aafa-afd56903d833",
+                            "id": "1f512502-ce22-45b7-af37-1b55e0c1f250",
+                            "additionalDetails": {
+                                "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+                            }
+                        }
+                    ],
+                    "createdTime": 1778930329122,
+                    "lastModifiedTime": 1778930360213,
+                    "caseTitle": "Paravur Akshaya Nidhi Ltd vs Sajitha S , CMP/703/2026",
+                    "caseSTNumber": "CMP/703/2026",
+                    "businessOfTheDay": "No delay in filing the complaint. The accused resides outside the jurisdiction of this court, hence enquiry u/s.225 of BNSS is conducted. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file as ST. Issue summons to accused. Take steps. For return of summons. 30.06.2026.."
+                }
+            },
+            "serviceObject": null
+        },
+        {
+            "ProcessInstance": null,
+            "businessObject": {
+                "orderNotification": {
+                    "id": "KL-001109-2026-OR1",
+                    "tenantId": "kl",
+                    "type": "COMPOSITE",
+                    "courtId": "KLKM52",
+                    "parties": [],
+                    "status": "PENDING_BULK_E-SIGN",
+                    "date": 1778869800000,
+                    "entityType": "Order",
+                    "title": "Schedule of Hearing Date and Other Items",
+                    "filingNumbers": [
+                        "KL-001109-2026"
+                    ],
+                    "caseNumbers": [
+                        "KL-001109-2026"
+                    ],
+                    "judgeIds": [],
+                    "documents": [
+                        {
+                            "documentType": "UNSIGNED",
+                            "documentUid": null,
+                            "fileStore": "29cc317f-8b0d-49b8-a17b-d7c6ede03536",
+                            "id": "18abcb74-d4e4-4c6b-a8f5-7e1769d56593",
+                            "additionalDetails": {
+                                "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+                            }
+                        }
+                    ],
+                    "createdTime": 1778930518156,
+                    "lastModifiedTime": 1778930546993,
+                    "caseTitle": "HARITHA SYNDICATE vs SIMLA E , CMP/706/2026",
+                    "caseSTNumber": "CMP/706/2026",
+                    "businessOfTheDay": "No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons.30.06.2026.."
+                }
+            },
+            "serviceObject": null
+        },
+        {
+            "ProcessInstance": null,
+            "businessObject": {
+                "orderNotification": {
+                    "id": "KL-001012-2026-OR1",
+                    "tenantId": "kl",
+                    "type": "SCHEDULE_OF_HEARING_DATE",
+                    "courtId": "KLKM52",
+                    "parties": [],
+                    "status": "PENDING_BULK_E-SIGN",
+                    "date": 1778869800000,
+                    "entityType": "Order",
+                    "title": "Schedule of Hearing Date",
+                    "filingNumbers": [
+                        "KL-001012-2026"
+                    ],
+                    "caseNumbers": [
+                        "KL-001012-2026"
+                    ],
+                    "judgeIds": [],
+                    "documents": [
+                        {
+                            "documentType": "UNSIGNED",
+                            "documentUid": null,
+                            "fileStore": "b8e19c73-0de1-4d91-95e7-d5d6ad1451bc",
+                            "id": "f27400bc-4421-4af5-b656-59205f862125",
+                            "additionalDetails": {
+                                "name": "Order: Schedule of Hearing Date.pdf"
+                            }
+                        }
+                    ],
+                    "createdTime": 1778930597841,
+                    "lastModifiedTime": 1778930610474,
+                    "caseTitle": "Sunil J vs Satheesan , CMP/707/2026",
+                    "caseSTNumber": "CMP/707/2026",
+                    "businessOfTheDay": "For enquiry u/s.225 of BNSS.22.06.2026.."
+                }
+            },
+            "serviceObject": null
+        },
+        {
+            "ProcessInstance": null,
+            "businessObject": {
+                "orderNotification": {
+                    "id": "KL-001074-2026-OR1",
+                    "tenantId": "kl",
+                    "type": "COMPOSITE",
+                    "courtId": "KLKM52",
+                    "parties": [],
+                    "status": "PENDING_BULK_E-SIGN",
+                    "date": 1778869800000,
+                    "entityType": "Order",
+                    "title": "Schedule of Hearing Date and Other Items",
+                    "filingNumbers": [
+                        "KL-001074-2026"
+                    ],
+                    "caseNumbers": [
+                        "KL-001074-2026"
+                    ],
+                    "judgeIds": [],
+                    "documents": [
+                        {
+                            "documentType": "UNSIGNED",
+                            "documentUid": null,
+                            "fileStore": "11d10d66-d373-40f0-ae08-04ce094e3567",
+                            "id": "c5935b64-d290-42f6-bb6e-24bc8fd8bc97",
+                            "additionalDetails": {
+                                "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+                            }
+                        }
+                    ],
+                    "createdTime": 1778930644684,
+                    "lastModifiedTime": 1778930670940,
+                    "caseTitle": "Sandhya B Pillai vs Sreelatha , CMP/708/2026",
+                    "caseSTNumber": "CMP/708/2026",
+                    "businessOfTheDay": "No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons.30.06.2026.."
+                }
+            },
+            "serviceObject": null
+        },
+        {
+            "ProcessInstance": null,
+            "businessObject": {
+                "orderNotification": {
+                    "id": "KL-001117-2026-OR1",
+                    "tenantId": "kl",
+                    "type": "COMPOSITE",
+                    "courtId": "KLKM52",
+                    "parties": [],
+                    "status": "PENDING_BULK_E-SIGN",
+                    "date": 1778869800000,
+                    "entityType": "Order",
+                    "title": "Schedule of Hearing Date and Other Items",
+                    "filingNumbers": [
+                        "KL-001117-2026"
+                    ],
+                    "caseNumbers": [
+                        "KL-001117-2026"
+                    ],
+                    "judgeIds": [],
+                    "documents": [
+                        {
+                            "documentType": "UNSIGNED",
+                            "documentUid": null,
+                            "fileStore": "170e5492-7456-4e6e-b3d4-b60082c5610f",
+                            "id": "2aebc295-5137-44da-9020-fb52b50fd832",
+                            "additionalDetails": {
+                                "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+                            }
+                        }
+                    ],
+                    "createdTime": 1778930713951,
+                    "lastModifiedTime": 1778930741415,
+                    "caseTitle": "Sandhya B Pillai vs Sreelekha , CMP/709/2026",
+                    "caseSTNumber": "CMP/709/2026",
+                    "businessOfTheDay": "No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons.30.06.2026.."
+                }
+            },
+            "serviceObject": null
+        },
+        {
+            "ProcessInstance": null,
+            "businessObject": {
+                "orderNotification": {
+                    "id": "KL-001127-2026-OR1",
+                    "tenantId": "kl",
+                    "type": "COMPOSITE",
+                    "courtId": "KLKM52",
+                    "parties": [],
+                    "status": "PENDING_BULK_E-SIGN",
+                    "date": 1778869800000,
+                    "entityType": "Order",
+                    "title": "Schedule of Hearing Date and Other Items",
+                    "filingNumbers": [
+                        "KL-001127-2026"
+                    ],
+                    "caseNumbers": [
+                        "KL-001127-2026"
+                    ],
+                    "judgeIds": [],
+                    "documents": [
+                        {
+                            "documentType": "UNSIGNED",
+                            "documentUid": null,
+                            "fileStore": "cc09c199-cc78-4bd2-81fe-c077c8069701",
+                            "id": "33a53bfc-8a4e-435e-aa90-ae22181b05c2",
+                            "additionalDetails": {
+                                "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+                            }
+                        }
+                    ],
+                    "createdTime": 1778930844727,
+                    "lastModifiedTime": 1778930871859,
+                    "caseTitle": "HARITHA SYNDICATE  vs SUDHEER , CMP/711/2026",
+                    "caseSTNumber": "CMP/711/2026",
+                    "businessOfTheDay": "No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons.30.06.2026.."
+                }
+            },
+            "serviceObject": null
+        },
+        {
+            "ProcessInstance": null,
+            "businessObject": {
+                "orderNotification": {
+                    "id": "KL-001096-2026-OR1",
+                    "tenantId": "kl",
+                    "type": "COMPOSITE",
+                    "courtId": "KLKM52",
+                    "parties": [],
+                    "status": "PENDING_BULK_E-SIGN",
+                    "date": 1778869800000,
+                    "entityType": "Order",
+                    "title": "Schedule of Hearing Date and Other Items",
+                    "filingNumbers": [
+                        "KL-001096-2026"
+                    ],
+                    "caseNumbers": [
+                        "KL-001096-2026"
+                    ],
+                    "judgeIds": [],
+                    "documents": [
+                        {
+                            "documentType": "UNSIGNED",
+                            "documentUid": null,
+                            "fileStore": "c058d168-4530-4a26-8c7c-6ecc14f2559c",
+                            "id": "5a098813-5371-4914-be08-2aba0ba12963",
+                            "additionalDetails": {
+                                "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+                            }
+                        }
+                    ],
+                    "createdTime": 1778931090058,
+                    "lastModifiedTime": 1778931128135,
+                    "caseTitle": "Saheerath vs V S Sudhakaran Nair , CMP/713/2026",
+                    "caseSTNumber": "CMP/713/2026",
+                    "businessOfTheDay": "No delay in filing the complaint. The accused resides outside the jurisdiction of this court, hence enquiry u/s.225 of BNSS is conducted. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file as ST. Issue summons to accused. Take steps. For return of summons. 30.06.2026.."
+                }
+            },
+            "serviceObject": null
+        }
+    ]
+}
