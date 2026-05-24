@@ -1,0 +1,198 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "attendees": [
+        {
+          "associatedWith": null,
+          "id": "86abef18-5095-4f4d-91bb-b2474f9a58bc",
+          "individualId": "IND-2025-04-07-000254",
+          "isOnline": null,
+          "label": "Gokul Krishna (Complainant)",
+          "name": "Gokul Krishna (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2025-04-07-000254",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "50871d48-cd84-448a-95dd-4e687ca8bdac",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Noushad (Accused)",
+          "name": "Noushad (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "Noushad (Accused)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "8eb96ef5-536c-42bc-9787-8c3378622ea4",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Manager Axis Bank LtdKollam Branch (Witness)",
+          "name": "Manager Axis Bank LtdKollam Branch (Witness)",
+          "partyType": "witness",
+          "type": "witness",
+          "value": "Manager Axis Bank LtdKollam Branch (Witness)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "81a56cc3-345a-403e-8979-361c46f15896",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Manager ICICI Bank Kollam Branch (Witness)",
+          "name": "Manager ICICI Bank Kollam Branch (Witness)",
+          "partyType": "witness",
+          "type": "witness",
+          "value": "Manager ICICI Bank Kollam Branch (Witness)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "eaa5daee-d745-44a3-8aca-029f92d9c56d",
+          "individualId": "IND-2024-11-20-000361",
+          "isOnline": null,
+          "label": "JYOTHI SAGAR V",
+          "name": "JYOTHI SAGAR V",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2024-11-20-000361",
+          "wasPresent": null
+        }
+      ],
+      "namesOfPartiesRequired": [
+        {
+          "code": "Gokul Krishna",
+          "individualId": "IND-2025-04-07-000254",
+          "isJoined": true,
+          "mobileNumber": "9447172172",
+          "name": "Gokul Krishna (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "1a585748-5285-43a2-bc6c-ac25e30cc2ac",
+          "uuid": [
+            "ca2879f4-09cc-46b3-b128-6576652eaea7"
+          ]
+        },
+        {
+          "code": "Noushad",
+          "isJoined": false,
+          "name": "Noushad (Accused)",
+          "partyType": "respondent",
+          "uniqueId": "fa221250-a525-4ba3-a03a-6a553234298a"
+        },
+        {
+          "code": "Manager Axis Bank LtdKollam Branch",
+          "name": "Manager Axis Bank LtdKollam Branch (Witness)",
+          "partyType": "witness"
+        },
+        {
+          "code": "Manager ICICI Bank Kollam Branch",
+          "name": "Manager ICICI Bank Kollam Branch (Witness)",
+          "partyType": "witness"
+        }
+      ],
+      "refHearingId": "KL-000475-2025-HR19"
+    },
+    "refHearingId": "KL-000475-2025-HR19"
+  },
+  "applicationNumber": null,
+  "attendance": {
+    "Absent": [
+      "COMPLAINANT",
+      "ACCUSED",
+      "ACCUSED_ADVOCATE"
+    ],
+    "Present": [
+      "COMPLAINANT_ADVOCATE"
+    ]
+  },
+  "auditDetails": {
+    "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+    "createdTime": 1778823408128,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779624539442
+  },
+  "cnrNumber": "KLKM520002572025",
+  "comments": null,
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 0,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: .pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "6a0bad5d-3a1b-424d-bfd2-6005c6e27429",
+      "id": "7fb1894c-aaad-4eaf-91ef-04b62dbca925",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000475-2025",
+  "hearingNumber": "KL-000475-2025-HR19",
+  "hearingType": "WARRANT",
+  "id": "637fd047-4387-4d52-b888-f9540bf00ccf",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Await steps u/s.84 and 85 of BNSS. 19.06.2026.</p><p><br></p><p>Due to technical issue order passed on 15-05-2026 could not be uploaded. Hence the order of 15-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": 1781807400000,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "ST/201/2025",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Gokul Krishna (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Noushad (Accused)",
+        "partyType": "respondent"
+      },
+      {
+        "counselName": "",
+        "partyName": "Manager Axis Bank LtdKollam Branch (Witness)",
+        "partyType": "witness"
+      },
+      {
+        "counselName": "",
+        "partyName": "Manager ICICI Bank Kollam Branch (Witness)",
+        "partyType": "witness"
+      }
+    ]
+  },
+  "orderNumber": "KL-000475-2025-OR25",
+  "orderTitle": "Schedule of Next Hearing Date",
+  "orderType": null,
+  "purposeOfNextHearing": "WARRANT",
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "createdTime": 1778823408128,
+      "lastModifiedBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "lastModifiedTime": 1778823408128
+    },
+    "id": "66dd0b0e-4936-473e-9d3c-ce980538b81d",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

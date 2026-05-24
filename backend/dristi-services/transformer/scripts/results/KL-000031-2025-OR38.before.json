@@ -1,0 +1,344 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "attendees": [
+        {
+          "associatedWith": null,
+          "id": "9c6ef059-4a24-41e4-8bf4-f28f04547c96",
+          "individualId": "IND-2025-01-09-000013",
+          "isOnline": null,
+          "label": "Anil kumar (Complainant)",
+          "name": "Anil kumar (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2025-01-09-000013",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "b12f03a8-1ea8-4dd0-a182-9fa8d5431fd9",
+          "individualId": "IND-2025-01-09-000013",
+          "isOnline": null,
+          "label": "Anil kumar (Complainant)",
+          "name": "Anil kumar (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2025-01-09-000013",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "aa30ec85-f2dc-4de1-99a3-c609e082dad9",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Vidya S Anand (Accused)",
+          "name": "Vidya S Anand (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "Vidya S Anand (Accused)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "ad190491-ffa9-4b71-933a-3a4342a1caf3",
+          "individualId": "IND-2025-01-08-000007",
+          "isOnline": null,
+          "label": "Nisha L Prakash",
+          "name": "Nisha L Prakash",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2025-01-08-000007",
+          "wasPresent": null
+        }
+      ],
+      "bailInfo": {
+        "bailableAmount": "",
+        "isBailable": {
+          "code": false,
+          "name": "ES_COMMON_NO"
+        },
+        "noOfSureties": ""
+      },
+      "dateOfHearing": "2026-06-26",
+      "namesOfPartiesRequired": [
+        {
+          "code": "Anil kumar",
+          "individualId": "IND-2025-01-09-000013",
+          "isJoined": true,
+          "mobileNumber": "9539713591",
+          "name": "Anil kumar (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "25de9a3b-2611-4615-a579-e9a456238b21",
+          "uuid": [
+            "22b3cab2-66f9-43e3-81d6-2b92c54c4dba"
+          ]
+        },
+        {
+          "code": "Anil kumar",
+          "individualId": "IND-2025-01-09-000013",
+          "isJoined": true,
+          "mobileNumber": "9539713591",
+          "name": "Anil kumar (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "25de9a3b-2611-4615-a579-e9a456238b21",
+          "uuid": [
+            "22b3cab2-66f9-43e3-81d6-2b92c54c4dba"
+          ]
+        },
+        {
+          "code": "Vidya S Anand",
+          "isJoined": false,
+          "name": "Vidya S Anand (Accused)",
+          "partyType": "respondent",
+          "uniqueId": "ec086fed-c67b-445b-858c-518ebe928f23"
+        }
+      ],
+      "orderType": {
+        "code": "WARRANT",
+        "id": 14,
+        "isactive": true,
+        "name": "ORDER_TYPE_WARRANT",
+        "type": "WARRANT"
+      },
+      "refHearingId": "KL-000031-2025-HR23",
+      "warrantFor": {
+        "party": {
+          "data": {
+            "address": [
+              {
+                "address": {
+                  "city": "Karunagapally",
+                  "district": "Kolllam",
+                  "locality": "Manesh Bhavanam, Thottinuvadakku",
+                  "pincode": "691583",
+                  "state": "Kerala",
+                  "typeOfAddress": {
+                    "code": "RESIDENTIAL",
+                    "id": 1,
+                    "isActive": true,
+                    "name": "Residential"
+                  }
+                },
+                "city": "Karunagapally",
+                "district": "Kolllam",
+                "geoLocationDetails": {
+                  "latitude": null,
+                  "longitude": null,
+                  "policeStation": {
+                    "active": true,
+                    "code": 15995016,
+                    "district": "KOLLAM CITY",
+                    "name": "CHAVARA"
+                  }
+                },
+                "id": "74053935-0b61-452f-98f6-985e4b2bf8c2",
+                "locality": "Manesh Bhavanam, Thottinuvadakku",
+                "pincode": "691583"
+              }
+            ],
+            "addressDetails": [
+              {
+                "addressDetails": {
+                  "city": "Karunagapally",
+                  "district": "Kolllam",
+                  "locality": "Manesh Bhavanam, Thottinuvadakku",
+                  "pincode": "691583",
+                  "state": "Kerala",
+                  "typeOfAddress": {
+                    "code": "RESIDENTIAL",
+                    "id": 1,
+                    "isActive": true,
+                    "name": "Residential"
+                  }
+                },
+                "geoLocationDetails": {
+                  "latitude": null,
+                  "longitude": null,
+                  "policeStation": {
+                    "active": true,
+                    "code": 15995016,
+                    "district": "KOLLAM CITY",
+                    "name": "CHAVARA"
+                  }
+                },
+                "id": "74053935-0b61-452f-98f6-985e4b2bf8c2"
+              }
+            ],
+            "companyDetailsUpload": null,
+            "email": [],
+            "firstName": "Vidya",
+            "inquiryAffidavitFileUpload": {
+              "document": [
+                {
+                  "documentName": "affiavit.pdf",
+                  "documentType": "case.affidavit.225bnss",
+                  "fileName": "Affidavit under section 225 of BNSS",
+                  "fileStore": "e32fda1e-105b-4fb0-a316-9fa4466fb2bf"
+                }
+              ]
+            },
+            "lastName": "Anand",
+            "middleName": "S",
+            "partyIndex": "Respondent_0",
+            "partyType": "Respondent",
+            "phone_numbers": [],
+            "respondentFirstName": "Vidya",
+            "respondentLastName": "Anand",
+            "respondentMiddleName": "S",
+            "respondentType": {
+              "code": "INDIVIDUAL",
+              "commonFields": true,
+              "complainantLocation": true,
+              "complainantTypeId": 1,
+              "id": 1,
+              "isIndividual": true,
+              "isactive": true,
+              "name": "Individual",
+              "showCompanyDetails": false
+            },
+            "uniqueId": "ec086fed-c67b-445b-858c-518ebe928f23"
+          },
+          "displayindex": 0,
+          "isenabled": true,
+          "uniqueId": "ec086fed-c67b-445b-858c-518ebe928f23"
+        },
+        "selectedChannels": [
+          {
+            "code": "RPAD",
+            "type": "Registered Post",
+            "value": {
+              "address": {
+                "city": "Karunagapally",
+                "district": "Kolllam",
+                "locality": "Manesh Bhavanam, Thottinuvadakku",
+                "pincode": "691583",
+                "state": "Kerala",
+                "typeOfAddress": {
+                  "code": "RESIDENTIAL",
+                  "id": 1,
+                  "isActive": true,
+                  "name": "Residential"
+                }
+              },
+              "city": "Karunagapally",
+              "district": "Kolllam",
+              "geoLocationDetails": {
+                "latitude": null,
+                "longitude": null,
+                "policeStation": {
+                  "active": true,
+                  "code": 15995016,
+                  "district": "KOLLAM CITY",
+                  "name": "CHAVARA"
+                }
+              },
+              "id": "74053935-0b61-452f-98f6-985e4b2bf8c2",
+              "locality": "Manesh Bhavanam, Thottinuvadakku",
+              "pincode": "691583"
+            }
+          }
+        ]
+      },
+      "warrantSubType": {
+        "belowOthers": "NO",
+        "code": "2000042",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "subType": "Warrant of arrest of accused 138",
+        "templateType": "SPECIFIC"
+      },
+      "warrantType": {
+        "code": "ARREST",
+        "id": 1,
+        "name": "Arrest"
+      }
+    },
+    "refHearingId": "KL-000031-2025-HR23",
+    "taskDetails": "[{\"warrantDetails\":{\"issueDate\":1778837929574,\"caseFilingDate\":1736417831410,\"docType\":\"ARREST\",\"docSubType\":\"NON_BAILABLE\",\"bailableAmount\":\"\",\"templateType\":\"SPECIFIC\",\"warrantText\":\"\"},\"respondentDetails\":{\"name\":\"Vidya S Anand\",\"address\":{\"id\":\"74053935-0b61-452f-98f6-985e4b2bf8c2\",\"city\":\"Karunagapally\",\"address\":{\"city\":\"Karunagapally\",\"state\":\"Kerala\",\"pincode\":\"691583\",\"district\":\"Kolllam\",\"locality\":\"Manesh Bhavanam, Thottinuvadakku\",\"typeOfAddress\":{\"id\":1,\"code\":\"RESIDENTIAL\",\"name\":\"Residential\",\"isActive\":true}},\"pincode\":\"691583\",\"district\":\"Kolllam\",\"locality\":\"Manesh Bhavanam, Thottinuvadakku\",\"geoLocationDetails\":{\"latitude\":null,\"longitude\":null,\"policeStation\":{\"code\":15995016,\"name\":\"CHAVARA\",\"active\":true,\"district\":\"KOLLAM CITY\"}},\"coordinate\":{\"longitude\":null,\"latitude\":null}},\"phone\":\"\",\"email\":\"\",\"age\":\"\",\"gender\":\"\",\"uniqueId\":\"ec086fed-c67b-445b-858c-518ebe928f23\"},\"caseDetails\":{\"caseTitle\":\"Anil kumar vs Vidya Anand\",\"year\":null,\"hearingDate\":1782432000000,\"judgeName\":\"Michael George\",\"courtName\":\"Special Court Of Judicial Magistrate of the First Class, for the trial of cases under section 138 of NI Act, 1881 at Kollam (\\\"24X7 ON Court\\\")\",\"courtAddress\":\"dummy address\",\"courtId\":\"KLKM52\"},\"deliveryChannels\":{\"channelName\":\"RPAD\",\"name\":\"\",\"address\":\"\",\"phone\":\"\",\"email\":\"\",\"status\":\"\",\"statusChangeDate\":\"\",\"fees\":1,\"feesStatus\":\"\",\"channelCode\":\"RPAD\",\"isPendingCollection\":true}}]"
+  },
+  "applicationNumber": null,
+  "attendance": {
+    "Absent": [
+      "COMPLAINANT",
+      "ACCUSED",
+      "ACCUSED_ADVOCATE"
+    ],
+    "Present": [
+      "COMPLAINANT_ADVOCATE"
+    ]
+  },
+  "auditDetails": {
+    "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+    "createdTime": 1778825041356,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1778837932516
+  },
+  "cnrNumber": "KLKM520000792025",
+  "comments": "",
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 0,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Warrant.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "09491cef-ecee-4e7e-a0f7-883700d85ff1",
+      "id": "40190055-4850-452d-8398-43ec3e8cd54d",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000031-2025",
+  "hearingNumber": "KL-000031-2025-HR23",
+  "hearingType": "WARRANT",
+  "id": "60ea4be8-04b6-4db6-8063-314bca168c14",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Repeat by hand warrant to accused. Take steps. For return of warrant. 26.06.2026.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": 1782412200000,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "ST/677/2025",
+    "hearingDate": 1782432000000,
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Vidya S Anand (Accused)",
+        "partyType": "respondent"
+      }
+    ],
+    "respondentName": "Vidya S Anand",
+    "warrantType": "ARREST"
+  },
+  "orderNumber": "KL-000031-2025-OR38",
+  "orderTitle": "Warrant",
+  "orderType": "WARRANT",
+  "purposeOfNextHearing": "WARRANT",
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "createdTime": 1778825041356,
+      "lastModifiedBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "lastModifiedTime": 1778825041356
+    },
+    "id": "786ac779-28a5-4569-87de-e336fe6b9cfc",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

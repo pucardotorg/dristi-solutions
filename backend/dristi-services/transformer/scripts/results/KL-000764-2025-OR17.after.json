@@ -1,0 +1,172 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "attendees": [
+        {
+          "associatedWith": null,
+          "id": "b246db0a-d6b4-4749-a381-18ba4ff1186b",
+          "individualId": "IND-2025-07-26-000642",
+          "isOnline": null,
+          "label": "Priya Krishnan (Complainant)",
+          "name": "Priya Krishnan (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2025-07-26-000642",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "7688b617-7334-47ca-b98a-c57c9627d31d",
+          "individualId": "IND-2025-08-30-000771",
+          "isOnline": null,
+          "label": "Litheesh A S (Accused)",
+          "name": "Litheesh A S (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "IND-2025-08-30-000771",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "73220199-ac22-41cf-9f79-4f33cc8399ba",
+          "individualId": "IND-2024-11-20-000858",
+          "isOnline": null,
+          "label": "Vishnu Mohan",
+          "name": "Vishnu Mohan",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2024-11-20-000858",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "5745e1eb-fd21-453b-8917-82e5e8fb67f2",
+          "individualId": "IND-2024-11-20-000881",
+          "isOnline": null,
+          "label": "Prasanth. R.S.",
+          "name": "Prasanth. R.S.",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2024-11-20-000881",
+          "wasPresent": null
+        }
+      ],
+      "namesOfPartiesRequired": [
+        {
+          "code": "Priya Krishnan",
+          "individualId": "IND-2025-07-26-000642",
+          "isJoined": true,
+          "mobileNumber": "8075968958",
+          "name": "Priya Krishnan (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "8f081ccf-a8c0-46d9-9ed8-752ab62580d1",
+          "uuid": [
+            "e08b4ad4-7e52-46e1-a30f-f4554a503ae3"
+          ]
+        },
+        {
+          "code": "Litheesh A S",
+          "individualId": "IND-2025-08-30-000771",
+          "isJoined": true,
+          "mobileNumber": "6238005399",
+          "name": "Litheesh A S (Accused)",
+          "partyType": "respondent",
+          "partyUuid": "a7de6865-8d63-4b97-938f-b3070bcb6527",
+          "uniqueId": "d42b7a2d-071f-4bac-adcc-ce1ffb9c2ae7",
+          "uuid": [
+            "fb2d4f47-5afe-4ea5-91cd-ed3bf721f32e"
+          ]
+        }
+      ],
+      "refHearingId": "KL-000764-2025-HR16"
+    },
+    "refHearingId": "KL-000764-2025-HR16"
+  },
+  "applicationNumber": null,
+  "attendance": {
+    "Absent": [
+      "COMPLAINANT",
+      "ACCUSED",
+      "ACCUSED_ADVOCATE"
+    ],
+    "Present": [
+      "COMPLAINANT_ADVOCATE"
+    ]
+  },
+  "auditDetails": {
+    "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+    "createdTime": 1778824078902,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779625165645
+  },
+  "cnrNumber": "KLKM520004502025",
+  "comments": null,
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 0,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: .pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "48c97d77-0cd8-4de9-88f3-4d65a6328dde",
+      "id": "1e6e1d8f-80b2-48d6-b9d1-a58a46d2d304",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000764-2025",
+  "hearingNumber": "KL-000764-2025-HR16",
+  "hearingType": "WARRANT",
+  "id": "fa282cde-5895-4668-ab9c-51ed5f222f49",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>SI of Police, Sulthanbatherry filed report. File the petition for issuing warrant by hand through SP. 26.05.2026.</p><p><br></p><p>Due to technical issue order passed on 15-05-2026 could not be uploaded. Hence the order of 15-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": 1779733800000,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "ST/440/2025",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Priya Krishnan (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Litheesh A S (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-000764-2025-OR17",
+  "orderTitle": "Schedule of Next Hearing Date",
+  "orderType": null,
+  "purposeOfNextHearing": "WARRANT",
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "createdTime": 1778824078902,
+      "lastModifiedBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "lastModifiedTime": 1778824078902
+    },
+    "id": "58527fb8-4016-440a-a6e9-93224bb8ddbc",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

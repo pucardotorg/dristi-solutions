@@ -1,0 +1,29 @@
+--- KL-000764-2025-OR17.before.json
++++ KL-000764-2025-OR17.after.json
+@@ -97,7 +97,7 @@
+     "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+     "createdTime": 1778824078902,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1778832223078
++    "lastModifiedTime": 1779625165645
+   },
+   "cnrNumber": "KLKM520004502025",
+   "comments": null,
+@@ -111,7 +111,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "505d73d9-a761-4ad3-8015-95af98b1f24d",
++      "fileStore": "48c97d77-0cd8-4de9-88f3-4d65a6328dde",
+       "id": "1e6e1d8f-80b2-48d6-b9d1-a58a46d2d304",
+       "isActive": true
+     }
+@@ -122,7 +122,7 @@
+   "id": "fa282cde-5895-4668-ab9c-51ed5f222f49",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>SI of Police, Sulthanbatherry filed report. File the petition for issuing warrant by hand through SP. 26.05.2026.</p>",
++  "itemText": "<p>SI of Police, Sulthanbatherry filed report. File the petition for issuing warrant by hand through SP. 26.05.2026.</p><p><br></p><p>Due to technical issue order passed on 15-05-2026 could not be uploaded. Hence the order of 15-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": 1779733800000,
+   "orderCategory": "INTERMEDIATE",

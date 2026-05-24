@@ -1,0 +1,354 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "attendees": [
+        {
+          "associatedWith": null,
+          "id": "2716b88a-ef8a-4922-8ef8-221e8007638e",
+          "individualId": "IND-2025-02-25-000136",
+          "isOnline": null,
+          "label": "Ajarsha L R (Complainant)",
+          "name": "Ajarsha L R (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2025-02-25-000136",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "90960b5d-1024-4cc2-88bb-bf903d8a64aa",
+          "individualId": null,
+          "isOnline": null,
+          "label": "MOHAN PRASAD U N (Accused)",
+          "name": "MOHAN PRASAD U N (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "MOHAN PRASAD U N (Accused)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "75cbd443-6228-4f84-af32-b914164833bb",
+          "individualId": "IND-2024-11-20-000125",
+          "isOnline": null,
+          "label": "ASHA. G.V.",
+          "name": "ASHA. G.V.",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2024-11-20-000125",
+          "wasPresent": null
+        }
+      ],
+      "bailInfo": {
+        "bailableAmount": "",
+        "isBailable": {
+          "code": false,
+          "name": "ES_COMMON_NO"
+        },
+        "noOfSureties": ""
+      },
+      "dateOfHearing": "2026-06-26",
+      "namesOfPartiesRequired": [
+        {
+          "code": "Ajarsha L R",
+          "individualId": "IND-2025-02-25-000136",
+          "isJoined": true,
+          "mobileNumber": "8547845392",
+          "name": "Ajarsha L R (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "faa4cccc-499f-4f2a-a7f8-6617f561dbab",
+          "uuid": [
+            "77d68d1d-da05-498e-b8c7-409d962689ff"
+          ]
+        },
+        {
+          "code": "MOHAN PRASAD U N",
+          "isJoined": false,
+          "name": "MOHAN PRASAD U N (Accused)",
+          "partyType": "respondent",
+          "uniqueId": "c0d53fe5-2da9-4d77-9f95-f9d2d8809178"
+        }
+      ],
+      "orderType": {
+        "code": "WARRANT",
+        "id": 14,
+        "isactive": true,
+        "name": "ORDER_TYPE_WARRANT",
+        "type": "WARRANT"
+      },
+      "refHearingId": "KL-000730-2025-HR12",
+      "warrantFor": {
+        "party": {
+          "data": {
+            "address": [
+              {
+                "address": {
+                  "city": "ERAVIPURAM",
+                  "district": "KOLLAM",
+                  "locality": "NANDANAM V R A NAGAR 421 B VALATHUNGAL ERAVIPURAM KOLLAM",
+                  "pincode": "691011",
+                  "state": "KERALA",
+                  "typeOfAddress": {
+                    "code": "RESIDENTIAL",
+                    "id": 1,
+                    "isActive": true,
+                    "name": "Residential"
+                  }
+                },
+                "city": "ERAVIPURAM",
+                "district": "KOLLAM",
+                "geoLocationDetails": {
+                  "latitude": null,
+                  "longitude": null,
+                  "policeStation": {
+                    "active": true,
+                    "code": 15995007,
+                    "district": "KOLLAM CITY",
+                    "name": "ERAVIPURAM"
+                  }
+                },
+                "id": "04a65a66-5660-4cd9-b7e2-6c18f8a3c243",
+                "locality": "NANDANAM V R A NAGAR 421 B VALATHUNGAL ERAVIPURAM KOLLAM",
+                "pincode": "691011"
+              }
+            ],
+            "addressDetails": [
+              {
+                "addressDetails": {
+                  "city": "ERAVIPURAM",
+                  "district": "KOLLAM",
+                  "locality": "NANDANAM V R A NAGAR 421 B VALATHUNGAL ERAVIPURAM KOLLAM",
+                  "pincode": "691011",
+                  "state": "KERALA",
+                  "typeOfAddress": {
+                    "code": "RESIDENTIAL",
+                    "id": 1,
+                    "isActive": true,
+                    "name": "Residential"
+                  }
+                },
+                "geoLocationDetails": {
+                  "latitude": null,
+                  "longitude": null,
+                  "policeStation": {
+                    "active": true,
+                    "code": 15995007,
+                    "district": "KOLLAM CITY",
+                    "name": "ERAVIPURAM"
+                  }
+                },
+                "id": "04a65a66-5660-4cd9-b7e2-6c18f8a3c243"
+              }
+            ],
+            "companyDetailsUpload": null,
+            "email": [],
+            "firstName": "MOHAN PRASAD U N",
+            "inquiryAffidavitFileUpload": {
+              "document": [
+                {
+                  "documentName": "225 affidavit mohan.pdf",
+                  "documentType": "case.affidavit.225bnss",
+                  "fileName": "Affidavit under section 225 of BNSS",
+                  "fileStore": "3b604ea0-b0d9-46eb-b94d-c55a6f673f79"
+                }
+              ]
+            },
+            "lastName": "",
+            "middleName": "",
+            "partyIndex": "Respondent_0",
+            "partyType": "Respondent",
+            "phone_numbers": [],
+            "respondentFirstName": "MOHAN PRASAD U N",
+            "respondentLastName": "",
+            "respondentMiddleName": "",
+            "respondentType": {
+              "code": "INDIVIDUAL",
+              "commonFields": true,
+              "complainantLocation": true,
+              "complainantTypeId": 1,
+              "id": 1,
+              "isIndividual": true,
+              "isactive": true,
+              "name": "Individual",
+              "showCompanyDetails": false
+            },
+            "uniqueId": "c0d53fe5-2da9-4d77-9f95-f9d2d8809178"
+          },
+          "displayindex": 0,
+          "isenabled": true,
+          "uniqueId": "c0d53fe5-2da9-4d77-9f95-f9d2d8809178"
+        },
+        "selectedChannels": [
+          {
+            "code": "POLICE",
+            "type": "Via Police",
+            "value": {
+              "address": {
+                "city": "ERAVIPURAM",
+                "district": "KOLLAM",
+                "locality": "NANDANAM V R A NAGAR 421 B VALATHUNGAL ERAVIPURAM KOLLAM",
+                "pincode": "691011",
+                "state": "KERALA",
+                "typeOfAddress": {
+                  "code": "RESIDENTIAL",
+                  "id": 1,
+                  "isActive": true,
+                  "name": "Residential"
+                }
+              },
+              "city": "ERAVIPURAM",
+              "district": "KOLLAM",
+              "geoLocationDetails": {
+                "latitude": null,
+                "longitude": null,
+                "policeStation": {
+                  "active": true,
+                  "code": 15995007,
+                  "district": "KOLLAM CITY",
+                  "name": "ERAVIPURAM"
+                }
+              },
+              "id": "04a65a66-5660-4cd9-b7e2-6c18f8a3c243",
+              "locality": "NANDANAM V R A NAGAR 421 B VALATHUNGAL ERAVIPURAM KOLLAM",
+              "pincode": "691011"
+            }
+          },
+          {
+            "code": "RPAD",
+            "type": "Registered Post",
+            "value": {
+              "address": {
+                "city": "ERAVIPURAM",
+                "district": "KOLLAM",
+                "locality": "NANDANAM V R A NAGAR 421 B VALATHUNGAL ERAVIPURAM KOLLAM",
+                "pincode": "691011",
+                "state": "KERALA",
+                "typeOfAddress": {
+                  "code": "RESIDENTIAL",
+                  "id": 1,
+                  "isActive": true,
+                  "name": "Residential"
+                }
+              },
+              "city": "ERAVIPURAM",
+              "district": "KOLLAM",
+              "geoLocationDetails": {
+                "latitude": null,
+                "longitude": null,
+                "policeStation": {
+                  "active": true,
+                  "code": 15995007,
+                  "district": "KOLLAM CITY",
+                  "name": "ERAVIPURAM"
+                }
+              },
+              "id": "04a65a66-5660-4cd9-b7e2-6c18f8a3c243",
+              "locality": "NANDANAM V R A NAGAR 421 B VALATHUNGAL ERAVIPURAM KOLLAM",
+              "pincode": "691011"
+            }
+          }
+        ]
+      },
+      "warrantSubType": {
+        "belowOthers": "NO",
+        "code": "2000042",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "subType": "Warrant of arrest of accused 138",
+        "templateType": "SPECIFIC"
+      },
+      "warrantType": {
+        "code": "ARREST",
+        "id": 1,
+        "name": "Arrest"
+      }
+    },
+    "refHearingId": "KL-000730-2025-HR12",
+    "taskDetails": "[{\"warrantDetails\":{\"issueDate\":1778837516267,\"caseFilingDate\":1752593112857,\"docType\":\"ARREST\",\"docSubType\":\"NON_BAILABLE\",\"bailableAmount\":\"\",\"templateType\":\"SPECIFIC\",\"warrantText\":\"\"},\"respondentDetails\":{\"name\":\"MOHAN PRASAD U N\",\"address\":{\"id\":\"04a65a66-5660-4cd9-b7e2-6c18f8a3c243\",\"city\":\"ERAVIPURAM\",\"address\":{\"city\":\"ERAVIPURAM\",\"state\":\"KERALA\",\"pincode\":\"691011\",\"district\":\"KOLLAM\",\"locality\":\"NANDANAM V R A NAGAR 421 B VALATHUNGAL ERAVIPURAM KOLLAM\",\"typeOfAddress\":{\"id\":1,\"code\":\"RESIDENTIAL\",\"name\":\"Residential\",\"isActive\":true}},\"pincode\":\"691011\",\"district\":\"KOLLAM\",\"locality\":\"NANDANAM V R A NAGAR 421 B VALATHUNGAL ERAVIPURAM KOLLAM\",\"geoLocationDetails\":{\"latitude\":null,\"longitude\":null,\"policeStation\":{\"code\":15995007,\"name\":\"ERAVIPURAM\",\"active\":true,\"district\":\"KOLLAM CITY\"}},\"coordinate\":{\"longitude\":null,\"latitude\":null}},\"phone\":\"\",\"email\":\"\",\"age\":\"\",\"gender\":\"\",\"uniqueId\":\"c0d53fe5-2da9-4d77-9f95-f9d2d8809178\"},\"caseDetails\":{\"caseTitle\":\"HDFC BANK LTD vs MOHAN PRASAD U N\",\"year\":null,\"hearingDate\":1782432000000,\"judgeName\":\"Michael George\",\"courtName\":\"Special Court Of Judicial Magistrate of the First Class, for the trial of cases under section 138 of NI Act, 1881 at Kollam (\\\"24X7 ON Court\\\")\",\"courtAddress\":\"dummy address\",\"courtId\":\"KLKM52\"},\"deliveryChannels\":{\"channelName\":\"Police\",\"name\":\"\",\"address\":\"\",\"phone\":\"\",\"email\":\"\",\"status\":\"\",\"statusChangeDate\":\"\",\"fees\":1,\"feesStatus\":\"\",\"channelCode\":\"POLICE\",\"isPendingCollection\":false}},{\"warrantDetails\":{\"issueDate\":1778837516267,\"caseFilingDate\":1752593112857,\"docType\":\"ARREST\",\"docSubType\":\"NON_BAILABLE\",\"bailableAmount\":\"\",\"templateType\":\"SPECIFIC\",\"warrantText\":\"\"},\"respondentDetails\":{\"name\":\"MOHAN PRASAD U N\",\"address\":{\"id\":\"04a65a66-5660-4cd9-b7e2-6c18f8a3c243\",\"city\":\"ERAVIPURAM\",\"address\":{\"city\":\"ERAVIPURAM\",\"state\":\"KERALA\",\"pincode\":\"691011\",\"district\":\"KOLLAM\",\"locality\":\"NANDANAM V R A NAGAR 421 B VALATHUNGAL ERAVIPURAM KOLLAM\",\"typeOfAddress\":{\"id\":1,\"code\":\"RESIDENTIAL\",\"name\":\"Residential\",\"isActive\":true}},\"pincode\":\"691011\",\"district\":\"KOLLAM\",\"locality\":\"NANDANAM V R A NAGAR 421 B VALATHUNGAL ERAVIPURAM KOLLAM\",\"geoLocationDetails\":{\"latitude\":null,\"longitude\":null,\"policeStation\":{\"code\":15995007,\"name\":\"ERAVIPURAM\",\"active\":true,\"district\":\"KOLLAM CITY\"}},\"coordinate\":{\"longitude\":null,\"latitude\":null}},\"phone\":\"\",\"email\":\"\",\"age\":\"\",\"gender\":\"\",\"uniqueId\":\"c0d53fe5-2da9-4d77-9f95-f9d2d8809178\"},\"caseDetails\":{\"caseTitle\":\"HDFC BANK LTD vs MOHAN PRASAD U N\",\"year\":null,\"hearingDate\":1782432000000,\"judgeName\":\"Michael George\",\"courtName\":\"Special Court Of Judicial Magistrate of the First Class, for the trial of cases under section 138 of NI Act, 1881 at Kollam (\\\"24X7 ON Court\\\")\",\"courtAddress\":\"dummy address\",\"courtId\":\"KLKM52\"},\"deliveryChannels\":{\"channelName\":\"RPAD\",\"name\":\"\",\"address\":\"\",\"phone\":\"\",\"email\":\"\",\"status\":\"\",\"statusChangeDate\":\"\",\"fees\":1,\"feesStatus\":\"\",\"channelCode\":\"RPAD\",\"isPendingCollection\":true}}]"
+  },
+  "applicationNumber": null,
+  "attendance": {
+    "Absent": [
+      "COMPLAINANT",
+      "ACCUSED",
+      "ACCUSED_ADVOCATE"
+    ],
+    "Present": [
+      "COMPLAINANT_ADVOCATE"
+    ]
+  },
+  "auditDetails": {
+    "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+    "createdTime": 1778824608949,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779624975588
+  },
+  "cnrNumber": "KLKM520004202025",
+  "comments": "",
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 0,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Warrant.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "7386491c-40c2-4718-85b1-80d73cb62a94",
+      "id": "0243e76e-af11-4eb8-92d2-b7a11549491a",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000730-2025",
+  "hearingNumber": "KL-000730-2025-HR12",
+  "hearingType": "WARRANT",
+  "id": "07e621b6-ccff-4beb-84d6-2927265b7aa1",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Issue NBW to accused. Take steps. For return of warrant. 26.06.2026.</p><p><br></p><p>Due to technical issue order passed on 15-05-2026 could not be uploaded. Hence the order of 15-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": 1782412200000,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "ST/524/2025",
+    "hearingDate": 1782432000000,
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "MOHAN PRASAD U N (Accused)",
+        "partyType": "respondent"
+      }
+    ],
+    "respondentName": "MOHAN PRASAD U N",
+    "warrantType": "ARREST"
+  },
+  "orderNumber": "KL-000730-2025-OR13",
+  "orderTitle": "Warrant",
+  "orderType": "WARRANT",
+  "purposeOfNextHearing": "WARRANT",
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "createdTime": 1778824608949,
+      "lastModifiedBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "lastModifiedTime": 1778824608949
+    },
+    "id": "e65c1e8e-bb8f-46a7-94e6-6583bb01655b",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

@@ -1,0 +1,112 @@
+{
+  "additionalDetails": {
+    "applicationNumber": [
+      "KL-000736-2026-AP1"
+    ],
+    "applicationStatus": "APPROVED",
+    "formdata": {
+      "applicationStatus": "APPROVED",
+      "isDcaAcceptedOrRejected": {
+        "code": "ACCEPTED",
+        "name": "ACCEPTED"
+      },
+      "orderType": {
+        "code": "ACCEPTANCE_REJECTION_DCA",
+        "name": "ORDER_TYPE_ACCEPTANCE_REJECTION_DCA",
+        "type": "ACCEPTANCE_REJECTION_DCA"
+      },
+      "refApplicationId": "KL-000736-2026-AP1"
+    },
+    "refHearingId": "KL-000736-2026-HR3"
+  },
+  "applicationNumber": [
+    "KL-000736-2026-AP1"
+  ],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778927665303,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779626425543
+  },
+  "cnrNumber": "KLKM520004322026",
+  "comments": null,
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Order for Acceptance/Rejection of Delay Condonation.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "3795a09c-90c3-4f4b-bf99-86dcc77c66f6",
+      "id": "c0620be0-a1a8-41e8-8e63-1d9d29b9d8bf",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000736-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "c645033b-dcdc-4508-a6b3-9f4c4234d8b9",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Delay is condoned</p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "applicationCMPNumber": "CMP/1/2026",
+    "applicationNumber": "KL-000736-2026-AP1",
+    "applicationTitle": "Condonation of delay",
+    "caseNumber": "CMP/432/2026",
+    "isDcaAcceptedOrRejected": "ACCEPTED",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Akhil S (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "MINI T (PoA Holder)",
+        "partyType": "poaHolder"
+      },
+      {
+        "counselName": "",
+        "partyName": "SHAHUL HAMEED (Accused)",
+        "partyType": "respondent"
+      }
+    ],
+    "refApplicationId": "KL-000736-2026-AP1"
+  },
+  "orderNumber": "KL-000736-2026-OR6",
+  "orderTitle": "Order for Acceptance/Rejection of Delay Condonation",
+  "orderType": "ACCEPTANCE_REJECTION_DCA",
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778927665303,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778927665303
+    },
+    "id": "0528d603-9554-4bf5-96e1-9f51fa4338c0",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

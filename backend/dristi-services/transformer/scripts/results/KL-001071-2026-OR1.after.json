@@ -1,0 +1,253 @@
+{
+  "additionalDetails": {},
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778930007071,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779626972839
+  },
+  "cnrNumber": "KLKM520007002026",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "7ee41cda-2603-49df-8051-363fcd5f3929",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "hearingDate": "2026-06-18",
+            "hearingPurpose": {
+              "code": "DELAY_CONDONATION_HEARING",
+              "id": 15,
+              "isactive": true,
+              "type": "DELAY_CONDONATION_HEARING"
+            },
+            "orderType": {
+              "code": "SCHEDULE_OF_HEARING_DATE",
+              "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              "type": "SCHEDULE_OF_HEARING_DATE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/700/2026",
+          "hearingDate": 1781740800000,
+          "purposeOfHearing": "DELAY_CONDONATION_HEARING"
+        },
+        "orderType": "SCHEDULE_OF_HEARING_DATE"
+      },
+      "orderType": "SCHEDULE_OF_HEARING_DATE"
+    },
+    {
+      "id": "d0218c4d-36f6-4da0-b028-124e8b8ba4fc",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "dateForHearing": "2026-06-18",
+            "noticeOrder": {
+              "party": [
+                {
+                  "data": {
+                    "address": [
+                      {
+                        "address": {
+                          "city": "Kundara",
+                          "district": "Kollam",
+                          "locality": "Kundara Anex Shop No 912 CSI COMMUNITY AND Commercial Complex Kundara Kollam",
+                          "pincode": "691501",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "OFFICE",
+                            "id": 2,
+                            "isActive": true,
+                            "name": "Office"
+                          }
+                        },
+                        "city": "Kundara",
+                        "district": "Kollam",
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15293021,
+                            "district": "KOLLAM RURAL",
+                            "name": "KUNDARA"
+                          }
+                        },
+                        "id": "7794b7b1-7099-4156-9bcc-b1ade6b18a0f",
+                        "locality": "Kundara Anex Shop No 912 CSI COMMUNITY AND Commercial Complex Kundara Kollam",
+                        "pincode": "691501",
+                        "state": "Kerala"
+                      }
+                    ],
+                    "addressDetails": [
+                      {
+                        "addressDetails": {
+                          "city": "Kundara",
+                          "district": "Kollam",
+                          "locality": "Kundara Anex Shop No 912 CSI COMMUNITY AND Commercial Complex Kundara Kollam",
+                          "pincode": "691501",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "OFFICE",
+                            "id": 2,
+                            "isActive": true,
+                            "name": "Office"
+                          }
+                        },
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15293021,
+                            "district": "KOLLAM RURAL",
+                            "name": "KUNDARA"
+                          }
+                        },
+                        "id": "7794b7b1-7099-4156-9bcc-b1ade6b18a0f"
+                      }
+                    ],
+                    "companyDetailsUpload": null,
+                    "email": [],
+                    "firstName": "Anilal V S",
+                    "inquiryAffidavitFileUpload": null,
+                    "lastName": "",
+                    "middleName": "",
+                    "partyIndex": "Respondent_0",
+                    "partyType": "Respondent",
+                    "phone_numbers": [],
+                    "respondentAge": "47",
+                    "respondentFirstName": "Anilal V S",
+                    "respondentLastName": "",
+                    "respondentMiddleName": "",
+                    "respondentType": {
+                      "code": "INDIVIDUAL",
+                      "commonFields": true,
+                      "complainantLocation": true,
+                      "complainantTypeId": 1,
+                      "id": 1,
+                      "isIndividual": true,
+                      "isactive": true,
+                      "name": "Individual",
+                      "showCompanyDetails": false
+                    },
+                    "uniqueId": "6211a128-11d2-4364-9953-f8b235018224"
+                  },
+                  "displayindex": 0,
+                  "isenabled": true,
+                  "uniqueId": "6211a128-11d2-4364-9953-f8b235018224"
+                }
+              ]
+            },
+            "noticeType": {
+              "code": "DCA Notice",
+              "id": 2,
+              "isActive": true,
+              "type": "DCA Notice"
+            },
+            "orderType": {
+              "code": "NOTICE",
+              "id": 22,
+              "isactive": true,
+              "name": "ORDER_TYPE_NOTICE",
+              "type": "NOTICE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/700/2026",
+          "hearingDate": 1781740800000,
+          "noticeType": "DCA Notice",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Anilal V S (Accused)",
+              "partyType": "respondent"
+            }
+          ],
+          "respondentName": [
+            "Anilal V S"
+          ]
+        },
+        "orderType": "NOTICE"
+      },
+      "orderType": "NOTICE"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "ea7cb10f-4cc0-4854-8848-b27916531922",
+      "id": "c605d3bc-f64c-49c3-a8ac-9076e918b3dd",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001071-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "29a3efe3-d12e-42f5-b3ec-6e53f42f0dbf",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Issue DCA notice to accused. Take steps. For return of notice. 18.06.2026.</p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "CMP/700/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Nibu Jacob Varkey (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Anilal V S (Accused)",
+        "partyType": "respondent"
+      },
+      {
+        "counselName": "",
+        "partyName": "Manager Kerala Gramin Bank Kundara Branch (Witness)",
+        "partyType": "witness"
+      },
+      {
+        "counselName": "",
+        "partyName": "Branch Manager Punjab National Bank Chinnakada Kollam (Witness)",
+        "partyType": "witness"
+      }
+    ]
+  },
+  "orderNumber": "KL-001071-2026-OR1",
+  "orderTitle": "Schedule of Hearing Date and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778930007071,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778930007071
+    },
+    "id": "22ab4de3-772b-4153-a9e1-becd4c1adf59",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

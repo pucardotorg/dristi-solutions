@@ -1,0 +1,29 @@
+--- KL-000180-2025-OR49.before.json
++++ KL-000180-2025-OR49.after.json
+@@ -144,7 +144,7 @@
+     "createdBy": "85ffc5d6-6ed8-4cd0-b60a-f2e82844cf69",
+     "createdTime": 1778736719022,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1778758542649
++    "lastModifiedTime": 1779623145390
+   },
+   "cnrNumber": "KLKM520000982025",
+   "comments": null,
+@@ -158,7 +158,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "1cdde828-206e-43c4-8eca-abc50dab18c8",
++      "fileStore": "01b35c20-d56b-46c0-9294-33fa0937e2a6",
+       "id": "446ec34c-46ae-4f90-8c6e-2fbeb3c1953b",
+       "isActive": true
+     }
+@@ -169,7 +169,7 @@
+   "id": "d4140872-b0c1-4456-9df0-dee9cc1c0c7b",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>Issue notice to the counsel for the accused. 21.05.2026.</p>",
++  "itemText": "<p>Issue notice to the counsel for the accused. 21.05.2026.</p><p><br></p><p>Due to technical issue order passed on 14-05-2026 could not be uploaded. Hence the order of 14-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": 1779301800000,
+   "orderCategory": "INTERMEDIATE",

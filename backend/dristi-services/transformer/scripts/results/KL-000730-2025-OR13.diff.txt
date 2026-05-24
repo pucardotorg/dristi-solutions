@@ -1,0 +1,29 @@
+--- KL-000730-2025-OR13.before.json
++++ KL-000730-2025-OR13.after.json
+@@ -281,7 +281,7 @@
+     "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+     "createdTime": 1778824608949,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1778837519618
++    "lastModifiedTime": 1779624975588
+   },
+   "cnrNumber": "KLKM520004202025",
+   "comments": "",
+@@ -295,7 +295,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "46017f90-1a4b-499a-ba91-465e4e7dfd32",
++      "fileStore": "7386491c-40c2-4718-85b1-80d73cb62a94",
+       "id": "0243e76e-af11-4eb8-92d2-b7a11549491a",
+       "isActive": true
+     }
+@@ -306,7 +306,7 @@
+   "id": "07e621b6-ccff-4beb-84d6-2927265b7aa1",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>Issue NBW to accused. Take steps. For return of warrant. 26.06.2026.</p>",
++  "itemText": "<p>Issue NBW to accused. Take steps. For return of warrant. 26.06.2026.</p><p><br></p><p>Due to technical issue order passed on 15-05-2026 could not be uploaded. Hence the order of 15-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": 1782412200000,
+   "orderCategory": "INTERMEDIATE",

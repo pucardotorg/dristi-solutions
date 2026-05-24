@@ -1,0 +1,421 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "attendees": [
+        {
+          "associatedWith": null,
+          "id": "7e293fbe-1fc6-491a-81cd-04716cc581f3",
+          "individualId": "IND-2024-12-09-001832",
+          "isOnline": null,
+          "label": "Biju B (Complainant)",
+          "name": "Biju B (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2024-12-09-001832",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "b0a88c4c-4fc2-4dae-88a8-04907d8f2c1f",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Dileep D (Accused)",
+          "name": "Dileep D (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "Dileep D (Accused)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "1467c8b4-954b-46f7-b424-e0fa5c56173b",
+          "individualId": "IND-2024-11-20-000940",
+          "isOnline": null,
+          "label": "JIJU BABU. S.",
+          "name": "JIJU BABU. S.",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2024-11-20-000940",
+          "wasPresent": null
+        }
+      ],
+      "namesOfPartiesRequired": [
+        {
+          "code": "Biju B",
+          "individualId": "IND-2024-12-09-001832",
+          "isJoined": true,
+          "mobileNumber": "9961904490",
+          "name": "Biju B (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "d6d29d63-a924-432e-86c0-dbafc5669ace",
+          "uuid": [
+            "66df1588-354d-4a19-ada4-897323de5bbd"
+          ]
+        },
+        {
+          "code": "Dileep D",
+          "isJoined": false,
+          "name": "Dileep D (Accused)",
+          "partyType": "respondent",
+          "uniqueId": "60841b36-8cc4-4fe3-8e52-7ab1b2c355bb"
+        }
+      ],
+      "refHearingId": "KL-000286-2024-HR18"
+    },
+    "refHearingId": "KL-000286-2024-HR18"
+  },
+  "applicationNumber": [
+    "KL-000286-2024-AP2"
+  ],
+  "attendance": {
+    "Absent": [
+      "COMPLAINANT",
+      "ACCUSED",
+      "ACCUSED_ADVOCATE"
+    ],
+    "Present": [
+      "COMPLAINANT_ADVOCATE"
+    ]
+  },
+  "auditDetails": {
+    "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+    "createdTime": 1778825394823,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1778838153125
+  },
+  "cnrNumber": "KLKM520004042025",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "1096f0f2-6fb9-4a55-814c-3db618318bc8",
+      "orderSchema": {
+        "additionalDetails": {
+          "applicationNumber": [
+            "KL-000286-2024-AP2"
+          ],
+          "applicationStatus": "APPROVED",
+          "formdata": {
+            "attendees": [
+              {
+                "associatedWith": null,
+                "id": "7e293fbe-1fc6-491a-81cd-04716cc581f3",
+                "individualId": "IND-2024-12-09-001832",
+                "isOnline": null,
+                "label": "Biju B (Complainant)",
+                "name": "Biju B (Complainant)",
+                "partyType": "complainant",
+                "type": "complainant",
+                "value": "IND-2024-12-09-001832",
+                "wasPresent": null
+              },
+              {
+                "associatedWith": null,
+                "id": "b0a88c4c-4fc2-4dae-88a8-04907d8f2c1f",
+                "individualId": null,
+                "isOnline": null,
+                "label": "Dileep D (Accused)",
+                "name": "Dileep D (Accused)",
+                "partyType": "respondent",
+                "type": "respondent",
+                "value": "Dileep D (Accused)",
+                "wasPresent": null
+              },
+              {
+                "associatedWith": null,
+                "id": "1467c8b4-954b-46f7-b424-e0fa5c56173b",
+                "individualId": "IND-2024-11-20-000940",
+                "isOnline": null,
+                "label": "JIJU BABU. S.",
+                "name": "JIJU BABU. S.",
+                "partyType": "Advocate",
+                "type": "Advocate",
+                "value": "IND-2024-11-20-000940",
+                "wasPresent": null
+              }
+            ],
+            "namesOfPartiesRequired": [
+              {
+                "code": "Biju B",
+                "individualId": "IND-2024-12-09-001832",
+                "isJoined": true,
+                "mobileNumber": "9961904490",
+                "name": "Biju B (Complainant)",
+                "partyType": "complainant",
+                "partyUuid": "d6d29d63-a924-432e-86c0-dbafc5669ace",
+                "uuid": [
+                  "66df1588-354d-4a19-ada4-897323de5bbd"
+                ]
+              },
+              {
+                "code": "Dileep D",
+                "isJoined": false,
+                "name": "Dileep D (Accused)",
+                "partyType": "respondent",
+                "uniqueId": "60841b36-8cc4-4fe3-8e52-7ab1b2c355bb"
+              }
+            ],
+            "orderType": {
+              "code": "APPROVE_VOLUNTARY_SUBMISSIONS",
+              "id": 9,
+              "isactive": true,
+              "name": "ORDER_TYPE_APPROVE_VOLUNTARY_SUBMISSIONS",
+              "type": "APPROVE_VOLUNTARY_SUBMISSIONS"
+            },
+            "refApplicationId": "KL-000286-2024-AP2",
+            "refHearingId": "KL-000286-2024-HR18"
+          },
+          "refHearingId": "KL-000286-2024-HR18"
+        },
+        "orderDetails": {
+          "caseNumber": "ST/819/2025",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Biju B (Complainant)",
+              "partyType": "complainant"
+            },
+            {
+              "counselName": "",
+              "partyName": "Dileep D (Accused)",
+              "partyType": "respondent"
+            }
+          ]
+        },
+        "orderType": "APPROVE_VOLUNTARY_SUBMISSIONS"
+      },
+      "orderType": "APPROVE_VOLUNTARY_SUBMISSIONS"
+    },
+    {
+      "id": "49c7a047-83ba-4989-8114-43e275d91076",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "bailInfo": {
+              "bailableAmount": "",
+              "isBailable": {
+                "code": false,
+                "name": "ES_COMMON_NO"
+              },
+              "noOfSureties": ""
+            },
+            "dateOfHearing": "2026-06-26",
+            "orderType": {
+              "code": "WARRANT",
+              "id": 14,
+              "isactive": true,
+              "name": "ORDER_TYPE_WARRANT",
+              "type": "WARRANT"
+            },
+            "warrantFor": {
+              "party": {
+                "data": {
+                  "address": [
+                    {
+                      "address": {
+                        "city": "Kollam",
+                        "district": "Kollam ",
+                        "locality": "Rajani Nivas, Puthenzhathu Kizhakathil, Thekkecherry, Thirikkaruva, Kanjaveli P O , kollam ",
+                        "pincode": "691602",
+                        "state": "Kerala "
+                      },
+                      "city": "Kollam",
+                      "district": "Kollam ",
+                      "geoLocationDetails": {
+                        "latitude": null,
+                        "longitude": null,
+                        "policeStation": {
+                          "active": true,
+                          "code": 15995004,
+                          "district": "KOLLAM CITY",
+                          "name": "ANCHALUMMOODU"
+                        }
+                      },
+                      "id": "62b6c6c8-1f1a-42b9-a897-20f1dc3c02a2",
+                      "locality": "Rajani Nivas, Puthenzhathu Kizhakathil, Thekkecherry, Thirikkaruva, Kanjaveli P O , kollam ",
+                      "pincode": "691602"
+                    }
+                  ],
+                  "addressDetails": [
+                    {
+                      "addressDetails": {
+                        "city": "Kollam",
+                        "district": "Kollam ",
+                        "locality": "Rajani Nivas, Puthenzhathu Kizhakathil, Thekkecherry, Thirikkaruva, Kanjaveli P O , kollam ",
+                        "pincode": "691602",
+                        "state": "Kerala "
+                      },
+                      "geoLocationDetails": {
+                        "latitude": null,
+                        "longitude": null,
+                        "policeStation": {
+                          "active": true,
+                          "code": 15995004,
+                          "district": "KOLLAM CITY",
+                          "name": "ANCHALUMMOODU"
+                        }
+                      },
+                      "id": "62b6c6c8-1f1a-42b9-a897-20f1dc3c02a2"
+                    }
+                  ],
+                  "companyDetailsUpload": null,
+                  "email": [],
+                  "firstName": "Dileep D ",
+                  "inquiryAffidavitFileUpload": null,
+                  "lastName": "",
+                  "middleName": "",
+                  "partyIndex": "Respondent_0",
+                  "partyType": "Respondent",
+                  "phone_numbers": [],
+                  "respondentFirstName": "Dileep D ",
+                  "respondentLastName": "",
+                  "respondentMiddleName": "",
+                  "respondentType": {
+                    "code": "INDIVIDUAL",
+                    "commonFields": true,
+                    "complainantLocation": true,
+                    "complainantTypeId": 1,
+                    "id": 1,
+                    "isIndividual": true,
+                    "isactive": true,
+                    "name": "Individual",
+                    "showCompanyDetails": false
+                  },
+                  "uniqueId": "60841b36-8cc4-4fe3-8e52-7ab1b2c355bb"
+                },
+                "displayindex": 0,
+                "isenabled": true,
+                "uniqueId": "60841b36-8cc4-4fe3-8e52-7ab1b2c355bb"
+              },
+              "selectedChannels": [
+                {
+                  "code": "RPAD",
+                  "type": "Registered Post",
+                  "value": {
+                    "address": {
+                      "city": "Kollam",
+                      "district": "Kollam ",
+                      "locality": "Rajani Nivas, Puthenzhathu Kizhakathil, Thekkecherry, Thirikkaruva, Kanjaveli P O , kollam ",
+                      "pincode": "691602",
+                      "state": "Kerala "
+                    },
+                    "city": "Kollam",
+                    "district": "Kollam ",
+                    "geoLocationDetails": {
+                      "latitude": null,
+                      "longitude": null,
+                      "policeStation": {
+                        "active": true,
+                        "code": 15995004,
+                        "district": "KOLLAM CITY",
+                        "name": "ANCHALUMMOODU"
+                      }
+                    },
+                    "id": "62b6c6c8-1f1a-42b9-a897-20f1dc3c02a2",
+                    "locality": "Rajani Nivas, Puthenzhathu Kizhakathil, Thekkecherry, Thirikkaruva, Kanjaveli P O , kollam ",
+                    "pincode": "691602"
+                  }
+                }
+              ]
+            },
+            "warrantSubType": {
+              "belowOthers": "NO",
+              "code": "2000042",
+              "docCaseType": "Criminal",
+              "docTypeCode": "1",
+              "subType": "Warrant of arrest of accused 138",
+              "templateType": "SPECIFIC"
+            },
+            "warrantType": {
+              "code": "ARREST",
+              "id": 1,
+              "name": "Arrest"
+            }
+          },
+          "taskDetails": "[{\"warrantDetails\":{\"issueDate\":1778838146889,\"caseFilingDate\":1733834307352,\"docType\":\"ARREST\",\"docSubType\":\"NON_BAILABLE\",\"bailableAmount\":\"\",\"templateType\":\"SPECIFIC\",\"warrantText\":\"\"},\"respondentDetails\":{\"name\":\"Dileep D\",\"address\":{\"id\":\"62b6c6c8-1f1a-42b9-a897-20f1dc3c02a2\",\"city\":\"Kollam\",\"address\":{\"city\":\"Kollam\",\"state\":\"Kerala \",\"pincode\":\"691602\",\"district\":\"Kollam \",\"locality\":\"Rajani Nivas, Puthenzhathu Kizhakathil, Thekkecherry, Thirikkaruva, Kanjaveli P O , kollam \"},\"pincode\":\"691602\",\"district\":\"Kollam \",\"locality\":\"Rajani Nivas, Puthenzhathu Kizhakathil, Thekkecherry, Thirikkaruva, Kanjaveli P O , kollam \",\"geoLocationDetails\":{\"latitude\":null,\"longitude\":null,\"policeStation\":{\"code\":15995004,\"name\":\"ANCHALUMMOODU\",\"active\":true,\"district\":\"KOLLAM CITY\"}},\"coordinate\":{\"longitude\":null,\"latitude\":null}},\"phone\":\"\",\"email\":\"\",\"age\":\"\",\"gender\":\"\",\"uniqueId\":\"60841b36-8cc4-4fe3-8e52-7ab1b2c355bb\"},\"caseDetails\":{\"caseTitle\":\"Biju K vs Dileep D\",\"year\":null,\"hearingDate\":1782432000000,\"judgeName\":\"Michael George\",\"courtName\":\"Special Court Of Judicial Magistrate of the First Class, for the trial of cases under section 138 of NI Act, 1881 at Kollam (\\\"24X7 ON Court\\\")\",\"courtAddress\":\"dummy address\",\"courtId\":\"KLKM52\"},\"deliveryChannels\":{\"channelName\":\"RPAD\",\"name\":\"\",\"address\":\"\",\"phone\":\"\",\"email\":\"\",\"status\":\"\",\"statusChangeDate\":\"\",\"fees\":1,\"feesStatus\":\"\",\"channelCode\":\"RPAD\",\"isPendingCollection\":true}}]"
+        },
+        "orderDetails": {
+          "caseNumber": "ST/819/2025",
+          "hearingDate": 1782432000000,
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Dileep D (Accused)",
+              "partyType": "respondent"
+            }
+          ],
+          "respondentName": "Dileep D",
+          "warrantType": "ARREST"
+        },
+        "orderType": "WARRANT"
+      },
+      "orderType": "WARRANT"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 0,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Approve Voluntary Submissions and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "8b5d3cc0-4cd2-4bc1-b3bd-b248bc00c392",
+      "id": "ea1fb0b5-dd78-40ca-8e6e-56910a251108",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000286-2024",
+  "hearingNumber": "KL-000286-2024-HR18",
+  "hearingType": "WARRANT",
+  "id": "5fc23221-96df-42c9-9ce6-8ebf730ad32e",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>CMP.1/2026 is allowed. Issue by hand warrant to accused. Take steps. For return of warrant. 26.06.2026.</p><p><br></p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": 1782412200000,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "ST/819/2025",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Biju B (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Dileep D (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-000286-2024-OR20",
+  "orderTitle": "Approve Voluntary Submissions and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": "WARRANT",
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "createdTime": 1778825394823,
+      "lastModifiedBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "lastModifiedTime": 1778825394823
+    },
+    "id": "ec6481d0-5181-4a82-a7af-a68863ae4eba",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

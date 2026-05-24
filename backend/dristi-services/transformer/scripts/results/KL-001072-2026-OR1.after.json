@@ -1,0 +1,265 @@
+{
+  "additionalDetails": {},
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778504469974,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779625479001
+  },
+  "cnrNumber": "KLKM520006692026",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "b0561960-d7e1-49af-abee-68e2da28f3be",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "hearingDate": "2026-06-24",
+            "hearingPurpose": {
+              "code": "APPEARANCE",
+              "id": 3,
+              "isactive": true,
+              "type": "APPEARANCE"
+            },
+            "orderType": {
+              "code": "SCHEDULE_OF_HEARING_DATE",
+              "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              "type": "SCHEDULE_OF_HEARING_DATE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/669/2026",
+          "hearingDate": 1782259200000,
+          "purposeOfHearing": "APPEARANCE"
+        },
+        "orderType": "SCHEDULE_OF_HEARING_DATE"
+      },
+      "orderType": "SCHEDULE_OF_HEARING_DATE"
+    },
+    {
+      "id": "baf3dcfd-3af1-4ffa-b702-e13106fedfc6",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "orderType": {
+              "code": "TAKE_COGNIZANCE",
+              "id": 30,
+              "isactive": true,
+              "name": "ORDER_TYPE_TAKE_COGNIZANCE",
+              "type": "TAKE_COGNIZANCE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/669/2026",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Dileep S (Complainant)",
+              "partyType": "complainant"
+            },
+            {
+              "counselName": "",
+              "partyName": "R Lathika (Accused)",
+              "partyType": "respondent"
+            }
+          ]
+        },
+        "orderType": "TAKE_COGNIZANCE"
+      },
+      "orderType": "TAKE_COGNIZANCE"
+    },
+    {
+      "id": "d7111ec9-544a-4b25-864c-db9b747d18a8",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "SummonsOrder": {
+              "party": [
+                {
+                  "data": {
+                    "address": [
+                      {
+                        "address": {
+                          "city": "Nedungolam",
+                          "district": "Kollam",
+                          "locality": "W/o Prakash.P, Pratheesh Bhavan, Nedugolam.po, Paravoor, Meenadu, Kollam",
+                          "pincode": "691334",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "city": "Nedungolam",
+                        "district": "Kollam",
+                        "id": "a0a9bf57-c787-462e-a5f9-28da36869556",
+                        "locality": "W/o Prakash.P, Pratheesh Bhavan, Nedugolam.po, Paravoor, Meenadu, Kollam",
+                        "pincode": "691334",
+                        "state": "Kerala"
+                      }
+                    ],
+                    "addressDetails": [
+                      {
+                        "addressDetails": {
+                          "city": "Nedungolam",
+                          "district": "Kollam",
+                          "locality": "W/o Prakash.P, Pratheesh Bhavan, Nedugolam.po, Paravoor, Meenadu, Kollam",
+                          "pincode": "691334",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "id": "a0a9bf57-c787-462e-a5f9-28da36869556"
+                      }
+                    ],
+                    "companyDetailsUpload": null,
+                    "email": [],
+                    "firstName": "R Lathika",
+                    "inquiryAffidavitFileUpload": {
+                      "document": [
+                        {
+                          "documentName": "lathika 225.pdf",
+                          "documentType": "case.affidavit.225bnss",
+                          "fileName": "Affidavit under section 225 of BNSS",
+                          "fileStore": "24d19135-1114-49de-85ed-e60c091544ed"
+                        }
+                      ]
+                    },
+                    "lastName": "",
+                    "middleName": "",
+                    "partyIndex": "Respondent_0",
+                    "partyType": "Respondent",
+                    "phone_numbers": [],
+                    "phonenumbers": {
+                      "textfieldValue": ""
+                    },
+                    "respondentAge": "58",
+                    "respondentFirstName": "R Lathika",
+                    "respondentLastName": "",
+                    "respondentMiddleName": "",
+                    "respondentType": {
+                      "code": "INDIVIDUAL",
+                      "commonFields": true,
+                      "complainantLocation": true,
+                      "complainantTypeId": 1,
+                      "id": 1,
+                      "isIndividual": true,
+                      "isactive": true,
+                      "name": "Individual",
+                      "showCompanyDetails": false
+                    },
+                    "uniqueId": "e26b3c20-ea04-4f5b-90ca-fa487982be3e"
+                  },
+                  "displayindex": 0,
+                  "isenabled": true,
+                  "uniqueId": "e26b3c20-ea04-4f5b-90ca-fa487982be3e"
+                }
+              ]
+            },
+            "dateForHearing": "2026-06-24",
+            "orderType": {
+              "code": "SUMMONS",
+              "id": 13,
+              "isactive": true,
+              "name": "ORDER_TYPE_SUMMONS",
+              "type": "SUMMONS"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/669/2026",
+          "hearingDate": 1782259200000,
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "R Lathika (Accused)",
+              "partyType": "respondent"
+            }
+          ],
+          "respondentName": [
+            "R Lathika"
+          ]
+        },
+        "orderType": "SUMMONS"
+      },
+      "orderType": "SUMMONS"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 1778437800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "139bf189-89a7-4c58-8e63-b4d2d63c79da",
+      "id": "6e2ad971-2c5d-41d7-baf1-11d3c054eb06",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001072-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "dcfcf3b4-7fc0-4c42-a889-416b75b5fdc6",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file&nbsp;as ST. Issue summons. Take steps. 24.06.2026</p><p><br></p><p>Due to technical issue order passed on 11-05-2026 could not be uploaded. Hence the order of 11-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "CMP/669/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Dileep S (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "R Lathika (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-001072-2026-OR1",
+  "orderTitle": "Schedule of Hearing Date and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778504469974,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778504469974
+    },
+    "id": "c3fe8be1-c49a-44a6-9d85-bddcc2490bc7",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

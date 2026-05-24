@@ -1,0 +1,154 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "attendees": [
+        {
+          "associatedWith": null,
+          "id": "994d0ea4-52b9-4b38-b1b3-730ce2bb6150",
+          "individualId": "IND-2026-01-13-000079",
+          "isOnline": null,
+          "label": "Ronn ES (Complainant)",
+          "name": "Ronn ES (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2026-01-13-000079",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "5759686c-3215-4eb4-8c92-5b70151ab400",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Nasla N (Accused)",
+          "name": "Nasla N (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "Nasla N (Accused)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "d3d5f198-0bf5-49af-b284-6227e7716991",
+          "individualId": "IND-2024-11-20-000520",
+          "isOnline": null,
+          "label": "RAJEEV C",
+          "name": "RAJEEV C",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2024-11-20-000520",
+          "wasPresent": null
+        }
+      ],
+      "namesOfPartiesRequired": [
+        {
+          "code": "Ronn ES",
+          "individualId": "IND-2026-01-13-000079",
+          "isJoined": true,
+          "mobileNumber": "7907259016",
+          "name": "Ronn ES (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "db6d591b-19d8-4055-86ac-c88ec2555f0c",
+          "uuid": [
+            "b218df68-4c67-472a-b13f-0d041bdde7be"
+          ]
+        },
+        {
+          "code": "Nasla N",
+          "isJoined": false,
+          "name": "Nasla N (Accused)",
+          "partyType": "respondent",
+          "uniqueId": "d886d534-90f2-4ba9-b4a1-a8a16ccf37c9"
+        }
+      ],
+      "refHearingId": "KL-000138-2026-HR4"
+    },
+    "refHearingId": "KL-000138-2026-HR4"
+  },
+  "applicationNumber": null,
+  "attendance": {
+    "Absent": [
+      "COMPLAINANT",
+      "ACCUSED",
+      "ACCUSED_ADVOCATE"
+    ],
+    "Present": [
+      "COMPLAINANT_ADVOCATE"
+    ]
+  },
+  "auditDetails": {
+    "createdBy": "85ffc5d6-6ed8-4cd0-b60a-f2e82844cf69",
+    "createdTime": 1778221414029,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1778505489110
+  },
+  "cnrNumber": "KLKM520000292026",
+  "comments": null,
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 0,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: .pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "7480f784-8a94-4c83-ba55-ea6a734a0f5c",
+      "id": "8182e7e4-06bd-4e04-97c6-4dfef1764684",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000138-2026",
+  "hearingNumber": "KL-000138-2026-HR4",
+  "hearingType": "WARRANT",
+  "id": "81bba834-72a2-40cd-b150-728dd8e6d0ee",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Await warrant.12/06/2026</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": 1781202600000,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "ST/28/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Ronn ES (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Nasla N (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-000138-2026-OR5",
+  "orderTitle": "Schedule of Next Hearing Date",
+  "orderType": null,
+  "purposeOfNextHearing": "WARRANT",
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "85ffc5d6-6ed8-4cd0-b60a-f2e82844cf69",
+      "createdTime": 1778221414029,
+      "lastModifiedBy": "85ffc5d6-6ed8-4cd0-b60a-f2e82844cf69",
+      "lastModifiedTime": 1778221414029
+    },
+    "id": "5a563807-b236-409a-938e-c08447eea617",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

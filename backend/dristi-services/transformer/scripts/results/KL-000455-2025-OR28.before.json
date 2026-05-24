@@ -1,0 +1,405 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "attendees": [
+        {
+          "associatedWith": null,
+          "id": "c739f55f-e9e6-48a0-9072-938c39e19fcc",
+          "individualId": "IND-2025-03-19-000199",
+          "isOnline": null,
+          "label": "Santha (Complainant)",
+          "name": "Santha (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2025-03-19-000199",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "5f7fa682-46fd-4c22-aac2-65a72cb77609",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Krishnaji Sivakumar (Accused)",
+          "name": "Krishnaji Sivakumar (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "Krishnaji Sivakumar (Accused)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "5b91368d-9b18-4572-a21e-1131b337e56c",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Branch Manager (Witness)",
+          "name": "Branch Manager (Witness)",
+          "partyType": "witness",
+          "type": "witness",
+          "value": "Branch Manager (Witness)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "62e6dcc0-e2e4-4ab8-86c6-e8f23e9bb762",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Branch Manager (Witness)",
+          "name": "Branch Manager (Witness)",
+          "partyType": "witness",
+          "type": "witness",
+          "value": "Branch Manager (Witness)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "b8080ddd-1709-4cbd-ab34-df28360dca87",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Branch Manager (Witness)",
+          "name": "Branch Manager (Witness)",
+          "partyType": "witness",
+          "type": "witness",
+          "value": "Branch Manager (Witness)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "d9d62fac-6d8e-4649-a206-82fb30bb681a",
+          "individualId": "IND-2024-11-20-000464",
+          "isOnline": null,
+          "label": "Maruthadi. S. Navas",
+          "name": "Maruthadi. S. Navas",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2024-11-20-000464",
+          "wasPresent": null
+        }
+      ],
+      "bailInfo": {
+        "bailableAmount": "",
+        "isBailable": {
+          "code": false,
+          "name": "ES_COMMON_NO"
+        },
+        "noOfSureties": ""
+      },
+      "dateOfHearing": "2026-06-26",
+      "namesOfPartiesRequired": [
+        {
+          "code": "Santha",
+          "individualId": "IND-2025-03-19-000199",
+          "isJoined": true,
+          "mobileNumber": "7012274218",
+          "name": "Santha (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "d59d1bf8-e1ae-49f4-a099-44a5565d1e65",
+          "uuid": [
+            "497e4d3d-dc3c-452f-a9fb-c32b17d64fd5"
+          ]
+        },
+        {
+          "code": "Krishnaji Sivakumar",
+          "isJoined": false,
+          "name": "Krishnaji Sivakumar (Accused)",
+          "partyType": "respondent",
+          "uniqueId": "66115e0a-688e-4b5c-bce2-a23bf5b4af3f"
+        },
+        {
+          "code": "Branch Manager",
+          "name": "Branch Manager (Witness)",
+          "partyType": "witness"
+        },
+        {
+          "code": "Branch Manager",
+          "name": "Branch Manager (Witness)",
+          "partyType": "witness"
+        },
+        {
+          "code": "Branch Manager",
+          "name": "Branch Manager (Witness)",
+          "partyType": "witness"
+        }
+      ],
+      "orderType": {
+        "code": "WARRANT",
+        "id": 14,
+        "isactive": true,
+        "name": "ORDER_TYPE_WARRANT",
+        "type": "WARRANT"
+      },
+      "refHearingId": "KL-000455-2025-HR21",
+      "warrantFor": {
+        "party": {
+          "data": {
+            "address": [
+              {
+                "address": {
+                  "city": "kollam",
+                  "district": "Kollam",
+                  "locality": "Proprietor Sree Krishna Traders, 33/809, Mulamkadakam, Thirumullavaram P.O, Kollam",
+                  "pincode": "691012",
+                  "state": "Kerala",
+                  "typeOfAddress": {
+                    "code": "RESIDENTIAL",
+                    "id": 1,
+                    "isActive": true,
+                    "name": "Residential"
+                  }
+                },
+                "city": "kollam",
+                "district": "Kollam",
+                "geoLocationDetails": {
+                  "latitude": null,
+                  "longitude": null,
+                  "policeStation": {
+                    "active": true,
+                    "code": 15995003,
+                    "district": "KOLLAM CITY",
+                    "name": "KOLLAM WEST"
+                  }
+                },
+                "id": "92cc9503-c477-4152-88c4-3e89f4637c26",
+                "locality": "Proprietor Sree Krishna Traders, 33/809, Mulamkadakam, Thirumullavaram P.O, Kollam",
+                "pincode": "691012"
+              }
+            ],
+            "addressDetails": [
+              {
+                "addressDetails": {
+                  "city": "kollam",
+                  "district": "Kollam",
+                  "locality": "Proprietor Sree Krishna Traders, 33/809, Mulamkadakam, Thirumullavaram P.O, Kollam",
+                  "pincode": "691012",
+                  "state": "Kerala",
+                  "typeOfAddress": {
+                    "code": "RESIDENTIAL",
+                    "id": 1,
+                    "isActive": true,
+                    "name": "Residential"
+                  }
+                },
+                "geoLocationDetails": {
+                  "latitude": null,
+                  "longitude": null,
+                  "policeStation": {
+                    "active": true,
+                    "code": 15995003,
+                    "district": "KOLLAM CITY",
+                    "name": "KOLLAM WEST"
+                  }
+                },
+                "id": "92cc9503-c477-4152-88c4-3e89f4637c26"
+              }
+            ],
+            "companyDetailsUpload": null,
+            "email": [],
+            "firstName": "Krishnaji Sivakumar",
+            "inquiryAffidavitFileUpload": {
+              "document": [
+                {
+                  "documentName": "krishnaji 225.pdf",
+                  "documentType": "case.affidavit.225bnss",
+                  "fileName": "Affidavit under section 225 of BNSS",
+                  "fileStore": "6ea70481-e5de-48d7-9f6f-98bc4c5a3665"
+                }
+              ]
+            },
+            "lastName": "",
+            "middleName": "",
+            "partyIndex": "Respondent_0",
+            "partyType": "Respondent",
+            "phone_numbers": [],
+            "respondentFirstName": "Krishnaji Sivakumar",
+            "respondentLastName": "",
+            "respondentMiddleName": "",
+            "respondentType": {
+              "code": "INDIVIDUAL",
+              "commonFields": true,
+              "complainantLocation": true,
+              "complainantTypeId": 1,
+              "id": 1,
+              "isIndividual": true,
+              "isactive": true,
+              "name": "Individual",
+              "showCompanyDetails": false
+            },
+            "uniqueId": "66115e0a-688e-4b5c-bce2-a23bf5b4af3f"
+          },
+          "displayindex": 0,
+          "isenabled": true,
+          "uniqueId": "66115e0a-688e-4b5c-bce2-a23bf5b4af3f"
+        },
+        "selectedChannels": [
+          {
+            "code": "POLICE",
+            "type": "Via Police",
+            "value": {
+              "address": {
+                "city": "kollam",
+                "district": "Kollam",
+                "locality": "Proprietor Sree Krishna Traders, 33/809, Mulamkadakam, Thirumullavaram P.O, Kollam",
+                "pincode": "691012",
+                "state": "Kerala",
+                "typeOfAddress": {
+                  "code": "RESIDENTIAL",
+                  "id": 1,
+                  "isActive": true,
+                  "name": "Residential"
+                }
+              },
+              "city": "kollam",
+              "district": "Kollam",
+              "geoLocationDetails": {
+                "latitude": null,
+                "longitude": null,
+                "policeStation": {
+                  "active": true,
+                  "code": 15995003,
+                  "district": "KOLLAM CITY",
+                  "name": "KOLLAM WEST"
+                }
+              },
+              "id": "92cc9503-c477-4152-88c4-3e89f4637c26",
+              "locality": "Proprietor Sree Krishna Traders, 33/809, Mulamkadakam, Thirumullavaram P.O, Kollam",
+              "pincode": "691012"
+            }
+          },
+          {
+            "code": "RPAD",
+            "type": "Registered Post",
+            "value": {
+              "address": {
+                "city": "kollam",
+                "district": "Kollam",
+                "locality": "Proprietor Sree Krishna Traders, 33/809, Mulamkadakam, Thirumullavaram P.O, Kollam",
+                "pincode": "691012",
+                "state": "Kerala",
+                "typeOfAddress": {
+                  "code": "RESIDENTIAL",
+                  "id": 1,
+                  "isActive": true,
+                  "name": "Residential"
+                }
+              },
+              "city": "kollam",
+              "district": "Kollam",
+              "geoLocationDetails": {
+                "latitude": null,
+                "longitude": null,
+                "policeStation": {
+                  "active": true,
+                  "code": 15995003,
+                  "district": "KOLLAM CITY",
+                  "name": "KOLLAM WEST"
+                }
+              },
+              "id": "92cc9503-c477-4152-88c4-3e89f4637c26",
+              "locality": "Proprietor Sree Krishna Traders, 33/809, Mulamkadakam, Thirumullavaram P.O, Kollam",
+              "pincode": "691012"
+            }
+          }
+        ]
+      },
+      "warrantSubType": {
+        "belowOthers": "NO",
+        "code": "2000042",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "subType": "Warrant of arrest of accused 138",
+        "templateType": "SPECIFIC"
+      },
+      "warrantType": {
+        "code": "ARREST",
+        "id": 1,
+        "name": "Arrest"
+      }
+    },
+    "refHearingId": "KL-000455-2025-HR21",
+    "taskDetails": "[{\"warrantDetails\":{\"issueDate\":1778836925807,\"caseFilingDate\":1744110478034,\"docType\":\"ARREST\",\"docSubType\":\"NON_BAILABLE\",\"bailableAmount\":\"\",\"templateType\":\"SPECIFIC\",\"warrantText\":\"\"},\"respondentDetails\":{\"name\":\"Krishnaji Sivakumar\",\"address\":{\"id\":\"92cc9503-c477-4152-88c4-3e89f4637c26\",\"city\":\"kollam\",\"address\":{\"city\":\"kollam\",\"state\":\"Kerala\",\"pincode\":\"691012\",\"district\":\"Kollam\",\"locality\":\"Proprietor Sree Krishna Traders, 33/809, Mulamkadakam, Thirumullavaram P.O, Kollam\",\"typeOfAddress\":{\"id\":1,\"code\":\"RESIDENTIAL\",\"name\":\"Residential\",\"isActive\":true}},\"pincode\":\"691012\",\"district\":\"Kollam\",\"locality\":\"Proprietor Sree Krishna Traders, 33/809, Mulamkadakam, Thirumullavaram P.O, Kollam\",\"geoLocationDetails\":{\"latitude\":null,\"longitude\":null,\"policeStation\":{\"code\":15995003,\"name\":\"KOLLAM WEST\",\"active\":true,\"district\":\"KOLLAM CITY\"}},\"coordinate\":{\"longitude\":null,\"latitude\":null}},\"phone\":\"\",\"email\":\"\",\"age\":\"\",\"gender\":\"\",\"uniqueId\":\"66115e0a-688e-4b5c-bce2-a23bf5b4af3f\"},\"caseDetails\":{\"caseTitle\":\"Santha vs Krishnaji Sivakumar\",\"year\":null,\"hearingDate\":1782432000000,\"judgeName\":\"Michael George\",\"courtName\":\"Special Court Of Judicial Magistrate of the First Class, for the trial of cases under section 138 of NI Act, 1881 at Kollam (\\\"24X7 ON Court\\\")\",\"courtAddress\":\"dummy address\",\"courtId\":\"KLKM52\"},\"deliveryChannels\":{\"channelName\":\"Police\",\"name\":\"\",\"address\":\"\",\"phone\":\"\",\"email\":\"\",\"status\":\"\",\"statusChangeDate\":\"\",\"fees\":1,\"feesStatus\":\"\",\"channelCode\":\"POLICE\",\"isPendingCollection\":false}},{\"warrantDetails\":{\"issueDate\":1778836925807,\"caseFilingDate\":1744110478034,\"docType\":\"ARREST\",\"docSubType\":\"NON_BAILABLE\",\"bailableAmount\":\"\",\"templateType\":\"SPECIFIC\",\"warrantText\":\"\"},\"respondentDetails\":{\"name\":\"Krishnaji Sivakumar\",\"address\":{\"id\":\"92cc9503-c477-4152-88c4-3e89f4637c26\",\"city\":\"kollam\",\"address\":{\"city\":\"kollam\",\"state\":\"Kerala\",\"pincode\":\"691012\",\"district\":\"Kollam\",\"locality\":\"Proprietor Sree Krishna Traders, 33/809, Mulamkadakam, Thirumullavaram P.O, Kollam\",\"typeOfAddress\":{\"id\":1,\"code\":\"RESIDENTIAL\",\"name\":\"Residential\",\"isActive\":true}},\"pincode\":\"691012\",\"district\":\"Kollam\",\"locality\":\"Proprietor Sree Krishna Traders, 33/809, Mulamkadakam, Thirumullavaram P.O, Kollam\",\"geoLocationDetails\":{\"latitude\":null,\"longitude\":null,\"policeStation\":{\"code\":15995003,\"name\":\"KOLLAM WEST\",\"active\":true,\"district\":\"KOLLAM CITY\"}},\"coordinate\":{\"longitude\":null,\"latitude\":null}},\"phone\":\"\",\"email\":\"\",\"age\":\"\",\"gender\":\"\",\"uniqueId\":\"66115e0a-688e-4b5c-bce2-a23bf5b4af3f\"},\"caseDetails\":{\"caseTitle\":\"Santha vs Krishnaji Sivakumar\",\"year\":null,\"hearingDate\":1782432000000,\"judgeName\":\"Michael George\",\"courtName\":\"Special Court Of Judicial Magistrate of the First Class, for the trial of cases under section 138 of NI Act, 1881 at Kollam (\\\"24X7 ON Court\\\")\",\"courtAddress\":\"dummy address\",\"courtId\":\"KLKM52\"},\"deliveryChannels\":{\"channelName\":\"RPAD\",\"name\":\"\",\"address\":\"\",\"phone\":\"\",\"email\":\"\",\"status\":\"\",\"statusChangeDate\":\"\",\"fees\":1,\"feesStatus\":\"\",\"channelCode\":\"RPAD\",\"isPendingCollection\":true}}]"
+  },
+  "applicationNumber": null,
+  "attendance": {
+    "Absent": [
+      "COMPLAINANT",
+      "ACCUSED",
+      "ACCUSED_ADVOCATE"
+    ],
+    "Present": [
+      "COMPLAINANT_ADVOCATE"
+    ]
+  },
+  "auditDetails": {
+    "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+    "createdTime": 1778823925464,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1778836929326
+  },
+  "cnrNumber": "KLKM520002622025",
+  "comments": "",
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 0,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Warrant.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "e80f9e0f-540b-4fd8-bb1c-3a4f7ac57e92",
+      "id": "903719e3-6aac-4818-acc7-0459bb16b693",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000455-2025",
+  "hearingNumber": "KL-000455-2025-HR21",
+  "hearingType": "WARRANT",
+  "id": "ff4d2efd-871b-415a-8a2d-e8d9b80a2852",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Issue NBW to accused. Take steps. For return of warrant. 26.06.2026.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": 1782412200000,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "ST/407/2025",
+    "hearingDate": 1782432000000,
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Krishnaji Sivakumar (Accused)",
+        "partyType": "respondent"
+      }
+    ],
+    "respondentName": "Krishnaji Sivakumar",
+    "warrantType": "ARREST"
+  },
+  "orderNumber": "KL-000455-2025-OR28",
+  "orderTitle": "Warrant",
+  "orderType": "WARRANT",
+  "purposeOfNextHearing": "WARRANT",
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "createdTime": 1778823925464,
+      "lastModifiedBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "lastModifiedTime": 1778823925464
+    },
+    "id": "9599de8d-08d1-442e-9355-680b36be149d",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

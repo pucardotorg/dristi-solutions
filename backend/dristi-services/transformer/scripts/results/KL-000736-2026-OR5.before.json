@@ -1,0 +1,105 @@
+{
+  "additionalDetails": {
+    "applicationNumber": [
+      "KL-000736-2026-AP1"
+    ],
+    "applicationStatus": "APPROVED",
+    "formdata": {
+      "isDcaAcceptedOrRejected": {
+        "code": "ACCEPTED",
+        "name": "ACCEPTED"
+      },
+      "orderType": {},
+      "refApplicationId": "KL-000736-2026-AP1"
+    },
+    "refHearingId": "KL-000736-2026-HR3"
+  },
+  "applicationNumber": [
+    "KL-000736-2026-AP1"
+  ],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778927657477,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1778927662319
+  },
+  "cnrNumber": "KLKM520004322026",
+  "comments": "",
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: .pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "2641cf27-8428-4795-9802-9ea9a8c1a2fd",
+      "id": "5e7dab95-d95a-45ed-83d4-d5714e57b99c",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000736-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "9f79b0b6-1f44-4e1c-8da8-f2182338329d",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Delay is condoned</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "applicationCMPNumber": "CMP/1/2026",
+    "applicationNumber": "KL-000736-2026-AP1",
+    "applicationTitle": "Condonation of delay",
+    "caseNumber": "CMP/432/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Akhil S (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "MINI T (PoA Holder)",
+        "partyType": "poaHolder"
+      },
+      {
+        "counselName": "",
+        "partyName": "SHAHUL HAMEED (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-000736-2026-OR5",
+  "orderTitle": "Draft Order",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778927657477,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778927657477
+    },
+    "id": "b780a33c-e483-40ad-b5b9-93adbd54caa8",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

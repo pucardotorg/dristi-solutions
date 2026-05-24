@@ -1,0 +1,288 @@
+{
+  "additionalDetails": {},
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778930644684,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779627061588
+  },
+  "cnrNumber": "KLKM520007082026",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "1f9eda1c-2765-4c7e-ab13-c9ccc099b4b3",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "hearingDate": "2026-06-30",
+            "hearingPurpose": {
+              "code": "APPEARANCE",
+              "id": 3,
+              "isactive": true,
+              "type": "APPEARANCE"
+            },
+            "orderType": {
+              "code": "SCHEDULE_OF_HEARING_DATE",
+              "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              "type": "SCHEDULE_OF_HEARING_DATE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/708/2026",
+          "hearingDate": 1782777600000,
+          "purposeOfHearing": "APPEARANCE"
+        },
+        "orderType": "SCHEDULE_OF_HEARING_DATE"
+      },
+      "orderType": "SCHEDULE_OF_HEARING_DATE"
+    },
+    {
+      "id": "ff5275b0-2f8a-48d3-9f6d-dda3dc954b3f",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "orderType": {
+              "code": "TAKE_COGNIZANCE",
+              "id": 30,
+              "isactive": true,
+              "name": "ORDER_TYPE_TAKE_COGNIZANCE",
+              "type": "TAKE_COGNIZANCE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/708/2026",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Sandhya B Pillai (Complainant)",
+              "partyType": "complainant"
+            },
+            {
+              "counselName": "",
+              "partyName": "Sreelatha (Accused)",
+              "partyType": "respondent"
+            },
+            {
+              "counselName": "",
+              "partyName": "Manager (Witness)",
+              "partyType": "witness"
+            },
+            {
+              "counselName": "",
+              "partyName": "Manager (Witness)",
+              "partyType": "witness"
+            }
+          ]
+        },
+        "orderType": "TAKE_COGNIZANCE"
+      },
+      "orderType": "TAKE_COGNIZANCE"
+    },
+    {
+      "id": "bee5da01-4303-4ce5-8e7e-2ae3bb678b33",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "SummonsOrder": {
+              "party": [
+                {
+                  "data": {
+                    "address": [
+                      {
+                        "address": {
+                          "city": "kollam",
+                          "district": "kollam",
+                          "locality": "Karthika Bhavan Njarackal Perinad P.o Kollam",
+                          "pincode": "691601",
+                          "state": "kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "city": "kollam",
+                        "district": "kollam",
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995004,
+                            "district": "KOLLAM CITY",
+                            "name": "ANCHALUMMOODU"
+                          }
+                        },
+                        "id": "52f22881-e4e7-487a-b5d1-b82060368515",
+                        "locality": "Karthika Bhavan Njarackal Perinad P.o Kollam",
+                        "pincode": "691601",
+                        "state": "kerala"
+                      }
+                    ],
+                    "addressDetails": [
+                      {
+                        "addressDetails": {
+                          "city": "kollam",
+                          "district": "kollam",
+                          "locality": "Karthika Bhavan Njarackal Perinad P.o Kollam",
+                          "pincode": "691601",
+                          "state": "kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995004,
+                            "district": "KOLLAM CITY",
+                            "name": "ANCHALUMMOODU"
+                          }
+                        },
+                        "id": "52f22881-e4e7-487a-b5d1-b82060368515"
+                      }
+                    ],
+                    "companyDetailsUpload": null,
+                    "email": [],
+                    "firstName": "Sreelatha",
+                    "inquiryAffidavitFileUpload": null,
+                    "lastName": "",
+                    "middleName": "",
+                    "partyIndex": "Respondent_0",
+                    "partyType": "Respondent",
+                    "phone_numbers": [],
+                    "respondentFirstName": "Sreelatha",
+                    "respondentLastName": "",
+                    "respondentMiddleName": "",
+                    "respondentType": {
+                      "code": "INDIVIDUAL",
+                      "commonFields": true,
+                      "complainantLocation": true,
+                      "complainantTypeId": 1,
+                      "id": 1,
+                      "isIndividual": true,
+                      "isactive": true,
+                      "name": "Individual",
+                      "showCompanyDetails": false
+                    },
+                    "uniqueId": "a03677f4-e0db-4625-86ef-6dbd0e37a505"
+                  },
+                  "displayindex": 0,
+                  "isenabled": true,
+                  "uniqueId": "a03677f4-e0db-4625-86ef-6dbd0e37a505"
+                }
+              ]
+            },
+            "dateForHearing": "2026-06-30",
+            "orderType": {
+              "code": "SUMMONS",
+              "id": 13,
+              "isactive": true,
+              "name": "ORDER_TYPE_SUMMONS",
+              "type": "SUMMONS"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/708/2026",
+          "hearingDate": 1782777600000,
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Sreelatha (Accused)",
+              "partyType": "respondent"
+            }
+          ],
+          "respondentName": [
+            "Sreelatha"
+          ]
+        },
+        "orderType": "SUMMONS"
+      },
+      "orderType": "SUMMONS"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "07490137-2f78-443d-b5a5-4ef027c99126",
+      "id": "c5935b64-d290-42f6-bb6e-24bc8fd8bc97",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001074-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "2a81c865-2f1f-4522-a310-8a780be9e822",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons.30.06.2026.</p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "CMP/708/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Sandhya B Pillai (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Sreelatha (Accused)",
+        "partyType": "respondent"
+      },
+      {
+        "counselName": "",
+        "partyName": "Manager (Witness)",
+        "partyType": "witness"
+      },
+      {
+        "counselName": "",
+        "partyName": "Manager (Witness)",
+        "partyType": "witness"
+      }
+    ]
+  },
+  "orderNumber": "KL-001074-2026-OR1",
+  "orderTitle": "Schedule of Hearing Date and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778930644684,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778930644684
+    },
+    "id": "3eb2a65d-c30a-4d37-8e63-981d56eb0cd4",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

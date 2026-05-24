@@ -1,0 +1,254 @@
+{
+  "additionalDetails": {},
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778930242879,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1778930287892
+  },
+  "cnrNumber": "KLKM520007022026",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "76a07c0c-2699-42c8-adc5-bd7487ef92d8",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "hearingDate": "2026-06-20",
+            "hearingPurpose": {
+              "code": "DELAY_CONDONATION_HEARING",
+              "id": 15,
+              "isactive": true,
+              "type": "DELAY_CONDONATION_HEARING"
+            },
+            "orderType": {
+              "code": "SCHEDULE_OF_HEARING_DATE",
+              "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              "type": "SCHEDULE_OF_HEARING_DATE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/702/2026",
+          "hearingDate": 1781913600000,
+          "purposeOfHearing": "DELAY_CONDONATION_HEARING"
+        },
+        "orderType": "SCHEDULE_OF_HEARING_DATE"
+      },
+      "orderType": "SCHEDULE_OF_HEARING_DATE"
+    },
+    {
+      "id": "05acd61a-e8d9-4d4a-995e-a4d8dbad71c9",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "dateForHearing": "2026-06-20",
+            "noticeOrder": {
+              "party": [
+                {
+                  "data": {
+                    "address": [
+                      {
+                        "address": {
+                          "city": "Kuthukalvalsai",
+                          "district": "Tirunelveli ",
+                          "locality": "169-1, Courtallam Madurai Road, Kuthukalvalsai, Tirunelveli, Kuthukalvalsai Village, Tenkasi Taluk",
+                          "pincode": "627803",
+                          "state": "Tamil Nadu",
+                          "typeOfAddress": {
+                            "code": "OFFICE",
+                            "id": 2,
+                            "isActive": true,
+                            "name": "Office"
+                          }
+                        },
+                        "city": "Kuthukalvalsai",
+                        "district": "Tirunelveli ",
+                        "id": "2d1fe3db-7740-45e3-89cf-674703b4ca52",
+                        "locality": "169-1, Courtallam Madurai Road, Kuthukalvalsai, Tirunelveli, Kuthukalvalsai Village, Tenkasi Taluk",
+                        "pincode": "627803",
+                        "state": "Tamil Nadu"
+                      }
+                    ],
+                    "addressDetails": [
+                      {
+                        "addressDetails": {
+                          "city": "Kuthukalvalsai",
+                          "district": "Tirunelveli ",
+                          "locality": "169-1, Courtallam Madurai Road, Kuthukalvalsai, Tirunelveli, Kuthukalvalsai Village, Tenkasi Taluk",
+                          "pincode": "627803",
+                          "state": "Tamil Nadu",
+                          "typeOfAddress": {
+                            "code": "OFFICE",
+                            "id": 2,
+                            "isActive": true,
+                            "name": "Office"
+                          }
+                        },
+                        "id": "2d1fe3db-7740-45e3-89cf-674703b4ca52"
+                      }
+                    ],
+                    "companyDetailsUpload": null,
+                    "email": [],
+                    "firstName": "Mathan Raghavendra",
+                    "inquiryAffidavitFileUpload": {
+                      "document": [
+                        {
+                          "documentName": "225 affi.pdf",
+                          "documentType": "case.affidavit.225bnss",
+                          "fileName": "Affidavit under section 225 of BNSS",
+                          "fileStore": "90b211ce-5668-4cd7-b4d2-ce9426569a46"
+                        }
+                      ]
+                    },
+                    "lastName": "",
+                    "middleName": "",
+                    "partyIndex": "Respondent_0",
+                    "partyType": "Respondent",
+                    "phone_numbers": [],
+                    "respondentAge": "31",
+                    "respondentCompanyName": "Raghavendra Timber Merchant",
+                    "respondentDesignation": "Proprietor",
+                    "respondentFirstName": "Mathan Raghavendra",
+                    "respondentLastName": "",
+                    "respondentMiddleName": "",
+                    "respondentType": {
+                      "code": "REPRESENTATIVE",
+                      "commonFields": true,
+                      "complainantLocation": false,
+                      "complainantTypeId": 2,
+                      "id": 2,
+                      "isIndividual": false,
+                      "isactive": true,
+                      "name": "Entity",
+                      "showCompanyDetails": true
+                    },
+                    "respondentTypeOfEntity": {
+                      "code": "SOLE_PROPRIETORSHIP",
+                      "id": 1,
+                      "isActive": true,
+                      "name": "Sole Proprietorship"
+                    },
+                    "uniqueId": "ecd078af-0c5d-4af2-bf84-718ce11b25ed"
+                  },
+                  "displayindex": 0,
+                  "isenabled": true,
+                  "uniqueId": "ecd078af-0c5d-4af2-bf84-718ce11b25ed"
+                }
+              ]
+            },
+            "noticeType": {
+              "code": "DCA Notice",
+              "id": 2,
+              "isActive": true,
+              "type": "DCA Notice"
+            },
+            "orderType": {
+              "code": "NOTICE",
+              "id": 22,
+              "isactive": true,
+              "name": "ORDER_TYPE_NOTICE",
+              "type": "NOTICE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/702/2026",
+          "hearingDate": 1781913600000,
+          "noticeType": "DCA Notice",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Mathan Raghavendra (Accused)",
+              "partyType": "respondent"
+            }
+          ],
+          "respondentName": [
+            "Mathan Raghavendra"
+          ]
+        },
+        "orderType": "NOTICE"
+      },
+      "orderType": "NOTICE"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "3e679fac-915a-477d-9b1c-d71f32592b64",
+      "id": "cc5867b8-ce2d-48f7-97fe-c76a821903ef",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001118-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "5ac83ebc-749d-48a2-b20a-2522eac6e16a",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Issue DCA notice to accused. Take steps. For return of notice. 20.06.2026.</p><p><br></p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "CMP/702/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Pradeep Kumar (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Mathan Raghavendra (Accused)",
+        "partyType": "respondent"
+      },
+      {
+        "counselName": "",
+        "partyName": "Branch Manager (Witness)",
+        "partyType": "witness"
+      },
+      {
+        "counselName": "",
+        "partyName": "Branch Manager (Witness)",
+        "partyType": "witness"
+      }
+    ]
+  },
+  "orderNumber": "KL-001118-2026-OR2",
+  "orderTitle": "Schedule of Hearing Date and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778930242879,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778930242879
+    },
+    "id": "db62939b-7d8a-48a0-9185-8e05fa514f1e",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

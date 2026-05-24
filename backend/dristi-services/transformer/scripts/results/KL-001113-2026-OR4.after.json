@@ -1,0 +1,283 @@
+{
+  "additionalDetails": {},
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778929549814,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779626007172
+  },
+  "cnrNumber": "KLKM520006952026",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "71180a6f-17ec-40b3-bb1f-426947d7dcc7",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "hearingDate": "2026-06-29",
+            "hearingPurpose": {
+              "code": "APPEARANCE",
+              "id": 3,
+              "isactive": true,
+              "type": "APPEARANCE"
+            },
+            "orderType": {
+              "code": "SCHEDULE_OF_HEARING_DATE",
+              "id": 7,
+              "isactive": true,
+              "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              "type": "SCHEDULE_OF_HEARING_DATE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/695/2026",
+          "hearingDate": 1782691200000,
+          "purposeOfHearing": "APPEARANCE"
+        },
+        "orderType": "SCHEDULE_OF_HEARING_DATE"
+      },
+      "orderType": "SCHEDULE_OF_HEARING_DATE"
+    },
+    {
+      "id": "3d1aabf5-2ced-4a03-aa2e-c071edede534",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "orderType": {
+              "code": "TAKE_COGNIZANCE",
+              "id": 30,
+              "isactive": true,
+              "name": "ORDER_TYPE_TAKE_COGNIZANCE",
+              "type": "TAKE_COGNIZANCE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/695/2026",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Akhilan S B (Complainant)",
+              "partyType": "complainant"
+            },
+            {
+              "counselName": "",
+              "partyName": "Sajitha R (Accused)",
+              "partyType": "respondent"
+            }
+          ]
+        },
+        "orderType": "TAKE_COGNIZANCE"
+      },
+      "orderType": "TAKE_COGNIZANCE"
+    },
+    {
+      "id": "b4da1b1b-3063-4f2a-9a63-c6b72c0fffab",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "SummonsOrder": {
+              "party": [
+                {
+                  "data": {
+                    "address": [
+                      {
+                        "address": {
+                          "city": "Poothakulam",
+                          "district": "Kollam",
+                          "locality": "D/o Sivan, Parandakulathu Veedu, Neduvallychal, Poothakulam, Kollam",
+                          "pincode": "691302",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "city": "Poothakulam",
+                        "district": "Kollam",
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995010,
+                            "district": "KOLLAM CITY",
+                            "name": "PARAVOOR"
+                          }
+                        },
+                        "id": "18657ea0-39ba-4d47-b7ea-75490237460d",
+                        "locality": "D/o Sivan, Parandakulathu Veedu, Neduvallychal, Poothakulam, Kollam",
+                        "pincode": "691302",
+                        "state": "Kerala"
+                      }
+                    ],
+                    "addressDetails": [
+                      {
+                        "addressDetails": {
+                          "city": "Poothakulam",
+                          "district": "Kollam",
+                          "locality": "D/o Sivan, Parandakulathu Veedu, Neduvallychal, Poothakulam, Kollam",
+                          "pincode": "691302",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995010,
+                            "district": "KOLLAM CITY",
+                            "name": "PARAVOOR"
+                          }
+                        },
+                        "id": "18657ea0-39ba-4d47-b7ea-75490237460d"
+                      }
+                    ],
+                    "companyDetailsUpload": null,
+                    "email": [],
+                    "firstName": "Sajitha R",
+                    "inquiryAffidavitFileUpload": {
+                      "document": [
+                        {
+                          "documentName": "R sajitha 225.pdf",
+                          "documentType": "case.affidavit.225bnss",
+                          "fileName": "Affidavit under section 225 of BNSS",
+                          "fileStore": "b00bf3b3-612e-4c21-a5a2-1f437bbe5b3a"
+                        }
+                      ]
+                    },
+                    "lastName": "",
+                    "middleName": "",
+                    "partyIndex": "Respondent_0",
+                    "partyType": "Respondent",
+                    "phone_numbers": [],
+                    "phonenumbers": {
+                      "textfieldValue": ""
+                    },
+                    "respondentAge": "43",
+                    "respondentFirstName": "Sajitha R",
+                    "respondentLastName": "",
+                    "respondentMiddleName": "",
+                    "respondentType": {
+                      "code": "INDIVIDUAL",
+                      "commonFields": true,
+                      "complainantLocation": true,
+                      "complainantTypeId": 1,
+                      "id": 1,
+                      "isIndividual": true,
+                      "isactive": true,
+                      "name": "Individual",
+                      "showCompanyDetails": false
+                    },
+                    "uniqueId": "5ebf197f-2da1-457a-a3b0-e993ec4af0c6"
+                  },
+                  "displayindex": 0,
+                  "isenabled": true,
+                  "uniqueId": "5ebf197f-2da1-457a-a3b0-e993ec4af0c6"
+                }
+              ]
+            },
+            "dateForHearing": "2026-06-29",
+            "orderType": {
+              "code": "SUMMONS",
+              "id": 13,
+              "isactive": true,
+              "name": "ORDER_TYPE_SUMMONS",
+              "type": "SUMMONS"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/695/2026",
+          "hearingDate": 1782691200000,
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Sajitha R (Accused)",
+              "partyType": "respondent"
+            }
+          ],
+          "respondentName": [
+            "Sajitha R"
+          ]
+        },
+        "orderType": "SUMMONS"
+      },
+      "orderType": "SUMMONS"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "1db82f1a-97c9-45bb-9405-482177212f5b",
+      "id": "72bd1ea1-2be2-4427-89e3-d58772206dab",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001113-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "9d7bfe75-398d-49c5-88fb-a292638608a1",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons.29.06.2026.</p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "CMP/695/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Akhilan S B (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Sajitha R (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-001113-2026-OR4",
+  "orderTitle": "Schedule of Hearing Date and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778929549814,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778929549814
+    },
+    "id": "469c3755-b3b7-4a3f-b281-a700fa4c64dd",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

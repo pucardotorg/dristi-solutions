@@ -1,0 +1,291 @@
+{
+  "additionalDetails": {},
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778930465809,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779626202104
+  },
+  "cnrNumber": "KLKM520007052026",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "6376f8b4-df47-4dc0-a3c5-3a7e8061f298",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "hearingDate": "2026-06-30",
+            "hearingPurpose": {
+              "code": "APPEARANCE",
+              "id": 3,
+              "isactive": true,
+              "type": "APPEARANCE"
+            },
+            "orderType": {
+              "code": "SCHEDULE_OF_HEARING_DATE",
+              "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              "type": "SCHEDULE_OF_HEARING_DATE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/705/2026",
+          "hearingDate": 1782777600000,
+          "purposeOfHearing": "APPEARANCE"
+        },
+        "orderType": "SCHEDULE_OF_HEARING_DATE"
+      },
+      "orderType": "SCHEDULE_OF_HEARING_DATE"
+    },
+    {
+      "id": "3bf8c810-4e26-4186-9085-039ee47cedf4",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "orderType": {
+              "code": "TAKE_COGNIZANCE",
+              "id": 30,
+              "isactive": true,
+              "name": "ORDER_TYPE_TAKE_COGNIZANCE",
+              "type": "TAKE_COGNIZANCE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/705/2026",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "A JENGISH KHAN (Complainant)",
+              "partyType": "complainant"
+            },
+            {
+              "counselName": "",
+              "partyName": "AKHIL B (Accused)",
+              "partyType": "respondent"
+            },
+            {
+              "counselName": "",
+              "partyName": "THE MANAGER (Witness)",
+              "partyType": "witness"
+            },
+            {
+              "counselName": "",
+              "partyName": "THE MANAGER (Witness)",
+              "partyType": "witness"
+            }
+          ]
+        },
+        "orderType": "TAKE_COGNIZANCE"
+      },
+      "orderType": "TAKE_COGNIZANCE"
+    },
+    {
+      "id": "21dfd5b6-f9b9-47e2-8ae5-4a6fcf154278",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "SummonsOrder": {
+              "party": [
+                {
+                  "data": {
+                    "address": [
+                      {
+                        "address": {
+                          "city": "KOLLAM",
+                          "district": "KOLLAM",
+                          "locality": "VARUVIL, PANMANA, PUTHENCHANDA P O,CHAVARA",
+                          "pincode": "691583",
+                          "state": "KERALA",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "city": "KOLLAM",
+                        "district": "KOLLAM",
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995016,
+                            "district": "KOLLAM CITY",
+                            "name": "CHAVARA"
+                          }
+                        },
+                        "id": "5ea6f0db-ae0f-4a97-a720-15de9b70de81",
+                        "locality": "VARUVIL, PANMANA, PUTHENCHANDA P O,CHAVARA",
+                        "pincode": "691583",
+                        "state": "KERALA"
+                      }
+                    ],
+                    "addressDetails": [
+                      {
+                        "addressDetails": {
+                          "city": "KOLLAM",
+                          "district": "KOLLAM",
+                          "locality": "VARUVIL, PANMANA, PUTHENCHANDA P O,CHAVARA",
+                          "pincode": "691583",
+                          "state": "KERALA",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995016,
+                            "district": "KOLLAM CITY",
+                            "name": "CHAVARA"
+                          }
+                        },
+                        "id": "5ea6f0db-ae0f-4a97-a720-15de9b70de81"
+                      }
+                    ],
+                    "companyDetailsUpload": null,
+                    "email": [],
+                    "firstName": "AKHIL",
+                    "inquiryAffidavitFileUpload": null,
+                    "lastName": "B",
+                    "middleName": "",
+                    "partyIndex": "Respondent_0",
+                    "partyType": "Respondent",
+                    "phone_numbers": [],
+                    "phonenumbers": {
+                      "textfieldValue": ""
+                    },
+                    "respondentFirstName": "AKHIL",
+                    "respondentLastName": "B",
+                    "respondentMiddleName": "",
+                    "respondentType": {
+                      "code": "INDIVIDUAL",
+                      "commonFields": true,
+                      "complainantLocation": true,
+                      "complainantTypeId": 1,
+                      "id": 1,
+                      "isIndividual": true,
+                      "isactive": true,
+                      "name": "Individual",
+                      "showCompanyDetails": false
+                    },
+                    "uniqueId": "e11c47ab-fda2-48b3-8e8a-a60f7c57b083"
+                  },
+                  "displayindex": 0,
+                  "isenabled": true,
+                  "uniqueId": "e11c47ab-fda2-48b3-8e8a-a60f7c57b083"
+                }
+              ]
+            },
+            "dateForHearing": "2026-06-30",
+            "orderType": {
+              "code": "SUMMONS",
+              "id": 13,
+              "isactive": true,
+              "name": "ORDER_TYPE_SUMMONS",
+              "type": "SUMMONS"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/705/2026",
+          "hearingDate": 1782777600000,
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "AKHIL B (Accused)",
+              "partyType": "respondent"
+            }
+          ],
+          "respondentName": [
+            "AKHIL B"
+          ]
+        },
+        "orderType": "SUMMONS"
+      },
+      "orderType": "SUMMONS"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "5f3fec2e-375c-4bda-beb3-82e7a706cca0",
+      "id": "0f39c7d5-1e9d-4c10-92b0-fcb4f3eb65cc",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001123-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "f8041938-b2f9-4243-aebe-8002124d9634",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons. 30.06.2026.</p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "CMP/705/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "A JENGISH KHAN (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "AKHIL B (Accused)",
+        "partyType": "respondent"
+      },
+      {
+        "counselName": "",
+        "partyName": "THE MANAGER (Witness)",
+        "partyType": "witness"
+      },
+      {
+        "counselName": "",
+        "partyName": "THE MANAGER (Witness)",
+        "partyType": "witness"
+      }
+    ]
+  },
+  "orderNumber": "KL-001123-2026-OR1",
+  "orderTitle": "Schedule of Hearing Date and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778930465809,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778930465809
+    },
+    "id": "5ebd35f7-5a1a-40af-a49d-cc72fa87e62e",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

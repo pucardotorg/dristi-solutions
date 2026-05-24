@@ -41,14 +41,5 @@ frontend/pucar-ui/web/micro-ui-internals/node_modules/*
 # Local-only RequestInfo for the order update scripts (contains live auth token)
 backend/dristi-services/transformer/scripts/request_info.json
 
-# Per-order snapshots/diffs written by update_orders.py — contain live order data
-backend/dristi-services/transformer/scripts/results/*.json
-backend/dristi-services/transformer/scripts/results/*.diff.txt
-
-# Per-order prepared itemText files — operational content, not part of the script
-backend/dristi-services/transformer/scripts/texts/*.html
-backend/dristi-services/transformer/scripts/texts/*.htm
-backend/dristi-services/transformer/scripts/texts/*.txt
-
 # Python bytecode
 backend/dristi-services/transformer/scripts/__pycache__/

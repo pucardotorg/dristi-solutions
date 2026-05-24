@@ -1,0 +1,29 @@
+--- KL-001112-2026-OR1.before.json
++++ KL-001112-2026-OR1.after.json
+@@ -6,7 +6,7 @@
+     "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+     "createdTime": 1778929599737,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1779625815420
++    "lastModifiedTime": 1779625862811
+   },
+   "cnrNumber": "KLKM520006962026",
+   "comments": "",
+@@ -220,7 +220,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "bd4cd5ee-12e8-491a-9d0f-9eebc06e3537",
++      "fileStore": "9a6c41a9-cffa-4bd6-86ea-bfcd25ba2c32",
+       "id": "9418f2e2-7d2f-44c6-ba79-19519534bce1",
+       "isActive": true
+     }
+@@ -231,7 +231,7 @@
+   "id": "b399333e-eef8-4baa-bbba-7e8aba211f10",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons.29.06.2026.</p><p><br></p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
++  "itemText": "<p>No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons.29.06.2026.</p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": null,
+   "orderCategory": "COMPOSITE",

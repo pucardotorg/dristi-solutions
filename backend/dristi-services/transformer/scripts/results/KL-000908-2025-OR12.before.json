@@ -1,0 +1,160 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "attendees": [
+        {
+          "associatedWith": null,
+          "id": "b34cb89a-aacb-4aee-8d62-5b927d7c824d",
+          "individualId": "IND-2025-02-25-000136",
+          "isOnline": null,
+          "label": "Ajarsha L R (Complainant)",
+          "name": "Ajarsha L R (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2025-02-25-000136",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "7055f739-a315-4b26-a87c-ac689800896b",
+          "individualId": "IND-2025-10-25-000903",
+          "isOnline": null,
+          "label": "NOBIN MATHAI (Accused)",
+          "name": "NOBIN MATHAI (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "IND-2025-10-25-000903",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "a16d2b51-aaeb-4187-8806-c43366a812b6",
+          "individualId": "IND-2024-11-20-000125",
+          "isOnline": null,
+          "label": "ASHA. G.V.",
+          "name": "ASHA. G.V.",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2024-11-20-000125",
+          "wasPresent": null
+        }
+      ],
+      "namesOfPartiesRequired": [
+        {
+          "code": "Ajarsha L R",
+          "individualId": "IND-2025-02-25-000136",
+          "isJoined": true,
+          "mobileNumber": "8547845392",
+          "name": "Ajarsha L R (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "faa4cccc-499f-4f2a-a7f8-6617f561dbab",
+          "uuid": [
+            "77d68d1d-da05-498e-b8c7-409d962689ff"
+          ]
+        },
+        {
+          "code": "NOBIN MATHAI",
+          "individualId": "IND-2025-10-25-000903",
+          "isJoined": true,
+          "mobileNumber": "9846060850",
+          "name": "NOBIN MATHAI (Accused)",
+          "partyType": "respondent",
+          "partyUuid": "d0ddb64c-90c1-49a0-bfb1-e764a79c2242",
+          "uniqueId": "fef3bb72-bfe9-43f0-809e-536d9dd122ad",
+          "uuid": [
+            "d0ddb64c-90c1-49a0-bfb1-e764a79c2242"
+          ]
+        }
+      ],
+      "refHearingId": "KL-000908-2025-HR11"
+    },
+    "refHearingId": "KL-000908-2025-HR11"
+  },
+  "applicationNumber": null,
+  "attendance": {
+    "Absent": [
+      "COMPLAINANT",
+      "ACCUSED",
+      "ACCUSED_ADVOCATE"
+    ],
+    "Present": [
+      "COMPLAINANT_ADVOCATE"
+    ]
+  },
+  "auditDetails": {
+    "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+    "createdTime": 1778824831585,
+    "lastModifiedBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+    "lastModifiedTime": 1778824860688
+  },
+  "cnrNumber": "KLKM520005552025",
+  "comments": null,
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 0,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: .pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "3006a9ec-b0df-4713-a160-dd1d2c1a2f89",
+      "id": "95996891-ca6b-487f-9f52-e971ddb06480",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000908-2025",
+  "hearingNumber": "KL-000908-2025-HR11",
+  "hearingType": "WARRANT",
+  "id": "00e2eaf2-c970-403c-af72-fcffafb14913",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Await warrant. For return of warrant. 19.06.2026.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": 1781807400000,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "ST/600/2025",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Ajarsha L R (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "NOBIN MATHAI (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-000908-2025-OR12",
+  "orderTitle": "Schedule of Next Hearing Date",
+  "orderType": null,
+  "purposeOfNextHearing": "WARRANT",
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "createdTime": 1778824831585,
+      "lastModifiedBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "lastModifiedTime": 1778824831585
+    },
+    "id": "e669cda4-27fe-415d-b10d-b2c16d3e6631",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

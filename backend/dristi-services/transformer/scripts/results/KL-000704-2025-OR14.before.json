@@ -1,0 +1,198 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "attendees": [
+        {
+          "associatedWith": null,
+          "id": "5e939f70-ecdd-4d76-9c1f-794fdc4aaa51",
+          "individualId": "IND-2025-05-03-000338",
+          "isOnline": null,
+          "label": "A JENGISH KHAN (Complainant)",
+          "name": "A JENGISH KHAN (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2025-05-03-000338",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "d3dc01c6-28ca-4c8d-9816-36b8f43d371a",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Vishnu M L (Accused)",
+          "name": "Vishnu M L (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "Vishnu M L (Accused)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "5e5e11e9-2a9d-4910-a096-773c159dc8ab",
+          "individualId": null,
+          "isOnline": null,
+          "label": "The Bank Manager (Witness)",
+          "name": "The Bank Manager (Witness)",
+          "partyType": "witness",
+          "type": "witness",
+          "value": "The Bank Manager (Witness)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "159290b3-5d56-4e06-b21b-5d0bedab9997",
+          "individualId": null,
+          "isOnline": null,
+          "label": "The Bank Manager (Witness)",
+          "name": "The Bank Manager (Witness)",
+          "partyType": "witness",
+          "type": "witness",
+          "value": "The Bank Manager (Witness)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "ba3d00b2-9462-438f-b6a2-79383059c2a0",
+          "individualId": "IND-2024-11-20-000612",
+          "isOnline": null,
+          "label": "SANAL VAMADEVAN (MANGAD)",
+          "name": "SANAL VAMADEVAN (MANGAD)",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2024-11-20-000612",
+          "wasPresent": null
+        }
+      ],
+      "namesOfPartiesRequired": [
+        {
+          "code": "A JENGISH KHAN",
+          "individualId": "IND-2025-05-03-000338",
+          "isJoined": true,
+          "mobileNumber": "9947833888",
+          "name": "A JENGISH KHAN (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "937edf29-f8fe-4212-aafa-0bbc2bf65614",
+          "uuid": [
+            "060191b8-4cce-4e06-bf5a-98d17aaab00d"
+          ]
+        },
+        {
+          "code": "Vishnu M L",
+          "isJoined": false,
+          "name": "Vishnu M L (Accused)",
+          "partyType": "respondent",
+          "uniqueId": "ddb64954-a7e0-460d-ae7e-9208a21ced63"
+        },
+        {
+          "code": "The Bank Manager",
+          "name": "The Bank Manager (Witness)",
+          "partyType": "witness"
+        },
+        {
+          "code": "The Bank Manager",
+          "name": "The Bank Manager (Witness)",
+          "partyType": "witness"
+        }
+      ],
+      "refHearingId": "KL-000704-2025-HR12"
+    },
+    "refHearingId": "KL-000704-2025-HR12"
+  },
+  "applicationNumber": null,
+  "attendance": {
+    "Absent": [
+      "ACCUSED",
+      "ACCUSED_ADVOCATE"
+    ],
+    "Present": [
+      "COMPLAINANT_ADVOCATE",
+      "COMPLAINANT"
+    ]
+  },
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778824325970,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1778824378128
+  },
+  "cnrNumber": "KLKM520004332025",
+  "comments": null,
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 0,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: .pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "ef0811c4-7983-4155-b42a-d9b6716d1497",
+      "id": "96972327-588e-45d8-a90f-37dcb6f5287a",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000704-2025",
+  "hearingNumber": "KL-000704-2025-HR12",
+  "hearingType": "WARRANT",
+  "id": "1d6ad652-09e8-493b-8393-78ba252c5249",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Await warrant. For return of warrant. 19.06.2026.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": 1781807400000,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "ST/486/2025",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "A JENGISH KHAN (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Vishnu M L (Accused)",
+        "partyType": "respondent"
+      },
+      {
+        "counselName": "",
+        "partyName": "The Bank Manager (Witness)",
+        "partyType": "witness"
+      },
+      {
+        "counselName": "",
+        "partyName": "The Bank Manager (Witness)",
+        "partyType": "witness"
+      }
+    ]
+  },
+  "orderNumber": "KL-000704-2025-OR14",
+  "orderTitle": "Schedule of Next Hearing Date",
+  "orderType": null,
+  "purposeOfNextHearing": "WARRANT",
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778824325970,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778824325970
+    },
+    "id": "51e770fe-1af0-4c13-bb04-638f9eb62251",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

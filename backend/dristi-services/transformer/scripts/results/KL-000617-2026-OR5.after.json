@@ -1,0 +1,177 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "attendees": [
+        {
+          "associatedWith": null,
+          "id": "b65443a8-fd9b-4834-8926-b4514cb34383",
+          "individualId": "IND-2026-03-09-000491",
+          "isOnline": null,
+          "label": "Dominic George (Complainant)",
+          "name": "Dominic George (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2026-03-09-000491",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "383a3af3-7f2b-4362-858e-f75357f9d2da",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Monisha (Accused)",
+          "name": "Monisha (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "Monisha (Accused)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "c4c8240e-46f3-425b-8732-0974ec629bae",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Monisha (Accused)",
+          "name": "Monisha (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "Monisha (Accused)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "0b1af156-d2c7-4018-9a79-4ed992fffc28",
+          "individualId": "IND-2024-11-20-000637",
+          "isOnline": null,
+          "label": "SATHEESH KUMAR N (ADICHANALLOOR)",
+          "name": "SATHEESH KUMAR N (ADICHANALLOOR)",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2024-11-20-000637",
+          "wasPresent": null
+        }
+      ],
+      "namesOfPartiesRequired": [
+        {
+          "code": "Dominic George",
+          "individualId": "IND-2026-03-09-000491",
+          "isJoined": true,
+          "mobileNumber": "9847178117",
+          "name": "Dominic George (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "22ab918c-11e6-4e84-bc58-ad50d067b962",
+          "uuid": [
+            "dcf0ea2f-9f29-49d3-acf0-6c2059609412"
+          ]
+        },
+        {
+          "code": "Monisha",
+          "isJoined": false,
+          "name": "Monisha (Accused)",
+          "partyType": "respondent",
+          "uniqueId": "a00bc90f-b582-4a6a-847e-bc0cf4d7ac0b"
+        },
+        {
+          "code": "Monisha",
+          "isJoined": false,
+          "name": "Monisha (Accused)",
+          "partyType": "respondent",
+          "uniqueId": "26576347-fa7f-4596-b639-f0dbd3065b9d"
+        }
+      ],
+      "refHearingId": "KL-000617-2026-HR2"
+    },
+    "refHearingId": "KL-000617-2026-HR2"
+  },
+  "applicationNumber": null,
+  "attendance": {
+    "Absent": [
+      "COMPLAINANT",
+      "COMPLAINANT_ADVOCATE",
+      "ACCUSED",
+      "ACCUSED_ADVOCATE"
+    ],
+    "Present": []
+  },
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1777355830324,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779624610586
+  },
+  "cnrNumber": "KLKM520003362026",
+  "comments": null,
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 0,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: .pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "245b5ceb-aa4c-4ef6-9e89-de4cdaed2d2e",
+      "id": "d033a792-e10e-41bf-81f9-c8a13e0c7f63",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000617-2026",
+  "hearingNumber": "KL-000617-2026-HR2",
+  "hearingType": "APPEARANCE",
+  "id": "cb0746ea-98de-4e3c-b438-f81fd471bdeb",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Complainant  shall be present. 26.05.2026.&nbsp;</p><p><br></p><p>Due to technical issue order passed on 11-05-2026 could not be uploaded. Hence the order of 11-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": 1779733800000,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "ST/294/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Dominic George (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Monisha (Accused)",
+        "partyType": "respondent"
+      },
+      {
+        "counselName": "",
+        "partyName": "Monisha (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-000617-2026-OR5",
+  "orderTitle": "Schedule of Next Hearing Date",
+  "orderType": null,
+  "purposeOfNextHearing": "APPEARANCE",
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1777355830324,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1777355830324
+    },
+    "id": "5a965226-2d1a-47ff-b8a5-d13b732f90df",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

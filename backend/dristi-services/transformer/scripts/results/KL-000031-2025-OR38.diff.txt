@@ -1,0 +1,29 @@
+--- KL-000031-2025-OR38.before.json
++++ KL-000031-2025-OR38.after.json
+@@ -271,7 +271,7 @@
+     "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+     "createdTime": 1778825041356,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1778837932516
++    "lastModifiedTime": 1779622815389
+   },
+   "cnrNumber": "KLKM520000792025",
+   "comments": "",
+@@ -285,7 +285,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "09491cef-ecee-4e7e-a0f7-883700d85ff1",
++      "fileStore": "a749b8ec-ae14-4c39-9787-9852f351ba17",
+       "id": "40190055-4850-452d-8398-43ec3e8cd54d",
+       "isActive": true
+     }
+@@ -296,7 +296,7 @@
+   "id": "60ea4be8-04b6-4db6-8063-314bca168c14",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>Repeat by hand warrant to accused. Take steps. For return of warrant. 26.06.2026.</p>",
++  "itemText": "<p>Repeat by hand warrant to accused. Take steps. For return of warrant. 26.06.2026.</p><p><br></p><p>Due to technical issue order passed on 15-05-2026 could not be uploaded. Hence the order of 15-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": 1782412200000,
+   "orderCategory": "INTERMEDIATE",

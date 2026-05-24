@@ -1,0 +1,29 @@
+--- KL-001096-2026-OR1.before.json
++++ KL-001096-2026-OR1.after.json
+@@ -6,7 +6,7 @@
+     "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+     "createdTime": 1778931090058,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1778931128135
++    "lastModifiedTime": 1779627181283
+   },
+   "cnrNumber": "KLKM520007132026",
+   "comments": "",
+@@ -216,7 +216,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "c058d168-4530-4a26-8c7c-6ecc14f2559c",
++      "fileStore": "15813f16-ca98-4f61-91c7-6fe69e2db5d8",
+       "id": "5a098813-5371-4914-be08-2aba0ba12963",
+       "isActive": true
+     }
+@@ -227,7 +227,7 @@
+   "id": "3b211552-c650-432f-9738-9644baf77478",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>No delay in filing the complaint. The accused resides outside the jurisdiction of this court, hence enquiry u/s.225 of BNSS is conducted. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file as ST. Issue summons to accused. Take steps. For return of summons. 30.06.2026.</p><p><br></p><p><br></p><p><br></p>",
++  "itemText": "<p>No delay in filing the complaint. The accused resides outside the jurisdiction of this court, hence enquiry u/s.225 of BNSS is conducted. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file as ST. Issue summons to accused. Take steps. For return of summons. 30.06.2026.</p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": null,
+   "orderCategory": "COMPOSITE",

@@ -1,0 +1,29 @@
+--- KL-000345-2025-OR39.before.json
++++ KL-000345-2025-OR39.after.json
+@@ -165,7 +165,7 @@
+     "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+     "createdTime": 1778737276482,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1778761311082
++    "lastModifiedTime": 1779624014990
+   },
+   "cnrNumber": "KLKM520001962025",
+   "comments": null,
+@@ -179,7 +179,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "c2c99015-4308-4653-ade7-e115c4ac76e2",
++      "fileStore": "63eefe74-47d9-4ac3-96c1-6eb4bfe6823b",
+       "id": "b7843526-3256-41fe-a3b4-e0c0b7b24e69",
+       "isActive": true
+     }
+@@ -190,7 +190,7 @@
+   "id": "218e2fa3-eb88-4d04-9d38-ed75554d4842",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>Witness no.1 the Manager, Kerala State Co-operative Bank, Kannanalloor Branch is present. He is already examined as PW2. He is further examined in chief. Ext.P7 marked. Complainant submitted no further evidence. For the examination of the accused u/s.351 (1) (b) of BNSS. 29.05.2026.</p>",
++  "itemText": "<p>Witness no.1 the Manager, Kerala State Co-operative Bank, Kannanalloor Branch is present. He is already examined as PW2. He is further examined in chief. Ext.P7 marked. Complainant submitted no further evidence. For the examination of the accused u/s.351 (1) (b) of BNSS. 29.05.2026.</p><p><br></p><p>Due to technical issue order passed on 14-05-2026 could not be uploaded. Hence the order of 14-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": 1779993000000,
+   "orderCategory": "INTERMEDIATE",

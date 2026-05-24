@@ -1,0 +1,29 @@
+--- KL-001116-2026-OR1.before.json
++++ KL-001116-2026-OR1.after.json
+@@ -6,7 +6,7 @@
+     "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+     "createdTime": 1778930329122,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1778930360213
++    "lastModifiedTime": 1779627989649
+   },
+   "cnrNumber": "KLKM520007032026",
+   "comments": "",
+@@ -220,7 +220,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "1587605c-7fb8-4905-aafa-afd56903d833",
++      "fileStore": "fe2ff66e-83d9-4e69-bb14-263f8c2340d5",
+       "id": "1f512502-ce22-45b7-af37-1b55e0c1f250",
+       "isActive": true
+     }
+@@ -231,7 +231,7 @@
+   "id": "b83a7c31-da1c-4b78-a7f0-79495d7b29bf",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>&nbsp;No delay in filing the complaint. The accused resides outside the jurisdiction of this court, hence enquiry u/s.225 of BNSS is conducted. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file as ST. Issue summons to accused. Take steps. For return of summons.&nbsp;&nbsp;30.06.2026.</p><p><br></p><p><br></p>",
++  "itemText": "<p>&nbsp;No delay in filing the complaint. The accused resides outside the jurisdiction of this court, hence enquiry u/s.225 of BNSS is conducted. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file as ST. Issue summons to accused. Take steps. For return of summons.&nbsp;&nbsp;30.06.2026.</p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": null,
+   "orderCategory": "COMPOSITE",

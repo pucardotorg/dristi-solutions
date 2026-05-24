@@ -1,0 +1,163 @@
+{
+  "additionalDetails": {},
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778930713951,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1778930741415
+  },
+  "cnrNumber": "KLKM520007092026",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "556817f9-f662-4203-8c34-4d3df29d040c",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "hearingDate": "2026-06-30",
+            "hearingPurpose": {
+              "code": "APPEARANCE",
+              "id": 3,
+              "isactive": true,
+              "type": "APPEARANCE"
+            },
+            "orderType": {
+              "code": "SCHEDULE_OF_HEARING_DATE",
+              "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              "type": "SCHEDULE_OF_HEARING_DATE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/709/2026",
+          "hearingDate": 1782777600000,
+          "purposeOfHearing": "APPEARANCE"
+        },
+        "orderType": "SCHEDULE_OF_HEARING_DATE"
+      },
+      "orderType": "SCHEDULE_OF_HEARING_DATE"
+    },
+    {
+      "id": "0be5340e-6fea-4119-87de-d0e5e1a6d066",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "orderType": {
+              "code": "TAKE_COGNIZANCE",
+              "id": 30,
+              "isactive": true,
+              "name": "ORDER_TYPE_TAKE_COGNIZANCE",
+              "type": "TAKE_COGNIZANCE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/709/2026",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Sandhya B Pillai (Complainant)",
+              "partyType": "complainant"
+            },
+            {
+              "counselName": "",
+              "partyName": "Sreelekha (Accused)",
+              "partyType": "respondent"
+            },
+            {
+              "counselName": "",
+              "partyName": "Manager (Witness)",
+              "partyType": "witness"
+            },
+            {
+              "counselName": "",
+              "partyName": "Manager (Witness)",
+              "partyType": "witness"
+            }
+          ]
+        },
+        "orderType": "TAKE_COGNIZANCE"
+      },
+      "orderType": "TAKE_COGNIZANCE"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "170e5492-7456-4e6e-b3d4-b60082c5610f",
+      "id": "2aebc295-5137-44da-9020-fb52b50fd832",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001117-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "054193a2-31b1-4a70-9b8c-f4282b01286f",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons.30.06.2026.</p><p><br></p><p><br></p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "CMP/709/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Sandhya B Pillai (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Sreelekha (Accused)",
+        "partyType": "respondent"
+      },
+      {
+        "counselName": "",
+        "partyName": "Manager (Witness)",
+        "partyType": "witness"
+      },
+      {
+        "counselName": "",
+        "partyName": "Manager (Witness)",
+        "partyType": "witness"
+      }
+    ]
+  },
+  "orderNumber": "KL-001117-2026-OR1",
+  "orderTitle": "Schedule of Hearing Date and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778930713951,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778930713951
+    },
+    "id": "815c5387-2df0-4653-8c72-68f408c43fcd",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

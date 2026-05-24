@@ -1,0 +1,176 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "attendees": [
+        {
+          "associatedWith": null,
+          "id": "01fb005b-d13a-4c0f-abf3-5d79483d8f3c",
+          "individualId": "IND-2026-03-01-000429",
+          "isOnline": null,
+          "label": "Prasannan T Pillai (Complainant)",
+          "name": "Prasannan T Pillai (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2026-03-01-000429",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "24d11efb-e106-4d1e-9003-fe06ea058b50",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Geethakumari (Accused)",
+          "name": "Geethakumari (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "Geethakumari (Accused)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "b8381c38-e42d-4ba3-92fa-1d25fbc100a9",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Sasidharan Pillai (Witness)",
+          "name": "Sasidharan Pillai (Witness)",
+          "partyType": "witness",
+          "type": "witness",
+          "value": "Sasidharan Pillai (Witness)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "d0c1a7be-3df9-4b54-a35e-5f5d8d8f366c",
+          "individualId": "IND-2026-01-05-000018",
+          "isOnline": null,
+          "label": "Radhakrishna Pillai",
+          "name": "Radhakrishna Pillai",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2026-01-05-000018",
+          "wasPresent": null
+        }
+      ],
+      "namesOfPartiesRequired": [
+        {
+          "code": "Prasannan T Pillai",
+          "individualId": "IND-2026-03-01-000429",
+          "isJoined": true,
+          "mobileNumber": "8590054891",
+          "name": "Prasannan T Pillai (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "463fe47f-2153-42b0-8974-e19009e17860",
+          "uuid": [
+            "922aaba6-deb1-4869-956f-8cf3f4edc7fa"
+          ]
+        },
+        {
+          "code": "Geethakumari",
+          "isJoined": false,
+          "name": "Geethakumari (Accused)",
+          "partyType": "respondent",
+          "uniqueId": "529dce91-e606-4adf-b194-ed0c6baf6cd9"
+        },
+        {
+          "code": "Sasidharan Pillai",
+          "name": "Sasidharan Pillai (Witness)",
+          "partyType": "witness"
+        }
+      ],
+      "refHearingId": "KL-000698-2026-HR2"
+    },
+    "refHearingId": "KL-000698-2026-HR2"
+  },
+  "applicationNumber": null,
+  "attendance": {
+    "Absent": [
+      "COMPLAINANT",
+      "ACCUSED",
+      "ACCUSED_ADVOCATE"
+    ],
+    "Present": [
+      "COMPLAINANT_ADVOCATE"
+    ]
+  },
+  "auditDetails": {
+    "createdBy": "85ffc5d6-6ed8-4cd0-b60a-f2e82844cf69",
+    "createdTime": 1778222076886,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779624807920
+  },
+  "cnrNumber": "KLKM520003892026",
+  "comments": null,
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 0,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: .pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "b857985b-bbeb-48b8-a449-bd1005338608",
+      "id": "81a2edba-9bcc-44e0-bf3e-7f464ba09022",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000698-2026",
+  "hearingNumber": "KL-000698-2026-HR2",
+  "hearingType": "ADMISSION",
+  "id": "7accfb40-9ff3-4dc6-8303-9c942f0adf05",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>For hearing on maintainability. 21/05/2026</p><p><br></p><p>Due to technical issue order passed on 08-05-2026 could not be uploaded. Hence the order of 08-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": 1779301800000,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "CMP/389/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Prasannan T Pillai (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Geethakumari (Accused)",
+        "partyType": "respondent"
+      },
+      {
+        "counselName": "",
+        "partyName": "Sasidharan Pillai (Witness)",
+        "partyType": "witness"
+      }
+    ]
+  },
+  "orderNumber": "KL-000698-2026-OR4",
+  "orderTitle": "Schedule of Next Hearing Date",
+  "orderType": null,
+  "purposeOfNextHearing": "ADMISSION",
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "85ffc5d6-6ed8-4cd0-b60a-f2e82844cf69",
+      "createdTime": 1778222076886,
+      "lastModifiedBy": "85ffc5d6-6ed8-4cd0-b60a-f2e82844cf69",
+      "lastModifiedTime": 1778222076886
+    },
+    "id": "fadec1e5-5c44-461f-88b6-68b5f5fc02da",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

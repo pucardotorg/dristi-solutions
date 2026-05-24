@@ -1,0 +1,29 @@
+--- KL-000286-2024-OR20.before.json
++++ KL-000286-2024-OR20.after.json
+@@ -81,7 +81,7 @@
+     "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+     "createdTime": 1778825394823,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1778838153125
++    "lastModifiedTime": 1779623312982
+   },
+   "cnrNumber": "KLKM520004042025",
+   "comments": "",
+@@ -360,7 +360,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "8b5d3cc0-4cd2-4bc1-b3bd-b248bc00c392",
++      "fileStore": "aa72f24b-27ae-46ee-81a6-c67fd29d003b",
+       "id": "ea1fb0b5-dd78-40ca-8e6e-56910a251108",
+       "isActive": true
+     }
+@@ -371,7 +371,7 @@
+   "id": "5fc23221-96df-42c9-9ce6-8ebf730ad32e",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>CMP.1/2026 is allowed. Issue by hand warrant to accused. Take steps. For return of warrant. 26.06.2026.</p><p><br></p>",
++  "itemText": "<p>CMP.1/2026 is allowed. Issue by hand warrant to accused. Take steps. For return of warrant. 26.06.2026.</p><p><br></p><p>Due to technical issue order passed on 15-05-2026 could not be uploaded. Hence the order of 15-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": 1782412200000,
+   "orderCategory": "COMPOSITE",

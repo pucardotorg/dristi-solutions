@@ -1,0 +1,277 @@
+{
+  "additionalDetails": {},
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778931090058,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779627181283
+  },
+  "cnrNumber": "KLKM520007132026",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "87c651ab-93c8-4713-b725-9c55ec962b2f",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "hearingDate": "2026-06-30",
+            "hearingPurpose": {
+              "code": "APPEARANCE",
+              "id": 3,
+              "isactive": true,
+              "type": "APPEARANCE"
+            },
+            "orderType": {
+              "code": "SCHEDULE_OF_HEARING_DATE",
+              "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              "type": "SCHEDULE_OF_HEARING_DATE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/713/2026",
+          "hearingDate": 1782777600000,
+          "purposeOfHearing": "APPEARANCE"
+        },
+        "orderType": "SCHEDULE_OF_HEARING_DATE"
+      },
+      "orderType": "SCHEDULE_OF_HEARING_DATE"
+    },
+    {
+      "id": "e3986ffc-9e22-4959-b465-d71d6e130a93",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "orderType": {
+              "code": "TAKE_COGNIZANCE",
+              "id": 30,
+              "isactive": true,
+              "name": "ORDER_TYPE_TAKE_COGNIZANCE",
+              "type": "TAKE_COGNIZANCE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/713/2026",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Saheerath (Complainant)",
+              "partyType": "complainant"
+            },
+            {
+              "counselName": "",
+              "partyName": "V S Sudhakaran Nair (Accused)",
+              "partyType": "respondent"
+            }
+          ]
+        },
+        "orderType": "TAKE_COGNIZANCE"
+      },
+      "orderType": "TAKE_COGNIZANCE"
+    },
+    {
+      "id": "69dae812-2991-4c3f-be54-e2f1d8cd2548",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "SummonsOrder": {
+              "party": [
+                {
+                  "data": {
+                    "address": [
+                      {
+                        "address": {
+                          "city": "Thiruvananthapuram",
+                          "district": "Kollam",
+                          "locality": "ARA- 167, Kanjirathin Muttil, Kavadiyar P.O",
+                          "pincode": "695003",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "city": "Thiruvananthapuram",
+                        "district": "Kollam",
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15291030,
+                            "district": "THIRUVANANTHAPURAM CITY",
+                            "name": "PEROORKADA"
+                          }
+                        },
+                        "id": "862a4b35-a698-4b65-a2a9-b30b9bcb4f0b",
+                        "locality": "ARA- 167, Kanjirathin Muttil, Kavadiyar P.O",
+                        "pincode": "695003",
+                        "state": "Kerala"
+                      }
+                    ],
+                    "addressDetails": [
+                      {
+                        "addressDetails": {
+                          "city": "Thiruvananthapuram",
+                          "district": "Kollam",
+                          "locality": "ARA- 167, Kanjirathin Muttil, Kavadiyar P.O",
+                          "pincode": "695003",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15291030,
+                            "district": "THIRUVANANTHAPURAM CITY",
+                            "name": "PEROORKADA"
+                          }
+                        },
+                        "id": "862a4b35-a698-4b65-a2a9-b30b9bcb4f0b"
+                      }
+                    ],
+                    "companyDetailsUpload": null,
+                    "email": [],
+                    "firstName": "V S Sudhakaran Nair",
+                    "inquiryAffidavitFileUpload": {
+                      "document": [
+                        {
+                          "documentName": "st saheerath affidavit .pdf",
+                          "documentType": "case.affidavit.225bnss",
+                          "fileName": "Affidavit under section 225 of BNSS",
+                          "fileStore": "b0408d8b-600e-47b9-9710-4c429f2f9353"
+                        }
+                      ]
+                    },
+                    "lastName": "",
+                    "middleName": "",
+                    "partyIndex": "Respondent_0",
+                    "partyType": "Respondent",
+                    "phone_numbers": [],
+                    "respondentFirstName": "V S Sudhakaran Nair",
+                    "respondentLastName": "",
+                    "respondentMiddleName": "",
+                    "respondentType": {
+                      "code": "INDIVIDUAL",
+                      "commonFields": true,
+                      "complainantLocation": true,
+                      "complainantTypeId": 1,
+                      "id": 1,
+                      "isIndividual": true,
+                      "isactive": true,
+                      "name": "Individual",
+                      "showCompanyDetails": false
+                    },
+                    "uniqueId": "cad7d839-e1fd-4182-b5c9-8d284fa9b3b5"
+                  },
+                  "displayindex": 0,
+                  "isenabled": true,
+                  "uniqueId": "cad7d839-e1fd-4182-b5c9-8d284fa9b3b5"
+                }
+              ]
+            },
+            "dateForHearing": "2026-06-30",
+            "orderType": {
+              "code": "SUMMONS",
+              "id": 13,
+              "isactive": true,
+              "name": "ORDER_TYPE_SUMMONS",
+              "type": "SUMMONS"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/713/2026",
+          "hearingDate": 1782777600000,
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "V S Sudhakaran Nair (Accused)",
+              "partyType": "respondent"
+            }
+          ],
+          "respondentName": [
+            "V S Sudhakaran Nair"
+          ]
+        },
+        "orderType": "SUMMONS"
+      },
+      "orderType": "SUMMONS"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "15813f16-ca98-4f61-91c7-6fe69e2db5d8",
+      "id": "5a098813-5371-4914-be08-2aba0ba12963",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001096-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "3b211552-c650-432f-9738-9644baf77478",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>No delay in filing the complaint. The accused resides outside the jurisdiction of this court, hence enquiry u/s.225 of BNSS is conducted. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file as ST. Issue summons to accused. Take steps. For return of summons. 30.06.2026.</p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "CMP/713/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Saheerath (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "V S Sudhakaran Nair (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-001096-2026-OR1",
+  "orderTitle": "Schedule of Hearing Date and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778931090058,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778931090058
+    },
+    "id": "a7df77aa-39c6-4ebc-9c80-17bdc38e7a1f",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

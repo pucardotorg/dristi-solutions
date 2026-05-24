@@ -1,0 +1,29 @@
+--- KL-000310-2026-OR6.before.json
++++ KL-000310-2026-OR6.after.json
+@@ -118,7 +118,7 @@
+     "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+     "createdTime": 1778738621841,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1779623422457
++    "lastModifiedTime": 1779623867717
+   },
+   "cnrNumber": "KLKM520001212026",
+   "comments": null,
+@@ -132,7 +132,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "0af5e81c-f209-47b8-b58d-c5caa4f99c8f",
++      "fileStore": "2eadf278-2a77-448c-a7e2-1ca86bd6be53",
+       "id": "9ea87e56-fc0a-4953-9036-6c7fd86a31c6",
+       "isActive": true
+     }
+@@ -143,7 +143,7 @@
+   "id": "c32daeb7-c9b1-40d8-a420-31cd2192862c",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>Due to technical reason order could not uploaded yesterday. Hence it is Suo motu taken today and uploaded. Accused has not taken bail so far. It is mistakenly posted for evidence in the previous hearing. Hence posted for the appearance of the accused for taking bail. 29.05.2026.</p><p><br></p><p>Due to technical issue order passed on 15-05-2026 could not be uploaded. Hence the order of 15-05-2026 is uploaded today.</p>",
++  "itemText": "<p>Due to technical reason order could not uploaded yesterday. Hence it is Suo motu taken today and uploaded. Accused has not taken bail so far. It is mistakenly posted for evidence in the previous hearing. Hence posted for the appearance of the accused for taking bail. 29.05.2026.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": 1779993000000,
+   "orderCategory": "INTERMEDIATE",

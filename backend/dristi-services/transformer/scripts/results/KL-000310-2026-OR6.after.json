@@ -1,0 +1,193 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "attendees": [
+        {
+          "associatedWith": null,
+          "id": "dea6bb33-5ec6-4e58-a3b0-b8cccdeee0ff",
+          "individualId": "IND-2025-01-07-000005",
+          "isOnline": null,
+          "label": "Ajikumar M S (Complainant)",
+          "name": "Ajikumar M S (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2025-01-07-000005",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "d39e62dc-97a4-44bf-ba92-481e17d943be",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Nizarudeen M (Accused)",
+          "name": "Nizarudeen M (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "Nizarudeen M (Accused)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "7ed98c54-d1ab-4d30-9391-643c5e6cac66",
+          "individualId": "IND-2026-01-31-000185",
+          "isOnline": null,
+          "label": "Meenakshy D",
+          "name": "Meenakshy D",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2026-01-31-000185",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "7afacbc1-a0f1-4a50-81ed-0eac7f568942",
+          "individualId": "IND-2026-01-31-000182",
+          "isOnline": null,
+          "label": "Theertha S",
+          "name": "Theertha S",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2026-01-31-000182",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "164b3806-6ed1-4294-acfb-cb5459a87d0d",
+          "individualId": "IND-2026-01-30-000176",
+          "isOnline": null,
+          "label": "Jiji Raj",
+          "name": "Jiji Raj",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2026-01-30-000176",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "67529e9c-3652-4176-8a78-5c6ff3be9003",
+          "individualId": "IND-2025-01-06-001880",
+          "isOnline": null,
+          "label": "Krishnakumar G",
+          "name": "Krishnakumar G",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2025-01-06-001880",
+          "wasPresent": null
+        }
+      ],
+      "namesOfPartiesRequired": [
+        {
+          "code": "Ajikumar M S",
+          "individualId": "IND-2025-01-07-000005",
+          "isJoined": true,
+          "mobileNumber": "9567769379",
+          "name": "Ajikumar M S (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "b956baed-3e9a-4060-b617-0d149f8143b9",
+          "uuid": [
+            "b0228c5b-6a38-4b5b-8c47-0c011144b7d5",
+            "d54baeb4-1e2a-41b0-954d-6c60eb3ef06f",
+            "6f3d707c-42b3-413b-907c-55bff619fa70",
+            "a1595034-2ab7-4d7e-b468-ad50290558ad"
+          ]
+        },
+        {
+          "code": "Nizarudeen M",
+          "isJoined": false,
+          "name": "Nizarudeen M (Accused)",
+          "partyType": "respondent",
+          "uniqueId": "6bdec505-e345-49ad-90c8-ea15aee25945"
+        }
+      ],
+      "refHearingId": "KL-000310-2026-HR5"
+    },
+    "refHearingId": "KL-000310-2026-HR5"
+  },
+  "applicationNumber": null,
+  "attendance": {
+    "Absent": [
+      "COMPLAINANT",
+      "ACCUSED"
+    ],
+    "Present": [
+      "COMPLAINANT_ADVOCATE",
+      "ACCUSED_ADVOCATE"
+    ]
+  },
+  "auditDetails": {
+    "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+    "createdTime": 1778738621841,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779623867717
+  },
+  "cnrNumber": "KLKM520001212026",
+  "comments": null,
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 0,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: .pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "2eadf278-2a77-448c-a7e2-1ca86bd6be53",
+      "id": "9ea87e56-fc0a-4953-9036-6c7fd86a31c6",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000310-2026",
+  "hearingNumber": "KL-000310-2026-HR5",
+  "hearingType": "EVIDENCE_COMPLAINANT",
+  "id": "c32daeb7-c9b1-40d8-a420-31cd2192862c",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Due to technical reason order could not uploaded yesterday. Hence it is Suo motu taken today and uploaded. Accused has not taken bail so far. It is mistakenly posted for evidence in the previous hearing. Hence posted for the appearance of the accused for taking bail. 29.05.2026.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": 1779993000000,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "ST/107/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Ajikumar M S (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Nizarudeen M (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-000310-2026-OR6",
+  "orderTitle": "Schedule of Next Hearing Date",
+  "orderType": null,
+  "purposeOfNextHearing": "APPEARANCE",
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "createdTime": 1778738621841,
+      "lastModifiedBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "lastModifiedTime": 1778738621841
+    },
+    "id": "c9f5d53a-180a-459b-8c44-ce9172454af3",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

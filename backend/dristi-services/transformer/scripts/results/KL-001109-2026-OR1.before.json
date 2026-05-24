@@ -1,0 +1,296 @@
+{
+  "additionalDetails": {},
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778930518156,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1778930546993
+  },
+  "cnrNumber": "KLKM520007062026",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "ca155c9b-f283-4fc7-9207-a01e19f9275b",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "hearingDate": "2026-06-30",
+            "hearingPurpose": {
+              "code": "APPEARANCE",
+              "id": 3,
+              "isactive": true,
+              "type": "APPEARANCE"
+            },
+            "orderType": {
+              "code": "SCHEDULE_OF_HEARING_DATE",
+              "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              "type": "SCHEDULE_OF_HEARING_DATE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/706/2026",
+          "hearingDate": 1782777600000,
+          "purposeOfHearing": "APPEARANCE"
+        },
+        "orderType": "SCHEDULE_OF_HEARING_DATE"
+      },
+      "orderType": "SCHEDULE_OF_HEARING_DATE"
+    },
+    {
+      "id": "dbd8e438-3db0-4db9-b327-bc25b71c7113",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "orderType": {
+              "code": "TAKE_COGNIZANCE",
+              "id": 30,
+              "isactive": true,
+              "name": "ORDER_TYPE_TAKE_COGNIZANCE",
+              "type": "TAKE_COGNIZANCE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/706/2026",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "A JENGISH KHAN (Complainant)",
+              "partyType": "complainant"
+            },
+            {
+              "counselName": "",
+              "partyName": "SIMLA MOL E (Accused)",
+              "partyType": "respondent"
+            },
+            {
+              "counselName": "",
+              "partyName": "THE MANAGER (Witness)",
+              "partyType": "witness"
+            },
+            {
+              "counselName": "",
+              "partyName": "THE MANAGER (Witness)",
+              "partyType": "witness"
+            }
+          ]
+        },
+        "orderType": "TAKE_COGNIZANCE"
+      },
+      "orderType": "TAKE_COGNIZANCE"
+    },
+    {
+      "id": "b14883b8-c385-4ede-b1c3-df695c25c5d4",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "SummonsOrder": {
+              "party": [
+                {
+                  "data": {
+                    "address": [
+                      {
+                        "address": {
+                          "city": "KOLLAM",
+                          "district": "KOLLAM",
+                          "locality": "SHA COTTEGE, MANGALAM NAGAR-123, MANGAD P O, KOLLAM",
+                          "pincode": "691015",
+                          "state": "KERALA",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "city": "KOLLAM",
+                        "district": "KOLLAM",
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995008,
+                            "district": "KOLLAM CITY",
+                            "name": "KILIKOLLOOR"
+                          }
+                        },
+                        "id": "6973bb2d-36f1-407c-bda8-da8aa39bb6d7",
+                        "locality": "SHA COTTEGE, MANGALAM NAGAR-123, MANGAD P O, KOLLAM",
+                        "pincode": "691015",
+                        "state": "KERALA"
+                      }
+                    ],
+                    "addressDetails": [
+                      {
+                        "addressDetails": {
+                          "city": "KOLLAM",
+                          "district": "KOLLAM",
+                          "locality": "SHA COTTEGE, MANGALAM NAGAR-123, MANGAD P O, KOLLAM",
+                          "pincode": "691015",
+                          "state": "KERALA",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995008,
+                            "district": "KOLLAM CITY",
+                            "name": "KILIKOLLOOR"
+                          }
+                        },
+                        "id": "6973bb2d-36f1-407c-bda8-da8aa39bb6d7"
+                      }
+                    ],
+                    "companyDetailsUpload": null,
+                    "email": [],
+                    "firstName": "SIMLA",
+                    "inquiryAffidavitFileUpload": null,
+                    "lastName": "E",
+                    "middleName": "MOL",
+                    "partyIndex": "Respondent_0",
+                    "partyType": "Respondent",
+                    "phone_numbers": [
+                      "7736083002"
+                    ],
+                    "phonenumbers": {
+                      "mobileNumber": [
+                        "7736083002"
+                      ],
+                      "textfieldValue": ""
+                    },
+                    "respondentFirstName": "SIMLA",
+                    "respondentLastName": "E",
+                    "respondentMiddleName": "MOL",
+                    "respondentType": {
+                      "code": "INDIVIDUAL",
+                      "commonFields": true,
+                      "complainantLocation": true,
+                      "complainantTypeId": 1,
+                      "id": 1,
+                      "isIndividual": true,
+                      "isactive": true,
+                      "name": "Individual",
+                      "showCompanyDetails": false
+                    },
+                    "uniqueId": "e9dd3498-43f5-46ae-81b7-30acdb0cb970"
+                  },
+                  "displayindex": 0,
+                  "isenabled": true,
+                  "uniqueId": "e9dd3498-43f5-46ae-81b7-30acdb0cb970"
+                }
+              ]
+            },
+            "dateForHearing": "2026-06-30",
+            "orderType": {
+              "code": "SUMMONS",
+              "id": 13,
+              "isactive": true,
+              "name": "ORDER_TYPE_SUMMONS",
+              "type": "SUMMONS"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/706/2026",
+          "hearingDate": 1782777600000,
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "SIMLA MOL E (Accused)",
+              "partyType": "respondent"
+            }
+          ],
+          "respondentName": [
+            "SIMLA MOL E"
+          ]
+        },
+        "orderType": "SUMMONS"
+      },
+      "orderType": "SUMMONS"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "29cc317f-8b0d-49b8-a17b-d7c6ede03536",
+      "id": "18abcb74-d4e4-4c6b-a8f5-7e1769d56593",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001109-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "5135d3cb-6499-4e11-9fef-d43d4ca3411a",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons.30.06.2026.</p><p><br></p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "CMP/706/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "A JENGISH KHAN (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "SIMLA MOL E (Accused)",
+        "partyType": "respondent"
+      },
+      {
+        "counselName": "",
+        "partyName": "THE MANAGER (Witness)",
+        "partyType": "witness"
+      },
+      {
+        "counselName": "",
+        "partyName": "THE MANAGER (Witness)",
+        "partyType": "witness"
+      }
+    ]
+  },
+  "orderNumber": "KL-001109-2026-OR1",
+  "orderTitle": "Schedule of Hearing Date and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778930518156,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778930518156
+    },
+    "id": "763747bb-0490-4147-9bb1-87dbde463e03",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

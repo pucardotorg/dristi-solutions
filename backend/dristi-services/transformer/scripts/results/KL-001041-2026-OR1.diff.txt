@@ -1,0 +1,29 @@
+--- KL-001041-2026-OR1.before.json
++++ KL-001041-2026-OR1.after.json
+@@ -21,7 +21,7 @@
+     "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+     "createdTime": 1778929460229,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1779091803913
++    "lastModifiedTime": 1779626816929
+   },
+   "cnrNumber": "KLKM520006942026",
+   "comments": null,
+@@ -35,7 +35,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "963c19e2-b3d8-4787-b1fb-b7aa7168a641",
++      "fileStore": "a740609d-d0d4-40bf-9233-c7884ffd0cd1",
+       "id": "d2e81f3b-6c28-43c9-b1ae-c770ad649e09",
+       "isActive": true
+     }
+@@ -46,7 +46,7 @@
+   "id": "04c1a650-0719-405b-9ff6-96c24e9a66a1",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>For hearing on delay. 02.06.2026.</p>",
++  "itemText": "<p>For hearing on delay. 02.06.2026.</p><p><br></p><p>Due to technical issue order passed on 18-05-2026 could not be uploaded. Hence the order of 18-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": null,
+   "orderCategory": "INTERMEDIATE",

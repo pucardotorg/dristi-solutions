@@ -1,0 +1,281 @@
+{
+  "additionalDetails": {},
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778929754654,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779627902527
+  },
+  "cnrNumber": "KLKM520006982026",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "bb27cc8a-ece2-4c53-a96c-1d86bcd15aac",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "hearingDate": "2026-06-29",
+            "hearingPurpose": {
+              "code": "APPEARANCE",
+              "id": 3,
+              "isactive": true,
+              "type": "APPEARANCE"
+            },
+            "orderType": {
+              "code": "SCHEDULE_OF_HEARING_DATE",
+              "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              "type": "SCHEDULE_OF_HEARING_DATE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/698/2026",
+          "hearingDate": 1782691200000,
+          "purposeOfHearing": "APPEARANCE"
+        },
+        "orderType": "SCHEDULE_OF_HEARING_DATE"
+      },
+      "orderType": "SCHEDULE_OF_HEARING_DATE"
+    },
+    {
+      "id": "a045f41c-dffd-42f6-a679-799f03ae1319",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "orderType": {
+              "code": "TAKE_COGNIZANCE",
+              "id": 30,
+              "isactive": true,
+              "name": "ORDER_TYPE_TAKE_COGNIZANCE",
+              "type": "TAKE_COGNIZANCE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/698/2026",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Akhilan S B (Complainant)",
+              "partyType": "complainant"
+            },
+            {
+              "counselName": "",
+              "partyName": "Salini L (Accused)",
+              "partyType": "respondent"
+            }
+          ]
+        },
+        "orderType": "TAKE_COGNIZANCE"
+      },
+      "orderType": "TAKE_COGNIZANCE"
+    },
+    {
+      "id": "43591de3-e2d8-42d0-ba78-d05750aa8d4d",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "SummonsOrder": {
+              "party": [
+                {
+                  "data": {
+                    "address": [
+                      {
+                        "address": {
+                          "city": "Paravur",
+                          "district": "Kollam",
+                          "locality": "W/o Shibu, Puthuvalthodi, Kurumandal-B, Paravur, Kollam",
+                          "pincode": "691301",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "city": "Paravur",
+                        "district": "Kollam",
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995010,
+                            "district": "KOLLAM CITY",
+                            "name": "PARAVOOR"
+                          }
+                        },
+                        "id": "b70af1c5-baff-4668-8fa5-c85d74a9a715",
+                        "locality": "W/o Shibu, Puthuvalthodi, Kurumandal-B, Paravur, Kollam",
+                        "pincode": "691301",
+                        "state": "Kerala"
+                      }
+                    ],
+                    "addressDetails": [
+                      {
+                        "addressDetails": {
+                          "city": "Paravur",
+                          "district": "Kollam",
+                          "locality": "W/o Shibu, Puthuvalthodi, Kurumandal-B, Paravur, Kollam",
+                          "pincode": "691301",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995010,
+                            "district": "KOLLAM CITY",
+                            "name": "PARAVOOR"
+                          }
+                        },
+                        "id": "b70af1c5-baff-4668-8fa5-c85d74a9a715"
+                      }
+                    ],
+                    "companyDetailsUpload": null,
+                    "email": [],
+                    "firstName": "Salini L",
+                    "inquiryAffidavitFileUpload": {
+                      "document": [
+                        {
+                          "documentName": "salini 225.pdf",
+                          "documentType": "case.affidavit.225bnss",
+                          "fileName": "Affidavit under section 225 of BNSS",
+                          "fileStore": "4fea205d-3c5f-4ca3-abd5-366a7a5c4965"
+                        }
+                      ]
+                    },
+                    "lastName": "",
+                    "middleName": "",
+                    "partyIndex": "Respondent_0",
+                    "partyType": "Respondent",
+                    "phone_numbers": [],
+                    "phonenumbers": {
+                      "textfieldValue": ""
+                    },
+                    "respondentAge": "41",
+                    "respondentFirstName": "Salini L",
+                    "respondentLastName": "",
+                    "respondentMiddleName": "",
+                    "respondentType": {
+                      "code": "INDIVIDUAL",
+                      "commonFields": true,
+                      "complainantLocation": true,
+                      "complainantTypeId": 1,
+                      "id": 1,
+                      "isIndividual": true,
+                      "isactive": true,
+                      "name": "Individual",
+                      "showCompanyDetails": false
+                    },
+                    "uniqueId": "7a731eba-1678-4b89-b448-90f55190e629"
+                  },
+                  "displayindex": 0,
+                  "isenabled": true,
+                  "uniqueId": "7a731eba-1678-4b89-b448-90f55190e629"
+                }
+              ]
+            },
+            "dateForHearing": "2026-06-29",
+            "orderType": {
+              "code": "SUMMONS",
+              "id": 13,
+              "isactive": true,
+              "name": "ORDER_TYPE_SUMMONS",
+              "type": "SUMMONS"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/698/2026",
+          "hearingDate": 1782691200000,
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Salini L (Accused)",
+              "partyType": "respondent"
+            }
+          ],
+          "respondentName": [
+            "Salini L"
+          ]
+        },
+        "orderType": "SUMMONS"
+      },
+      "orderType": "SUMMONS"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "990372b4-8a2f-463f-88aa-cd92170b2c40",
+      "id": "ffd6971f-daba-446f-9a52-57ee4c869676",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001115-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "683db56d-7d3f-4696-a9d5-54dc535b4fb5",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons.29.06.2026.</p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "CMP/698/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Akhilan S B (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Salini L (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-001115-2026-OR1",
+  "orderTitle": "Schedule of Hearing Date and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778929754654,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778929754654
+    },
+    "id": "c49bacb3-cab7-442f-b0cb-b451854645c0",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

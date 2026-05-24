@@ -1,0 +1,281 @@
+{
+  "additionalDetails": {},
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778929599737,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779625815420
+  },
+  "cnrNumber": "KLKM520006962026",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "fbc5c259-3e3e-4ea2-b63a-fe4f3bdf14ea",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "hearingDate": "2026-06-29",
+            "hearingPurpose": {
+              "code": "APPEARANCE",
+              "id": 3,
+              "isactive": true,
+              "type": "APPEARANCE"
+            },
+            "orderType": {
+              "code": "SCHEDULE_OF_HEARING_DATE",
+              "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              "type": "SCHEDULE_OF_HEARING_DATE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/696/2026",
+          "hearingDate": 1782691200000,
+          "purposeOfHearing": "APPEARANCE"
+        },
+        "orderType": "SCHEDULE_OF_HEARING_DATE"
+      },
+      "orderType": "SCHEDULE_OF_HEARING_DATE"
+    },
+    {
+      "id": "09ef292c-179d-4ac1-9be2-2d783eb1a850",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "orderType": {
+              "code": "TAKE_COGNIZANCE",
+              "id": 30,
+              "isactive": true,
+              "name": "ORDER_TYPE_TAKE_COGNIZANCE",
+              "type": "TAKE_COGNIZANCE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/696/2026",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Akhilan S B (Complainant)",
+              "partyType": "complainant"
+            },
+            {
+              "counselName": "",
+              "partyName": "Nandu Suresh (Accused)",
+              "partyType": "respondent"
+            }
+          ]
+        },
+        "orderType": "TAKE_COGNIZANCE"
+      },
+      "orderType": "TAKE_COGNIZANCE"
+    },
+    {
+      "id": "3bdf961f-ec94-4220-bd6f-207e42826e59",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "SummonsOrder": {
+              "party": [
+                {
+                  "data": {
+                    "address": [
+                      {
+                        "address": {
+                          "city": "Paravur",
+                          "district": "Kollam",
+                          "locality": "S/o K.B Suresh Kumar,  Jaya Mandiram, Kongal, Paravur",
+                          "pincode": "691301",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "city": "Paravur",
+                        "district": "Kollam",
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995010,
+                            "district": "KOLLAM CITY",
+                            "name": "PARAVOOR"
+                          }
+                        },
+                        "id": "9b9de595-9420-4bca-a5ba-aec5841259ae",
+                        "locality": "S/o K.B Suresh Kumar,  Jaya Mandiram, Kongal, Paravur",
+                        "pincode": "691301",
+                        "state": "Kerala"
+                      }
+                    ],
+                    "addressDetails": [
+                      {
+                        "addressDetails": {
+                          "city": "Paravur",
+                          "district": "Kollam",
+                          "locality": "S/o K.B Suresh Kumar,  Jaya Mandiram, Kongal, Paravur",
+                          "pincode": "691301",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995010,
+                            "district": "KOLLAM CITY",
+                            "name": "PARAVOOR"
+                          }
+                        },
+                        "id": "9b9de595-9420-4bca-a5ba-aec5841259ae"
+                      }
+                    ],
+                    "companyDetailsUpload": null,
+                    "email": [],
+                    "firstName": "Nandu Suresh",
+                    "inquiryAffidavitFileUpload": {
+                      "document": [
+                        {
+                          "documentName": "nandu 225.pdf",
+                          "documentType": "case.affidavit.225bnss",
+                          "fileName": "Affidavit under section 225 of BNSS",
+                          "fileStore": "0897981e-f762-451d-9d88-dd5ef4b0b530"
+                        }
+                      ]
+                    },
+                    "lastName": "",
+                    "middleName": "",
+                    "partyIndex": "Respondent_0",
+                    "partyType": "Respondent",
+                    "phone_numbers": [],
+                    "phonenumbers": {
+                      "textfieldValue": ""
+                    },
+                    "respondentAge": "33",
+                    "respondentFirstName": "Nandu Suresh",
+                    "respondentLastName": "",
+                    "respondentMiddleName": "",
+                    "respondentType": {
+                      "code": "INDIVIDUAL",
+                      "commonFields": true,
+                      "complainantLocation": true,
+                      "complainantTypeId": 1,
+                      "id": 1,
+                      "isIndividual": true,
+                      "isactive": true,
+                      "name": "Individual",
+                      "showCompanyDetails": false
+                    },
+                    "uniqueId": "df5d3bd1-e592-42e2-bbad-f6ab2db2816d"
+                  },
+                  "displayindex": 0,
+                  "isenabled": true,
+                  "uniqueId": "df5d3bd1-e592-42e2-bbad-f6ab2db2816d"
+                }
+              ]
+            },
+            "dateForHearing": "2026-06-29",
+            "orderType": {
+              "code": "SUMMONS",
+              "id": 13,
+              "isactive": true,
+              "name": "ORDER_TYPE_SUMMONS",
+              "type": "SUMMONS"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/696/2026",
+          "hearingDate": 1782691200000,
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Nandu Suresh (Accused)",
+              "partyType": "respondent"
+            }
+          ],
+          "respondentName": [
+            "Nandu Suresh"
+          ]
+        },
+        "orderType": "SUMMONS"
+      },
+      "orderType": "SUMMONS"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "bd4cd5ee-12e8-491a-9d0f-9eebc06e3537",
+      "id": "9418f2e2-7d2f-44c6-ba79-19519534bce1",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001112-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "b399333e-eef8-4baa-bbba-7e8aba211f10",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons.29.06.2026.</p><p><br></p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "CMP/696/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Akhilan S B (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Nandu Suresh (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-001112-2026-OR1",
+  "orderTitle": "Schedule of Hearing Date and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778929599737,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778929599737
+    },
+    "id": "514b06aa-aa82-41dc-93fb-08101a3b4750",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

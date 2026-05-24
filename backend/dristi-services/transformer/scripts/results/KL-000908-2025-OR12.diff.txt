@@ -1,0 +1,31 @@
+--- KL-000908-2025-OR12.before.json
++++ KL-000908-2025-OR12.after.json
+@@ -84,8 +84,8 @@
+   "auditDetails": {
+     "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+     "createdTime": 1778824831585,
+-    "lastModifiedBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+-    "lastModifiedTime": 1778824860688
++    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
++    "lastModifiedTime": 1779625295153
+   },
+   "cnrNumber": "KLKM520005552025",
+   "comments": null,
+@@ -99,7 +99,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "3006a9ec-b0df-4713-a160-dd1d2c1a2f89",
++      "fileStore": "a2e8f40c-5d45-4df8-b04d-83d82532b4a1",
+       "id": "95996891-ca6b-487f-9f52-e971ddb06480",
+       "isActive": true
+     }
+@@ -110,7 +110,7 @@
+   "id": "00e2eaf2-c970-403c-af72-fcffafb14913",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>Await warrant. For return of warrant. 19.06.2026.</p>",
++  "itemText": "<p>Await warrant. For return of warrant. 19.06.2026.</p><p><br></p><p>Due to technical issue order passed on 15-05-2026 could not be uploaded. Hence the order of 15-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": 1781807400000,
+   "orderCategory": "INTERMEDIATE",

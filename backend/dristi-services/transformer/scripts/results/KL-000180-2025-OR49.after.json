@@ -1,0 +1,229 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "attendees": [
+        {
+          "associatedWith": null,
+          "id": "7be3d7f4-4e08-489b-a7b1-57c296e24706",
+          "individualId": "IND-2025-02-03-000063",
+          "isOnline": null,
+          "label": "Gopakumar gopi (Complainant)",
+          "name": "Gopakumar gopi (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2025-02-03-000063",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "bbc53b37-d135-47a4-97b1-68780d02923d",
+          "individualId": "IND-2025-02-03-000063",
+          "isOnline": null,
+          "label": "Gopakumar Gopi (Complainant)",
+          "name": "Gopakumar Gopi (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2025-02-03-000063",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "b2035004-8457-4180-aa9a-d5d7fb2726f6",
+          "individualId": "IND-2025-06-10-000442",
+          "isOnline": null,
+          "label": "Sajitha (Accused)",
+          "name": "Sajitha (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "IND-2025-06-10-000442",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "16163ca6-867b-4391-9d4e-1069d046d86a",
+          "individualId": "IND-2025-06-10-000443",
+          "isOnline": null,
+          "label": "Sajitha (Accused)",
+          "name": "Sajitha (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "IND-2025-06-10-000443",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "582a935d-4156-4511-98c7-e6eae3e3b0db",
+          "individualId": "IND-2024-11-20-000508",
+          "isOnline": null,
+          "label": "RAGHU K (NALLILA)",
+          "name": "RAGHU K (NALLILA)",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2024-11-20-000508",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "fb02daee-7e48-45c8-9f34-e0a63c88521d",
+          "individualId": "IND-2024-11-20-000374",
+          "isOnline": null,
+          "label": "KISHORE P",
+          "name": "KISHORE P",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2024-11-20-000374",
+          "wasPresent": null
+        }
+      ],
+      "namesOfPartiesRequired": [
+        {
+          "code": "Gopakumar gopi",
+          "individualId": "IND-2025-02-03-000063",
+          "isJoined": true,
+          "mobileNumber": "8281550655",
+          "name": "Gopakumar gopi (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "f10d8fb5-b915-4874-8b24-7545bd6cc2e6",
+          "uuid": [
+            "c56228eb-f910-44bb-b7bf-5c5d03613ee8"
+          ]
+        },
+        {
+          "code": "Gopakumar Gopi",
+          "individualId": "IND-2025-02-03-000063",
+          "isJoined": true,
+          "mobileNumber": "8281550655",
+          "name": "Gopakumar Gopi (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "f10d8fb5-b915-4874-8b24-7545bd6cc2e6",
+          "uuid": [
+            "c56228eb-f910-44bb-b7bf-5c5d03613ee8"
+          ]
+        },
+        {
+          "code": "Sajitha",
+          "individualId": "IND-2025-06-10-000442",
+          "isJoined": true,
+          "mobileNumber": "9605342958",
+          "name": "Sajitha (Accused)",
+          "partyType": "respondent",
+          "partyUuid": "2d75bd9d-08c5-45e4-89e4-cc6283ef5b91",
+          "uniqueId": "7040086f-6b89-4be2-801b-471b1c181d03",
+          "uuid": [
+            "12d06e94-290a-4657-a107-f67e1c84c1c6"
+          ]
+        },
+        {
+          "code": "Sajitha",
+          "individualId": "IND-2025-06-10-000443",
+          "isJoined": true,
+          "mobileNumber": "9605342958",
+          "name": "Sajitha (Accused)",
+          "partyType": "respondent",
+          "partyUuid": "2d75bd9d-08c5-45e4-89e4-cc6283ef5b91",
+          "uuid": [
+            "12d06e94-290a-4657-a107-f67e1c84c1c6"
+          ]
+        }
+      ],
+      "refHearingId": "KL-000180-2025-HR35"
+    },
+    "refHearingId": "KL-000180-2025-HR35"
+  },
+  "applicationNumber": null,
+  "attendance": {
+    "Absent": [
+      "COMPLAINANT",
+      "COMPLAINANT_ADVOCATE",
+      "ACCUSED",
+      "ACCUSED_ADVOCATE"
+    ],
+    "Present": []
+  },
+  "auditDetails": {
+    "createdBy": "85ffc5d6-6ed8-4cd0-b60a-f2e82844cf69",
+    "createdTime": 1778736719022,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779623145390
+  },
+  "cnrNumber": "KLKM520000982025",
+  "comments": null,
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 0,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: .pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "01b35c20-d56b-46c0-9294-33fa0937e2a6",
+      "id": "446ec34c-46ae-4f90-8c6e-2fbeb3c1953b",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000180-2025",
+  "hearingNumber": "KL-000180-2025-HR35",
+  "hearingType": "JUDGEMENT",
+  "id": "d4140872-b0c1-4456-9df0-dee9cc1c0c7b",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Issue notice to the counsel for the accused. 21.05.2026.</p><p><br></p><p>Due to technical issue order passed on 14-05-2026 could not be uploaded. Hence the order of 14-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": 1779301800000,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "ST/81/2025",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Gopakumar gopi (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Gopakumar Gopi (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Sajitha (Accused)",
+        "partyType": "respondent"
+      },
+      {
+        "counselName": "",
+        "partyName": "Sajitha (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-000180-2025-OR49",
+  "orderTitle": "Schedule of Next Hearing Date",
+  "orderType": null,
+  "purposeOfNextHearing": "JUDGEMENT",
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "85ffc5d6-6ed8-4cd0-b60a-f2e82844cf69",
+      "createdTime": 1778736719022,
+      "lastModifiedBy": "85ffc5d6-6ed8-4cd0-b60a-f2e82844cf69",
+      "lastModifiedTime": 1778736719022
+    },
+    "id": "d8e02231-5180-4f3f-82a6-66784c334580",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

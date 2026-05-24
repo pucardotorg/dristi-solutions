@@ -1,0 +1,260 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "attendees": [
+        {
+          "associatedWith": null,
+          "id": "15735e73-6ed2-4eef-8caa-8ec1f895c56f",
+          "individualId": "IND-2025-03-10-000162",
+          "isOnline": null,
+          "label": "Rajendran M (Complainant)",
+          "name": "Rajendran M (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2025-03-10-000162",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "91b805ab-5474-4b59-b9f1-97d7ef796590",
+          "individualId": "IND-2025-08-05-000682",
+          "isOnline": null,
+          "label": "Sureshkumar B S (Accused)",
+          "name": "Sureshkumar B S (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "IND-2025-08-05-000682",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "8ab47bcf-fb2f-4b26-bd13-cde54ac70e35",
+          "individualId": null,
+          "isOnline": null,
+          "label": "The Manager,Kerala State Co operative Bank Ltd,Kannanalloor Branch,Kollam (Witness)",
+          "name": "The Manager,Kerala State Co operative Bank Ltd,Kannanalloor Branch,Kollam (Witness)",
+          "partyType": "witness",
+          "type": "witness",
+          "value": "The Manager,Kerala State Co operative Bank Ltd,Kannanalloor Branch,Kollam (Witness)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "629b6f7c-95de-43eb-9cf0-6190c3f507d3",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch (Witness)",
+          "name": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch (Witness)",
+          "partyType": "witness",
+          "type": "witness",
+          "value": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch (Witness)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "6f58fc37-6007-4776-b03b-e2c5650353cd",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch (Witness)",
+          "name": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch (Witness)",
+          "partyType": "witness",
+          "type": "witness",
+          "value": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch (Witness)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "d268f347-8ac5-4907-9232-c64ea0f2434d",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch (Witness)",
+          "name": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch (Witness)",
+          "partyType": "witness",
+          "type": "witness",
+          "value": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch (Witness)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "101c6beb-ffd0-4963-b5b7-73e460ccf82f",
+          "individualId": "IND-2024-11-20-000348",
+          "isOnline": null,
+          "label": "JOHNSON R",
+          "name": "JOHNSON R",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2024-11-20-000348",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "31f2bdbe-1c71-431f-8004-5a159e74d3bc",
+          "individualId": "IND-2024-11-20-000745",
+          "isOnline": null,
+          "label": "SUMITH MOHAN",
+          "name": "SUMITH MOHAN",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2024-11-20-000745",
+          "wasPresent": null
+        }
+      ],
+      "namesOfPartiesRequired": [
+        {
+          "code": "Rajendran M",
+          "individualId": "IND-2025-03-10-000162",
+          "isJoined": true,
+          "mobileNumber": "8138960501",
+          "name": "Rajendran M (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "bfeb7650-6538-4e55-82bb-88fa5e3353f6",
+          "uuid": [
+            "cf92dbeb-5e08-4d1f-8134-780b514d296d"
+          ]
+        },
+        {
+          "code": "Sureshkumar B S",
+          "individualId": "IND-2025-08-05-000682",
+          "isJoined": true,
+          "mobileNumber": "9947980541",
+          "name": "Sureshkumar B S (Accused)",
+          "partyType": "respondent",
+          "partyUuid": "160465d2-9cfa-4dcb-9402-1c1406ce2447",
+          "uniqueId": "e1c30c8c-da93-4657-8eab-9ffd7c036e49",
+          "uuid": [
+            "8319b832-999c-4f35-b115-95f0662471e2"
+          ]
+        },
+        {
+          "code": "The Manager,Kerala State Co operative Bank Ltd,Kannanalloor Branch,Kollam",
+          "name": "The Manager,Kerala State Co operative Bank Ltd,Kannanalloor Branch,Kollam (Witness)",
+          "partyType": "witness"
+        },
+        {
+          "code": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch",
+          "name": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch (Witness)",
+          "partyType": "witness"
+        },
+        {
+          "code": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch",
+          "name": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch (Witness)",
+          "partyType": "witness"
+        },
+        {
+          "code": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch",
+          "name": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch (Witness)",
+          "partyType": "witness"
+        }
+      ],
+      "refHearingId": "KL-000345-2025-HR27"
+    },
+    "refHearingId": "KL-000345-2025-HR27"
+  },
+  "applicationNumber": null,
+  "attendance": {
+    "Absent": [
+      "ACCUSED"
+    ],
+    "Present": [
+      "COMPLAINANT_ADVOCATE",
+      "ACCUSED_ADVOCATE",
+      "COMPLAINANT"
+    ]
+  },
+  "auditDetails": {
+    "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+    "createdTime": 1778737276482,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779624014990
+  },
+  "cnrNumber": "KLKM520001962025",
+  "comments": null,
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 0,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: .pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "63eefe74-47d9-4ac3-96c1-6eb4bfe6823b",
+      "id": "b7843526-3256-41fe-a3b4-e0c0b7b24e69",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000345-2025",
+  "hearingNumber": "KL-000345-2025-HR27",
+  "hearingType": "EVIDENCE_COMPLAINANT",
+  "id": "218e2fa3-eb88-4d04-9d38-ed75554d4842",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Witness no.1 the Manager, Kerala State Co-operative Bank, Kannanalloor Branch is present. He is already examined as PW2. He is further examined in chief. Ext.P7 marked. Complainant submitted no further evidence. For the examination of the accused u/s.351 (1) (b) of BNSS. 29.05.2026.</p><p><br></p><p>Due to technical issue order passed on 14-05-2026 could not be uploaded. Hence the order of 14-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": 1779993000000,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "ST/365/2025",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Rajendran M (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Sureshkumar B S (Accused)",
+        "partyType": "respondent"
+      },
+      {
+        "counselName": "",
+        "partyName": "The Manager,Kerala State Co operative Bank Ltd,Kannanalloor Branch,Kollam (Witness)",
+        "partyType": "witness"
+      },
+      {
+        "counselName": "",
+        "partyName": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch (Witness)",
+        "partyType": "witness"
+      },
+      {
+        "counselName": "",
+        "partyName": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch (Witness)",
+        "partyType": "witness"
+      },
+      {
+        "counselName": "",
+        "partyName": "Manager - Manager Kerala State Cooperative Bank Ltd Kannanalloor Branch (Witness)",
+        "partyType": "witness"
+      }
+    ]
+  },
+  "orderNumber": "KL-000345-2025-OR39",
+  "orderTitle": "Schedule of Next Hearing Date",
+  "orderType": null,
+  "purposeOfNextHearing": "EXAMINATION_UNDER_S351_BNSS",
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "createdTime": 1778737276482,
+      "lastModifiedBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "lastModifiedTime": 1778737276482
+    },
+    "id": "7e9e2c5a-4637-4eab-bdbf-49cd60eef2db",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

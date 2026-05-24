@@ -1,0 +1,29 @@
+--- KL-000736-2026-OR6.before.json
++++ KL-000736-2026-OR6.after.json
+@@ -27,7 +27,7 @@
+     "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+     "createdTime": 1778927665303,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1778933225492
++    "lastModifiedTime": 1779626425543
+   },
+   "cnrNumber": "KLKM520004322026",
+   "comments": null,
+@@ -41,7 +41,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "0cfa1dea-dd83-4213-b6b2-0b257a2aaece",
++      "fileStore": "3795a09c-90c3-4f4b-bf99-86dcc77c66f6",
+       "id": "c0620be0-a1a8-41e8-8e63-1d9d29b9d8bf",
+       "isActive": true
+     }
+@@ -52,7 +52,7 @@
+   "id": "c645033b-dcdc-4508-a6b3-9f4c4234d8b9",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>Delay is condoned</p>",
++  "itemText": "<p>Delay is condoned</p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": null,
+   "orderCategory": "INTERMEDIATE",

@@ -1,0 +1,256 @@
+{
+  "additionalDetails": {},
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778930779887,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1778930807001
+  },
+  "cnrNumber": "KLKM520007102026",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "b46e2a54-0d80-4437-9b78-af68a0001d78",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "hearingDate": "2026-06-23",
+            "hearingPurpose": {
+              "code": "DELAY_CONDONATION_HEARING",
+              "id": 15,
+              "isactive": true,
+              "type": "DELAY_CONDONATION_HEARING"
+            },
+            "orderType": {
+              "code": "SCHEDULE_OF_HEARING_DATE",
+              "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              "type": "SCHEDULE_OF_HEARING_DATE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/710/2026",
+          "hearingDate": 1782172800000,
+          "purposeOfHearing": "DELAY_CONDONATION_HEARING"
+        },
+        "orderType": "SCHEDULE_OF_HEARING_DATE"
+      },
+      "orderType": "SCHEDULE_OF_HEARING_DATE"
+    },
+    {
+      "id": "ad822649-420a-41be-820d-be6c841dd55a",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "dateForHearing": "2026-06-23",
+            "noticeOrder": {
+              "party": [
+                {
+                  "data": {
+                    "address": [
+                      {
+                        "address": {
+                          "city": "ATTINGAL",
+                          "district": "THIRUVANANTHAPURAM",
+                          "locality": "KADAYIL, VEEDU, AYILAM PO ELAMBA,MUDAKKAL",
+                          "pincode": "695103",
+                          "state": "KERALA",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "city": "ATTINGAL",
+                        "district": "THIRUVANANTHAPURAM",
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15292001,
+                            "district": "THIRUVANANTHAPURAM RURAL",
+                            "name": "ATTINGAL"
+                          }
+                        },
+                        "id": "75b273d1-332d-47f2-b8bf-507c0e203a10",
+                        "locality": "KADAYIL, VEEDU, AYILAM PO ELAMBA,MUDAKKAL",
+                        "pincode": "695103",
+                        "state": "KERALA"
+                      }
+                    ],
+                    "addressDetails": [
+                      {
+                        "addressDetails": {
+                          "city": "ATTINGAL",
+                          "district": "THIRUVANANTHAPURAM",
+                          "locality": "KADAYIL, VEEDU, AYILAM PO ELAMBA,MUDAKKAL",
+                          "pincode": "695103",
+                          "state": "KERALA",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15292001,
+                            "district": "THIRUVANANTHAPURAM RURAL",
+                            "name": "ATTINGAL"
+                          }
+                        },
+                        "id": "75b273d1-332d-47f2-b8bf-507c0e203a10"
+                      }
+                    ],
+                    "companyDetailsUpload": null,
+                    "email": [],
+                    "firstName": "Indrajith",
+                    "inquiryAffidavitFileUpload": {
+                      "document": [
+                        {
+                          "documentName": "Akshay affidavit 225.pdf",
+                          "documentType": "case.affidavit.225bnss",
+                          "fileName": "Affidavit under section 225 of BNSS",
+                          "fileStore": "d01114c8-88f9-4e09-a037-e74adaf7b3e9"
+                        }
+                      ]
+                    },
+                    "lastName": "J",
+                    "middleName": "",
+                    "partyIndex": "Respondent_0",
+                    "partyType": "Respondent",
+                    "phone_numbers": [],
+                    "phonenumbers": {
+                      "mobileNumber": [],
+                      "textfieldValue": ""
+                    },
+                    "respondentAge": "29",
+                    "respondentFirstName": "Indrajith",
+                    "respondentLastName": "J",
+                    "respondentMiddleName": "",
+                    "respondentType": {
+                      "code": "INDIVIDUAL",
+                      "commonFields": true,
+                      "complainantLocation": true,
+                      "complainantTypeId": 1,
+                      "id": 1,
+                      "isIndividual": true,
+                      "isactive": true,
+                      "name": "Individual",
+                      "showCompanyDetails": false
+                    },
+                    "uniqueId": "932d1ae8-2ef0-44d1-ab84-3f2de300d7eb"
+                  },
+                  "displayindex": 0,
+                  "isenabled": true,
+                  "uniqueId": "932d1ae8-2ef0-44d1-ab84-3f2de300d7eb"
+                }
+              ]
+            },
+            "noticeType": {
+              "code": "DCA Notice",
+              "id": 2,
+              "isActive": true,
+              "type": "DCA Notice"
+            },
+            "orderType": {
+              "code": "NOTICE",
+              "id": 22,
+              "isactive": true,
+              "name": "ORDER_TYPE_NOTICE",
+              "type": "NOTICE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/710/2026",
+          "hearingDate": 1782172800000,
+          "noticeType": "DCA Notice",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Indrajith J (Accused)",
+              "partyType": "respondent"
+            }
+          ],
+          "respondentName": [
+            "Indrajith J"
+          ]
+        },
+        "orderType": "NOTICE"
+      },
+      "orderType": "NOTICE"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "9022f21d-364c-4cfd-b1b1-6727e62c4813",
+      "id": "8a1329db-ae28-4c9b-82dd-2915db0665ed",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001075-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "c7192146-2e05-48e4-a2f0-e9c892a142b7",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Issue DCA notice to accused. Take steps. For return of notice. 23.06.2026.</p><p><br></p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "CMP/710/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Akshay Francis (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Indrajith J (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-001075-2026-OR1",
+  "orderTitle": "Schedule of Hearing Date and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778930779887,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778930779887
+    },
+    "id": "a5da342f-15af-4178-a264-91b85ede1efa",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

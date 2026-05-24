@@ -1,0 +1,371 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "attendees": [
+        {
+          "associatedWith": null,
+          "id": "ce01b1b0-dc94-4c28-8749-2df4d224c9f4",
+          "individualId": "IND-2025-08-13-000707",
+          "isOnline": null,
+          "label": "Veena Muraleedharan S (Complainant)",
+          "name": "Veena Muraleedharan S (Complainant)",
+          "partyType": "complainant",
+          "type": "complainant",
+          "value": "IND-2025-08-13-000707",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "ea3148c6-8f89-404e-88b0-d282b22e9d55",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Nazarudeen K A (Accused)",
+          "name": "Nazarudeen K A (Accused)",
+          "partyType": "respondent",
+          "type": "respondent",
+          "value": "Nazarudeen K A (Accused)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "32d2dc67-6d98-4b66-8d4c-1099f4830c8f",
+          "individualId": null,
+          "isOnline": null,
+          "label": "Veena Muraleedharan S (Witness)",
+          "name": "Veena Muraleedharan S (Witness)",
+          "partyType": "witness",
+          "type": "witness",
+          "value": "Veena Muraleedharan S (Witness)",
+          "wasPresent": null
+        },
+        {
+          "associatedWith": null,
+          "id": "5bfbe418-b8a4-4212-aa5a-ea5cca9eae1e",
+          "individualId": "IND-2025-08-12-000703",
+          "isOnline": null,
+          "label": "Ammu K R",
+          "name": "Ammu K R",
+          "partyType": "Advocate",
+          "type": "Advocate",
+          "value": "IND-2025-08-12-000703",
+          "wasPresent": null
+        }
+      ],
+      "bailInfo": {
+        "bailableAmount": "",
+        "isBailable": {
+          "code": false,
+          "name": "ES_COMMON_NO"
+        },
+        "noOfSureties": ""
+      },
+      "dateOfHearing": "2026-06-26",
+      "namesOfPartiesRequired": [
+        {
+          "code": "Veena Muraleedharan S",
+          "individualId": "IND-2025-08-13-000707",
+          "isJoined": true,
+          "mobileNumber": "9846049464",
+          "name": "Veena Muraleedharan S (Complainant)",
+          "partyType": "complainant",
+          "partyUuid": "583cbcf6-bc7b-4dd1-9dde-24b825fbc86e",
+          "uuid": [
+            "d1c2595d-f13b-4765-8413-e8712efaffd6"
+          ]
+        },
+        {
+          "code": "Nazarudeen K A",
+          "isJoined": false,
+          "name": "Nazarudeen K A (Accused)",
+          "partyType": "respondent",
+          "uniqueId": "05def726-e0ba-4469-803e-e3325943b5bb"
+        },
+        {
+          "code": "Veena Muraleedharan S",
+          "name": "Veena Muraleedharan S (Witness)",
+          "partyType": "witness"
+        }
+      ],
+      "orderType": {
+        "code": "WARRANT",
+        "id": 14,
+        "isactive": true,
+        "name": "ORDER_TYPE_WARRANT",
+        "type": "WARRANT"
+      },
+      "refHearingId": "KL-000815-2025-HR11",
+      "warrantFor": {
+        "party": {
+          "data": {
+            "address": [
+              {
+                "address": {
+                  "city": "Thrissur",
+                  "district": "Thrissur",
+                  "locality": "Kochiplakkil House,Chelakkara P O,Thonnurkkara",
+                  "pincode": "680586",
+                  "state": "Kerala",
+                  "typeOfAddress": {
+                    "code": "RESIDENTIAL",
+                    "id": 1,
+                    "isActive": true,
+                    "name": "Residential"
+                  }
+                },
+                "city": "Thrissur",
+                "district": "Thrissur",
+                "geoLocationDetails": {
+                  "latitude": null,
+                  "longitude": null,
+                  "policeStation": {
+                    "active": true,
+                    "code": 15290014,
+                    "district": "THRISSUR RURAL",
+                    "name": "CHELAKKARA"
+                  }
+                },
+                "id": "e8437e3d-f9a8-41e7-ad6e-9fd249fe8f49",
+                "locality": "Kochiplakkil House,Chelakkara P O,Thonnurkkara",
+                "pincode": "680586"
+              }
+            ],
+            "addressDetails": [
+              {
+                "addressDetails": {
+                  "city": "Thrissur",
+                  "district": "Thrissur",
+                  "locality": "Kochiplakkil House,Chelakkara P O,Thonnurkkara",
+                  "pincode": "680586",
+                  "state": "Kerala",
+                  "typeOfAddress": {
+                    "code": "RESIDENTIAL",
+                    "id": 1,
+                    "isActive": true,
+                    "name": "Residential"
+                  }
+                },
+                "geoLocationDetails": {
+                  "latitude": null,
+                  "longitude": null,
+                  "policeStation": {
+                    "active": true,
+                    "code": 15290014,
+                    "district": "THRISSUR RURAL",
+                    "name": "CHELAKKARA"
+                  }
+                },
+                "id": "e8437e3d-f9a8-41e7-ad6e-9fd249fe8f49"
+              }
+            ],
+            "companyDetailsUpload": null,
+            "email": [],
+            "firstName": "Nazarudeen",
+            "inquiryAffidavitFileUpload": {
+              "document": [
+                {
+                  "documentName": "veena 225 aff_0001.pdf",
+                  "documentType": "case.affidavit.225bnss",
+                  "fileName": "Affidavit under section 225 of BNSS",
+                  "fileStore": "dfc958b3-ec1b-40bf-8ee9-31d53a9382cc"
+                }
+              ]
+            },
+            "lastName": "A",
+            "middleName": "K",
+            "partyIndex": "Respondent_0",
+            "partyType": "Respondent",
+            "phone_numbers": [],
+            "respondentFirstName": "Nazarudeen",
+            "respondentLastName": "A",
+            "respondentMiddleName": "K",
+            "respondentType": {
+              "code": "INDIVIDUAL",
+              "commonFields": true,
+              "complainantLocation": true,
+              "complainantTypeId": 1,
+              "id": 1,
+              "isIndividual": true,
+              "isactive": true,
+              "name": "Individual",
+              "showCompanyDetails": false
+            },
+            "uniqueId": "05def726-e0ba-4469-803e-e3325943b5bb"
+          },
+          "displayindex": 0,
+          "isenabled": true,
+          "uniqueId": "05def726-e0ba-4469-803e-e3325943b5bb"
+        },
+        "selectedChannels": [
+          {
+            "code": "POLICE",
+            "type": "Via Police",
+            "value": {
+              "address": {
+                "city": "Thrissur",
+                "district": "Thrissur",
+                "locality": "Kochiplakkil House,Chelakkara P O,Thonnurkkara",
+                "pincode": "680586",
+                "state": "Kerala",
+                "typeOfAddress": {
+                  "code": "RESIDENTIAL",
+                  "id": 1,
+                  "isActive": true,
+                  "name": "Residential"
+                }
+              },
+              "city": "Thrissur",
+              "district": "Thrissur",
+              "geoLocationDetails": {
+                "latitude": null,
+                "longitude": null,
+                "policeStation": {
+                  "active": true,
+                  "code": 15290014,
+                  "district": "THRISSUR RURAL",
+                  "name": "CHELAKKARA"
+                }
+              },
+              "id": "e8437e3d-f9a8-41e7-ad6e-9fd249fe8f49",
+              "locality": "Kochiplakkil House,Chelakkara P O,Thonnurkkara",
+              "pincode": "680586"
+            }
+          },
+          {
+            "code": "RPAD",
+            "type": "Registered Post",
+            "value": {
+              "address": {
+                "city": "Thrissur",
+                "district": "Thrissur",
+                "locality": "Kochiplakkil House,Chelakkara P O,Thonnurkkara",
+                "pincode": "680586",
+                "state": "Kerala",
+                "typeOfAddress": {
+                  "code": "RESIDENTIAL",
+                  "id": 1,
+                  "isActive": true,
+                  "name": "Residential"
+                }
+              },
+              "city": "Thrissur",
+              "district": "Thrissur",
+              "geoLocationDetails": {
+                "latitude": null,
+                "longitude": null,
+                "policeStation": {
+                  "active": true,
+                  "code": 15290014,
+                  "district": "THRISSUR RURAL",
+                  "name": "CHELAKKARA"
+                }
+              },
+              "id": "e8437e3d-f9a8-41e7-ad6e-9fd249fe8f49",
+              "locality": "Kochiplakkil House,Chelakkara P O,Thonnurkkara",
+              "pincode": "680586"
+            }
+          }
+        ]
+      },
+      "warrantSubType": {
+        "belowOthers": "NO",
+        "code": "2000042",
+        "docCaseType": "Criminal",
+        "docTypeCode": "1",
+        "subType": "Warrant of arrest of accused 138",
+        "templateType": "SPECIFIC"
+      },
+      "warrantType": {
+        "code": "ARREST",
+        "id": 1,
+        "name": "Arrest"
+      }
+    },
+    "refHearingId": "KL-000815-2025-HR11",
+    "taskDetails": "[{\"warrantDetails\":{\"issueDate\":1778837130828,\"caseFilingDate\":1755069709688,\"docType\":\"ARREST\",\"docSubType\":\"NON_BAILABLE\",\"bailableAmount\":\"\",\"templateType\":\"SPECIFIC\",\"warrantText\":\"\"},\"respondentDetails\":{\"name\":\"Nazarudeen K A\",\"address\":{\"id\":\"e8437e3d-f9a8-41e7-ad6e-9fd249fe8f49\",\"city\":\"Thrissur\",\"address\":{\"city\":\"Thrissur\",\"state\":\"Kerala\",\"pincode\":\"680586\",\"district\":\"Thrissur\",\"locality\":\"Kochiplakkil House,Chelakkara P O,Thonnurkkara\",\"typeOfAddress\":{\"id\":1,\"code\":\"RESIDENTIAL\",\"name\":\"Residential\",\"isActive\":true}},\"pincode\":\"680586\",\"district\":\"Thrissur\",\"locality\":\"Kochiplakkil House,Chelakkara P O,Thonnurkkara\",\"geoLocationDetails\":{\"latitude\":null,\"longitude\":null,\"policeStation\":{\"code\":15290014,\"name\":\"CHELAKKARA\",\"active\":true,\"district\":\"THRISSUR RURAL\"}},\"coordinate\":{\"longitude\":null,\"latitude\":null}},\"phone\":\"\",\"email\":\"\",\"age\":\"\",\"gender\":\"\",\"uniqueId\":\"05def726-e0ba-4469-803e-e3325943b5bb\"},\"caseDetails\":{\"caseTitle\":\"Veena S vs Nazarudeen A\",\"year\":null,\"hearingDate\":1782432000000,\"judgeName\":\"Michael George\",\"courtName\":\"Special Court Of Judicial Magistrate of the First Class, for the trial of cases under section 138 of NI Act, 1881 at Kollam (\\\"24X7 ON Court\\\")\",\"courtAddress\":\"dummy address\",\"courtId\":\"KLKM52\"},\"deliveryChannels\":{\"channelName\":\"Police\",\"name\":\"\",\"address\":\"\",\"phone\":\"\",\"email\":\"\",\"status\":\"\",\"statusChangeDate\":\"\",\"fees\":1,\"feesStatus\":\"\",\"channelCode\":\"POLICE\",\"isPendingCollection\":false}},{\"warrantDetails\":{\"issueDate\":1778837130828,\"caseFilingDate\":1755069709688,\"docType\":\"ARREST\",\"docSubType\":\"NON_BAILABLE\",\"bailableAmount\":\"\",\"templateType\":\"SPECIFIC\",\"warrantText\":\"\"},\"respondentDetails\":{\"name\":\"Nazarudeen K A\",\"address\":{\"id\":\"e8437e3d-f9a8-41e7-ad6e-9fd249fe8f49\",\"city\":\"Thrissur\",\"address\":{\"city\":\"Thrissur\",\"state\":\"Kerala\",\"pincode\":\"680586\",\"district\":\"Thrissur\",\"locality\":\"Kochiplakkil House,Chelakkara P O,Thonnurkkara\",\"typeOfAddress\":{\"id\":1,\"code\":\"RESIDENTIAL\",\"name\":\"Residential\",\"isActive\":true}},\"pincode\":\"680586\",\"district\":\"Thrissur\",\"locality\":\"Kochiplakkil House,Chelakkara P O,Thonnurkkara\",\"geoLocationDetails\":{\"latitude\":null,\"longitude\":null,\"policeStation\":{\"code\":15290014,\"name\":\"CHELAKKARA\",\"active\":true,\"district\":\"THRISSUR RURAL\"}},\"coordinate\":{\"longitude\":null,\"latitude\":null}},\"phone\":\"\",\"email\":\"\",\"age\":\"\",\"gender\":\"\",\"uniqueId\":\"05def726-e0ba-4469-803e-e3325943b5bb\"},\"caseDetails\":{\"caseTitle\":\"Veena S vs Nazarudeen A\",\"year\":null,\"hearingDate\":1782432000000,\"judgeName\":\"Michael George\",\"courtName\":\"Special Court Of Judicial Magistrate of the First Class, for the trial of cases under section 138 of NI Act, 1881 at Kollam (\\\"24X7 ON Court\\\")\",\"courtAddress\":\"dummy address\",\"courtId\":\"KLKM52\"},\"deliveryChannels\":{\"channelName\":\"RPAD\",\"name\":\"\",\"address\":\"\",\"phone\":\"\",\"email\":\"\",\"status\":\"\",\"statusChangeDate\":\"\",\"fees\":1,\"feesStatus\":\"\",\"channelCode\":\"RPAD\",\"isPendingCollection\":true}}]"
+  },
+  "applicationNumber": null,
+  "attendance": {
+    "Absent": [
+      "COMPLAINANT",
+      "ACCUSED",
+      "ACCUSED_ADVOCATE"
+    ],
+    "Present": [
+      "COMPLAINANT_ADVOCATE"
+    ]
+  },
+  "auditDetails": {
+    "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+    "createdTime": 1778824128097,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1778837134041
+  },
+  "cnrNumber": "KLKM520004782025",
+  "comments": "",
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 0,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Warrant.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "9fa495ac-ee19-44a2-97c5-754f39a883d0",
+      "id": "5613e6fb-36c4-4504-8ad4-312f4a6c267a",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-000815-2025",
+  "hearingNumber": "KL-000815-2025-HR11",
+  "hearingType": "WARRANT",
+  "id": "f5843af0-f040-4f98-a578-43e385bab7b8",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>Repeat warrant to accused. Take steps. For return of warrant. 26.06.2026.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": 1782412200000,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "ST/442/2025",
+    "hearingDate": 1782432000000,
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Nazarudeen K A (Accused)",
+        "partyType": "respondent"
+      }
+    ],
+    "respondentName": "Nazarudeen K A",
+    "warrantType": "ARREST"
+  },
+  "orderNumber": "KL-000815-2025-OR13",
+  "orderTitle": "Warrant",
+  "orderType": "WARRANT",
+  "purposeOfNextHearing": "WARRANT",
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "createdTime": 1778824128097,
+      "lastModifiedBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+      "lastModifiedTime": 1778824128097
+    },
+    "id": "9671af7d-bea3-459c-9ee7-02286ba1829a",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

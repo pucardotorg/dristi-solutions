@@ -1,0 +1,281 @@
+{
+  "additionalDetails": {},
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778502694790,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779625384614
+  },
+  "cnrNumber": "KLKM520006652026",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "90ba7f27-d2c5-4674-91ce-619937664ca6",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "hearingDate": "2026-06-23",
+            "hearingPurpose": {
+              "code": "APPEARANCE",
+              "id": 3,
+              "isactive": true,
+              "type": "APPEARANCE"
+            },
+            "orderType": {
+              "code": "SCHEDULE_OF_HEARING_DATE",
+              "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              "type": "SCHEDULE_OF_HEARING_DATE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/665/2026",
+          "hearingDate": 1782172800000,
+          "purposeOfHearing": "APPEARANCE"
+        },
+        "orderType": "SCHEDULE_OF_HEARING_DATE"
+      },
+      "orderType": "SCHEDULE_OF_HEARING_DATE"
+    },
+    {
+      "id": "14643522-701a-453d-9849-b357f030e743",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "orderType": {
+              "code": "TAKE_COGNIZANCE",
+              "id": 30,
+              "isactive": true,
+              "name": "ORDER_TYPE_TAKE_COGNIZANCE",
+              "type": "TAKE_COGNIZANCE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/665/2026",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Rakesh Krishna (Complainant)",
+              "partyType": "complainant"
+            },
+            {
+              "counselName": "",
+              "partyName": "Omana C (Accused)",
+              "partyType": "respondent"
+            }
+          ]
+        },
+        "orderType": "TAKE_COGNIZANCE"
+      },
+      "orderType": "TAKE_COGNIZANCE"
+    },
+    {
+      "id": "344898cc-1312-479b-87ca-8373443133aa",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "SummonsOrder": {
+              "party": [
+                {
+                  "data": {
+                    "address": [
+                      {
+                        "address": {
+                          "city": "Paravur",
+                          "district": "Kollam",
+                          "locality": "D/o Govindan, Yakshikavu Vila, Kurumandal-B, Paravur, Kollam",
+                          "pincode": "691301",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "city": "Paravur",
+                        "district": "Kollam",
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995010,
+                            "district": "KOLLAM CITY",
+                            "name": "PARAVOOR"
+                          }
+                        },
+                        "id": "d80bdeaf-263d-404d-afcb-d422d503c4e4",
+                        "locality": "D/o Govindan, Yakshikavu Vila, Kurumandal-B, Paravur, Kollam",
+                        "pincode": "691301",
+                        "state": "Kerala"
+                      }
+                    ],
+                    "addressDetails": [
+                      {
+                        "addressDetails": {
+                          "city": "Paravur",
+                          "district": "Kollam",
+                          "locality": "D/o Govindan, Yakshikavu Vila, Kurumandal-B, Paravur, Kollam",
+                          "pincode": "691301",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995010,
+                            "district": "KOLLAM CITY",
+                            "name": "PARAVOOR"
+                          }
+                        },
+                        "id": "d80bdeaf-263d-404d-afcb-d422d503c4e4"
+                      }
+                    ],
+                    "companyDetailsUpload": null,
+                    "email": [],
+                    "firstName": "Omana C",
+                    "inquiryAffidavitFileUpload": {
+                      "document": [
+                        {
+                          "documentName": "omana 225.pdf",
+                          "documentType": "case.affidavit.225bnss",
+                          "fileName": "Affidavit under section 225 of BNSS",
+                          "fileStore": "330715b2-ae5e-4b05-acde-607486436b36"
+                        }
+                      ]
+                    },
+                    "lastName": "",
+                    "middleName": "",
+                    "partyIndex": "Respondent_0",
+                    "partyType": "Respondent",
+                    "phone_numbers": [],
+                    "phonenumbers": {
+                      "textfieldValue": ""
+                    },
+                    "respondentAge": "50",
+                    "respondentFirstName": "Omana C",
+                    "respondentLastName": "",
+                    "respondentMiddleName": "",
+                    "respondentType": {
+                      "code": "INDIVIDUAL",
+                      "commonFields": true,
+                      "complainantLocation": true,
+                      "complainantTypeId": 1,
+                      "id": 1,
+                      "isIndividual": true,
+                      "isactive": true,
+                      "name": "Individual",
+                      "showCompanyDetails": false
+                    },
+                    "uniqueId": "1c61c565-67ee-454c-9a34-d632a1535db3"
+                  },
+                  "displayindex": 0,
+                  "isenabled": true,
+                  "uniqueId": "1c61c565-67ee-454c-9a34-d632a1535db3"
+                }
+              ]
+            },
+            "dateForHearing": "2026-06-23",
+            "orderType": {
+              "code": "SUMMONS",
+              "id": 13,
+              "isactive": true,
+              "name": "ORDER_TYPE_SUMMONS",
+              "type": "SUMMONS"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/665/2026",
+          "hearingDate": 1782172800000,
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Omana C (Accused)",
+              "partyType": "respondent"
+            }
+          ],
+          "respondentName": [
+            "Omana C"
+          ]
+        },
+        "orderType": "SUMMONS"
+      },
+      "orderType": "SUMMONS"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 1778437800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "5300ccee-67ba-4de5-bd99-6e5af8d03c30",
+      "id": "c05e6cb1-3086-4675-a7f7-3cf5c6c228b4",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001063-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "1401e0a7-1379-43c7-b0c7-a77b7e292bfb",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file&nbsp;as ST. Issue summons. Take steps. 23.06.2026</p><p><br></p><p>Due to technical issue order passed on 11-05-2026 could not be uploaded. Hence the order of 11-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "CMP/665/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Rakesh Krishna (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Omana C (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-001063-2026-OR1",
+  "orderTitle": "Schedule of Hearing Date and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778502694790,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778502694790
+    },
+    "id": "4bdffafb-153f-495f-be58-4ff2040fd1ca",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

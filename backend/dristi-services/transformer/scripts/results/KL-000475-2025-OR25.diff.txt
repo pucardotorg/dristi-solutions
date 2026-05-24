@@ -1,0 +1,29 @@
+--- KL-000475-2025-OR25.before.json
++++ KL-000475-2025-OR25.after.json
+@@ -113,7 +113,7 @@
+     "createdBy": "2c395fc5-1d4c-45a4-9308-1fb531425b34",
+     "createdTime": 1778823408128,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1778836037332
++    "lastModifiedTime": 1779624539442
+   },
+   "cnrNumber": "KLKM520002572025",
+   "comments": null,
+@@ -127,7 +127,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "ca70a155-ff20-4f5d-9427-c0abe569b17f",
++      "fileStore": "6a0bad5d-3a1b-424d-bfd2-6005c6e27429",
+       "id": "7fb1894c-aaad-4eaf-91ef-04b62dbca925",
+       "isActive": true
+     }
+@@ -138,7 +138,7 @@
+   "id": "637fd047-4387-4d52-b888-f9540bf00ccf",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>Await steps u/s.84 and 85 of BNSS. 19.06.2026.</p>",
++  "itemText": "<p>Await steps u/s.84 and 85 of BNSS. 19.06.2026.</p><p><br></p><p>Due to technical issue order passed on 15-05-2026 could not be uploaded. Hence the order of 15-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": 1781807400000,
+   "orderCategory": "INTERMEDIATE",

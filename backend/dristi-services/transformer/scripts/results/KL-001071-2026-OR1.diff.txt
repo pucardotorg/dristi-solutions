@@ -1,0 +1,29 @@
+--- KL-001071-2026-OR1.before.json
++++ KL-001071-2026-OR1.after.json
+@@ -6,7 +6,7 @@
+     "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+     "createdTime": 1778930007071,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1778930072404
++    "lastModifiedTime": 1779626972839
+   },
+   "cnrNumber": "KLKM520007002026",
+   "comments": "",
+@@ -182,7 +182,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "747b76ae-08b9-4bb6-87ce-3c6375d96281",
++      "fileStore": "ea7cb10f-4cc0-4854-8848-b27916531922",
+       "id": "c605d3bc-f64c-49c3-a8ac-9076e918b3dd",
+       "isActive": true
+     }
+@@ -193,7 +193,7 @@
+   "id": "29a3efe3-d12e-42f5-b3ec-6e53f42f0dbf",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>Issue DCA notice to accused. Take steps. For return of notice. 18.06.2026.</p>",
++  "itemText": "<p>Issue DCA notice to accused. Take steps. For return of notice. 18.06.2026.</p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": null,
+   "orderCategory": "COMPOSITE",

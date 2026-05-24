@@ -1,0 +1,281 @@
+{
+  "additionalDetails": {},
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778504333665,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1778504396503
+  },
+  "cnrNumber": "KLKM520006682026",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "f132a44c-9cd1-4ac1-9beb-61952393f667",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "hearingDate": "2026-06-24",
+            "hearingPurpose": {
+              "code": "APPEARANCE",
+              "id": 3,
+              "isactive": true,
+              "type": "APPEARANCE"
+            },
+            "orderType": {
+              "code": "SCHEDULE_OF_HEARING_DATE",
+              "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              "type": "SCHEDULE_OF_HEARING_DATE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/668/2026",
+          "hearingDate": 1782259200000,
+          "purposeOfHearing": "APPEARANCE"
+        },
+        "orderType": "SCHEDULE_OF_HEARING_DATE"
+      },
+      "orderType": "SCHEDULE_OF_HEARING_DATE"
+    },
+    {
+      "id": "28416d70-fc97-4f5a-92f3-f888a1f8c454",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "orderType": {
+              "code": "TAKE_COGNIZANCE",
+              "id": 30,
+              "isactive": true,
+              "name": "ORDER_TYPE_TAKE_COGNIZANCE",
+              "type": "TAKE_COGNIZANCE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/668/2026",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Dileep S (Complainant)",
+              "partyType": "complainant"
+            },
+            {
+              "counselName": "",
+              "partyName": "Sandhya S (Accused)",
+              "partyType": "respondent"
+            }
+          ]
+        },
+        "orderType": "TAKE_COGNIZANCE"
+      },
+      "orderType": "TAKE_COGNIZANCE"
+    },
+    {
+      "id": "1ff72eda-4ee2-4f00-9946-c378c2cfa7c1",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "SummonsOrder": {
+              "party": [
+                {
+                  "data": {
+                    "address": [
+                      {
+                        "address": {
+                          "city": "Nedungolam",
+                          "district": "Kollam",
+                          "locality": "W/o Baiju.M, Mavila Veedu, Ozhukupara, Polachira.po, Paravur, Meenadu, Nedungolam, Kollam",
+                          "pincode": "691334",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "city": "Nedungolam",
+                        "district": "Kollam",
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995010,
+                            "district": "KOLLAM CITY",
+                            "name": "PARAVOOR"
+                          }
+                        },
+                        "id": "8133d6b5-b4c6-400d-b756-2b9197140ff6",
+                        "locality": "W/o Baiju.M, Mavila Veedu, Ozhukupara, Polachira.po, Paravur, Meenadu, Nedungolam, Kollam",
+                        "pincode": "691334",
+                        "state": "Kerala"
+                      }
+                    ],
+                    "addressDetails": [
+                      {
+                        "addressDetails": {
+                          "city": "Nedungolam",
+                          "district": "Kollam",
+                          "locality": "W/o Baiju.M, Mavila Veedu, Ozhukupara, Polachira.po, Paravur, Meenadu, Nedungolam, Kollam",
+                          "pincode": "691334",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15995010,
+                            "district": "KOLLAM CITY",
+                            "name": "PARAVOOR"
+                          }
+                        },
+                        "id": "8133d6b5-b4c6-400d-b756-2b9197140ff6"
+                      }
+                    ],
+                    "companyDetailsUpload": null,
+                    "email": [],
+                    "firstName": "Sandhya S",
+                    "inquiryAffidavitFileUpload": {
+                      "document": [
+                        {
+                          "documentName": "sandhya 225.pdf",
+                          "documentType": "case.affidavit.225bnss",
+                          "fileName": "Affidavit under section 225 of BNSS",
+                          "fileStore": "fd20f481-aaa2-4760-9a0c-b7f73a35e6a6"
+                        }
+                      ]
+                    },
+                    "lastName": "",
+                    "middleName": "",
+                    "partyIndex": "Respondent_0",
+                    "partyType": "Respondent",
+                    "phone_numbers": [],
+                    "phonenumbers": {
+                      "textfieldValue": ""
+                    },
+                    "respondentAge": "34",
+                    "respondentFirstName": "Sandhya S",
+                    "respondentLastName": "",
+                    "respondentMiddleName": "",
+                    "respondentType": {
+                      "code": "INDIVIDUAL",
+                      "commonFields": true,
+                      "complainantLocation": true,
+                      "complainantTypeId": 1,
+                      "id": 1,
+                      "isIndividual": true,
+                      "isactive": true,
+                      "name": "Individual",
+                      "showCompanyDetails": false
+                    },
+                    "uniqueId": "ee85706b-61d6-4f71-939f-ad56df7c18ec"
+                  },
+                  "displayindex": 0,
+                  "isenabled": true,
+                  "uniqueId": "ee85706b-61d6-4f71-939f-ad56df7c18ec"
+                }
+              ]
+            },
+            "dateForHearing": "2026-06-24",
+            "orderType": {
+              "code": "SUMMONS",
+              "id": 13,
+              "isactive": true,
+              "name": "ORDER_TYPE_SUMMONS",
+              "type": "SUMMONS"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/668/2026",
+          "hearingDate": 1782259200000,
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Sandhya S (Accused)",
+              "partyType": "respondent"
+            }
+          ],
+          "respondentName": [
+            "Sandhya S"
+          ]
+        },
+        "orderType": "SUMMONS"
+      },
+      "orderType": "SUMMONS"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 1778437800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "5a09c383-5b58-4214-87fc-d190b4842a26",
+      "id": "27d3aef5-9dec-4f83-b29d-d55b1c7798a8",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001076-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "f324267d-6019-4c3c-8abf-4fe939e06eb4",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file&nbsp;as ST. Issue summons. Take steps. 24.06.2026</p><p><br></p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "CMP/668/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Dileep S (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Sandhya S (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-001076-2026-OR1",
+  "orderTitle": "Schedule of Hearing Date and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778504333665,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778504333665
+    },
+    "id": "a68841df-442c-4ce8-a171-580e1b296bb4",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

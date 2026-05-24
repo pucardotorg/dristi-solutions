@@ -1,0 +1,86 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "hearingDate": "2026-06-22",
+      "hearingPurpose": {
+        "code": "ADMISSION",
+        "id": 2,
+        "isactive": true,
+        "type": "ADMISSION"
+      },
+      "orderType": {
+        "code": "SCHEDULE_OF_HEARING_DATE",
+        "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+        "type": "SCHEDULE_OF_HEARING_DATE"
+      }
+    }
+  },
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778930597841,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1778930610474
+  },
+  "cnrNumber": "KLKM520007072026",
+  "comments": null,
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "b8e19c73-0de1-4d91-95e7-d5d6ad1451bc",
+      "id": "f27400bc-4421-4af5-b656-59205f862125",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001012-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "97bc026a-c9c7-4906-8c1c-292a5b514fe9",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>For enquiry u/s.225 of BNSS.22.06.2026.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "CMP/707/2026",
+    "hearingDate": 1782086400000,
+    "purposeOfHearing": "ADMISSION"
+  },
+  "orderNumber": "KL-001012-2026-OR1",
+  "orderTitle": "Schedule of Hearing Date",
+  "orderType": "SCHEDULE_OF_HEARING_DATE",
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778930597841,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778930597841
+    },
+    "id": "7f6e5af2-0bdb-431f-a37a-5fa6dd0db43c",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

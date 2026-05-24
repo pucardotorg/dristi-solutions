@@ -1,0 +1,29 @@
+--- KL-001074-2026-OR1.before.json
++++ KL-001074-2026-OR1.after.json
+@@ -6,7 +6,7 @@
+     "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+     "createdTime": 1778930644684,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1778930670940
++    "lastModifiedTime": 1779627061588
+   },
+   "cnrNumber": "KLKM520007082026",
+   "comments": "",
+@@ -217,7 +217,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "11d10d66-d373-40f0-ae08-04ce094e3567",
++      "fileStore": "07490137-2f78-443d-b5a5-4ef027c99126",
+       "id": "c5935b64-d290-42f6-bb6e-24bc8fd8bc97",
+       "isActive": true
+     }
+@@ -228,7 +228,7 @@
+   "id": "2a81c865-2f1f-4522-a310-8a780be9e822",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons.30.06.2026.</p><p><br></p><p><br></p>",
++  "itemText": "<p>No delay in filing the complaint. The accused resides within the jurisdiction of this court, hence enquiry u/s.225 of BNSS is dispensed with. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file ST. Issue summons to accused.Take steps. For return of summons.30.06.2026.</p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": null,
+   "orderCategory": "COMPOSITE",

@@ -1,0 +1,86 @@
+{
+  "additionalDetails": {
+    "formdata": {
+      "hearingDate": "2026-06-02",
+      "hearingPurpose": {
+        "code": "ADMISSION",
+        "id": 5,
+        "isactive": true,
+        "type": "ADMISSION"
+      },
+      "orderType": {
+        "code": "SCHEDULE_OF_HEARING_DATE",
+        "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+        "type": "SCHEDULE_OF_HEARING_DATE"
+      }
+    }
+  },
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778929460229,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779626816929
+  },
+  "cnrNumber": "KLKM520006942026",
+  "comments": null,
+  "compositeItems": null,
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "a740609d-d0d4-40bf-9233-c7884ffd0cd1",
+      "id": "d2e81f3b-6c28-43c9-b1ae-c770ad649e09",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001041-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "04c1a650-0719-405b-9ff6-96c24e9a66a1",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>For hearing on delay. 02.06.2026.</p><p><br></p><p>Due to technical issue order passed on 18-05-2026 could not be uploaded. Hence the order of 18-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "INTERMEDIATE",
+  "orderDetails": {
+    "caseNumber": "CMP/694/2026",
+    "hearingDate": 1780358400000,
+    "purposeOfHearing": "ADMISSION"
+  },
+  "orderNumber": "KL-001041-2026-OR1",
+  "orderTitle": "Schedule of Hearing Date",
+  "orderType": "SCHEDULE_OF_HEARING_DATE",
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778929460229,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778929460229
+    },
+    "id": "d2a92aee-8c00-4401-b2bb-f24c59ada9f5",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}

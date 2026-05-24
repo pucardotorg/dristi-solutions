@@ -1,0 +1,29 @@
+--- KL-000617-2026-OR5.before.json
++++ KL-000617-2026-OR5.after.json
+@@ -97,7 +97,7 @@
+     "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+     "createdTime": 1777355830324,
+     "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+-    "lastModifiedTime": 1778501029828
++    "lastModifiedTime": 1779624610586
+   },
+   "cnrNumber": "KLKM520003362026",
+   "comments": null,
+@@ -111,7 +111,7 @@
+       },
+       "documentType": "UNSIGNED",
+       "documentUid": null,
+-      "fileStore": "5756b05b-7ebd-467a-943c-a2e870cf4fef",
++      "fileStore": "245b5ceb-aa4c-4ef6-9e89-de4cdaed2d2e",
+       "id": "d033a792-e10e-41bf-81f9-c8a13e0c7f63",
+       "isActive": true
+     }
+@@ -122,7 +122,7 @@
+   "id": "cb0746ea-98de-4e3c-b438-f81fd471bdeb",
+   "isActive": true,
+   "issuedBy": null,
+-  "itemText": "<p>Complainant  shall be present. 26.05.2026.&nbsp;</p>",
++  "itemText": "<p>Complainant  shall be present. 26.05.2026.&nbsp;</p><p><br></p><p>Due to technical issue order passed on 11-05-2026 could not be uploaded. Hence the order of 11-05-2026 is uploaded today.</p>",
+   "linkedOrderNumber": null,
+   "nextHearingDate": 1779733800000,
+   "orderCategory": "INTERMEDIATE",

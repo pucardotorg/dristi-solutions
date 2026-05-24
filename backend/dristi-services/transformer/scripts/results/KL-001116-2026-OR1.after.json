@@ -1,0 +1,281 @@
+{
+  "additionalDetails": {},
+  "applicationNumber": [],
+  "attendance": null,
+  "auditDetails": {
+    "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "createdTime": 1778930329122,
+    "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+    "lastModifiedTime": 1779627989649
+  },
+  "cnrNumber": "KLKM520007032026",
+  "comments": "",
+  "compositeItems": [
+    {
+      "id": "56444d4b-4df7-455c-8d48-794540020162",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "hearingDate": "2026-06-30",
+            "hearingPurpose": {
+              "code": "APPEARANCE",
+              "id": 3,
+              "isactive": true,
+              "type": "APPEARANCE"
+            },
+            "orderType": {
+              "code": "SCHEDULE_OF_HEARING_DATE",
+              "name": "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              "type": "SCHEDULE_OF_HEARING_DATE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/703/2026",
+          "hearingDate": 1782777600000,
+          "purposeOfHearing": "APPEARANCE"
+        },
+        "orderType": "SCHEDULE_OF_HEARING_DATE"
+      },
+      "orderType": "SCHEDULE_OF_HEARING_DATE"
+    },
+    {
+      "id": "00e6e10a-0826-4be1-a132-3495cd9424a6",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "orderType": {
+              "code": "TAKE_COGNIZANCE",
+              "id": 30,
+              "isactive": true,
+              "name": "ORDER_TYPE_TAKE_COGNIZANCE",
+              "type": "TAKE_COGNIZANCE"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/703/2026",
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Akhilan S B (Complainant)",
+              "partyType": "complainant"
+            },
+            {
+              "counselName": "",
+              "partyName": "Sajitha S (Accused)",
+              "partyType": "respondent"
+            }
+          ]
+        },
+        "orderType": "TAKE_COGNIZANCE"
+      },
+      "orderType": "TAKE_COGNIZANCE"
+    },
+    {
+      "id": "0ac5846c-a332-4f0a-b0e7-81dd291f0414",
+      "orderSchema": {
+        "additionalDetails": {
+          "formdata": {
+            "SummonsOrder": {
+              "party": [
+                {
+                  "data": {
+                    "address": [
+                      {
+                        "address": {
+                          "city": "Edava",
+                          "district": "Thiruvananthapuram",
+                          "locality": "W/o Viswanathan, Udyanam, Pananinnavia, Parayil, Edava,TVM",
+                          "pincode": "695311",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "city": "Edava",
+                        "district": "Thiruvananthapuram",
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15292007,
+                            "district": "THIRUVANANTHAPURAM RURAL",
+                            "name": "AYIROOR"
+                          }
+                        },
+                        "id": "5691d9a0-ac0f-437e-82ae-1733fce82e3a",
+                        "locality": "W/o Viswanathan, Udyanam, Pananinnavia, Parayil, Edava,TVM",
+                        "pincode": "695311",
+                        "state": "Kerala"
+                      }
+                    ],
+                    "addressDetails": [
+                      {
+                        "addressDetails": {
+                          "city": "Edava",
+                          "district": "Thiruvananthapuram",
+                          "locality": "W/o Viswanathan, Udyanam, Pananinnavia, Parayil, Edava,TVM",
+                          "pincode": "695311",
+                          "state": "Kerala",
+                          "typeOfAddress": {
+                            "code": "RESIDENTIAL",
+                            "id": 1,
+                            "isActive": true,
+                            "name": "Residential"
+                          }
+                        },
+                        "geoLocationDetails": {
+                          "policeStation": {
+                            "active": true,
+                            "code": 15292007,
+                            "district": "THIRUVANANTHAPURAM RURAL",
+                            "name": "AYIROOR"
+                          }
+                        },
+                        "id": "5691d9a0-ac0f-437e-82ae-1733fce82e3a"
+                      }
+                    ],
+                    "companyDetailsUpload": null,
+                    "email": [],
+                    "firstName": "Sajitha S",
+                    "inquiryAffidavitFileUpload": {
+                      "document": [
+                        {
+                          "documentName": "s sajitha 225.pdf",
+                          "documentType": "case.affidavit.225bnss",
+                          "fileName": "Affidavit under section 225 of BNSS",
+                          "fileStore": "d291d730-c23a-472b-84af-ef6fbbc14d5b"
+                        }
+                      ]
+                    },
+                    "lastName": "",
+                    "middleName": "",
+                    "partyIndex": "Respondent_0",
+                    "partyType": "Respondent",
+                    "phone_numbers": [],
+                    "phonenumbers": {
+                      "textfieldValue": ""
+                    },
+                    "respondentAge": "42",
+                    "respondentFirstName": "Sajitha S",
+                    "respondentLastName": "",
+                    "respondentMiddleName": "",
+                    "respondentType": {
+                      "code": "INDIVIDUAL",
+                      "commonFields": true,
+                      "complainantLocation": true,
+                      "complainantTypeId": 1,
+                      "id": 1,
+                      "isIndividual": true,
+                      "isactive": true,
+                      "name": "Individual",
+                      "showCompanyDetails": false
+                    },
+                    "uniqueId": "facda7a0-0a5e-46f0-bb2a-bc74aabd57ef"
+                  },
+                  "displayindex": 0,
+                  "isenabled": true,
+                  "uniqueId": "facda7a0-0a5e-46f0-bb2a-bc74aabd57ef"
+                }
+              ]
+            },
+            "dateForHearing": "2026-06-30",
+            "orderType": {
+              "code": "SUMMONS",
+              "id": 13,
+              "isactive": true,
+              "name": "ORDER_TYPE_SUMMONS",
+              "type": "SUMMONS"
+            }
+          }
+        },
+        "orderDetails": {
+          "caseNumber": "CMP/703/2026",
+          "hearingDate": 1782777600000,
+          "parties": [
+            {
+              "counselName": "",
+              "partyName": "Sajitha S (Accused)",
+              "partyType": "respondent"
+            }
+          ],
+          "respondentName": [
+            "Sajitha S"
+          ]
+        },
+        "orderType": "SUMMONS"
+      },
+      "orderType": "SUMMONS"
+    }
+  ],
+  "courtId": "KLKM52",
+  "createdDate": 1778869800000,
+  "documents": [
+    {
+      "additionalDetails": {
+        "name": "Order: Schedule of Hearing Date and Other Items.pdf"
+      },
+      "documentType": "UNSIGNED",
+      "documentUid": null,
+      "fileStore": "fe2ff66e-83d9-4e69-bb14-263f8c2340d5",
+      "id": "1f512502-ce22-45b7-af37-1b55e0c1f250",
+      "isActive": true
+    }
+  ],
+  "filingNumber": "KL-001116-2026",
+  "hearingNumber": null,
+  "hearingType": null,
+  "id": "b83a7c31-da1c-4b78-a7f0-79495d7b29bf",
+  "isActive": true,
+  "issuedBy": null,
+  "itemText": "<p>&nbsp;No delay in filing the complaint. The accused resides outside the jurisdiction of this court, hence enquiry u/s.225 of BNSS is conducted. Heard. Perused the records. Satisfied that there is sufficient ground to proceed against the accused for the offence punishable u/s.138 of NI Act. Hence the court took cognizance of the aforesaid offence and the case is taken on file as ST. Issue summons to accused. Take steps. For return of summons.&nbsp;&nbsp;30.06.2026.</p><p><br></p><p>Due to technical issue order passed on 16-05-2026 could not be uploaded. Hence the order of 16-05-2026 is uploaded today.</p>",
+  "linkedOrderNumber": null,
+  "nextHearingDate": null,
+  "orderCategory": "COMPOSITE",
+  "orderDetails": {
+    "caseNumber": "CMP/703/2026",
+    "parties": [
+      {
+        "counselName": "",
+        "partyName": "Akhilan S B (Complainant)",
+        "partyType": "complainant"
+      },
+      {
+        "counselName": "",
+        "partyName": "Sajitha S (Accused)",
+        "partyType": "respondent"
+      }
+    ]
+  },
+  "orderNumber": "KL-001116-2026-OR1",
+  "orderTitle": "Schedule of Hearing Date and Other Items",
+  "orderType": null,
+  "purposeOfNextHearing": null,
+  "scheduledHearingNumber": null,
+  "status": "PENDING_BULK_E-SIGN",
+  "statuteSection": {
+    "additionalDetails": null,
+    "auditDetails": {
+      "createdBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "createdTime": 1778930329122,
+      "lastModifiedBy": "7e86281d-f7d7-4e64-9605-eb69864941e8",
+      "lastModifiedTime": 1778930329122
+    },
+    "id": "7c0c6a7b-b9a4-43cb-8468-7b0f160c23de",
+    "sections": [
+      "str"
+    ],
+    "statute": null,
+    "strSections": null,
+    "strSubsections": null,
+    "subsections": [
+      "str"
+    ],
+    "tenantId": "kl"
+  },
+  "tenantId": "kl",
+  "workflow": null
+}
