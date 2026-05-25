@@ -38,6 +38,7 @@ public class CaseQueryBuilder {
 
     private static final String DOCUMENT_SELECT_QUERY_CASE = "Select doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore," +
             " doc.documentuid as documentuid, doc.additionaldetails as docadditionaldetails, doc.case_id as case_id, doc.isactive as isactive, doc.linked_case_id as linked_case_id, doc.litigant_id as litigant_id, doc.representative_id as representative_id, doc.representing_id as representing_id, doc.poaholder_id as poaholder_id ";
+
     private static final String FROM_DOCUMENTS_TABLE = " FROM dristi_case_document doc";
 
     private static final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
