@@ -409,37 +409,53 @@ function EFilingCases({ path }) {
     return false;
   }, [caseDetails, errorCaseDetails]);
 
-  const showMandatoryFieldsRemainingModal = useMemo(() => {
-    if (selected === "reviewCaseFile") {
-      if (mandatoryFieldsLeftTotalCount > 0) {
-        setShowConfirmMandatoryModal(true);
-        return true;
-      } else return false;
-    }
-    return false;
-  }, [selected, mandatoryFieldsLeftTotalCount]);
+  useEffect(() => {
+    const currentCaseDetails = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
+    if (!currentCaseDetails?.filingNumber || isLoading) return;
+    if (selected !== "reviewCaseFile") return;
 
-  const showOptionalFieldsRemainingModal = useMemo(() => {
-    if (selected === "reviewCaseFile") {
-      if (!isComplainantDetailsCompleted && mandatoryFieldsLeftTotalCount === 0 && isDraftInProgress) {
-        setShowFillComplainantDetailsAdvisoryModal({ show: true, redirectTo: "complainantDetails" });
-        return false;
-      } else if (isComplainantDetailsChanged && mandatoryFieldsLeftTotalCount === 0 && isDraftInProgress) {
-        setShowFillComplainantDetailsAdvisoryModal({ show: true, redirectTo: "advocateDetails" });
-        return false;
-      } else if (checkAndGetOptionalFieldLeftPages.length !== 0) {
-        setShowConfirmOptionalModal(true);
-        return true;
-      } else return false;
+    if (mandatoryFieldsLeftTotalCount > 0) {
+      setShowConfirmMandatoryModal(true);
+      setShowConfirmOptionalModal(false);
+      setShowFillComplainantDetailsAdvisoryModal(null);
+      return;
     }
-    return false;
+
+    if (!isComplainantDetailsCompleted && isDraftInProgress) {
+      setShowFillComplainantDetailsAdvisoryModal({ show: true, redirectTo: "complainantDetails" });
+      setShowConfirmMandatoryModal(false);
+      setShowConfirmOptionalModal(false);
+      return;
+    }
+
+    if (isComplainantDetailsChanged && isDraftInProgress) {
+      setShowFillComplainantDetailsAdvisoryModal({ show: true, redirectTo: "advocateDetails" });
+      setShowConfirmMandatoryModal(false);
+      setShowConfirmOptionalModal(false);
+      return;
+    }
+
+    if (checkAndGetOptionalFieldLeftPages.length !== 0) {
+      setShowConfirmOptionalModal(true);
+      setShowFillComplainantDetailsAdvisoryModal(null);
+      setShowConfirmMandatoryModal(false);
+      return;
+    }
+
+    setShowConfirmMandatoryModal(false);
+    setShowConfirmOptionalModal(false);
+    setShowFillComplainantDetailsAdvisoryModal(null);
   }, [
     selected,
-    checkAndGetOptionalFieldLeftPages,
     mandatoryFieldsLeftTotalCount,
+    checkAndGetOptionalFieldLeftPages,
     isComplainantDetailsCompleted,
     isComplainantDetailsChanged,
     isDraftInProgress,
+    isLoading,
+    isCaseReAssigned,
+    errorCaseDetails,
+    caseDetails,
   ]);
 
   const { data: taskManagementData, isLoading: isTaskManagementLoading, refetch: refetchTaskManagement } = useSearchTaskMangementService(
@@ -1054,10 +1070,11 @@ function EFilingCases({ path }) {
       children: parent.children.map((child, cIndex) => ({
         ...child,
         checked: child.key === selected,
-        isCompleted: caseDetails?.additionalDetails?.[child.key]?.isCompleted || caseDetails?.caseDetails?.[child.key]?.isCompleted,
+        isCompleted:
+          (errorCaseDetails || caseDetails)?.additionalDetails?.[child.key]?.isCompleted || caseDetails?.caseDetails?.[child.key]?.isCompleted,
       })),
     }));
-  }, [caseDetails, parentOpen, selected]);
+  }, [caseDetails, parentOpen, selected, errorCaseDetails]);
 
   const pageConfig = useMemo(() => {
     return sideMenuConfig.find((parent) => parent.children.some((child) => child.key === selected))?.children?.find((child) => child.key === selected)
@@ -3433,7 +3450,7 @@ function EFilingCases({ path }) {
             ></Modal>
           )}
           {/* show this modal only for filingParty */}
-          {isEditingAllowed && showMandatoryFieldsRemainingModal && showConfirmMandatoryModal && (
+          {isEditingAllowed && showConfirmMandatoryModal && (
             <Modal
               headerBarMain={<Heading label={`${mandatoryFieldsLeftTotalCount} ${t("MANDATORY_FIELDS_REMAINING")}`} />}
               headerBarEnd={<CloseBtn onClick={() => takeUserToRemainingMandatoryFieldsPage()} />}
@@ -3442,28 +3459,24 @@ function EFilingCases({ path }) {
               actionSaveOnSubmit={() => takeUserToRemainingMandatoryFieldsPage()}
             ></Modal>
           )}
-          {showOptionalFieldsRemainingModal &&
-            showConfirmOptionalModal &&
-            !mandatoryFieldsLeftTotalCount &&
-            !isDisableAllFieldsMode &&
-            !optionalFieldModalAlreadyViewed && (
-              <Modal
-                headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASES")} />}
-                headerBarEnd={
-                  <CloseBtn
-                    onClick={() => {
-                      setShowConfirmOptionalModal(false);
-                      setOptionalFieldModalAlreadyViewed(true);
-                    }}
-                  />
-                }
-                actionCancelLabel={t("SKIP_AND_CONTINUE")}
-                actionCancelOnSubmit={handleSkip}
-                actionSaveLabel={isEditingAllowed && t("FILL_NOW")}
-                children={optionalFieldsRemainingText(optionalFieldsLeftTotalCount)}
-                actionSaveOnSubmit={() => takeUserToRemainingOptionalFieldsPage()}
-              ></Modal>
-            )}
+          {showConfirmOptionalModal && !mandatoryFieldsLeftTotalCount && !isDisableAllFieldsMode && !optionalFieldModalAlreadyViewed && (
+            <Modal
+              headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASES")} />}
+              headerBarEnd={
+                <CloseBtn
+                  onClick={() => {
+                    setShowConfirmOptionalModal(false);
+                    setOptionalFieldModalAlreadyViewed(true);
+                  }}
+                />
+              }
+              actionCancelLabel={t("SKIP_AND_CONTINUE")}
+              actionCancelOnSubmit={handleSkip}
+              actionSaveLabel={isEditingAllowed && t("FILL_NOW")}
+              children={optionalFieldsRemainingText(optionalFieldsLeftTotalCount)}
+              actionSaveOnSubmit={() => takeUserToRemainingOptionalFieldsPage()}
+            ></Modal>
+          )}
           {showReviewCorrectionModal && isDraftInProgress && (
             <Modal
               headerBarMain={<Heading label={t("REVIEW_CASE_HEADER")} />}
