@@ -179,6 +179,10 @@ const BailBondSignaturePage = () => {
     // TODO: Update call with Signed FileStore
     try {
       const fileStoreId = sessionStorage.getItem("fileStoreId");
+      if (!fileStoreId || fileStoreId === bailBondDetails?.documents?.[0]?.fileStore) {
+        setShowErrorToast({ label: t("UPDATE_FAILED_ERROR"), error: true });
+        return;
+      }
       const payload = {
         tenantId,
         bailId: bailbondId,

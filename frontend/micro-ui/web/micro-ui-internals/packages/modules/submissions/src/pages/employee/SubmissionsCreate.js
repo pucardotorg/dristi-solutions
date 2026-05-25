@@ -1438,6 +1438,14 @@ const SubmissionsCreate = ({ path }) => {
       const newFileStoreId = localStorageID || signedDoucumentUploadedID;
       fileStoreIds.delete(newFileStoreId);
 
+      if (!mockESignEnabled && action === SubmissionWorkflowAction.ESIGN) {
+        const effectiveSignedId = sessionStorage.getItem("fileStoreId");
+        if (!effectiveSignedId || effectiveSignedId === applicationPdfFileStoreId) {
+          setShowErrorToast({ label: t("UPDATE_FAILED_ERROR"), error: true });
+          return null;
+        }
+      }
+
       const documentsFile =
         mockESignEnabled && applicationPdfFileStoreId
           ? [
@@ -1816,6 +1824,7 @@ const SubmissionsCreate = ({ path }) => {
     setLoader(true);
     try {
       const response = await updateSubmission(SubmissionWorkflowAction.ESIGN);
+      if (!response) return;
       setShowsignatureModal(false);
       setShowPaymentModal(true);
       if (response && response?.application?.additionalDetails?.isResponseRequired) {

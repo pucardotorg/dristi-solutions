@@ -703,9 +703,12 @@ const MarkAsEvidence = ({
           });
         }
       } else if (stepper === 1 && isSigned) {
-        if (!mockESignEnabled && sessionStorage.getItem("fileStoreId") === null) {
-          showToast("error", t("EVIDENCE_UPDATE_ERROR_MESSAGE"), 5000);
-          return;
+        if (!mockESignEnabled) {
+          const signedFileStore = sessionStorage.getItem("fileStoreId");
+          if (!signedFileStore || signedFileStore === sealFileStoreId) {
+            showToast("error", t("EVIDENCE_UPDATE_ERROR_MESSAGE"), 5000);
+            return;
+          }
         }
         let fileStore = "";
         if (mockESignEnabled) {

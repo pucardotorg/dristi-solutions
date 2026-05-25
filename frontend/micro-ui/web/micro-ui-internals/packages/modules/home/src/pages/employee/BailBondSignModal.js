@@ -325,6 +325,9 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const newFilestore = bailBondSignedPdf || localStorageID;
+      if (!newFilestore || newFilestore === selectedBailBondFilestoreid) {
+        return;
+      }
       // fileStoreIds.delete(newFilestore);
       // if (ADiarypdf) {
       //   fileStoreIds.delete(ADiarypdf);
