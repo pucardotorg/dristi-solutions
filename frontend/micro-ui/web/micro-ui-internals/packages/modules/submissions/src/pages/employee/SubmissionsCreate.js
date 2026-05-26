@@ -1437,7 +1437,7 @@ const SubmissionsCreate = ({ path }) => {
     }
   };
 
-  const updateSubmission = async (action) => {
+  const updateSubmission = async (action, isUpload) => {
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
@@ -1445,7 +1445,8 @@ const SubmissionsCreate = ({ path }) => {
       const newFileStoreId = localStorageID || signedDoucumentUploadedID;
       fileStoreIds.delete(newFileStoreId);
 
-      if (!mockESignEnabled && action === SubmissionWorkflowAction.ESIGN) {
+      if (!mockESignEnabled && !isUpload) {
+        // Only add this check for esign flow
         const effectiveSignedId = sessionStorage.getItem("fileStoreId");
         if (!effectiveSignedId || effectiveSignedId === applicationPdfFileStoreId) {
           setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
@@ -1862,10 +1863,10 @@ const SubmissionsCreate = ({ path }) => {
     }
   };
 
-  const handleAddSignature = async () => {
+  const handleAddSignature = async (isUpload) => {
     setLoader(true);
     try {
-      const response = await updateSubmission(SubmissionWorkflowAction.ESIGN);
+      const response = await updateSubmission(SubmissionWorkflowAction.ESIGN, isUpload);
       if (!response) return;
       setShowsignatureModal(false);
       setShowPaymentModal(true);
