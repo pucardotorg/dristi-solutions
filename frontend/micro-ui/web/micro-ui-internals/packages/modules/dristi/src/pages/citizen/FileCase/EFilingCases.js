@@ -330,6 +330,14 @@ function EFilingCases({ path }) {
     );
   }, []);
 
+  const complainantDetailsAdvisoryModalText = useCallback((text) => {
+    return (
+      <div>
+        <h3>{text}</h3>
+      </div>
+    );
+  }, []);
+
   const mandatoryFieldsRemainingText = useCallback(() => {
     return (
       <div>
@@ -3441,11 +3449,11 @@ function EFilingCases({ path }) {
               headerBarMain={<Heading label={t("ADVISORY_TITLE")} />}
               headerBarEnd={<CloseBtn onClick={() => handleComplainantDetailsAdvisoryModal(showFillComplainantDetailsAdvisoryModal?.redirectTo)} />}
               actionSaveLabel={t("OK")}
-              children={
+              children={complainantDetailsAdvisoryModalText(
                 showFillComplainantDetailsAdvisoryModal?.redirectTo === "complainantDetails"
                   ? t("PLEASE_GO_TO_COMPLAINANT_SCREEN_AND_CLICK_CONTINUE")
                   : t("PLEASE_GO_TO_ADVOCATE_SCREEN_AND_CLICK_CONTINUE")
-              }
+              )}
               actionSaveOnSubmit={() => handleComplainantDetailsAdvisoryModal(showFillComplainantDetailsAdvisoryModal?.redirectTo)}
             ></Modal>
           )}

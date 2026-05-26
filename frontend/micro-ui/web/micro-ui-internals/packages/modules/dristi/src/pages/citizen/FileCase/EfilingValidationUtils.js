@@ -2631,6 +2631,33 @@ export const updateCaseDetails = async ({
 
     data.litigants = [...finalLitigants];
 
+    // This block ensures that litigants is not made [] if user does not clicks on continue button.
+    // if any of the complainants are delted, we just delete corresp. litigants from litigants array and update.
+    // if new complainant array is added then we don't do anything (means litigants will have to be updated as [] in this case because for new compl, validationn is cheked only on comtinue button click)
+    if (!isContinueClicked && isDraftInProgress) {
+      const caseLitigantsForDraft = caseDetails?.litigants || [];
+      const updatedLitigantsForDraft = structuredClone(caseLitigantsForDraft);
+
+      const hasInvalidEntry = updatedFormData.some((formItem) => {
+        const individualId = formItem?.data?.complainantVerification?.individualDetails?.individualId;
+        if (!individualId) return true;
+        return !caseLitigantsForDraft.some((lit) => lit.individualId === individualId);
+      });
+
+      if (!hasInvalidEntry) {
+        updatedFormData.forEach((formItem) => {
+          if (formItem?.isenabled === false) {
+            const individualId = formItem?.data?.complainantVerification?.individualDetails?.individualId;
+            const litIndex = updatedLitigantsForDraft.findIndex((lit) => lit.individualId === individualId);
+            if (litIndex !== -1) {
+              updatedLitigantsForDraft.splice(litIndex, 1);
+            }
+          }
+        });
+        data.litigants = updatedLitigantsForDraft;
+      }
+    }
+
     tempDocList = tempDocList?.filter((doc) => doc?.fileStore !== documentToDelete);
 
     const mergedPoaHoldersMap = new Map();
