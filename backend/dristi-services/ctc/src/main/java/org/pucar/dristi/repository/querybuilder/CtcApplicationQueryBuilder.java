@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -24,6 +25,8 @@ public class CtcApplicationQueryBuilder {
     private static final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY ctc.created_time DESC";
     private static final String ORDERBY_CLAUSE = " ORDER BY {orderBy} {sortingOrder}";
+    private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of(
+            "created_time", "last_modified_time", "ctc_application_number", "status");
 
     public String getCtcApplicationsQuery(CtcApplicationSearchCriteria criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         try {
@@ -107,12 +110,13 @@ public class CtcApplicationQueryBuilder {
     }
 
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isEmptyPagination(pagination) || pagination.getSortBy().contains(";")) {
+        if (isEmptyPagination(pagination)
+                || !ALLOWED_SORT_COLUMNS.contains(pagination.getSortBy().toLowerCase())) {
             return query + DEFAULT_ORDERBY_CLAUSE;
-        } else {
-            query = query + ORDERBY_CLAUSE;
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+        return (query + ORDERBY_CLAUSE)
+                .replace("{orderBy}", pagination.getSortBy().toLowerCase())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     public String addOrderByQueryForLitigants(String query) {

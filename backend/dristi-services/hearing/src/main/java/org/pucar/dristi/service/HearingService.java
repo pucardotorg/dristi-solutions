@@ -336,7 +336,7 @@ public class HearingService {
             HearingExists order = body.getOrder();
             HearingCriteria criteria = HearingCriteria.builder().cnrNumber(order.getCnrNumber())
                     .filingNumber(order.getFilingNumber()).applicationNumber(order.getApplicationNumber()).hearingId(order.getHearingId()).tenantId(body.getRequestInfo().getUserInfo().getTenantId()).build();
-            Pagination pagination = Pagination.builder().limit(1.0).offSet((double) 0).build();
+            Pagination pagination = Pagination.builder().limit(1).offSet(0).build();
             HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder().criteria(criteria).pagination(pagination).build();
             List<Hearing> hearingList = hearingRepository.getHearings(hearingSearchRequest);
             order.setExists(!hearingList.isEmpty());
@@ -937,7 +937,7 @@ public class HearingService {
 
         OrderSearchRequest searchRequest = OrderSearchRequest.builder()
                 .criteria(criteria)
-                .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
+                .pagination(Pagination.builder().limit(100).offSet(0).build())
                 .build();
 
                 OrderResponse orderResponse;

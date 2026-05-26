@@ -158,7 +158,7 @@ class TaskManagementServiceTest {
     @Test
     void getTaskManagement_ReturnsListFromRepository() {
         TaskSearchCriteria criteria = TaskSearchCriteria.builder().tenantId("kl").build();
-        Pagination pagination = Pagination.builder().limit(10.0).offSet(0.0).build();
+        Pagination pagination = Pagination.builder().limit(10).offSet(0).build();
         TaskSearchRequest searchRequest = TaskSearchRequest.builder()
                 .requestInfo(requestInfo)
                 .criteria(criteria)

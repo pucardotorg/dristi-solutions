@@ -277,7 +277,7 @@ class HearingQueryBuilderTest {
         // Arrange
         String query = "SELECT * FROM dristi_hearing WHERE 1=1";
         List<Object> preparedStmtList = new ArrayList<>();
-        Pagination pagination = Pagination.builder().limit(10d).offSet(20d).build();
+        Pagination pagination = Pagination.builder().limit(10).offSet(20).build();
 
         // Act
         query = hearingQueryBuilder.addPaginationQuery(query, pagination, preparedStmtList,new ArrayList<>());

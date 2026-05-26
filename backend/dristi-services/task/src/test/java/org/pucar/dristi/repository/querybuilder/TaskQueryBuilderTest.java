@@ -44,9 +44,9 @@ class TaskQueryBuilderTest {
         String result = taskQueryBuilder.addPaginationQuery(query, pagination, preparedStatementList, preparedStatementArgList);
         assertEquals("SELECT * FROM dristi_task LIMIT ? OFFSET ?", result);
         assertEquals(2, preparedStatementList.size());
-        assertEquals(10.0, preparedStatementList.get(0));
-        assertEquals(0.0, preparedStatementList.get(1));
-        assertEquals(Arrays.asList(Types.DOUBLE, Types.DOUBLE), preparedStatementArgList);
+        assertEquals(10, preparedStatementList.get(0));
+        assertEquals(0, preparedStatementList.get(1));
+        assertEquals(Arrays.asList(Types.INTEGER, Types.INTEGER), preparedStatementArgList);
     }
 
     @Test

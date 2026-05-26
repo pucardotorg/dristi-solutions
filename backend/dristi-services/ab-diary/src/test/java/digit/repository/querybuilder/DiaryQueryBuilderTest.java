@@ -78,8 +78,8 @@ class DiaryQueryBuilderTest {
 
     @Test
     void addPaginationQuery_AppendsLimitAndOffset() {
-        pagination.setLimit(10.0);
-        pagination.setOffSet(5.0);
+        pagination.setLimit(10);
+        pagination.setOffSet(5);
 
         String query = queryBuilder.addPaginationQuery("SELECT * FROM diary", preparedStatementValues, pagination, preparedStatementTypeValues);
 

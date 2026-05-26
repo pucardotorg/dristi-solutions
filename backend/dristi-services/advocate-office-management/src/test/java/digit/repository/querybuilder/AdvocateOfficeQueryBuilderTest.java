@@ -173,10 +173,10 @@ class AdvocateOfficeQueryBuilderTest {
 
         assertEquals("SELECT * FROM member LIMIT ? OFFSET ?", query);
         assertEquals(2, preparedStmtList.size());
-        assertEquals(10.0, preparedStmtList.get(0));
-        assertEquals(5.0, preparedStmtList.get(1));
-        assertEquals(Types.DOUBLE, preparedStmtArgList.get(0));
-        assertEquals(Types.DOUBLE, preparedStmtArgList.get(1));
+        assertEquals(10, preparedStmtList.get(0));
+        assertEquals(5, preparedStmtList.get(1));
+        assertEquals(Types.INTEGER, preparedStmtArgList.get(0));
+        assertEquals(Types.INTEGER, preparedStmtArgList.get(1));
     }
 
     @Test

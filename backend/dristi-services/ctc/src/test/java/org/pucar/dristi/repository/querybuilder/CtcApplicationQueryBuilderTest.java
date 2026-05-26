@@ -113,7 +113,7 @@ class CtcApplicationQueryBuilderTest {
 
     @Test
     void addPaginationQuery_shouldAddLimitAndOffset() {
-        Pagination pagination = Pagination.builder().limit(10.0).offSet(5.0).build();
+        Pagination pagination = Pagination.builder().limit(10).offSet(5).build();
         List<Object> stmtList = new ArrayList<>();
         List<Integer> argList = new ArrayList<>();
 

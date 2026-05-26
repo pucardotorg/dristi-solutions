@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.sql.Types;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static digit.config.ServiceConstants.CITIZEN_UPPER;
@@ -59,8 +60,11 @@ public class BailQueryBuilder {
             " LEFT JOIN dristi_surety srt ON bail.id = srt.bail_id AND srt.is_active = true " +
             " LEFT JOIN dristi_surety_document surety_doc ON srt.id = surety_doc.surety_id AND surety_doc.is_active = true ";
 
-    private static final String ORDER_BY_CLAUSE = " ORDER BY {orderBy} {sortingOrder} ";
+    private static final String ORDER_BY_CLAUSE = " ORDER BY bail.{orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY bail.created_time DESC ";
+    private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of(
+            "created_time", "last_modified_time", "bail_status", "filing_number",
+            "cnr_number", "case_number", "bail_type");
 
 
     public String getPaginatedBailIdsQuery(RequestInfo requestInfo, BailSearchCriteria criteria, Pagination pagination, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
@@ -107,12 +111,13 @@ public class BailQueryBuilder {
     }
 
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isPaginationInvalid(pagination)) {
+        if (isPaginationInvalid(pagination)
+                || !ALLOWED_SORT_COLUMNS.contains(pagination.getSortBy().toLowerCase())) {
             return query + DEFAULT_ORDERBY_CLAUSE;
-        } else {
-            query = query + ORDER_BY_CLAUSE;
-            return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
         }
+        return (query + ORDER_BY_CLAUSE)
+                .replace("{orderBy}", pagination.getSortBy().toLowerCase())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     private static boolean isPaginationInvalid(Pagination pagination) {

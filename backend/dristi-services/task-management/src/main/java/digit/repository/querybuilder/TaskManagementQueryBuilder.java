@@ -45,10 +45,10 @@ public class TaskManagementQueryBuilder {
 
     public String addPaginationQuery(String query, Pagination pagination, List<Object> preparedStatementList, List<Integer> preparedStatementArgList) {
         preparedStatementList.add(pagination.getLimit());
-        preparedStatementArgList.add(Types.DOUBLE);
+        preparedStatementArgList.add(Types.INTEGER);
 
         preparedStatementList.add(pagination.getOffSet());
-        preparedStatementArgList.add(Types.DOUBLE);
+        preparedStatementArgList.add(Types.INTEGER);
         return query + " LIMIT ? OFFSET ?";
     }
 

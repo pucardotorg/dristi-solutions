@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -19,13 +20,21 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 @Component
 @Slf4j
 public class HearingQueryBuilder {
-    private static final String BASE_ATR_QUERY = " SELECT * FROM dristi_hearing WHERE 1=1 ";
+    private static final String HEARING_SELECT_COLUMNS =
+            " SELECT id, tenantid, hearingid, hearingtype, status, starttime, endtime,"
+            + " vclink, isactive, notes, hearingsummary, courtcasenumber, casereferencenumber, cmpnumber,"
+            + " createdby, lastmodifiedby, createdtime, lastmodifiedtime,"
+            + " cnrnumbers, filingnumber, applicationnumbers, presidedby, attendees, transcript, additionaldetails";
+
+    private static final String BASE_ATR_QUERY = HEARING_SELECT_COLUMNS + " FROM dristi_hearing WHERE 1=1 ";
 
     private static final String DOCUMENT_SELECT_QUERY = "Select doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore, doc.documentuid as documentuid, doc.additionaldetails as additionaldetails, doc.hearingid as hearingid, doc.isactive as isactive ";
     private static final String FROM_DOCUMENTS_TABLE = " FROM dristi_hearing_document doc";
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY createdtime DESC ";
     private static final String ORDERBY_CLAUSE = " ORDER BY {orderBy} {sortingOrder} ";
+    private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of(
+            "createdtime", "lastmodifiedtime", "filingnumber", "hearingid", "status");
 
     private final ObjectMapper mapper;
 
@@ -84,12 +93,13 @@ public class HearingQueryBuilder {
         }
     }
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isPaginationInvalid(pagination) || pagination.getSortBy().contains(";"))  {
+        if (isPaginationInvalid(pagination)
+                || !ALLOWED_SORT_COLUMNS.contains(pagination.getSortBy().toLowerCase())) {
             return query + DEFAULT_ORDERBY_CLAUSE;
-        } else {
-            query = query + ORDERBY_CLAUSE;
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+        return (query + ORDERBY_CLAUSE)
+                .replace("{orderBy}", pagination.getSortBy().toLowerCase())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     private static boolean isPaginationInvalid(Pagination pagination) {
@@ -147,11 +157,22 @@ public class HearingQueryBuilder {
         return TOTAL_COUNT_QUERY.replace("{baseQuery}", baseQuery);
     }
 
+    public String getHearingsWithMultipleFilingNumbersQuery() {
+        return HEARING_SELECT_COLUMNS
+                + " FROM dristi_hearing"
+                + " WHERE filingNumber->>0 IN ("
+                + "   SELECT filingNumber->>0 FROM dristi_hearing"
+                + "   GROUP BY filingNumber->>0 HAVING COUNT(*) > 1"
+                + " )"
+                + " ORDER BY filingNumber->>0, createdTime"
+                + " LIMIT 500";
+    }
+
     public String addPaginationQuery(String query, Pagination pagination, List<Object> preparedStatementList, List<Integer> preparedStatementArgList) {
         preparedStatementList.add(pagination.getLimit());
-        preparedStatementArgList.add(Types.DOUBLE);
+        preparedStatementArgList.add(Types.INTEGER);
         preparedStatementList.add(pagination.getOffSet());
-        preparedStatementArgList.add(Types.DOUBLE);
+        preparedStatementArgList.add(Types.INTEGER);
         return query + " LIMIT ? OFFSET ?";
     }
 }

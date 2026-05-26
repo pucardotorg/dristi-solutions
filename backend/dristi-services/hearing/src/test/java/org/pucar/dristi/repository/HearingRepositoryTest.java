@@ -79,7 +79,7 @@ class HearingRepositoryTest {
     void testGetHearings_WithPagination() {
         // Mock data
         HearingCriteria criteria = HearingCriteria.builder().hearingId("sdf").build();
-        Pagination pagination = Pagination.builder().limit(10.0).offSet(0.0).build();
+        Pagination pagination = Pagination.builder().limit(10).offSet(0).build();
         HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder().criteria(criteria).pagination(pagination).build();
         List<Hearing> expectedHearings = List.of(Hearing.builder().id(UUID.randomUUID()).build());
 

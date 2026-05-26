@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -28,6 +29,8 @@ public class EvidenceQueryBuilder {
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY art.createdtime DESC ";
     private static final String ORDERBY_CLAUSE = " ORDER BY art.{orderBy} {sortingOrder} ";
+    private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of(
+            "createdtime", "lastmodifiedtime", "filingnumber", "artifactnumber", "artifacttype");
     private static final String FROM_ARTIFACTS_TABLE = " FROM dristi_evidence_artifact art";
     public String getArtifactSearchQuery(List<Object> preparedStmtList, List<Integer> preparedStmtArgList, EvidenceSearchCriteria criteria) {
         try {
@@ -308,12 +311,13 @@ public class EvidenceQueryBuilder {
         return TOTAL_COUNT_QUERY.replace("{baseQuery}", baseQuery);
     }
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isPaginationInvalid(pagination) || pagination.getSortBy().contains(";")) {
+        if (isPaginationInvalid(pagination)
+                || !ALLOWED_SORT_COLUMNS.contains(pagination.getSortBy().toLowerCase())) {
             return query + DEFAULT_ORDERBY_CLAUSE;
-        } else {
-            query = query + ORDERBY_CLAUSE;
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+        return (query + ORDERBY_CLAUSE)
+                .replace("{orderBy}", pagination.getSortBy().toLowerCase())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     private static boolean isPaginationInvalid(Pagination pagination) {
@@ -322,9 +326,9 @@ public class EvidenceQueryBuilder {
 
     public String addPaginationQuery(String query, Pagination pagination, List<Object> preparedStatementList, List<Integer> preparedStatementArgList) {
         preparedStatementList.add(pagination.getLimit());
-        preparedStatementArgList.add(Types.DOUBLE);
+        preparedStatementArgList.add(Types.INTEGER);
         preparedStatementList.add(pagination.getOffSet());
-        preparedStatementArgList.add(Types.DOUBLE);
+        preparedStatementArgList.add(Types.INTEGER);
         return query + " LIMIT ? OFFSET ?";
     }
 

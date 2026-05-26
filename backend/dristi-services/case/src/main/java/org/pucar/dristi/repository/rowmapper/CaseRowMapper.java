@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.pucar.dristi.config.ServiceConstants.ROW_MAPPER_EXCEPTION;
 
@@ -30,11 +31,24 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public List<CourtCase> extractData(ResultSet rs) {
+        return extractDataInternal(rs, null);
+    }
+
+    public List<CourtCase> extractDataWithCount(ResultSet rs, AtomicInteger totalCount) {
+        return extractDataInternal(rs, totalCount);
+    }
+
+    private List<CourtCase> extractDataInternal(ResultSet rs, AtomicInteger totalCount) {
         Map<String, CourtCase> caseMap = new LinkedHashMap<>();
+        boolean countCaptured = false;
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             while (rs.next()) {
+                if (totalCount != null && !countCaptured) {
+                    totalCount.set(rs.getInt("total_count"));
+                    countCaptured = true;
+                }
                 String uuid = rs.getString("id");
                 CourtCase courtCase = caseMap.get(uuid);
 

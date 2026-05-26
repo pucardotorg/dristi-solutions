@@ -147,8 +147,8 @@ class TemplateConfigurationQueryBuilderTest {
     void testAddPaginationQuery() {
 
         Pagination pagination = new Pagination();
-        pagination.setLimit(10.0);
-        pagination.setOffSet(20.0);
+        pagination.setLimit(10);
+        pagination.setOffSet(20);
 
         List<Object> stmtList = new ArrayList<>();
         List<Integer> argList = new ArrayList<>();
@@ -160,10 +160,10 @@ class TemplateConfigurationQueryBuilderTest {
         assertTrue(result.contains("LIMIT ? OFFSET ?"));
 
         assertEquals(2, stmtList.size());
-        assertEquals(10.0, stmtList.get(0));
-        assertEquals(20.0, stmtList.get(1));
+        assertEquals(10, stmtList.get(0));
+        assertEquals(20, stmtList.get(1));
 
-        assertEquals(Types.DOUBLE, argList.get(0));
-        assertEquals(Types.DOUBLE, argList.get(1));
+        assertEquals(Types.INTEGER, argList.get(0));
+        assertEquals(Types.INTEGER, argList.get(1));
     }
 }

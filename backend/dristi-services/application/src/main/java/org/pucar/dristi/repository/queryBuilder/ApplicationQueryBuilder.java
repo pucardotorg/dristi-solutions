@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.sql.Types;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -44,6 +45,8 @@ public class ApplicationQueryBuilder {
     private static final String FROM_APP_TABLE = " FROM dristi_application app";
     private static final String ORDERBY_CLAUSE = " ORDER BY app.{orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY app.createdtime DESC ";
+    private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of(
+            "createdtime", "lastmodifiedtime", "filingnumber", "applicationnumber", "status");
     private static final String BASE_APPLICATION_EXIST_QUERY = "SELECT COUNT(*) FROM dristi_application app";
 
     public String checkApplicationExistQuery(String filingNumber, String cnrNumber, String applicationNumber, List<Object> preparedStmtList) {
@@ -256,18 +259,19 @@ public class ApplicationQueryBuilder {
 
     public String addPaginationQuery(String query, Pagination pagination, List<Object> preparedStatementList, List<Integer> preparedStatementArgList) {
         preparedStatementList.add(pagination.getLimit());
-        preparedStatementArgList.add(Types.DOUBLE);
+        preparedStatementArgList.add(Types.INTEGER);
         preparedStatementList.add(pagination.getOffSet());
-        preparedStatementArgList.add(Types.DOUBLE);
+        preparedStatementArgList.add(Types.INTEGER);
         return query + " LIMIT ? OFFSET ?";
     }
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isPaginationInvalid(pagination) || pagination.getSortBy().contains(";")) {
+        if (isPaginationInvalid(pagination)
+                || !ALLOWED_SORT_COLUMNS.contains(pagination.getSortBy().toLowerCase())) {
             return query + DEFAULT_ORDERBY_CLAUSE;
-        } else {
-            query = query + ORDERBY_CLAUSE;
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+        return (query + ORDERBY_CLAUSE)
+                .replace("{orderBy}", pagination.getSortBy().toLowerCase())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     private static boolean isPaginationInvalid(Pagination pagination) {

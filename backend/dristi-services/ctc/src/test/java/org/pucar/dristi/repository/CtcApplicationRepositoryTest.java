@@ -36,7 +36,7 @@ class CtcApplicationRepositoryTest {
         searchRequest = CtcApplicationSearchRequest.builder()
                 .criteria(CtcApplicationSearchCriteria.builder()
                         .tenantId("kl").courtId("KLKM52").ctcApplicationNumber("CA-001").build())
-                .pagination(Pagination.builder().limit(10.0).offSet(0.0).build())
+                .pagination(Pagination.builder().limit(10).offSet(0).build())
                 .build();
     }
 

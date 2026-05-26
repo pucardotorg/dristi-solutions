@@ -60,7 +60,7 @@ public class CtcApplicationValidator {
         }
         CtcApplicationSearchRequest ctcApplicationSearchRequest = new CtcApplicationSearchRequest();
         ctcApplicationSearchRequest.setCriteria(CtcApplicationSearchCriteria.builder().ctcApplicationNumber(application.getCtcApplicationNumber()).build());
-        ctcApplicationSearchRequest.setPagination(Pagination.builder().limit(1.0).offSet(0.0).build());
+        ctcApplicationSearchRequest.setPagination(Pagination.builder().limit(1).offSet(0).build());
         ctcApplicationSearchRequest.setRequestInfo(request.getRequestInfo());
 
         // Check if application exists
