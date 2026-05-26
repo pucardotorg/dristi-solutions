@@ -636,7 +636,7 @@ const WitnessDrawerV2 = ({
       const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
 
       // Check if we need to create or update evidence
-      const artifactNum = artifactNumber || currentArtifactNumber;
+      const artifactNum = currentArtifactNumber;
       if (artifactNum) {
         const evidence = activeTabs?.find((tab) => tab?.artifactNumber === artifactNum);
 
@@ -1040,7 +1040,7 @@ const WitnessDrawerV2 = ({
 
       const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
       // Check if we need to create or update evidence
-      const artifactNum = artifactNumber || currentArtifactNumber;
+      const artifactNum = currentArtifactNumber;
       if (artifactNum) {
         const currentActiveIndex = activeTabs?.findIndex((tab) => tab?.artifactNumber === artifactNum);
         const evidence = activeTabs?.find((tab) => tab?.artifactNumber === artifactNum);
