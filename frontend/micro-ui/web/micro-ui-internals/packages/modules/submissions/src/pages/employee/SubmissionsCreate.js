@@ -1430,7 +1430,7 @@ const SubmissionsCreate = ({ path }) => {
     }
   };
 
-  const updateSubmission = async (action, isUpload) => {
+  const updateSubmission = async (action, isESign) => {
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
@@ -1438,7 +1438,7 @@ const SubmissionsCreate = ({ path }) => {
       const newFileStoreId = localStorageID || signedDoucumentUploadedID;
       fileStoreIds.delete(newFileStoreId);
 
-      if (!mockESignEnabled && !isUpload) {
+      if (!mockESignEnabled && isESign) {
         // Only add this check for esign flow
         const effectiveSignedId = sessionStorage.getItem("fileStoreId");
         if (!effectiveSignedId || effectiveSignedId === applicationPdfFileStoreId) {
@@ -1727,7 +1727,7 @@ const SubmissionsCreate = ({ path }) => {
   const handleReviewModalSubmit = async ({ applicationPreviewPdf, applicationPreviewFileName, isUpload = false }) => {
     try {
       if (applicationDetails?.status === SubmissionWorkflowState.DRAFT_IN_PROGRESS) {
-        const res = await updateSubmission(SubmissionWorkflowAction.SUBMIT);
+        const res = await updateSubmission(SubmissionWorkflowAction.SUBMIT, false);
         const newapplicationNumber = res?.application?.applicationNumber;
         if (newapplicationNumber) {
           if (isCitizen) {
@@ -1821,10 +1821,10 @@ const SubmissionsCreate = ({ path }) => {
     }
   };
 
-  const handleAddSignature = async (isUpload) => {
+  const handleAddSignature = async (isESign) => {
     setLoader(true);
     try {
-      const response = await updateSubmission(SubmissionWorkflowAction.ESIGN, isUpload);
+      const response = await updateSubmission(SubmissionWorkflowAction.ESIGN, isESign);
       if (!response) return;
       setShowsignatureModal(false);
       setShowPaymentModal(true);
