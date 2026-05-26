@@ -117,7 +117,7 @@ function SubmissionSignatureModal({
       actionSaveLabel={t("PROCEED")}
       isDisabled={!isSigned}
       actionSaveOnSubmit={() => {
-        handleProceed(isUploadAction);
+        handleProceed(isUploadAction ? false : true);
       }}
       className={"submission-add-signature-modal"}
     >
