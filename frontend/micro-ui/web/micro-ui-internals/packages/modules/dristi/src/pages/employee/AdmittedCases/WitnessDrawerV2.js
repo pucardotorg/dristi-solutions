@@ -613,7 +613,7 @@ const WitnessDrawerV2 = ({
       const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
 
       // Check if we need to create or update evidence
-      const artifactNum = artifactNumber || currentArtifactNumber;
+      const artifactNum = currentArtifactNumber;
       if (artifactNum) {
         const evidence = activeTabs?.find((tab) => tab?.artifactNumber === artifactNum);
 
@@ -725,6 +725,7 @@ const WitnessDrawerV2 = ({
 
       // Also refresh evidence list to ensure server and client are in sync
       evidenceRefetch();
+      refetchCaseData();
       if (submit) {
         if (!isWitnessTypeDisabled) {
           setShowConfirmWitnessModal(true);
@@ -758,6 +759,7 @@ const WitnessDrawerV2 = ({
 
   const handleConfirmWitnessAndSign = async (evidence) => {
     try {
+      setLoader(true);
       // Check if we need to create or update evidence
       const evidence = activeTabs?.find((tab) => tab?.artifactNumber === currentArtifactNumber);
       const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
@@ -791,6 +793,8 @@ const WitnessDrawerV2 = ({
         localStorage.setItem("showPdfPreview", true);
         setCurrentEvidence(updatedEvidence?.artifact);
         setCurrentArtifactNumber(updatedEvidence?.artifact?.artifactNumber);
+        const confirmedTag = updatedEvidence?.artifact?.tag;
+        setObtainedTag(confirmedTag);
 
         // setDisableWitnessType(true);
         setShowWitnessDepositionReview(true);
@@ -804,6 +808,7 @@ const WitnessDrawerV2 = ({
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("FAILED_TO_SAVE_WITNESS_MARKING"), error: true, errorId });
     } finally {
+      setLoader(false);
     }
   };
 
@@ -898,6 +903,7 @@ const WitnessDrawerV2 = ({
       setShowsignatureModal(false);
       setShowWitnessDepositionESign(true);
       evidenceRefetch();
+      refetchCaseData();
       setCurrentArtifactNumber(null);
     } catch (error) {
       console.error("Failed to update witness deposition:", error);
@@ -919,6 +925,7 @@ const WitnessDrawerV2 = ({
       setShowUploadSignature(false);
       setShowSuccessModal(true);
       evidenceRefetch();
+      refetchCaseData();
       setCurrentArtifactNumber(null);
     } catch (error) {
       console.error("Failed to update bail bond signature:", error);
@@ -997,6 +1004,7 @@ const WitnessDrawerV2 = ({
         }
         setShowConfirmDeleteDepositionModal({ show: false, tab: {} });
         evidenceRefetch();
+        refetchCaseData();
       }
     } catch (error) {
       console.error("Failed to delete witness deposition:", error);
@@ -1023,7 +1031,7 @@ const WitnessDrawerV2 = ({
 
       const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
       // Check if we need to create or update evidence
-      const artifactNum = artifactNumber || currentArtifactNumber;
+      const artifactNum = currentArtifactNumber;
       if (artifactNum) {
         const currentActiveIndex = activeTabs?.findIndex((tab) => tab?.artifactNumber === artifactNum);
         const evidence = activeTabs?.find((tab) => tab?.artifactNumber === artifactNum);
@@ -1130,6 +1138,7 @@ const WitnessDrawerV2 = ({
       }
 
       // Also refresh evidence list to ensure server and client are in sync
+      refetchCaseData();
     } catch (error) {
       console.error("Failed to save examination draft:", error);
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
@@ -1191,7 +1200,7 @@ const WitnessDrawerV2 = ({
         `}
       </style>
       <div className="bottom-drawer-wrapper">
-        {loader && (
+        {(loader || isFilingTypeLoading || isEvidenceLoading || caseApiLoading) && (
           <div
             style={{
               width: "100vw",
