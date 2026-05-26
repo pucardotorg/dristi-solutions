@@ -32,6 +32,7 @@ function SubmissionSignatureModal({
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
   const authorizedUuid = getAuthorizedUuid(userUuid);
+  const [isUploadAction, setIsUploadAction] = useState(false); // to identify whether the flow is coming from upload signature or eSign, to handle the toast message in SubmissionsCreate page
 
   const applicationPlaceHolder = useMemo(() => {
     if (applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") {
@@ -82,6 +83,7 @@ function SubmissionSignatureModal({
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
         setOpenUploadSignatureModal(false);
+        setIsUploadAction(true);
       } catch (error) {
         setLoader(false);
         console.error("error", error);
@@ -96,8 +98,8 @@ function SubmissionSignatureModal({
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
   }, [checkSignStatus]);
 
-  
   const handleClickEsign = () => {
+    isUploadAction && setIsUploadAction(false);
     if (mockESignEnabled) {
       setIsSigned(true);
     } else {
@@ -115,7 +117,7 @@ function SubmissionSignatureModal({
       actionSaveLabel={t("PROCEED")}
       isDisabled={!isSigned}
       actionSaveOnSubmit={() => {
-        handleProceed();
+        handleProceed(isUploadAction);
       }}
       className={"submission-add-signature-modal"}
     >
