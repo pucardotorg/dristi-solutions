@@ -173,9 +173,12 @@ public class EvidenceService {
             JsonNode courtCase = searchCaseDetails(body, filingNumber);
 
             JsonNode witnessDetailsNode = courtCase.get("witnessDetails");
+            String action = body.getArtifact().getWorkflow().getAction();
             if (StringUtils.isBlank(uniqueId) || witnessDetailsNode == null || !witnessDetailsNode.isArray()) {
                 log.info("Witness list missing/invalid or uniqueId blank; falling back to legacy path. uniqueIdPresent={}", StringUtils.isNotBlank(uniqueId));
-                updateWitnessDeposition(body, courtCase);
+                if(SUBMIT.equalsIgnoreCase(action)){
+                    enrichTagForParties(body, courtCase);
+                }
                 return;
             }
             List<WitnessDetails> witnessDetails = objectMapper.convertValue(witnessDetailsNode, new TypeReference<>() {});
@@ -188,7 +191,9 @@ public class EvidenceService {
                 updateWitnessRecord(body, uniqueId, witness);
             } else {
                 log.info("No matching witness by uniqueId; using legacy update path");
-                updateWitnessDeposition(body, courtCase);
+                if(SUBMIT.equalsIgnoreCase(action)){
+                    enrichTagForParties(body, courtCase);
+                }
             }
             log.info("Successfully completed updateCaseWitness for filing number: {}", filingNumber);
 
@@ -200,7 +205,7 @@ public class EvidenceService {
         }
     }
 
-    private void updateWitnessDeposition(EvidenceRequest body, JsonNode courtCase) {
+    private void enrichTagForParties(EvidenceRequest body, JsonNode courtCase) {
         JsonNode litigants = courtCase.get("litigants");
         JsonNode representatives = courtCase.get("representatives");
         JsonNode poaHolders = courtCase.get("poaHolders");
@@ -335,7 +340,9 @@ public class EvidenceService {
 
     private void updateWitnessRecord(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
         witness.setUniqueId(uniqueId);
-        witness.setWitnessTag(body.getArtifact().getTag());
+        if(SUBMIT.equalsIgnoreCase(body.getArtifact().getWorkflow().getAction())){
+            witness.setWitnessTag(body.getArtifact().getTag());
+        }
 
         // Remark: may need to add email later to witness details
 //        updateWitnessEmails(body, witness);
