@@ -159,28 +159,26 @@ public class CaseSummaryQueryBuilderTest {
 
         String result = caseSummaryQueryBuilder.addOrderByQuery(baseQuery, pagination);
 
-        assertTrue(result.contains("SELECT * FROM cases ORDER BY cases.DROP TABLE cases ASC"));
+        assertTrue(result.contains("ORDER BY cases.createdtime DESC"));
+        assertFalse(result.contains("DROP TABLE"));
     }
 
     @Test
     public void testAddClauseIfRequired_withEmptyPreparedStmtList() {
         StringBuilder query = new StringBuilder("SELECT * FROM cases");
-        List<Object> preparedStmtList = new ArrayList<>();
 
-        caseSummaryQueryBuilder.addClauseIfRequired(query, preparedStmtList);
+        caseSummaryQueryBuilder.addClauseIfRequired(query, true);
 
         assertTrue(query.toString().contains(" WHERE "));
     }
 
     @Test
     public void testAddClauseIfRequired_withNonEmptyPreparedStmtList() {
-        StringBuilder query = new StringBuilder("SELECT * FROM cases");
-        List<Object> preparedStmtList = new ArrayList<>();
-        preparedStmtList.add("123");
+        StringBuilder query = new StringBuilder("SELECT * FROM cases WHERE tenantid = ?");
 
-        caseSummaryQueryBuilder.addClauseIfRequired(query, preparedStmtList);
+        caseSummaryQueryBuilder.addClauseIfRequired(query, false);
 
-        assertTrue(query.toString().contains(" OR "));
+        assertTrue(query.toString().contains(" AND "));
     }
 
     @Test
@@ -191,6 +189,7 @@ public class CaseSummaryQueryBuilderTest {
         String query = caseSummaryQueryBuilder.getCaseBaseQuery(criteria, preparedStmtList, preparedStmtArgList);
 
         assertTrue(query.contains("SELECT cases.id, cases.tenantid, cases.casenumber"));
+        assertTrue(query.contains(" WHERE "));
         assertTrue(query.contains("cases.id IN (  ? )"));
         assertEquals(1, preparedStmtList.size());
         assertEquals("123", preparedStmtList.get(0));
@@ -204,6 +203,7 @@ public class CaseSummaryQueryBuilderTest {
 
         String query = caseSummaryQueryBuilder.getCaseBaseQuery(criteria, preparedStmtList, preparedStmtArgList);
 
+        assertTrue(query.contains(" WHERE "));
         assertTrue(query.contains("cases.filingnumber IN (  ? )"));
         assertEquals(1, preparedStmtList.size());
         assertEquals("FN123", preparedStmtList.get(0));
@@ -217,6 +217,7 @@ public class CaseSummaryQueryBuilderTest {
 
         String query = caseSummaryQueryBuilder.getCaseBaseQuery(criteria, preparedStmtList, preparedStmtArgList);
 
+        assertTrue(query.contains(" WHERE "));
         assertTrue(query.contains("cases.cnrNumber IN (  ? )"));
         assertEquals(1, preparedStmtList.size());
         assertEquals("CNR123", preparedStmtList.get(0));
@@ -232,6 +233,8 @@ public class CaseSummaryQueryBuilderTest {
 
         String query = caseSummaryQueryBuilder.getCaseBaseQuery(criteria, preparedStmtList, preparedStmtArgList);
 
+        assertTrue(query.contains(" WHERE "));
+        assertTrue(query.contains(" AND "));
         assertTrue(query.contains("cases.id IN (  ? )"));
         assertTrue(query.contains("cases.filingnumber IN (  ? )"));
         assertTrue(query.contains("cases.cnrNumber IN (  ? )"));

@@ -9,6 +9,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.Set;
 
 @Component
 @Slf4j
@@ -77,6 +78,8 @@ public class CaseSummaryQueryBuilder {
     private static final String ORDERBY_CLAUSE = " ORDER BY cases.{orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY cases.createdtime DESC ";
     private static final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
+    private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of(
+            "createdtime", "lastmodifiedtime", "filingnumber", "status", "casenumber");
 
 
     private static final String LEFT_JOIN_QUERY =
@@ -88,11 +91,11 @@ public class CaseSummaryQueryBuilder {
                     " ) ON uc.id = rep.case_id ";
 
 
-    public void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
-        if (preparedStmtList.isEmpty()) {
+    void addClauseIfRequired(StringBuilder query, boolean isFirstCriteria) {
+        if (isFirstCriteria) {
             query.append(WHERE);
         } else {
-            query.append(OR);
+            query.append(AND);
         }
     }
 
@@ -107,13 +110,13 @@ public class CaseSummaryQueryBuilder {
     }
 
     public String addOrderByQuery(String caseSummaryQuery, @Valid Pagination pagination) {
-
-        if (isEmptyPagination(pagination) || pagination.getSortBy().contains(";")) {
+        if (isEmptyPagination(pagination)
+                || !ALLOWED_SORT_COLUMNS.contains(pagination.getSortBy().toLowerCase())) {
             return caseSummaryQuery + DEFAULT_ORDERBY_CLAUSE;
-        } else {
-            caseSummaryQuery = caseSummaryQuery + ORDERBY_CLAUSE;
         }
-        return caseSummaryQuery.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+        return (caseSummaryQuery + ORDERBY_CLAUSE)
+                .replace("{orderBy}", pagination.getSortBy().toLowerCase())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     public String addPaginationQuery(String caseSummaryQuery, List<Object> preparedStmtList, @Valid Pagination pagination, List<Integer> preparedStmtArgList) {
@@ -150,43 +153,41 @@ public class CaseSummaryQueryBuilder {
     }
 
     public String getCaseBaseQuery(@Valid CaseSearchCriteria criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        Boolean firstOrCondition = true;
-
         StringBuilder query = new StringBuilder(BASE_CASE_QUERY);
         query.append(FROM_CASES_TABLE);
+        boolean firstCriteria = true;
 
         if (criteria.getTenantId() != null) {
-            addClauseIfRequired(query, preparedStmtList);
+            addClauseIfRequired(query, firstCriteria);
             query.append(" cases.tenantid = ? ");
             preparedStmtList.add(criteria.getTenantId());
             preparedStmtArgList.add(Types.VARCHAR);
-            query.append(AND);
+            firstCriteria = false;
         }
 
         if (!CollectionUtils.isEmpty(criteria.getCaseId())) {
+            addClauseIfRequired(query, firstCriteria);
             query.append(" cases.id IN ( ").append(createQuery(criteria.getCaseId())).append(" ) ");
             addToPreparedStatement(preparedStmtList, criteria.getCaseId());
             addToPreparedStatementArgs(preparedStmtArgList, Types.VARCHAR, criteria.getCaseId());
-            firstOrCondition =false;
+            firstCriteria = false;
         }
 
         if (!CollectionUtils.isEmpty(criteria.getFilingNumber())) {
-            if(!firstOrCondition) addClauseIfRequired(query, preparedStmtList);
+            addClauseIfRequired(query, firstCriteria);
             query.append(" cases.filingnumber IN ( ").append(createQuery(criteria.getFilingNumber())).append(" ) ");
             addToPreparedStatement(preparedStmtList, criteria.getFilingNumber());
             addToPreparedStatementArgs(preparedStmtArgList, Types.VARCHAR, criteria.getFilingNumber());
-            firstOrCondition =false;
+            firstCriteria = false;
         }
 
         if (!CollectionUtils.isEmpty(criteria.getCnrNumber())) {
-            if(!firstOrCondition) addClauseIfRequired(query, preparedStmtList);
+            addClauseIfRequired(query, firstCriteria);
             query.append(" cases.cnrNumber IN ( ").append(createQuery(criteria.getCnrNumber())).append(" ) ");
             addToPreparedStatement(preparedStmtList, criteria.getCnrNumber());
             addToPreparedStatementArgs(preparedStmtArgList, Types.VARCHAR, criteria.getCnrNumber());
-            firstOrCondition =false;
         }
 
         return query.toString();
-
     }
 }
