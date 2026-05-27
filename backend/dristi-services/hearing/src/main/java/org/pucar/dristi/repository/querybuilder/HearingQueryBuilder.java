@@ -24,7 +24,8 @@ public class HearingQueryBuilder {
             " SELECT id, tenantid, hearingid, hearingtype, status, starttime, endtime,"
             + " vclink, isactive, notes, hearingsummary, courtcasenumber, casereferencenumber, cmpnumber,"
             + " createdby, lastmodifiedby, createdtime, lastmodifiedtime,"
-            + " cnrnumbers, filingnumber, applicationnumbers, presidedby, attendees, transcript, additionaldetails";
+            + " cnrnumbers, filingnumber, applicationnumbers, presidedby, attendees, transcript, additionaldetails,"
+            + " hearingdurationinmillis";
 
     private static final String BASE_ATR_QUERY = HEARING_SELECT_COLUMNS + " FROM dristi_hearing WHERE 1=1 ";
 
