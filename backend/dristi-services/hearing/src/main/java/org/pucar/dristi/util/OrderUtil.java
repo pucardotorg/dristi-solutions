@@ -109,7 +109,7 @@ public class OrderUtil {
 
         OrderSearchRequest searchRequest = OrderSearchRequest.builder()
                 .criteria(criteria)
-                .pagination(Pagination.builder().limit(100.0).offSet(0.0).order(org.pucar.dristi.web.models.Order.ASC).sortBy("createdDate").build())
+                .pagination(Pagination.builder().limit(100).offSet(0).order(org.pucar.dristi.web.models.Order.ASC).sortBy("createdDate").build())
                 .build();
 
         OrderListResponse response = getOrders(searchRequest);
@@ -129,7 +129,7 @@ public class OrderUtil {
 
         OrderSearchRequest orderSearchRequest = OrderSearchRequest.builder()
                 .criteria(orderCriteria)
-                .pagination(Pagination.builder().limit(100.0).offSet(0.0).order(org.pucar.dristi.web.models.Order.ASC).sortBy("createdDate").build())
+                .pagination(Pagination.builder().limit(100).offSet(0).order(org.pucar.dristi.web.models.Order.ASC).sortBy("createdDate").build())
                 .build();
 
         OrderListResponse orderListResponse = getOrders(orderSearchRequest);
@@ -190,7 +190,7 @@ public class OrderUtil {
 
         TaskSearchRequest taskSearchRequest = TaskSearchRequest.builder()
                 .criteria(taskCriteria)
-                .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
+                .pagination(Pagination.builder().limit(100).offSet(0).build())
                 .build();
 
         List<Task> taskList = taskUtil.searchTask(taskSearchRequest).getList();

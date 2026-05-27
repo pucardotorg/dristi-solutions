@@ -13,6 +13,7 @@ import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.advocateofficemember.AdvocateOfficeCaseMember;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -269,7 +270,7 @@ public class CaseRepository {
                 }
                 List<CourtCase> list;
                 if (caseCriteria.getPagination() != null) {
-                    list = jdbcTemplate.query(casesQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), rs -> rowMapper.extractDataWithCount(rs, totalCount));
+                    list = jdbcTemplate.query(casesQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), (ResultSetExtractor<List<CourtCase>>) rs -> rowMapper.extractDataWithCount(rs, totalCount));
                     caseCriteria.getPagination().setTotalCount((double) totalCount.get());
                 } else {
                     list = jdbcTemplate.query(casesQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), rowMapper);

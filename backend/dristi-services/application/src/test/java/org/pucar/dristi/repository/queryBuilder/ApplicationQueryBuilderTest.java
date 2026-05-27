@@ -436,8 +436,8 @@ class ApplicationQueryBuilderTest {
     @Test
     void addPagination_Query_ShouldReturnCorrectQuery_WhenPageSizeAndPageNumberAreNotNull() {
         String query = "SELECT * FROM dristi_application app WHERE app.status <> 'DELETED' AND app.id = '111'";
-        pagination.setLimit(2d);
-        pagination.setOffSet(0d);
+        pagination.setLimit(2);
+        pagination.setOffSet(0);
         List<Object> preparedStmtList = new ArrayList<>();
         String paginatedQuery = applicationQueryBuilder.addPaginationQuery(query, pagination, preparedStmtList,new ArrayList<>());
 
