@@ -236,16 +236,12 @@ const MediationFormSignaturePage = () => {
         return party;
       });
       const initialFileStoreId = sessionStorage.getItem("InitialMediationFileStoreId");
-      const fileStoreCheckOpen =
-        digitalizationAction === MediationWorkflowAction.E_SIGN
-          ? signatureDocumentId && signatureDocumentId !== mediationFileStoreId && initialFileStoreId === mediationFileStoreId
-          : true;
+      const fileStoreCheckOpen = isESign
+        ? signatureDocumentId && signatureDocumentId !== mediationFileStoreId && initialFileStoreId === mediationFileStoreId
+        : true;
       if (isUserLoggedIn) {
         const fStoreId = signatureDocumentId || fileStoreId;
-        const fileStoreCheck =
-          digitalizationAction === MediationWorkflowAction.E_SIGN
-            ? fStoreId && fStoreId !== mediationFileStoreId && initialFileStoreId === mediationFileStoreId
-            : true;
+        const fileStoreCheck = isESign ? fStoreId && fStoreId !== mediationFileStoreId && initialFileStoreId === mediationFileStoreId : true;
 
         if (fileStoreCheck) {
           await submissionService.updateDigitalization({
