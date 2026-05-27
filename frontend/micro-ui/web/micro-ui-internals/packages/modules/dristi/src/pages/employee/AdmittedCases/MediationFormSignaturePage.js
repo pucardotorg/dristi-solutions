@@ -216,9 +216,10 @@ const MediationFormSignaturePage = () => {
         }
         return party;
       });
+      const initialFileStoreId = sessionStorage.getItem("InitialMediationFileStoreId");
       if (isUserLoggedIn) {
         const fStoreId = signatureDocumentId || fileStoreId;
-        if (fStoreId && fStoreId !== mediationFileStoreId) {
+        if (fStoreId && fStoreId !== mediationFileStoreId && initialFileStoreId === mediationFileStoreId) {
           await submissionService.updateDigitalization({
             digitalizedDocument: {
               ...digitalizationServiceDetails,
@@ -243,7 +244,8 @@ const MediationFormSignaturePage = () => {
             },
           });
         }
-      } else if (signatureDocumentId && signatureDocumentId !== mediationFileStoreId) {
+        setShowSuccessModal(true);
+      } else if (signatureDocumentId && signatureDocumentId !== mediationFileStoreId && initialFileStoreId === mediationFileStoreId) {
         await submissionService.updateOpenDigitizedDocument({
           tenantId,
           documentNumber: documentNumber,
@@ -254,13 +256,16 @@ const MediationFormSignaturePage = () => {
             partyDetails: updatedPartyDetails,
           },
         });
+        setShowSuccessModal(true);
+      } else {
+        setShowToast({ label: t("SOMETHING_WENT_WRONG_REFRESH_AND_TRY_AGAIN"), error: true });
       }
-      setShowSuccessModal(true);
     } catch (error) {
       throw error;
     } finally {
       setSelectedParty(null);
       sessionStorage.removeItem("selectedParty");
+      sessionStorage.removeItem("InitialMediationFileStoreId");
     }
   };
 
@@ -385,6 +390,7 @@ const MediationFormSignaturePage = () => {
         if (!isUserLoggedIn) {
           sessionStorage.setItem("mobileNumber", mobileNumber);
         }
+        sessionStorage.setItem("InitialMediationFileStoreId", mediationFileStoreId);
         handleEsign(name, pageModule, mediationFileStoreId, setShowToast, t, getPlaceholder());
       }
     } catch (error) {
