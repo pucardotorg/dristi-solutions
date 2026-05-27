@@ -72,15 +72,6 @@ public class    EvidenceRepository {
             List<Artifact> artifactList = jdbcTemplate.query(artifactQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(),evidenceRowMapper);
             log.info("DB artifact list :: {}", artifactList);
 
-            // Fetch associated comments
-            List<String> artifactIds = new ArrayList<>();
-            for (Artifact artifact : artifactList) {
-                artifactIds.add(artifact.getId().toString());
-            }
-            if (artifactIds.isEmpty()) {
-                return artifactList;
-            }
-
             return artifactList;
         } catch (CustomException e) {
             log.error("Custom Exception while fetching artifact list");
