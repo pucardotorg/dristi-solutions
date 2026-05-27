@@ -79,17 +79,17 @@ public class OrderRepository {
                 return orderList;
             }
 
-            String statueAndSectionQuery = "";
+            String statuteAndSectionQuery = "";
             preparedStmtListSt = new ArrayList<>();
             List<Integer> preparedStmtStSecArgList = new ArrayList<>();
 
-            statueAndSectionQuery = queryBuilder.getStatuteSectionSearchQuery(ids, preparedStmtListSt,preparedStmtStSecArgList);
-            log.info("Final statue and sections query :: {}", statueAndSectionQuery);
+            statuteAndSectionQuery = queryBuilder.getStatuteSectionSearchQuery(ids, preparedStmtListSt,preparedStmtStSecArgList);
+            log.info("Final statute and sections query :: {}", statuteAndSectionQuery);
             if(preparedStmtListSt.size()!=preparedStmtStSecArgList.size()){
                 log.info("Statute Arg size :: {}, and ArgType size :: {}", preparedStmtListSt.size(),preparedStmtStSecArgList.size());
                 throw new CustomException(ORDER_SEARCH_EXCEPTION, "Arg and ArgType size mismatch for statute ");
             }
-            Map<UUID, StatuteSection> statuteSectionsMap = jdbcTemplate.query(statueAndSectionQuery, preparedStmtListSt.toArray(), preparedStmtStSecArgList.stream().mapToInt(Integer::intValue).toArray(),statuteSectionRowMapper);
+            Map<UUID, StatuteSection> statuteSectionsMap = jdbcTemplate.query(statuteAndSectionQuery, preparedStmtListSt.toArray(), preparedStmtStSecArgList.stream().mapToInt(Integer::intValue).toArray(),statuteSectionRowMapper);
             log.info("DB statute sections map :: {}", statuteSectionsMap);
             if (statuteSectionsMap != null) {
                 orderList.forEach(order -> {

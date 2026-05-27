@@ -47,7 +47,7 @@ public class CaseRepository {
     private final DocumentRowMapper caseDocumentRowMapper;
     private final LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper;
     private final LitigantDocumentRowMapper litigantDocumentRowMapper;
-    private final RepresentiveDocumentRowMapper representativeDocumentRowMapper;
+    private final RepresentativeDocumentRowMapper representativeDocumentRowMapper;
     private final RepresentingDocumentRowMapper representingDocumentRowMapper;
     private final LinkedCaseRowMapper linkedCaseRowMapper;
     private final LitigantRowMapper litigantRowMapper;
@@ -62,7 +62,7 @@ public class CaseRepository {
 
 
     @Autowired
-    public CaseRepository(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentiveDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper, CaseSummaryQueryBuilder caseSummaryQueryBuilder, CaseSummaryRowMapper caseSummaryRowMapper, OpenApiCaseSummaryQueryBuilder openApiCaseSummaryQueryBuilder, OpenApiCaseSummaryRowMapper openApiCaseSummaryRowMapper, OpenApiCaseListRowMapper openApiCaseListRowMapper, PoaDocumentRowMapper poaDocumentRowMapper, PoaRowMapper poaRowMapper, AdvocateOfficeCaseMemberRowMapper advocateOfficeCaseMemberRowMapper, CaseSearchTextRowMapper caseSearchTextRowMapper, ObjectMapper objectMapper) {
+    public CaseRepository(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentativeDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper, CaseSummaryQueryBuilder caseSummaryQueryBuilder, CaseSummaryRowMapper caseSummaryRowMapper, OpenApiCaseSummaryQueryBuilder openApiCaseSummaryQueryBuilder, OpenApiCaseSummaryRowMapper openApiCaseSummaryRowMapper, OpenApiCaseListRowMapper openApiCaseListRowMapper, PoaDocumentRowMapper poaDocumentRowMapper, PoaRowMapper poaRowMapper, AdvocateOfficeCaseMemberRowMapper advocateOfficeCaseMemberRowMapper, CaseSearchTextRowMapper caseSearchTextRowMapper, ObjectMapper objectMapper) {
         this.queryBuilder = queryBuilder;
         this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
@@ -455,13 +455,13 @@ public class CaseRepository {
         preparedStmtListDoc = new ArrayList<>();
         representativeDocumentQuery = queryBuilder.getRepresentativeDocumentSearchQuery(idsRepresentative, preparedStmtListDoc, preparedStmtArgList);
         log.info("Final representative document query :: {}", representativeDocumentQuery);
-        Map<UUID, List<Document>> caseRepresentiveDocumentMap = jdbcTemplate.query(representativeDocumentQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), representativeDocumentRowMapper);
-        if (caseRepresentiveDocumentMap != null) {
+        Map<UUID, List<Document>> caseRepresentativeDocumentMap = jdbcTemplate.query(representativeDocumentQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), representativeDocumentRowMapper);
+        if (caseRepresentativeDocumentMap != null) {
             caseCriteria.getResponseList().forEach(courtCase -> {
                 if (courtCase.getRepresentatives() != null) {
                     courtCase.getRepresentatives().forEach(rep -> {
                         if (rep != null) {
-                            rep.setDocuments(caseRepresentiveDocumentMap.get(UUID.fromString(rep.getId())));
+                            rep.setDocuments(caseRepresentativeDocumentMap.get(UUID.fromString(rep.getId())));
                         }
                     });
                 }
@@ -642,13 +642,13 @@ public class CaseRepository {
 
     private void setStatuteAndSections(CaseCriteria caseCriteria, List<String> ids) {
         List<Object> preparedStmtListDoc;
-        String statueAndSectionQuery = "";
+        String statuteAndSectionQuery = "";
         preparedStmtListDoc = new ArrayList<>();
         List<Integer> preparedStmtArgList = new ArrayList<>();
 
-        statueAndSectionQuery = queryBuilder.getStatuteSectionSearchQuery(ids, preparedStmtListDoc, preparedStmtArgList);
-        log.info("Final statute and sections query :: {}", statueAndSectionQuery);
-        Map<UUID, List<StatuteSection>> statuteSectionsMap = jdbcTemplate.query(statueAndSectionQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), statuteSectionRowMapper);
+        statuteAndSectionQuery = queryBuilder.getStatuteSectionSearchQuery(ids, preparedStmtListDoc, preparedStmtArgList);
+        log.info("Final statute and sections query :: {}", statuteAndSectionQuery);
+        Map<UUID, List<StatuteSection>> statuteSectionsMap = jdbcTemplate.query(statuteAndSectionQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), statuteSectionRowMapper);
         if (statuteSectionsMap != null) {
             caseCriteria.getResponseList().forEach(courtCase -> courtCase.setStatutesAndSections(statuteSectionsMap.get(courtCase.getId())));
         }
