@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static digit.config.ServiceConstants.CITIZEN_UPPER;
+import static digit.config.ServiceConstants.DRAFT_IN_PROGRESS;
 
 @Slf4j
 @Component
@@ -169,12 +170,12 @@ public class BailQueryBuilder {
 
         if (isCitizen) {
             if (criteria.getAsUser() != null && !criteria.getAsUser().isEmpty()) {
-                query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS' OR (bail.bail_status = 'DRAFT_IN_PROGRESS' AND bail.as_user = ?)) ");
+                query.append(" AND (bail.bail_status != '" + DRAFT_IN_PROGRESS + "' OR (bail.bail_status = '" + DRAFT_IN_PROGRESS + "' AND bail.as_user = ?)) ");
                 preparedStmtList.add(criteria.getAsUser());
                 preparedStmtArgList.add(Types.VARCHAR);
             }
         } else {
-            query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS')");
+            query.append(" AND (bail.bail_status != '" + DRAFT_IN_PROGRESS + "')");
 
         }
     }

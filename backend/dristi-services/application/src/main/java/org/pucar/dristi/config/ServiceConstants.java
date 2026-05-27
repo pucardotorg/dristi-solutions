@@ -158,4 +158,7 @@ public class ServiceConstants {
     public static final String APPLICATION_TYPE_MASTER = "ApplicationType";
 
     public static final String ERROR_WHILE_SEARCHING_FOR_BILL = "ERROR_WHILE_SEARCHING_FOR_BILL";
+
+    public static final String DRAFT_IN_PROGRESS = "DRAFT_IN_PROGRESS";
+    public static final String PENDINGESIGN = "PENDINGESIGN";
 }

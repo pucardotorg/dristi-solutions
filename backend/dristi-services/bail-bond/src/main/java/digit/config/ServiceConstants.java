@@ -166,4 +166,6 @@ public class ServiceConstants {
 
     public static final String APPEARANCE = "APPEARANCE";
 
+    public static final String DRAFT_IN_PROGRESS = "DRAFT_IN_PROGRESS";
+
 }

@@ -108,7 +108,7 @@ public class ApplicationQueryBuilder {
             if (isCitizen) {
                 if(asUser != null){
                     addClauseIfRequired(query, firstCriteria);
-                    query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.asuser = ?))");
+                    query.append("(app.status != '" + DRAFT_IN_PROGRESS + "' OR (app.status = '" + DRAFT_IN_PROGRESS + "' AND app.asuser = ?))");
                     preparedStmtList.add(asUser);
                     preparedStmtArgList.add(Types.VARCHAR);
                     firstCriteria = false;
@@ -116,7 +116,7 @@ public class ApplicationQueryBuilder {
             }
             else {
                 addClauseIfRequired(query, firstCriteria);
-                query.append("app.status NOT IN ('DRAFT_IN_PROGRESS', 'PENDINGESIGN', 'PENDINGPAYMENT')");
+                query.append("app.status NOT IN ('" + DRAFT_IN_PROGRESS + "', '" + PENDINGESIGN + "', '" + PENDINGPAYMENT + "')");
                 firstCriteria = false;
             }
 

@@ -127,7 +127,7 @@ public class EvidenceQueryBuilder {
         else if(searchCriteria.getOwner() != null && !searchCriteria.getOwner().toString().equals(asUser)) {
             queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
         }
-        queryBuilder.append(" AND (status IS NULL OR status != 'DRAFT_IN_PROGRESS') ");
+        queryBuilder.append(" AND (status IS NULL OR status != '" + DRAFT_IN_PROGRESS + "') ");
 
         return queryBuilder.toString();
     }
@@ -207,11 +207,11 @@ public class EvidenceQueryBuilder {
             queryBuilder.append(" OR ");
         }
         if (!searchCriteria.getIsCourtEmployee()) {
-            queryBuilder.append("(status IN ('PENDING_E-SIGN') AND artifactType = 'WITNESS_DEPOSITION' AND sourceId = ?)) AND status != 'DRAFT_IN_PROGRESS')");
+            queryBuilder.append("(status IN ('" + PENDING_E_SIGN + "') AND artifactType = 'WITNESS_DEPOSITION' AND sourceId = ?)) AND status != '" + DRAFT_IN_PROGRESS + "')");
             preparedStmtList.add(searchCriteria.getUserUuid());
             preparedStmtArgsList.add(java.sql.Types.VARCHAR);
         } else {
-            queryBuilder.append("(status IN ('PENDING_E-SIGN') AND artifactType = 'WITNESS_DEPOSITION')))");
+            queryBuilder.append("(status IN ('" + PENDING_E_SIGN + "') AND artifactType = 'WITNESS_DEPOSITION')))");
         }
         queryBuilder.append(" OR status IS NULL )");
         return queryBuilder.toString();

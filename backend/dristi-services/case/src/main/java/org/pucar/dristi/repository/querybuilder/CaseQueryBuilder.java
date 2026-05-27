@@ -125,7 +125,7 @@ public class CaseQueryBuilder {
                     firstCriteria = false;
                 }
                 addClauseIfRequired(query, firstCriteria);
-                query.append(" cases.status NOT IN ('DRAFT_IN_PROGRESS', 'DELETED_DRAFT') ");
+                query.append(" cases.status NOT IN ('" + DRAFT_IN_PROGRESS + "', '" + DELETED_DRAFT + "') ");
             }
 
             return query.toString();
@@ -234,7 +234,7 @@ public class CaseQueryBuilder {
                                 " AND aocm.member_user_uuid = ?" +
                                 " AND aocm.case_id = cases.id" +
                                 " AND aocm.is_active = true))" +
-                                " AND (cases.status NOT IN ('DELETED_DRAFT'))"
+                                " AND (cases.status NOT IN ('" + DELETED_DRAFT + "'))"
                         );
                 preparedStmtList.add(officeAdvocateId);
                 preparedStmtArgList.add(Types.VARCHAR);
@@ -251,7 +251,7 @@ public class CaseQueryBuilder {
                                 " SELECT dcr.case_id" +
                                 " FROM dristi_case_representatives dcr" +
                                 " WHERE dcr.advocateId = ? AND dcr.isactive = true))" +
-                        " AND (cases.status NOT IN ('DELETED_DRAFT'))");
+                        " AND (cases.status NOT IN ('" + DELETED_DRAFT + "'))");
                 preparedStmtList.add(officeAdvocateId);
                 preparedStmtArgList.add(Types.VARCHAR);
                 preparedStmtList.add(userUuid);
@@ -275,7 +275,7 @@ public class CaseQueryBuilder {
                     "        SELECT poaholders.case_id" +
                     "        FROM dristi_case_poaholders poaholders" +
                     "        WHERE poaholders.individual_id = ? AND poaholders.is_active = true))" +
-                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('DELETED_DRAFT'))");
+                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('" + DELETED_DRAFT + "'))");
             preparedStmtList.add(advocateId);
             preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(poaHolderIndividualId);
@@ -306,8 +306,8 @@ public class CaseQueryBuilder {
                     "        SELECT aocm.case_id" +
                     "        FROM dristi_advocate_office_case_member aocm" +
                     "        WHERE aocm.member_user_uuid = ? AND aocm.is_active = true))" +
-                    " OR cases.status='DRAFT_IN_PROGRESS' AND cases.createdby = ?" +
-                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('DELETED_DRAFT'))");
+                    " OR cases.status='" + DRAFT_IN_PROGRESS + "' AND cases.createdby = ?" +
+                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('" + DELETED_DRAFT + "'))");
             preparedStmtList.add(advocateId);
             preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(poaHolderIndividualId);
@@ -334,7 +334,7 @@ public class CaseQueryBuilder {
                     "        SELECT aocm.case_id" +
                     "        FROM dristi_advocate_office_case_member aocm" +
                     "        WHERE aocm.member_user_uuid = ? AND aocm.is_active = true))" +
-                    " AND (cases.status NOT IN ('DELETED_DRAFT'))");
+                    " AND (cases.status NOT IN ('" + DELETED_DRAFT + "'))");
             preparedStmtList.add(userUuid);
             preparedStmtArgList.add(Types.VARCHAR);
             return false;
@@ -353,7 +353,7 @@ public class CaseQueryBuilder {
                     " SELECT poaholders.case_id" +
                     " FROM dristi_case_poaholders poaholders" +
                     " WHERE poaholders.individual_id = ? AND poaholders.is_active = true))" +
-                    " OR cases.status ='DRAFT_IN_PROGRESS' AND cases.createdby = ?) AND (cases.status NOT IN ('DELETED_DRAFT'))");
+                    " OR cases.status ='" + DRAFT_IN_PROGRESS + "' AND cases.createdby = ?) AND (cases.status NOT IN ('" + DELETED_DRAFT + "'))");
             preparedStmtList.add(litigantId);
             preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(poaHolderIndividualId);
