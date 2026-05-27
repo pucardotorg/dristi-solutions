@@ -236,9 +236,10 @@ const MediationFormSignaturePage = () => {
         return party;
       });
       const initialFileStoreId = sessionStorage.getItem("InitialMediationFileStoreId");
+      const fileStoreCheck = digitalizationAction === MediationWorkflowAction.E_SIGN ? initialFileStoreId === mediationFileStoreId : true;
       if (isUserLoggedIn) {
         const fStoreId = signatureDocumentId || fileStoreId;
-        if (fStoreId && fStoreId !== mediationFileStoreId && initialFileStoreId === mediationFileStoreId) {
+        if (fStoreId && fStoreId !== mediationFileStoreId && fileStoreCheck) {
           await submissionService.updateDigitalization({
             digitalizedDocument: {
               ...digitalizationServiceDetails,
@@ -262,9 +263,9 @@ const MediationFormSignaturePage = () => {
               },
             },
           });
+          setShowSuccessModal(true);
         }
-        setShowSuccessModal(true);
-      } else if (signatureDocumentId && signatureDocumentId !== mediationFileStoreId && initialFileStoreId === mediationFileStoreId) {
+      } else if (signatureDocumentId && signatureDocumentId !== mediationFileStoreId && fileStoreCheck) {
         await submissionService.updateOpenDigitizedDocument({
           tenantId,
           documentNumber: documentNumber,
