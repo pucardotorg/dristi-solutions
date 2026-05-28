@@ -116,13 +116,28 @@ public class OrderUtil {
                 .criteria(orderCriteria)
                 .build();
 
-        OrderListResponse orderListResponse = getOrders(orderSearchRequest);
+        int maxRetries = configs.getOrderFetchRetryCount();
+        long retryIntervalMs = configs.getOrderFetchRetryIntervalMs();
 
-        if (orderListResponse != null && orderListResponse.getList() != null
-                && !orderListResponse.getList().isEmpty()) {
-            return orderListResponse.getList().get(0).getId().toString();
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            OrderListResponse orderListResponse = getOrders(orderSearchRequest);
+            if (orderListResponse != null && orderListResponse.getList() != null
+                    && !orderListResponse.getList().isEmpty()) {
+                return orderListResponse.getList().get(0).getId().toString();
+            }
+            if (attempt < maxRetries) {
+                log.warn("No PUBLISHED order found for scheduledHearingNumber: {} (attempt {}/{}), retrying in {}ms...",
+                        hearingId, attempt, maxRetries, retryIntervalMs);
+                try {
+                    Thread.sleep(retryIntervalMs);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.warn("Retry interrupted for hearingId: {}", hearingId);
+                    break;
+                }
+            }
         }
-        log.warn("No PUBLISHED order found for scheduledHearingNumber: {}", hearingId);
+        log.warn("No PUBLISHED order found for scheduledHearingNumber: {} after {} attempts", hearingId, maxRetries);
         return null;
     }
 }

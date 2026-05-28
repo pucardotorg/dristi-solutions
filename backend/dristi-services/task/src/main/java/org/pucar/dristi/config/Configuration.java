@@ -382,4 +382,11 @@ public class Configuration {
 
     @Value("${allowed.content.types}")
     private String[] allowedContentTypes;
+
+    // Order fetch retry config (for hearing→order race condition)
+    @Value("${egov.order.fetch.retry.count:3}")
+    private int orderFetchRetryCount;
+
+    @Value("${egov.order.fetch.retry.interval.ms:2000}")
+    private long orderFetchRetryIntervalMs;
 }

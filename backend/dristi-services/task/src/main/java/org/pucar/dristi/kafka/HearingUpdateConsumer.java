@@ -69,7 +69,7 @@ public class HearingUpdateConsumer {
                 String orderId = orderUtil.getOrderIdByHearingId(requestInfo, hearing.getHearingId(),
                         hearing.getTenantId());
                 if (orderId == null) {
-                    log.debug("orderId is null for hearingId: {}, tenantId: {}; fetchActiveWarrants will be invoked with null orderId",
+                    log.info("orderId is null for hearingId: {}, tenantId: {}; fetchActiveWarrants will be invoked with null orderId",
                             hearing.getHearingId(), hearing.getTenantId());
                 }
 
