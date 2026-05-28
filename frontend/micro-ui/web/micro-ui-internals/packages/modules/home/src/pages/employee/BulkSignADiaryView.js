@@ -353,6 +353,10 @@ function BulkSignADiaryView() {
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const newFilestore = signedDocumentUploadID || localStorageID;
+      if (!newFilestore || newFilestore === ADiarypdf) {
+        setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+        return;
+      }
       fileStoreIds.delete(newFilestore);
       if (ADiarypdf) {
         fileStoreIds.delete(ADiarypdf);

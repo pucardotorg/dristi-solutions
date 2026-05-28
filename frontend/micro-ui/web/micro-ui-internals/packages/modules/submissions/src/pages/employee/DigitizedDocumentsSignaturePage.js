@@ -210,6 +210,11 @@ const DigitizedDocumentsSignaturePage = () => {
   const handleUploadSubmit = async (uploadedFileStoreId) => {
     try {
       setLoader(true);
+      if (!uploadedFileStoreId || uploadedFileStoreId === fileStoreId) {
+        setShowToast({ label: t("UPLOAD_FAILED_ERROR"), error: true });
+        setLoader(false);
+        return;
+      }
       const payload = {
         tenantId,
         documentNumber: documentNumber,
@@ -234,6 +239,10 @@ const DigitizedDocumentsSignaturePage = () => {
     // TODO: Update call with Signed FileStore
     try {
       const fileStoreId = sessionStorage.getItem("fileStoreId");
+      if (!fileStoreId || fileStoreId === digitizedDocumentsDetails?.documents?.[0]?.fileStore) {
+        setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+        return;
+      }
       const payload = {
         tenantId,
         documentNumber: documentNumber,
