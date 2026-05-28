@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useState,useMemo } from "react";
+import React, { useEffect, useReducer, useState, useMemo, useRef } from "react";
 import { Toast } from "@egovernments/digit-ui-components";
 import ResultsTable from "./ResultsTable"
 import reducer, { initialInboxState } from "./InboxSearchComposerReducer";
@@ -26,10 +26,14 @@ const InboxSearchComposer = ({configs,headerLabel,additionalConfig,onFormValueCh
     const [type, setType] = useState("");
     const [popup, setPopup] = useState(false);
    
-    const [apiDetails, setApiDetails] = useState(configs?.apiDetails);
+    const [apiDetails, setApiDetails] = useState(() => _.cloneDeep(configs?.apiDetails));
+    const prevConfigLabelRef = useRef(configs?.label);
 
     useEffect(()=>{
-        setApiDetails(configs?.apiDetails)
+        if (prevConfigLabelRef.current === configs?.label) return;
+        prevConfigLabelRef.current = configs?.label;
+        setApiDetails(_.cloneDeep(configs?.apiDetails));
+        dispatch({ type: "obj", updatedState: initialInboxState(configs) });
     },[configs])
 
     const mobileSearchSession = Digit.Hooks.useSessionStorage("MOBILE_SEARCH_MODAL_FORM", 
@@ -176,9 +180,10 @@ const InboxSearchComposer = ({configs,headerLabel,additionalConfig,onFormValueCh
                 {
                     configs?.type === 'search' && configs?.sections?.search?.show &&
                         <div className={`section search ${showTab ? "tab": ""}`}>
-                            <SearchComponent 
-                                uiConfig={ configs?.sections?.search?.uiConfig} 
-                                header={configs?.sections?.search?.label} 
+                            <SearchComponent
+                                key={configs?.label}
+                                uiConfig={ configs?.sections?.search?.uiConfig}
+                                header={configs?.sections?.search?.label}
                                 screenType={configs.type}
                                 fullConfig={configs}
                                 data={data}
@@ -191,12 +196,13 @@ const InboxSearchComposer = ({configs,headerLabel,additionalConfig,onFormValueCh
 
                 }
                 {   
-                    configs?.type === 'search' && configs?.sections?.filter?.show && 
+                    configs?.type === 'search' && configs?.sections?.filter?.show &&
 
                         <div className="section filter">
-                            <SearchComponent 
-                                uiConfig={ configs?.sections?.filter?.uiConfig} 
-                                header={configs?.sections?.filter?.label} 
+                            <SearchComponent
+                                key={configs?.label}
+                                uiConfig={ configs?.sections?.filter?.uiConfig}
+                                header={configs?.sections?.filter?.label}
                                 screenType={configs.type}
                                 fullConfig={configs}
                                 data={data}
@@ -208,9 +214,10 @@ const InboxSearchComposer = ({configs,headerLabel,additionalConfig,onFormValueCh
                     configs?.type === 'inbox' && configs?.sections?.search?.show &&
                     <MediaQuery minWidth={426}>
                         <div className="section search">
-                            <SearchComponent 
-                                uiConfig={ configs?.sections?.search?.uiConfig} 
-                                header={configs?.sections?.search?.label} 
+                            <SearchComponent
+                                key={configs?.label}
+                                uiConfig={ configs?.sections?.search?.uiConfig}
+                                header={configs?.sections?.search?.label}
                                 screenType={configs.type}
                                 fullConfig={configs}
                                 data={data}
@@ -220,12 +227,13 @@ const InboxSearchComposer = ({configs,headerLabel,additionalConfig,onFormValueCh
                      </MediaQuery>
                 }
                 {   
-                    configs?.type === 'inbox' && configs?.sections?.filter?.show && 
+                    configs?.type === 'inbox' && configs?.sections?.filter?.show &&
                     <MediaQuery minWidth={426}>
                         <div className="section filter">
-                            <SearchComponent 
-                                uiConfig={ configs?.sections?.filter?.uiConfig} 
-                                header={configs?.sections?.filter?.label} 
+                            <SearchComponent
+                                key={configs?.label}
+                                uiConfig={ configs?.sections?.filter?.uiConfig}
+                                header={configs?.sections?.filter?.label}
                                 screenType={configs.type}
                                 fullConfig={configs}
                                 data={data}

@@ -214,6 +214,15 @@ public class Configuration {
 	@Value("${egov.idgen.courtWitnessFormat}")
 	private String courtWitnessFormat;
 
+	@Value("${dristi.prosecutionWitnessSequence}")
+	private String prosecutionWitnessSequence;
+
+	@Value("${dristi.defenceWitnessSequence}")
+	private String defenceWitnessSequence;
+
+	@Value("${dristi.courtWitnessSequence}")
+	private String courtWitnessSequence;
+
 	@Value("${egov.idgen.artifactFormat}")
 	private String artifactFormat;
 

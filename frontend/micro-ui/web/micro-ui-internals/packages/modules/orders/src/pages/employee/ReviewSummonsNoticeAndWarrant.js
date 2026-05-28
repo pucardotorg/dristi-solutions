@@ -24,6 +24,14 @@ import { DateUtils, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/U
 import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS } from "../../utils/constants";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { UploadModal } from "@egovernments/digit-ui-module-common";
+
+const parseXml = (xmlString, tagName) => {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+  const element = xmlDoc.getElementsByTagName(tagName)[0];
+  return element ? element.textContent.trim() : null;
+};
 
 const defaultSearchValues = {
   eprocess: "",
@@ -229,7 +237,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   // Initialize download PDF hook
   const { downloadPdf } = useDownloadCasePdf();
   const { uploadDocuments } = useDocumentUpload();
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const history = useHistory();
   const dayInMillisecond = 24 * 3600 * 1000;
   const todayDate = new Date().getTime();
@@ -864,6 +871,15 @@ const ReviewSummonsNoticeAndWarrant = () => {
       } else {
         localStorageID = sessionStorage.getItem("fileStoreId");
       }
+
+      if (!mockESignEnabled) {
+        const effectiveSignedId = signatureId || localStorageID;
+        if (!effectiveSignedId || effectiveSignedId === rowData?.documents?.[0]?.fileStore) {
+          setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+          return { continue: false };
+        }
+      }
+
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
 
       if (currentConfig?.label === "PENDING_RPAD_COLLECTION") {
@@ -1086,72 +1102,47 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
   }, [tenantId, rowData?.taskNumber, t]);
 
-  // XML parsing utility from BulkESignView
-  const parseXml = (xmlString, tagName) => {
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-    const element = xmlDoc.getElementsByTagName(tagName)[0];
-    return element ? element.textContent.trim() : null;
-  };
+  const fetchResponseFromXmlRequest = useCallback(
+    async (orderRequestList) => {
+      const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
+      const responses = [];
 
-  const fetchResponseFromXmlRequest = async (orderRequestList) => {
-    const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
-    const responses = [];
-
-    const requests = orderRequestList?.map(async (order) => {
-      try {
-        const formData = qs.stringify({ response: order?.request });
-        const response = await axiosInstance.post(bulkSignUrl, formData, {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          },
-        });
-
-        const data = response?.data;
-        if (parseXml(data, "status") !== "failed") {
-          responses.push({
-            taskNumber: order?.taskNumber || order?.orderNumber,
-            signedTaskData: parseXml(data, "data"),
-            signed: true,
-            errorMsg: null,
-            tenantId: tenantId,
+      for (const order of orderRequestList || []) {
+        try {
+          const formData = qs.stringify({ response: order?.request });
+          const response = await axiosInstance.post(bulkSignUrl, formData, {
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            },
           });
-        } else {
-          responses.push({
-            taskNumber: order?.taskNumber || order?.orderNumber,
-            signedTaskData: parseXml(data, "data"),
-            signed: false,
-            errorMsg: parseXml(data, "error"),
-            tenantId: tenantId,
-          });
+
+          const data = response?.data;
+          if (parseXml(data, "status") !== "failed") {
+            responses.push({
+              taskNumber: order?.taskNumber || order?.orderNumber,
+              signedTaskData: parseXml(data, "data"),
+              signed: true,
+              errorMsg: null,
+              tenantId: tenantId,
+            });
+          } else {
+            responses.push({
+              taskNumber: order?.taskNumber || order?.orderNumber,
+              signedTaskData: parseXml(data, "data"),
+              signed: false,
+              errorMsg: parseXml(data, "error"),
+              tenantId: tenantId,
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching order ${order?.orderNumber}:`, error?.message);
         }
-      } catch (error) {
-        console.error(`Error fetching order ${order?.orderNumber}:`, error?.message);
       }
-    });
 
-    await Promise.allSettled(requests);
-    return responses;
-  };
-  const bulkUploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: "Signature",
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["PDF", "PNG", "JPEG", "JPG"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, []);
+      return responses;
+    },
+    [tenantId]
+  );
 
   const onBulkSignatureSelect = (key, value) => {
     if (value?.Signature === null) {
@@ -1165,14 +1156,17 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setFileUploadError(null);
   };
 
-  const onBulkSignatureSubmit = async () => {
+  const onBulkSignatureSubmit = async (combineResult) => {
     if (bulkSignatureData?.uploadSignature?.Signature?.length > 0) {
       try {
         setShowBulkSignatureModal(false);
         handleActualBulkSign();
       } catch (error) {
         setBulkSignatureData({});
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+        setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
+        setShowToast({ label: t(errorCode), error: true, errorId });
       }
     }
   };
@@ -2573,17 +2567,17 @@ const ReviewSummonsNoticeAndWarrant = () => {
         />
       )}
       {showBulkSignatureModal && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key="bulkSignature"
           name="Signature"
-          setOpenUploadSignatureModal={setShowBulkSignatureModal}
+          onClose={() => setShowBulkSignatureModal(false)}
           onSelect={onBulkSignatureSelect}
-          config={bulkUploadModalConfig}
           formData={bulkSignatureData}
           onSubmit={onBulkSignatureSubmit}
+          isDisabled={isBulkLoading}
+          isParentLoading={isBulkLoading}
           fileUploadError={fileUploadError}
-          setFileUploadError={setFileUploadError}
         />
       )}
       {showToast && (

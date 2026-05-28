@@ -52,7 +52,7 @@ const CaseDetailsStrip = ({ t, caseDetails, advocateName, delayCondonationData, 
             <div className="sub-details-text">{t(caseDetails?.filingNumber)}</div> <hr className="vertical-line" />
           </React.Fragment>
         )}
-        <div className="sub-details-text">Stage: {t(caseDetails?.stage)}</div>
+        <div className="sub-details-text">Stage: {isLPRCase(caseDetails) ? t("CS_LPR") : t(caseDetails?.stage)}</div>
         {(Array.isArray(caseDetails?.secondaryStage) ? caseDetails?.secondaryStage?.length > 0 : caseDetails?.secondaryStage) && (
           <React.Fragment>
             <hr className="vertical-line" />

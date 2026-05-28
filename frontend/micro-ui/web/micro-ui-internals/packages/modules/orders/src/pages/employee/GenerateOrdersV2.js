@@ -1552,6 +1552,14 @@ const GenerateOrdersV2 = () => {
         localStorageID = orderPdfFileStoreID;
       }
 
+      if (!mockESignEnabled && isSigning) {
+        const effectiveSignedId = signedDoucumentUploadedID || localStorageID;
+        if (!effectiveSignedId || effectiveSignedId === orderPdfFileStoreID) {
+          setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+          return null;
+        }
+      }
+
       const fileExtension = signedOrderPdfFileName && signedDoucumentUploadedID ? getSafeFileExtension(signedOrderPdfFileName) : "pdf";
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
@@ -2709,6 +2717,7 @@ const GenerateOrdersV2 = () => {
                 errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("HEARING_RESCHEDULE_FAILED");
               const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
               setShowToast({ label: errorMsg, error: true, errorId });
+              return;
             }
           } else {
             const compositeItems = [

@@ -1,7 +1,9 @@
 import * as utils from "./utils";
+import UploadModal from "./components/UploadModal";
 
 const componentsToRegister = {
   CommonUtils: utils,
+  UploadModal,
 };
 
 export const initCommonComponents = () => {
@@ -12,3 +14,4 @@ export const initCommonComponents = () => {
 
 // Re-export all utilities for direct import
 export * from "./utils";
+export { default as UploadModal } from "./components/UploadModal";

@@ -15,13 +15,13 @@ import {
   getSuffixByBusinessCode,
   getUniqueAcronym,
 } from "../../../Utils";
-import UploadSignatureModal from "../../../components/UploadSignatureModal";
 import { Urls } from "../../../hooks";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Modal from "../../../components/Modal";
 import { mergeBreakdowns } from "./EfilingValidationUtils";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import { UploadModal } from "@egovernments/digit-ui-module-common";
 
 const getStyles = () => ({
   container: { display: "flex", flexDirection: "row", marginBottom: "50px" },
@@ -206,26 +206,6 @@ const ComplainantSignature = ({ path }) => {
     return userInfo.roles?.some((role) => role?.code === "ADVOCATE_CLERK_ROLE");
   }, [userInfo.roles]);
 
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
-
   const onSelect = (key, value) => {
     if (value?.[name] === null) {
       setFormData({});
@@ -240,17 +220,21 @@ const ComplainantSignature = ({ path }) => {
     setFileUploadError(null);
   };
 
-  const onSubmit = async () => {
+  const onSubmit = async (combineResult) => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
+        const filesToUpload = combineResult?.combinedFiles || formData?.uploadSignature?.Signature;
+        const uploadedFileId = await uploadDocuments(filesToUpload, tenantId);
         setSignatureDocumentId(uploadedFileId?.[0]?.fileStoreId);
         setUploadDoc(true);
         setDocumentUpload(false);
       } catch (error) {
         console.error("error", error);
         setFormData({});
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+        setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
+        setShowToast({ label: t(errorCode), error: true, errorId });
       }
     }
   };
@@ -962,6 +946,11 @@ const ComplainantSignature = ({ path }) => {
     let tempDocList = [...caseDocList];
     const isSignedDocumentsPresent = tempDocList?.some((doc) => doc?.documentType === "case.complaint.signed");
     if (isSignedDocumentsPresent) tempDocList = tempDocList?.filter((doc) => doc?.documentType !== "case.complaint.unsigned");
+    if (!mockESignEnabled && (!signatureDocumentId || signatureDocumentId === caseDetails?.additionalDetails?.signedCaseDocument)) {
+      setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+      setLoader(false);
+      return;
+    }
     try {
       await DRISTIService.caseUpdateService(
         {
@@ -1392,13 +1381,12 @@ const ComplainantSignature = ({ path }) => {
       </ActionBar>
 
       {isDocumentUpload && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key={name}
           name={name}
-          setOpenUploadSignatureModal={setDocumentUpload}
+          onClose={() => setDocumentUpload(false)}
           onSelect={onSelect}
-          config={uploadModalConfig}
           formData={formData}
           showWarning={true}
           warningText={t("UPLOAD_SIGNED_DOC_WARNING")}

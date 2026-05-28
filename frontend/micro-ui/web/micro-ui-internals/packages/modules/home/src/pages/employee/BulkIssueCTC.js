@@ -311,7 +311,7 @@ const BulkIssueCTC = () => {
     const responses = [];
     const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
 
-    const requests = docRequestList?.map(async (docRequest) => {
+    for (const docRequest of docRequestList || []) {
       try {
         const formData = qs.stringify({ response: docRequest?.request });
         const response = await axiosInstance.post(bulkSignUrl, formData, {
@@ -349,9 +349,8 @@ const BulkIssueCTC = () => {
       } catch (error) {
         console.error(`Error fetching document ${docRequest?.docId}:`, error?.message);
       }
-    });
+    }
 
-    await Promise.allSettled(requests);
     return responses;
   };
 
@@ -458,13 +457,20 @@ const BulkIssueCTC = () => {
 
   const handleIssueDocuments = async () => {
     const localStorageID = sessionStorage.getItem("fileStoreId");
+    const signedId = localStorageID || signedDocumentUploadId;
+    const originalId =
+      selectedRowData?.businessObject?.fileStoreId || selectedRowData?.affidavitDocument?.fileStore || selectedRowData?.documents?.[0]?.fileStore;
+    if (!signedId || signedId === originalId) {
+      setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+      return;
+    }
 
     await handleCTCDocumentAction({
       action: "ISSUE",
       documents: [
         {
           documentType: "SIGNED_CTC_APPLICATION",
-          fileStore: localStorageID || signedDocumentUploadId,
+          fileStore: signedId,
         },
       ],
       successMessage: "CTC_DOCUMENT_ISSUED_SUCCESSFULLY",

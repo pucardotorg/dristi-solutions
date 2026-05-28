@@ -135,7 +135,7 @@ function BulkMarkAsEvidenceView({ setShowToast = () => {} }) {
   const fetchResponseFromXmlRequest = async (MarkAsEvidenceRequestList) => {
     const responses = [];
 
-    const requests = MarkAsEvidenceRequestList?.map(async (MarkAsEvidence) => {
+    for (const MarkAsEvidence of MarkAsEvidenceRequestList || []) {
       try {
         // URL encoding the XML request
         const formData = qs.stringify({ response: MarkAsEvidence?.request });
@@ -169,9 +169,8 @@ function BulkMarkAsEvidenceView({ setShowToast = () => {} }) {
       } catch (error) {
         console.error(`Error fetching MarkAsEvidence ${MarkAsEvidence?.artifactNumber}:`, error?.message);
       }
-    });
+    }
 
-    await Promise.allSettled(requests);
     return responses;
   };
   const handleBulkSign = useCallback(async () => {

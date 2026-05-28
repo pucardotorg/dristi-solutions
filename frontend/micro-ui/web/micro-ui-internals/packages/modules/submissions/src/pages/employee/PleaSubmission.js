@@ -1,4 +1,5 @@
-import { FormComposerV2, Header, Loader } from "@egovernments/digit-ui-react-components";
+import { Header, Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { pleaSubmissionDetailConfig } from "../../configs/pleaSubmissionConfig";

@@ -1,4 +1,4 @@
-import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useEffect, useState } from "react";
 import { getFileByFileStore } from "../../../Utils";
