@@ -1,0 +1,37 @@
+# =============================================================================
+# dristi-monolith — lightweight runtime image (v2 / pre-built JAR)
+#
+# Assumes the fat-jar was already produced by a prior Maven step
+# (e.g. the Sonar analysis action that runs `mvn package sonar:sonar`).
+# Skips the full Maven build to significantly reduce pipeline time.
+#
+# Build context must be the repository root (parent of dristi-monolith/).
+# Example:
+#   docker build \
+#     --build-arg WORK_DIR=dristi-monolith \
+#     -f dristi-monolith/Dockerfile.v2 \
+#     -t dristi-monolith:latest .
+#
+# The fat-jar is produced by the dristi-app submodule (the only module that
+# has spring-boot-maven-plugin:repackage configured), so it lives one level
+# deeper than WORK_DIR:
+#   <WORK_DIR>/dristi-app/target/dristi-app-*.jar
+# =============================================================================
+
+FROM openjdk:24-ea-15-oraclelinux8
+
+ARG WORK_DIR
+
+WORKDIR /opt/egov
+
+# Copy the repackaged Spring Boot fat-jar from dristi-app
+COPY ${WORK_DIR}/dristi-app/target/*.jar /opt/egov/dristi-app.jar
+
+# Reuse the shared start.sh (handles JAVA_OPTS, JAVA_ARGS, debug port)
+COPY build/maven/start.sh /opt/egov/start.sh
+
+RUN chmod +x /opt/egov/start.sh
+
+EXPOSE 8080
+
+CMD ["/opt/egov/start.sh"]
