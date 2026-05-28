@@ -78,7 +78,7 @@ class BailQueryBuilderTest {
     void testGetBailDetailsByIdsQuery_withValidIds() {
         List<String> bailIds = Arrays.asList("id1", "id2", "id3");
         Pagination pagination = new Pagination();
-        pagination.setSortBy("bail.created_time");
+        pagination.setSortBy("created_time");
         pagination.setOrder(Order.ASC);
 
         List<Object> preparedStmtList = new ArrayList<>();
@@ -123,7 +123,7 @@ class BailQueryBuilderTest {
     void testAddOrderByQuery_withValidPagination() {
         String baseQuery = "SELECT * FROM dristi_bail bail";
         Pagination pagination = new Pagination();
-        pagination.setSortBy("bail.case_number");
+        pagination.setSortBy("case_number");
         pagination.setOrder(Order.ASC);
 
         String queryWithOrder = queryBuilder.addOrderByQuery(baseQuery, pagination);

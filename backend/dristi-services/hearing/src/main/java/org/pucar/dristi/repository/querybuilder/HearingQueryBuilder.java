@@ -35,7 +35,7 @@ public class HearingQueryBuilder {
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY createdtime DESC ";
     private static final String ORDERBY_CLAUSE = " ORDER BY {orderBy} {sortingOrder} ";
     private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of(
-            "createdtime", "lastmodifiedtime", "filingnumber", "hearingid", "status");
+            "createdtime", "lastmodifiedtime", "filingnumber", "hearingid", "status", "starttime");
 
     private final ObjectMapper mapper;
 

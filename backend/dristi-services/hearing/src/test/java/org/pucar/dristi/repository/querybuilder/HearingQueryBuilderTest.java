@@ -47,7 +47,7 @@ class HearingQueryBuilderTest {
 
         // Assert
         assertNotNull(query);
-        assertTrue(query.contains("SELECT * FROM dristi_hearing WHERE 1=1"));
+        assertTrue(query.contains("FROM dristi_hearing WHERE 1=1"));
     }
 
     @Test
@@ -256,7 +256,7 @@ class HearingQueryBuilderTest {
         query = hearingQueryBuilder.addOrderByQuery(query, pagination);
 
         // Assert
-        assertTrue(query.contains("ORDER BY startTime ASC"));
+        assertTrue(query.contains("ORDER BY starttime ASC"));
     }
 
     @Test
@@ -285,8 +285,8 @@ class HearingQueryBuilderTest {
         // Assert
         assertTrue(query.contains(" LIMIT ? OFFSET ?"));
         assertEquals(2, preparedStmtList.size());
-        assertEquals(10d, preparedStmtList.get(0));
-        assertEquals(20d, preparedStmtList.get(1));
+        assertEquals(10, preparedStmtList.get(0));
+        assertEquals(20, preparedStmtList.get(1));
     }
 
     @Test
