@@ -153,6 +153,7 @@ public class WarrantReissueService {
                 // 1. Terminate old warrant
                 WorkflowObject terminateWorkflow = new WorkflowObject();
                 terminateWorkflow.setAction(REISSUE_WITH_NEW_WARRANT);
+                terminateWorkflow.setDocuments(Collections.singletonList(new org.egov.common.contract.models.Document()));
                 warrant.setWorkflow(terminateWorkflow);
                 setAdditionalDetail(warrant, "previousState", currentState);
 
@@ -181,6 +182,7 @@ public class WarrantReissueService {
             } else {
                 createWorkflow.setAction(CREATE);
             }
+            createWorkflow.setDocuments(Collections.singletonList(new org.egov.common.contract.models.Document()));
             newWarrant.setWorkflow(createWorkflow);
 
             TaskRequest createRequest = TaskRequest.builder()
