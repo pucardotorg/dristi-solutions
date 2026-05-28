@@ -178,6 +178,10 @@ public class ServiceConstants {
 
     public static final String INTERNALMICROSERVICEROLE_CODE = "SYSTEM";
 
+    public static final String SYSTEM_ADMIN_ROLE_NAME = "SYSTEM_ADMIN";
+
+    public static final String SYSTEM_ADMIN_ROLE_CODE = "SYSTEM_ADMIN";
+
     public static final String INTERNALMICROSERVICEUSER_NAME = "Internal Microservice User";
 
     public static final String INTERNALMICROSERVICEUSER_USERNAME = "INTERNAL_SYSTEM_USER";

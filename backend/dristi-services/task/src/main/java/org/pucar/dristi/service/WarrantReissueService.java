@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
+import org.egov.common.contract.request.User;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.kafka.Producer;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,11 +43,48 @@ public class WarrantReissueService {
         this.objectMapper = objectMapper;
     }
 
+    private RequestInfo enrichRequestInfoWithSystemAdmin(RequestInfo requestInfo) {
+        if (requestInfo == null) {
+            requestInfo = new RequestInfo();
+        }
+
+        if (requestInfo.getUserInfo() == null) {
+            User user = User.builder()
+                    .id(0L)
+                    .type("SYSTEM")
+                    .build();
+            requestInfo.setUserInfo(user);
+        }
+
+        Role systemAdminRole = Role.builder()
+                .name(SYSTEM_ADMIN_ROLE_NAME)
+                .code(SYSTEM_ADMIN_ROLE_CODE)
+                .tenantId(config.getTenantId())
+                .build();
+
+        if (requestInfo.getUserInfo().getRoles() == null || requestInfo.getUserInfo().getRoles().isEmpty()) {
+            requestInfo.getUserInfo().setRoles(Collections.singletonList(systemAdminRole));
+        } else {
+            // Check if SYSTEM_ADMIN role already exists
+            boolean hasSystemAdmin = requestInfo.getUserInfo().getRoles().stream()
+                    .anyMatch(role -> SYSTEM_ADMIN_ROLE_CODE.equals(role.getCode()));
+            if (!hasSystemAdmin) {
+                List<Role> roles = new ArrayList<>(requestInfo.getUserInfo().getRoles());
+                roles.add(systemAdminRole);
+                requestInfo.getUserInfo().setRoles(roles);
+            }
+        }
+
+        return requestInfo;
+    }
+
     /**
      * Handles Scenario 1: Hearing Rescheduled - Update warrants in-place.
      */
     public void handleHearingRescheduled(RequestInfo requestInfo, String filingNumber, Long newHearingDate, String orderId) {
         log.info("Handling hearing reschedule for filingNumber: {}, orderId: {}", filingNumber, orderId);
+
+        requestInfo = enrichRequestInfoWithSystemAdmin(requestInfo);
 
         // 1. Fetch all ACTIVE warrants for this case
         List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, orderId, false);
