@@ -392,4 +392,7 @@ public class Configuration {
 
     @Value("${egov.order.fetch.retry.interval.ms:2000}")
     private long orderFetchRetryIntervalMs;
+
+    @Value("${egov.kafka.order.update.party.unique.id.topic}")
+    private String orderUpdatePartyUniqueIdTopic;
 }

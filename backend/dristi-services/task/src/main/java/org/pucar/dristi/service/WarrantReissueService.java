@@ -447,7 +447,7 @@ public class WarrantReissueService {
                     .order(order)
                     .build();
 
-            producer.push(config.getOrderUpdateUniqueIdTopic(), orderRequest);
+            producer.push(config.getOrderUpdatePartyUniqueIdTopic(), orderRequest);
             log.info("Pushed {} partyUniqueIds to order: {} on topic: {}", partyUniqueIds.size(), orderId, config.getOrderUpdateUniqueIdTopic());
         } catch (Exception e) {
             log.error("Error updating partyUniqueIds for order: {}", orderId, e);
