@@ -830,6 +830,226 @@ public class PaymentService {
         }
     }
 
+    public void processReconciliationV3Batch(RequestInfo requestInfo) {
+        long now = System.currentTimeMillis();
+        long thresholdTime = now - (config.getReconciliationV3ThresholdMinutes() * 60 * 1000L);
+        log.info("Starting V3 reconciliation batch | now={} | thresholdTime={} (rows with session_time <= threshold and PENDING)",
+                now, thresholdTime);
+
+        List<AuthSek> agedPending = repository.getAgedPendingAuthSeks(thresholdTime);
+        log.info("V3 reconciliation: found {} aged PENDING auth_sek rows", agedPending.size());
+
+        int successCount = 0, noActionCount = 0, errorCount = 0;
+        for (AuthSek authSek : agedPending) {
+            try {
+                boolean processed = reconcileV3(authSek, requestInfo);
+                if (processed) successCount++; else noActionCount++;
+            } catch (Exception e) {
+                errorCount++;
+                log.error("V3 reconciliation failed | billId={} | departmentId={} | error={}",
+                        authSek.getBillId(), authSek.getDepartmentId(), e.getMessage(), e);
+            }
+        }
+        log.info("V3 reconciliation batch finished | processed={} | noAction={} | errors={}",
+                successCount, noActionCount, errorCount);
+    }
+
+    /**
+     * @return true when the row was reconciled into a SUCCESS (status=Y); false when the V3 endpoint
+     *         reported no/failed transaction and we deliberately took no further action.
+     */
+    boolean reconcileV3(AuthSek authSek, RequestInfo requestInfo) throws Exception {
+        String departmentId = authSek.getDepartmentId();
+        if (departmentId == null || departmentId.isEmpty()) {
+            log.warn("Skipping V3 reconciliation | billId={} has no departmentId", authSek.getBillId());
+            return false;
+        }
+
+        log.info("V3 reconciliation: querying TransactionDetailsV3 | billId={} | departmentId={}",
+                authSek.getBillId(), departmentId);
+        ResponseEntity<String> responseEntity = treasuryUtil.callTransactionDetailsV3(
+                departmentId, config.getTransactionDetailsV3Url());
+
+        if (responseEntity == null || responseEntity.getBody() == null) {
+            log.warn("V3 reconciliation: empty response | billId={} | departmentId={}",
+                    authSek.getBillId(), departmentId);
+            return false;
+        }
+
+        String body = responseEntity.getBody();
+        log.info("V3 reconciliation raw envelope | billId={} | body={}", authSek.getBillId(), body);
+
+        TransactionDetailsV3Envelope envelope = objectMapper.readValue(body, TransactionDetailsV3Envelope.class);
+        if (envelope.getKey() == null || envelope.getData() == null) {
+            log.warn("V3 reconciliation: response missing key/data | billId={} | body={}",
+                    authSek.getBillId(), body);
+            return false;
+        }
+
+        String decryptedJson = encryptionUtil.decryptV3Response(
+                envelope.getKey(), envelope.getData(), config.getReconciliationV3ClientSecret());
+        log.info("V3 reconciliation decrypted payload | billId={} | decrypted={}",
+                authSek.getBillId(), decryptedJson);
+
+        // Some V3 responses (e.g. "Wrong GRN") prefix a few non-JSON bytes before the array.
+        String jsonArray = sliceJsonArray(decryptedJson);
+        if (jsonArray == null) {
+            log.warn("V3 reconciliation: decrypted payload does not contain a JSON array | billId={} | decrypted={}",
+                    authSek.getBillId(), decryptedJson);
+            return false;
+        }
+
+        JsonNode root = objectMapper.readTree(jsonArray);
+        if (!root.isArray() || root.isEmpty()) {
+            log.info("V3 reconciliation: no transaction yet at treasury | billId={} | departmentId={}",
+                    authSek.getBillId(), departmentId);
+            return false;
+        }
+
+        TransactionDetailsV3 v3 = objectMapper.treeToValue(root.get(0), TransactionDetailsV3.class);
+        String status = v3.getStatus() == null ? "" : v3.getStatus().trim();
+        String errorMsg = v3.getError() == null ? "" : v3.getError().trim();
+        log.info("V3 reconciliation: treasury reported status={} | error={} | billId={} | GRN={}",
+                status, errorMsg, authSek.getBillId(), v3.getGrn());
+
+        if (!TREASURY_STATUS_SUCCESS.equalsIgnoreCase(status)) {
+            log.info("V3 reconciliation: status is not Y, taking no action | billId={} | departmentId={}",
+                    authSek.getBillId(), departmentId);
+            return false;
+        }
+
+        TransactionDetails transactionDetails = v3.toTransactionDetails();
+        TreasuryPaymentData paymentData = createTreasuryPaymentData(transactionDetails, authSek);
+        treasuryEnrichment.enrichTreasuryPaymentData(paymentData, requestInfo);
+        requestInfo.getUserInfo().setTenantId(config.getEgovStateTenantId());
+
+        TreasuryPaymentRequest paymentRequest = TreasuryPaymentRequest.builder()
+                .requestInfo(requestInfo)
+                .treasuryPaymentData(paymentData)
+                .build();
+        paymentData.setFileStoreId(printPayInSlipPdf(paymentRequest));
+        log.info("V3 reconciliation: payment receipt generated | billId={} | fileStoreId={}",
+                authSek.getBillId(), paymentData.getFileStoreId());
+
+        producer.push(config.getSaveTreasuryPaymentData(), paymentRequest);
+        repository.updateAuthSekStatus(
+                authSek.getAuthToken(),
+                PaymentStatus.SUCCESS.name(),
+                COMPLETION_SOURCE_RECONCILIATION_V3,
+                System.currentTimeMillis(),
+                PROCESSED_STATUS_RECONCILED
+        );
+        log.info("V3 reconciliation: row reconciled to SUCCESS | billId={} | departmentId={}",
+                authSek.getBillId(), departmentId);
+        return true;
+    }
+
+    private String sliceJsonArray(String decrypted) {
+        if (decrypted == null) return null;
+        int start = decrypted.indexOf('[');
+        int end = decrypted.lastIndexOf(']');
+        if (start < 0 || end < 0 || end < start) return null;
+        return decrypted.substring(start, end + 1);
+    }
+
+    /**
+     * Test helper: runs the V3 reconciliation for a single departmentId.
+     * <p>
+     * dryRun=true  → call Treasury V3, decrypt, and return the parsed payload only. No auth_sek lookup,
+     *                no Kafka push, no DB writes. Safe to call repeatedly during testing.
+     * <p>
+     * dryRun=false → look up the auth_sek_session_data row by department_id and run the full
+     *                reconcileV3 path (Kafka push + DB update) just for that row.
+     */
+    public ReconciliationV3TestResponse testReconciliationV3(String departmentId, boolean dryRun, RequestInfo requestInfo) {
+        log.info("V3 reconciliation TEST | departmentId={} | dryRun={}", departmentId, dryRun);
+        ReconciliationV3TestResponse.ReconciliationV3TestResponseBuilder result =
+                ReconciliationV3TestResponse.builder().dryRun(dryRun);
+
+        try {
+            if (dryRun) {
+                return buildDryRunResult(departmentId, result);
+            }
+
+            List<AuthSek> rows = repository.getAuthSekByDepartmentId(departmentId);
+            if (rows.isEmpty()) {
+                log.warn("V3 reconciliation TEST: no auth_sek row found | departmentId={}", departmentId);
+                return result
+                        .authSekFound(false)
+                        .processed(false)
+                        .message("No auth_sek_session_data row found for departmentId=" + departmentId)
+                        .build();
+            }
+
+            AuthSek authSek = rows.get(0);
+            boolean processed = reconcileV3(authSek, requestInfo);
+            return result
+                    .authSekFound(true)
+                    .processed(processed)
+                    .envelopeReceived(true)
+                    .message(processed
+                            ? "Row reconciled to SUCCESS via V3."
+                            : "Row inspected; Treasury reported non-Y status or empty result, no action taken.")
+                    .build();
+        } catch (Exception e) {
+            log.error("V3 reconciliation TEST failed | departmentId={} | error={}", departmentId, e.getMessage(), e);
+            return result
+                    .processed(false)
+                    .message("V3 reconciliation test failed: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    private ReconciliationV3TestResponse buildDryRunResult(String departmentId,
+                                                           ReconciliationV3TestResponse.ReconciliationV3TestResponseBuilder result) throws Exception {
+        ResponseEntity<String> responseEntity = treasuryUtil.callTransactionDetailsV3(
+                departmentId, config.getTransactionDetailsV3Url());
+
+        if (responseEntity == null || responseEntity.getBody() == null) {
+            return result.envelopeReceived(false)
+                    .processed(false)
+                    .message("Treasury returned an empty response for departmentId=" + departmentId)
+                    .build();
+        }
+
+        String body = responseEntity.getBody();
+        log.info("V3 reconciliation TEST raw envelope | departmentId={} | body={}", departmentId, body);
+        TransactionDetailsV3Envelope envelope = objectMapper.readValue(body, TransactionDetailsV3Envelope.class);
+
+        if (envelope.getKey() == null || envelope.getData() == null) {
+            return result.envelopeReceived(true)
+                    .processed(false)
+                    .message("Envelope received but missing key/data fields. Body=" + body)
+                    .build();
+        }
+
+        String decryptedJson = encryptionUtil.decryptV3Response(
+                envelope.getKey(), envelope.getData(), config.getReconciliationV3ClientSecret());
+        String jsonArray = sliceJsonArray(decryptedJson);
+        result.envelopeReceived(true).decryptedPayload(jsonArray != null ? jsonArray : decryptedJson);
+
+        if (jsonArray == null) {
+            return result.processed(false)
+                    .message("Decrypted payload does not contain a JSON array.")
+                    .build();
+        }
+
+        JsonNode root = objectMapper.readTree(jsonArray);
+        if (!root.isArray() || root.isEmpty()) {
+            return result.processed(false)
+                    .message("Decrypted JSON array is empty.")
+                    .build();
+        }
+
+        TransactionDetailsV3 v3 = objectMapper.treeToValue(root.get(0), TransactionDetailsV3.class);
+        return result.processed(false)
+                .treasuryStatus(v3.getStatus() == null ? null : v3.getStatus().trim())
+                .treasuryError(v3.getError() == null ? null : v3.getError().trim())
+                .grn(v3.getGrn() == null ? null : v3.getGrn().trim())
+                .message("Dry-run successful. No DB writes or Kafka push performed.")
+                .build();
+    }
+
     private VerificationData getVerificationData(AuthSek authSek) {
         VerificationDetails details = new VerificationDetails();
         details.setDepartmentId(authSek.getDepartmentId());

@@ -104,4 +104,12 @@ public class ServiceConstants {
     public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
     public static final String PAYMENT_COMPLETED_SUCCESSFULLY = "PAYMENT_COMPLETED_SUCCESSFULLY";
 
+    // V3 reconciliation
+    public static final String MD5_ALGORITHM = "MD5";
+    public static final String AES_ALGORITHM = "AES";
+    public static final String DEPARTMENT_ID_PARAM = "DEPARTMENT_ID";
+    public static final String TREASURY_STATUS_SUCCESS = "Y";
+    public static final String COMPLETION_SOURCE_RECONCILIATION_V3 = "RECONCILIATION_V3";
+    public static final String PROCESSED_STATUS_RECONCILED = "RECONCILED";
+
 }

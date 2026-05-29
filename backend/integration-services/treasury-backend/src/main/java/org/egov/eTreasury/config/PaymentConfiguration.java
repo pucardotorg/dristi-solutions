@@ -243,4 +243,15 @@ public class PaymentConfiguration {
     @Value("${payment.reconciliation.threshold.hours}")
     private Long reconciliationThresholdHours;
 
+    // V3 Reconciliation (TransactionDetailsV3.php) — triggered by external K8s CronJob via REST.
+    // Distinct client secret because the V3 endpoint is provisioned separately from the main treasury auth.
+    @Value("${treasury-transaction-details-v3-url}")
+    private String transactionDetailsV3Url;
+
+    @Value("${treasury-reconciliation-v3-client-secret:}")
+    private String reconciliationV3ClientSecret;
+
+    @Value("${payment.reconciliation.v3.threshold.minutes:30}")
+    private Long reconciliationV3ThresholdMinutes;
+
 }

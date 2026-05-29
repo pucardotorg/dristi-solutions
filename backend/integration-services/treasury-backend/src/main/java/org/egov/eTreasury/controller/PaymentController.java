@@ -88,6 +88,24 @@ public class PaymentController {
         return ResponseEntity.ok("Batch processing initiated.");
     }
 
+    @PostMapping("/v1/_processReconciliationV3")
+    public ResponseEntity<String> processReconciliationV3Batch(@RequestBody RequestInfo requestInfo) {
+        log.info("V3 reconciliation batch triggered via endpoint");
+        paymentService.processReconciliationV3Batch(requestInfo);
+        return ResponseEntity.ok("V3 reconciliation batch initiated.");
+    }
+
+    @PostMapping("/v1/_testReconciliationV3")
+    public ResponseEntity<ReconciliationV3TestResponse> testReconciliationV3(
+            @RequestParam("departmentId") String departmentId,
+            @RequestParam(value = "dryRun", required = false, defaultValue = "true") boolean dryRun,
+            @RequestBody RequestInfo requestInfo) {
+        log.info("V3 reconciliation TEST endpoint hit | departmentId={} | dryRun={}", departmentId, dryRun);
+        ReconciliationV3TestResponse response = paymentService.testReconciliationV3(departmentId, dryRun, requestInfo);
+        response.setResponseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true));
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/v1/_doubleVerification")
     public TreasuryPaymentResponse verifyDetails(@Valid @RequestBody VerificationRequest request) {
         log.info("Performing double verification for billId: {}",  request.getVerificationData() != null ? request.getVerificationData().getBillId() : "null");

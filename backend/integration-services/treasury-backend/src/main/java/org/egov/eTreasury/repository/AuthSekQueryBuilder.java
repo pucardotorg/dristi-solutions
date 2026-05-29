@@ -43,4 +43,22 @@ public class AuthSekQueryBuilder {
         query.append(ORDER_BY_SESSION_TIME);
         return query.toString();
     }
+
+    public String getAgedPendingAuthSeksQuery(Long thresholdTime, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(BASE_QUERY);
+        query.append(FROM_TABLES);
+        query.append(" WHERE processed_status = 'PENDING' AND session_time <= ? AND department_id IS NOT NULL ");
+        preparedStmtList.add(thresholdTime);
+        query.append(ORDER_BY_SESSION_TIME);
+        return query.toString();
+    }
+
+    public String getAuthSekByDepartmentIdQuery(String departmentId, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(BASE_QUERY);
+        query.append(FROM_TABLES);
+        query.append(" WHERE department_id = ? ");
+        preparedStmtList.add(departmentId);
+        query.append(ORDER_BY_SESSION_TIME).append(" DESC ");
+        return query.toString();
+    }
 }
