@@ -1573,7 +1573,7 @@ const GenerateOrdersV2 = () => {
         localStorageID = orderPdfFileStoreID;
       }
 
-      if (!mockESignEnabled && isSigning) {
+      if (!mockESignEnabled && [OrderWorkflowAction.ESIGN]?.includes(action)) {
         const effectiveSignedId = signedDoucumentUploadedID || localStorageID;
         if (!effectiveSignedId || effectiveSignedId === orderPdfFileStoreID) {
           setShowErrorToast({ label: t("UPDATE_FAILED_ERROR"), error: true });
