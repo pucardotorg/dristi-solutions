@@ -22,7 +22,7 @@ import lombok.Builder;
 public class Pagination {
     @JsonProperty("limit")
 
-    @DecimalMax("100")
+    @Max(100)
     private Integer limit = 10;
 
     @JsonProperty("offSet")
