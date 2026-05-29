@@ -49,8 +49,7 @@ public class HearingUpdateConsumer {
     // Listens to hearing updates to trigger in-place warrant reschedule or warrant reissue
     @KafkaListener(topics = {
             "${kafka.topics.hearing.update}",
-            "${kafka.topics.hearing.create}",
-            "${update.start.end.time.topic}"
+            "${kafka.topics.hearing.create}"
     })
     public void listen(Map<String, Object> record, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
