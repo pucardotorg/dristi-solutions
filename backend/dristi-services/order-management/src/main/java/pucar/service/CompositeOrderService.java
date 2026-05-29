@@ -105,10 +105,14 @@ public class CompositeOrderService implements OrderProcessor {
 
         List<Order> itemListFormCompositeItem = getItemListFormCompositeItem(order);
         for (Order compositeOrderItem : itemListFormCompositeItem) {
-            // here call post
-            orderStrategyExecutor.afterPublish(OrderRequest.builder()
-                    .order(compositeOrderItem)
-                    .requestInfo(requestInfo).build());
+            try {
+                // here call post
+                orderStrategyExecutor.afterPublish(OrderRequest.builder()
+                        .order(compositeOrderItem)
+                        .requestInfo(requestInfo).build());
+            } catch (Exception e) {
+                log.error("Error while processing composite order, result= IN_PROGRESS,orderNumber:{}, orderType:{}", orderRequest.getOrder().getOrderNumber(), orderRequest.getOrder().getOrderType());
+            }
         }
         log.info("post processing composite order, result= SUCCESS,orderNumber:{}, orderType:{}", orderRequest.getOrder().getOrderNumber(), orderRequest.getOrder().getOrderType());
 

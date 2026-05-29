@@ -64,6 +64,9 @@ public class PublishOrderForVoluntarySubmissionWitness implements OrderUpdateStr
         log.info("operation=postProcess, result= IN_PROGRESS, orderType:{}, orderNumber:{}", orderRequest.getOrder().getOrderType(), orderRequest.getOrder().getOrderNumber());
         Order order = orderRequest.getOrder();
         String referenceId = orderUtil.getReferenceId(order);
+        if(referenceId == null){
+            return null;
+        }
         List<Application> applications = applicationUtil.searchApplications(ApplicationSearchRequest.builder()
                 .requestInfo(orderRequest.getRequestInfo())
                 .criteria(ApplicationCriteria.builder().applicationNumber(referenceId).tenantId(order.getTenantId()).build())
