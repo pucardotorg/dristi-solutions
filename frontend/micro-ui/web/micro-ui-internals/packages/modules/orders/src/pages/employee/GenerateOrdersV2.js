@@ -1552,7 +1552,7 @@ const GenerateOrdersV2 = () => {
         localStorageID = orderPdfFileStoreID;
       }
 
-      if (!mockESignEnabled && isSigning) {
+      if (!mockESignEnabled && [OrderWorkflowAction.ESIGN]?.includes(action)) {
         const effectiveSignedId = signedDoucumentUploadedID || localStorageID;
         if (!effectiveSignedId || effectiveSignedId === orderPdfFileStoreID) {
           setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
