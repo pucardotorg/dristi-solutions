@@ -5,16 +5,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.contract.request.Role;
-import org.egov.common.contract.request.User;
 import org.pucar.dristi.config.Configuration;
-import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.kafka.Producer;
+import org.pucar.dristi.util.OrderUtil;
 import org.pucar.dristi.web.models.Task;
 import org.pucar.dristi.web.models.TaskCriteria;
 import org.pucar.dristi.web.models.TaskRequest;
 import org.pucar.dristi.web.models.TaskSearchRequest;
 import org.pucar.dristi.web.models.WorkflowObject;
+import org.pucar.dristi.web.models.order.Order;
+import org.pucar.dristi.web.models.order.OrderRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -34,48 +34,18 @@ public class WarrantReissueService {
     private final Configuration config;
     private final Producer producer;
     private final ObjectMapper objectMapper;
+    private final UserService userService;
+    private final OrderUtil orderUtil;
 
     @Autowired
-    public WarrantReissueService(TaskService taskService, Configuration config, Producer producer, ObjectMapper objectMapper) {
+    public WarrantReissueService(TaskService taskService, Configuration config, Producer producer,
+                                  ObjectMapper objectMapper, UserService userService, OrderUtil orderUtil) {
         this.taskService = taskService;
         this.config = config;
         this.producer = producer;
         this.objectMapper = objectMapper;
-    }
-
-    private RequestInfo enrichRequestInfoWithSystemAdmin(RequestInfo requestInfo) {
-        if (requestInfo == null) {
-            requestInfo = new RequestInfo();
-        }
-
-        if (requestInfo.getUserInfo() == null) {
-            User user = User.builder()
-                    .id(0L)
-                    .type("SYSTEM")
-                    .build();
-            requestInfo.setUserInfo(user);
-        }
-
-        Role systemAdminRole = Role.builder()
-                .name(SYSTEM_ADMIN_ROLE_NAME)
-                .code(SYSTEM_ADMIN_ROLE_CODE)
-                .tenantId(config.getTenantId())
-                .build();
-
-        if (requestInfo.getUserInfo().getRoles() == null || requestInfo.getUserInfo().getRoles().isEmpty()) {
-            requestInfo.getUserInfo().setRoles(Collections.singletonList(systemAdminRole));
-        } else {
-            // Check if SYSTEM_ADMIN role already exists
-            boolean hasSystemAdmin = requestInfo.getUserInfo().getRoles().stream()
-                    .anyMatch(role -> SYSTEM_ADMIN_ROLE_CODE.equals(role.getCode()));
-            if (!hasSystemAdmin) {
-                List<Role> roles = new ArrayList<>(requestInfo.getUserInfo().getRoles());
-                roles.add(systemAdminRole);
-                requestInfo.getUserInfo().setRoles(roles);
-            }
-        }
-
-        return requestInfo;
+        this.userService = userService;
+        this.orderUtil = orderUtil;
     }
 
     /**
@@ -84,7 +54,7 @@ public class WarrantReissueService {
     public void handleHearingRescheduled(RequestInfo requestInfo, String filingNumber, Long newHearingDate, String orderId) {
         log.info("Handling hearing reschedule for filingNumber: {}, orderId: {}", filingNumber, orderId);
 
-        requestInfo = enrichRequestInfoWithSystemAdmin(requestInfo);
+        requestInfo = userService.createInternalMicroserviceRequestInfo();
 
         // 1. Fetch all ACTIVE warrants for this case
         List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, orderId, false);
@@ -136,6 +106,8 @@ public class WarrantReissueService {
     public void handleHearingCompletedAndNewHearingScheduled(RequestInfo requestInfo, String filingNumber, Long newHearingDate, String newOrderId) {
         log.info("Handling hearing completed and new hearing scheduled for filingNumber: {}, newOrderId: {}", filingNumber, newOrderId);
 
+        requestInfo = userService.createInternalMicroserviceRequestInfo();
+
         // Fetch all ACTIVE warrants and warrants EXPIRED today for this case
         // We pass null for orderId because we want to find the OLD warrants, which are not linked to the NEW orderId
         List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, null, true);
@@ -143,6 +115,8 @@ public class WarrantReissueService {
             log.info("No active or recently expired warrants for filing: {}", filingNumber);
             return;
         }
+
+        List<String> collectedPartyUniqueIds = new ArrayList<>();
 
         for (Task warrant : activeWarrants) {
             String currentState = warrant.getStatus();
@@ -193,9 +167,17 @@ public class WarrantReissueService {
             try {
                 Task createdWarrant = taskService.createTask(createRequest);
                 log.info("Created new warrant for reissue: {}, linked to old warrant: {}", createdWarrant.getTaskNumber(), warrant.getTaskNumber());
+                String partyUniqueId = extractPartyUniqueId(createdWarrant);
+                if (partyUniqueId != null && !collectedPartyUniqueIds.contains(partyUniqueId)) {
+                    collectedPartyUniqueIds.add(partyUniqueId);
+                }
             } catch (Exception e) {
                 log.error("Error creating new warrant for reissue", e);
             }
+        }
+
+        if (!collectedPartyUniqueIds.isEmpty() && newOrderId != null) {
+            updateOrderPartyUniqueIds(requestInfo, newOrderId, collectedPartyUniqueIds);
         }
     }
 
@@ -257,12 +239,10 @@ public class WarrantReissueService {
         return newWarrant;
     }
 
-    /**
-     * Handles bail acceptance: abandons all active warrant tasks for the case.
-     * Uses EXPIRE for PENDING_PAYMENT warrants, ABANDON for all other active states.
-     */
     public void handleBailAccepted(RequestInfo requestInfo, String filingNumber) {
         log.info("Handling bail accepted for filingNumber: {}", filingNumber);
+
+        requestInfo = userService.createInternalMicroserviceRequestInfo();
 
         List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, null, false);
         if (activeWarrants.isEmpty()) {
@@ -271,13 +251,8 @@ public class WarrantReissueService {
         }
 
         for (Task warrant : activeWarrants) {
-            String currentState = warrant.getStatus();
             WorkflowObject workflow = new WorkflowObject();
-            if (PENDING_PAYMENT.equalsIgnoreCase(currentState)) {
-                workflow.setAction(EXPIRE);
-            } else {
-                workflow.setAction(ABANDON);
-            }
+            workflow.setAction(EXPIRE);
             warrant.setWorkflow(workflow);
 
             TaskRequest taskRequest = TaskRequest.builder()
@@ -431,6 +406,51 @@ public class WarrantReissueService {
             task.setTaskDetails(taskDetails);
         } catch (Exception e) {
             log.error("Error updating hearing date in taskDetails: ", e);
+        }
+    }
+
+    private String extractPartyUniqueId(Task task) {
+        try {
+            if (task.getTaskDetails() != null) {
+                JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
+                JsonNode respondentUniqueId = taskDetails.path("respondentDetails").path("uniqueId");
+                if (!respondentUniqueId.isMissingNode() && !respondentUniqueId.isNull()) {
+                    return respondentUniqueId.asText();
+                }
+                JsonNode witnessUniqueId = taskDetails.path("witnessDetails").path("uniqueId");
+                if (!witnessUniqueId.isMissingNode() && !witnessUniqueId.isNull()) {
+                    return witnessUniqueId.asText();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not extract partyUniqueId from task: {}", task.getTaskNumber());
+        }
+        return null;
+    }
+
+    private void updateOrderPartyUniqueIds(RequestInfo requestInfo, String orderId, List<String> newPartyUniqueIds) {
+        try {
+            Order order = orderUtil.getOrderByOrderId(requestInfo, orderId);
+            List<String> partyUniqueIds = order.getPartyUniqueIds();
+            if (partyUniqueIds == null) {
+                partyUniqueIds = new ArrayList<>();
+            }
+            for (String id : newPartyUniqueIds) {
+                if (!partyUniqueIds.contains(id)) {
+                    partyUniqueIds.add(id);
+                }
+            }
+            order.setPartyUniqueIds(partyUniqueIds);
+
+            OrderRequest orderRequest = OrderRequest.builder()
+                    .requestInfo(requestInfo)
+                    .order(order)
+                    .build();
+
+            producer.push(config.getOrderUpdateUniqueIdTopic(), orderRequest);
+            log.info("Pushed {} partyUniqueIds to order: {} on topic: {}", partyUniqueIds.size(), orderId, config.getOrderUpdateUniqueIdTopic());
+        } catch (Exception e) {
+            log.error("Error updating partyUniqueIds for order: {}", orderId, e);
         }
     }
 }

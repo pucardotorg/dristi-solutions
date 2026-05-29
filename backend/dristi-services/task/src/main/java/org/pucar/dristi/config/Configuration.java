@@ -188,6 +188,9 @@ public class Configuration {
     @Value("${kafka.topics.order.update}")
     private String orderUpdateTopic;
 
+    @Value("${egov.kafka.order.update.uniqueid.topic}")
+    private String orderUpdateUniqueIdTopic;
+
     // BailBond Config
     @Value("${egov.bailbond.host}")
     private String bailBondHost;

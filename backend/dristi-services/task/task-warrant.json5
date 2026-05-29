@@ -88,6 +88,12 @@
               "active": true
             },
             {
+              "action": "EXPIRE",
+              "nextState": "EXPIRED",
+              "roles": ["SYSTEM", "SYSTEM_ADMIN"],
+              "active": true
+            },
+            {
               "action": "ABANDON",
               "nextState": "ABATED",
               "roles": ["SYSTEM", "SYSTEM_ADMIN"],
@@ -125,6 +131,12 @@
               "action": "SEND",
               "nextState": "WARRANT_SENT",
               "roles": ["TASK_EDITOR", "SYSTEM", "SYSTEM_ADMIN"],
+              "active": true
+            },
+            {
+              "action": "EXPIRE",
+              "nextState": "EXPIRED",
+              "roles": ["SYSTEM", "SYSTEM_ADMIN"],
               "active": true
             },
             {
@@ -176,6 +188,12 @@
               "action": "NOT_DELIVERED",
               "nextState": "NOT_EXECUTED",
               "roles": ["TASK_EDITOR", "SYSTEM", "SYSTEM_ADMIN", "AUTO_ESCALATE"],
+              "active": true
+            },
+            {
+              "action": "EXPIRE",
+              "nextState": "EXPIRED",
+              "roles": ["SYSTEM", "SYSTEM_ADMIN"],
               "active": true
             },
             {
