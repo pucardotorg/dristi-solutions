@@ -47,6 +47,11 @@ public class HearingRowMapper implements ResultSetExtractor<List<Hearing>> {
                         lastModifiedTime = null;
                     }
 
+                    Long hearingDurationInMillis = rs.getLong("hearingdurationinmillis");
+                    if (rs.wasNull()) {
+                        hearingDurationInMillis = null;
+                    }
+
 
                     AuditDetails auditdetails = AuditDetails.builder()
                             .createdBy(rs.getString("createdby"))
@@ -78,7 +83,7 @@ public class HearingRowMapper implements ResultSetExtractor<List<Hearing>> {
                             .presidedBy(getObjectFromJson(rs.getString("presidedby"), new TypeReference<PresidedBy>() {}))
                             .attendees(getObjectFromJson(rs.getString("attendees"), new TypeReference<List<Attendee>>() {}))
                             .transcript(getListFromJson(rs.getString("transcript")))
-                            .hearingDurationInMillis(rs.getLong("hearingdurationinmillis"))
+                            .hearingDurationInMillis(hearingDurationInMillis)
                             .build();
                 }
                 PGobject pgObject = (PGobject) rs.getObject("additionalDetails");
