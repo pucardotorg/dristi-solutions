@@ -73,26 +73,25 @@ public class HearingUpdateConsumer {
                 }
 
                 String status = hearing.getStatus() != null ? hearing.getStatus() : "";
-                if (SCHEDULED.equalsIgnoreCase(status)) {
+                String action = (hearing.getWorkflow() != null) ? hearing.getWorkflow().getAction() : null;
+
+                boolean isReschedule =
+                        UPDATE_DATE.equalsIgnoreCase(action) ||
+                        RESCHEDULE_ONGOING.equalsIgnoreCase(action);
+
+                if (isReschedule) {
+                    if (filingNumber != null) {
+                        warrantReissueService.handleHearingRescheduled(requestInfo, filingNumber, startTime,
+                                orderId);
+                    } else {
+                        log.warn("filingNumber not found in hearing update payload for scenario 1");
+                    }
+                } else if (SCHEDULED.equalsIgnoreCase(status)) {
                     if (filingNumber != null) {
                         warrantReissueService.handleHearingCompletedAndNewHearingScheduled(requestInfo, filingNumber,
                                 startTime, orderId);
                     } else {
                         log.warn("filingNumber not found in hearing update payload for scenario 2");
-                    }
-                }
-
-                if (hearing.getWorkflow() != null && hearing.getWorkflow().getAction() != null) {
-                    String action = hearing.getWorkflow().getAction();
-
-                    // Trigger on UPDATE_DATE or RESCHEDULE_ONGOING
-                    if (UPDATE_DATE.equalsIgnoreCase(action) || RESCHEDULE_ONGOING.equalsIgnoreCase(action)) {
-                        if (filingNumber != null) {
-                            warrantReissueService.handleHearingRescheduled(requestInfo, filingNumber, startTime,
-                                    orderId);
-                        } else {
-                            log.warn("filingNumber not found in hearing update payload for scenario 1");
-                        }
                     }
                 }
             }
