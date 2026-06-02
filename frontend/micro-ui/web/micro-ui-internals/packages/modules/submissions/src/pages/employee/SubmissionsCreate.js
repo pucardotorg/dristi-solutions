@@ -1437,13 +1437,22 @@ const SubmissionsCreate = ({ path }) => {
     }
   };
 
-  const updateSubmission = async (action) => {
+  const updateSubmission = async (action, isESign) => {
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
 
       const newFileStoreId = localStorageID || signedDoucumentUploadedID;
       fileStoreIds.delete(newFileStoreId);
+
+      if (!mockESignEnabled && isESign) {
+        // Only add this check for esign flow
+        const effectiveSignedId = sessionStorage.getItem("fileStoreId");
+        if (!effectiveSignedId || effectiveSignedId === applicationPdfFileStoreId) {
+          setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+          return null;
+        }
+      }
 
       const documentsFile =
         mockESignEnabled && applicationPdfFileStoreId
@@ -1719,7 +1728,7 @@ const SubmissionsCreate = ({ path }) => {
       if (applicationDetails?.status === SubmissionWorkflowState.DRAFT_IN_PROGRESS) {
         let res;
         try {
-          res = await updateSubmission(SubmissionWorkflowAction.SUBMIT);
+          res = await updateSubmission(SubmissionWorkflowAction.SUBMIT, false);
         } catch (error) {
           console.error("Failed to update submission:", error);
           const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
@@ -1854,10 +1863,11 @@ const SubmissionsCreate = ({ path }) => {
     }
   };
 
-  const handleAddSignature = async () => {
+  const handleAddSignature = async (isESign) => {
     setLoader(true);
     try {
-      const response = await updateSubmission(SubmissionWorkflowAction.ESIGN);
+      const response = await updateSubmission(SubmissionWorkflowAction.ESIGN, isESign);
+      if (!response) return;
       setShowsignatureModal(false);
       setShowPaymentModal(true);
       if (response && response?.application?.additionalDetails?.isResponseRequired) {

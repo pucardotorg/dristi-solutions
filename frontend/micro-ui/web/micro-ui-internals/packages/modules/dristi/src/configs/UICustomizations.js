@@ -853,14 +853,7 @@ export const UICustomizations = {
           ...requestCriteria.config,
           select: (data) => {
             // if (requestCriteria.url.split("/").includes("order")) {
-            return userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order")
-              ? { ...data, list: data.list?.filter((order) => order.status !== "DRAFT_IN_PROGRESS") }
-              : userRoles.includes("EMPLOYEE") && requestCriteria.url.split("/").includes("application")
-              ? {
-                  ...data,
-                  applicationList: data.applicationList?.filter((application) => !["PENDINGESIGN", "PENDINGPAYMENT"].includes(application.status)),
-                }
-              : data;
+            return data;
             // }
           },
         },
@@ -1330,7 +1323,6 @@ export const UICustomizations = {
   },
   PartiesConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
-      const { limit, offset } = requestCriteria.state?.tableForm || {};
       return {
         ...requestCriteria,
         config: {
@@ -1491,14 +1483,13 @@ export const UICustomizations = {
               ...advocateOfficeClerks,
               ...advocateOfficeAssistantAdvocates,
             ];
-            const paginatedParties = allParties.slice(offset, offset + limit);
             return {
               ...data,
               criteria: {
                 ...data.criteria[0],
                 responseList: {
                   ...data.criteria[0].responseList[0],
-                  parties: paginatedParties,
+                  parties: allParties,
                 },
               },
               totalCount: allParties?.length,

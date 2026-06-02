@@ -216,9 +216,15 @@ const MediationFormSignaturePage = () => {
         }
         return party;
       });
+      const initialFileStoreId = sessionStorage.getItem("InitialMediationFileStoreId");
+      const fileStoreCheckOpen = isESign
+        ? signatureDocumentId && signatureDocumentId !== mediationFileStoreId && initialFileStoreId === mediationFileStoreId
+        : true;
       if (isUserLoggedIn) {
         const fStoreId = signatureDocumentId || fileStoreId;
-        if (fStoreId && fStoreId !== mediationFileStoreId) {
+        const fileStoreCheck = isESign ? fStoreId && fStoreId !== mediationFileStoreId && initialFileStoreId === mediationFileStoreId : true;
+
+        if (fileStoreCheck) {
           await submissionService.updateDigitalization({
             digitalizedDocument: {
               ...digitalizationServiceDetails,
@@ -242,8 +248,9 @@ const MediationFormSignaturePage = () => {
               },
             },
           });
+          setShowSuccessModal(true);
         }
-      } else if (signatureDocumentId && signatureDocumentId !== mediationFileStoreId) {
+      } else if (fileStoreCheckOpen) {
         await submissionService.updateOpenDigitizedDocument({
           tenantId,
           documentNumber: documentNumber,
@@ -254,13 +261,16 @@ const MediationFormSignaturePage = () => {
             partyDetails: updatedPartyDetails,
           },
         });
+        setShowSuccessModal(true);
+      } else {
+        setShowToast({ label: t("SOMETHING_WENT_WRONG_REFRESH_AND_TRY_AGAIN"), error: true });
       }
-      setShowSuccessModal(true);
     } catch (error) {
       throw error;
     } finally {
       setSelectedParty(null);
       sessionStorage.removeItem("selectedParty");
+      sessionStorage.removeItem("InitialMediationFileStoreId");
     }
   };
 
@@ -385,6 +395,7 @@ const MediationFormSignaturePage = () => {
         if (!isUserLoggedIn) {
           sessionStorage.setItem("mobileNumber", mobileNumber);
         }
+        sessionStorage.setItem("InitialMediationFileStoreId", mediationFileStoreId);
         handleEsign(name, pageModule, mediationFileStoreId, setShowToast, t, getPlaceholder());
       }
     } catch (error) {

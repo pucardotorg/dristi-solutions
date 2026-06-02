@@ -138,6 +138,10 @@ const WitnessDepositionSignaturePage = () => {
     // TODO: Update call with Signed FileStore
     try {
       const fileStoreId = sessionStorage.getItem("fileStoreId");
+      if (!fileStoreId || fileStoreId === witnessDepositionDetails?.file?.fileStore) {
+        setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+        return;
+      }
       const payload = {
         tenantId,
         artifactNumber: artifactNumber,

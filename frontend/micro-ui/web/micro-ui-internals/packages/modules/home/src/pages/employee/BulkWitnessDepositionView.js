@@ -156,7 +156,7 @@ function BulkWitnessDepositionView({ setShowToast = () => {} }) {
   const fetchResponseFromXmlRequest = async (witnessDepositionRequestList) => {
     const responses = [];
 
-    const requests = witnessDepositionRequestList?.map(async (deposition) => {
+    for (const deposition of witnessDepositionRequestList || []) {
       try {
         // URL encoding the XML request
         const formData = qs.stringify({ response: deposition?.request });
@@ -190,9 +190,8 @@ function BulkWitnessDepositionView({ setShowToast = () => {} }) {
       } catch (error) {
         console.error(`Error fetching witness deposition ${deposition?.artifactNumber}:`, error?.message);
       }
-    });
+    }
 
-    await Promise.allSettled(requests);
     return responses;
   };
 

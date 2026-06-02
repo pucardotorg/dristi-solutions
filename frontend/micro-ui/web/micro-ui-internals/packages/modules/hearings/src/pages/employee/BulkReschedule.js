@@ -188,6 +188,11 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       });
 
       const newFileStoreId = signedDocumentUploadID || localStorageID;
+      if (!newFileStoreId || newFileStoreId === notificationFileStoreId) {
+        setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+        setLoader(false);
+        return;
+      }
       fileStoreIds.delete(newFileStoreId);
       await hearingService?.updateNotification({
         notification: {
