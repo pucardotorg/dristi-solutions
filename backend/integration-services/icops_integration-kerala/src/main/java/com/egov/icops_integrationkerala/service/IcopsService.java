@@ -242,6 +242,9 @@ public class IcopsService {
         String processNextHearingDate = dateStringConverter.convertLongToDate(
                 task.getTaskDetails().getCaseDetails().getHearingDate());
 
+        if (task.getDocuments() == null || task.getDocuments().isEmpty()) {
+            throw new Exception("Signed document not found in task documents");
+        }
         String signedFileStoreId = task.getDocuments().stream()
                 .filter(doc -> doc.getDocumentType() != null
                         && doc.getDocumentType().equalsIgnoreCase(SIGNED_TASK_DOCUMENT))
@@ -262,8 +265,8 @@ public class IcopsService {
         ChannelMessage channelMessage = processRequestUtil.callRescheduleRequest(authResponse, icopsPayload);
 
         icopsTracker.setRowVersion(icopsTracker.getRowVersion() + 1);
-        icopsTracker.setDeliveryStatus(channelMessage.getAcknowledgementStatus().equalsIgnoreCase("SUCCESS")
-                ? DeliveryStatus.RESCHEDULED : DeliveryStatus.FAILED);
+        boolean isSuccess = "SUCCESS".equalsIgnoreCase(channelMessage.getAcknowledgementStatus());
+        icopsTracker.setDeliveryStatus(isSuccess ? DeliveryStatus.RESCHEDULED : DeliveryStatus.FAILED);
         ZoneId zone;
         try {
             zone = ZoneId.of(config.getZoneId());
@@ -272,7 +275,7 @@ public class IcopsService {
             zone = ZoneId.of("UTC");
         }
         icopsTracker.setReceivedDate(LocalDateTime.now(zone).toString());
-        if (channelMessage.getAcknowledgementStatus().equalsIgnoreCase("SUCCESS")) {
+        if (isSuccess) {
             icopsTracker.setFailureReason(null);
         } else {
             icopsTracker.setFailureReason(channelMessage.getFailureMsg());

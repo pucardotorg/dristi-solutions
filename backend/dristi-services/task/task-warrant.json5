@@ -126,6 +126,12 @@
         //WARRANT_REISSUED as new state similar to ISSUE_WARRANT
         {
           "state": "WARRANT_REISSUED",
+          "applicationStatus": "INWORKFLOW",
+          "sla": 388000000,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
           "actions": [
             {
               "action": "SEND",

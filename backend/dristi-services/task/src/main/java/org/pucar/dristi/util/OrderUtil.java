@@ -122,7 +122,8 @@ public class OrderUtil {
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             OrderListResponse orderListResponse = getOrders(orderSearchRequest);
             if (orderListResponse != null && orderListResponse.getList() != null
-                    && !orderListResponse.getList().isEmpty()) {
+                    && !orderListResponse.getList().isEmpty()
+                    && orderListResponse.getList().get(0).getId() != null) {
                 return orderListResponse.getList().get(0).getId().toString();
             }
             if (attempt < maxRetries) {

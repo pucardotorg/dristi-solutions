@@ -50,6 +50,7 @@ public class BailBondUtil {
             }
         } catch (Exception e) {
             log.error("Error fetching bail-bond status for filingNumber: {}", filingNumber, e);
+            throw new RuntimeException("Failed to fetch bail-bond status for filingNumber: " + filingNumber, e);
         }
         return null;
     }

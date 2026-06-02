@@ -364,6 +364,11 @@ public class WarrantReissueService {
             additionalDetails.put(key, (Boolean) value);
         } else if (value == null) {
             additionalDetails.putNull(key);
+        } else {
+            // Fallback for other types (Double, nested objects, arrays, etc.)
+            log.warn("setAdditionalDetail received unexpected value type {} for key {}; converting via objectMapper",
+                    value.getClass().getName(), key);
+            additionalDetails.set(key, objectMapper.convertValue(value, JsonNode.class));
         }
 
         task.setAdditionalDetails(additionalDetails);

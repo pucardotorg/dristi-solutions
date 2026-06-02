@@ -132,16 +132,25 @@ public class Hearing {
 
 
     public Hearing addFilingNumberItem(String filingNumberItem) {
+        if (this.filingNumber == null) {
+            this.filingNumber = new ArrayList<>();
+        }
         this.filingNumber.add(filingNumberItem);
         return this;
     }
 
     public Hearing addCnrNumbersItem(String cnrNumbersItem) {
+        if (this.cnrNumbers == null) {
+            this.cnrNumbers = new ArrayList<>();
+        }
         this.cnrNumbers.add(cnrNumbersItem);
         return this;
     }
 
     public Hearing addApplicationNumbersItem(String applicationNumbersItem) {
+        if (this.applicationNumbers == null) {
+            this.applicationNumbers = new ArrayList<>();
+        }
         this.applicationNumbers.add(applicationNumbersItem);
         return this;
     }
@@ -155,11 +164,17 @@ public class Hearing {
     }
 
     public Hearing addTranscriptItem(String transcriptItem) {
+        if (this.transcript == null) {
+            this.transcript = new ArrayList<>();
+        }
         this.transcript.add(transcriptItem);
         return this;
     }
 
     public Hearing addDocumentsItem(Document documentsItem) {
+        if (this.documents == null) {
+            this.documents = new ArrayList<>();
+        }
         this.documents.add(documentsItem);
         return this;
     }
