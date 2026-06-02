@@ -122,6 +122,7 @@ public class BSSService {
     private void validateHearingNotAlreadyScheduled(OrdersToSignRequest request) {
         RequestInfo requestInfo = request.getRequestInfo();
 
+        Set<String> conflictingFilingNumbers = new LinkedHashSet<>();
         for (OrdersCriteria criterion : request.getCriteria()) {
             OrderSearchRequest searchRequest = OrderSearchRequest.builder()
                     .requestInfo(requestInfo)
@@ -142,8 +143,13 @@ public class BSSService {
 
             if (hasScheduledHearing(requestInfo, order)) {
                 log.error("Hearing already scheduled for case with filingNumber:{}, orderNumber:{}", order.getFilingNumber(), order.getOrderNumber());
-                throw new CustomException(HEARING_ALREADY_SCHEDULED_ERROR, "A hearing is already scheduled for case " + order.getFilingNumber() + ". Cannot publish an order that schedules a new hearing for this case.");
+                conflictingFilingNumbers.add(order.getFilingNumber());
             }
+        }
+
+        if (!conflictingFilingNumbers.isEmpty()) {
+            String filingNumbers = String.join(", ", conflictingFilingNumbers);
+            throw new CustomException(HEARING_ALREADY_SCHEDULED_ERROR, "A hearing is already scheduled for the following case(s): " + filingNumbers + ". Cannot publish an order that schedules a new hearing for these case(s).");
         }
     }
 
