@@ -28,6 +28,7 @@ public class ServiceConstants {
     public static final String COORDINATES_ERROR = "COORDINATES_ERROR";
     public static final String EMPTY_ORDERS_ERROR = "EMPTY_ORDERS_ERROR";
     public static final String ORDER_SIGN_ERROR = "ORDER_SIGN_ERROR";
+    public static final String ORDER_SIGN_VALIDATION_FAILED = "ORDER_SIGN_VALIDATION_FAILED";
     public static final String UPDATE_ORDER_SIGN_ERROR = "UPDATE_ORDER_SIGN_ERROR";
     public static final String UPDATE_ORDER_SIGN_ERROR_MESSAGE = "Error while updating order with signed doc";
     public static final String XML_CREATE_ERROR = "XML_CREATE_ERROR";

@@ -116,8 +116,16 @@ public class OrderQueryBuilder {
             firstCriteria = addCriteriaDate(criteria.getFromPublishedDate(), query, firstCriteria, "orders.createdDate >= ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addCriteriaDate(criteria.getToPublishedDate(), query, firstCriteria, "orders.createdDate <= ?", preparedStmtList, preparedStmtArgList);
 
-            if (criteria.getIsFuzzySearch() == null || !criteria.getIsFuzzySearch()) {
-                addCriteria(criteria.getOrderNumber() , query, firstCriteria, "LOWER(orders.orderNumber) = LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            if (criteria.getOrderNumbers() != null && !criteria.getOrderNumbers().isEmpty()) {
+                addClauseIfRequired(query, firstCriteria);
+                String placeholders = criteria.getOrderNumbers().stream().map(n -> "?").collect(Collectors.joining(","));
+                query.append("LOWER(orders.orderNumber) IN (").append(placeholders).append(")");
+                criteria.getOrderNumbers().forEach(n -> {
+                    preparedStmtList.add(n.toLowerCase());
+                    preparedStmtArgList.add(Types.VARCHAR);
+                });
+            } else if (criteria.getIsFuzzySearch() == null || !criteria.getIsFuzzySearch()) {
+                addCriteria(criteria.getOrderNumber(), query, firstCriteria, "LOWER(orders.orderNumber) = LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             } else {
                 addCriteria(criteria.getOrderNumber() == null ? null : "%" + criteria.getOrderNumber() + "%", query, firstCriteria, "LOWER(orders.orderNumber) LIKE LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             }
