@@ -48,8 +48,8 @@ class TaskManagementRepositoryTest {
                 .filingNumber("KL-2024-001")
                 .build();
         pagination = Pagination.builder()
-                .limit(10.0)
-                .offSet(0.0)
+                .limit(10)
+                .offSet(0)
                 .build();
     }
 

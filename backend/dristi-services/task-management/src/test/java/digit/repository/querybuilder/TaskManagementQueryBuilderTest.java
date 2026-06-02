@@ -138,16 +138,16 @@ class TaskManagementQueryBuilderTest {
     void addPaginationQuery_AddsLimitOffset() {
         String query = "SELECT * FROM task";
         Pagination pagination = Pagination.builder()
-                .limit(10.0)
-                .offSet(20.0)
+                .limit(10)
+                .offSet(20)
                 .build();
 
         String result = queryBuilder.addPaginationQuery(query, pagination, preparedStmtList, preparedStmtArgList);
 
         assertTrue(result.contains("LIMIT ? OFFSET ?"));
         assertEquals(2, preparedStmtList.size());
-        assertEquals(10.0, preparedStmtList.get(0));
-        assertEquals(20.0, preparedStmtList.get(1));
+        assertEquals(10, preparedStmtList.get(0));
+        assertEquals(20, preparedStmtList.get(1));
     }
 
     @Test

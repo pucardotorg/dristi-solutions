@@ -60,8 +60,8 @@ public class DigitalizedDocumentRepository {
                 .build();
         
         Pagination pagination = Pagination.builder()
-                .limit(1.0)
-                .offSet(0.0)
+                .limit(1)
+                .offSet(0)
                 .build();
 
         List<DigitalizedDocument> documents = getDigitalizedDocuments(criteria, pagination);

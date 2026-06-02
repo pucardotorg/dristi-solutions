@@ -85,8 +85,8 @@ class DiaryQueryBuilderTest {
 
         assertTrue(query.contains("LIMIT ? OFFSET ?"));
         assertEquals(2, preparedStatementValues.size());
-        assertEquals(10.0, preparedStatementValues.get(0));
-        assertEquals(5.0, preparedStatementValues.get(1));
+        assertEquals(10, preparedStatementValues.get(0));
+        assertEquals(5, preparedStatementValues.get(1));
     }
 
     @Test

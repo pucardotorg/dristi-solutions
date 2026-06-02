@@ -264,8 +264,8 @@ class AdvocateOfficeServiceTest {
     @Test
     void testSearchMembers_WithPagination() {
         Pagination pagination = Pagination.builder()
-                .limit(10.0)
-                .offSet(0.0)
+                .limit(10)
+                .offSet(0)
                 .build();
         searchRequest.setPagination(pagination);
 
