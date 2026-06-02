@@ -38,9 +38,10 @@ public class BSSService {
     private final OrderServiceFactoryProvider factoryProvider;
     private final ADiaryUtil aDiaryUtil;
     private final HearingUtil hearingUtil;
+    private final CompositeOrderService compositeOrderService;
 
     @Autowired
-    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil) {
+    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil, CompositeOrderService compositeOrderService) {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.eSignUtil = eSignUtil;
         this.fileStoreUtil = fileStoreUtil;
@@ -50,12 +51,18 @@ public class BSSService {
         this.factoryProvider = factoryProvider;
         this.aDiaryUtil = aDiaryUtil;
         this.hearingUtil = hearingUtil;
+        this.compositeOrderService = compositeOrderService;
     }
 
     public List<OrderToSign> createOrderToSignRequest(OrdersToSignRequest request) {
 
         // get location to sign here from esign
         log.info("creating order to sign request, result= IN_PROGRESS, orderCriteria:{}", request.getCriteria().size());
+
+        // Pre Validation
+        // Orders that create a new hearing (SCHEDULE_OF_HEARING_DATE / SCHEDULING_NEXT_HEARING, including
+        // such items inside a composite order) cannot be published if the case already has a scheduled hearing.
+        validateHearingNotAlreadyScheduled(request);
 
         List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
 
@@ -105,6 +112,68 @@ public class BSSService {
         log.info("creating order to sign request, result= SUCCESS, orderCriteria:{}", request.getCriteria().size());
         return orderToSign;
 
+    }
+
+    /**
+     * Validates that none of the orders selected for (bulk) signing will create a new hearing for a case
+     * that already has a hearing in SCHEDULED status. If such a conflict is found a CustomException is thrown
+     * so the user is informed before the orders are signed/published.
+     */
+    private void validateHearingNotAlreadyScheduled(OrdersToSignRequest request) {
+        RequestInfo requestInfo = request.getRequestInfo();
+
+        for (OrdersCriteria criterion : request.getCriteria()) {
+            OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(OrderCriteria.builder()
+                            .orderNumber(criterion.getOrderNumber())
+                            .tenantId(criterion.getTenantId()).build())
+                    .build();
+
+            OrderListResponse orders = orderUtil.getOrders(searchRequest);
+            if (orders.getList() == null || orders.getList().isEmpty()) {
+                continue;
+            }
+
+            Order order = orders.getList().get(0);
+            if (!createsHearing(order)) {
+                continue;
+            }
+
+            if (hasScheduledHearing(requestInfo, order)) {
+                log.error("Hearing already scheduled for case with filingNumber:{}, orderNumber:{}", order.getFilingNumber(), order.getOrderNumber());
+                throw new CustomException(HEARING_ALREADY_SCHEDULED_ERROR, "A hearing is already scheduled for case " + order.getFilingNumber() + ". Cannot publish an order that schedules a new hearing for this case.");
+            }
+        }
+    }
+
+    private boolean createsHearing(Order order) {
+        // An order carrying a nextHearingDate schedules a follow-up hearing on sign
+        // (BSSService.updateOrderWithSignDoc -> HearingUtil.preProcessScheduleNextHearing).
+        if (order.getNextHearingDate() != null) {
+            return true;
+        }
+        if (COMPOSITE.equalsIgnoreCase(order.getOrderCategory())) {
+            return compositeOrderService.getItemListFormCompositeItem(order).stream()
+                    .anyMatch(item -> isHearingCreatingOrderType(item.getOrderType()));
+        }
+        return isHearingCreatingOrderType(order.getOrderType());
+    }
+
+    private boolean isHearingCreatingOrderType(String orderType) {
+        return SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(orderType) || SCHEDULING_NEXT_HEARING.equalsIgnoreCase(orderType);
+    }
+
+    private boolean hasScheduledHearing(RequestInfo requestInfo, Order order) {
+        List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(HearingCriteria.builder()
+                        .filingNumber(order.getFilingNumber())
+                        .tenantId(order.getTenantId()).build())
+                .build());
+
+        return Optional.ofNullable(hearings).orElse(Collections.emptyList()).stream()
+                .anyMatch(hearing -> SCHEDULED.equalsIgnoreCase(hearing.getStatus()));
     }
 
 
