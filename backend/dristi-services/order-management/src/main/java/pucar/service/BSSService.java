@@ -149,7 +149,7 @@ public class BSSService {
 
         if (!conflictingFilingNumbers.isEmpty()) {
             String filingNumbers = String.join(", ", conflictingFilingNumbers);
-            throw new CustomException(HEARING_ALREADY_SCHEDULED_ERROR, "A hearing is already scheduled for the following case(s): " + filingNumbers + ". Cannot publish an order that schedules a new hearing for these case(s).");
+            throw new CustomException(HEARING_ALREADY_SCHEDULED_ERROR, "A hearing is already scheduled for the following case(s): " + filingNumbers);
         }
     }
 
