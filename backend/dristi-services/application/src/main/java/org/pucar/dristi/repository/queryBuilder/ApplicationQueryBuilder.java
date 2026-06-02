@@ -46,7 +46,7 @@ public class ApplicationQueryBuilder {
     private static final String ORDERBY_CLAUSE = " ORDER BY app.{orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY app.createdtime DESC ";
     private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of(
-            "createdtime", "lastmodifiedtime", "filingnumber", "applicationnumber", "status");
+            "createdtime", "lastmodifiedtime", "filingnumber", "applicationnumber", "status", "applicationcmpnumber");
     private static final String BASE_APPLICATION_EXIST_QUERY = "SELECT COUNT(*) FROM dristi_application app";
 
     public String checkApplicationExistQuery(String filingNumber, String cnrNumber, String applicationNumber, List<Object> preparedStmtList) {

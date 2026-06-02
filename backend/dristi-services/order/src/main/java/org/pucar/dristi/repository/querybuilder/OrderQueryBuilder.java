@@ -42,7 +42,7 @@ public class OrderQueryBuilder {
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY orders.createdtime DESC ";
     private static final String ORDERBY_CLAUSE = " ORDER BY orders.{orderBy} {sortingOrder} ";
     private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of(
-            "createdtime", "lastmodifiedtime", "filingnumber", "ordernumber", "status");
+            "createdtime", "lastmodifiedtime", "filingnumber", "ordernumber", "status", "createddate");
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
 
 

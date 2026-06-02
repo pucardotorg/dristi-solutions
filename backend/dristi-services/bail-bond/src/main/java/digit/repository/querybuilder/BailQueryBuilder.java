@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -66,6 +67,11 @@ public class BailQueryBuilder {
     private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of(
             "created_time", "last_modified_time", "bail_status", "filing_number",
             "cnr_number", "case_number", "bail_type");
+    // Maps UI-supplied camelCase SELECT aliases (lowercased) to their actual DB column names,
+    // so the ORDER BY bail.{orderBy} clause references a real column and not the alias.
+    private static final Map<String, String> SORT_COLUMN_ALIASES = Map.of(
+            "bailcreatedtime", "created_time",
+            "baillastmodifiedtime", "last_modified_time");
 
 
     public String getPaginatedBailIdsQuery(RequestInfo requestInfo, BailSearchCriteria criteria, Pagination pagination, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
@@ -112,12 +118,17 @@ public class BailQueryBuilder {
     }
 
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isPaginationInvalid(pagination)
-                || !ALLOWED_SORT_COLUMNS.contains(pagination.getSortBy().toLowerCase())) {
+        if (isPaginationInvalid(pagination)) {
+            return query + DEFAULT_ORDERBY_CLAUSE;
+        }
+        // Resolve any UI alias (e.g. bailCreatedTime) to its real column before whitelist validation.
+        String requestedSort = pagination.getSortBy().toLowerCase();
+        String sortColumn = SORT_COLUMN_ALIASES.getOrDefault(requestedSort, requestedSort);
+        if (!ALLOWED_SORT_COLUMNS.contains(sortColumn)) {
             return query + DEFAULT_ORDERBY_CLAUSE;
         }
         return (query + ORDER_BY_CLAUSE)
-                .replace("{orderBy}", pagination.getSortBy().toLowerCase())
+                .replace("{orderBy}", sortColumn)
                 .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
