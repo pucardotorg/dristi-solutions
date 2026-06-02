@@ -59,6 +59,7 @@ public class HearingRowMapperTest {
         when(rs.getString("status")).thenReturn("status1");
         when(rs.getLong("starttime")).thenReturn(1625140800000L);
         when(rs.getLong("endtime")).thenReturn(1625144400000L);
+        when(rs.getLong("hearingdurationinmillis")).thenReturn(3600000L);
         when(rs.getString("vclink")).thenReturn("link1");
         when(rs.getBoolean("isactive")).thenReturn(true);
         when(rs.getString("notes")).thenReturn("note1");
@@ -126,6 +127,7 @@ public class HearingRowMapperTest {
         when(rs.getString("status")).thenReturn("status1");
         when(rs.getLong("starttime")).thenReturn(0L);
         when(rs.getLong("endtime")).thenReturn(1625140800000L);
+        when(rs.getLong("hearingdurationinmillis")).thenReturn(3600000L);
         when(rs.getString("vclink")).thenReturn("link1");
         when(rs.getBoolean("isactive")).thenReturn(true);
         when(rs.getString("notes")).thenReturn("note1");
