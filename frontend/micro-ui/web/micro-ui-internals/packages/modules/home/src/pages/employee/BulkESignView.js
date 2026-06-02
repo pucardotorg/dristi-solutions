@@ -349,7 +349,9 @@ function BulkESignView() {
       });
     } catch (e) {
       const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
-      setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true, errorId });
+      const backendError = e?.response?.data?.Errors?.[0];
+      const label = backendError?.code === "HEARING_ALREADY_SCHEDULED_ERROR" ? backendError?.message : t("FAILED_TO_PERFORM_BULK_SIGN");
+      setShowToast({ label, error: true, errorId });
       console.error("Failed to perform bulk sign", e?.message);
     } finally {
       setIsLoading(false);
