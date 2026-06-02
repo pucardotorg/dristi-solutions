@@ -1025,7 +1025,21 @@ public class EvidenceService {
             }
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
-                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
+                double cx = coordinate.getX();
+                double cy = coordinate.getY();
+                double pageWidth = coordinate.getPageWidth();
+                double pageHeight = coordinate.getPageHeight();
+                int sigWidth = config.getEsignSignatureWidth();
+                int sigHeight = config.getEsignSignatureHeight();
+                if (pageWidth > 0) {
+                    cx = Math.min(cx, pageWidth - sigWidth);
+                    cx = Math.max(cx, 0);
+                }
+                if (pageHeight > 0) {
+                    cy = Math.min(cy, pageHeight - sigHeight);
+                    cy = Math.max(cy, 0);
+                }
+                String coord = (int) Math.floor(cx) + "," + (int) Math.floor(cy);
                 String txnId = java.util.UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
                 java.time.ZonedDateTime timestamp = java.time.ZonedDateTime.now(java.time.ZoneId.of(config.getZoneId()));
