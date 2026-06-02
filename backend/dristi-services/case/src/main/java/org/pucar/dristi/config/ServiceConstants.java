@@ -261,6 +261,10 @@ public class ServiceConstants {
     public static final String FILING = "FILING";
     public static final String LP = "LP";
     public static final String POA_JOIN_CASE = "poaJoinCase";
+
+    public static final String DRAFT_IN_PROGRESS = "DRAFT_IN_PROGRESS";
+    public static final String DELETED_DRAFT = "DELETED_DRAFT";
+
     private ServiceConstants() {
     }
 }

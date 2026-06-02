@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
-public class RepresentiveDocumentRowMapper implements ResultSetExtractor<Map<UUID,List<Document>>> {
+public class RepresentativeDocumentRowMapper implements ResultSetExtractor<Map<UUID,List<Document>>> {
     public Map<UUID,List<Document>> extractData(ResultSet rs) {
         Map<UUID, List<Document>> documentMap = new LinkedHashMap<>();
         try {

@@ -64,7 +64,7 @@ class CaseRepositoryTest {
     private LitigantDocumentRowMapper litigantDocumentRowMapper;
 
     @Mock
-    private RepresentiveDocumentRowMapper representativeDocumentRowMapper;
+    private RepresentativeDocumentRowMapper representativeDocumentRowMapper;
 
     @Mock
     private RepresentingDocumentRowMapper representingDocumentRowMapper;
@@ -165,8 +165,8 @@ class CaseRepositoryTest {
         Map<UUID, List<Document>> caseLinkedCaseDocumentMap = new HashMap<>();
         caseLinkedCaseDocumentMap.put(courtCase.getId(), courtCase.getLinkedCases().get(0).getDocuments());
 
-        Map<UUID, List<Document>> caseRepresentiveDocumentMap = new HashMap<>();
-        caseRepresentiveDocumentMap.put(courtCase.getId(), courtCase.getRepresentatives().get(0).getDocuments());
+        Map<UUID, List<Document>> caseRepresentativeDocumentMap = new HashMap<>();
+        caseRepresentativeDocumentMap.put(courtCase.getId(), courtCase.getRepresentatives().get(0).getDocuments());
 
         Map<UUID, List<Document>> caseRepresentingDocumentMap = new HashMap<>();
         caseRepresentingDocumentMap.put(courtCase.getId(), courtCase.getRepresentatives().get(0).getRepresenting().get(0).getDocuments());
@@ -202,7 +202,7 @@ class CaseRepositoryTest {
         lenient().when(jdbcTemplate.query(anyString(), any(Object[].class), any(), any(LinkedCaseDocumentRowMapper.class))).thenReturn(caseLinkedCaseDocumentMap);
 
         lenient().when(queryBuilder.getRepresentativeDocumentSearchQuery(anyList(), any(),any())).thenReturn("SELECT * FROM dristi_document_case WHERE ...");
-        lenient().when(jdbcTemplate.query(anyString(), any(Object[].class), any(), any(RepresentiveDocumentRowMapper.class))).thenReturn(caseRepresentiveDocumentMap);
+        lenient().when(jdbcTemplate.query(anyString(), any(Object[].class), any(), any(RepresentativeDocumentRowMapper.class))).thenReturn(caseRepresentativeDocumentMap);
 
         lenient().when(queryBuilder.getRepresentingDocumentSearchQuery(anyList(), any(),any())).thenReturn("SELECT * FROM dristi_document_case WHERE ...");
         lenient().when(jdbcTemplate.query(anyString(), any(Object[].class), any(), any(RepresentingDocumentRowMapper.class))).thenReturn(caseRepresentingDocumentMap);
@@ -249,8 +249,8 @@ class CaseRepositoryTest {
         Map<UUID, List<Document>> caseLinkedCaseDocumentMap = new HashMap<>();
         caseLinkedCaseDocumentMap.put(courtCase.getId(), courtCase.getLinkedCases().get(0).getDocuments());
 
-        Map<UUID, List<Document>> caseRepresentiveDocumentMap = new HashMap<>();
-        caseRepresentiveDocumentMap.put(courtCase.getId(), courtCase.getRepresentatives().get(0).getDocuments());
+        Map<UUID, List<Document>> caseRepresentativeDocumentMap = new HashMap<>();
+        caseRepresentativeDocumentMap.put(courtCase.getId(), courtCase.getRepresentatives().get(0).getDocuments());
 
         Map<UUID, List<Document>> caseRepresentingDocumentMap = new HashMap<>();
         caseRepresentingDocumentMap.put(courtCase.getId(), courtCase.getRepresentatives().get(0).getRepresenting().get(0).getDocuments());
@@ -296,8 +296,8 @@ class CaseRepositoryTest {
         Map<UUID, List<Document>> caseLinkedCaseDocumentMap = new HashMap<>();
         caseLinkedCaseDocumentMap.put(courtCase.getId(), courtCase.getLinkedCases().get(0).getDocuments());
 
-        Map<UUID, List<Document>> caseRepresentiveDocumentMap = new HashMap<>();
-        caseRepresentiveDocumentMap.put(courtCase.getId(), courtCase.getRepresentatives().get(0).getDocuments());
+        Map<UUID, List<Document>> caseRepresentativeDocumentMap = new HashMap<>();
+        caseRepresentativeDocumentMap.put(courtCase.getId(), courtCase.getRepresentatives().get(0).getDocuments());
 
         Map<UUID, List<Document>> caseRepresentingDocumentMap = new HashMap<>();
         caseRepresentingDocumentMap.put(courtCase.getId(), courtCase.getRepresentatives().get(0).getRepresenting().get(0).getDocuments());

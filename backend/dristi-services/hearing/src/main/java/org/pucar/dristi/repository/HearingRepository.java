@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -110,11 +111,12 @@ public class HearingRepository {
 
     public List<Hearing> checkHearingsExist(Hearing hearing) {
         HearingCriteria criteria = HearingCriteria.builder().hearingId(hearing.getHearingId()).tenantId(hearing.getTenantId()).build();
-        Pagination pagination = Pagination.builder().limit(1.0).offSet((double) 0).build();
+        Pagination pagination = Pagination.builder().limit(1).offSet(0).build();
         HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder().criteria(criteria).pagination(pagination).build();
         return getHearings(hearingSearchRequest);
     }
 
+    @Transactional
     public void updateTranscriptAdditionalAttendees(Hearing hearing) {
         List<Object> preparedStmtList = new ArrayList<>();
         String hearingUpdateQuery = queryBuilder.buildUpdateTranscriptAdditionalAttendeesQuery(preparedStmtList, hearing);
@@ -124,7 +126,7 @@ public class HearingRepository {
     }
 
     public List<Hearing> getHearingsWithMultipleHearings() {
-        String sql = "SELECT * FROM dristi_hearing WHERE filingNumber->>0 IN (SELECT filingNumber->>0 FROM dristi_hearing GROUP BY filingNumber->>0 HAVING COUNT(*) > 1) ORDER BY filingNumber->>0, createdTime;";
+        String sql = queryBuilder.getHearingsWithMultipleFilingNumbersQuery();
         return readerJdbcTemplate.query(sql, rowMapper);
     }
 }

@@ -9,10 +9,13 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static digit.config.ServiceConstants.CITIZEN_UPPER;
+import static digit.config.ServiceConstants.DRAFT_IN_PROGRESS;
 
 @Slf4j
 @Component
@@ -59,8 +62,16 @@ public class BailQueryBuilder {
             " LEFT JOIN dristi_surety srt ON bail.id = srt.bail_id AND srt.is_active = true " +
             " LEFT JOIN dristi_surety_document surety_doc ON srt.id = surety_doc.surety_id AND surety_doc.is_active = true ";
 
-    private static final String ORDER_BY_CLAUSE = " ORDER BY {orderBy} {sortingOrder} ";
+    private static final String ORDER_BY_CLAUSE = " ORDER BY bail.{orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY bail.created_time DESC ";
+    private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of(
+            "created_time", "last_modified_time", "bail_status", "filing_number",
+            "cnr_number", "case_number", "bail_type");
+    // Maps UI-supplied camelCase SELECT aliases (lowercased) to their actual DB column names,
+    // so the ORDER BY bail.{orderBy} clause references a real column and not the alias.
+    private static final Map<String, String> SORT_COLUMN_ALIASES = Map.of(
+            "bailcreatedtime", "created_time",
+            "baillastmodifiedtime", "last_modified_time");
 
 
     public String getPaginatedBailIdsQuery(RequestInfo requestInfo, BailSearchCriteria criteria, Pagination pagination, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
@@ -109,10 +120,16 @@ public class BailQueryBuilder {
     public String addOrderByQuery(String query, Pagination pagination) {
         if (isPaginationInvalid(pagination)) {
             return query + DEFAULT_ORDERBY_CLAUSE;
-        } else {
-            query = query + ORDER_BY_CLAUSE;
-            return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
         }
+        // Resolve any UI alias (e.g. bailCreatedTime) to its real column before whitelist validation.
+        String requestedSort = pagination.getSortBy().toLowerCase();
+        String sortColumn = SORT_COLUMN_ALIASES.getOrDefault(requestedSort, requestedSort);
+        if (!ALLOWED_SORT_COLUMNS.contains(sortColumn)) {
+            return query + DEFAULT_ORDERBY_CLAUSE;
+        }
+        return (query + ORDER_BY_CLAUSE)
+                .replace("{orderBy}", sortColumn)
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     private static boolean isPaginationInvalid(Pagination pagination) {
@@ -164,12 +181,12 @@ public class BailQueryBuilder {
 
         if (isCitizen) {
             if (criteria.getAsUser() != null && !criteria.getAsUser().isEmpty()) {
-                query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS' OR (bail.bail_status = 'DRAFT_IN_PROGRESS' AND bail.as_user = ?)) ");
+                query.append(" AND (bail.bail_status != '" + DRAFT_IN_PROGRESS + "' OR (bail.bail_status = '" + DRAFT_IN_PROGRESS + "' AND bail.as_user = ?)) ");
                 preparedStmtList.add(criteria.getAsUser());
                 preparedStmtArgList.add(Types.VARCHAR);
             }
         } else {
-            query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS')");
+            query.append(" AND (bail.bail_status != '" + DRAFT_IN_PROGRESS + "')");
 
         }
     }

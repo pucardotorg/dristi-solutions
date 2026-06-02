@@ -2,7 +2,7 @@ package digit.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.Max;
 import org.springframework.validation.annotation.Validated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,7 +22,7 @@ public class Pagination {
 
     @JsonProperty("limit")
 
-    @DecimalMax("100")
+    @Max(100)
     private Integer limit = 10;
 
     @JsonProperty("offSet")

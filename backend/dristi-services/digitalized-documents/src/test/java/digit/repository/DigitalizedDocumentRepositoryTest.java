@@ -49,8 +49,8 @@ class DigitalizedDocumentRepositoryTest {
                 .build();
 
         pagination = Pagination.builder()
-                .limit(10.0)
-                .offSet(0.0)
+                .limit(10)
+                .offSet(0)
                 .build();
 
         document = DigitalizedDocument.builder()

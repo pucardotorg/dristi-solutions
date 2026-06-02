@@ -113,7 +113,7 @@ class CtcApplicationQueryBuilderTest {
 
     @Test
     void addPaginationQuery_shouldAddLimitAndOffset() {
-        Pagination pagination = Pagination.builder().limit(10.0).offSet(5.0).build();
+        Pagination pagination = Pagination.builder().limit(10).offSet(5).build();
         List<Object> stmtList = new ArrayList<>();
         List<Integer> argList = new ArrayList<>();
 
@@ -121,8 +121,8 @@ class CtcApplicationQueryBuilderTest {
 
         assertTrue(result.endsWith("LIMIT ? OFFSET ?"));
         assertEquals(2, stmtList.size());
-        assertEquals(10.0, stmtList.get(0));
-        assertEquals(5.0, stmtList.get(1));
+        assertEquals(10, stmtList.get(0));
+        assertEquals(5, stmtList.get(1));
     }
 
     @Test
@@ -144,11 +144,11 @@ class CtcApplicationQueryBuilderTest {
     @Test
     void addOrderByQuery_shouldUseCustomSort() {
         Pagination pagination = Pagination.builder()
-                .sortBy("ctc.case_number").order(OrderPagination.ASC).build();
+                .sortBy("ctc_application_number").order(OrderPagination.ASC).build();
 
         String result = queryBuilder.addOrderByQuery("SELECT * FROM ctc", pagination);
 
-        assertTrue(result.contains("ORDER BY ctc.case_number ASC"));
+        assertTrue(result.contains("ORDER BY ctc_application_number ASC"));
     }
 
     @Test

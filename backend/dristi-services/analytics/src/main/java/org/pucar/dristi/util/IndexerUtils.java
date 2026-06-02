@@ -1054,7 +1054,7 @@ public class IndexerUtils {
         org.pucar.dristi.web.models.ctcApplication.CtcApplicationSearchRequest searchRequest = org.pucar.dristi.web.models.ctcApplication.CtcApplicationSearchRequest
                 .builder()
                 .requestInfo(requestInfo)
-                .pagination(Pagination.builder().limit(1.0).offSet(0.0).build())
+                .pagination(Pagination.builder().limit(1).offSet(0).build())
                 .criteria(searchCriteria)
                 .build();
         List<org.pucar.dristi.web.models.ctcApplication.CtcApplication> ctcApplicationList = ctcApplicationUtil

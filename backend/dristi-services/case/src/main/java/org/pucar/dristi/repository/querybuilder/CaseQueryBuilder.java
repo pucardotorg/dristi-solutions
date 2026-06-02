@@ -3,6 +3,7 @@ package org.pucar.dristi.repository.querybuilder;
 import java.sql.Types;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
@@ -35,6 +36,9 @@ public class CaseQueryBuilder {
     private static final String FROM_CASES_TABLE = " FROM dristi_cases cases";
     private static final String ORDERBY_CLAUSE = " ORDER BY cases.{orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY cases.createdtime DESC ";
+    private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of(
+            "createdtime", "lastmodifiedtime", "filingnumber", "courtcasenumber",
+            "registrationdate", "filingdate", "status", "cnrnumber", "cmpnumber", "casenumber");
 
     private static final String DOCUMENT_SELECT_QUERY_CASE = "Select doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore," +
             " doc.documentuid as documentuid, doc.additionaldetails as docadditionaldetails, doc.case_id as case_id, doc.isactive as isactive, doc.linked_case_id as linked_case_id, doc.litigant_id as litigant_id, doc.representative_id as representative_id, doc.representing_id as representing_id, doc.poaholder_id as poaholder_id ";
@@ -121,7 +125,7 @@ public class CaseQueryBuilder {
                     firstCriteria = false;
                 }
                 addClauseIfRequired(query, firstCriteria);
-                query.append(" cases.status NOT IN ('DRAFT_IN_PROGRESS', 'DELETED_DRAFT') ");
+                query.append(" cases.status NOT IN ('" + DRAFT_IN_PROGRESS + "', '" + DELETED_DRAFT + "') ");
             }
 
             return query.toString();
@@ -230,7 +234,7 @@ public class CaseQueryBuilder {
                                 " AND aocm.member_user_uuid = ?" +
                                 " AND aocm.case_id = cases.id" +
                                 " AND aocm.is_active = true))" +
-                                " AND (cases.status NOT IN ('DELETED_DRAFT'))"
+                                " AND (cases.status NOT IN ('" + DELETED_DRAFT + "'))"
                         );
                 preparedStmtList.add(officeAdvocateId);
                 preparedStmtArgList.add(Types.VARCHAR);
@@ -247,7 +251,7 @@ public class CaseQueryBuilder {
                                 " SELECT dcr.case_id" +
                                 " FROM dristi_case_representatives dcr" +
                                 " WHERE dcr.advocateId = ? AND dcr.isactive = true))" +
-                        " AND (cases.status NOT IN ('DELETED_DRAFT'))");
+                        " AND (cases.status NOT IN ('" + DELETED_DRAFT + "'))");
                 preparedStmtList.add(officeAdvocateId);
                 preparedStmtArgList.add(Types.VARCHAR);
                 preparedStmtList.add(userUuid);
@@ -271,7 +275,7 @@ public class CaseQueryBuilder {
                     "        SELECT poaholders.case_id" +
                     "        FROM dristi_case_poaholders poaholders" +
                     "        WHERE poaholders.individual_id = ? AND poaholders.is_active = true))" +
-                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('DELETED_DRAFT'))");
+                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('" + DELETED_DRAFT + "'))");
             preparedStmtList.add(advocateId);
             preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(poaHolderIndividualId);
@@ -302,8 +306,8 @@ public class CaseQueryBuilder {
                     "        SELECT aocm.case_id" +
                     "        FROM dristi_advocate_office_case_member aocm" +
                     "        WHERE aocm.member_user_uuid = ? AND aocm.is_active = true))" +
-                    " OR cases.status='DRAFT_IN_PROGRESS' AND cases.createdby = ?" +
-                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('DELETED_DRAFT'))");
+                    " OR cases.status='" + DRAFT_IN_PROGRESS + "' AND cases.createdby = ?" +
+                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('" + DELETED_DRAFT + "'))");
             preparedStmtList.add(advocateId);
             preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(poaHolderIndividualId);
@@ -330,7 +334,7 @@ public class CaseQueryBuilder {
                     "        SELECT aocm.case_id" +
                     "        FROM dristi_advocate_office_case_member aocm" +
                     "        WHERE aocm.member_user_uuid = ? AND aocm.is_active = true))" +
-                    " AND (cases.status NOT IN ('DELETED_DRAFT'))");
+                    " AND (cases.status NOT IN ('" + DELETED_DRAFT + "'))");
             preparedStmtList.add(userUuid);
             preparedStmtArgList.add(Types.VARCHAR);
             return false;
@@ -349,7 +353,7 @@ public class CaseQueryBuilder {
                     " SELECT poaholders.case_id" +
                     " FROM dristi_case_poaholders poaholders" +
                     " WHERE poaholders.individual_id = ? AND poaholders.is_active = true))" +
-                    " OR cases.status ='DRAFT_IN_PROGRESS' AND cases.createdby = ?) AND (cases.status NOT IN ('DELETED_DRAFT'))");
+                    " OR cases.status ='" + DRAFT_IN_PROGRESS + "' AND cases.createdby = ?) AND (cases.status NOT IN ('" + DELETED_DRAFT + "'))");
             preparedStmtList.add(litigantId);
             preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(poaHolderIndividualId);
@@ -483,10 +487,9 @@ public class CaseQueryBuilder {
     private static void addRegistrationDateCriteria(CaseCriteria criteria, boolean firstCriteria, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtListArgs) {
         if (criteria.getRegistrationFromDate() != null && criteria.getRegistrationToDate() != null) {
             if (!firstCriteria)
-                query.append(" OR cases.registrationdate>= ? AND cases.registrationdate <= ? ").append(" ");
-            else {
-                query.append(" WHERE cases.registrationdate>= ? AND cases.registrationdate <= ? ").append(" ");
-            }
+                query.append(" AND (cases.registrationdate >= ? AND cases.registrationdate <= ?) ");
+            else
+                query.append(" WHERE (cases.registrationdate >= ? AND cases.registrationdate <= ?) ");
             preparedStmtList.add(criteria.getRegistrationFromDate());
             preparedStmtListArgs.add(Types.TIMESTAMP);
             preparedStmtList.add(criteria.getRegistrationToDate());
@@ -497,10 +500,9 @@ public class CaseQueryBuilder {
     private static void addRegistrationDateCriteria(CaseSummaryListCriteria criteria, boolean firstCriteria, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtListArgs) {
         if (criteria.getRegistrationFromDate() != null && criteria.getRegistrationToDate() != null) {
             if (!firstCriteria)
-                query.append(" OR cases.registrationdate>= ? AND cases.registrationdate <= ? ").append(" ");
-            else {
-                query.append(" WHERE cases.registrationdate>= ? AND cases.registrationdate <= ? ").append(" ");
-            }
+                query.append(" AND (cases.registrationdate >= ? AND cases.registrationdate <= ?) ");
+            else
+                query.append(" WHERE (cases.registrationdate >= ? AND cases.registrationdate <= ?) ");
             preparedStmtList.add(criteria.getRegistrationFromDate());
             preparedStmtListArgs.add(Types.TIMESTAMP);
             preparedStmtList.add(criteria.getRegistrationToDate());
@@ -511,10 +513,9 @@ public class CaseQueryBuilder {
     private static boolean addFilingDateCriteria(CaseCriteria criteria, boolean firstCriteria, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtListArgs) {
         if (criteria.getFilingFromDate() != null && criteria.getFilingToDate() != null) {
             if (!firstCriteria)
-                query.append(" OR cases.filingdate >= ? AND cases.filingdate <= ? ").append(" ");
-            else {
-                query.append(" WHERE cases.filingdate >= ? AND cases.filingdate <= ? ").append(" ");
-            }
+                query.append(" AND (cases.filingdate >= ? AND cases.filingdate <= ?) ");
+            else
+                query.append(" WHERE (cases.filingdate >= ? AND cases.filingdate <= ?) ");
             preparedStmtList.add(criteria.getFilingFromDate());
             preparedStmtListArgs.add(Types.TIMESTAMP);
             preparedStmtList.add(criteria.getFilingToDate());
@@ -527,10 +528,9 @@ public class CaseQueryBuilder {
     private static boolean addFilingDateCriteria(CaseSummaryListCriteria criteria, boolean firstCriteria, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtListArgs) {
         if (criteria.getFilingFromDate() != null && criteria.getFilingToDate() != null) {
             if (!firstCriteria)
-                query.append(" OR cases.filingdate >= ? AND cases.filingdate <= ? ").append(" ");
-            else {
-                query.append(" WHERE cases.filingdate >= ? AND cases.filingdate <= ? ").append(" ");
-            }
+                query.append(" AND (cases.filingdate >= ? AND cases.filingdate <= ?) ");
+            else
+                query.append(" WHERE (cases.filingdate >= ? AND cases.filingdate <= ?) ");
             preparedStmtList.add(criteria.getFilingFromDate());
             preparedStmtListArgs.add(Types.TIMESTAMP);
             preparedStmtList.add(criteria.getFilingToDate());
@@ -976,6 +976,10 @@ public class CaseQueryBuilder {
         return TOTAL_COUNT_QUERY.replace("{baseQuery}", baseQuery);
     }
 
+    public String addCountWindowFunction(String query) {
+        return query.replace(" SELECT cases.id", " SELECT COUNT(*) OVER() AS total_count, cases.id");
+    }
+
     public String addPaginationQuery(String query, List<Object> preparedStatementList, Pagination pagination, List<Integer> preparedStmtArgList) {
         preparedStatementList.add(pagination.getLimit());
         preparedStmtArgList.add(Types.INTEGER);
@@ -987,12 +991,13 @@ public class CaseQueryBuilder {
     }
 
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isEmptyPagination(pagination) || pagination.getSortBy().contains(";")) {
+        if (isEmptyPagination(pagination)
+                || !ALLOWED_SORT_COLUMNS.contains(pagination.getSortBy().toLowerCase())) {
             return query + DEFAULT_ORDERBY_CLAUSE;
-        } else {
-            query = query + ORDERBY_CLAUSE;
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+        return (query + ORDERBY_CLAUSE)
+                .replace("{orderBy}", pagination.getSortBy().toLowerCase())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     public String addOrderByQueryForLitigants(String query) {

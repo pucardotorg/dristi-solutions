@@ -33,7 +33,7 @@ class DigitalizedDocumentQueryBuilderTest {
     @Test
     void testAddPaginationQuery_AppendsLimitOffsetAndBindsParams() {
         String base = "SELECT * FROM digitalized_document dd";
-        Pagination pagination = Pagination.builder().limit(10d).offSet(5d).build();
+        Pagination pagination = Pagination.builder().limit(10).offSet(5).build();
         List<Object> ps = new ArrayList<>();
         List<Integer> argTypes = new ArrayList<>();
 
@@ -41,11 +41,11 @@ class DigitalizedDocumentQueryBuilderTest {
 
         assertEquals(base + " LIMIT ? OFFSET ?", result);
         assertEquals(2, ps.size());
-        assertEquals(10d, ps.get(0));
-        assertEquals(5d, ps.get(1));
+        assertEquals(10, ps.get(0));
+        assertEquals(5, ps.get(1));
         assertEquals(2, argTypes.size());
-        assertEquals(Types.DOUBLE, argTypes.get(0));
-        assertEquals(Types.DOUBLE, argTypes.get(1));
+        assertEquals(Types.INTEGER, argTypes.get(0));
+        assertEquals(Types.INTEGER, argTypes.get(1));
     }
 
     @Test

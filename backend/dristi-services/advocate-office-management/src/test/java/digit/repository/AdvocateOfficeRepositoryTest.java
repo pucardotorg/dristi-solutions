@@ -49,8 +49,8 @@ class AdvocateOfficeRepositoryTest {
                 .build();
 
         pagination = Pagination.builder()
-                .limit(10.0)
-                .offSet(0.0)
+                .limit(10)
+                .offSet(0)
                 .build();
 
         mockMembers = Arrays.asList(
@@ -218,8 +218,8 @@ class AdvocateOfficeRepositoryTest {
     void testGetMembers_WithPaginationNoTotalCount() {
         String query = "SELECT * FROM members WHERE office_advocate_id = ?";
         Pagination paginationWithoutTotal = Pagination.builder()
-                .limit(5.0)
-                .offSet(0.0)
+                .limit(5)
+                .offSet(0)
                 .build();
 
         when(queryBuilder.getMemberSearchQuery(any(), anyList(), anyList())).thenReturn(query);

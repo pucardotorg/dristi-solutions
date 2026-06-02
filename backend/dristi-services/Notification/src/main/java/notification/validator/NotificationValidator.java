@@ -33,7 +33,7 @@ public class NotificationValidator {
         NotificationCriteria criteria = NotificationCriteria.builder()
                 .id(notification.getId().toString()).build();
 
-        List<Notification> notifications = repository.getNotifications(criteria, Pagination.builder().limit(1.0).offSet(0.0).build());
+        List<Notification> notifications = repository.getNotifications(criteria, Pagination.builder().limit(1).offSet(0).build());
 
         if (notifications.isEmpty()) {
             throw new CustomException("INVALID_NOTIFICATION_UPDATE", "Notification does not exist in DB");

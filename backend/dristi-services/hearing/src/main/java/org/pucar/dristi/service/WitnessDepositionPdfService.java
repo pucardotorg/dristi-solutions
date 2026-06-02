@@ -46,7 +46,7 @@ public class WitnessDepositionPdfService {
 
     public ByteArrayResource getWitnessDepositionPdf(HearingSearchRequest searchRequest) {
         HearingCriteria criteria = searchRequest.getCriteria();
-        Pagination pagination = Pagination.builder().limit(1D).offSet(0D).build();
+        Pagination pagination = Pagination.builder().limit(1).offSet(0).build();
         HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
                 .criteria(criteria).pagination(pagination).build();
         Optional<Hearing> optionalHearing = hearingRepository.getHearings(hearingSearchRequest).stream().findFirst();

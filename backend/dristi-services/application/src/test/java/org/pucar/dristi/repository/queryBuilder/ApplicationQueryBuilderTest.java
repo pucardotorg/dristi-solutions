@@ -56,14 +56,14 @@ class ApplicationQueryBuilderTest {
         ApplicationQueryBuilder queryBuilder = new ApplicationQueryBuilder();
         String query = "SELECT * FROM applications";
         Pagination paginationNotNull = new Pagination();
-        paginationNotNull.setSortBy("columnName");
+        paginationNotNull.setSortBy("createdtime");
         paginationNotNull.setOrder(Order.ASC);
 
         // Execute
         String resultQuery = queryBuilder.addOrderByQuery(query, paginationNotNull);
 
         // Assert
-        String expectedQuery = "SELECT * FROM applications ORDER BY app.columnName ASC ";
+        String expectedQuery = "SELECT * FROM applications ORDER BY app.createdtime ASC ";
         assertEquals(expectedQuery, resultQuery);
     }
 
@@ -436,8 +436,8 @@ class ApplicationQueryBuilderTest {
     @Test
     void addPagination_Query_ShouldReturnCorrectQuery_WhenPageSizeAndPageNumberAreNotNull() {
         String query = "SELECT * FROM dristi_application app WHERE app.status <> 'DELETED' AND app.id = '111'";
-        pagination.setLimit(2d);
-        pagination.setOffSet(0d);
+        pagination.setLimit(2);
+        pagination.setOffSet(0);
         List<Object> preparedStmtList = new ArrayList<>();
         String paginatedQuery = applicationQueryBuilder.addPaginationQuery(query, pagination, preparedStmtList,new ArrayList<>());
 
@@ -445,7 +445,7 @@ class ApplicationQueryBuilderTest {
 
         assertEquals(expectedQuery, paginatedQuery);
         assertEquals(2, preparedStmtList.size());
-        assertEquals(0d, preparedStmtList.get(0));
-        assertEquals(0d, preparedStmtList.get(1));
+        assertEquals(0, preparedStmtList.get(0));
+        assertEquals(0, preparedStmtList.get(1));
     }
 }

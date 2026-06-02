@@ -100,7 +100,7 @@ class DigitalizedDocumentServiceTest {
     void searchDigitalizedDocument_ReturnsFromRepository() {
         DigitalizedDocumentSearchRequest searchRequest = DigitalizedDocumentSearchRequest.builder()
                 .criteria(DigitalizedDocumentSearchCriteria.builder().tenantId("t1").build())
-                .pagination(Pagination.builder().limit(5d).offSet(0d).build())
+                .pagination(Pagination.builder().limit(5).offSet(0).build())
                 .build();
         when(repository.getDigitalizedDocuments(any(), any())).thenReturn(List.of(document));
 
@@ -114,7 +114,7 @@ class DigitalizedDocumentServiceTest {
     void searchDigitalizedDocument_WhenRepoThrows_WrapsAsCustomException() {
         DigitalizedDocumentSearchRequest searchRequest = DigitalizedDocumentSearchRequest.builder()
                 .criteria(DigitalizedDocumentSearchCriteria.builder().tenantId("t1").build())
-                .pagination(Pagination.builder().limit(5d).offSet(0d).build())
+                .pagination(Pagination.builder().limit(5).offSet(0).build())
                 .build();
         when(repository.getDigitalizedDocuments(any(), any())).thenThrow(new RuntimeException("db error"));
 

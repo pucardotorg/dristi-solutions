@@ -36,6 +36,8 @@ public class NotificationQueryBuilder {
 
     private static final String ORDERBY_CLAUSE = " ORDER BY pn.{orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY pn.createdDate DESC ";
+    private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of(
+            "createddate", "lastmodifiedtime", "notificationnumber", "status");
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
     private static final String COUNT_ALL = " COUNT(*) ";
 
@@ -224,12 +226,13 @@ public class NotificationQueryBuilder {
      */
 
     private String addOrderByQuery(String query, Pagination pagination) {
-        if (isEmptyPagination(pagination) || pagination.getSortBy().contains(";")) {
+        if (isEmptyPagination(pagination)
+                || !ALLOWED_SORT_COLUMNS.contains(pagination.getSortBy().toLowerCase())) {
             return query + DEFAULT_ORDERBY_CLAUSE;
-        } else {
-            query = query + ORDERBY_CLAUSE;
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+        return (query + ORDERBY_CLAUSE)
+                .replace("{orderBy}", pagination.getSortBy().toLowerCase())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     private boolean isEmptyPagination(Pagination pagination) {

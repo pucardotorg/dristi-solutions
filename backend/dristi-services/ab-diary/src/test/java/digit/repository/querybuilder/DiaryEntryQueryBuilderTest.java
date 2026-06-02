@@ -131,8 +131,8 @@ class DiaryEntryQueryBuilderTest {
     void addPaginationQuery_AddsLimitAndOffset() {
         String baseQuery = "SELECT * FROM table";
         Pagination pagination = Pagination.builder()
-                .limit(10.0)
-                .offSet(5.0)
+                .limit(10)
+                .offSet(5)
                 .build();
 
         String result = queryBuilder.addPaginationQuery(baseQuery, preparedStatementValues, pagination, preparedStatementTypeValues);

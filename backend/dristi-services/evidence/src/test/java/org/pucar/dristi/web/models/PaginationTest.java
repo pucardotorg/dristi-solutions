@@ -15,8 +15,8 @@ public class PaginationTest {
 
     @Test
     public void testDefaultValues() {
-        Assertions.assertEquals(10.0, pagination.getLimit());
-        Assertions.assertEquals(0.0, pagination.getOffSet());
+        Assertions.assertEquals(10, pagination.getLimit());
+        Assertions.assertEquals(0, pagination.getOffSet());
         Assertions.assertNull(pagination.getTotalCount());
         Assertions.assertNull(pagination.getSortBy());
         Assertions.assertNull(pagination.getOrder());
@@ -24,8 +24,8 @@ public class PaginationTest {
 
     @Test
     public void testGettersAndSetters() {
-        Double limit = 20.0;
-        Double offSet = 5.0;
+        Integer limit = 20;
+        Integer offSet = 5;
         Double totalCount = 100.0;
         String sortBy = "name";
         Order order = Order.ASC;

@@ -882,8 +882,8 @@ public class TaskService {
                     .build();
 
             Pagination pagination = Pagination.builder()
-                    .offSet(0.0)
-                    .limit(50.0)
+                    .offSet(0)
+                    .limit(50)
                     .build();
 
             List<Task> tasks = taskRepository.getTasks(taskSearchCriteria, pagination);
@@ -1164,7 +1164,7 @@ public class TaskService {
                             .taskNumber(taskNumber)
                             .tenantId(tenantId)
                             .build();
-                    Pagination pagination = Pagination.builder().limit(1.0).offSet(0.0).build();
+                    Pagination pagination = Pagination.builder().limit(1).offSet(0).build();
                     List<Task> taskList = taskRepository.getTasks(criteria, pagination);
 
                     if (taskList.isEmpty()) {

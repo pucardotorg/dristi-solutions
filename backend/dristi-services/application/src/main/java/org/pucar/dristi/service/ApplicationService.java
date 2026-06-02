@@ -301,8 +301,8 @@ public class ApplicationService {
 
     public List<Application> searchApplications(ApplicationSearchRequest request) {
         try {
-            // Fetch applications from database according to the given search params
             log.info("Starting application search with parameters :: {}", request);
+            validator.validateApplicationSearchRequest(request);
             List<Application> applicationList = applicationRepository.getApplications(request);
             log.info("Application list fetched with size :: {}", applicationList.size());
             // If no applications are found, return an empty list

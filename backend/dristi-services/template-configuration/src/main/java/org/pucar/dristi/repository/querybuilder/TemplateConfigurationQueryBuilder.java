@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.Set;
 
 import static org.pucar.dristi.config.ServiceConstants.TEMPLATE_SEARCH_EXCEPTION;
 
@@ -26,6 +27,8 @@ public class TemplateConfigurationQueryBuilder {
 
     private static final String ORDERBY_CLAUSE = " ORDER BY tc.{orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY tc.created_time DESC ";
+    private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of(
+            "created_time", "last_modified_time", "template_id");
 
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
 
@@ -72,20 +75,21 @@ public class TemplateConfigurationQueryBuilder {
     }
 
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isPaginationInvalid(pagination) || pagination.getSortBy().contains(";")) {
+        if (isPaginationInvalid(pagination)
+                || !ALLOWED_SORT_COLUMNS.contains(pagination.getSortBy().toLowerCase())) {
             return query + DEFAULT_ORDERBY_CLAUSE;
-        } else {
-            query = query + ORDERBY_CLAUSE;
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+        return (query + ORDERBY_CLAUSE)
+                .replace("{orderBy}", pagination.getSortBy().toLowerCase())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     public String addPaginationQuery(String query, Pagination pagination, List<Object> preparedStatementList, List<Integer> preparedStatementArgList) {
         preparedStatementList.add(pagination.getLimit());
-        preparedStatementArgList.add(Types.DOUBLE);
+        preparedStatementArgList.add(Types.INTEGER);
 
         preparedStatementList.add(pagination.getOffSet());
-        preparedStatementArgList.add(Types.DOUBLE);
+        preparedStatementArgList.add(Types.INTEGER);
         return query + " LIMIT ? OFFSET ?";
     }
 

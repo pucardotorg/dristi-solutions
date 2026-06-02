@@ -143,8 +143,8 @@ public class HearingApiControllerTest {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.setUserInfo(user);
         Pagination pagination = Pagination.builder()
-                .offSet(0D)
-                .limit(10D)
+                .offSet(0)
+                .limit(10)
                 .totalCount(10D)
                 .build();
         HearingSearchRequest request = HearingSearchRequest.builder()

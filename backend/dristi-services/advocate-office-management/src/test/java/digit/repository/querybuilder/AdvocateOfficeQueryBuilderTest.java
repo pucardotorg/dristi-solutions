@@ -165,18 +165,18 @@ class AdvocateOfficeQueryBuilderTest {
     void testAddPaginationQuery() {
         String baseQuery = "SELECT * FROM member";
         Pagination pagination = Pagination.builder()
-                .limit(10.0)
-                .offSet(5.0)
+                .limit(10)
+                .offSet(5)
                 .build();
 
         String query = queryBuilder.addPaginationQuery(baseQuery, pagination, preparedStmtList, preparedStmtArgList);
 
         assertEquals("SELECT * FROM member LIMIT ? OFFSET ?", query);
         assertEquals(2, preparedStmtList.size());
-        assertEquals(10.0, preparedStmtList.get(0));
-        assertEquals(5.0, preparedStmtList.get(1));
-        assertEquals(Types.DOUBLE, preparedStmtArgList.get(0));
-        assertEquals(Types.DOUBLE, preparedStmtArgList.get(1));
+        assertEquals(10, preparedStmtList.get(0));
+        assertEquals(5, preparedStmtList.get(1));
+        assertEquals(Types.INTEGER, preparedStmtArgList.get(0));
+        assertEquals(Types.INTEGER, preparedStmtArgList.get(1));
     }
 
     @Test
@@ -302,14 +302,14 @@ class AdvocateOfficeQueryBuilderTest {
     void testAddPaginationQuery_WithZeroOffset() {
         String baseQuery = "SELECT * FROM member";
         Pagination pagination = Pagination.builder()
-                .limit(20.0)
-                .offSet(0.0)
+                .limit(20)
+                .offSet(0)
                 .build();
 
         queryBuilder.addPaginationQuery(baseQuery, pagination, preparedStmtList, preparedStmtArgList);
 
         assertEquals(2, preparedStmtList.size());
-        assertEquals(0.0, preparedStmtList.get(1));
+        assertEquals(0, preparedStmtList.get(1));
     }
 
     @Test

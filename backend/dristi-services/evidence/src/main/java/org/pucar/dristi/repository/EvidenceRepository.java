@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.pucar.dristi.config.ServiceConstants.EVIDENCE_SEARCH_QUERY_EXCEPTION;
+import static org.pucar.dristi.config.ServiceConstants.INVALID_INPUT;
 import static org.pucar.dristi.config.ServiceConstants.PENDING_E_SIGN;
 
 @Slf4j
@@ -71,15 +72,6 @@ public class    EvidenceRepository {
             List<Artifact> artifactList = jdbcTemplate.query(artifactQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(),evidenceRowMapper);
             log.info("DB artifact list :: {}", artifactList);
 
-            // Fetch associated comments
-            List<String> artifactIds = new ArrayList<>();
-            for (Artifact artifact : artifactList) {
-                artifactIds.add(artifact.getId().toString());
-            }
-            if (artifactIds.isEmpty()) {
-                return artifactList;
-            }
-
             return artifactList;
         } catch (CustomException e) {
             log.error("Custom Exception while fetching artifact list");
@@ -105,9 +97,12 @@ public class    EvidenceRepository {
      * @return the next sequence value or 1 if sequence doesn't exist
      */
     public Integer getNextValForSequence(String sequenceName) {
+        if (sequenceName == null || !sequenceName.matches("^[a-z0-9_]+$")) {
+            throw new CustomException(INVALID_INPUT, "Invalid sequence name: " + sequenceName);
+        }
         try {
             log.info("Getting next sequence value for sequence: {}", sequenceName);
-            
+
             String sql = "SELECT last_value + 1 FROM " + sequenceName;
             Integer nextValue = jdbcTemplate.queryForObject(sql, Integer.class);
             log.info("Next sequence value for {}: {}", sequenceName, nextValue);

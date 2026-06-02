@@ -31,11 +31,11 @@ class RepresentativeDocumentRowMapperTest {
     @Mock
     private ResultSet rs;
 
-    private RepresentiveDocumentRowMapper rowMapper;
+    private RepresentativeDocumentRowMapper rowMapper;
 
     @BeforeEach
     void setUp() {
-        rowMapper = new RepresentiveDocumentRowMapper();
+        rowMapper = new RepresentativeDocumentRowMapper();
     }
 
     @Test

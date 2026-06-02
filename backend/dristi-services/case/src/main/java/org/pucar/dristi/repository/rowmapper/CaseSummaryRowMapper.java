@@ -160,18 +160,18 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
     }
 
 
-    public String getStatuteAndSectionsString(StringBuilder statueAndSections, String statute, List<String> sections) {
-        if (!statueAndSections.isEmpty()) {
-            statueAndSections.append(";");
+    public String getStatuteAndSectionsString(StringBuilder statuteAndSections, String statute, List<String> sections) {
+        if (!statuteAndSections.isEmpty()) {
+            statuteAndSections.append(";");
         }
-        if (statute != null) statueAndSections.append(statute);
+        if (statute != null) statuteAndSections.append(statute);
 
         if (!sections.isEmpty()) {
-            statueAndSections.append(" ");
+            statuteAndSections.append(" ");
             for (int i = 0; i < sections.size(); i++) {
-                statueAndSections.append(sections.get(i));
+                statuteAndSections.append(sections.get(i));
                 if (i < sections.size() - 1) {
-                    statueAndSections.append(", ");
+                    statuteAndSections.append(", ");
                 }
             }
         }
@@ -186,7 +186,7 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
 //            }
 //        }
 
-        return statueAndSections.toString();
+        return statuteAndSections.toString();
     }
 
     private Long parseDateToLong(String dateStr) {

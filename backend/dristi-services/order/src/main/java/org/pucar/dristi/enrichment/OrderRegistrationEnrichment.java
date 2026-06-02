@@ -152,7 +152,7 @@ public class OrderRegistrationEnrichment {
                 orderCriteria.setOrderNumber(orderRequest.getOrder().getOrderNumber());
                 orderCriteria.setCourtId(orderRequest.getOrder().getCourtId());
 
-                List<Order> existingOrders = repository.getOrders(orderCriteria, Pagination.builder().limit(1.0).offSet(0.0).build());
+                List<Order> existingOrders = repository.getOrders(orderCriteria, Pagination.builder().limit(1).offSet(0).build());
                 String intermediateOrderType = null;
                 if(existingOrders != null && !existingOrders.isEmpty()) {
                     intermediateOrderType = existingOrders.get(0).getOrderType();

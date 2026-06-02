@@ -78,8 +78,8 @@ public class NotificationRepositoryTest {
     public void getNotifications_WithPagination_ShouldReturnPaginatedNotifications() {
         NotificationCriteria criteria = new NotificationCriteria();
         Pagination pagination = new Pagination();
-        pagination.setLimit(10D);
-        pagination.setOffSet(0D);
+        pagination.setLimit(10);
+        pagination.setOffSet(0);
 
         String baseQuery = "SELECT * FROM notifications";
         String countQuery = "SELECT COUNT(*) FROM (" + baseQuery + ") AS count";
