@@ -54,9 +54,7 @@ public class WarrantReissueService {
     public void handleHearingRescheduled(RequestInfo requestInfo, String filingNumber, Long newHearingDate, String orderId) {
         log.info("Handling hearing reschedule for filingNumber: {}, orderId: {}", filingNumber, orderId);
 
-        String msgId = requestInfo.getMsgId();
         requestInfo = userService.createInternalMicroserviceRequestInfo();
-        requestInfo.setMsgId(msgId);
 
         // 1. Fetch all ACTIVE warrants for this case
         List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, orderId, false);
@@ -108,9 +106,7 @@ public class WarrantReissueService {
     public void handleHearingCompletedAndNewHearingScheduled(RequestInfo requestInfo, String filingNumber, Long newHearingDate, String newOrderId) {
         log.info("Handling hearing completed and new hearing scheduled for filingNumber: {}, newOrderId: {}", filingNumber, newOrderId);
 
-        String msgId = requestInfo.getMsgId();
         requestInfo = userService.createInternalMicroserviceRequestInfo();
-        requestInfo.setMsgId(msgId);
 
         // Fetch all ACTIVE warrants and warrants EXPIRED today for this case
         // We pass null for orderId because we want to find the OLD warrants, which are not linked to the NEW orderId
@@ -262,9 +258,7 @@ public class WarrantReissueService {
     public void handleBailAccepted(RequestInfo requestInfo, String filingNumber) {
         log.info("Handling bail accepted for filingNumber: {}", filingNumber);
 
-        String msgId = requestInfo.getMsgId();
         requestInfo = userService.createInternalMicroserviceRequestInfo();
-        requestInfo.setMsgId(msgId);
 
         List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, null, false);
         if (activeWarrants.isEmpty()) {

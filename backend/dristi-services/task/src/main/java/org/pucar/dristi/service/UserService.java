@@ -71,6 +71,7 @@ public class UserService {
                 .roles(Collections.singletonList(role))
                 .build();
         requestInfo.setUserInfo(user);
+        requestInfo.setMsgId(DEFAULT_MESSAGE_ID);
         return requestInfo;
     }
 

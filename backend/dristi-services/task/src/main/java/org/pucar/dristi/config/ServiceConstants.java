@@ -251,4 +251,6 @@ public class ServiceConstants {
     public static final String BAIL_BOND_COMPLETED = "COMPLETED";
     public static final String EXPIRE = "EXPIRE";
     public static final String ABANDON = "ABANDON";
+
+    public static final String DEFAULT_MESSAGE_ID = "123|en_IN";
 }
