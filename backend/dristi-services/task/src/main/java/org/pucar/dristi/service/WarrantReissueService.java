@@ -150,8 +150,11 @@ public class WarrantReissueService {
             // 2. Create new warrant using createTask
             Task newWarrant = cloneWarrantForReissue(warrant, newHearingDate, newOrderId);
             WorkflowObject createWorkflow = new WorkflowObject();
+
+            boolean shouldSkipPayment =
+                    (isIcops && !PENDING_PAYMENT.equalsIgnoreCase(currentState) && !isAlreadyExpired) || isCourtWitness(newWarrant.getTaskDetails());
             
-            if (isIcops && !PENDING_PAYMENT.equalsIgnoreCase(currentState) && !isAlreadyExpired) {
+            if (shouldSkipPayment) {
                 createWorkflow.setAction(CREATE_WITH_OUT_PAYMENT);
             } else {
                 createWorkflow.setAction(CREATE);
@@ -179,6 +182,19 @@ public class WarrantReissueService {
         if (!collectedPartyUniqueIds.isEmpty() && newOrderId != null) {
             updateOrderPartyUniqueIds(requestInfo, newOrderId, collectedPartyUniqueIds);
         }
+    }
+
+    public boolean isCourtWitness(Object taskDetails) {
+        if (!(taskDetails instanceof JsonNode taskDetailsNode)) {
+            return false;
+        }
+
+        return COURT_WITNESS.equalsIgnoreCase(
+                taskDetailsNode
+                        .path("respondentDetails")
+                        .path("ownerType")
+                        .textValue()
+        );
     }
 
     private Task cloneWarrantForReissue(Task oldWarrant, Long newHearingDate, String newOrderId) {
