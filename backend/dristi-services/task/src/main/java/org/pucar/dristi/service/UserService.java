@@ -68,6 +68,7 @@ public class UserService {
                 .id(0L)
                 .uuid(internalMicroserviceRoleUuid)
                 .type(INTERNALMICROSERVICEUSER_TYPE)
+                .tenantId(configuration.getTenantId())
                 .roles(Collections.singletonList(role))
                 .build();
         requestInfo.setUserInfo(user);
