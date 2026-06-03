@@ -227,4 +227,28 @@ public class InboxUtil {
                 .inbox(inboxSearchCriteria)
                 .build();
     }
+
+    public InboxRequest getInboxRequestForOpenHearing(String courtId, Long fromDate, Long toDate) {
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+        moduleSearchCriteria.put("courtId", courtId);
+        moduleSearchCriteria.put("fromDate", fromDate);
+        moduleSearchCriteria.put("toDate", toDate);
+
+        ProcessInstanceSearchCriteria processSearchCriteria = ProcessInstanceSearchCriteria.builder()
+                .moduleName("Hearing Service")
+                .tenantId(configuration.getTenantId())
+                .businessService(Collections.singletonList("hearing-default"))
+                .build();
+        InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
+                .processSearchCriteria(processSearchCriteria)
+                .moduleSearchCriteria(moduleSearchCriteria)
+                .tenantId(configuration.getTenantId())
+                .limit(300)
+                .offset(0)
+                .build();
+
+        return InboxRequest.builder()
+                .inbox(inboxSearchCriteria)
+                .build();
+    }
 }

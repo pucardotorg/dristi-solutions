@@ -22,6 +22,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-18T11:14:11.072458+05:30[Asia/Calcutta]")
 @Controller
@@ -170,6 +171,33 @@ public class HearingApiController {
         cronJobScheduler.sendNotificationForHearingsScheduledTomorrow();
 
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v1/cause-list")
+    public ResponseEntity<CauseListResponse> getCauseList(@Valid @RequestBody CauseListRequest body) {
+        log.info("api=/v1/cause-list, courtId={}, date={}", body.getCourtId(), body.getDate());
+        List<Map<String, Object>> hearings = hearingService.getCauseList(body.getCourtId(), body.getDate());
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        CauseListResponse response = CauseListResponse.builder()
+                .responseInfo(responseInfo)
+                .hearings(hearings)
+                .totalCount(hearings.size())
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v1/current-hearing")
+    public ResponseEntity<CurrentHearingResponse> getCurrentHearing(@Valid @RequestBody CauseListRequest body) {
+        log.info("api=/v1/current-hearing, courtId={}", body.getCourtId());
+        HearingService.CurrentHearingData data = hearingService.getCurrentHearing(body.getCourtId());
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        CurrentHearingResponse response = CurrentHearingResponse.builder()
+                .responseInfo(responseInfo)
+                .sessionStatus(data.sessionStatus)
+                .currentHearingKey(data.currentHearingKey)
+                .hearingData(data.hearingData)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
 

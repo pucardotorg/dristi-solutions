@@ -23,11 +23,13 @@ import org.pucar.dristi.web.models.inbox.InboxRequest;
 import org.pucar.dristi.web.models.orders.*;
 import org.pucar.dristi.web.models.orders.Order;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -61,6 +63,7 @@ public class HearingService {
     private final EsUtil esUtil;
     private final OrderUtil orderUtil;
     private final CacheService cacheService;
+    private AsyncPersistenceService asyncPersistenceService;
 
     @Autowired
     public HearingService(
@@ -89,6 +92,11 @@ public class HearingService {
         this.esUtil = esUtil;
         this.orderUtil = orderUtil;
         this.cacheService = cacheService;
+    }
+
+    @Autowired
+    public void setAsyncPersistenceService(@Lazy AsyncPersistenceService asyncPersistenceService) {
+        this.asyncPersistenceService = asyncPersistenceService;
     }
 
     public Hearing createHearing(HearingRequest body) {
@@ -136,6 +144,12 @@ public class HearingService {
     public Hearing updateHearing(HearingRequest hearingRequest) {
 
         try {
+            String action = hearingRequest.getHearing() != null && hearingRequest.getHearing().getWorkflow() != null
+                    ? hearingRequest.getHearing().getWorkflow().getAction() : null;
+
+            if (action != null && isFastPathAction(action) && Boolean.TRUE.equals(config.getRedisEnabled())) {
+                return updateHearingFastPath(hearingRequest, action);
+            }
 
             // Validate whether the application that is being requested for update indeed exists
             Hearing hearing = validator.validateHearingExistence(hearingRequest.getRequestInfo(), hearingRequest.getHearing());
@@ -195,6 +209,130 @@ public class HearingService {
 
     }
 
+    private boolean isFastPathAction(String action) {
+        return action.equalsIgnoreCase(START) || action.equalsIgnoreCase(CLOSE)
+                || action.equalsIgnoreCase(PASS_OVER) || action.equalsIgnoreCase(MARK_COMPLETE);
+    }
+
+    private String resolveStatus(String action) {
+        if (action.equalsIgnoreCase(START)) return IN_PROGRESS;
+        if (action.equalsIgnoreCase(CLOSE)) return COMPLETED;
+        if (action.equalsIgnoreCase(MARK_COMPLETE)) return COMPLETED;
+        if (action.equalsIgnoreCase(PASS_OVER)) return PASSED_OVER;
+        return SCHEDULED;
+    }
+
+    private int resolveStatusOrder(String status) {
+        if (IN_PROGRESS.equals(status)) return 1;
+        if (PASSED_OVER.equals(status) || SCHEDULED.equals(status)) return 2;
+        if (COMPLETED.equals(status)) return 3;
+        return 99;
+    }
+
+    private Hearing updateHearingFastPath(HearingRequest hearingRequest, String action) {
+        String hearingId = hearingRequest.getHearing().getHearingId();
+        String newStatus = resolveStatus(action);
+        int newStatusOrder = resolveStatusOrder(newStatus);
+
+        String courtId = config.getCourtId();
+        String date = dateUtil.getCurrentDate();
+        String hKey = CACHE_KEY_PREFIX + courtId + ":" + date + CACHE_HEARING_PREFIX + hearingId;
+        String metaKey = CACHE_KEY_PREFIX + courtId + ":" + date + CACHE_COURT_META_SUFFIX;
+
+        Map<String, Object> statusUpdate = new HashMap<>();
+        statusUpdate.put("status", newStatus);
+        statusUpdate.put("statusOrder", newStatusOrder);
+        cacheService.hmset(hKey, statusUpdate);
+
+        if (IN_PROGRESS.equals(newStatus)) {
+            cacheService.hset(metaKey, "sessionStatus", SESSION_STATUS_ACTIVE);
+            cacheService.hset(metaKey, "currentHearingKey", hKey);
+        } else {
+            cacheService.hset(metaKey, "currentHearingKey", "");
+            if (CLOSE.equalsIgnoreCase(action)) {
+                advanceToNextScheduledHearing(courtId, date, metaKey, hearingRequest);
+            }
+        }
+
+        asyncPersistenceService.persistStatusChange(hearingRequest);
+
+        Hearing hearing = hearingRequest.getHearing();
+        hearing.setStatus(newStatus);
+        return hearing;
+    }
+
+    private void advanceToNextScheduledHearing(String courtId, String date, String metaKey, HearingRequest originalRequest) {
+        String causeListKey = CACHE_KEY_PREFIX + courtId + ":" + date + CACHE_CAUSE_LIST_SUFFIX;
+        List<Object> hearingKeys = cacheService.lrange(causeListKey, 0, -1);
+        for (Object keyObj : hearingKeys) {
+            String nextKey = String.valueOf(keyObj);
+            Object statusObj = cacheService.hget(nextKey, "status");
+            if (SCHEDULED.equals(statusObj)) {
+                String nextHearingId = nextKey.substring(nextKey.lastIndexOf(CACHE_HEARING_PREFIX) + CACHE_HEARING_PREFIX.length());
+
+                Map<String, Object> nextUpdate = new HashMap<>();
+                nextUpdate.put("status", IN_PROGRESS);
+                nextUpdate.put("statusOrder", resolveStatusOrder(IN_PROGRESS));
+                cacheService.hmset(nextKey, nextUpdate);
+                cacheService.hset(metaKey, "sessionStatus", SESSION_STATUS_ACTIVE);
+                cacheService.hset(metaKey, "currentHearingKey", nextKey);
+
+                Object tenantObj = cacheService.hget(nextKey, "tenantId");
+                String tenantId = (tenantObj != null && !"null".equals(tenantObj.toString()) && !tenantObj.toString().isEmpty())
+                        ? tenantObj.toString() : config.getTenantId();
+                HearingRequest nextRequest = buildMinimalHearingRequest(nextHearingId, tenantId, START, originalRequest.getRequestInfo());
+                asyncPersistenceService.persistStatusChange(nextRequest);
+                log.info("Auto-advanced to next hearing hearingId={}", nextHearingId);
+                break;
+            }
+        }
+    }
+
+    private HearingRequest buildMinimalHearingRequest(String hearingId, String tenantId, String action, RequestInfo requestInfo) {
+        WorkflowObject workflow = new WorkflowObject();
+        workflow.setAction(action);
+        Hearing hearing = Hearing.builder()
+                .hearingId(hearingId)
+                .tenantId(tenantId)
+                .workflow(workflow)
+                .build();
+        return HearingRequest.builder()
+                .requestInfo(requestInfo)
+                .hearing(hearing)
+                .build();
+    }
+
+    // Package-private: called by AsyncPersistenceService in the background thread.
+    void performPersistStatusChange(HearingRequest hearingRequest) {
+        try {
+            Hearing hearing = validator.validateHearingExistence(hearingRequest.getRequestInfo(), hearingRequest.getHearing());
+            hearing.setWorkflow(hearingRequest.getHearing().getWorkflow());
+            String newHearingType = null;
+            if (hearing.getWorkflow() != null && (hearing.getWorkflow().getAction().equalsIgnoreCase(MARK_COMPLETE)
+                    || hearing.getWorkflow().getAction().equalsIgnoreCase(UPDATE_DATE)
+                    || hearing.getWorkflow().getAction().equalsIgnoreCase(RESCHEDULE_ONGOING))) {
+                newHearingType = hearingRequest.getHearing().getHearingType();
+                hearing.setHearingType(newHearingType);
+            }
+            hearingRequest.setHearing(hearing);
+
+            enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
+
+            if (hearing.getWorkflow() != null) {
+                workflowService.updateWorkflowStatus(hearingRequest);
+                updateOpenHearingStatus(hearingRequest);
+            }
+
+            producer.push(config.getHearingUpdateTopic(), hearingRequest);
+
+            String updatedState = hearingRequest.getHearing().getStatus();
+            callNotificationService(hearingRequest, updatedState, false);
+        } catch (Exception e) {
+            log.error("performPersistStatusChange failed for hearingId={}",
+                    hearingRequest.getHearing() != null ? hearingRequest.getHearing().getHearingId() : "unknown", e);
+        }
+    }
+
     private void updateOpenHearingStatus(HearingRequest hearingRequest) {
 
         // search for open hearing
@@ -217,12 +355,6 @@ public class HearingService {
                     String uri = config.getEsHostUrl() + config.getBulkPath();
                     esUtil.manualIndex(uri, request);
                     updateStatusInCache(openHearing);
-                    // search the open hearing index here for confirmation
-                    InboxRequest confirmationRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, requestInfo, hearingNumber,status);
-                   List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(confirmationRequest);
-                   if (openHearingList == null || openHearingList.isEmpty()) {
-                       log.error("Update of status is not reflected yet in ES");
-                   }
                 } catch (Exception e) {
                     log.error("Error occurred while updating open hearing status in es");
                     log.error("ERROR_FROM_ES: {}", e.getMessage());
@@ -244,39 +376,20 @@ public class HearingService {
 
         String courtId = openHearing.getCourtId();
         String date = dateUtil.getCurrentDate();
-        String key  = CACHE_KEY_PREFIX + courtId + ":" + date;
-        Object response = cacheService.getCache(key);
-        if (response != null) {
-            List<OpenHearing> openHearingList = new ArrayList<>();
-            if (response instanceof List<?> rawList) {
-                for (Object item : rawList) {
-                    if (item instanceof OpenHearing) {
-                        openHearingList.add((OpenHearing) item);
-                    } else if (item instanceof LinkedHashMap) {
-                        try {
-                            OpenHearing convertedHearing = objectMapper.convertValue(item, OpenHearing.class);
-                            openHearingList.add(convertedHearing);
-                        } catch (Exception e) {
-                            log.error("Error converting LinkedHashMap to OpenHearing: {}", e.getMessage());
-                        }
-                    }
-                }
-            }
+        String hKey = CACHE_KEY_PREFIX + courtId + ":" + date + CACHE_HEARING_PREFIX + openHearing.getHearingNumber();
 
-            boolean updated = false;
-            for(OpenHearing openHearing1 : openHearingList) {
-                if(openHearing1.getHearingNumber().equalsIgnoreCase(openHearing.getHearingNumber())) {
-                    openHearing1.setStatus(openHearing.getStatus());
-                    openHearing1.setStatusOrder(openHearing.getStatusOrder());
-                    openHearing1.setHearingType(openHearing.getHearingType());
-                    updated = true;
-                    break;
-                }
+        // Only update if the HEARING hash already exists (written by scheduler-svc at 10AM)
+        Object existing = cacheService.hget(hKey, "hearingNumber");
+        if (existing != null) {
+            Map<String, Object> statusUpdate = new HashMap<>();
+            statusUpdate.put("status", openHearing.getStatus() != null ? openHearing.getStatus() : "");
+            if (openHearing.getStatusOrder() != null) {
+                statusUpdate.put("statusOrder", openHearing.getStatusOrder());
             }
-            if(!updated) {
-                openHearingList.add(openHearing);
+            if (openHearing.getHearingType() != null) {
+                statusUpdate.put("hearingType", openHearing.getHearingType());
             }
-            cacheService.updateCache(key, openHearingList);
+            cacheService.hmset(hKey, statusUpdate);
         }
     }
 
@@ -328,6 +441,92 @@ public class HearingService {
                 fileStoreUtil.deleteFilesByFileStore(fileStoreIds, hearing.getTenantId());
                 log.info("Deleted files from file store with ids: {}", fileStoreIds);
             }
+        }
+    }
+
+    public List<Map<String, Object>> getCauseList(String courtId, String date) {
+        String baseKey = CACHE_KEY_PREFIX + courtId + ":" + date;
+        String causeListKey = baseKey + CACHE_CAUSE_LIST_SUFFIX;
+
+        List<Object> hearingKeys = cacheService.lrange(causeListKey, 0, -1);
+        if (!hearingKeys.isEmpty()) {
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Object keyObj : hearingKeys) {
+                Map<String, Object> hearingData = cacheService.hgetAll(String.valueOf(keyObj));
+                if (!hearingData.isEmpty()) {
+                    result.add(hearingData);
+                }
+            }
+            return result;
+        }
+
+        // Cache miss — fall back to ES via inbox service
+        log.info("Cause-list cache miss for courtId={}, date={} — falling back to ES", courtId, date);
+        try {
+            LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern(DATE_FORMAT_REDIS));
+            Long fromDateEpoch = dateUtil.getEPochFromLocalDate(localDate);
+            Long toDateEpoch = dateUtil.getEpochFromLocalDateTime(localDate.atTime(23, 59, 59));
+            InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtId, fromDateEpoch, toDateEpoch);
+            List<OpenHearing> openHearings = inboxUtil.getOpenHearings(inboxRequest);
+            if (openHearings == null || openHearings.isEmpty()) return Collections.emptyList();
+
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (OpenHearing h : openHearings) {
+                Map<String, Object> map = new LinkedHashMap<>();
+                map.put("hearingNumber", h.getHearingNumber() != null ? h.getHearingNumber() : "");
+                map.put("hearingUuid", h.getHearingUuid() != null ? h.getHearingUuid() : "");
+                map.put("status", h.getStatus() != null ? h.getStatus() : "");
+                map.put("statusOrder", h.getStatusOrder() != null ? h.getStatusOrder() : 99);
+                map.put("caseNumber", h.getCaseNumber() != null ? h.getCaseNumber() : "");
+                map.put("caseTitle", h.getCaseTitle() != null ? h.getCaseTitle() : "");
+                map.put("hearingType", h.getHearingType() != null ? h.getHearingType() : "");
+                map.put("stage", h.getStage() != null ? h.getStage() : "");
+                map.put("filingNumber", h.getFilingNumber() != null ? h.getFilingNumber() : "");
+                map.put("caseUuid", h.getCaseUuid() != null ? h.getCaseUuid() : "");
+                map.put("serialNumber", h.getSerialNumber());
+                map.put("fromDate", h.getFromDate() != null ? h.getFromDate() : 0L);
+                map.put("toDate", h.getToDate() != null ? h.getToDate() : 0L);
+                map.put("tenantId", h.getTenantId() != null ? h.getTenantId() : "");
+                map.put("courtId", h.getCourtId() != null ? h.getCourtId() : "");
+                map.put("hearingTypeOrder", h.getHearingTypeOrder() != null ? h.getHearingTypeOrder() : 99);
+                try {
+                    map.put("advocate", objectMapper.writeValueAsString(h.getAdvocate()));
+                } catch (Exception ex) {
+                    map.put("advocate", "{}");
+                }
+                result.add(map);
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("ES fallback failed for cause-list courtId={}, date={}", courtId, date, e);
+            return Collections.emptyList();
+        }
+    }
+
+    public CurrentHearingData getCurrentHearing(String courtId) {
+        String date = dateUtil.getCurrentDate();
+        String metaKey = CACHE_KEY_PREFIX + courtId + ":" + date + CACHE_COURT_META_SUFFIX;
+
+        Map<String, Object> meta = cacheService.hgetAll(metaKey);
+        String sessionStatus = meta.isEmpty() ? SESSION_STATUS_NOT_STARTED : String.valueOf(meta.getOrDefault("sessionStatus", SESSION_STATUS_NOT_STARTED));
+        String currentHearingKey = meta.isEmpty() ? "" : String.valueOf(meta.getOrDefault("currentHearingKey", ""));
+
+        Map<String, Object> hearingData = Collections.emptyMap();
+        if (currentHearingKey != null && !currentHearingKey.isEmpty()) {
+            hearingData = cacheService.hgetAll(currentHearingKey);
+        }
+        return new CurrentHearingData(sessionStatus, currentHearingKey, hearingData);
+    }
+
+    public static class CurrentHearingData {
+        public final String sessionStatus;
+        public final String currentHearingKey;
+        public final Map<String, Object> hearingData;
+
+        public CurrentHearingData(String sessionStatus, String currentHearingKey, Map<String, Object> hearingData) {
+            this.sessionStatus = sessionStatus;
+            this.currentHearingKey = currentHearingKey;
+            this.hearingData = hearingData;
         }
     }
 
