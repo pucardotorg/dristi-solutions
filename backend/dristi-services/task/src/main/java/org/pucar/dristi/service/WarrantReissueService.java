@@ -63,6 +63,13 @@ public class WarrantReissueService {
             return;
         }
 
+        // Only warrants tagged to the previous hearing date are reissued; older warrants are left untouched
+        activeWarrants = filterToPreviousHearingDate(activeWarrants, newHearingDate);
+        if (activeWarrants.isEmpty()) {
+            log.info("No warrants tagged to the previous hearing date for filing: {}", filingNumber);
+            return;
+        }
+
         for (Task warrant : activeWarrants) {
             String currentState = warrant.getStatus();
             boolean isIcops = isIcopsDeliveryChannel(warrant);
@@ -113,6 +120,13 @@ public class WarrantReissueService {
         List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, null, true);
         if (activeWarrants.isEmpty()) {
             log.info("No active or recently expired warrants for filing: {}", filingNumber);
+            return;
+        }
+
+        // Only warrants tagged to the previous hearing date are reissued; older warrants are left untouched
+        activeWarrants = filterToPreviousHearingDate(activeWarrants, newHearingDate);
+        if (activeWarrants.isEmpty()) {
+            log.info("No warrants tagged to the previous hearing date for filing: {}", filingNumber);
             return;
         }
 
@@ -330,6 +344,57 @@ public class WarrantReissueService {
             }
         }
         return activeWarrants;
+    }
+
+    /**
+     * Restricts a list of warrants to only those tagged to the "previous hearing date",
+     * so that older warrants from earlier hearings are not affected by the reissue flow.
+     * The previous hearing date is derived from the warrants themselves
+     * (see {@link #resolvePreviousHearingDate(List, Long)}).
+     */
+    private List<Task> filterToPreviousHearingDate(List<Task> warrants, Long newHearingDate) {
+        Long previousHearingDate = resolvePreviousHearingDate(warrants, newHearingDate);
+        if (previousHearingDate == null) {
+            log.info("Could not resolve a previous hearing date from {} warrant(s); none will be reissued", warrants.size());
+            return Collections.emptyList();
+        }
+
+        List<Task> filtered = new ArrayList<>();
+        for (Task warrant : warrants) {
+            if (previousHearingDate.equals(getHearingDateFromTask(warrant))) {
+                filtered.add(warrant);
+            }
+        }
+        log.info("Filtered {} warrant(s) down to {} tagged to previous hearing date: {}",
+                warrants.size(), filtered.size(), previousHearingDate);
+        return filtered;
+    }
+
+    /**
+     * Determines the previous hearing date from the warrants' own tagged hearing dates
+     * (taskDetails.caseDetails.hearingDate). Prefers the latest tagged date strictly before
+     * the newly scheduled hearing date; if none qualifies (or newHearingDate is null), falls
+     * back to the latest tagged date overall so the most recent batch is still picked up.
+     * Returns null when no warrant carries a usable hearing date.
+     */
+    private Long resolvePreviousHearingDate(List<Task> warrants, Long newHearingDate) {
+        Long latestBeforeNew = null;
+        Long latestOverall = null;
+        for (Task warrant : warrants) {
+            Long hearingDate = getHearingDateFromTask(warrant);
+            if (hearingDate == null) {
+                continue;
+            }
+            if (latestOverall == null || hearingDate > latestOverall) {
+                latestOverall = hearingDate;
+            }
+            if (newHearingDate == null || hearingDate < newHearingDate) {
+                if (latestBeforeNew == null || hearingDate > latestBeforeNew) {
+                    latestBeforeNew = hearingDate;
+                }
+            }
+        }
+        return latestBeforeNew != null ? latestBeforeNew : latestOverall;
     }
 
     private Long getHearingDateFromTask(Task task) {
