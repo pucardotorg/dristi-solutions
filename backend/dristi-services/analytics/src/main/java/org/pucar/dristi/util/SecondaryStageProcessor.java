@@ -305,7 +305,7 @@ public class SecondaryStageProcessor {
         return switch (taskType) {
             case ORDER_TYPE_SUMMONS -> SECONDARY_STAGE_SUMMONS;
             case ORDER_TYPE_WARRANT -> SECONDARY_STAGE_WARRANT;
-            case ORDER_TYPE_PROCLAMATION, ORDER_TYPE_ATTACHMENT -> SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT;
+            case ORDER_TYPE_ATTACHMENT -> SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT;
             case ORDER_TYPE_NOTICE -> SECONDARY_STAGE_NOTICE;
             default -> null;
         };
