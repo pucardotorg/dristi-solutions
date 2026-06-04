@@ -1859,7 +1859,7 @@ function EFilingCases({ path }) {
                       {
                         type: "component",
                         component: "ScrutinyInfo",
-                        key: `${key}Scrutiny`,
+                        key: `${key.replace(/\./g, "_")}Scrutiny`,
                         label: modifiedFormComponent.label,
                         populators: {
                           scrutinyMessage: scrutiny?.[selected].form[index][key].FSOError,
