@@ -476,6 +476,11 @@ public class WarrantReissueService {
             ObjectNode taskDetails;
             if (task.getTaskDetails() instanceof ObjectNode) {
                 taskDetails = (ObjectNode) task.getTaskDetails();
+            } else if (task.getTaskDetails() != null) {
+                // taskDetails from search is a LinkedHashMap (row mapper reads it as Object.class);
+                // convert it instead of replacing it with an empty node, which would wipe
+                // warrantDetails, deliveryChannels, respondentDetails, etc.
+                taskDetails = objectMapper.convertValue(task.getTaskDetails(), ObjectNode.class);
             } else {
                 taskDetails = objectMapper.createObjectNode();
             }
