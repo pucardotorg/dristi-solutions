@@ -14,8 +14,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static digit.config.ServiceConstants.*;
@@ -74,7 +73,7 @@ public class EsUtil {
 
     public void updateOpenHearingInCache(List<OpenHearing> openHearings, Long hearingDate) {
         try {
-            if(!config.getRedisEnabled()) {
+            if (!config.getRedisEnabled()) {
                 log.info("Redis is disabled. Skipping cache update for open hearings.");
                 return;
             }
@@ -85,10 +84,36 @@ public class EsUtil {
             }
             String courtId = openHearings.get(0).getCourtId() != null ? openHearings.get(0).getCourtId() : config.getCourtId();
             LocalDate date = dateUtil.getLocalDateFromEpoch(hearingDate);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
-            String key = CACHE_KEY_PREFIX + courtId + ":" + date.format(formatter);
-            cacheService.updateCache(key, openHearings);
-            log.info("Updated redis cache for open hearings:: {}", key);
+            String dateStr = date.format(DateTimeFormatter.ofPattern(DATE_FORMAT_REDIS));
+            String baseKey = CACHE_KEY_PREFIX + courtId + ":" + dateStr;
+            String causeListKey = baseKey + CACHE_CAUSE_LIST_SUFFIX;
+
+            List<String> hearingKeys = new ArrayList<>();
+            for (OpenHearing h : openHearings) {
+                String hearingKey = baseKey + CACHE_HEARING_PREFIX + h.getHearingNumber();
+                Map<String, Object> hearingMap = new LinkedHashMap<>();
+                hearingMap.put("hearingNumber", h.getHearingNumber() != null ? h.getHearingNumber() : "");
+                hearingMap.put("hearingUuid", h.getHearingUuid() != null ? h.getHearingUuid() : "");
+                hearingMap.put("status", h.getStatus() != null ? h.getStatus() : "");
+                hearingMap.put("statusOrder", h.getStatusOrder() != null ? h.getStatusOrder() : 99);
+                hearingMap.put("caseNumber", h.getCaseNumber() != null ? h.getCaseNumber() : "");
+                hearingMap.put("caseTitle", h.getCaseTitle() != null ? h.getCaseTitle() : "");
+                hearingMap.put("hearingType", h.getHearingType() != null ? h.getHearingType() : "");
+                hearingMap.put("stage", h.getStage() != null ? h.getStage() : "");
+                hearingMap.put("filingNumber", h.getFilingNumber() != null ? h.getFilingNumber() : "");
+                hearingMap.put("caseUuid", h.getCaseUuid() != null ? h.getCaseUuid() : "");
+                hearingMap.put("serialNumber", h.getSerialNumber());
+                hearingMap.put("fromDate", h.getFromDate() != null ? h.getFromDate() : 0L);
+                hearingMap.put("toDate", h.getToDate() != null ? h.getToDate() : 0L);
+                hearingMap.put("tenantId", h.getTenantId() != null ? h.getTenantId() : "");
+                hearingMap.put("courtId", h.getCourtId() != null ? h.getCourtId() : "");
+                hearingMap.put("hearingTypeOrder", h.getHearingTypeOrder() != null ? h.getHearingTypeOrder() : 99);
+                hearingMap.put("advocate", h.getAdvocate());
+                cacheService.hmset(hearingKey, hearingMap);
+                hearingKeys.add(hearingKey);
+            }
+            cacheService.setList(causeListKey, hearingKeys);
+            log.info("Updated redis cache for {} hearings under key: {}", hearingKeys.size(), causeListKey);
         } catch (Exception e) {
             log.error("Error while updating redis cache for open hearings:: {}", e.getMessage());
         }
