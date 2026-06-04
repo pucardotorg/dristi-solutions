@@ -69,10 +69,8 @@ function CitizenHome({ tenantId, setHideBack = () => {} }) {
   );
   useEffect(() => {
     refetch().then(() => {
-      refetchAdvocateClerk().then(() => {
-        setIsFetchingAdvocate(false);
-      });
       setIsFetching(false);
+      setIsFetchingAdvocate(false);
     });
   }, []);
 
