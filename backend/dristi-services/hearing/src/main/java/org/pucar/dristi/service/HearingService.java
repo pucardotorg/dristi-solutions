@@ -450,12 +450,10 @@ public class HearingService {
 
         List<Object> hearingKeys = cacheService.lrange(causeListKey, 0, -1);
         if (!hearingKeys.isEmpty()) {
+            List<String> keys = hearingKeys.stream().map(String::valueOf).collect(java.util.stream.Collectors.toList());
             List<Map<String, Object>> result = new ArrayList<>();
-            for (Object keyObj : hearingKeys) {
-                Map<String, Object> hearingData = cacheService.hgetAll(String.valueOf(keyObj));
-                if (!hearingData.isEmpty()) {
-                    result.add(hearingData);
-                }
+            for (Map<String, Object> hearingData : cacheService.hgetAllPipelined(keys)) {
+                if (!hearingData.isEmpty()) result.add(hearingData);
             }
             return result;
         }
