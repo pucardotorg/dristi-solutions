@@ -51,13 +51,18 @@ public class WarrantReissueService {
     /**
      * Handles Scenario 1: Hearing Rescheduled - Update warrants in-place.
      */
-    public void handleHearingRescheduled(RequestInfo requestInfo, String filingNumber, Long newHearingDate, String orderId) {
-        log.info("Handling hearing reschedule for filingNumber: {}, orderId: {}", filingNumber, orderId);
+    public void handleHearingRescheduled(RequestInfo requestInfo, String filingNumber, Long newHearingDate) {
+        log.info("Handling hearing reschedule for filingNumber: {}", filingNumber);
 
         requestInfo = userService.createInternalMicroserviceRequestInfo();
 
-        // 1. Fetch all ACTIVE warrants for this case
-        List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, orderId, false);
+        // 1. Fetch all ACTIVE warrants for this case.
+        // Do NOT filter by the hearing's SCHEDULE_OF_HEARING_DATE order id here: warrant tasks
+        // are linked to the WARRANT order (or, for reissued clones, the new scheduling order),
+        // never to the rescheduled hearing's original scheduling order, so an orderId filter
+        // silently excludes every first-generation warrant. Scoping to the right hearing is
+        // done by filterToPreviousHearingDate below.
+        List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, false);
         if (activeWarrants.isEmpty()) {
             log.info("No active warrants for filing: {}", filingNumber);
             return;
@@ -116,8 +121,7 @@ public class WarrantReissueService {
         requestInfo = userService.createInternalMicroserviceRequestInfo();
 
         // Fetch all ACTIVE warrants and warrants EXPIRED today for this case
-        // We pass null for orderId because we want to find the OLD warrants, which are not linked to the NEW orderId
-        List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, null, true);
+        List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, true);
         if (activeWarrants.isEmpty()) {
             log.info("No active or recently expired warrants for filing: {}", filingNumber);
             return;
@@ -274,7 +278,7 @@ public class WarrantReissueService {
 
         requestInfo = userService.createInternalMicroserviceRequestInfo();
 
-        List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, null, false);
+        List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, false);
         if (activeWarrants.isEmpty()) {
             log.info("No active warrants to expire for filingNumber: {}", filingNumber);
             return;
@@ -298,19 +302,11 @@ public class WarrantReissueService {
         }
     }
 
-    private List<Task> fetchActiveWarrants(RequestInfo requestInfo, String filingNumber, String orderId, boolean includeExpiredToday) {
+    private List<Task> fetchActiveWarrants(RequestInfo requestInfo, String filingNumber, boolean includeExpiredToday) {
         TaskCriteria criteria = TaskCriteria.builder()
                 .filingNumber(filingNumber)
                 .taskType(WARRANT)
                 .build();
-
-        if (orderId != null) {
-            try {
-                criteria.setOrderId(UUID.fromString(orderId));
-            } catch (Exception e) {
-                log.warn("Invalid orderId format: {}", orderId);
-            }
-        }
 
         TaskSearchRequest searchRequest = new TaskSearchRequest();
         searchRequest.setRequestInfo(requestInfo);

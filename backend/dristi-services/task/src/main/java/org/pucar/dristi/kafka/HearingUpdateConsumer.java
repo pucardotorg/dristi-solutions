@@ -65,12 +65,6 @@ public class HearingUpdateConsumer {
                 }
 
                 Long startTime = hearing.getStartTime();
-                String orderId = orderUtil.getOrderIdByHearingId(requestInfo, hearing.getHearingId(),
-                        hearing.getTenantId());
-                if (orderId == null) {
-                    log.info("orderId is null for hearingId: {}, tenantId: {}; fetchActiveWarrants will be invoked with null orderId",
-                            hearing.getHearingId(), hearing.getTenantId());
-                }
 
                 String status = hearing.getStatus() != null ? hearing.getStatus() : "";
                 String action = (hearing.getWorkflow() != null) ? hearing.getWorkflow().getAction() : null;
@@ -81,13 +75,19 @@ public class HearingUpdateConsumer {
 
                 if (isReschedule) {
                     if (filingNumber != null) {
-                        warrantReissueService.handleHearingRescheduled(requestInfo, filingNumber, startTime,
-                                orderId);
+                        warrantReissueService.handleHearingRescheduled(requestInfo, filingNumber, startTime);
                     } else {
                         log.warn("filingNumber not found in hearing update payload for scenario 1");
                     }
                 } else if (SCHEDULED.equalsIgnoreCase(status)) {
                     if (filingNumber != null) {
+                        // The new hearing's SCHEDULE_OF_HEARING_DATE order; cloned warrants are linked to it
+                        String orderId = orderUtil.getOrderIdByHearingId(requestInfo, hearing.getHearingId(),
+                                hearing.getTenantId());
+                        if (orderId == null) {
+                            log.info("orderId is null for hearingId: {}, tenantId: {}; new warrants will not be linked to an order",
+                                    hearing.getHearingId(), hearing.getTenantId());
+                        }
                         warrantReissueService.handleHearingCompletedAndNewHearingScheduled(requestInfo, filingNumber,
                                 startTime, orderId);
                     } else {
@@ -117,15 +117,9 @@ public class HearingUpdateConsumer {
                     }
 
                     Long startTime = hearing.getStartTime();
-                    String orderId = orderUtil.getOrderIdByHearingId(requestInfo, hearing.getHearingId(),
-                            hearing.getTenantId());
-                    if (orderId == null) {
-                        log.debug("orderId is null for hearingId: {}, tenantId: {}; fetchActiveWarrants will be invoked with null orderId",
-                                hearing.getHearingId(), hearing.getTenantId());
-                    }
 
                     if (filingNumber != null) {
-                        warrantReissueService.handleHearingRescheduled(requestInfo, filingNumber, startTime, orderId);
+                        warrantReissueService.handleHearingRescheduled(requestInfo, filingNumber, startTime);
                     } else {
                         log.warn("filingNumber not found in bulk hearing update payload for hearingId: {}",
                                 hearing.getHearingId() != null ? hearing.getHearingId() : "unknown");
