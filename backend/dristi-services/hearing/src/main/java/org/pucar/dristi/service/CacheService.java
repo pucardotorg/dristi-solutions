@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import org.springframework.data.redis.serializer.RedisSerializer;
+
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -106,7 +108,9 @@ public class CacheService {
         try {
             List<Object> raw = redisTemplate.executePipelined((org.springframework.data.redis.core.RedisCallback<Object>) connection -> {
                 for (String key : keys) {
-                    connection.hashCommands().hGetAll(redisTemplate.getKeySerializer().serialize(key));
+                    @SuppressWarnings("unchecked")
+                    byte[] rawKey = ((RedisSerializer<String>) redisTemplate.getKeySerializer()).serialize(key);
+                    connection.hashCommands().hGetAll(rawKey);
                 }
                 return null;
             });
