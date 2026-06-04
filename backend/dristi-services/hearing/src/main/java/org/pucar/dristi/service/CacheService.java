@@ -100,4 +100,28 @@ public class CacheService {
             return Collections.emptyList();
         }
     }
+
+    public List<Map<String, Object>> hgetAllPipelined(List<String> keys) {
+        if (redisTemplate == null || keys.isEmpty()) return Collections.emptyList();
+        try {
+            List<Object> raw = redisTemplate.executePipelined((org.springframework.data.redis.core.RedisCallback<Object>) connection -> {
+                for (String key : keys) {
+                    connection.hashCommands().hGetAll(redisTemplate.getKeySerializer().serialize(key));
+                }
+                return null;
+            });
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Object entry : raw) {
+                Map<String, Object> converted = new LinkedHashMap<>();
+                if (entry instanceof Map) {
+                    ((Map<?, ?>) entry).forEach((k, v) -> converted.put(String.valueOf(k), v));
+                }
+                result.add(converted);
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("Error in pipelined hgetAll for {} keys", keys.size(), e);
+            return Collections.emptyList();
+        }
+    }
 }
