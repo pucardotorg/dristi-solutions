@@ -372,9 +372,10 @@ public class WarrantReissueService {
 
     /**
      * Determines the previous hearing date from the warrants' own tagged hearing dates
-     * (taskDetails.caseDetails.hearingDate). Prefers the latest tagged date strictly before
-     * the newly scheduled hearing date; if none qualifies (or newHearingDate is null), falls
-     * back to the latest tagged date overall so the most recent batch is still picked up.
+     * (taskDetails.caseDetails.hearingDate). Picks the latest tagged date strictly before
+     * the newly scheduled hearing date; warrants already tagged to the new hearing date are
+     * never reissued, so a duplicate hearing event (create + scheduler-svc update) is a no-op.
+     * Only when newHearingDate is unknown does it fall back to the latest tagged date overall.
      * Returns null when no warrant carries a usable hearing date.
      */
     private Long resolvePreviousHearingDate(List<Task> warrants, Long newHearingDate) {
@@ -394,7 +395,13 @@ public class WarrantReissueService {
                 }
             }
         }
-        return latestBeforeNew != null ? latestBeforeNew : latestOverall;
+        if (latestBeforeNew != null) {
+            return latestBeforeNew;
+        }
+        // Only fall back to the latest tagged date when the new hearing date is unknown;
+        // otherwise warrants already tagged to the new date would be reissued again on the
+        // duplicate hearing event emitted during order publish (create + scheduler-svc update).
+        return newHearingDate == null ? latestOverall : null;
     }
 
     private Long getHearingDateFromTask(Task task) {
