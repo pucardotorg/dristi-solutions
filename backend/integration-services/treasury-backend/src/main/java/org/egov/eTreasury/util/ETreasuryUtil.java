@@ -16,7 +16,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.egov.eTreasury.config.ServiceConstants.CLIENT_ID_HEADER;
+import static org.egov.eTreasury.config.ServiceConstants.CLIENT_SECRET_HEADER;
 import static org.egov.eTreasury.config.ServiceConstants.DEPARTMENT_ID_PARAM;
+import static org.egov.eTreasury.config.ServiceConstants.SOURCE_PARAM;
 
 @Component
 @Slf4j
@@ -100,7 +103,13 @@ public class ETreasuryUtil {
             headers.setBasicAuth(paymentConfiguration.getBasicAuthUsername(), paymentConfiguration.getBasicAuthPassword());
         }
 
+        // Updated TransactionDetailsV3.php API requires CLIENTID/CLIENTSECRET headers (in addition to basic auth).
+        headers.add(CLIENT_ID_HEADER, paymentConfiguration.getReconciliationV3ClientId());
+        headers.add(CLIENT_SECRET_HEADER, paymentConfiguration.getReconciliationV3ClientSecret());
+
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        // Updated API requires the SOURCE form param alongside DEPARTMENT_ID.
+        body.add(SOURCE_PARAM, paymentConfiguration.getReconciliationV3Source());
         body.add(DEPARTMENT_ID_PARAM, departmentId);
 
         HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);

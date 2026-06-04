@@ -251,6 +251,14 @@ public class PaymentConfiguration {
     @Value("${treasury-reconciliation-v3-client-secret:}")
     private String reconciliationV3ClientSecret;
 
+    // CLIENTID header for the updated TransactionDetailsV3.php API (provisioned separately from treasury-client-id).
+    @Value("${treasury-reconciliation-v3-client-id:}")
+    private String reconciliationV3ClientId;
+
+    // SOURCE form parameter required by the updated TransactionDetailsV3.php API (treasury-assigned identifier).
+    @Value("${treasury-reconciliation-v3-source:}")
+    private String reconciliationV3Source;
+
     @Value("${payment.reconciliation.v3.threshold.minutes:30}")
     private Long reconciliationV3ThresholdMinutes;
 
