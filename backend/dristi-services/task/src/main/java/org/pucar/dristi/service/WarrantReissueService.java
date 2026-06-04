@@ -30,6 +30,8 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 @Slf4j
 public class WarrantReissueService {
 
+    private static final long MILLIS_PER_DAY = 24L * 60 * 60 * 1000;
+
     private final TaskService taskService;
     private final Configuration config;
     private final Producer producer;
@@ -347,47 +349,51 @@ public class WarrantReissueService {
      * so that older warrants from earlier hearings are not affected by the reissue flow.
      * The previous hearing date is derived from the warrants themselves
      * (see {@link #resolvePreviousHearingDate(List, Long)}).
+     * All comparisons happen at UTC-day granularity (see {@link #normalizeToUtcDayStart(Long)})
+     * because different writers tag the same hearing with different epoch encodings.
      */
     private List<Task> filterToPreviousHearingDate(List<Task> warrants, Long newHearingDate) {
-        Long previousHearingDate = resolvePreviousHearingDate(warrants, newHearingDate);
-        if (previousHearingDate == null) {
+        Long previousHearingDay = resolvePreviousHearingDate(warrants, newHearingDate);
+        if (previousHearingDay == null) {
             log.info("Could not resolve a previous hearing date from {} warrant(s); none will be reissued", warrants.size());
             return Collections.emptyList();
         }
 
         List<Task> filtered = new ArrayList<>();
         for (Task warrant : warrants) {
-            if (previousHearingDate.equals(getHearingDateFromTask(warrant))) {
+            if (previousHearingDay.equals(normalizeToUtcDayStart(getHearingDateFromTask(warrant)))) {
                 filtered.add(warrant);
             }
         }
-        log.info("Filtered {} warrant(s) down to {} tagged to previous hearing date: {}",
-                warrants.size(), filtered.size(), previousHearingDate);
+        log.info("Filtered {} warrant(s) down to {} tagged to previous hearing day (UTC day start): {}",
+                warrants.size(), filtered.size(), previousHearingDay);
         return filtered;
     }
 
     /**
      * Determines the previous hearing date from the warrants' own tagged hearing dates
-     * (taskDetails.caseDetails.hearingDate). Picks the latest tagged date strictly before
-     * the newly scheduled hearing date; warrants already tagged to the new hearing date are
-     * never reissued, so a duplicate hearing event (create + scheduler-svc update) is a no-op.
-     * Only when newHearingDate is unknown does it fall back to the latest tagged date overall.
+     * (taskDetails.caseDetails.hearingDate), normalized to UTC day start. Picks the latest
+     * tagged day strictly before the newly scheduled hearing day; warrants already tagged to
+     * the new hearing day are never reissued, so a duplicate hearing event (create +
+     * scheduler-svc update) is a no-op.
+     * Only when newHearingDate is unknown does it fall back to the latest tagged day overall.
      * Returns null when no warrant carries a usable hearing date.
      */
     private Long resolvePreviousHearingDate(List<Task> warrants, Long newHearingDate) {
+        Long newHearingDay = normalizeToUtcDayStart(newHearingDate);
         Long latestBeforeNew = null;
         Long latestOverall = null;
         for (Task warrant : warrants) {
-            Long hearingDate = getHearingDateFromTask(warrant);
-            if (hearingDate == null) {
+            Long hearingDay = normalizeToUtcDayStart(getHearingDateFromTask(warrant));
+            if (hearingDay == null) {
                 continue;
             }
-            if (latestOverall == null || hearingDate > latestOverall) {
-                latestOverall = hearingDate;
+            if (latestOverall == null || hearingDay > latestOverall) {
+                latestOverall = hearingDay;
             }
-            if (newHearingDate == null || hearingDate < newHearingDate) {
-                if (latestBeforeNew == null || hearingDate > latestBeforeNew) {
-                    latestBeforeNew = hearingDate;
+            if (newHearingDay == null || hearingDay < newHearingDay) {
+                if (latestBeforeNew == null || hearingDay > latestBeforeNew) {
+                    latestBeforeNew = hearingDay;
                 }
             }
         }
@@ -397,7 +403,25 @@ public class WarrantReissueService {
         // Only fall back to the latest tagged date when the new hearing date is unknown;
         // otherwise warrants already tagged to the new date would be reissued again on the
         // duplicate hearing event emitted during order publish (create + scheduler-svc update).
-        return newHearingDate == null ? latestOverall : null;
+        return newHearingDay == null ? latestOverall : null;
+    }
+
+    /**
+     * Floors an epoch to the start of its UTC day. Hearing-date tags for the same hearing are
+     * encoded inconsistently by different writers: the backend writes the hearing startTime
+     * (midnight IST = 18:30 UTC of the previous day), while the frontend task payload can
+     * round-trip the date through a UTC date string, yielding midnight UTC of that previous
+     * day (e.g. 1780770600000 vs 1780704000000 for a hearing on 2026-06-07 IST). Both
+     * encodings floor to the same UTC day start, so comparing floored values matches warrants
+     * of the same hearing regardless of writer, while hearings on different IST days still
+     * floor to different UTC days. An exact-equality comparison on the raw epochs silently
+     * splits warrants of the same hearing (only one of them gets reissued).
+     */
+    private Long normalizeToUtcDayStart(Long epochMillis) {
+        if (epochMillis == null) {
+            return null;
+        }
+        return Math.floorDiv(epochMillis, MILLIS_PER_DAY) * MILLIS_PER_DAY;
     }
 
     private Long getHearingDateFromTask(Task task) {
