@@ -1,0 +1,271 @@
+curl --location 'https://dristi-kerala-qa.pucar.org/localization/messages/v1/_upsert' \
+--header 'Content-Type: application/json' \
+--data '{
+    "RequestInfo":{
+  "apiId": "Rainmaker",
+  "authToken": "8ae41133-87aa-4fc0-9278-7d1b09008ffb",
+  "userInfo": {
+    "id": 102,
+    "uuid": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+    "userName": "mdmsv2Qa",
+    "name": "mdms",
+    "mobileNumber": "1020335566",
+    "emailId": null,
+    "locale": null,
+    "type": "EMPLOYEE",
+    "roles": [
+      {
+        "name": "HRMS_ADMIN",
+        "code": "HRMS_ADMIN",
+        "tenantId": "kl"
+      },
+      {
+        "name": "Localisation admin",
+        "code": "LOC_ADMIN",
+        "tenantId": "kl"
+      },
+      {
+        "name": "MDMS ADMIN",
+        "code": "MDMS_ADMIN",
+        "tenantId": "kl"
+      },
+      {
+        "name": "Employee",
+        "code": "EMPLOYEE",
+        "tenantId": "kl"
+      }
+    ],
+    "active": true,
+    "tenantId": "kl",
+    "permanentCity": null
+  },
+  "msgId": "1780472012931|en_IN",
+  "plainAccessRequest": {}
+},
+    "tenantId": "kl",
+    "messages": [
+        {
+            "code": "sms.login.otp.msg",
+            "message": "Hello,\nPlease use the OTP %s to log in to your ON Courts account.\n- ON Courts",
+            "module": "egov-user",
+            "locale": "en_IN"
+        },
+        {
+            "code": "ADVOCATE_REGISTERED",
+            "message": "Hello,\nYour registration request has been approved. You can now log in to the 24x7 ON Courts platform to access your account.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "ADVOCATE_REJECTED",
+            "message": "Hello,\nYour registration request in ON Courts has been rejected. Please log in to oncourts.kerala.gov.in to correct and resubmit the request.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "APPLICATION_SUBMITTED",
+            "message": "Hello,\nA {{partyType}} has made a submission in your case {{cmpNumber}}. Log in to oncourts.kerala.gov.in for details.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "BAIL_BOND_INITIATED_LITIGANT",
+            "message": "Hello,\nPlease e-Sign the Bail Bond for your case {{courtCaseNumber}} here: {{shortenedUrl}}\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "BAIL_BOND_INITIATED_SURETY",
+            "message": "Hello,\nPlease e-Sign the Bail Bond as surety for case {{courtCaseNumber}} here: {{shortenedUrl}}\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "CASE_ADMITTED",
+            "message": "Hello,\nCognizance of your case {{cmpNumberForCognizance}} has been taken. Your new case number is {{courtCaseNumber}}. Log in to oncourts.kerala.gov.in for details.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "CASE_FILED",
+            "message": "Hello,\nYour case {{efilingNumber}} has been successfully filed and is under scrutiny. Log in to oncourts.kerala.gov.in to view updates.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "CASE_STATUS_CHANGE_MESSAGE",
+            "message": "Hello,\nYour case {{cmpNumber}} has moved to the {{subStage}} stage. Log in to oncourts.kerala.gov.in for details.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "DOCUMENT_SUBMITTED",
+            "message": "Hello,\nA submission has been made by your counsel in case {{cmpNumber}}. Log in to oncourts.kerala.gov.in for details.\n- ON Courts ",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "ERRORS_PENDING",
+            "message": "Hello,\nYou have errors pending in case {{efilingNumber}}. Log in to oncourts.kerala.gov.in if you wish to rectify and resubmit the case.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "ESIGN_PENDING",
+            "message": "Hello,\nThe eSignature for case E-filing number {{efilingNumber}} is pending. The case will be filed after eSignature is completed.\n-ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "EVIDENCE_ACCUSED_PUBLISHED",
+            "message": "Hello,\nThe hearing for case {{cmpNumber}} is scheduled on {{hearingDate}} for Evidence of Accused hearing. Visit the 24x7 ON Courts platform for more details.\n-ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "EVIDENCE_COMPLAINANT_PUBLISHED",
+            "message": "Hello,\nThe hearing for case {{cmpNumber}} is scheduled on {{hearingDate}} for Evidence of Complainant hearing. Visit the 24x7 ON Courts platform for more details.\n-ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "EVIDENCE_REQUESTED",
+            "message": "Hello,\nA submission has been requested by the judge before {{submissionDate}} for your case {{cmpNumber}}. Visit the 24x7 ON Courts platform for more details.\n -ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "FSO_SEND_BACK",
+            "message": "Hello,\nErrors have been identified in case {{efilingNumber}} during scrutiny. Log in to oncourts.kerala.gov.in to rectify the file within 3 days.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "HEARINGS_HELD_TODAY_MULTIPLE",
+            "message": "Hello,\nYour {{caseCount}} cases had hearings today. Log in to oncourts.kerala.gov.in to view hearing dates, orders, and more details.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "HEARINGS_HELD_TODAY_SINGLE",
+            "message": "Hello,\nThe next hearing of your case {{cmpNumber}} is scheduled for {{hearingDate}}. Log in to oncourts.kerala.gov.in for details.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "HEARINGS_SCHEDULED_TOMORROW_MULTIPLE",
+            "message": "Hello,\nYou have hearings scheduled tomorrow for {{caseCount}} cases. Virtual link: {{link}}\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "HEARINGS_SCHEDULED_TOMORROW_SINGLE",
+            "message": "Hello,\nYou have a hearing tomorrow for case {{cmpNumber}}. Virtual link: {{link}}\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "HEARING_RESCHEDULED",
+            "message": "Hello,\nThe hearing for case {{cmpNumber}} on {{oldHearingDate}} has been rescheduled to {{hearingDate}}. Log in to oncourts.kerala.gov.in for details.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "HEARING_SCHEDULED",
+            "message": "Hello,\nYour case {{efilingNumber}} is registered as {{cmpNumber}} with hearing scheduled for {{hearingDate}}. Log in to oncourts.kerala.gov.in for details.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "MANDATORY_SUBMISSION_PENDING",
+            "message": "Hello,\nYou have a mandatory submission due in case {{cmpNumber}}. Log into oncourts.kerala.gov.in to make the submission by {{submissionDueDate}}.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "NOTICE_ISSUED",
+            "message": "Hello,\nNotice has been issued to you to appear in court for case {{cmpNumber}}. Visit the 24x7 ON Courts platform to access the digital notice.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "ORDER_ISSUED",
+            "message": "Hello,\nAn order was issued in your case {{cmpNumber}}. Log in to oncourts.kerala.gov.in for details.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "PAYMENT_COMPLETED_SUCCESSFULLY",
+            "message": "Hello,\nA payment has been made in your case {{cmpNumber}}. Log in to oncourts.kerala.gov.in for details.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "PROCESS_FEE_PAYMENT",
+            "message": "Hello,\nA {{orderType}} has been issued against {{partyType}} in your case {{cmpNumber}}. Log into oncourts.kerala.gov.in to pay the fee within {{days}} days.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "PROCESS_FEE_PAYMENT_PENDING",
+            "message": "Hello,\nYou have process payment(s) pending. Please log in to oncourts.kerala.gov.in and pay immediately to ensure your cases move forward.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "RPAD_SUBMISSION",
+            "message": "Hello,\nA RPAD envelope is due in your case {{cmpNumber}}. Please submit within {{days}} days at the 24x7 ON Court courtroom. Ignore if already done.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "RPAD_SUBMISSION_PENDING",
+            "message": "Hello,\nYou have RPAD payment(s) pending. Please pay at the 24x7 ON Court courtroom immediately to ensure your cases move forward. Ignore if already paid.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "SIGN_EXAMINATION_DOCUMENT",
+            "message": "Hello,\nPlease e-Sign the Examination Record as accused for case {{cmpNumber}} here: {{shortenedUrl}}\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "SIGN_MEDIATION_DOCUMENT",
+            "message": "Hello,\nPlease e-Sign the mediation referral form for case {{cmpNumber}} here: {{shortenedUrl}}\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "SIGN_PLEA_DOCUMENT",
+            "message": "Hello,\nPlease e-Sign the plea form for case {{cmpNumber}} here: {{shortenedUrl}}\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "SUBMISSION_MADE",
+            "message": "Hello,\nA {{partyType}} has made a submission in your case {{cmpNumber}}. Log in to oncourts.kerala.gov.in for details.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "SUMMONS_ISSUED",
+            "message": "Hello,\nSummons have been issued to you to appear in court for case {{cmpNumber}}. Visit the 24x7 ON Courts platform to access the digital summons.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "VAKALATNAMA_FILED",
+            "message": "Hello,\nThe next hearing of your case {{cmpNumber}} is scheduled for {{hearingDate}}. Log in to oncourts.kerala.gov.in for case details.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+        {
+            "code": "WITNESS_DEPOSITION_MESSAGE",
+            "message": "Hello,\nPlease e-Sign the deposition as a witness for case {{filingNumber}} here: {{shortenedUrl}}\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        }
+
+    ]
+}'

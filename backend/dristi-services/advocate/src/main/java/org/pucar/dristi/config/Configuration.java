@@ -148,6 +148,9 @@ public class Configuration {
 	@Value("${egov.sms.notification.advocate.registered.template.id}")
 	private String smsNotificationAdvocateRegisteredTemplateId;
 
+	@Value("${egov.sms.notification.advocate.rejected.template.id}")
+	private String smsNotificationAdvocateRejectedTemplateId;
+
 	//Localization
 	@Value("${egov.localization.host}")
 	private String localizationHost;
