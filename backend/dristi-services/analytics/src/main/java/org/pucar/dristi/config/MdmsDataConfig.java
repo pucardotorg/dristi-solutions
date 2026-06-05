@@ -166,7 +166,6 @@ public class MdmsDataConfig {
                     "NOTICE", "Notice",
                     "SUMMONS", "Summons", 
                     "WARRANT", "Warrant",
-                    "PROCLAMATION", "Proclamation & Attachment",
                     "ATTACHMENT", "Proclamation & Attachment"
                 );
                 log.info("Using default orderType to substage mappings: {}", orderTypeToSubstageMap);
@@ -178,7 +177,6 @@ public class MdmsDataConfig {
                 "NOTICE", "Notice",
                 "SUMMONS", "Summons", 
                 "WARRANT", "Warrant",
-                "PROCLAMATION", "Proclamation & Attachment",
                 "ATTACHMENT", "Proclamation & Attachment"
             );
         }

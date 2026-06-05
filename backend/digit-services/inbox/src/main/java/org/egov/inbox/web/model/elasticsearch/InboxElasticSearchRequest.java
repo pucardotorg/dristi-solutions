@@ -3,7 +3,6 @@ package org.egov.inbox.web.model.elasticsearch;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.inbox.web.model.InboxSearchCriteria;
 
 import javax.validation.Valid;
 
@@ -16,7 +15,7 @@ import javax.validation.Valid;
 @Setter
 public class InboxElasticSearchRequest {
   @JsonProperty("RequestInfo")
-  private RequestInfo RequestInfo;
+  private RequestInfo requestInfo;
 
   @Valid
   @JsonProperty("InboxElasticSearchCriteria")

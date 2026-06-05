@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
-import org.egov.common.contract.response.ResponseInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
@@ -27,17 +26,12 @@ import org.pucar.dristi.web.models.esign.ESignResponse;
 import org.pucar.dristi.web.models.filestore.StorageResponse;
 import org.pucar.dristi.web.models.inbox.*;
 
-import org.springframework.core.io.Resource;
-import org.springframework.http.ResponseEntity;
-
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -450,7 +444,7 @@ public class OpenApiService {
                         .build())
                 .build();
 
-        return InboxRequest.builder().inbox(inboxSearchCriteria).RequestInfo(RequestInfo.builder().build()).build();
+        return InboxRequest.builder().inbox(inboxSearchCriteria).requestInfo(RequestInfo.builder().build()).build();
     }
 
     public String getMagistrateName(String courtId, String tenantId) {
