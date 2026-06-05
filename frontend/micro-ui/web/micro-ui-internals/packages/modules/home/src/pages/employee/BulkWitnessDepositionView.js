@@ -44,7 +44,7 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
   const [showBulkSignModal, setShowBulkSignModal] = useState(sessionStorage.getItem("bulkWitnessDepositionSignSelectedItem") ? true : false);
   const [witnessDepositionPaginationData, setWitnessDepositionPaginationData] = useState({});
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
-  const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
+  const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://127.0.0.1:1620";
   const courtId = localStorage.getItem("courtId");
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const [successCount, setSuccessCount] = useState(0);
@@ -177,6 +177,8 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
         const response = await axiosInstance.post(bulkSignUrl, formData, {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Access-Control-Allow-Origin": "*",
+            "Accept": "text/html,application/xhtml+xml,application/json,application/xml;q=0.9,image/webp,*/*;q=0.8",
           },
         });
 
