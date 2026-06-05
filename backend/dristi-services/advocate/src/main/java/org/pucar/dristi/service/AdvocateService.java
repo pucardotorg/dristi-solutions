@@ -208,7 +208,7 @@ public class AdvocateService {
         if (ACTIVE.equalsIgnoreCase(updatedStatus)){
             return ADVOCATE_REGISTERED;
         }
-        if (INACTIVE.equalsIgnoreCase(updatedStatus)){
+        else if (INACTIVE.equalsIgnoreCase(updatedStatus)){
             return ADVOCATE_REJECTED;
         }
         return null;
