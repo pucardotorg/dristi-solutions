@@ -448,14 +448,9 @@ public class HearingService {
         String baseKey = CACHE_KEY_PREFIX + courtId + ":" + date;
         String causeListKey = baseKey + CACHE_CAUSE_LIST_SUFFIX;
 
-        List<Object> hearingKeys = cacheService.lrange(causeListKey, 0, -1);
-        if (!hearingKeys.isEmpty()) {
-            List<String> keys = hearingKeys.stream().map(String::valueOf).collect(java.util.stream.Collectors.toList());
-            List<Map<String, Object>> result = new ArrayList<>();
-            for (Map<String, Object> hearingData : cacheService.hgetAllPipelined(keys)) {
-                if (!hearingData.isEmpty()) result.add(hearingData);
-            }
-            return result;
+        List<Map<String, Object>> cached = cacheService.lrangeAndHGetAll(causeListKey);
+        if (!cached.isEmpty()) {
+            return cached;
         }
 
         // Cache miss — fall back to ES via inbox service

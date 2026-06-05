@@ -4,10 +4,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.pucar.dristi.config.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 
 import org.springframework.data.redis.serializer.RedisSerializer;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -99,6 +101,42 @@ public class CacheService {
             return result != null ? result : Collections.emptyList();
         } catch (Exception e) {
             log.error("Error reading list for key: {}", key, e);
+            return Collections.emptyList();
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public List<Map<String, Object>> lrangeAndHGetAll(String listKey) {
+        if (redisTemplate == null) return Collections.emptyList();
+        try {
+            String lua =
+                "local ks = redis.call('LRANGE', KEYS[1], 0, -1)\n" +
+                "if #ks == 0 then return {} end\n" +
+                "local out = {}\n" +
+                "for _, k in ipairs(ks) do\n" +
+                "  table.insert(out, redis.call('HGETALL', k))\n" +
+                "end\n" +
+                "return out";
+            DefaultRedisScript<List> script = new DefaultRedisScript<>(lua, List.class);
+            List raw = redisTemplate.execute(script, Collections.singletonList(listKey));
+            if (raw == null || raw.isEmpty()) return Collections.emptyList();
+
+            RedisSerializer valSer = redisTemplate.getHashValueSerializer();
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Object item : raw) {
+                if (!(item instanceof List)) continue;
+                List pairs = (List) item;
+                Map<String, Object> map = new LinkedHashMap<>();
+                for (int i = 0; i + 1 < pairs.size(); i += 2) {
+                    String field = new String((byte[]) pairs.get(i), StandardCharsets.UTF_8);
+                    Object val = valSer.deserialize((byte[]) pairs.get(i + 1));
+                    map.put(field, val);
+                }
+                if (!map.isEmpty()) result.add(map);
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("Error in lrangeAndHGetAll for key: {}", listKey, e);
             return Collections.emptyList();
         }
     }
