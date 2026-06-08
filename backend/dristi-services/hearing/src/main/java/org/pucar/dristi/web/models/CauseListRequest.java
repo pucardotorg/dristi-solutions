@@ -19,4 +19,10 @@ public class CauseListRequest {
 
     @JsonProperty("date")
     private String date;
+
+    @JsonProperty("offset")
+    private int offset = 0;
+
+    @JsonProperty("limit")
+    private int limit = 100;
 }

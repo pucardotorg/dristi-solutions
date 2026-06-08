@@ -230,12 +230,21 @@ public class HearingService {
     }
 
     private Hearing updateHearingFastPath(HearingRequest hearingRequest, String action) {
-        String hearingId = hearingRequest.getHearing().getHearingId();
+        // Validate existence before any cache write to prevent orphaned entries for invalid hearingIds.
+        Hearing dbHearing = validator.validateHearingExistence(
+                hearingRequest.getRequestInfo(), hearingRequest.getHearing());
+
+        String hearingId = dbHearing.getHearingId();
         String newStatus = resolveStatus(action);
         int newStatusOrder = resolveStatusOrder(newStatus);
 
         String courtId = config.getCourtId();
-        String date = dateUtil.getCurrentDate();
+        // Derive the cache-key date from the hearing's own startTime so the key is correct
+        // when the hearing's scheduled date differs from the current system date.
+        String date = (dbHearing.getStartTime() != null)
+                ? dateUtil.getLocalDateFromEpoch(dbHearing.getStartTime())
+                          .format(DateTimeFormatter.ofPattern(DATE_FORMAT_REDIS))
+                : dateUtil.getCurrentDate();
         String hKey = CACHE_KEY_PREFIX + courtId + ":" + date + CACHE_HEARING_PREFIX + hearingId;
         String metaKey = CACHE_KEY_PREFIX + courtId + ":" + date + CACHE_COURT_META_SUFFIX;
 
@@ -266,9 +275,29 @@ public class HearingService {
         List<Object> hearingKeys = cacheService.lrange(causeListKey, 0, -1);
         for (Object keyObj : hearingKeys) {
             String nextKey = String.valueOf(keyObj);
-            Object statusObj = cacheService.hget(nextKey, "status");
-            if (SCHEDULED.equals(statusObj)) {
-                String nextHearingId = nextKey.substring(nextKey.lastIndexOf(CACHE_HEARING_PREFIX) + CACHE_HEARING_PREFIX.length());
+            if (!SCHEDULED.equals(cacheService.hget(nextKey, "status"))) {
+                continue;
+            }
+
+            // Acquire a short-TTL distributed lock to guard the compare-and-set
+            // against concurrent CLOSE actions racing to advance the same hearing.
+            String lockKey = nextKey + ":ADVANCE_LOCK";
+            if (!cacheService.tryLock(lockKey, 10)) {
+                // Another actor is advancing this hearing concurrently; nothing left to do.
+                log.info("auto-advance: lock contention on hearingKey={}, concurrent actor is handling it", nextKey);
+                break;
+            }
+            try {
+                // Re-read inside the critical section to confirm status hasn't changed.
+                if (!SCHEDULED.equals(cacheService.hget(nextKey, "status"))) {
+                    break; // Concurrent actor already advanced it
+                }
+                Object hearingNumObj = cacheService.hget(nextKey, "hearingNumber");
+                if (hearingNumObj == null || hearingNumObj.toString().isEmpty()) {
+                    log.warn("auto-advance: hearingNumber missing in cache hash for key={}, aborting advance", nextKey);
+                    break;
+                }
+                String nextHearingId = hearingNumObj.toString();
 
                 Map<String, Object> nextUpdate = new HashMap<>();
                 nextUpdate.put("status", IN_PROGRESS);
@@ -283,8 +312,10 @@ public class HearingService {
                 HearingRequest nextRequest = buildMinimalHearingRequest(nextHearingId, tenantId, START, originalRequest.getRequestInfo());
                 asyncPersistenceService.persistStatusChange(nextRequest);
                 log.info("Auto-advanced to next hearing hearingId={}", nextHearingId);
-                break;
+            } finally {
+                cacheService.releaseLock(lockKey);
             }
+            break; // Reached only on successful advance; exits the search loop
         }
     }
 
@@ -307,11 +338,10 @@ public class HearingService {
         try {
             Hearing hearing = validator.validateHearingExistence(hearingRequest.getRequestInfo(), hearingRequest.getHearing());
             hearing.setWorkflow(hearingRequest.getHearing().getWorkflow());
-            String newHearingType = null;
             if (hearing.getWorkflow() != null && (hearing.getWorkflow().getAction().equalsIgnoreCase(MARK_COMPLETE)
                     || hearing.getWorkflow().getAction().equalsIgnoreCase(UPDATE_DATE)
                     || hearing.getWorkflow().getAction().equalsIgnoreCase(RESCHEDULE_ONGOING))) {
-                newHearingType = hearingRequest.getHearing().getHearingType();
+                String newHearingType = hearingRequest.getHearing().getHearingType();
                 hearing.setHearingType(newHearingType);
             }
             hearingRequest.setHearing(hearing);
@@ -330,6 +360,7 @@ public class HearingService {
         } catch (Exception e) {
             log.error("performPersistStatusChange failed for hearingId={}",
                     hearingRequest.getHearing() != null ? hearingRequest.getHearing().getHearingId() : "unknown", e);
+            throw e;
         }
     }
 
@@ -444,13 +475,24 @@ public class HearingService {
         }
     }
 
-    public List<Map<String, Object>> getCauseList(String courtId, String date) {
+    public List<Map<String, Object>> getCauseList(String courtId, String date, int offset, int limit) {
         String baseKey = CACHE_KEY_PREFIX + courtId + ":" + date;
         String causeListKey = baseKey + CACHE_CAUSE_LIST_SUFFIX;
 
-        List<Map<String, Object>> cached = cacheService.lrangeAndHGetAll(causeListKey);
-        if (!cached.isEmpty()) {
-            return cached;
+        List<Object> hearingKeys = cacheService.lrange(causeListKey, offset, (long) offset + limit - 1);
+        if (!hearingKeys.isEmpty()) {
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Object keyObj : hearingKeys) {
+                Map<String, Object> hearingData = cacheService.hgetAll(String.valueOf(keyObj));
+                if (!hearingData.isEmpty()) {
+                    result.add(hearingData);
+                }
+            }
+            if (result.size() == hearingKeys.size()) {
+                return result;
+            }
+            log.warn("Cache partial-read: causeListKey={} had {} keys but only {} hashes resolved; falling back to ES",
+                    causeListKey, hearingKeys.size(), result.size());
         }
 
         // Cache miss — fall back to ES via inbox service
@@ -459,7 +501,7 @@ public class HearingService {
             LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern(DATE_FORMAT_REDIS));
             Long fromDateEpoch = dateUtil.getEPochFromLocalDate(localDate);
             Long toDateEpoch = dateUtil.getEpochFromLocalDateTime(localDate.atTime(23, 59, 59));
-            InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtId, fromDateEpoch, toDateEpoch);
+            InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtId, fromDateEpoch, toDateEpoch, offset, limit);
             List<OpenHearing> openHearings = inboxUtil.getOpenHearings(inboxRequest);
             if (openHearings == null || openHearings.isEmpty()) return Collections.emptyList();
 

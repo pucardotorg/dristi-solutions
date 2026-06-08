@@ -228,7 +228,7 @@ public class InboxUtil {
                 .build();
     }
 
-    public InboxRequest getInboxRequestForOpenHearing(String courtId, Long fromDate, Long toDate) {
+    public InboxRequest getInboxRequestForOpenHearing(String courtId, Long fromDate, Long toDate, int offset, int limit) {
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
         moduleSearchCriteria.put("courtId", courtId);
         moduleSearchCriteria.put("fromDate", fromDate);
@@ -243,8 +243,8 @@ public class InboxUtil {
                 .processSearchCriteria(processSearchCriteria)
                 .moduleSearchCriteria(moduleSearchCriteria)
                 .tenantId(configuration.getTenantId())
-                .limit(300)
-                .offset(0)
+                .limit(limit)
+                .offset(offset)
                 .build();
 
         return InboxRequest.builder()
