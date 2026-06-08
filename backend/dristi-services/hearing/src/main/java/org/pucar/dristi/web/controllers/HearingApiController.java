@@ -176,7 +176,7 @@ public class HearingApiController {
     @PostMapping(value = "/v1/cause-list")
     public ResponseEntity<CauseListResponse> getCauseList(@Valid @RequestBody CauseListRequest body) {
         log.info("api=/v1/cause-list, courtId={}, date={}", body.getCourtId(), body.getDate());
-        List<Map<String, Object>> hearings = hearingService.getCauseList(body.getCourtId(), body.getDate());
+        List<Map<String, Object>> hearings = hearingService.getCauseList(body.getCourtId(), body.getDate(), body.getOffset(), body.getLimit());
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         CauseListResponse response = CauseListResponse.builder()
                 .responseInfo(responseInfo)
