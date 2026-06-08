@@ -1,6 +1,4 @@
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { search_order_v2 } = require("../../api");
 const { logger } = require("../../logger");
 
@@ -70,9 +68,6 @@ async function processOrders(
   } else {
     ordersIndexSection.lineItems = [];
   }
-  logger.info(
-    `[processOrders] Completed | lineItems: ${ordersIndexSection?.lineItems?.length || 0}`
-  );
 }
 
 module.exports = {

@@ -1,12 +1,12 @@
 import { Button } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
-import { Urls } from "../hooks/services";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
-import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { InfoCard } from "@egovernments/digit-ui-components";
 import { downloadPdfFromBlob } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
+
 const AddSignatureCTCModal = ({
   t,
   setSignedDocumentUploadID,
@@ -21,34 +21,15 @@ const AddSignatureCTCModal = ({
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
   const [formData, setFormData] = useState({});
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
-  const [pageModule, setPageModule] = useState("en");
+  const pageModule = "en";
   const [loader, setLoader] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const name = "Signature";
   const [fileUploadError, setFileUploadError] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: name,
-            // documentHeader: "CS_ADD_SIGNATURE",
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
+  const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const onSelect = (key, value) => {
     if (value?.[name] === null) {
@@ -75,6 +56,8 @@ const AddSignatureCTCModal = ({
         console.error("error", error);
         setLoader(false);
         setFormData({});
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("CS_ESIGN_ERROR"), error: true, errorId });
         setIsSigned(false);
         setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
@@ -103,11 +86,13 @@ const AddSignatureCTCModal = ({
           sessionStorage.setItem("homeActiveTab", "CS_HOME_ISSUE_CTC_COPY");
           sessionStorage.setItem("ctcSignState", JSON.stringify(selectedRowData));
           sessionStorage.setItem("docPdf", uploadedFileStoreId);
-          handleEsign(name, pageModule, uploadedFileStoreId, "Certification Signature");
+          handleEsign(name, pageModule, uploadedFileStoreId, setShowToast, t, "Certification Signature");
         }
       } catch (error) {
         console.error("Failed to upload document for e-sign", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        setShowToast({ label: t("CS_FILE_UPLOAD_ERROR"), error: true, errorId });
       } finally {
         setLoader(false);
       }
@@ -161,21 +146,39 @@ const AddSignatureCTCModal = ({
           </div>
         )}
       </div>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </Modal>
   ) : (
-    <UploadSignatureModal
-      t={t}
-      key={name}
-      name={name}
-      setOpenUploadSignatureModal={setOpenUploadSignatureModal}
-      onSelect={onSelect}
-      config={uploadModalConfig}
-      formData={formData}
-      onSubmit={onSubmit}
-      isDisabled={loader}
-      fileUploadError={fileUploadError}
-      setFileUploadError={setFileUploadError}
-    />
+    <React.Fragment>
+      <UploadModal
+        t={t}
+        key={name}
+        name={name}
+        onClose={() => setOpenUploadSignatureModal(false)}
+        onSelect={onSelect}
+        formData={formData}
+        onSubmit={onSubmit}
+        isDisabled={loader}
+        fileUploadError={fileUploadError}
+      />
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
+    </React.Fragment>
   );
 };
 

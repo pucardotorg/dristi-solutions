@@ -1,14 +1,8 @@
 const { search_application_v2 } = require("../../api");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
-const {
-  combineMultipleFilestores,
-} = require("../utils/combineMultipleFilestores");
-const {
-  duplicateExistingFileStore,
-} = require("../utils/duplicateExistingFileStore");
+const { combineMultipleFilestores } = require("../utils/combineMultipleFilestores");
+const { duplicateExistingFileStore } = require("../utils/duplicateExistingFileStore");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 const { logger } = require("../../logger");
 
@@ -52,7 +46,6 @@ async function processPendingApplicationsSection(
 
   if (pendingReviewApplicationSection?.length !== 0) {
     const section = pendingReviewApplicationSection[0];
-    logger.info(`[processPendingApplicationsSection] search_application_v2 | status: PENDINGREVIEW`);
     const pendingReviewApplications = await search_application_v2(
       tenantId,
       requestInfo,
@@ -70,7 +63,7 @@ async function processPendingApplicationsSection(
       }
     );
 
-    logger.info(`[processPendingApplicationsSection] search_application_v2 | status: PENDINGAPPROVAL`);
+    // Search for PENDINGAPPROVAL applications
     const pendingApprovalApplications = await search_application_v2(
       tenantId,
       requestInfo,
@@ -88,7 +81,6 @@ async function processPendingApplicationsSection(
       }
     );
 
-    logger.info(`[processPendingApplicationsSection] search_application_v2 | status: DOCUMENT_UPLOAD`);
     const pendingDocUploadApplications = await search_application_v2(
       tenantId,
       requestInfo,
@@ -352,9 +344,6 @@ async function processPendingApplicationsSection(
   } else {
     pendingApplicationsIndexSection.lineItems = [];
   }
-  logger.info(
-    `[processPendingApplicationsSection] Completed | lineItems: ${pendingApplicationsIndexSection?.lineItems?.length || 0}`
-  );
 }
 
 module.exports = {

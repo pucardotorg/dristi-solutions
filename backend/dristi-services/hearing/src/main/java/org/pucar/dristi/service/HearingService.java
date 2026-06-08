@@ -18,6 +18,7 @@ import org.pucar.dristi.validator.HearingRegistrationValidator;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.cases.CaseRequest;
 import org.pucar.dristi.web.models.cases.CourtCase;
+import org.pucar.dristi.web.models.cases.LifecycleStatus;
 import org.pucar.dristi.web.models.inbox.InboxRequest;
 import org.pucar.dristi.web.models.orders.*;
 import org.pucar.dristi.web.models.orders.Order;
@@ -253,9 +254,7 @@ public class HearingService {
                         openHearingList.add((OpenHearing) item);
                     } else if (item instanceof LinkedHashMap) {
                         try {
-                            ObjectMapper objectMapper = new ObjectMapper();
-                            String json = objectMapper.writeValueAsString(item);
-                            OpenHearing convertedHearing = objectMapper.readValue(json, OpenHearing.class);
+                            OpenHearing convertedHearing = objectMapper.convertValue(item, OpenHearing.class);
                             openHearingList.add(convertedHearing);
                         } catch (Exception e) {
                             log.error("Error converting LinkedHashMap to OpenHearing: {}", e.getMessage());
@@ -588,7 +587,7 @@ public class HearingService {
                 scheduleHearing.setOriginalHearingDate(hearing.getFromDate());
                 scheduleHearing.setCaseId(hearing.getCaseNumber());
                 scheduleHearing.setFilingNumber(Collections.singletonList(hearing.getFilingNumber()));
-                scheduleHearing.setCaseStage(hearing.getSubStage());
+                scheduleHearing.setCaseStage(hearing.getStage());
             }
         }
 
@@ -859,7 +858,7 @@ public class HearingService {
             for (Hearing hearing : hearingList) {
                 hearing.setCourtCaseNumber(courtCase.getCourtCaseNumber());
                 hearing.setCmpNumber(courtCase.getCmpNumber());
-                if ((courtCase.getIsLPRCase() != null && courtCase.getIsLPRCase()) && courtCase.getLprNumber() != null) {
+                if (LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus()) && courtCase.getLprNumber() != null) {
                     hearing.setCaseReferenceNumber(courtCase.getLprNumber());
                 } else if (courtCase.getCourtCaseNumber() != null) {
                     hearing.setCaseReferenceNumber(courtCase.getCourtCaseNumber());

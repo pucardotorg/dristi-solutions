@@ -1,4 +1,5 @@
-import { Button, FormComposerV2, Modal, Loader } from "@egovernments/digit-ui-react-components";
+import { Button, Modal, Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import addPartyConfig from "../../configs/AddNewPartyConfig.js";
 import { useTranslation } from "react-i18next";

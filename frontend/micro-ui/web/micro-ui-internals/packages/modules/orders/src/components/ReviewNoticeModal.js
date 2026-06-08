@@ -14,14 +14,19 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
   const useDownloadCasePdf = Digit?.Hooks?.dristi?.useDownloadCasePdf;
   const { downloadPdf } = useDownloadCasePdf();
 
-  
   const handleDownload = async (tenantId, filestoreId, filestoreIdPolice) => {
     // await downloadPdfFromFile(file?.[0]);
     if (filestoreId) {
-      downloadPdf(tenantId, filestoreId);
+      const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber || "Case"}_${rowData?.taskNumber}_${t(
+        rowData?.taskType
+      )}`;
+      downloadPdf(tenantId, filestoreId, fileName);
     }
     if (filestoreIdPolice) {
-      downloadPdf(tenantId, filestoreIdPolice, "Police Report");
+      const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber || "Case"}_${rowData?.taskNumber}_${t(
+        "Police_Report"
+      )}`;
+      downloadPdf(tenantId, filestoreIdPolice, fileName);
     }
   };
 
@@ -32,13 +37,12 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
   const showDocument = useMemo(() => {
     return (
       <div
-        className="show-document-doc-container"
         style={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           width: "100%",
-          maxHeight: "60vh",
+          maxHeight: infos ? "50vh" : "60vh",
           maxWidth: "100%",
           overflowY: "auto",
           overflowX: "hidden",
@@ -87,7 +91,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
       actionSaveLabel={null}
       hideSubmit={true}
       actionSaveOnSubmit={() => {}}
-      popupStyles={{ minWidth: "880px", width: "80%" }}
+      popupStyles={{ minWidth: "880px", width: "80%", maxHeight: "95vh" }}
     >
       {infos && <ApplicationInfoComponent infos={infos} />}
       {showDocument}

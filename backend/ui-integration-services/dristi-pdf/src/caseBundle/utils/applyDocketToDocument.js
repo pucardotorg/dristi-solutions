@@ -32,99 +32,105 @@ async function applyDocketToDocument(
     return null;
   }
 
-  logger.info(`[applyDocketToDocument] Started | fileStoreId: ${documentFileStoreId}, type: ${docketApplicationType}`);
-  const filingPDFDocument = await convertFileStoreToDocument(
-    tenantId,
-    documentFileStoreId,
-    requestInfo
-  );
+  logger.info(`[applyDocketToDocument] Started | fileStoreId: ${documentFileStoreId}, docketApplicationType: ${docketApplicationType}`);
+  try {
+    const filingPDFDocument = await convertFileStoreToDocument(
+      tenantId,
+      documentFileStoreId,
+      requestInfo
+    );
 
-  // handling with multiple name and names are seperated by comma
-  const complainants = courtCase.litigants.filter((litigant) =>
-    litigant.partyType.includes("complainant")
-  );
+    // handling with multiple name and names are seperated by comma
+    const complainants = courtCase.litigants.filter((litigant) =>
+      litigant.partyType.includes("complainant")
+    );
 
-  const filteredRespondents =
-    courtCase.litigants?.filter((litigant) =>
-      litigant.partyType.includes("respondent")
-    ) || [];
+    const filteredRespondents =
+      courtCase.litigants?.filter((litigant) =>
+        litigant.partyType.includes("respondent")
+      ) || [];
 
-  const respondents =
-    filteredRespondents.length > 0
-      ? filteredRespondents
-      : courtCase?.additionalDetails?.respondentDetails?.formdata?.map(
-          (item) => item?.data
-        ) || [];
+    const respondents =
+      filteredRespondents.length > 0
+        ? filteredRespondents
+        : courtCase?.additionalDetails?.respondentDetails?.formdata?.map(
+            (item) => item?.data
+          ) || [];
 
-  const docketComplainantName = complainants
-    .map((lit) => lit.additionalDetails.fullName)
-    .filter(Boolean)
-    .join(", ");
+    const docketComplainantName = complainants
+      .map((lit) => lit.additionalDetails.fullName)
+      .filter(Boolean)
+      .join(", ");
 
-  const docketAccusedName =
-    respondents
-      ?.map((lit) => lit?.additionalDetails?.fullName)
-      ?.filter(Boolean)
-      ?.join(", ") ||
-    respondents
-      ?.map(
-        ({ respondentFirstName, respondentMiddleName, respondentLastName }) =>
-          [respondentFirstName, respondentMiddleName, respondentLastName]
-            ?.filter(Boolean)
-            ?.join(" ")
-      )
-      ?.filter(Boolean)
-      ?.join(", ");
+    const docketAccusedName =
+      respondents
+        ?.map((lit) => lit?.additionalDetails?.fullName)
+        ?.filter(Boolean)
+        ?.join(", ") ||
+      respondents
+        ?.map(
+          ({ respondentFirstName, respondentMiddleName, respondentLastName }) =>
+            [respondentFirstName, respondentMiddleName, respondentLastName]
+              ?.filter(Boolean)
+              ?.join(" ")
+        )
+        ?.filter(Boolean)
+        ?.join(", ");
 
-  logger.info(`[applyDocketToDocument] search_mdms Court_Rooms | courtId: ${courtCase.courtId}`);
-  const response = await search_mdms(
-    courtCase.courtId,
-    "common-masters.Court_Rooms",
-    tenantId,
-    requestInfo
-  ).then((mdmsRes) => {
-    return mdmsRes.data.mdms.filter((x) => x.isActive).map((x) => x.data);
-  });
+    logger.info(`[applyDocketToDocument] Fetching court room MDMS | courtId: ${courtCase.courtId}`);
+    const response = await search_mdms(
+      courtCase.courtId,
+      "common-masters.Court_Rooms",
+      tenantId,
+      requestInfo
+    ).then((mdmsRes) => {
+      return mdmsRes.data.mdms.filter((x) => x.isActive).map((x) => x.data);
+    });
 
-  const data = {
-    Data: [
-      {
-        docketDateOfSubmission: docketDateOfSubmission,
-        docketCourtName: "Before The " + response[0].name,
-        docketComplainantName,
-        docketAccusedName,
-        docketApplicationType,
-        docketNameOfAdvocate,
-        docketCounselFor,
-        docketNameOfFiling,
-        documentPath,
-      },
-    ],
-  };
-  logger.info(`[applyDocketToDocument] create_pdf_v2 | key: docket-page`);
-  const filingDocketPdfResponse = await create_pdf_v2(
-    tenantId,
-    "docket-page",
-    data,
-    { RequestInfo: requestInfo }
-  );
-  const filingDocketPDFDocument = await PDFDocument.load(
-    filingDocketPdfResponse.data,
-    { ignoreEncryption: true }
-  );
+    const data = {
+      Data: [
+        {
+          docketDateOfSubmission: docketDateOfSubmission,
+          docketCourtName: "Before The " + response[0].name,
+          docketComplainantName,
+          docketAccusedName,
+          docketApplicationType,
+          docketNameOfAdvocate,
+          docketCounselFor,
+          docketNameOfFiling,
+          documentPath,
+        },
+      ],
+    };
 
-  const mergedDocumentWithDocket = await mergePDFDocuments(
-    filingDocketPDFDocument,
-    filingPDFDocument
-  );
-  const mergedDocWithDocketFileStoreId = await persistPDF(
-    mergedDocumentWithDocket,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR
-  );
-  logger.info(`[applyDocketToDocument] Completed | newFileStoreId: ${mergedDocWithDocketFileStoreId}`);
-  return mergedDocWithDocketFileStoreId;
+    logger.info(`[applyDocketToDocument] Generating docket page PDF | fileStoreId: ${documentFileStoreId}`);
+    const filingDocketPdfResponse = await create_pdf_v2(
+      tenantId,
+      "docket-page",
+      data,
+      { RequestInfo: requestInfo }
+    );
+    const filingDocketPDFDocument = await PDFDocument.load(
+      filingDocketPdfResponse.data,
+      { ignoreEncryption: true }
+    );
+
+    const mergedDocumentWithDocket = await mergePDFDocuments(
+      filingDocketPDFDocument,
+      filingPDFDocument
+    );
+    const mergedDocWithDocketFileStoreId = await persistPDF(
+      mergedDocumentWithDocket,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR
+    );
+    logger.info(`[applyDocketToDocument] Completed | sourceFileStoreId: ${documentFileStoreId}, resultFileStoreId: ${mergedDocWithDocketFileStoreId}`);
+    return mergedDocWithDocketFileStoreId;
+  } catch (err) {
+    logger.error(`[applyDocketToDocument] Failed | fileStoreId: ${documentFileStoreId}, docketApplicationType: ${docketApplicationType} | error: ${err.message}`);
+    throw err;
+  }
 }
 
 module.exports = {

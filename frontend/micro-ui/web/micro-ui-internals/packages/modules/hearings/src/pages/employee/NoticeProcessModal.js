@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Modal, CloseSvg, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { Modal, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";

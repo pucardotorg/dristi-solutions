@@ -24,6 +24,7 @@ export const SubmissionWorkflowState = {
   REJECTED: "REJECTED",
   DOC_UPLOAD: "DOCUMENT_UPLOAD",
   DRAFT_IN_PROGRESS: "DRAFT_IN_PROGRESS",
+  PENDING_E_SIGN: "PENDING_E-SIGN",
 };
 
 export const SubmissionDocumentsWorkflowState = {

@@ -1,13 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { formatNoticeDeliveryDate } from "../utils";
+import { ORDER_TYPES } from "../utils/constants";
 import { OrderName } from "@egovernments/digit-ui-module-dristi/src/components/OrderName";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/components/BulkCheckbox";
 import { AdvocateName } from "@egovernments/digit-ui-module-dristi/src/components/AdvocateName";
-import { DateUtils, modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, modifiedEvidenceNumber, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
 import PencilIconEdit from "@egovernments/digit-ui-module-dristi/src/components/PencilIconEdit";
 import EditDeleteModal from "@egovernments/digit-ui-module-dristi/src/components/EditDeleteModal";
@@ -255,7 +256,7 @@ export const UICustomizations = {
       const activeTab = searchResult?.additionalDetails?.activeTab || "";
       const isDisposedTab = activeTab === "DISPOSED";
       const caseId =
-        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+        (isLPRCase(row) && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "Draft Name":
         case "CS_CASE_NAME":
@@ -269,7 +270,7 @@ export const UICustomizations = {
         case "CS_OUTCOME":
           return t(value);
         case "CS_STAGE":
-          return t(value);
+          return isLPRCase(row) ? t("Long Pending Register") : t(value);
         case "CS_SECONDARY_STAGE": {
           const stages = Array.isArray(value) ? value : [value];
           const normalized = stages.filter(Boolean);
@@ -363,12 +364,12 @@ export const UICustomizations = {
       const activeTab = searchResult?.additionalDetails?.activeTab || "";
       const isDisposedTab = activeTab === "DISPOSED";
       const caseId =
-        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+        (isLPRCase(row) && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
         case "CS_STAGE":
-          return t(value);
+          return isLPRCase(row) ? t("Long Pending Register") : t(value);
         case "CS_SECONDARY_STAGE": {
           const stages = Array.isArray(value) ? value : [value];
           const normalized = stages.filter(Boolean);
@@ -478,7 +479,7 @@ export const UICustomizations = {
       const activeTab = searchResult?.additionalDetails?.activeTab || "";
       const isDisposedTab = activeTab === "DISPOSED";
       const caseId =
-        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+        (isLPRCase(row) && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
@@ -487,7 +488,7 @@ export const UICustomizations = {
         case "CD_OUTCOME":
           return t(value);
         case "CS_STAGE":
-          return t(value);
+          return isLPRCase(row) ? t("Long Pending Register") : t(value);
         case "CS_SECONDARY_STAGE": {
           const stages = Array.isArray(value) ? value : [value];
           const normalized = stages.filter(Boolean);
@@ -557,7 +558,7 @@ export const UICustomizations = {
       const searchForm = requestCriteria?.state?.searchForm || {};
       const noticeType = searchForm?.noticeType?.code || searchForm?.noticeType?.name || null;
       const deliveryChanel = searchForm?.channel?.name === "EPOST" ? "POST" : searchForm?.channel?.name || null;
-      const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T05:30:00`).getTime() : null;
+      const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T00:00:00+05:30`).getTime() : null;
       const activeTabIndex = additionalDetails?.activeTabIndex || 0;
       const compStatus = searchForm?.compStatus?.code || "";
       if (Array.isArray(completeStatusData)) {
@@ -610,7 +611,7 @@ export const UICustomizations = {
       const activeTab = searchResult?.additionalDetails?.activeTab || "";
       const isDisposedTab = activeTab === "DISPOSED";
       const caseId =
-        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+        (isLPRCase(row) && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
 
       switch (key) {
         // case "CASE_NAME_ID":
@@ -621,10 +622,10 @@ export const UICustomizations = {
           return `${DateUtils.getFormattedDate(new Date(value))}`;
         case "PROCESS_TYPE":
           const processType = value?.toUpperCase?.();
-          if (processType === "NOTICE") {
+          if (processType === ORDER_TYPES.NOTICE) {
             const noticeType = row?.taskDetails?.noticeDetails?.noticeType || "NOTICE";
             return t(noticeType);
-          } else if (processType === "MISCELLANEOUS_PROCESS") {
+          } else if (processType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
             const miscType = row?.taskDetails?.miscellaneuosDetails?.processTitle || "MISCELLANEOUS_PROCESS";
             return t(miscType);
           }

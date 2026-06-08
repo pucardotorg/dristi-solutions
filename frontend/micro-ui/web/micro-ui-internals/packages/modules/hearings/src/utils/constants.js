@@ -1,0 +1,81 @@
+export const ORDER_TYPES = {
+  NOTICE: "NOTICE",
+  SUMMONS: "SUMMONS",
+  WARRANT: "WARRANT",
+  MISCELLANEOUS_PROCESS: "MISCELLANEOUS_PROCESS",
+  PROCLAMATION: "PROCLAMATION",
+  ATTACHMENT: "ATTACHMENT",
+};
+
+export const ORDER_CATEGORIES = {
+  COMPOSITE: "COMPOSITE",
+  INTERMEDIATE: "INTERMEDIATE",
+};
+
+export const TASK_TYPES = {
+  NOTICE: "NOTICE",
+  SUMMONS: "SUMMONS",
+  WARRANT: "WARRANT",
+};
+
+export const HEARING_TYPES = {
+  ADMISSION: "ADMISSION",
+  REGULAR: "REGULAR",
+  MENTIONING: "MENTIONING",
+};
+
+export const STATUS_TYPES = {
+  COMPLETED: "COMPLETED",
+  IN_PROGRESS: "IN_PROGRESS",
+  ABATED: "ABATED",
+  SCHEDULED: "SCHEDULED",
+  PUBLISHED: "PUBLISHED",
+  DRAFT_IN_PROGRESS: "DRAFT_IN_PROGRESS",
+};
+
+export const APPLICATION_TYPES = {
+  DELAY_CONDONATION: "DELAY_CONDONATION",
+};
+
+export const USER_TYPES = {
+  CITIZEN: "CITIZEN",
+  EMPLOYEE: "EMPLOYEE",
+};
+
+export const USER_ROLES = {
+  POST_MANAGER: "POST_MANAGER",
+  HEARING_EDITOR: "HEARING_EDITOR",
+  EMPLOYEE: "EMPLOYEE",
+  PENDING_TASK_ORDER: "PENDING_TASK_ORDER",
+};
+
+export const WORKFLOW_ACTIONS = {
+  SAVE_DRAFT: "SAVE_DRAFT",
+};
+
+export const ENTITY_TYPES = {
+  ORDER_DEFAULT: "order-default",
+};
+
+export const PARTY_TYPES = {
+  POA_HOLDER: "poaHolder",
+  OTHER: "other",
+  OTHERS: "others",
+  ACCUSED: "Accused",
+  RESPONDENT: "Respondent",
+  RESPONDENT_LOWER: "respondent",
+  RESPONDENT_DISPLAY: "Respondent",
+  WITNESS: "witness",
+  WITNESS_DISPLAY: "Witness",
+  POLICE: "police",
+};
+
+export const TAB_NAMES = {
+  TRANSCRIPT_SUMMARY: "Transcript/Summary",
+  WITNESS_DEPOSITION: "Witness Deposition",
+};
+
+export const YES_NO = {
+  YES: "YES",
+  NO: "NO",
+};

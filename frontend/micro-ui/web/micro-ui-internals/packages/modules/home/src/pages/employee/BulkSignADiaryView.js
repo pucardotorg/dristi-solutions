@@ -1,6 +1,6 @@
-import { InboxSearchComposer, SubmitBar, Loader, Button, Toast } from "@egovernments/digit-ui-react-components";
+import { SubmitBar, Loader, Button } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useMemo, useState, useCallback, useEffect } from "react";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
 import { bulkADiarySignConfig } from "../../configs/BulkADiarySignConfig";
 import { HomeService } from "../../hooks/services";
@@ -12,6 +12,9 @@ import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosIns
 import ADiaryDocumentPdfModal from "./ADiaryDocumentPdfModal";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { DateUtils, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { ORDER_TYPES } from "../../utils/constants";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
 
 const buttonStyle = {
   borderRadius: "4px",
@@ -46,8 +49,6 @@ const Heading = ({ label }) => {
 function BulkSignADiaryView() {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const queryStrings = Digit.Hooks.useQueryParams();
-  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const history = useHistory();
   const { t } = useTranslation();
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isDiaryApprover = useMemo(() => roles?.some((role) => role.code === "DIARY_APPROVER"), [roles]);
@@ -69,14 +70,13 @@ function BulkSignADiaryView() {
   const [noAdiaryModal, setNoAdiaryModal] = useState(false);
   const [loader, setLoader] = useState(false);
   const [showDocumentPdfModal, setShowDocumentPdfModal] = useState({ show: false, rowData: null });
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [reload, setReload] = useState(false);
   const [fileUploadError, setFileUploadError] = useState(null);
 
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${ADiarypdf}`;
@@ -90,32 +90,7 @@ function BulkSignADiaryView() {
 
   const [diaryEntries, setDiaryEntries] = useState([]);
 
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
-
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
+  const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const fetchEntries = useCallback(
     async (date) => {
@@ -166,7 +141,8 @@ function BulkSignADiaryView() {
           setShowDocumentPdfModal({ show: true, rowData: { document: order?.documents?.[0], rowData: entry } });
         } catch (error) {
           console.error("error: ", error);
-          showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("BULK_SIGN_DIARY_SEARCH_ORDER_FAILED"), error: true, errorId });
         }
       }
 
@@ -188,10 +164,11 @@ function BulkSignADiaryView() {
           setShowDocumentPdfModal({ show: true, rowData: { document: response?.artifacts?.[0]?.file, rowData: entry } });
         } catch (error) {
           console.error("error: ", error);
-          showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("BULK_SIGN_DIARY_SEARCH_EVIDENCE_FAILED"), error: true, errorId });
         }
       }
-      if (entry?.referenceType === "notice") {
+      if (entry?.referenceType === ORDER_TYPES.NOTICE.toLocaleLowerCase()) {
         try {
           const notificationResponse = await Digit.HearingService.searchNotification({
             criteria: {
@@ -209,8 +186,9 @@ function BulkSignADiaryView() {
             rowData: { document: notification?.documents?.[notification?.documents?.length - 1], rowData: entry },
           });
         } catch (error) {
-          console.error("error: ", error);
-          showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+          console.error("Failed to fetch notification:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("NOTIFICATION_FETCH_FAILED"), error: true, errorId });
         }
       }
     };
@@ -319,6 +297,12 @@ function BulkSignADiaryView() {
         setStepper(parseInt(stepper) + 1);
       } catch (error) {
         console.error("Error :", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({
+          error: true,
+          label: t("FAILED_TO_GENERATE_THE_A_DIARY_PDF"),
+          errorId: errorId,
+        });
         setGenerateAdiaryLoader(false);
       }
     } else if (parseInt(stepper) === 1) {
@@ -341,23 +325,27 @@ function BulkSignADiaryView() {
     setFileUploadError(null);
   };
 
-  const onUploadSubmit = async () => {
+  const onUploadSubmit = async (combineResult) => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
         setLoader(true);
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
+        const filesToUpload = combineResult?.combinedFiles || formData?.uploadSignature?.Signature;
+        const uploadedFileId = await uploadDocuments(filesToUpload, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setFileStoreIds((prevFileStoreIds) => new Set([...prevFileStoreIds, uploadedFileId?.[0]?.fileStoreId]));
         setIsSigned(true);
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
-        setLoader(false);
         setFormData({});
         setIsSigned(false);
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+        setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
+        setShowToast({ label: t(errorCode), error: true, errorId });
+      } finally {
+        setLoader(false);
       }
-      setLoader(false);
     }
   };
 
@@ -366,7 +354,7 @@ function BulkSignADiaryView() {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const newFilestore = signedDocumentUploadID || localStorageID;
       if (!newFilestore || newFilestore === ADiarypdf) {
-        showToast("error", t("UPDATE_FAILED_ERROR"), 5000);
+        setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
         return;
       }
       fileStoreIds.delete(newFilestore);
@@ -435,7 +423,8 @@ function BulkSignADiaryView() {
           const blobUrl = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = blobUrl;
-          link.download = `downloadedFile.${extension}`;
+          const name = `${new Date(entryDate).toLocaleDateString("en-GB")}_ADiary_signed`;
+          link.download = `${name}.${extension}`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -445,7 +434,13 @@ function BulkSignADiaryView() {
         }
       })
       .catch((error) => {
-        console.error("Error during the API request:", error);
+        console.error("Failed to fetch the PDF", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({
+          error: true,
+          label: t("FAILED_TO_DOWNLOAD_THE_A_DIARY_PDF"),
+          errorId: errorId,
+        });
       });
   };
 
@@ -550,7 +545,7 @@ function BulkSignADiaryView() {
                     label={t("CS_ESIGN")}
                     onButtonClick={() => {
                       sessionStorage.setItem("homeActiveTab", "CS_HOME_A_DAIRY");
-                      handleEsign(name, pageModule, ADiarypdf, "Signature");
+                      handleEsign(name, pageModule, ADiarypdf, setShowToast, t, "Signature");
                     }} //as sending null throwing error in esign
                     className="aadhar-sign-in"
                     labelClassName="aadhar-sign-in"
@@ -573,6 +568,7 @@ function BulkSignADiaryView() {
                     displayFilename={"CLICK_HERE"}
                     t={t}
                     pdf={true}
+                    name={`${new Date(entryDate).toLocaleDateString("en-GB")}_ADiary_unsigned`} // here
                   />
                 </div>
               </div>
@@ -581,18 +577,19 @@ function BulkSignADiaryView() {
         )}
 
         {stepper === 2 && openUploadSignatureModal && (
-          <UploadSignatureModal
+          <UploadModal
             t={t}
             key={name}
             name={name}
-            setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+            onClose={() => setOpenUploadSignatureModal(false)}
             onSelect={onSelect}
-            config={uploadModalConfig}
             formData={formData}
             onSubmit={onUploadSubmit}
             isDisabled={loader}
+            isParentLoading={loader}
             fileUploadError={fileUploadError}
             setFileUploadError={setFileUploadError}
+            downloadedFileName={`${new Date(entryDate).toLocaleDateString("en-GB")}_ADiary_signed`}
           />
         )}
 
@@ -681,13 +678,13 @@ function BulkSignADiaryView() {
             reload={reload}
           />
         )}
-        {toastMsg && (
-          <Toast
-            error={toastMsg.key === "error"}
-            label={t(toastMsg.action)}
-            onClose={() => setToastMsg(null)}
-            isDleteBtn={true}
-            style={{ maxWidth: "500px" }}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
           />
         )}
       </div>
