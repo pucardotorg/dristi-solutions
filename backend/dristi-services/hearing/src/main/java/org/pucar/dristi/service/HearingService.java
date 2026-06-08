@@ -314,6 +314,16 @@ public class HearingService {
                 newHearingType = hearingRequest.getHearing().getHearingType();
                 hearing.setHearingType(newHearingType);
             }
+            // Preserve a rescheduled date supplied on the request (e.g. MARK_COMPLETE moving a future
+            // hearing to today). The normal updateHearing path copies these from the request; the fast
+            // path must do the same, else the existing (stale) startTime/endTime are persisted unchanged.
+            // Guard against null so minimal status-only requests (START/CLOSE/PASS_OVER auto-advance) don't wipe them.
+            if (hearingRequest.getHearing().getStartTime() != null) {
+                hearing.setStartTime(hearingRequest.getHearing().getStartTime());
+            }
+            if (hearingRequest.getHearing().getEndTime() != null) {
+                hearing.setEndTime(hearingRequest.getHearing().getEndTime());
+            }
             hearingRequest.setHearing(hearing);
 
             enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
