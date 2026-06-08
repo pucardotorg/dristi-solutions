@@ -142,7 +142,7 @@ public class CacheService {
     }
 
     public List<Map<String, Object>> hgetAllPipelined(List<String> keys) {
-        if (redisTemplate == null || keys.isEmpty()) return Collections.emptyList();
+        if (redisTemplate == null || keys == null || keys.isEmpty()) return Collections.emptyList();
         try {
             List<Object> raw = redisTemplate.executePipelined((org.springframework.data.redis.core.RedisCallback<Object>) connection -> {
                 for (String key : keys) {

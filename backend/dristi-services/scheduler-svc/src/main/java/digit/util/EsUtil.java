@@ -1,5 +1,6 @@
 package digit.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import digit.config.Configuration;
 import digit.service.CacheService;
@@ -28,13 +29,15 @@ public class EsUtil {
     private final Configuration config;
     private final CacheService cacheService;
     private final DateUtil dateUtil;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public EsUtil(RestTemplate restTemplate, Configuration config, CacheService cacheService, DateUtil dateUtil) {
+    public EsUtil(RestTemplate restTemplate, Configuration config, CacheService cacheService, DateUtil dateUtil, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.cacheService = cacheService;
         this.dateUtil = dateUtil;
+        this.objectMapper = objectMapper;
     }
 
 
@@ -73,7 +76,7 @@ public class EsUtil {
 
     public void updateOpenHearingInCache(List<OpenHearing> openHearings, Long hearingDate) {
         try {
-            if (!config.getRedisEnabled()) {
+            if (Boolean.FALSE.equals(config.getRedisEnabled())) {
                 log.info("Redis is disabled. Skipping cache update for open hearings.");
                 return;
             }
@@ -108,7 +111,11 @@ public class EsUtil {
                 hearingMap.put("tenantId", h.getTenantId() != null ? h.getTenantId() : "");
                 hearingMap.put("courtId", h.getCourtId() != null ? h.getCourtId() : "");
                 hearingMap.put("hearingTypeOrder", h.getHearingTypeOrder() != null ? h.getHearingTypeOrder() : 99);
-                hearingMap.put("advocate", h.getAdvocate());
+                try {
+                    hearingMap.put("advocate", objectMapper.writeValueAsString(h.getAdvocate()));
+                } catch (Exception ex) {
+                    hearingMap.put("advocate", "{}");
+                }
                 cacheService.hmset(hearingKey, hearingMap);
                 hearingKeys.add(hearingKey);
             }
