@@ -3,6 +3,7 @@ const { mergePDFDocuments } = require("./mergePDFDocuments");
 const { persistPDF } = require("./persistPDF");
 const { convertFileStoreToDocument } = require("./convertFileStoreToDocument");
 const { search_mdms, create_pdf_v2 } = require("../../api");
+const { logger } = require("../../logger");
 
 /**
  *
@@ -31,6 +32,7 @@ async function applyDocketToDocument(
     return null;
   }
 
+  logger.info(`[applyDocketToDocument] Started | fileStoreId: ${documentFileStoreId}, type: ${docketApplicationType}`);
   const filingPDFDocument = await convertFileStoreToDocument(
     tenantId,
     documentFileStoreId,
@@ -74,6 +76,7 @@ async function applyDocketToDocument(
       ?.filter(Boolean)
       ?.join(", ");
 
+  logger.info(`[applyDocketToDocument] search_mdms Court_Rooms | courtId: ${courtCase.courtId}`);
   const response = await search_mdms(
     courtCase.courtId,
     "common-masters.Court_Rooms",
@@ -98,6 +101,7 @@ async function applyDocketToDocument(
       },
     ],
   };
+  logger.info(`[applyDocketToDocument] create_pdf_v2 | key: docket-page`);
   const filingDocketPdfResponse = await create_pdf_v2(
     tenantId,
     "docket-page",
@@ -119,6 +123,7 @@ async function applyDocketToDocument(
     requestInfo,
     TEMP_FILES_DIR
   );
+  logger.info(`[applyDocketToDocument] Completed | newFileStoreId: ${mergedDocWithDocketFileStoreId}`);
   return mergedDocWithDocketFileStoreId;
 }
 

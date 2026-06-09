@@ -162,6 +162,7 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
   );
 
   const defaultValue = useMemo(() => {
+    // Remove once the default district and courtroom are removed from the login screen
     const district = commonMasterData?.["common-masters"]?.District?.find((district) => district?.code === "KOLLAM");
     const courtRoom = commonMasterData?.["common-masters"]?.Court_Rooms?.find((room) => room?.code === "KLKM52");
     setPrevDistrict(district);

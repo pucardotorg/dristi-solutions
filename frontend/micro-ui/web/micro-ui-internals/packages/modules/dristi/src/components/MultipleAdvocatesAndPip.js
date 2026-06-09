@@ -15,6 +15,7 @@ import { useToast } from "./Toast/useToast";
 import { FSOErrorIcon } from "../icons/svgIndex";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import SearchableDropdown from "./SearchableDropdown";
+import { EXTENSION_TO_MIME } from "../Utils/constants";
 
 function ScrutinyInfoAdvocate({ message, t }) {
   return (
@@ -217,11 +218,10 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           uploadGuidelines: "UPLOAD_DOC_10",
           maxFileSize: 10,
           maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-          fileTypes: ["JPG", "PDF", "PNG"],
+          fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
           isMultipleUpload: true,
           downloadTemplateText: "VAKALATNAMA_TEMPLATE_TEXT",
-          downloadTemplateLink:
-            "https://oncourts.kerala.gov.in/minio-filestore/v1/files/id?tenantId=kl&fileStoreId=eb7407fb-5642-40d9-9f06-31e4895c75b0",
+          downloadTemplateLink: `https://oncourts.kerala.gov.in/minio-filestore/v1/files/id?tenantId=${tenantId}&fileStoreId=eb7407fb-5642-40d9-9f06-31e4895c75b0`,
         },
         {
           fileKey: "pipAffidavitFileUpload",
@@ -233,7 +233,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           uploadGuidelines: "UPLOAD_DOC_10",
           maxFileSize: 10,
           maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-          fileTypes: ["JPG", "PDF", "PNG"],
+          fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
           isMultipleUpload: true,
         },
       ];
@@ -484,9 +484,19 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           (userType === "ADVOCATE" ? isPrimaryAdvocate : true) &&
           caseDetails?.status === CaseWorkflowState.DRAFT_IN_PROGRESS // Append filing advocate automatically only while  in filing stage, not thereafter (like case reassigned stage)
         ) {
-          const firstAdvocate = { advocateBarRegNumberWithName, advocateNameDetails };
-          const updatedData = [firstAdvocate, ...advData];
-          newData = { ...advocateAndPipData, multipleAdvocateNameDetails: updatedData, showVakalatNamaUpload: true, showAffidavit: false };
+          const isFilingAdvocateAlreadyPresent = advData?.some((advocateObj) => {
+            const existingAdvocate = advocateObj?.advocateBarRegNumberWithName || {};
+            return (
+              (individualId && existingAdvocate?.individualId === individualId) ||
+              (advocateId && existingAdvocate?.advocateId === advocateId) ||
+              (barRegNum && existingAdvocate?.barRegistrationNumberOriginal === barRegNum)
+            );
+          });
+          if (!isFilingAdvocateAlreadyPresent) {
+            const firstAdvocate = { advocateBarRegNumberWithName, advocateNameDetails };
+            const updatedData = [firstAdvocate, ...advData];
+            newData = { ...advocateAndPipData, multipleAdvocateNameDetails: updatedData, showVakalatNamaUpload: true, showAffidavit: false };
+          }
         }
         if (!isEqual(advocateAndPipData, newData)) {
           setAdvocateAndPipData(newData);
@@ -611,7 +621,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         value === "YES"
           ? false
           : Array.isArray(advocateAndPipData?.multipleAdvocateNameDetails) &&
-            Object.keys(advocateAndPipData?.multipleAdvocateNameDetails?.[0])?.length !== 0,
+            Object.keys(advocateAndPipData?.multipleAdvocateNameDetails?.[0] || {})?.length !== 0,
       showAffidavit: value === "YES" ? true : false,
       vakalatnamaFileUpload: value === "YES" ? null : advocateAndPipData?.vakalatnamaFileUpload,
       pipAffidavitFileUpload: value === "NO" ? null : advocateAndPipData?.pipAffidavitFileUpload,
@@ -622,6 +632,12 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
 
   const fileValidator = (file, input) => {
     if (file?.fileStore) return null;
+    if (file?.type && input?.fileTypes?.length) {
+      const allowedMimes = input.fileTypes.flatMap((ext) => EXTENSION_TO_MIME[ext.toLowerCase()] || []);
+      if (allowedMimes.length && !allowedMimes.includes(file.type)) {
+        return t("NOT_SUPPORTED_FILE_TYPE");
+      }
+    }
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
     return file?.size > maxFileSize ? `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` : null;
   };
@@ -667,6 +683,9 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     const newData = { ...advocateAndPipData, [input?.fileKey]: { [input?.name]: currentValue } };
     onSelect(config?.key, newData);
     setAdvocateAndPipData(newData);
+    if (clearErrors) {
+      clearErrors(config.key);
+    }
   };
 
   const disableRadio = useMemo(() => {
@@ -708,7 +727,9 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         }}
       >
         <span style={{ fontSize: "16px", fontWeight: 700 }}>Complainant {advocateAndPipData?.boxComplainant?.index + 1 || 1}</span>
-        <span style={{ fontSize: "16px" }}>{advocateAndPipData?.boxComplainant?.firstName || ""}</span>
+        <span style={{ fontSize: "16px" }}>
+          {[advocateAndPipData?.boxComplainant?.firstName, advocateAndPipData?.boxComplainant?.lastName].filter(Boolean).join(" ") || ""}
+        </span>
       </div>
       <div
         style={{
@@ -1014,6 +1035,8 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                       t={t}
                       uploadErrorInfo={fileErrors[index]}
                       input={input}
+                      configKey={config?.key}
+                      setError={setError}
                     />
                   ))}
 

@@ -155,7 +155,7 @@ const DigitizedDocumentsSignaturePage = () => {
         .post(
           `${Urls.openApi.FileFetchByFileStore}`,
           {
-            tenantId: "kl",
+            tenantId,
             fileStoreId: fileStoreId,
             moduleName: "DRISTI",
           },
@@ -208,6 +208,11 @@ const DigitizedDocumentsSignaturePage = () => {
   const handleUploadSubmit = async (uploadedFileStoreId) => {
     try {
       setLoader(true);
+      if (!uploadedFileStoreId || uploadedFileStoreId === fileStoreId) {
+        setShowErrorToast({ label: t("UPDATE_FAILED_ERROR"), error: true });
+        setLoader(false);
+        return;
+      }
       const payload = {
         tenantId,
         documentNumber: documentNumber,
@@ -231,6 +236,10 @@ const DigitizedDocumentsSignaturePage = () => {
     // TODO: Update call with Signed FileStore
     try {
       const fileStoreId = sessionStorage.getItem("fileStoreId");
+      if (!fileStoreId || fileStoreId === digitizedDocumentsDetails?.documents?.[0]?.fileStore) {
+        setShowErrorToast({ label: t("UPDATE_FAILED_ERROR"), error: true });
+        return;
+      }
       const payload = {
         tenantId,
         documentNumber: documentNumber,

@@ -1004,7 +1004,7 @@ const SubmissionsCreate = ({ path }) => {
         assignedRole: assignedRole,
         cnrNumber: caseDetails?.cnrNumber || applicationDetails?.cnrNumber,
         filingNumber: filingNumber,
-        caseId: caseDetails?.id || applicationDetails?.cnrNumber,
+        caseId: caseDetails?.id || applicationDetails?.caseId,
         caseTitle: caseDetails?.caseTitle || applicationDetails?.additionalDetails?.caseTitle || "",
         isCompleted,
         stateSla,
@@ -1430,13 +1430,22 @@ const SubmissionsCreate = ({ path }) => {
     }
   };
 
-  const updateSubmission = async (action) => {
+  const updateSubmission = async (action, isESign) => {
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
 
       const newFileStoreId = localStorageID || signedDoucumentUploadedID;
       fileStoreIds.delete(newFileStoreId);
+
+      if (!mockESignEnabled && isESign) {
+        // Only add this check for esign flow
+        const effectiveSignedId = sessionStorage.getItem("fileStoreId");
+        if (!effectiveSignedId || effectiveSignedId === applicationPdfFileStoreId) {
+          setShowErrorToast({ label: t("UPDATE_FAILED_ERROR"), error: true });
+          return null;
+        }
+      }
 
       const documentsFile =
         mockESignEnabled && applicationPdfFileStoreId
@@ -1718,7 +1727,7 @@ const SubmissionsCreate = ({ path }) => {
   const handleReviewModalSubmit = async ({ applicationPreviewPdf, applicationPreviewFileName, isUpload = false }) => {
     try {
       if (applicationDetails?.status === SubmissionWorkflowState.DRAFT_IN_PROGRESS) {
-        const res = await updateSubmission(SubmissionWorkflowAction.SUBMIT);
+        const res = await updateSubmission(SubmissionWorkflowAction.SUBMIT, false);
         const newapplicationNumber = res?.application?.applicationNumber;
         if (newapplicationNumber) {
           if (isCitizen) {
@@ -1812,13 +1821,11 @@ const SubmissionsCreate = ({ path }) => {
     }
   };
 
-  const handleAddSignature = async () => {
+  const handleAddSignature = async (isESign) => {
     setLoader(true);
     try {
-      if (applicationType !== "SUBMIT_BAIL_DOCUMENTS") {
-        await createDemand();
-      }
-      const response = await updateSubmission(SubmissionWorkflowAction.ESIGN);
+      const response = await updateSubmission(SubmissionWorkflowAction.ESIGN, isESign);
+      if (!response) return;
       setShowsignatureModal(false);
       setShowPaymentModal(true);
       if (response && response?.application?.additionalDetails?.isResponseRequired) {
@@ -1873,6 +1880,7 @@ const SubmissionsCreate = ({ path }) => {
   const handleCloseSignaturePopup = () => {
     setShowsignatureModal(false);
     setShowReviewModal(true);
+    sessionStorage.removeItem("fileStoreId");
   };
 
   const handleSkipPayment = () => {
@@ -1897,38 +1905,6 @@ const SubmissionsCreate = ({ path }) => {
     totalAmount: _getApplicationAmount(applicationTypeAmount, applicationType),
     scenario,
   });
-
-  const { data: billResponse, isLoading: isBillLoading } = Digit.Hooks.dristi.useBillSearch(
-    {},
-    { tenantId, consumerCode: applicationDetails?.applicationNumber + `_${suffix}`, service: entityType },
-    `dristi_${suffix}`,
-    Boolean(applicationDetails?.applicationNumber && suffix)
-  );
-
-  const createDemand = async () => {
-    if (billResponse?.Bill?.length === 0) {
-      await DRISTIService.etreasuryCreateDemand({
-        tenantId,
-        entityType,
-        filingNumber: caseDetails?.filingNumber || filingNumber,
-        consumerCode: applicationDetails?.applicationNumber + `_${suffix}`,
-        calculation: [
-          {
-            tenantId: tenantId,
-            totalAmount: _getApplicationAmount(applicationTypeAmount, applicationType),
-            breakDown: [
-              {
-                type: "Application Fee",
-                code: "APPLICATION_FEE",
-                amount: _getApplicationAmount(applicationTypeAmount, applicationType),
-                additionalParams: {},
-              },
-            ],
-          },
-        ],
-      });
-    }
-  };
 
   const handleMakePayment = async (totalAmount) => {
     try {
@@ -2081,7 +2057,15 @@ const SubmissionsCreate = ({ path }) => {
           <SuccessModal
             t={t}
             isPaymentDone={applicationDetails?.status === SubmissionWorkflowState.PENDINGPAYMENT}
-            headerBarEndClose={handleBack}
+            headerBarEndClose={
+              !makePaymentLabel
+                ? handleBack
+                : () => {
+                    history.replace(
+                      `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+                    );
+                  }
+            }
             handleCloseSuccessModal={makePaymentLabel ? handleMakePayment : handleBack}
             actionCancelLabel={"DOWNLOAD_SUBMISSION"}
             actionCancelOnSubmit={handleDownloadSubmission}

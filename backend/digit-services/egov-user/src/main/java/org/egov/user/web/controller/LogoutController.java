@@ -6,8 +6,7 @@ import org.egov.common.contract.response.ResponseInfo;
 import org.egov.user.domain.model.TokenWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.common.OAuth2AccessToken;
-import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.egov.user.security.oauth2.EgovTokenStore;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,9 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class LogoutController {
 
-    private TokenStore tokenStore;
+    private final EgovTokenStore tokenStore;
 
-    public LogoutController(TokenStore tokenStore) {
+    public LogoutController(EgovTokenStore tokenStore) {
         this.tokenStore = tokenStore;
     }
 
@@ -32,8 +31,7 @@ public class LogoutController {
     @PostMapping("/_logout")
     public ResponseInfo deleteToken(@RequestBody TokenWrapper tokenWrapper) throws Exception {
         String accessToken = tokenWrapper.getAccessToken();
-        OAuth2AccessToken redisToken = tokenStore.readAccessToken(accessToken);
-        tokenStore.removeAccessToken(redisToken);
+        tokenStore.removeAccessToken(accessToken);
         return new ResponseInfo("", "", System.currentTimeMillis(), "", "", "Logout successfully");
     }
 

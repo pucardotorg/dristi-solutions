@@ -107,7 +107,7 @@ const SBIEpostPayment = () => {
             OtherDetails: "NA",
             PayMode: "NB",
             billId: bill?.Bill?.[0]?.billDetails?.[0]?.billId,
-            tenantId: "kl",
+            tenantId,
             totalDue: bill?.Bill?.[0]?.totalAmount,
             businessService: businessService,
             serviceNumber: serviceNumber,

@@ -16,7 +16,7 @@ import {
   sendBackCase,
 } from "../../citizen/FileCase/Config/admissionActionConfig";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
-import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
+import { getAdvocates, transformCaseDataForFetching } from "../../citizen/FileCase/EfilingValidationUtils";
 import AdmissionActionModal from "./AdmissionActionModal";
 import {
   advocateCaseFilingStatusTypes,
@@ -131,7 +131,13 @@ function CaseFileAdmission({ t, path }) {
     caseId,
     Boolean(caseId)
   );
-  const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || null, [caseFetchResponse]);
+
+  const caseDetails = useMemo(() => {
+    const caseDetails = structuredClone(caseFetchResponse?.criteria?.[0]?.responseList?.[0] || {});
+    const updatedCaseData = transformCaseDataForFetching(caseDetails, ["witnessDetails", "advocateDetails"]);
+    return updatedCaseData;
+  }, [caseFetchResponse]);
+
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
@@ -320,13 +326,7 @@ function CaseFileAdmission({ t, path }) {
                   return {
                     ...input,
                     data:
-                      input?.key === "witnessDetails"
-                        ? caseDetails?.witnessDetails?.map((witness) => {
-                            return {
-                              data: witness,
-                            };
-                          }) || {}
-                        : input?.key === "paymentReceipt"
+                      input?.key === "paymentReceipt"
                         ? [
                             {
                               data: {
@@ -650,11 +650,9 @@ function CaseFileAdmission({ t, path }) {
         document: form?.data?.inquiryAffidavitFileUpload?.document,
         key: "inquiryAffidavitFileUpload",
       })),
-      ...caseDetails?.additionalDetails?.advocateDetails?.formdata?.map((form) => ({
-        document: form?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload
-          ? form?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload?.document
-          : form?.data?.multipleAdvocatesAndPip?.pipAffidavitFileUpload?.document,
-        key: form?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload ? "vakalatnamaFileUpload" : "pipAffidavitFileUpload",
+      ...caseDetails?.advocateDetailBlock?.map((data) => ({
+        document: data?.documents?.vakalatnama?.length > 0 ? data?.documents?.vakalatnama : data?.documents?.pipAffidavit,
+        key: data?.documents?.vakalatnama?.length > 0 ? "vakalatnamaFileUpload" : "pipAffidavitFileUpload",
       })),
     ].flat();
 

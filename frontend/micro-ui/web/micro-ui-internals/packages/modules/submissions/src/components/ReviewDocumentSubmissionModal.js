@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import { Toast } from "@egovernments/digit-ui-react-components";
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { SubmissionDocumentWorkflowState } from "../utils/submissionDocumentsWorkflow";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const downloadSvgStyle = {
   margin: "0px 12px 0px 0px",
@@ -15,45 +15,6 @@ const downloadSvgStyle = {
 const downloadPathStyle = {
   fill: "#007e7e",
 };
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div style={{ display: "flex" }}>
-      <Button
-        icon={<FileDownloadIcon svgStyle={downloadSvgStyle} pathStyle={downloadPathStyle} />}
-        label={""}
-        onButtonClick={() => {
-          props.handleDownload();
-        }}
-        style={{ boxShadow: "none", background: "none", border: "none", padding: "20px 10px", maxWidth: "fit-content" }}
-        textStyles={{
-          width: "unset",
-        }}
-      >
-        <h1
-          style={{
-            fontFamily: "Roboto",
-            fontSize: "16px",
-            fontWeight: 700,
-            lineHeight: "18.75px",
-            textAlign: "center",
-            color: "#007E7E",
-          }}
-        >
-          {props.t("SUBMISSION_DOCUMENT_DOWNLOAD")}
-        </h1>
-      </Button>
-      <div onClick={props?.onClick} style={{ maxHeight: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    </div>
-  );
-};
-
 function ReviewDocumentSubmissionModal({
   t,
   combinedFileStoreId,

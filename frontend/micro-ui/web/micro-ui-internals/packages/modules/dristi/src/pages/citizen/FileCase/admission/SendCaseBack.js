@@ -7,10 +7,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import CustomSubmitModal from "./CustomSubmitModal";
 
 import { ReactComponent as RightArrow } from "../../citizen/Home/ImageUpload/image/arrow_forward.svg";
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { Heading } from "../../../../components/ModalComponents";
 const Close = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g clip-path="url(#clip0_4124_3214)">

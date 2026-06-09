@@ -245,9 +245,7 @@ public class HearingService {
         String date = dateUtil.getCurrentDate();
         String key  = CACHE_KEY_PREFIX + courtId + ":" + date;
         Object response = cacheService.getCache(key);
-        if(response == null) {
-            cacheService.updateCache(key, List.of(openHearing));
-        } else {
+        if (response != null) {
             List<OpenHearing> openHearingList = new ArrayList<>();
             if (response instanceof List<?> rawList) {
                 for (Object item : rawList) {

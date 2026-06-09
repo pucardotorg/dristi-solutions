@@ -1,5 +1,5 @@
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState } from "react";
+import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const submitButtonTextStyle = {
   fontFamily: "Roboto",
@@ -8,17 +8,6 @@ const submitButtonTextStyle = {
   lineHeight: "18.75px",
   textAlign: "center",
   margin: "0px",
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer", ...props?.style }}
-    >
-      <CloseSvg />
-    </div>
-  );
 };
 const Heading = ({ heading, isStatus = true }) => {
   return (

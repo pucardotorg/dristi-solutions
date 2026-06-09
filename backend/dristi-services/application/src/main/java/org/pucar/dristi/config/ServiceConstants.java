@@ -19,6 +19,7 @@ public class ServiceConstants {
     public static final String COMPLETED = "COMPLETED";
     public static final String SUBMIT = "SUBMIT";
     public static final String REJECTED = "REJECTED";
+    public static final String ESIGN = "ESIGN";
 
     public static final String IDGEN_ERROR = "IDGEN ERROR";
     public static final String NO_IDS_FOUND_ERROR = "No ids returned from idgen Service";
@@ -144,4 +145,17 @@ public class ServiceConstants {
 
     public static final String ADVOCATE_ROLE = "ADVOCATE_ROLE";
     public static final String ADVOCATE_CLERK_ROLE = "ADVOCATE_CLERK_ROLE";
+
+    public static final String PAYMENT_MODULE = "payment";
+    public static final String PAYMENT_TYPE_MASTER = "paymentType";
+    public static final String BUSINESS_SERVICE = "businessService";
+    public static final String BUSINESS_CODE = "businessCode";
+    public static final String SUFFIX = "suffix";
+
+    public static final String APPLICATION_FILING_SUFFIX = "APPL_FILING";
+
+    public static final String APPLICATION_MODULE = "Application";
+    public static final String APPLICATION_TYPE_MASTER = "ApplicationType";
+
+    public static final String ERROR_WHILE_SEARCHING_FOR_BILL = "ERROR_WHILE_SEARCHING_FOR_BILL";
 }

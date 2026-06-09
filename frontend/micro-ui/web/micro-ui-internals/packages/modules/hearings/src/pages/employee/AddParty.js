@@ -1,9 +1,10 @@
-import { Button, CloseSvg, FormComposerV2, Modal, Loader } from "@egovernments/digit-ui-react-components";
+import { Button, FormComposerV2, Modal, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import addPartyConfig from "../../configs/AddNewPartyConfig.js";
 import { useTranslation } from "react-i18next";
 import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote.js";
 import { Urls } from "../../hooks/services/Urls.js";
+import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const AddParty = ({ onCancel, onAddSuccess, caseDetails, tenantId, hearing, refetchHearing }) => {
   const { t } = useTranslation();
@@ -32,14 +33,7 @@ const AddParty = ({ onCancel, onAddSuccess, caseDetails, tenantId, hearing, refe
     },
   });
 
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   // check if labelchildren is optional then change it to span with color #77787B
   useMemo(() => {
     formConfigs.forEach((config) => {

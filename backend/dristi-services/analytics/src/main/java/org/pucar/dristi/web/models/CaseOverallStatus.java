@@ -11,6 +11,9 @@ import org.egov.common.contract.models.AuditDetails;
 import org.pucar.dristi.web.models.enums.ProcessHandler;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Schema(description = "Case overall status topic object")
 @Validated
@@ -31,6 +34,9 @@ public class CaseOverallStatus {
 
     @JsonProperty("substage")
     private String substage = null;
+
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = new ArrayList<>();
 
     @JsonProperty("processHandler")
     private ProcessHandler processHandler = ProcessHandler.RESET_BACKUP;

@@ -10,23 +10,21 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.ServiceCallException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import pucar.config.Configuration;
 import pucar.config.StateSlaMap;
 import pucar.repository.ServiceRequestRepository;
-import pucar.web.models.courtCase.AdvocateMapping;
-import pucar.web.models.courtCase.CourtCase;
-import pucar.web.models.courtCase.Party;
+import pucar.web.models.courtCase.*;
 import pucar.web.models.pendingtask.*;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static pucar.config.ServiceConstants.*;
@@ -276,5 +274,80 @@ public class PendingTaskUtil {
         };
     }
 
+    public void createPendingTaskForRPAD(pucar.web.models.task.Task task, RequestInfo requestInfo, CourtCase courtCase, List<User> assignees) {
+        if ((task.getTaskType().equalsIgnoreCase(SUMMONS) || task.getTaskType().equalsIgnoreCase(WARRANT)
+                || task.getTaskType().equalsIgnoreCase(NOTICE) || task.getTaskType().equalsIgnoreCase(PROCLAMATION) || task.getTaskType().equalsIgnoreCase(ATTACHMENT)) && (isRPADdeliveryChannel(task))) {
+            log.info("Creating pending task for envelope submission");
+            createPendingTaskForEnvelope(task, requestInfo, courtCase, assignees);
+            log.info("Successfully created pending task for envelope submission");
+        }
+    }
+
+    private void createPendingTaskForEnvelope(pucar.web.models.task.Task task, RequestInfo requestInfo, CourtCase courtCase, List<User> assignees) {
+        try {
+            PendingTask pendingTask = buildPendingTaskForEnvelope(task, courtCase, assignees);
+            createPendingTask(
+                    PendingTaskRequest.builder()
+                            .requestInfo(requestInfo)
+                            .pendingTask(pendingTask)
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("Error while creating pending task for envelope submission", e);
+        }
+    }
+
+    private boolean isRPADdeliveryChannel(pucar.web.models.task.Task task) {
+        JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
+
+        if (taskDetails == null || !taskDetails.has("deliveryChannels") || taskDetails.get("deliveryChannels").isNull()) {
+            return false;
+        }
+
+        JsonNode deliveryChannels = taskDetails.get("deliveryChannels");
+
+        if (deliveryChannels.has(CHANNEL_CODE) && !deliveryChannels.get(CHANNEL_CODE).isNull()) {
+            String channelCode = deliveryChannels.get(CHANNEL_CODE).textValue();
+            return channelCode != null && channelCode.equalsIgnoreCase(RPAD);
+        }
+        return false;
+    }
+
+    private PendingTask buildPendingTaskForEnvelope(pucar.web.models.task.Task task, CourtCase courtCase, List<User> assignees) {
+        String entityType = getEntityType(task.getTaskType());
+
+        ZoneId zoneId = ZoneId.of(configuration.getZoneId());
+        ZonedDateTime istTime = ZonedDateTime.now(zoneId);
+        long currentISTMillis = istTime.toInstant().toEpochMilli();
+
+        long sla = configuration.getEnvelopeSlaValue() + currentISTMillis;
+
+        return PendingTask.builder()
+                .name(PENDING_ENVELOPE_SUBMISSION)
+                .referenceId(MANUAL + task.getTaskNumber() + PENDING_ENVELOPE_SUBMISSION)
+                .entityType(entityType)
+                .status(PENDING_ENVELOPE_SUBMISSION)
+                .assignedTo(assignees)
+                .cnrNumber(courtCase.getCnrNumber())
+                .filingNumber(courtCase.getFilingNumber())
+                .caseId(courtCase.getId().toString())
+                .caseTitle(courtCase.getCaseTitle())
+                .isCompleted(false)
+                .stateSla(sla)
+                .screenType("home")
+                .build();
+    }
+
+
+    private String getEntityType(String taskType) {
+        return switch (taskType) {
+            case SUMMONS -> "task-summons";
+            case WARRANT -> "task-warrant";
+            case PROCLAMATION -> "task-proclamation";
+            case ATTACHMENT -> "task-attachment";
+            case NOTICE -> "task-notice";
+            default -> null;
+        };
+    }
 
 }

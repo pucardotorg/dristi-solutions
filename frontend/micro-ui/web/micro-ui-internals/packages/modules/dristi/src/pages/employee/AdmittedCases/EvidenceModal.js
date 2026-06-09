@@ -1,4 +1,4 @@
-import { CloseSvg, TextInput } from "@egovernments/digit-ui-react-components";
+import { TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -31,6 +31,7 @@ import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
 import DOMPurify from "dompurify";
 import { getUserInfoFromIndividualId, getUserInfoFromUuids } from "../../../../../submissions/src/utils";
+import { CloseBtn } from "../../../components/ModalComponents";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -98,13 +99,7 @@ const EvidenceModal = ({
     setFormData(data);
   };
 
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
+  
   const Heading = (props) => {
     return (
       <div className="evidence-title">

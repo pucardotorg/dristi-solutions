@@ -1,22 +1,10 @@
 import React, { useEffect, useState } from "react";
 import Modal from "./Modal";
-import { CardLabel, CloseSvg, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
+import { CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
 import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
 import isEqual from "lodash/isEqual";
 import { runComprehensiveSanitizer } from "../Utils";
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { CloseBtn, Heading } from "./ModalComponents";
 const UploadDocument = ({ config, t, handleCancelUpload, handleUploadProceed, formUploadData, setData }) => {
   const [isDisable, setIsDisable] = useState(true);
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {

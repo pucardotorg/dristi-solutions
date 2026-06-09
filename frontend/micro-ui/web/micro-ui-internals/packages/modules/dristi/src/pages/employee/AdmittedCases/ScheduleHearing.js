@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { modalConfig, selectParticipantConfig } from "../../citizen/FileCase/Config/admissionActionConfig";
-import { CloseSvg, Modal } from "@egovernments/digit-ui-react-components";
+import { Modal } from "@egovernments/digit-ui-react-components";
 import AdmissionActionModal from "../admission/AdmissionActionModal";
 import { DRISTIService } from "../../../services";
+import { CloseBtn } from "../../../components/ModalComponents";
 
 const ScheduleHearing = ({
   tenantId,
@@ -76,13 +77,7 @@ const ScheduleHearing = ({
     );
   };
 
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
+  
   const Heading = (props) => {
     return (
       <div className="evidence-title">

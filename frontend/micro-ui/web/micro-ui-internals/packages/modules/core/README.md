@@ -236,7 +236,6 @@ Application Bootstrap:
 | `react-query` | 3.6.1 | Async data fetching/caching |
 | `react-i18next` | 11.16.2 | Internationalization |
 | `react-tooltip` | 4.1.2 | Tooltip component |
-| `web-vitals` | ^2.1.4 | Performance monitoring |
 | `@egovernments/digit-ui-react-components` | 1.8.2-beta.11 | Shared UI components |
 | `@egovernments/digit-ui-components` | 0.0.1-beta.28 | Design system components |
 

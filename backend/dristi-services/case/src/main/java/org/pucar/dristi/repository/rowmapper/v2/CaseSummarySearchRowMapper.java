@@ -1,5 +1,6 @@
 package org.pucar.dristi.repository.rowmapper.v2;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
@@ -11,6 +12,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -64,6 +66,7 @@ public class CaseSummarySearchRowMapper implements ResultSetExtractor<List<CaseS
                             .registrationDate(parseDateToLong(rs.getString("registrationdate")))
                             .caseCategory(rs.getString("casecategory"))
                             .natureOfPleading(rs.getString("natureofpleading"))
+                            .secondaryStage(getObjectListFromJson(rs.getString("secondaryStage"), new TypeReference<List<String>>() {}))
                             .status(rs.getString("status"))
                             .createdBy(rs.getString("createdby"))
                             .build();
@@ -109,6 +112,21 @@ public class CaseSummarySearchRowMapper implements ResultSetExtractor<List<CaseS
             log.error("Invalid date format: {}", dateStr);
             throw new CustomException("INVALID_DATE_FORMAT",
                     "Date must be a valid timestamp: " + dateStr);
+        }
+    }
+
+    public <T> T getObjectListFromJson(String json, TypeReference<T> typeRef) {
+        if (json == null || json.trim().isEmpty()) {
+            try {
+                return objectMapper.readValue("[]", typeRef); // Return an empty object of the specified type
+            } catch (IOException e) {
+                throw new CustomException("Failed to create an empty instance of " + typeRef.getType(), e.getMessage());
+            }
+        }
+        try {
+            return objectMapper.readValue(json, typeRef);
+        } catch (Exception e) {
+            throw new CustomException("Failed to convert JSON to " + typeRef.getType(), e.getMessage());
         }
     }
 }

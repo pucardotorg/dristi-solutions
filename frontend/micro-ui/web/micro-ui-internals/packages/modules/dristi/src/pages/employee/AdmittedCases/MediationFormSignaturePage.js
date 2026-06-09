@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import { ActionBar, Button, Toast, Loader, CloseSvg, LabelFieldPair, CardLabel, Dropdown } from "@egovernments/digit-ui-react-components";
+import { ActionBar, Button, Toast, Loader, LabelFieldPair, CardLabel, Dropdown } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import SuccessBannerModal from "../../../../../submissions/src/components/SuccessBannerModal";
@@ -17,6 +17,7 @@ import { useQuery } from "react-query";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { Urls } from "../../../../../submissions/src/hooks/services/Urls";
 import useESignOpenApi from "../../../../../submissions/src/hooks/submissions/useESignOpenApi";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 const MediationFormSignaturePage = () => {
   const { t } = useTranslation();
@@ -47,6 +48,7 @@ const MediationFormSignaturePage = () => {
   const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
   const name = "Signature";
   const [formData, setFormData] = useState({});
+  const [fileUploadError, setFileUploadError] = useState(null);
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const [signatureDocumentId, setSignatureDocumentId] = useState(null);
   const [isEsignSuccess, setEsignSuccess] = useState(false);
@@ -75,18 +77,6 @@ const MediationFormSignaturePage = () => {
 
   const pageModule = isUserLoggedIn ? (isCitizen ? "ci" : "en") : "ci";
   const [esignMobileNumber, setEsignMobileNumber] = useState("");
-
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -168,7 +158,7 @@ const MediationFormSignaturePage = () => {
         .post(
           `${Urls.openApi.FileFetchByFileStore}`,
           {
-            tenantId: "kl",
+            tenantId,
             fileStoreId: mediationFileStoreId,
             moduleName: "mediation-document",
           },
@@ -245,31 +235,41 @@ const MediationFormSignaturePage = () => {
         }
         return party;
       });
+      const initialFileStoreId = sessionStorage.getItem("InitialMediationFileStoreId");
+      const fileStoreCheckOpen = isESign
+        ? signatureDocumentId && signatureDocumentId !== mediationFileStoreId && initialFileStoreId === mediationFileStoreId
+        : true;
       if (isUserLoggedIn) {
-        await submissionService.updateDigitalization({
-          digitalizedDocument: {
-            ...digitalizationServiceDetails,
-            mediationDetails: {
-              ...digitalizationServiceDetails?.mediationDetails,
-              partyDetails: updatedPartyDetails,
-            },
-            ...((signatureDocumentId || fileStoreId) && {
-              documents: [
-                {
-                  ...digitalizationServiceDetails?.documents?.[0],
-                  fileStore: signatureDocumentId || fileStoreId,
-                  documentType: "SIGNED",
-                },
-              ],
-            }),
-            workflow: {
-              action: digitalizationAction,
+        const fStoreId = signatureDocumentId || fileStoreId;
+        const fileStoreCheck = isESign ? fStoreId && fStoreId !== mediationFileStoreId && initialFileStoreId === mediationFileStoreId : true;
 
-              documents: [{}],
+        if (fileStoreCheck) {
+          await submissionService.updateDigitalization({
+            digitalizedDocument: {
+              ...digitalizationServiceDetails,
+              mediationDetails: {
+                ...digitalizationServiceDetails?.mediationDetails,
+                partyDetails: updatedPartyDetails,
+              },
+              ...(fStoreId && {
+                documents: [
+                  {
+                    ...digitalizationServiceDetails?.documents?.[0],
+                    fileStore: fStoreId,
+                    documentType: "SIGNED",
+                  },
+                ],
+              }),
+              workflow: {
+                action: digitalizationAction,
+
+                documents: [{}],
+              },
             },
-          },
-        });
-      } else {
+          });
+          setShowSuccessModal(true);
+        }
+      } else if (fileStoreCheckOpen) {
         await submissionService.updateOpenDigitizedDocument({
           tenantId,
           documentNumber: documentNumber,
@@ -280,13 +280,16 @@ const MediationFormSignaturePage = () => {
             partyDetails: updatedPartyDetails,
           },
         });
+        setShowSuccessModal(true);
+      } else {
+        setShowErrorToast({ label: t("SOMETHING_WENT_WRONG_REFRESH_AND_TRY_AGAIN"), error: true });
       }
-      setShowSuccessModal(true);
     } catch (error) {
       throw error;
     } finally {
       setSelectedParty(null);
       sessionStorage.removeItem("selectedParty");
+      sessionStorage.removeItem("InitialMediationFileStoreId");
     }
   };
 
@@ -300,6 +303,7 @@ const MediationFormSignaturePage = () => {
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
@@ -313,6 +317,8 @@ const MediationFormSignaturePage = () => {
       } catch (error) {
         console.error("error", error);
         setFormData({});
+        setSignatureDocumentId(null);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       } finally {
         setUploadLoader(false);
       }
@@ -402,6 +408,7 @@ const MediationFormSignaturePage = () => {
         if (!isUserLoggedIn) {
           sessionStorage.setItem("mobileNumber", mobileNumber);
         }
+        sessionStorage.setItem("InitialMediationFileStoreId", mediationFileStoreId);
         handleEsign(name, pageModule, mediationFileStoreId, getPlaceholder());
       }
     } catch (error) {
@@ -750,6 +757,8 @@ const MediationFormSignaturePage = () => {
           formData={formData}
           onSubmit={onSubmit}
           isDisabled={uploadLoader}
+          fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {showSkipConfirmModal && (

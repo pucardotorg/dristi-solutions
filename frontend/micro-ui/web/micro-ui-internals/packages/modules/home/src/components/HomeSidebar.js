@@ -6,6 +6,7 @@ import HomeHeader from "./HomeHeader";
 
 const HomeSidebar = ({
   t,
+  tenantId,
   onTabChange,
   activeTab,
   options,
@@ -138,22 +139,22 @@ const HomeSidebar = ({
                     processSearchCriteria: {
                       businessService: ["notification"],
                       moduleName: "Transformer service",
-                      tenantId: Digit.ULBService.getCurrentTenantId(),
+                      tenantId,
                     },
                     moduleSearchCriteria: {
                       entityType: "Order",
-                      tenantId: Digit.ULBService.getCurrentTenantId(),
+                      tenantId,
                       status: "PENDING_BULK_E-SIGN",
                       courtId: localStorage.getItem("courtId"),
                     },
-                    tenantId: Digit.ULBService.getCurrentTenantId(),
+                    tenantId,
                     limit: 300,
                     offset: 0,
                   },
                 };
 
                 try {
-                  const res = await HomeService.InboxSearch(payload, { tenantId: "kl" });
+                  const res = await HomeService.InboxSearch(payload, { tenantId });
                   shouldProceed = res?.totalCount > 0;
                 } catch (err) {
                   showToast("error", t("ISSUE_IN_FETCHING"), 5000);

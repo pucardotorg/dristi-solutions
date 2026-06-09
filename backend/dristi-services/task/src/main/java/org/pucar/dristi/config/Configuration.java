@@ -283,6 +283,9 @@ public class Configuration {
     @Value("${egov.sms.notification.process.fee.payment.template.id}")
     private String smsNotificationProcessFeePaymentTemplateId;
 
+    @Value("${egov.sms.notification.rpad.dispatch.template.id}")
+    private String smsNotificationRPADTemplateId;
+
     //Individual Service
     @Value("${egov.individual.host}")
     private String individualHost;
@@ -353,6 +356,15 @@ public class Configuration {
 
     @Value("${dristi.esign.signature.height:50}")
     private int esignSignatureHeight;
+
+    @Value("${dristi.esign.signature.max.left.offset:70}")
+    private int esignSignatureMaxLeftOffset;
+
+    @Value("${dristi.esign.signature.min.width:155}")
+    private int esignSignatureMinWidth;
+
+    @Value("${dristi.esign.signature.preferred.width.threshold:190}")
+    private int esignSignaturePreferredWidthThreshold;
 
     // Zone id
     @Value("${app.zone.id}")

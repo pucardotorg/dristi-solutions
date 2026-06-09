@@ -187,8 +187,6 @@ const respondentFromconfig = [
           name: "respondentAge",
           validation: {
             maxLength: 3,
-            minLength: 2,
-            pattern: "[0-9]+",
             patternType: "Number",
           },
         },
@@ -394,7 +392,7 @@ const respondentFromconfig = [
               label: "STATE",
               validation: {
                 isRequired: true,
-                patternType: "Name", // new
+                patternType: "Name",
               },
               isMandatory: true,
             },
@@ -404,7 +402,7 @@ const respondentFromconfig = [
               label: "DISTRICT",
               validation: {
                 isRequired: true,
-                patternType: "Name", // new
+                patternType: "Name",
               },
               isMandatory: true,
             },
@@ -414,7 +412,7 @@ const respondentFromconfig = [
               label: "CITY/TOWN",
               validation: {
                 isRequired: true,
-                patternType: "Name", // new
+                patternType: "Name",
               },
               isMandatory: true,
             },
@@ -423,13 +421,12 @@ const respondentFromconfig = [
               type: "text",
               label: "ADDRESS",
               validation: {
-                isRequired: true,
-                // new
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
                   patternType: "address",
                 },
+                isRequired: true,
               },
               isMandatory: true,
             },
@@ -539,7 +536,7 @@ const respondentFromconfig = [
 export const respondentconfig = {
   formconfig: respondentFromconfig,
   header: "CS_RESPONDENT_DETAIL_HEADING",
-  subtext: "CS_RESPONDENT_DETAIL_SUBTEXT",
+  subtext: "CS_COMPLAINT_DATA_ENTRY_INFO",
   isOptional: false,
   addFormText: "ADD_RESPONDENT",
   formItemName: "CS_RESPONDENT",

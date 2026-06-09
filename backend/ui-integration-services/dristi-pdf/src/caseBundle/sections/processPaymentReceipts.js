@@ -7,6 +7,7 @@ const { search_task_v2, search_task_mangement } = require("../../api");
 const {
   duplicateExistingFileStore,
 } = require("../utils/duplicateExistingFileStore");
+const { logger } = require("../../logger");
 
 async function processPaymentReceipts(
   courtCase,
@@ -16,6 +17,7 @@ async function processPaymentReceipts(
   TEMP_FILES_DIR,
   indexCopy
 ) {
+  logger.info(`[processPaymentReceipts] Started | filingNumber: ${courtCase?.filingNumber}`);
   const paymentReceiptSection = filterCaseBundleBySection(
     caseBundleMaster,
     "paymentreceipts"
@@ -41,6 +43,7 @@ async function processPaymentReceipts(
         b?.additionalDetails?.consumerCode || ""
       )
     );
+  logger.info(`[processPaymentReceipts] search_task_v2 | taskType: GENERIC`);
   const genericTaskDocument = await search_task_v2(
     tenantId,
     requestInfo,
@@ -62,6 +65,7 @@ async function processPaymentReceipts(
     ?.filter((task) => task?.documents && task?.documents?.length > 0)
     ?.map((task) => task?.documents?.[0]);
 
+  logger.info(`[processPaymentReceipts] search_task_mangement`);
   const taskMangementData = await search_task_mangement(
     tenantId,
     requestInfo,
@@ -160,6 +164,9 @@ async function processPaymentReceipts(
   } else {
     paymentReceiptsIndexSection.lineItems = [];
   }
+  logger.info(
+    `[processPaymentReceipts] Completed | lineItems: ${paymentReceiptsIndexSection?.lineItems?.length || 0}`
+  );
 }
 
 module.exports = {

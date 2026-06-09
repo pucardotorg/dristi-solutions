@@ -101,4 +101,7 @@ public class CaseCriteria {
     @JsonProperty("isClerk")
     private Boolean isClerk = null;
 
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = null;
+
 }

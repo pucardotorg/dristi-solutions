@@ -175,6 +175,7 @@ export const documentsTypeMapping = {
   nocJudgeOrder: "NOC_JUDGE_ORDER",
   supportingDocument: "SUPPORTING_DOCUMENT",
   lprDocument: "LPR_DOCUMENT",
+  advocateIdProof: "ADVOCATE_ID_PROOF",
 };
 
 export const documentLabels = {

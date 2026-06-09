@@ -49,6 +49,17 @@ public class CaseUpdateConsumer {
         }
     }
 
+    @KafkaListener(topics = {"${egov.case.overall.status.topic.v2}"})
+    public void updateCaseOverallStatusV2(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            logger.info("Received case overall status record on topic: {}", topic);
+            CaseStageSubStage caseStageSubStage = objectMapper.convertValue(payload.value(), CaseStageSubStage.class);
+            caseService.updateCaseOverallStatusV2(caseStageSubStage);
+        } catch (final Exception e) {
+            logger.error("Error while listening to case overall status on topic: {}: ", topic, e);
+        }
+    }
+
     @KafkaListener(topics = {"${egov.case.outcome.topic}"})
     public void updateCaseOutcome(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {

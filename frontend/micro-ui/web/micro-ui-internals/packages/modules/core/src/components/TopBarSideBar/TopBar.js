@@ -145,8 +145,13 @@ const TopBar = ({
     <div className="topbar">
       <div
         className="hambuger-back-wrapper"
+        style={{ cursor: "pointer" }}
         onClick={() => {
           sessionStorage.removeItem("homeActiveTab");
+          if (!loggedin) {
+            window.location.replace(window.location.origin);
+            return;
+          }
           if (isEpostUser) {
             history.push(pathname);
           } else {

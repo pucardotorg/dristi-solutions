@@ -9,7 +9,7 @@ import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/componen
 import NewBulkRescheduleTable from "./NewBulkRescheduleTable";
 import { Urls } from "@egovernments/digit-ui-module-hearings/src/hooks/services/Urls";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
-import _ from "lodash";
+import get from "lodash/get";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
@@ -162,7 +162,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     [{ name: "BulkRescheduleReason" }],
     {
       select: (data) => {
-        return _.get(data, "Hearing.BulkRescheduleReason", []).map((opt) => ({ ...opt }));
+        return get(data, "Hearing.BulkRescheduleReason", []).map((opt) => ({ ...opt }));
       },
     }
   );
@@ -235,6 +235,10 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       });
 
       const newFileStoreId = signedDocumentUploadID || localStorageID;
+      if (!newFileStoreId || newFileStoreId === notificationFileStoreId) {
+        showToast("error", t("UPDATE_FAILED_ERROR"), 5000);
+        return;
+      }
       fileStoreIds.delete(newFileStoreId);
       await hearingService?.updateNotification({
         notification: {
@@ -651,6 +655,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
           onSubmit={onUploadSubmit}
           isDisabled={issignLoader}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {stepper === 3 && !openUploadSignatureModal && isSigned && (

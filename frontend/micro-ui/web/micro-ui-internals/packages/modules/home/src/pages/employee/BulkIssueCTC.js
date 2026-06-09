@@ -78,7 +78,7 @@ const BulkIssueCTC = () => {
 
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       const accessToken = window.localStorage.getItem("token");
-      const courtId = window.localStorage.getItem("courtId") || "KLKM52";
+      const courtId = window.localStorage.getItem("courtId");
 
       // Call the PDF generation API
       const response = await axiosInstance.post(
@@ -427,7 +427,7 @@ const BulkIssueCTC = () => {
       };
 
       const payload = {
-        courtId: selectedRowData?.businessObject?.courtId || window.localStorage.getItem("courtId") || "KLKM52",
+        courtId: selectedRowData?.businessObject?.courtId || window.localStorage.getItem("courtId"),
         action,
         docs: [docsDetails],
         status: "PENDING",
@@ -456,13 +456,20 @@ const BulkIssueCTC = () => {
 
   const handleIssueDocuments = async () => {
     const localStorageID = sessionStorage.getItem("fileStoreId");
+    const signedId = localStorageID || signedDocumentUploadId;
+    const originalId =
+      selectedRowData?.businessObject?.fileStoreId || selectedRowData?.affidavitDocument?.fileStore || selectedRowData?.documents?.[0]?.fileStore;
+    if (!signedId || signedId === originalId) {
+      showToast("error", t("UPDATE_FAILED_ERROR"), 5000);
+      return;
+    }
 
     await handleCTCDocumentAction({
       action: "ISSUE",
       documents: [
         {
           documentType: "SIGNED_CTC_APPLICATION",
-          fileStore: localStorageID || signedDocumentUploadId,
+          fileStore: signedId,
         },
       ],
       successMessage: "CTC_DOCUMENT_ISSUED_SUCCESSFULLY",

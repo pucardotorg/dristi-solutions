@@ -1,7 +1,8 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { CloseSvg, Toast } from "@egovernments/digit-ui-react-components";
+import { Toast } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { EditPencilIcon } from "../icons/svgIndex";
+import { CloseBtn } from "./ModalComponents";
 
 const toInternal = (dateStr) => {
   if (!dateStr || typeof dateStr !== "string") return dateStr;
@@ -45,13 +46,6 @@ const Chip = ({ label, isSelected, handleClick, icon }) => {
     </div>
   );
 };
-
-const CloseBtn = (props) => (
-  <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-    <CloseSvg />
-  </div>
-);
-
 function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors }) {
   const [showPicker, setShowPicker] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);

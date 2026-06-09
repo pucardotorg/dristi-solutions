@@ -11,6 +11,9 @@ import org.egov.common.contract.models.AuditDetails;
 import org.pucar.dristi.web.models.ProcessHandler;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Schema(description = "Case overall status topic object")
 @Validated
@@ -40,6 +43,9 @@ public class CaseOverallStatus {
 
     @JsonProperty("substageBackup")
     private String substageBackup = null;
+
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = new ArrayList<>();
 
     @JsonProperty("auditDetails")
     @Valid

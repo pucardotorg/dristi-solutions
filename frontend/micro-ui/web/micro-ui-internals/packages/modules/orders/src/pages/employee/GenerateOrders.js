@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState, useContext } 
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
-import { Header, FormComposerV2, Toast, Button, EditIcon, Modal, CloseButton, TextInput, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { Header, FormComposerV2, Toast, Button, EditIcon, Modal, CloseButton, TextInput } from "@egovernments/digit-ui-react-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core"; // Import breadcrumb context from core module
 import {
   applicationTypeConfig,
@@ -57,7 +57,7 @@ import { Urls } from "../../hooks/services/Urls";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../utils/submissionWorkflow";
 import { getAdvocates, getuuidNameMap } from "../../utils/caseUtils";
 import { HearingWorkflowAction, HearingWorkflowState } from "../../utils/hearingWorkflow";
-import _ from "lodash";
+import get from "lodash/get";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName } from "../../utils";
@@ -68,6 +68,7 @@ import TasksComponent from "../../../../home/src/components/TaskComponent";
 import MandatoryFieldsErrorModal from "./MandatoryFieldsErrorModal";
 import OrderAddToBulkSuccessModal from "../../pageComponents/OrderAddToBulkSuccessModal";
 import { getFullName } from "../../../../cases/src/utils/joinCaseUtils";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 // any order type from orderTypes can not be paired with any order from unAllowedOrderTypes when creating composite order.
 export const compositeOrderAllowedTypes = [
@@ -178,22 +179,6 @@ const OutlinedInfoIcon = () => (
     </defs>
   </svg>
 );
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-const CloseBtn = (props) => {
-  return (
-    <div
-      className="composite-orders-error-modal-close"
-      onClick={props?.onClick}
-      style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-
 const stateSlaMap = {
   SECTION_202_CRPC: 3,
   MANDATORY_SUBMISSIONS_RESPONSES: 3,
@@ -475,7 +460,7 @@ const GenerateOrders = () => {
     select: (data) => {
       let newData = {};
       [{ name: "Court_Rooms" }]?.forEach((master) => {
-        const optionsData = _.get(data, `${"common-masters"}.${master?.name}`, []);
+        const optionsData = get(data, `${"common-masters"}.${master?.name}`, []);
         newData = {
           ...newData,
           [master.name]: optionsData.filter((opt) => (opt?.hasOwnProperty("active") ? opt.active : true)).map((opt) => ({ ...opt })),
@@ -487,7 +472,7 @@ const GenerateOrders = () => {
 
   const { data: orderTypeData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "Order", [{ name: "OrderType" }], {
     select: (data) => {
-      return _.get(data, "Order.OrderType", [])
+      return get(data, "Order.OrderType", [])
         .filter((opt) => (opt?.hasOwnProperty("isactive") ? opt.isactive : true))
         .map((opt) => ({ ...opt }));
     },

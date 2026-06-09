@@ -365,6 +365,10 @@ function BulkSignADiaryView() {
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const newFilestore = signedDocumentUploadID || localStorageID;
+      if (!newFilestore || newFilestore === ADiarypdf) {
+        showToast("error", t("UPDATE_FAILED_ERROR"), 5000);
+        return;
+      }
       fileStoreIds.delete(newFilestore);
       if (ADiarypdf) {
         fileStoreIds.delete(ADiarypdf);
@@ -588,6 +592,7 @@ function BulkSignADiaryView() {
             onSubmit={onUploadSubmit}
             isDisabled={loader}
             fileUploadError={fileUploadError}
+            setFileUploadError={setFileUploadError}
           />
         )}
 

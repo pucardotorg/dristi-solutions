@@ -1046,6 +1046,32 @@ const TasksComponent = ({
     });
   }, []);
 
+  const handleInitialCourierServiceChange = useCallback((data, index) => {
+    setCourierOrderDetails((prevOrderDetails) => {
+      const updatedOrderDetails = { ...prevOrderDetails };
+      const formDataKey = formDataKeyMap[updatedOrderDetails?.orderType];
+
+      if (updatedOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party?.[index]) {
+        const updatedParties = [...updatedOrderDetails.additionalDetails.formdata[formDataKey].party];
+        const updatedParty = { ...updatedParties[index] };
+        const courierFieldMap = {
+          notice: "noticeCourierService",
+          summons: "summonsCourierService",
+        };
+
+        Object.keys(courierFieldMap).forEach((key) => {
+          if (data?.[key]) {
+            updatedParty[courierFieldMap[key]] = data[key];
+          }
+        });
+        updatedParties[index] = updatedParty;
+        updatedOrderDetails.additionalDetails.formdata[formDataKey].party = updatedParties;
+      }
+
+      return updatedOrderDetails;
+    });
+  }, []);
+
   const handleAddressSelection = useCallback((addressId, isSelected, index) => {
     setCourierOrderDetails((prevOrderDetails) => {
       const updatedOrderDetails = { ...prevOrderDetails };
@@ -1181,6 +1207,7 @@ const TasksComponent = ({
               setNoticeActive={setActive}
               orderType={orderType}
               handleAddAddress={handleAddAddress}
+              handleInitialCourierServiceChange={(data) => handleInitialCourierServiceChange(data, i)}
             />
           ),
           actionSaveOnSubmit: async () => {

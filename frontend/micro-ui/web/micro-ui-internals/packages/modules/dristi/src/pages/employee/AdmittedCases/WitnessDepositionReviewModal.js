@@ -1,22 +1,10 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import React, { useMemo, useState } from "react";
+import { Loader } from "@egovernments/digit-ui-react-components";
 import { useQuery } from "react-query";
 import { Urls } from "../../../hooks";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 const onDocumentUpload = async (fileData, filename) => {
   const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
   return { file: fileUploadRes?.data, fileType: fileData.type, filename };
@@ -42,6 +30,7 @@ const WitnessDepositionReviewModal = ({
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
 
   const [showErrorToast, setShowErrorToast] = useState(null);
+  const [loader, setLoader] = useState(false);
 
   const { data: { file: witnessDepositionPreviewPdf, fileName: witnessDepositionPreviewFilename } = {}, isFetching: isLoading } = useQuery({
     queryKey: [
@@ -126,6 +115,7 @@ const WitnessDepositionReviewModal = ({
         actionSaveLabel={t("PROCEED_TO_SIGN")}
         isDisabled={false}
         actionSaveOnSubmit={() => {
+          setLoader(true);
           const pdfFile = new File([witnessDepositionPreviewPdf], witnessDepositionPreviewFilename, { type: "application/pdf" });
 
           onDocumentUpload(pdfFile, pdfFile.name)
@@ -143,6 +133,9 @@ const WitnessDepositionReviewModal = ({
             })
             .catch((e) => {
               setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+            })
+            .finally(() => {
+              setLoader(false);
             });
         }}
         className={"review-submission-appl-modal bail-bond"}
@@ -153,6 +146,25 @@ const WitnessDepositionReviewModal = ({
           </div>
         </div>
       </Modal>
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "999999999999999999",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
     </React.Fragment>
   );
 };

@@ -1,0 +1,490 @@
+[
+  {
+    "id": "77ff2f2a-a86e-4809-b765-a1f723dd6f41",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "21",
+    "data": {
+      "id": "21",
+      "stage": "Appearance",
+      "state": "published",
+      "action": "E-SIGN",
+      "endStage": "Cognizance",
+      "priority": 10,
+      "entityType": "HEARING",
+      "typeIdentifier": "APPEARANCE",
+      "workflowModule": "order-default",
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1776102228034,
+      "lastModifiedTime": 1776322452337
+    }
+  },
+  {
+    "id": "dd2410cc-c449-4a60-8d6a-e9f2af8f1d7e",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "20",
+    "data": {
+      "id": "20",
+      "stage": "Appearance",
+      "state": "published",
+      "action": "E-SIGN",
+      "endStage": "Cognizance",
+      "priority": 9,
+      "entityType": "ORDER",
+      "typeIdentifier": "TAKE_COGNIZANCE",
+      "workflowModule": "order-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1775809983738,
+      "lastModifiedTime": 1776322438320
+    }
+  },
+  {
+    "id": "068aedb3-c89e-4e99-aaf7-e68077e57e8f",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "19",
+    "data": {
+      "id": "19",
+      "stage": "Post-Disposal",
+      "state": "published",
+      "action": "E-SIGN",
+      "priority": 1,
+      "entityType": "ORDER",
+      "typeIdentifier": "WITHDRAWAL_ACCEPT,SETTLEMENT_ACCEPT,DISMISS_CASE,CASE_TRANSFER_ACCEPT",
+      "workflowModule": "order-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1775647314567,
+      "lastModifiedTime": 1776322287082
+    }
+  },
+  {
+    "id": "ad175962-2668-43e4-bd29-196e3bd9a9ea",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "18",
+    "data": {
+      "id": "18",
+      "stage": "RESTORE_BACKUP",
+      "state": "published",
+      "action": "E-SIGN",
+      "priority": 1,
+      "entityType": "ORDER",
+      "processHandler": "RESTORE_BACKUP",
+      "typeIdentifier": "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER",
+      "workflowModule": "order-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "createdTime": 1775646743576,
+      "lastModifiedTime": 1775646743576
+    }
+  },
+  {
+    "id": "c9228bec-c4c4-4273-9e3d-ddd561a4ff8e",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "17",
+    "data": {
+      "id": "17",
+      "stage": "Long Pending Register",
+      "state": "published",
+      "action": "E-SIGN",
+      "priority": 0,
+      "entityType": "ORDER",
+      "processHandler": "UPDATE_BACKUP",
+      "typeIdentifier": "MOVE_CASE_TO_LONG_PENDING_REGISTER",
+      "workflowModule": "order-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "createdTime": 1775646728104,
+      "lastModifiedTime": 1775646728104
+    }
+  },
+  {
+    "id": "fbd23f01-0827-4181-868a-f82e97f72dd5",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "16",
+    "data": {
+      "id": "16",
+      "stage": "Post-Judgement",
+      "state": "published",
+      "action": "E-SIGN",
+      "endStage": "Judgement",
+      "priority": 3,
+      "entityType": "ORDER",
+      "typeIdentifier": "judgement",
+      "workflowModule": "order-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1775646431312,
+      "lastModifiedTime": 1776322300990
+    }
+  },
+  {
+    "id": "7c3199ce-c552-4d15-bdac-f24b55eea27b",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "14",
+    "data": {
+      "id": "14",
+      "stage": "Arguments",
+      "state": "published",
+      "action": "E-SIGN",
+      "priority": 5,
+      "entityType": "HEARING",
+      "typeIdentifier": "arguments",
+      "workflowModule": "order-default",
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1775646415125,
+      "lastModifiedTime": 1776322357787
+    }
+  },
+  {
+    "id": "fef3c26c-56cc-43f7-a495-febfe3060109",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "15",
+    "data": {
+      "id": "15",
+      "stage": "Judgement",
+      "state": "published",
+      "action": "E-SIGN",
+      "priority": 4,
+      "entityType": "HEARING",
+      "typeIdentifier": "judgement",
+      "workflowModule": "order-default",
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1775646394820,
+      "lastModifiedTime": 1776322314800
+    }
+  },
+  {
+    "id": "21b31c9d-901f-4f22-929f-d41ac76b54ec",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "13",
+    "data": {
+      "id": "13",
+      "stage": "Examination of Accused",
+      "state": "published",
+      "action": "E-SIGN",
+      "priority": 7,
+      "entityType": "HEARING",
+      "typeIdentifier": "EXAMINATION_UNDER_S351_BNSS",
+      "workflowModule": "order-default",
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1775645919902,
+      "lastModifiedTime": 1776322387987
+    }
+  },
+  {
+    "id": "5ac6f763-99e0-4d72-ad68-c91cc0163869",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "12",
+    "data": {
+      "id": "12",
+      "stage": "Defense Evidence",
+      "state": "published",
+      "action": "E-SIGN",
+      "priority": 6,
+      "entityType": "HEARING",
+      "typeIdentifier": "EVIDENCE_ACCUSED",
+      "workflowModule": "order-default",
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "createdTime": 1775645899618,
+      "lastModifiedTime": 1775645899618
+    }
+  },
+  {
+    "id": "f69a38cc-0992-4dc1-b1f7-c9f6465dd36e",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "11",
+    "data": {
+      "id": "11",
+      "stage": "Complainant Evidence",
+      "state": "published",
+      "action": "E-SIGN",
+      "priority": 8,
+      "entityType": "HEARING",
+      "typeIdentifier": "EVIDENCE_COMPLAINANT",
+      "workflowModule": "order-default",
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1775645873762,
+      "lastModifiedTime": 1776322404539
+    }
+  },
+  {
+    "id": "f98ee4b2-a835-4bc2-9ecb-d982d7b353dc",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "10",
+    "data": {
+      "id": "10",
+      "stage": "Scrutiny",
+      "state": "UNDER_SCRUTINY",
+      "action": "MAKE_PAYMENT",
+      "endStage": "Filing,Defect Correction",
+      "typeIdentifier": "scrutiny",
+      "workflowModule": "case-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1775481435874,
+      "lastModifiedTime": 1776153372484
+    }
+  },
+  {
+    "id": "e000fe71-dd27-4d77-8e50-3f081183ce35",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "9",
+    "data": {
+      "id": "9",
+      "stage": "Scrutiny",
+      "state": "UNDER_SCRUTINY",
+      "action": "UPLOAD",
+      "endStage": "Filing,Defect Correction",
+      "typeIdentifier": "scrutiny",
+      "workflowModule": "case-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1775481408608,
+      "lastModifiedTime": 1776153393127
+    }
+  },
+  {
+    "id": "e7a1a613-dcf4-4193-9389-3aee2feb54c8",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "8",
+    "data": {
+      "id": "8",
+      "stage": "Scrutiny",
+      "state": "UNDER_SCRUTINY",
+      "action": "E-SIGN_PARTY_IN_PERSON",
+      "endStage": "Filing",
+      "typeIdentifier": "scrutiny",
+      "workflowModule": "case-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "createdTime": 1775481396820,
+      "lastModifiedTime": 1775481396820
+    }
+  },
+  {
+    "id": "785050bd-1769-43cd-b772-fad7b7d2009f",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "7",
+    "data": {
+      "id": "7",
+      "stage": "Scrutiny",
+      "state": "UNDER_SCRUTINY",
+      "action": "E-SIGN",
+      "endStage": "Filing",
+      "typeIdentifier": "scrutiny",
+      "workflowModule": "case-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "createdTime": 1775481386189,
+      "lastModifiedTime": 1775481386189
+    }
+  },
+  {
+    "id": "d3e490f7-6df1-48d7-b99b-ce40d179b3a9",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "6",
+    "data": {
+      "id": "6",
+      "stage": "Registration",
+      "state": "PENDING_REGISTRATION",
+      "action": "validate",
+      "endStage": "Scrutiny",
+      "typeIdentifier": "",
+      "workflowModule": "case-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1775479276127,
+      "lastModifiedTime": 1775807701060
+    }
+  },
+  {
+    "id": "a13d6444-d001-4e66-aa42-8d285d7b0c78",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "5",
+    "data": {
+      "id": "5",
+      "stage": "Cognizance",
+      "state": "PENDING_RESPONSE",
+      "action": "REGISTER",
+      "endStage": "Registration",
+      "typeIdentifier": "registration",
+      "workflowModule": "case-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1775479259735,
+      "lastModifiedTime": 1776100405074
+    }
+  },
+  {
+    "id": "5306de65-564b-4e80-b0f5-a7d75f7f3e06",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "4",
+    "data": {
+      "id": "4",
+      "stage": "Defect Correction",
+      "state": "CASE_REASSIGNED",
+      "action": "send_back",
+      "endStage": "Scrutiny,Registration",
+      "typeIdentifier": "",
+      "workflowModule": "case-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1775479234570,
+      "lastModifiedTime": 1776150295633
+    }
+  },
+  {
+    "id": "24a52fbc-1166-432a-8c9f-b50a57befb56",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "3",
+    "data": {
+      "id": "3",
+      "stage": "Scrutiny",
+      "state": "UNDER_SCRUTINY",
+      "action": "E-SIGN_COMPLETE",
+      "endStage": "Filing,Defect Correction",
+      "typeIdentifier": "scrutiny",
+      "workflowModule": "case-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1775479210244,
+      "lastModifiedTime": 1776153357419
+    }
+  },
+  {
+    "id": "48cb27ad-5756-4525-afa5-89352b63d88f",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "2",
+    "data": {
+      "id": "2",
+      "stage": "Filing",
+      "state": "PENDING_E-SIGNSDFS",
+      "action": "SDF",
+      "typeIdentifier": "",
+      "workflowModule": "case-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1775479012099,
+      "lastModifiedTime": 1776233796551
+    }
+  },
+  {
+    "id": "e4bf0b59-0b10-4bbb-8a43-1f9696e8b5f0",
+    "tenantId": "kl",
+    "schemaCode": "case.CasePrimaryStage",
+    "uniqueIdentifier": "1",
+    "data": {
+      "id": "1",
+      "stage": "Filing",
+      "state": "DRAFT_IN_PROGRESS",
+      "action": "SAVE_DRAFT",
+      "typeIdentifier": "filing",
+      "workflowModule": "case-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1775478968171,
+      "lastModifiedTime": 1776233772353
+    }
+  }
+]
