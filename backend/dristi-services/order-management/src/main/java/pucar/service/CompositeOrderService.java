@@ -9,10 +9,13 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pucar.util.CaseUtil;
 import pucar.util.OrderUtil;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
+import pucar.web.models.courtCase.WitnessDetails;
+import pucar.web.models.courtCase.WitnessDetailsRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,12 +31,14 @@ public class CompositeOrderService implements OrderProcessor {
     private final ObjectMapper objectMapper;
     private final OrderStrategyExecutor orderStrategyExecutor;
     private final OrderUtil orderUtil;
+    private final CaseUtil caseUtil;
 
     @Autowired
-    public CompositeOrderService(ObjectMapper objectMapper, OrderStrategyExecutor orderStrategyExecutor, OrderUtil orderUtil) {
+    public CompositeOrderService(ObjectMapper objectMapper, OrderStrategyExecutor orderStrategyExecutor, OrderUtil orderUtil, CaseUtil caseUtil) {
         this.objectMapper = objectMapper;
         this.orderStrategyExecutor = orderStrategyExecutor;
         this.orderUtil = orderUtil;
+        this.caseUtil = caseUtil;
     }
 
     @Override
@@ -103,13 +108,27 @@ public class CompositeOrderService implements OrderProcessor {
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
 
+        List<WitnessDetails> witnessAccumulator = new ArrayList<>();
+
         List<Order> itemListFormCompositeItem = getItemListFormCompositeItem(order);
         for (Order compositeOrderItem : itemListFormCompositeItem) {
-            // here call post
             orderStrategyExecutor.afterPublish(OrderRequest.builder()
                     .order(compositeOrderItem)
-                    .requestInfo(requestInfo).build());
+                    .requestInfo(requestInfo)
+                    .witnessAccumulator(witnessAccumulator)
+                    .build());
         }
+
+        if (!witnessAccumulator.isEmpty()) {
+            log.info("Flushing batch of {} witness(es) for filingNumber:{}", witnessAccumulator.size(), order.getFilingNumber());
+            caseUtil.addWitnessToCase(WitnessDetailsRequest.builder()
+                    .requestInfo(requestInfo)
+                    .caseFilingNumber(order.getFilingNumber())
+                    .tenantId(order.getTenantId())
+                    .witnessDetails(witnessAccumulator)
+                    .build());
+        }
+
         log.info("post processing composite order, result= SUCCESS,orderNumber:{}, orderType:{}", orderRequest.getOrder().getOrderNumber(), orderRequest.getOrder().getOrderType());
 
     }

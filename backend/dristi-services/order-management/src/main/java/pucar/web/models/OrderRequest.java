@@ -1,5 +1,6 @@
 package pucar.web.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.validation.annotation.Validated;
+import pucar.web.models.courtCase.WitnessDetails;
+
+import java.util.List;
 
 /**
  * OrderRequest
@@ -27,5 +31,9 @@ public class OrderRequest {
     @JsonProperty("order")
     @Valid
     private Order order = null;
+
+    // Runtime-only: non-null signals composite batch mode; witness strategy adds to this list instead of calling the API
+    @JsonIgnore
+    private List<WitnessDetails> witnessAccumulator = null;
 
 }
