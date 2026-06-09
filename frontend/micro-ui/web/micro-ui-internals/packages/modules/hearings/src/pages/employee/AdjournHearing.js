@@ -6,6 +6,7 @@ import SummaryModal from "../../components/SummaryModal";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { hearingService } from "../../hooks/services";
 import { useTranslation } from "react-i18next";
+import { Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const AdjournHearing = ({ hearing, updateTranscript, transcriptText, setAdjournHearing, disableTextArea, setTranscriptText }) => {
   const { hearingId } = Digit.Hooks.useQueryParams();
@@ -17,10 +18,6 @@ const AdjournHearing = ({ hearing, updateTranscript, transcriptText, setAdjournH
 
   const history = useHistory();
 
-  const handleNavigate = (path) => {
-    const contextPath = window?.contextPath || "";
-    history.push(`/${contextPath}${path}`);
-  };
 
   const onSubmit = (data) => {
     setStepper(stepper + 1);
@@ -87,9 +84,7 @@ const AdjournHearing = ({ hearing, updateTranscript, transcriptText, setAdjournH
     );
   };
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
+  
   const onFormValueChange = (setValue, formData, formState) => {
     if (formData?.reason) {
       if (formData.reason !== reasonFormData.reason) {
@@ -146,19 +141,19 @@ const AdjournHearing = ({ hearing, updateTranscript, transcriptText, setAdjournH
             defaultValues={
               reasonFormData?.reason
                 ? {
-                    reason: {
-                      code: reasonFormData?.reason?.code,
-                      name: reasonFormData?.reason?.name,
-                      isEnabled: true,
-                    },
-                  }
+                  reason: {
+                    code: reasonFormData?.reason?.code,
+                    name: reasonFormData?.reason?.name,
+                    isEnabled: true,
+                  },
+                }
                 : {
-                    reason: {
-                      code: "Select a Reason",
-                      name: "Select a Reason",
-                      isEnabled: true,
-                    },
-                  }
+                  reason: {
+                    code: "Select a Reason",
+                    name: "Select a Reason",
+                    isEnabled: true,
+                  },
+                }
             }
             fieldStyle={{ width: "100%" }}
           ></FormComposerV2>

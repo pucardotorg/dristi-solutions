@@ -1,0 +1,257 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseUiPrimaryStage",
+    "mdmsPayload": {
+      "id": "cd6e1330-4602-4151-a34b-18f9318bfc7f",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseUiPrimaryStage",
+      "uniqueIdentifier": "15",
+      "data": {
+        "id": 15,
+        "code": "LONG_PENDING_REGISTER",
+        "name": "Long Pending Register"
+      },
+      "isActive": true
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseUiPrimaryStage",
+    "mdmsPayload": {
+      "id": "d83168bb-027d-42cc-9ae6-3c54c6430203",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseUiPrimaryStage",
+      "uniqueIdentifier": "14",
+      "data": {
+        "id": 14,
+        "code": "POST_DISPOSAL ",
+        "name": "Post-Disposal"
+      },
+      "isActive": true
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseUiPrimaryStage",
+    "mdmsPayload": {
+      "id": "91a83b4a-2be5-47d3-8019-99dc40af3e9c",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseUiPrimaryStage",
+      "uniqueIdentifier": "13",
+      "data": {
+        "id": 13,
+        "code": "POST_JUDGEMENT",
+        "name": "Post-Judgement"
+      },
+      "isActive": true
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseUiPrimaryStage",
+    "mdmsPayload": {
+      "id": "4cab4ceb-c046-488d-b4f1-d0f7205aae3a",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseUiPrimaryStage",
+      "uniqueIdentifier": "12",
+      "data": {
+        "id": 12,
+        "code": "JUDGEMENT",
+        "name": "Judgement"
+      },
+      "isActive": true
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseUiPrimaryStage",
+    "mdmsPayload": {
+      "id": "c449b3e0-c271-45fe-b3a0-956ee5c111b7",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseUiPrimaryStage",
+      "uniqueIdentifier": "11",
+      "data": {
+        "id": 11,
+        "code": "ARGUMENTS",
+        "name": "Arguments"
+      },
+      "isActive": true
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseUiPrimaryStage",
+    "mdmsPayload": {
+      "id": "4070dbe2-97f8-4e63-83dd-55cc3802747f",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseUiPrimaryStage",
+      "uniqueIdentifier": "10",
+      "data": {
+        "id": 10,
+        "code": "DEFENSE_EVIDENCE",
+        "name": "Defense Evidence"
+      },
+      "isActive": true
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseUiPrimaryStage",
+    "mdmsPayload": {
+      "id": "b8f5d78e-1e87-4a27-9ccc-7ba2e3b7d6d7",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseUiPrimaryStage",
+      "uniqueIdentifier": "9",
+      "data": {
+        "id": 9,
+        "code": "EXAMINATION_OF_ACCUSED",
+        "name": "Examination of Accused"
+      },
+      "isActive": true
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseUiPrimaryStage",
+    "mdmsPayload": {
+      "id": "61ab2b18-7713-46e1-b7bd-281fa2792db0",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseUiPrimaryStage",
+      "uniqueIdentifier": "8",
+      "data": {
+        "id": 8,
+        "code": "COMPLAINANT_EVIDENCE",
+        "name": "Complainant Evidence"
+      },
+      "isActive": true
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseUiPrimaryStage",
+    "mdmsPayload": {
+      "id": "331dbcaf-1fcf-4706-9fcf-a530bf691584",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseUiPrimaryStage",
+      "uniqueIdentifier": "7",
+      "data": {
+        "id": 7,
+        "code": "BAIL_AND_RECORDING_OF_PLEA",
+        "name": "Bail & Recording of Plea"
+      },
+      "isActive": true
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseUiPrimaryStage",
+    "mdmsPayload": {
+      "id": "ffc90a48-a660-42c1-be0d-d380085aadf6",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseUiPrimaryStage",
+      "uniqueIdentifier": "6",
+      "data": {
+        "id": 6,
+        "code": "APPEARANCE",
+        "name": "Appearance"
+      },
+      "isActive": true
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseUiPrimaryStage",
+    "mdmsPayload": {
+      "id": "2b6f84b1-627c-4c0d-b72e-373d30998195",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseUiPrimaryStage",
+      "uniqueIdentifier": "5",
+      "data": {
+        "id": 5,
+        "code": "COGNIZANCE",
+        "name": "Cognizance"
+      },
+      "isActive": true
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseUiPrimaryStage",
+    "mdmsPayload": {
+      "id": "df8fd28c-6bd7-4bbc-a9dd-526dcb46981e",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseUiPrimaryStage",
+      "uniqueIdentifier": "4",
+      "data": {
+        "id": 4,
+        "code": "REGISTRATION",
+        "name": "Registration"
+      },
+      "isActive": true
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseUiPrimaryStage",
+    "mdmsPayload": {
+      "id": "7a66c6ea-e4da-4cc3-bc40-960dbdedabf3",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseUiPrimaryStage",
+      "uniqueIdentifier": "3",
+      "data": {
+        "id": 3,
+        "code": "DEFECT_CORRECTION",
+        "name": "Defect Correction"
+      },
+      "isActive": true
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseUiPrimaryStage",
+    "mdmsPayload": {
+      "id": "cb88f6fa-289c-44b0-99e2-551937f9919a",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseUiPrimaryStage",
+      "uniqueIdentifier": "2",
+      "data": {
+        "id": 2,
+        "code": "SCRUTINY",
+        "name": "Scrutiny"
+      },
+      "isActive": true
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseUiPrimaryStage",
+    "mdmsPayload": {
+      "id": "beae40ed-a010-4c9f-90cb-14541668acfd",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseUiPrimaryStage",
+      "uniqueIdentifier": "1",
+      "data": {
+        "id": 1,
+        "code": "FILING",
+        "name": "Filing"
+      },
+      "isActive": true
+    }
+  }
+]

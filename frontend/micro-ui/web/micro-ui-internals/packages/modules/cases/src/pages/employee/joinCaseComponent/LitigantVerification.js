@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
-import { VerifyMultipartyLitigantConfig } from "../../../configs/VerifyMultipartyLitigantconfig";
+import { VerifyMultipartyLitigantConfig, VerifyPoaClaiming } from "../../../configs/VerifyMultipartyLitigantconfig";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 import { ForwardArrow, BackwardArrow } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 
@@ -12,14 +12,20 @@ const LitigantVerification = ({
   setParty,
   goBack,
   onProceed,
+  uploadErrorMessages,
+  clearUploadError,
   alreadyJoinedMobileNumber,
   setAlreadyJoinedMobileNumber,
   isDisabled,
   setIsDisabled,
   selectPartyData,
   isApiCalled,
+  poa,
+  userInfo,
 }) => {
   const modalRef = useRef(null);
+  const setFormErrors = useRef({});
+  const clearFormErrors = useRef({});
   const [index, setIndex] = useState(0);
   const [litigants, setLitigants] = useState([]);
 
@@ -61,8 +67,42 @@ const LitigantVerification = ({
         }),
     });
 
-    return VerifyMultipartyLitigantConfig?.map((config) => applyUiChanges(config));
-  }, [litigants, index, t]);
+    const applyUiChangesPoa = (config) => ({
+      ...config,
+      head: litigants?.some((litigant) => litigant?.isComplainant) ? t("COMPLAINANT_BASIC_DETAILS") : t("ACCUSED_BASIC_DETAILS"),
+      body: config?.body
+        ?.filter((body) =>
+          litigants?.[index]?.isPoaAvailable?.code === "YES" && litigants?.[index]?.uuid === userInfo?.uuid
+            ? true
+            : !["poaCustomInfo"].includes(body?.key)
+        )
+        ?.map((body) => {
+          let tempBody = {
+            ...body,
+          };
+          if (body?.labelChildren === "optional") {
+            tempBody = {
+              ...tempBody,
+              labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
+            };
+          }
+
+          if (litigants?.[index]?.phoneNumberVerification?.isUserVerified) {
+            if (config?.body?.[3]?.disableConfigFields?.includes(body?.key)) {
+              tempBody = {
+                ...tempBody,
+                disable: true,
+              };
+            }
+          }
+          return tempBody;
+        }),
+    });
+
+    return !poa
+      ? VerifyMultipartyLitigantConfig?.map((config) => applyUiChanges(config))
+      : VerifyPoaClaiming?.map((config) => applyUiChangesPoa(config));
+  }, [poa, litigants, t, index]);
 
   useEffect(() => {
     if (
@@ -85,7 +125,7 @@ const LitigantVerification = ({
   };
 
   const shouldUpdateState = (selectedParty, formData) => {
-    const commonFields = ["firstName", "middleName", "lastName"];
+    const commonFields = ["firstName", "middleName", "lastName", "fatherName"];
 
     const hasBasicInfoChanged = commonFields?.some((field) => selectedParty[field] !== formData[field]);
 
@@ -113,18 +153,55 @@ const LitigantVerification = ({
     );
   };
 
-  useEffect(
-    () =>
-      setIsDisabled(
-        !litigants.every(
-          (litigant) =>
-            litigant?.phoneNumberVerification?.isUserVerified === true &&
-            ((litigant?.isVakalatnamaNew?.code === "YES" && litigant?.noOfAdvocates > 0 && litigant?.vakalatnama?.document?.length > 0) ||
-              litigant?.isVakalatnamaNew?.code === "NO")
-        )
-      ),
-    [litigants, setIsDisabled]
-  );
+  const areFileArraysEqual = (arr1 = [], arr2 = []) => {
+    if (arr1.length !== arr2.length) return false;
+
+    return arr1?.every((file1) => arr2?.some((file2) => areFilesEqual(file1, file2)));
+  };
+
+  const shouldUpdateStatePOA = (selectedParty, formData) => {
+    const commonFields = ["firstName", "middleName", "lastName", "fatherName"];
+
+    const hasBasicInfoChanged = commonFields.some((field) => selectedParty[field] !== formData[field]);
+
+    const hasPhoneNumberChanged =
+      selectedParty?.phoneNumberVerification?.mobileNumber !== formData?.phoneNumberVerification?.mobileNumber ||
+      selectedParty?.phoneNumberVerification?.otpNumber !== formData?.phoneNumberVerification?.otpNumber ||
+      selectedParty?.phoneNumberVerification?.isUserVerified !== formData?.phoneNumberVerification?.isUserVerified;
+
+    const selectedDocs = selectedParty?.poaAuthorizationDocument?.poaDocument || [];
+    const formDocs = formData?.poaAuthorizationDocument?.poaDocument || [];
+
+    const hasDocumentChanged = !areFileArraysEqual(selectedDocs, formDocs);
+
+    const isDocumentNull = formData?.poaAuthorizationDocument === null && selectedParty?.poaAuthorizationDocument !== null;
+
+    return hasBasicInfoChanged || hasPhoneNumberChanged || hasDocumentChanged || isDocumentNull;
+  };
+
+  useEffect(() => {
+    const isValidWithoutPOA = litigants?.every((litigant) => {
+      const isNewVakalatnama = litigant?.isVakalatnamaNew?.code === "YES";
+      const hasRequiredVakalatnamaDocs = litigant?.noOfAdvocates > 0 && litigant?.vakalatnama?.document?.length > 0;
+
+      return (
+        litigant?.fatherName &&
+        litigant?.phoneNumberVerification?.isUserVerified === true &&
+        (isNewVakalatnama ? hasRequiredVakalatnamaDocs : litigant?.isVakalatnamaNew?.code === "NO")
+      );
+    });
+
+    const isValidWithPOA = litigants?.every(
+      (litigant) =>
+        litigant?.fatherName &&
+        litigant?.phoneNumberVerification?.isUserVerified === true &&
+        litigant?.poaAuthorizationDocument?.poaDocument?.length > 0
+    );
+
+    const shouldDisable = !poa ? !isValidWithoutPOA : !isValidWithPOA;
+
+    setIsDisabled(shouldDisable);
+  }, [litigants, poa, setIsDisabled]);
 
   const handleScrollToTop = () => {
     if (modalRef.current) {
@@ -133,10 +210,10 @@ const LitigantVerification = ({
   };
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors) => {
-    if (formData?.firstName || formData?.middleName || formData?.lastName) {
+    if (formData?.firstName || formData?.middleName || formData?.lastName || formData?.fatherName) {
       const formDataCopy = structuredClone(formData);
       for (const key in formDataCopy) {
-        if (["firstName", "middleName", "lastName"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
+        if (["firstName", "middleName", "lastName", "fatherName"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
           const oldValue = formDataCopy[key];
           let value = oldValue;
           if (typeof value === "string") {
@@ -175,7 +252,7 @@ const LitigantVerification = ({
         }
       }
     }
-    if (shouldUpdateState(litigants[index], formData)) {
+    if (!poa && shouldUpdateState(litigants[index], formData)) {
       setLitigants(
         litigants?.map((item, i) => {
           return i === index
@@ -183,6 +260,17 @@ const LitigantVerification = ({
                 ...item,
                 ...formData,
                 ...(formData?.isVakalatnamaNew?.code === "NO" && { noOfAdvocates: "", vakalatnama: null }),
+              }
+            : item;
+        })
+      );
+    } else if (poa && shouldUpdateStatePOA(litigants[index], formData)) {
+      setLitigants(
+        litigants?.map((item, i) => {
+          return i === index
+            ? {
+                ...item,
+                ...formData,
               }
             : item;
         })
@@ -222,6 +310,17 @@ const LitigantVerification = ({
     };
   }, [handleKeyDown]);
 
+  useEffect(() => {
+    const uploadFieldKey = poa ? "poaAuthorizationDocument" : "vakalatnama";
+    const uploadErrorMessage = uploadErrorMessages?.[`${uploadFieldKey}:${index}`] || null;
+
+    if (uploadErrorMessage && setFormErrors.current[index]) {
+      setFormErrors.current[index](uploadFieldKey, { message: uploadErrorMessage });
+    } else if (!uploadErrorMessage && clearFormErrors.current[index]) {
+      clearFormErrors.current[index](uploadFieldKey);
+    }
+  }, [uploadErrorMessages, index, poa]);
+
   return (
     <React.Fragment>
       <div ref={modalRef} className="litigant-verification">
@@ -229,15 +328,31 @@ const LitigantVerification = ({
           <FormComposerV2
             key={index}
             config={modifiedFormConfig}
-            onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors) =>
-              onFormValueChange(setValue, formData, formState, reset, setError, clearErrors)
-            }
+            onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors) => {
+              if (!setFormErrors.current.hasOwnProperty(index)) {
+                setFormErrors.current[index] = setError;
+              }
+              if (!clearFormErrors.current.hasOwnProperty(index)) {
+                clearFormErrors.current[index] = clearErrors;
+              }
+              const currentDocument = poa ? formData?.poaAuthorizationDocument?.poaDocument : formData?.vakalatnama?.document;
+              const previousDocument = poa
+                ? litigants?.[index]?.poaAuthorizationDocument?.poaDocument
+                : litigants?.[index]?.vakalatnama?.document;
+              const uploadFieldKey = poa ? "poaAuthorizationDocument" : "vakalatnama";
+              if (!areFileArraysEqual(previousDocument || [], currentDocument || []) && uploadErrorMessages?.[`${uploadFieldKey}:${index}`]) {
+                clearUploadError(`${uploadFieldKey}:${index}`);
+              }
+              onFormValueChange(setValue, formData, formState, reset, setError, clearErrors);
+            }}
             defaultValues={{
               ...litigants?.[index],
-              isVakalatnamaNew: {
-                code: litigants?.[index]?.isVakalatnamaNew?.code || "YES",
-                name: litigants?.[index]?.isVakalatnamaNew?.name || "YES",
-              },
+              ...(!poa && {
+                isVakalatnamaNew: {
+                  code: litigants?.[index]?.isVakalatnamaNew?.code || "YES",
+                  name: litigants?.[index]?.isVakalatnamaNew?.name || "YES",
+                },
+              }),
             }}
             fieldStyle={fieldStyle}
             className={"multi-litigant-composer"}

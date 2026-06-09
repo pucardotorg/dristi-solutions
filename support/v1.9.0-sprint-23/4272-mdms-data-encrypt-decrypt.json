@@ -1,0 +1,281 @@
+[
+  {
+    "moduleName": "DataSecurity",
+    "masterName": "SecurityPolicy",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "DataSecurity.SecurityPolicy",
+        "uniqueIdentifier": "BailDecrypt",
+        "data": {
+          "model": "BailDecrypt",
+          "attributes": [
+            {
+              "name": "litigantName",
+              "jsonPath": "litigantName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "litigantFatherName",
+              "jsonPath": "litigantFatherName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "litigantMobileNumber",
+              "jsonPath": "litigantMobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "suretyName",
+              "jsonPath": "sureties/*/name",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "suretyFatherName",
+              "jsonPath": "sureties/*/fatherName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "suretyMobileNumber",
+              "jsonPath": "sureties/*/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "suretyEmail",
+              "jsonPath": "sureties/*/email",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "city",
+              "jsonPath": "sureties/*/address/city",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "state",
+              "jsonPath": "sureties/*/address/state",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "sureties/*/address/pincode",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "district",
+              "jsonPath": "sureties/*/address/district",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "sureties/*/address/locality",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            }
+          ],
+          "uniqueIdentifier": {
+            "name": "id",
+            "jsonPath": "/id"
+          },
+          "roleBasedDecryptionPolicy": [
+            {
+              "roles": [
+                "EMPLOYEE"
+              ],
+              "attributeAccessList": [
+                {
+                  "attribute": "litigantName",
+                  "firstLevelVisibility": "PLAIN",
+                  "secondLevelVisibility": "PLAIN"
+                }
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "createdTime": 1752412484037,
+          "lastModifiedTime": 1752413666441
+        }
+      }
+    ]
+  },
+
+  {
+    "moduleName": "DataSecurity",
+    "masterName": "SecurityPolicy",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "DataSecurity.SecurityPolicy",
+        "uniqueIdentifier": "BailEncrypt",
+        "data": {
+          "model": "BailEncrypt",
+          "attributes": [
+            {
+              "name": "litigantName",
+              "jsonPath": "litigantName",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "litigantFatherName",
+              "jsonPath": "litigantFatherName",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "litigantMobileNumber",
+              "jsonPath": "litigantMobileNumber",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "suretyName",
+              "jsonPath": "sureties/*/name",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "suretyFatherName",
+              "jsonPath": "sureties/*/fatherName",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "suretyMobileNumber",
+              "jsonPath": "sureties/*/mobileNumber",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "suretyEmail",
+              "jsonPath": "sureties/*/email",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "sureties/*/address/city",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "sureties/*/address/state",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "sureties/*/address/pincode",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "sureties/*/address/district",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "sureties/*/address/locality",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            }
+          ],
+          "uniqueIdentifier": {
+            "name": "id",
+            "jsonPath": "/id"
+          },
+          "roleBasedDecryptionPolicy": [
+            {
+              "roles": [
+                "EMPLOYEE"
+              ],
+              "attributeAccessList": [
+                {
+                  "attribute": "litigantName",
+                  "firstLevelVisibility": "PLAIN",
+                  "secondLevelVisibility": "PLAIN"
+                }
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "createdTime": 1752412618265,
+          "lastModifiedTime": 1752413806229
+        }
+      }
+    ]
+  },
+
+  {
+    "moduleName": "DataSecurity",
+    "masterName": "SecurityPolicy",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "id": "9ec9d195-177c-4f64-b4a0-c0ece3ac5927",
+        "tenantId": "kl",
+        "schemaCode": "DataSecurity.SecurityPolicy",
+        "uniqueIdentifier": "BailSearch",
+        "data": {
+          "model": "BailSearch",
+          "attributes": [
+            {
+              "name": "suretyMobileNumber",
+              "jsonPath": "suretyMobileNumber",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            }
+          ],
+          "uniqueIdentifier": {
+            "name": "id",
+            "jsonPath": "/id"
+          },
+          "roleBasedDecryptionPolicy": [
+            {
+              "roles": [
+                "INTERNAL_MICROSERVICE_ROLE"
+              ],
+              "attributeAccessList": [
+                {
+                  "attribute": "suretyMobileNumber",
+                  "firstLevelVisibility": "PLAIN",
+                  "secondLevelVisibility": "PLAIN"
+                }
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "createdTime": 1752481485897,
+          "lastModifiedTime": 1752481485897
+        }
+      }
+    ]
+  }
+]

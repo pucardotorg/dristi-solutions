@@ -1,0 +1,25 @@
+{
+  "tenantId": "kl",
+  "code": "LandingPage.LiveCauseListRefetchTimeInterval",
+  "description": null,
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "required": [
+      "id",
+      "timeInSecs"
+    ],
+    "x-unique": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "timeInSecs": {
+        "type": "number"
+      }
+    }
+  },
+  "isActive": true
+}

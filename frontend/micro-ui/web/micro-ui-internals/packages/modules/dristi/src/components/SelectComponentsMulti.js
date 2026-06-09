@@ -88,6 +88,12 @@ const selectCompMultiConfig = {
   populators: {
     inputs: [
       {
+        infoHeader: "CS_COMMON_NOTE",
+        infoText: "ACCUSED_ADDRESS_NOTE",
+        infoTooltipMessage: "ACCUSED_ADDRESS_NOTE",
+        type: "InfoComponent",
+      },
+      {
         label: "CS_TYPE_OF_ADDRESS",
         showOptional: true,
         type: "Radio",
@@ -249,10 +255,19 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
                     : t("CS_COMMON_ADDRESS_DETAIL")
                 } ${index + 1}`}</h1>
               </b>
-              {(config?.state === "DRAFT_IN_PROGRESS" || index >= config?.addressLength || config?.isJudgeSendBack) && (
+              {(config?.state === "DRAFT_IN_PROGRESS" ||
+                index >= config?.addressLength ||
+                config?.isJudgeSendBack ||
+                config?.formType === "Witness") && (
                 <span
                   onClick={() => {
-                    if (!config?.disable && (config?.state === "DRAFT_IN_PROGRESS" || index >= config?.addressLength || config?.isJudgeSendBack)) {
+                    if (
+                      !config?.disable &&
+                      (config?.state === "DRAFT_IN_PROGRESS" ||
+                        index >= config?.addressLength ||
+                        config?.isJudgeSendBack ||
+                        config?.formType === "Witness")
+                    ) {
                       handleDeleteLocation(data.id);
                     }
                   }}

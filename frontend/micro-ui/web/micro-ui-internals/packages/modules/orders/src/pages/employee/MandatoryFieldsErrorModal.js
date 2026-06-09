@@ -1,22 +1,6 @@
-import { CloseSvg, Modal } from "@egovernments/digit-ui-react-components";
+import { Modal } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
-
-const Heading = (props) => {
-  return (
-    <h1 className="heading-m" style={{ marginLeft: "24px" }}>
-      {props.label}
-    </h1>
-  );
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 function MandatoryFieldsErrorModal({ t, showMandatoryFieldsErrorModal, setShowMandatoryFieldsErrorModal }) {
   const handleOnClose = () => {
     setShowMandatoryFieldsErrorModal({ showModal: false, errorsData: [] });
@@ -24,7 +8,7 @@ function MandatoryFieldsErrorModal({ t, showMandatoryFieldsErrorModal, setShowMa
 
   return (
     <Modal
-      headerBarMain={<Heading label={t("PLEASE_CORRECT_THESE_FIELD_BEFORE_REVIEWING_ORDER")} />}
+      headerBarMain={<Heading style={{ marginLeft: "24px" }} label={t("PLEASE_CORRECT_THESE_FIELD_BEFORE_REVIEWING_ORDER")} />}
       headerBarEnd={<CloseBtn onClick={handleOnClose} />}
       actionSaveLabel={t("CS_CLOSE")}
       actionSaveOnSubmit={handleOnClose}

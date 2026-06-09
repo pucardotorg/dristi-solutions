@@ -1,0 +1,25 @@
+[
+  {
+    "tenantId": "kl",
+    "masterName": "case",
+    "moduleName": "CaseOverallStatusType",
+    //can be added using workbench
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "case.CaseOverallStatusType",
+        "uniqueIdentifier": "20",
+        "data": {
+          "id": "20",
+          "stage": "Long Pending Register",
+          "state": "published",
+          "action": "E-SIGN",
+          "substage": "Long Pending Register",
+          "typeIdentifier": "MOVE_CASE_TO_LONG_PENDING_REGISTER",
+          "workflowModule": "order-default"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

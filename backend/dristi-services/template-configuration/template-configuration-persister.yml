@@ -1,0 +1,81 @@
+serviceMaps:
+  serviceName: template-configuration-services
+  mappings:
+    - version: 1.0
+      description: Persists template configuration details in tables
+      fromTopic: save-template-configuration
+      isTransaction: true
+      isAuditEnabled: true
+      module: TEMPLATE
+      objectIdJsonPath: $.id
+      tenantIdJsonPath: $.tenantId
+      transactionCodeJsonPath: $.id
+      auditAttributeBasePath: templateConfiguration
+      queryMaps:
+        - query: |
+            INSERT INTO dristi_template_configuration (
+              id, tenant_id, court_id, is_active, 
+              process_title, process_text, addressee_name, is_cover_letter_required, addressee, 
+              order_text, cover_letter_text, created_by, created_time, 
+              last_modified_by, last_modified_time
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+          basePath: templateConfiguration
+          jsonMaps:
+            - jsonPath: $.templateConfiguration.id
+            - jsonPath: $.templateConfiguration.tenantId
+            - jsonPath: $.templateConfiguration.courtId
+            - jsonPath: $.templateConfiguration.isActive
+            - jsonPath: $.templateConfiguration.processTitle
+            - jsonPath: $.templateConfiguration.processText
+            - jsonPath: $.templateConfiguration.addresseeName
+            - jsonPath: $.templateConfiguration.isCoverLetterRequired
+            - jsonPath: $.templateConfiguration.addressee
+            - jsonPath: $.templateConfiguration.orderText
+            - jsonPath: $.templateConfiguration.coverLetterText
+            - jsonPath: $.templateConfiguration.auditDetails.createdBy
+            - jsonPath: $.templateConfiguration.auditDetails.createdTime
+            - jsonPath: $.templateConfiguration.auditDetails.lastModifiedBy
+            - jsonPath: $.templateConfiguration.auditDetails.lastModifiedTime
+
+    - version: 1.0
+      description: Update template configuration details in tables
+      fromTopic: update-template-configuration
+      isTransaction: true
+      isAuditEnabled: true
+      module: TEMPLATE
+      objectIdJsonPath: $.id
+      tenantIdJsonPath: $.tenantId
+      transactionCodeJsonPath: $.id
+      auditAttributeBasePath: templateConfiguration
+      queryMaps:
+        - query: |
+            UPDATE dristi_template_configuration 
+            SET 
+              tenant_id = ?, 
+              court_id = ?, 
+              is_active = ?, 
+              process_title = ?, 
+              is_cover_letter_required = ?, 
+              addressee = ?, 
+              process_text = ?, 
+              addressee_name = ?, 
+              order_text = ?, 
+              cover_letter_text = ?, 
+              last_modified_by = ?, 
+              last_modified_time = ? 
+            WHERE id = ?;
+          basePath: templateConfiguration
+          jsonMaps:
+            - jsonPath: $.templateConfiguration.tenantId
+            - jsonPath: $.templateConfiguration.courtId
+            - jsonPath: $.templateConfiguration.isActive
+            - jsonPath: $.templateConfiguration.processTitle
+            - jsonPath: $.templateConfiguration.isCoverLetterRequired
+            - jsonPath: $.templateConfiguration.addressee
+            - jsonPath: $.templateConfiguration.processText
+            - jsonPath: $.templateConfiguration.addresseeName
+            - jsonPath: $.templateConfiguration.orderText
+            - jsonPath: $.templateConfiguration.coverLetterText
+            - jsonPath: $.templateConfiguration.auditDetails.lastModifiedBy
+            - jsonPath: $.templateConfiguration.auditDetails.lastModifiedTime
+            - jsonPath: $.templateConfiguration.id

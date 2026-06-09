@@ -1,0 +1,283 @@
+openapi: 3.0.0
+
+info:
+  title: Hearing Management Service
+  description: APIs to manage court hearings in DRISTI
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: Hearing service base path
+
+tags:
+  - name: Hearings
+  - name: Witness Depositions
+  - name: Bulk
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /v1/_create:
+    post:
+      tags: [Hearings]
+      summary: Create hearing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HearingRequest'
+      responses:
+        '200':
+          description: Hearing created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HearingResponse'
+
+  /v1/_update:
+    post:
+      tags: [Hearings]
+      summary: Update hearing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HearingRequest'
+      responses:
+        '200':
+          description: Hearing updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HearingResponse'
+
+  /v1/_search:
+    post:
+      tags: [Hearings]
+      summary: Search hearings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HearingSearchRequest'
+      responses:
+        '200':
+          description: Search result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HearingSearchResponse'
+
+  /v1/_exists:
+    post:
+      tags: [Hearings]
+      summary: Check hearing exists
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HearingExistsRequest'
+      responses:
+        '200':
+          description: Exists result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HearingExistsResponse'
+
+  /v1/_updateTime:
+    post:
+      tags: [Hearings]
+      summary: Update hearing time
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTimeRequest'
+      responses:
+        '200':
+          description: Time updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateTimeResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    HearingRequest:
+      type: object
+      required: [requestInfo, tenantId, hearing]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        tenantId:
+          type: string
+        hearing:
+          $ref: '#/components/schemas/Hearing'
+
+    HearingResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        hearing:
+          $ref: '#/components/schemas/Hearing'
+
+    HearingSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          $ref: '#/components/schemas/HearingSearchCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    HearingSearchResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        hearings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hearing'
+        totalCount:
+          type: integer
+          description: Total number of records matching search criteria
+
+    HearingExistsRequest:
+      type: object
+      required: [requestInfo, hearingId]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        hearingId:
+          type: string
+          format: uuid
+
+    HearingExistsResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        exists:
+          type: boolean
+
+    UpdateTimeRequest:
+      type: object
+      required: [requestInfo, hearingId, startTime, endTime]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        hearingId:
+          type: string
+          format: uuid
+        startTime:
+          type: integer
+        endTime:
+          type: integer
+
+    UpdateTimeResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+
+    Pagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+          default: 10
+        offset:
+          type: integer
+          default: 0
+        sortBy:
+          type: string
+        order:
+          type: string
+          enum: [ASC, DESC]
+
+    Hearing:
+      type: object
+      required: [id, tenantId, hearingType, status, startTime, endTime]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        filingNumber:
+          type: array
+          items:
+            type: string
+        cnrNumbers:
+          type: array
+          items:
+            type: string
+        hearingType:
+          type: string
+        status:
+          type: string
+          enum: [SCHEDULED, COMPLETED, CANCELLED, ADJOURNED]
+        attendees:
+          type: array
+          items:
+            $ref: '#/components/schemas/HearingAttendee'
+        startTime:
+          type: integer
+        endTime:
+          type: integer
+        presidedBy:
+          $ref: '#/components/schemas/PresidedBy'
+        auditDetails:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
+
+    HearingAttendee:
+      type: object
+      properties:
+        name:
+          type: string
+        individualId:
+          type: string
+        type:
+          type: string
+
+    PresidedBy:
+      type: object
+      properties:
+        judgeId:
+          type: array
+          items:
+            type: string
+        benchId:
+          type: string
+        courtId:
+          type: string
+
+    HearingSearchCriteria:
+      type: object
+      properties:
+        filingNumber:
+          type: string
+        cnrNumber:
+          type: string
+        tenantId:
+          type: string

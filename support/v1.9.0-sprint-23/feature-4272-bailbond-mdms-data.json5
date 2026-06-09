@@ -1,0 +1,258 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "masterName": "actions-test",
+    "mdmsPayload": [
+      {
+        "id": "e14b8e88-e243-4290-9f7b-5c681052e1c2",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": "2746",
+        "data": {
+          "id": 2746,
+          "url": "/bail-bond/v1/_search",
+          "code": "2746",
+          "name": "search bail bond",
+          "displayName": "search bail bond",
+          "serviceCode": "bail-bond"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1752578427859,
+          "lastModifiedTime": 1752578427859
+        }
+      },
+      {
+        "id": "7c35b068-301b-4876-b254-da899a5a269d",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": "2745",
+        "data": {
+          "id": 2745,
+          "url": "/bail-bond/v1/_update",
+          "code": "2745",
+          "name": "update bail bond",
+          "displayName": "update bail bond",
+          "serviceCode": "bail-bond"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1752578238167,
+          "lastModifiedTime": 1752578238167
+        }
+      },
+      {
+        "id": "54876a59-a396-4c01-a0d6-73fefb182a68",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": "2744",
+        "data": {
+          "id": 2744,
+          "url": "/bail-bond/v1/_create",
+          "code": "2744",
+          "name": "create bail bond",
+          "displayName": "create bail bond",
+          "serviceCode": "bail-bond"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1752578060808,
+          "lastModifiedTime": 1752578060808
+        }
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "masterName": "ACCESSCONTROL-ROLEACTIONS",
+    "moduleName": "roleactions",
+    "mdmsPayload": [
+      {
+        "id": "de4cc8ba-4fcd-4eff-88ea-d4c9075fb9d5",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": "490",
+        "data": {
+          "id": 490,
+          "actionid": 2747,
+          "rolecode": "BAIL_BOND_CREATOR",
+          "tenantid": "kl",
+          "actioncode": "2747"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1752660354379,
+          "lastModifiedTime": 1752660537095
+        }
+      },
+      {
+        "id": "0d208953-20ce-4e64-9155-47e910726aa7",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": "489",
+        "data": {
+          "id": 489,
+          "actionid": 2745,
+          "rolecode": "BAIL_BOND_APPROVER",
+          "tenantid": "kl",
+          "actioncode": "2745"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1752578813238,
+          "lastModifiedTime": 1752578813238
+        }
+      },
+      {
+        "id": "1828ac6b-1fc9-459c-9f92-26233668b988",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": "488",
+        "data": {
+          "id": 488,
+          "actionid": 2746,
+          "rolecode": "BAIL_BOND_VIEWER",
+          "tenantid": "kl",
+          "actioncode": "2746"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1752578657856,
+          "lastModifiedTime": 1752578657856
+        }
+      },
+      {
+        "id": "3058198b-b4ed-42a1-8377-a41cb2378b3e",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": "487",
+        "data": {
+          "id": 487,
+          "actionid": 2745,
+          "rolecode": "BAIL_BOND_EDITOR",
+          "tenantid": "kl",
+          "actioncode": "2745"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1752578312307,
+          "lastModifiedTime": 1752578489351
+        }
+      },
+      {
+        "id": "866a221e-7bdb-400e-a60c-d095ae3ce88a",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": "486",
+        "data": {
+          "id": 486,
+          "actionid": 2744,
+          "rolecode": "BAIL_BOND_CREATOR",
+          "tenantid": "kl",
+          "actioncode": "2744"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1752578271651,
+          "lastModifiedTime": 1752578271651
+        }
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ROLES",
+    "masterName": "roles",
+    "mdmsPayload": [
+      {
+        "id": "4781e7da-53e7-49cb-8268-d2a52ffbf0c3",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLES.roles",
+        "uniqueIdentifier": "BAIL_BOND_APPROVER",
+        "data": {
+          "code": "BAIL_BOND_APPROVER",
+          "name": "BAIL_BOND_APPROVER",
+          "description": "BAIL_BOND_APPROVER"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1752562524680,
+          "lastModifiedTime": 1752562524680
+        }
+      },
+      {
+        "id": "f64b8635-b1e7-4b91-add4-435cea31d553",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLES.roles",
+        "uniqueIdentifier": "BAIL_BOND_VIEWER",
+        "data": {
+          "code": "BAIL_BOND_VIEWER",
+          "name": "BAIL_BOND_VIEWER",
+          "description": "BAIL_BOND_VIEWER"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1752562518685,
+          "lastModifiedTime": 1752562518685
+        }
+      },
+      {
+        "id": "94cf985f-2510-4ed9-8b66-45bd0085f43e",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLES.roles",
+        "uniqueIdentifier": "BAIL_BOND_EDITOR",
+        "data": {
+          "code": "BAIL_BOND_EDITOR",
+          "name": "BAIL_BOND_EDITOR",
+          "description": "BAIL_BOND_EDITOR"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1752562512859,
+          "lastModifiedTime": 1752562512859
+        }
+      },
+      {
+        "id": "039fd803-474c-4091-94f9-6c4cb9a926f6",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLES.roles",
+        "uniqueIdentifier": "BAIL_BOND_CREATOR",
+        "data": {
+          "code": "BAIL_BOND_CREATOR",
+          "name": "BAIL_BOND_CREATOR",
+          "description": "BAIL_BOND_CREATOR"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1752562506373,
+          "lastModifiedTime": 1752562506372
+        }
+      }
+    ]
+  }
+]

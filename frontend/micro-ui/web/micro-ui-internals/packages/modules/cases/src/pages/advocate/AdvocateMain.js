@@ -25,10 +25,6 @@ const AdvocateMain = () => {
   }, []);
 
   const history = useHistory();
-  const handleNavigate = (path) => {
-    const contextPath = window?.contextPath || ""; // Adjust as per your context path logic
-    history.push(`/${contextPath}${path}`);
-  };
 
 
   return (

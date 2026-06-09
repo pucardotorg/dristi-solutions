@@ -1,0 +1,55 @@
+[
+  // TODO: Remove the inactive entries
+  {
+    "id": "d5d071d8-65b9-4632-b49f-c7d5e306e14b",
+    "tenantId": "kl",
+    "schemaCode": "case.CaseOverallStatusType",
+    "uniqueIdentifier": "10",
+    "data": {
+      "id": "10",
+      "stage": "Referred to ADR",
+      "state": "published",
+      "action": "E-SIGN",
+      "substage": "REFER_TO_ADR",
+      "typeIdentifier": "REFERRAL_CASE_TO_ADR",
+      "workflowModule": "order-default"
+    },
+    "isActive": false
+  },
+  {
+    "id": "c8fed5e6-b0ab-47ed-8360-793016f40d6a",
+    "tenantId": "kl",
+    "schemaCode": "case.SubStage",
+    "uniqueIdentifier": "10",
+    "data": {
+      "id": 10,
+      "code": "REFER_TO_ADR",
+      "subStage": "Referred to ADR"
+    },
+    "isActive": false
+  },
+  {
+    "id": "fc9827c5-ac0f-4082-9767-5749c2d7cfb4",
+    "tenantId": "kl",
+    "schemaCode": "case.SubStage",
+    "uniqueIdentifier": "7",
+    "data": {
+      "id": 7,
+      "code": "INQUIRY",
+      "subStage": "Inquiry"
+    },
+    "isActive": false
+  },
+  {
+    "id": "b1a76851-7080-4126-bfd6-9dbda71f2e17",
+    "tenantId": "kl",
+    "schemaCode": "case.SubStage",
+    "uniqueIdentifier": "6",
+    "data": {
+      "id": 6,
+      "code": "FRAMING_OF_CHARGES",
+      "subStage": "Framing of charges"
+    },
+    "isActive": false
+  }
+]

@@ -1,0 +1,36 @@
+{
+  "id": "5feaaf3b-6e3a-460e-87e7-34776e39e2c6",
+  "tenantId": "kl",
+  "code": "case.CaseSecondaryStage",
+  "description": null,
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "required": [
+      "id",
+      "substage"
+    ],
+    "x-unique": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "substage": {
+        "type": "string"
+      },
+      "orderType": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "isActive": true,
+  "auditDetails": {
+    "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+    "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+    "createdTime": 1775565081371,
+    "lastModifiedTime": 1775565081371
+  }
+}

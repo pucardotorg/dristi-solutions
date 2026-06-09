@@ -1,6 +1,5 @@
 import { Loader } from "@egovernments/digit-ui-components";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
 import Button from "../../../components/Button";
 import CustomDetailsCard from "../../../components/CustomDetailsCard";
@@ -11,6 +10,8 @@ import { FileDownloadIcon } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import { userTypeOptions } from "../registration/config";
+import CustomDetailsDropdownCard from "../../../components/CustomDetailsDropdownCard";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 const customNoteConfig = {
   populators: {
@@ -24,11 +25,12 @@ const customNoteConfig = {
   },
 };
 
-export const formatDate = (date) => {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
+const removeYearFromName = (name = "") => name.replace(/,\s*\d{4}$/, "");
+
+const DEFAULT_SELECTION_RULES = {
+  CASE_CATEGORY: (item) => item?.category?.toLowerCase() === "criminal",
+  CS_STATUS_ACT: (item) => item?.name?.toLowerCase()?.includes("negotiable"),
+  CS_SECTION: (item) => item?.sectionCode === "138" || item?.sectionHeading?.includes("138"),
 };
 
 function CaseType({ t }) {
@@ -38,6 +40,7 @@ function CaseType({ t }) {
   const [page, setPage] = useState(0);
   const [isDisabled, setIsDisabled] = useState(false);
   const requiredDocumentsListLink = window?.globalConfigs?.getConfig("CASE_FILE_REQUIRED_DOCUMENTS");
+  const [formData, setFormData] = useState({});
 
   const onCancel = () => {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
@@ -45,16 +48,7 @@ function CaseType({ t }) {
   const onSelect = () => {
     setPage(1);
   };
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
+  
   const { data: complainantRespondentTypeData, isLoading: isComplainantRespondentTypeLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "case",
@@ -65,20 +59,25 @@ function CaseType({ t }) {
       },
     }
   );
+
+  const { isLoading: mdmsLoading, data: statuteData } = useGetStatuteSection();
+
   const Submitbar = () => {
     const token = window.localStorage.getItem("token");
     const isUserLoggedIn = Boolean(token);
     const moduleCode = "DRISTI";
     const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+    const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
+    const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
     const roles = userInfo?.roles;
     const { data: individualData, isLoading, refetch, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
       {
         Individual: {
-          userUuid: [userInfo?.uuid],
+          userUuid: selectedAdvocateUuid ? [selectedAdvocateUuid] : [userInfo?.uuid],
         },
       },
       { tenantId, limit: 1000, offset: 0 },
-      moduleCode,
+      `${moduleCode}-${userInfo?.uuid}-${selectedAdvocateUuid}`,
       "",
       userInfo?.uuid && isUserLoggedIn
     );
@@ -113,8 +112,8 @@ function CaseType({ t }) {
       },
       {},
       individualId,
-      userType,
-      "/advocate/v1/_search"
+      Boolean(!selectedAdvocateUuid && isUserLoggedIn && individualId && userType !== "LITIGANT"), // no need to search call if already adv mapping exists
+      userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
     );
 
     if (userType === "ADVOCATE" && searchData) {
@@ -135,10 +134,8 @@ function CaseType({ t }) {
     }, [searchData, userTypeDetail?.apiDetails?.requestKey]);
 
     const advocateId = useMemo(() => {
-      return searchResult?.[0]?.responseList?.[0]?.id;
-    }, [searchResult]);
-
-    const { isLoading: mdmsLoading, data: statuteData } = useGetStatuteSection();
+      return userType === "ADVOCATE" ? searchResult?.[0]?.responseList?.[0]?.id : null;
+    }, [searchResult, userType]);
 
     if (isLoading || isFetching || isSearchLoading || mdmsLoading || isComplainantRespondentTypeLoading) {
       return <Loader />;
@@ -176,17 +173,18 @@ function CaseType({ t }) {
                   {
                     tenantId,
                     statute: statuteData?.name,
-                    sections: ["Negotiable Instrument Act", "02."],
-                    subsections: ["138", "03."],
+                    sections: [removeYearFromName(formData?.CS_STATUS_ACT?.name)],
+                    subsections: [formData?.CS_SECTION?.sectionHeading],
                   },
                 ],
                 litigants: [],
-                representatives: advocateId
+                representatives: selectedAdvocateId
                   ? [
                       {
-                        advocateId: advocateId,
+                        advocateId: selectedAdvocateId,
                         tenantId,
                         representing: [],
+                        advocateFilingStatus: "caseOwner",
                       },
                     ]
                   : [],
@@ -207,70 +205,44 @@ function CaseType({ t }) {
                 additionalDetails: {
                   payerMobileNo: individualData?.Individual?.[0]?.mobileNumber,
                   payerName: `${givenName} ${familyName}`,
-                  ...(advocateId
-                    ? {
-                        advocateDetails: {
-                          formdata: [
-                            {
-                              isenabled: true,
-                              displayindex: 0,
-                              data: {},
+                  ...(!selectedAdvocateId && {
+                    complainantDetails: {
+                      formdata: [
+                        {
+                          isenabled: true,
+                          data: {
+                            complainantType: complainantRespondentTypeData.find((item) => item.id === 1),
+                            "addressDetails-select": {
+                              pincode: pincode,
+                              district: addressLine2,
+                              city: city,
+                              state: addressLine1,
+                              locality: address,
                             },
-                          ],
-                        },
-                      }
-                    : {
-                        complainantDetails: {
-                          formdata: [
-                            {
-                              isenabled: true,
-                              data: {
-                                complainantType: complainantRespondentTypeData.find((item) => item.id === 1),
+                            complainantId: { complainantId: true },
+                            firstName: givenName,
+                            middleName: otherNames,
+                            lastName: familyName,
+                            complainantVerification: {
+                              mobileNumber: userInfo?.userName,
+                              otpNumber: "123456",
+                              individualDetails: {
+                                individualId: individualId,
+                                document: identifierIdDetails?.fileStoreId
+                                  ? [
+                                      {
+                                        fileName: idType,
+                                        fileStore: identifierIdDetails?.fileStoreId,
+                                        documentName: identifierIdDetails?.filename,
+                                      },
+                                    ]
+                                  : null,
                                 "addressDetails-select": {
                                   pincode: pincode,
                                   district: addressLine2,
                                   city: city,
                                   state: addressLine1,
                                   locality: address,
-                                },
-                                complainantId: { complainantId: true },
-                                firstName: givenName,
-                                middleName: otherNames,
-                                lastName: familyName,
-                                complainantVerification: {
-                                  mobileNumber: userInfo?.userName,
-                                  otpNumber: "123456",
-                                  individualDetails: {
-                                    individualId: individualId,
-                                    document: identifierIdDetails?.fileStoreId
-                                      ? [
-                                          {
-                                            fileName: idType,
-                                            fileStore: identifierIdDetails?.fileStoreId,
-                                            documentName: identifierIdDetails?.filename,
-                                          },
-                                        ]
-                                      : null,
-                                    "addressDetails-select": {
-                                      pincode: pincode,
-                                      district: addressLine2,
-                                      city: city,
-                                      state: addressLine1,
-                                      locality: address,
-                                    },
-                                    addressDetails: {
-                                      pincode: pincode,
-                                      district: addressLine2,
-                                      city: city,
-                                      state: addressLine1,
-                                      coordinates: {
-                                        longitude: longitude,
-                                        latitude: latitude,
-                                      },
-                                      locality: address,
-                                    },
-                                  },
-                                  isUserVerified: true,
                                 },
                                 addressDetails: {
                                   pincode: pincode,
@@ -284,11 +256,25 @@ function CaseType({ t }) {
                                   locality: address,
                                 },
                               },
-                              displayindex: 0,
+                              isUserVerified: true,
                             },
-                          ],
+                            addressDetails: {
+                              pincode: pincode,
+                              district: addressLine2,
+                              city: city,
+                              state: addressLine1,
+                              coordinates: {
+                                longitude: longitude,
+                                latitude: latitude,
+                              },
+                              locality: address,
+                            },
+                          },
+                          displayindex: 0,
                         },
-                      }),
+                      ],
+                    },
+                  }),
                 },
               };
               DRISTIService.caseCreateService({ cases, tenantId })
@@ -304,66 +290,114 @@ function CaseType({ t }) {
   };
 
   const detailsCardList = useMemo(() => {
-    const caseTypeDetails = [
-      { header: "CASE_CATEGORY", subtext: "CS_CRIMINAL" },
+    if (page !== 0) {
+      return [
+        {
+          header: "CS_PROOF_OF_IDENTITY",
+          subtext: "TAX_RECORDS_DESCRIPTION",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "01.",
+        },
+        {
+          header: "CS_BOUNCED_CHEQUE",
+          subtext: "CS_BOUNCE_DESCRIPTION",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "02.",
+        },
+        {
+          header: "CHEQUE_RETURN_MEMO",
+          subtext: "CS_RETURN_MEMO_DESC",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "03.",
+        },
+        {
+          header: "CS_DEMAND_NOTICE",
+          subtext: "CS_DEMAND_DESC",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "04",
+        },
+        {
+          header: "CS_POSTAL_ISSUE_NOTICE",
+          subtext: "CS_POSTAL_ISSUE_DESC",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "05",
+        },
+        {
+          header: "CS_POSTAL_DELIVERY_NOTICE",
+          subtext: "CS_POSTAL_DELIVERY_DESC",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "06",
+        },
+        {
+          header: "CS_SWORN_STATEMENT",
+          subtext: "CS_AFFADAVIT_DESC",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "07",
+        },
+        {
+          header: "CS_ANY_OTHER_DOC",
+          subtext: "CS_ADDTIONAL_DOC_DESC",
+          subnote: "UPLOAD_DOC_10",
+          serialNumber: "08",
+        },
+      ];
+    }
+
+    return [
+      {
+        header: "CASE_CATEGORY",
+        subtext:
+          statuteData?.CaseCategory?.filter((c) => c.isactive)?.map((c) => {
+            return {
+              ...c,
+              label: t(c.category),
+            };
+          }) || [],
+      },
       {
         header: "CS_STATUS_ACT",
-        subtext: "CS_NIA",
-      },
-      { header: "CS_SECTION", subtext: "138" },
-    ];
-    const listDocumentDetails = [
-      {
-        header: "CS_PROOF_OF_IDENTITY",
-        subtext: "TAX_RECORDS_DESCRIPTION",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "01.",
+        subtext:
+          statuteData?.Statute?.filter((s) => s.isActive).map((s) => {
+            return {
+              ...s,
+              label: s?.name,
+            };
+          }) || [],
       },
       {
-        header: "CS_BOUNCED_CHEQUE",
-        subtext: "CS_BOUNCE_DESCRIPTION",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "02.",
-      },
-      {
-        header: "CHEQUE_RETURN_MEMO",
-        subtext: "CS_RETURN_MEMO_DESC",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "03.",
-      },
-      {
-        header: "CS_DEMAND_NOTICE",
-        subtext: "CS_DEMAND_DESC",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "04",
-      },
-      {
-        header: "CS_POSTAL_ISSUE_NOTICE",
-        subtext: "CS_POSTAL_ISSUE_DESC",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "05",
-      },
-      {
-        header: "CS_POSTAL_DELIVERY_NOTICE",
-        subtext: "CS_POSTAL_DELIVERY_DESC",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "06",
-      },
-      {
-        header: "CS_SWORN_STATEMENT",
-        subtext: "CS_AFFADAVIT_DESC",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "07",
-      },
-      {
-        header: "CS_ANY_OTHER_DOC",
-        subtext: "CS_ADDTIONAL_DOC_DESC",
-        subnote: "UPLOAD_DOC_50",
-        serialNumber: "08",
+        header: "CS_SECTION",
+        subtext:
+          statuteData?.Section?.filter((s) => s.isActive)?.map((s) => {
+            return {
+              ...s,
+              label: s?.sectionHeading,
+            };
+          }) || [],
       },
     ];
-    return page === 0 ? caseTypeDetails : listDocumentDetails;
-  }, [page]);
+  }, [page, statuteData]);
+
+  useEffect(() => {
+    if (page !== 0) return;
+
+    setFormData((prev) => {
+      if (Object.keys(prev || {}).length) return prev;
+      const initialData = {};
+      detailsCardList?.forEach((item) => {
+        if (item?.subtext?.length) {
+          const matcher = DEFAULT_SELECTION_RULES[item.header];
+          const matchedValue = matcher ? item.subtext.find(matcher) : null;
+          initialData[item?.header] = matchedValue || item?.subtext?.[0];
+        }
+      });
+
+      return initialData;
+    });
+  }, [page, detailsCardList]);
+
+  if (mdmsLoading) {
+    return <Loader />;
+  }
 
   return (
     <Modal
@@ -379,15 +413,31 @@ function CaseType({ t }) {
       className="case-types"
     >
       <div className="case-types-main-div">
-        {detailsCardList.map((item) => (
-          <CustomDetailsCard
-            header={item.header}
-            subtext={item.subtext}
-            serialNumber={item.serialNumber}
-            subnote={item.subnote}
-            style={{ width: "100%" }}
-          />
-        ))}
+        {detailsCardList.map((item) =>
+          page === 0 ? (
+            <CustomDetailsDropdownCard
+              key={item.header}
+              header={item.header}
+              options={item.subtext}
+              value={formData[item.header]}
+              onChange={(data) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  [item.header]: data,
+                }));
+              }}
+            />
+          ) : (
+            <CustomDetailsCard
+              key={item.header}
+              header={item.header}
+              subtext={item.subtext}
+              serialNumber={item.serialNumber}
+              subnote={item.subnote}
+              style={{ width: "100%" }}
+            />
+          )
+        )}
         {page === 0 && <SelectCustomNote t={t} config={customNoteConfig}></SelectCustomNote>}
       </div>
 

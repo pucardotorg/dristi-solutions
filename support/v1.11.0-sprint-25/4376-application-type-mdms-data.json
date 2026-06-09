@@ -1,0 +1,22 @@
+[
+  {
+    "moduleName": "Application",
+    "masterName": "ApplicationType",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "id": "8cc0ca77-24de-4116-bd48-3fc46b1b35d5",
+        "tenantId": "kl",
+        "schemaCode": "Application.ApplicationType",
+        "uniqueIdentifier": "17",
+        "data": {
+          "id": 17,
+          "type": "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",
+          "isactive": true,
+          "totalAmount": "20"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

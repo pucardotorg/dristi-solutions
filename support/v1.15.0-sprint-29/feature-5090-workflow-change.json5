@@ -1,0 +1,229 @@
+{
+  "tenantId": "kl",
+  "uuid": "41f4ab15-b4e0-4257-8e78-02e013b528ff",
+  "businessService": "evidence-default",
+  "business": "evidence",
+  "businessServiceSla": 0,
+  "states": [
+    {
+      "auditDetails": {
+        "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "createdTime": 1754030510634,
+        "lastModifiedTime": 1765797949933
+      },
+      "uuid": "efa0e96d-8304-408f-8cb0-dab9e2c6a59e",
+      "tenantId": "kl",
+      "businessServiceId": "41f4ab15-b4e0-4257-8e78-02e013b528ff",
+      "sla": null,
+      "state": null,
+      "applicationStatus": null,
+      "docUploadRequired": false,
+      "isStartState": true,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "createdTime": 1754030510634,
+            "lastModifiedTime": 1765797949933
+          },
+          "uuid": "6344e588-69f0-4ccd-8d44-1e3554d57990",
+          "tenantId": "kl",
+          "currentState": "efa0e96d-8304-408f-8cb0-dab9e2c6a59e",
+          "action": "CREATE",
+          "nextState": "87abc56f-e12e-4463-ab2d-196516cb3f15",
+          "roles": [
+            "EVIDENCE_CREATOR"
+          ],
+          "active": true
+        }
+      ]
+    },
+    {
+      "auditDetails": {
+        "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "createdTime": 1754030510634,
+        "lastModifiedTime": 1765797949933
+      },
+      "uuid": "87abc56f-e12e-4463-ab2d-196516cb3f15",
+      "tenantId": "kl",
+      "businessServiceId": "41f4ab15-b4e0-4257-8e78-02e013b528ff",
+      "sla": null,
+      "state": "DRAFT_IN_PROGRESS",
+      "applicationStatus": "ACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          // todo add this action
+          "currentState": "DRAFT_IN_PROGRESS",
+          "action": "DELETE_DRAFT",
+          "nextState": "DELETED_DRAFT",
+          "roles": [
+            "EVIDENCE_EDITOR"
+          ],
+          "active": true
+        },
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "createdTime": 1754030510634,
+            "lastModifiedTime": 1765797949933
+          },
+          "uuid": "742b1ad0-7e4c-4eae-b12f-24c2916d46ca",
+          "tenantId": "kl",
+          "currentState": "87abc56f-e12e-4463-ab2d-196516cb3f15",
+          "action": "SUBMIT_BULK_E-SIGN",
+          "nextState": "153b13d3-d54e-410f-8dc2-8badeafd4519",
+          "roles": [
+            "EVIDENCE_CREATOR"
+          ],
+          "active": true
+        },
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "createdTime": 1754030510634,
+            "lastModifiedTime": 1765797949933
+          },
+          "uuid": "35c7c33d-604d-42a0-b166-c7515fc9bd04",
+          "tenantId": "kl",
+          "currentState": "87abc56f-e12e-4463-ab2d-196516cb3f15",
+          "action": "SAVE_DRAFT",
+          "nextState": "87abc56f-e12e-4463-ab2d-196516cb3f15",
+          "roles": [
+            "EVIDENCE_EDITOR"
+          ],
+          "active": true
+        },
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "createdTime": 1754030510634,
+            "lastModifiedTime": 1765797949933
+          },
+          "uuid": "4aff96a7-714c-4d1a-91e6-534bae9aaa63",
+          "tenantId": "kl",
+          "currentState": "87abc56f-e12e-4463-ab2d-196516cb3f15",
+          "action": "E-SIGN",
+          "nextState": "76130f51-354c-452b-9448-d3f63c089e22",
+          "roles": [
+            "EVIDENCE_APPROVER"
+          ],
+          "active": true
+        }
+      ]
+    },
+    {
+      "auditDetails": {
+        "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "createdTime": 1754030510634,
+        "lastModifiedTime": 1765797949933
+      },
+      "uuid": "153b13d3-d54e-410f-8dc2-8badeafd4519",
+      "tenantId": "kl",
+      "businessServiceId": "41f4ab15-b4e0-4257-8e78-02e013b528ff",
+      "sla": null,
+      "state": "PENDING_BULK_E-SIGN",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "createdTime": 1754030510634,
+            "lastModifiedTime": 1765797949933
+          },
+          "uuid": "96576eae-321b-401f-8fec-205ad0a5a475",
+          "tenantId": "kl",
+          "currentState": "153b13d3-d54e-410f-8dc2-8badeafd4519",
+          "action": "E-SIGN",
+          "nextState": "76130f51-354c-452b-9448-d3f63c089e22",
+          "roles": [
+            "EVIDENCE_APPROVER",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ],
+          "active": true
+        },
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "createdTime": 1754030510634,
+            "lastModifiedTime": 1765797949933
+          },
+          "uuid": "d1b86bc2-8190-4a84-b994-9690e89c16b2",
+          "tenantId": "kl",
+          "currentState": "153b13d3-d54e-410f-8dc2-8badeafd4519",
+          "action": "EDIT",
+          "nextState": "87abc56f-e12e-4463-ab2d-196516cb3f15",
+          "roles": [
+            "EVIDENCE_EDITOR"
+          ],
+          "active": true
+        }
+      ]
+    },
+    {
+      "auditDetails": {
+        "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "createdTime": 1754030510634,
+        "lastModifiedTime": 1765797949933
+      },
+      "uuid": "76130f51-354c-452b-9448-d3f63c089e22",
+      "tenantId": "kl",
+      "businessServiceId": "41f4ab15-b4e0-4257-8e78-02e013b528ff",
+      "sla": null,
+      "state": "COMPLETED",
+      "applicationStatus": "ACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    },
+    {
+      // todo add this state
+      "sla": null,
+      "state": "DELETED_DRAFT",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "currentState": "DELETED_DRAFT",
+          "action": "RECREATE",
+          "nextState": "DRAFT_IN_PROGRESS",
+          "roles": [
+            "EVIDENCE_EDITOR"
+          ],
+          "active": true
+        }
+      ]
+    }
+  ],
+  "auditDetails": {
+    "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+    "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+    "createdTime": 1754030510634,
+    "lastModifiedTime": 1765797949933
+  }
+}

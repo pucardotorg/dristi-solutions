@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { CustomArrowDownIcon } from "../../../icons/svgIndex";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
 import SendCaseBack from "./SendCaseBack";
+import { runComprehensiveSanitizer } from "../../../../Utils";
 
 function CaseFileAdmission({ t }) {
   const [isDisabled, setIsDisabled] = useState(false);
@@ -74,6 +75,7 @@ function CaseFileAdmission({ t }) {
   };
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (JSON.stringify(formData) !== JSON.stringify(formdata.data)) {
+      runComprehensiveSanitizer({ formData, setValue });
       setFormdata((prev) => {
         return { ...prev, data: formData };
       });
@@ -83,10 +85,6 @@ function CaseFileAdmission({ t }) {
     setShowErrorToast(false);
   };
 
-  const handleCloseModal = () => {
-    setModalData(null);
-    setSubmitModalInfo(null);
-  };
   // {
   //   modalInfo.type === "Schedule" && modalInfo.page === 0 && <Modal1 modalData={modalData} setModalData={setModalData} />;
   // }
@@ -108,7 +106,7 @@ function CaseFileAdmission({ t }) {
           <div className="header-content">
             <div className="header-details">
               <Header>{t("Review Case")}</Header>
-              <div className="header-icon" onClick={() => {}}>
+              <div className="header-icon" onClick={() => { }}>
                 <CustomArrowDownIcon />
               </div>
             </div>

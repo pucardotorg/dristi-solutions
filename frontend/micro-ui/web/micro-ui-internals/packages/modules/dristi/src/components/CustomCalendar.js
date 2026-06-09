@@ -9,6 +9,7 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
   const [selectedDate, setSelectedDate] = useState(initialDate); // State to track the current month
   const selectedMonth = useMemo(() => new Date(currentMonth).getMonth(), [currentMonth]);
   const selectedYear = useMemo(() => new Date(currentMonth).getFullYear(), [currentMonth]);
+  const courtId = localStorage.getItem("courtId");
 
   const hearingCriteria = useMemo(
     () => ({
@@ -16,10 +17,11 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
         tenantId,
         fromDate: new Date(selectedYear, selectedMonth, 1).getTime(),
         toDate: new Date(selectedYear, selectedMonth + 1, 0).getTime(),
+        ...(courtId && { courtId }),
       },
       tenantId,
     }),
-    [selectedMonth, selectedYear, tenantId]
+    [selectedMonth, selectedYear, tenantId, courtId]
   );
 
   const { data: hearingResponse } = Digit.Hooks.hearings.useGetHearingsCounts(

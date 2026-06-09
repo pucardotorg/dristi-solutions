@@ -1,16 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
-import { CloseSvg, FormComposerV2, Header, Loader, Modal, Toast } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2, Header, Loader, Modal, Toast } from "@egovernments/digit-ui-react-components";
 import { extractCodeFromErrorMsg, extractValue, OutlinedInfoIcon } from "../FileCase/EFilingCases";
-import useGetAllCasesConfig from "../../../hooks/dristi/useGetAllCasesConfig";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import ReactTooltip from "react-tooltip";
-import { RightArrow } from "../../../icons/svgIndex";
 import isEqual from "lodash/isEqual";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 import { useToast } from "../../../components/Toast/useToast";
-import { documentLabels, getFilingType } from "../../../Utils";
+import { documentLabels, getFilingType, runComprehensiveSanitizer } from "../../../Utils";
 import {
   editCheckDuplicateMobileEmailValidation,
   editCheckNameValidation,
@@ -24,19 +22,7 @@ import { editRespondentConfig } from "./Config/editRespondentConfig";
 import { getAdvocates } from "../FileCase/EfilingValidationUtils";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 const EditProfile = ({ path }) => {
   const { t } = useTranslation();
   const history = useHistory();
@@ -65,7 +51,7 @@ const EditProfile = ({ path }) => {
   const userInfo = Digit.UserService.getUser()?.info;
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
 
-  const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
+  const { data: caseData, isLoading } = useSearchCaseService(
     {
       criteria: [
         {
@@ -85,7 +71,7 @@ const EditProfile = ({ path }) => {
     () => ({
       ...caseData?.criteria?.[0]?.responseList?.[0],
     }),
-    [caseData, caseId, selected, uniqueId]
+    [caseData]
   );
 
   const { data: individualData } = window?.Digit.Hooks.dristi.useGetIndividualUser(
@@ -124,39 +110,6 @@ const EditProfile = ({ path }) => {
 
   const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "Application"), [filingTypeData?.FilingType]);
 
-  // useEffect(() => {
-  // if (selected === "complainantDetails") {
-  //   const currentComplainant = caseDetails?.additionalDetails?.[selected]?.formdata?.find(
-  //     (item, index) => item?.data?.complainantVerification?.individualDetails?.individualId === uniqueId
-  //   );
-  //   if (currentComplainant?.data) {
-  //     if(complainantType?.code === "INDIVIDUAL") {
-  //     }
-  //     const updatedData = structuredClone(currentComplainant?.data);
-  //     updatedData.reasonForChange = updatedData?.updatedData || "";
-  //     let updatedFormData = structuredClone(formdata);
-  //     updatedFormData[0].data = updatedData;
-  //     if (!isEqual(updatedFormData, formdata?.[0]?.data)) {
-  //       setFormdata(updatedFormData);
-  //     }
-  //   }
-  // }
-  // if (selected === "respondentDetails") {
-  //   const currentRespondent = caseDetails?.additionalDetails?.[selected]?.formdata?.find(
-  //     (item, index) => item?.data?.respondentVerification?.individualDetails?.individualId === uniqueId || item?.uniqueId === uniqueId
-  //   );
-  //   if (currentRespondent?.data) {
-  //     const updatedData = structuredClone(currentRespondent?.data);
-  //     updatedData.reasonForChange = "";
-  //     let updatedFormData = structuredClone(formdata);
-  //     updatedFormData[0].data = updatedData;
-  //     if (!isEqual(updatedFormData, formdata?.[0]?.data)) {
-  //       setFormdata(updatedFormData);
-  //     }
-  //   }
-  // }
-  // }, [caseDetails, selected, uniqueId]);
-
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
 
   useEffect(() => {
@@ -167,17 +120,10 @@ const EditProfile = ({ path }) => {
       return;
     }
 
-    // if (!type || !uniqueId) {
-    //   history.replace(`/${window.contextPath}/citizen/dristi/home/view-case`);
-    //   return;
-    // }
-
     return () => {
       sessionStorage.removeItem("editProfileAccess");
     };
   }, [history, location]);
-
-  const { data: caseDetailsConfig, isLoading: isGetAllCasesLoading } = useGetAllCasesConfig();
 
   const pageConfig = useMemo(() => {
     if (selected === "complainantDetails") {
@@ -186,7 +132,7 @@ const EditProfile = ({ path }) => {
       return editRespondentConfig;
     }
     return null;
-  }, [caseDetailsConfig, selected]);
+  }, [selected]);
 
   const closeToast = () => {
     setShowErrorToast(false);
@@ -606,6 +552,7 @@ const EditProfile = ({ path }) => {
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index, currentDisplayIndex) => {
     editCheckNameValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
+    runComprehensiveSanitizer({ formData, setValue });
     if (!isEqual(formData, formdata[index].data)) {
       editCheckDuplicateMobileEmailValidation({
         formData,
@@ -672,7 +619,7 @@ const EditProfile = ({ path }) => {
         },
         { tenantId, limit: 1000, offset: 0 }
       );
-  
+
       const individual = response?.Individual?.[0];
       return individual?.userUuid || uniqueId;
     } catch (error) {
@@ -774,6 +721,12 @@ const EditProfile = ({ path }) => {
     } else {
       setIsLoader(true);
       try {
+        const referenceId = `MANUAL_${uniqueId}_${editorUuid}_${caseDetails?.id}`;
+        const ifProfileRequestAlreadyExists = caseDetails?.additionalDetails?.profileRequests?.find((req) => req?.pendingTaskRefId === referenceId);
+        if (ifProfileRequestAlreadyExists) {
+          toast.error(t("AN_EDIT_PROFILE_REQUEST_ALREADY_EXISTS"));
+          return;
+        }
         const onBehalfOfUuid = await getOnBehalfOfUuid();
         const res = await updateProfileData({
           t,

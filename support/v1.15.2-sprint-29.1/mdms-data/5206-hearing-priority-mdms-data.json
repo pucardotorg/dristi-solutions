@@ -1,0 +1,65 @@
+[
+      {
+        "id": "e57819fb-0996-4ede-a80d-e92ded210760",
+        "tenantId": "kl",
+        "schemaCode": "court.hearings",
+        "uniqueIdentifier": "14",
+        "data": {
+          "id": 14,
+          "priority": 7,
+          "hearingName": "Delay Condonation Hearing",
+          "hearingTime": "3",
+          "hearingType": "DELAY_CONDONATION_HEARING",
+          "unitOfMeasurement": "Minutes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "7a695a12-8ac5-4f7e-97dd-313f3d3c57d2",
+          "createdTime": 1741264671234,
+          "lastModifiedTime": 1768919683518
+        }
+      },
+      {
+        "id": "6cf4627a-2abf-4192-a698-46e86f26c500",
+        "tenantId": "kl",
+        "schemaCode": "court.hearings",
+        "uniqueIdentifier": "1",
+        "data": {
+          "id": 1,
+          "priority": 2,
+          "hearingName": "Judgement",
+          "hearingTime": "3",
+          "hearingType": "JUDGEMENT",
+          "unitOfMeasurement": "Minutes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "7a695a12-8ac5-4f7e-97dd-313f3d3c57d2",
+          "createdTime": 1727421003438,
+          "lastModifiedTime": 1768919726764
+        }
+      },
+      {
+        "id": "edb6f574-76f8-4455-b9b3-7433075b710e",
+        "tenantId": "kl",
+        "schemaCode": "court.hearings",
+        "uniqueIdentifier": "18",
+        "data": {
+          "id": 18,
+          "priority": 5,
+          "hearingName": "To Issue Order",
+          "hearingTime": "1",
+          "hearingType": "TO_ISSUE_ORDER",
+          "unitOfMeasurement": "Minutes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "7a695a12-8ac5-4f7e-97dd-313f3d3c57d2",
+          "lastModifiedBy": "7a695a12-8ac5-4f7e-97dd-313f3d3c57d2",
+          "createdTime": 1768919772178,
+          "lastModifiedTime": 1768919772178
+        }
+      }
+]

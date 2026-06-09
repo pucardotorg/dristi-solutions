@@ -1,84 +1,85 @@
-import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useState } from "react";
-import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
-import { updateEPostConfig } from "../../configs/EpostFormConfigs";
+import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
+import { CloseBtn, Heading } from "../../utils/orderUtils";
+import isEqual from "lodash/isEqual";
 
-const EpostUpdateStatus = ({ rowData, form, setForm, setShowDocument, infos, links, setUpdatedData }) => {
-  const [currentStatus, setCurrentStatus] = useState(rowData?.original?.deliveryStatus);
+const EpostUpdateStatus = ({
+  t,
+  headerLabel,
+  handleCancel,
+  handleSubmit,
+  defaultValue,
+  modifiedFormConfig,
+  saveLabel,
+  cancelLabel,
+  closeToast,
+  showErrorToast,
+  setFormErrors,
+  clearFormErrors,
+}) => {
+  const [formdata, setFormData] = useState({});
+  const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
 
-  const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index) => {
+  const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+    if (formData?.statusDate && formData?.statusDate !== formdata?.statusDate && Object.keys(formState?.errors).includes("statusDate")) {
+      clearFormErrors?.current("statusDate");
+    }
+
     if (
-      JSON.stringify(formData.currentStatus) !== JSON.stringify(form?.currentStatus) ||
-      (formData?.dateOfDelivery && JSON.stringify(formData.dateOfDelivery) !== JSON.stringify(form?.dateOfDelivery))
+      formData?.speedPostId &&
+      formData?.speedPostId?.trim() !== formdata?.speedPostId?.trim() &&
+      Object.keys(formState?.errors).includes("speedPostId")
     ) {
-      setCurrentStatus(formData.currentStatus.code);
-      setForm((prevForm) => ({
-        ...prevForm,
-        ...formData,
-      }));
+      clearFormErrors?.current("speedPostId");
     }
-  };
 
-  const config = (status) => {
-    return updateEPostConfig(status);
-  };
-  const getOption = (currentStatus) => {
-    switch (currentStatus) {
-      case "IN_TRANSIT":
-        return {
-          code: "IN_TRANSIT",
-          name: "In Transit",
-          isEnabled: true,
-        };
-      case "DELIVERED":
-        return {
-          code: "DELIVERED",
-          name: "Delivered",
-          isEnabled: true,
-        };
-      case "NOT_DELIVERED":
-        return {
-          code: "NOT_DELIVERED",
-          name: "Not Delivered",
-          isEnabled: true,
-        };
-      default:
-        return {
-          code: "NOT_UPDATED",
-          name: "Not Updated",
-          isEnabled: true,
-        };
+    if (!isEqual(formData, formdata)) {
+      setFormData(formData);
     }
+
+    if (Object.keys(formState?.errors).length) {
+      setIsSubmitDisabled(true);
+    } else {
+      setIsSubmitDisabled(false);
+    }
+
+    setFormErrors.current = setError;
+    clearFormErrors.current = clearErrors;
   };
 
   return (
-    <div style={{ padding: "16px", width: "720px" }}>
-      <div style={{ marginBottom: "16px" }}>
-        <FormComposerV2
-          key={"updateEPost"}
-          className="form-print-and-summon"
-          config={config(currentStatus)}
-          onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-            onFormValueChange(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues);
-          }}
-          defaultValues={{
-            currentStatus: getOption(`${rowData?.original?.deliveryStatus}`),
-            dateOfDelivery: `${rowData?.original?.receivedDate}`,
-          }}
-        />
-        {currentStatus === "Delivered" && (
-          <div>
-            Date of Delivery : <span>{rowData?.original?.receivedDate}</span>
+    <React.Fragment>
+      <Modal
+        headerBarMain={<Heading label={t(headerLabel)} />}
+        headerBarEnd={<CloseBtn onClick={handleCancel} />}
+        hideModalActionbar={true}
+        className="add-order-type-modal e-post-update-modal"
+      >
+        <div className="generate-orders">
+          <div className="view-order order-type-form-modal">
+            <FormComposerV2
+              className={"generate-orders order-type-modal"}
+              defaultValues={defaultValue}
+              config={modifiedFormConfig}
+              fieldStyle={{ width: "100%" }}
+              cardClassName={`order-type-form-composer new-order`}
+              actionClassName={"order-type-action e-post-action"}
+              onFormValueChange={onFormValueChange}
+              label={t(saveLabel)}
+              secondaryLabel={t(cancelLabel)}
+              showSecondaryLabel={true}
+              onSubmit={() => {
+                handleSubmit(formdata);
+              }}
+              onSecondayActionClick={handleCancel}
+              isDisabled={isSubmitDisabled}
+            />
           </div>
-        )}
-        {currentStatus === "Not Delivered" && (
-          <div>
-            Date of Delivery Attempted : <span>{rowData?.original?.receivedDate}</span>
-          </div>
-        )}
-      </div>
-      <ApplicationInfoComponent infos={infos} links={links} />
-    </div>
+        </div>
+      </Modal>
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn onClose={closeToast} />}
+    </React.Fragment>
   );
 };
 

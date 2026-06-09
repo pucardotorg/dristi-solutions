@@ -1,0 +1,58 @@
+{
+  "tenantId": "kl",
+  "code": "INBOX.InboxSortConfiguration",
+  "description": "Sort configuration for inbox",
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "isActive": true,
+    "required": [
+      "module",
+      "index",
+      "sortBy"
+    ],
+    "x-unique": [
+      "index"
+    ],
+    "properties": {
+      "index": {
+        "type": "string"
+      },
+      "module": {
+        "type": "string"
+      },
+      "sortBy": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "orderType",
+            "isActive",
+            "code"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "script": {
+              "type": "string"
+            },
+            "isActive": {
+              "type": "boolean"
+            },
+            "orderType": {
+              "type": "string"
+            },
+            "orderPriority": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    }
+  },
+  "isActive": true
+}

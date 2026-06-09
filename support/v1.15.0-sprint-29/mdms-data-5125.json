@@ -1,0 +1,20 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "Order",
+    "masterName": "OrderType",
+    "mdmsPayload": {
+      "id": "3e26498b-cbda-4a20-8596-d7e4f6467a0a",
+      "tenantId": "kl",
+      "schemaCode": "Order.OrderType",
+      "uniqueIdentifier": "50",
+      "data": {
+        "id": 50,
+        "code": "ABATE_CASE",
+        "type": "ABATE_CASE",
+        "isactive": true
+      },
+      "isActive": true
+    }
+  }
+]

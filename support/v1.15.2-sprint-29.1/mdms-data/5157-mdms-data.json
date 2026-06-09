@@ -1,0 +1,170 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "commonUiConfig",
+    "masterName": "debtLiabilityConfig",
+    "mdmsPayload": {
+      "id": "32388e6d-8afa-41a8-a360-e86f572b1fac",
+      "tenantId": "kl",
+      "schemaCode": "commonUiConfig.debtLiabilityConfig",
+      "uniqueIdentifier": "1",
+      "data": {
+        "id": 1,
+        "header": "CS_DEBT_LIABILITY_HEADING",
+        "subtext": "CS_COMPLAINT_DATA_ENTRY_INFO",
+        "className": "debt-liability",
+        "formconfig": [
+          {
+            "body": [
+              {
+                "type": "text",
+                "label": "CS_NATURE_DEBT_LIABILITY",
+                "populators": {
+                  "name": "liabilityNature",
+                  "error": "FIRST_LAST_NAME_MANDATORY_MESSAGE",
+                  "validation": {
+                    "title": "",
+                    "pattern": {
+                      "message": "CORE_COMMON_APPLICANT_NAME_INVALID",
+                      "masterName": "commonUiConfig",
+                      "moduleName": "patternValidation",
+                      "patternType": "debtNature"
+                    },
+                    "minLength": 1,
+                    "patternType": "Name"
+                  }
+                },
+                "isMandatory": true
+              }
+            ]
+          },
+          {
+            "body": [
+              {
+                "key": "liabilityType",
+                "type": "radio",
+                "label": "CHEQUE_FOR_FULL_OR_PARTIAL_LIABILITY",
+                "populators": {
+                  "name": "liabilityType",
+                  "type": "radioButton",
+                  "error": "CORE_REQUIRED_FIELD_ERROR",
+                  "label": "SELECT_RESPONDENT_TYPE",
+                  "required": false,
+                  "mdmsConfig": {
+                    "select": "(data) => {return data['case'].LiabilityCategory?.map((item) => {return item;});}",
+                    "masterName": "LiabilityCategory",
+                    "moduleName": "case"
+                  },
+                  "optionsKey": "name",
+                  "isDependent": true,
+                  "isMandatory": true
+                },
+                "isMandatory": true
+              }
+            ]
+          },
+          {
+            "body": [
+              {
+                "type": "amount",
+                "label": "CS_TOTAL_CHEQUE_AMOUNT",
+                "component": "CustomInput",
+                "populators": {
+                  "name": "totalAmount",
+                  "prefix": "",
+                  "validation": {
+                    "max": 999999999999,
+                    "maxLength": 12
+                  },
+                  "componentInFront": "₹"
+                },
+                "isMandatory": true
+              }
+            ],
+            "dependentKey": {
+              "liabilityType": ["showAmountCovered"]
+            }
+          },
+          {
+            "body": [
+              {
+                "key": "addressDetailsNote",
+                "type": "component",
+                "component": "SelectCustomNote",
+                "populators": {
+                  "inputs": [
+                    {
+                      "type": "InfoComponent",
+                      "infoText": "CS_NOTE_DEBT_LIABILITY",
+                      "infoHeader": "CS_COMMON_NOTE",
+                      "infoTooltipMessage": "CS_NOTE_DEBT_LIABILITY"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "body": [
+              {
+                "key": "debtLiabilityFileUpload",
+                "type": "component",
+                "label": "CS_PROOF_DEBT",
+                "component": "SelectCustomDragDrop",
+                "populators": {
+                  "inputs": [
+                    {
+                      "name": "document",
+                      "type": "DragDropComponent",
+                      "fileTypes": ["JPG", "JPEG", "PDF", "PNG"],
+                      "isOptional": "CS_IS_OPTIONAL",
+                      "maxFileSize": 10,
+                      "documentHeader": "CS_PROOF_DEBT",
+                      "isMultipleUpload": false,
+                      "uploadGuidelines": "UPLOAD_DOC_10",
+                      "infoTooltipMessage": "CS_PROOF_DEBT",
+                      "maxFileErrorMessage": "CS_FILE_LIMIT_10_MB"
+                    }
+                  ]
+                },
+                "withoutLabel": true
+              }
+            ]
+          },
+          {
+            "body": [
+              {
+                "key": "additionalDebtLiabilityDetails",
+                "type": "component",
+                "label": "CS_DEBT_ADDITIONAL_DETAILS",
+                "component": "SelectCustomFormatterTextArea",
+                "populators": {
+                  "inputs": [
+                    {
+                      "name": "text",
+                      "type": "TextAreaComponent",
+                      "isOptional": true,
+                      "textAreaSubHeader": "CS_DEBT_ADDITIONAL_DETAILS"
+                    }
+                  ]
+                },
+                "withoutLabel": true
+              }
+            ]
+          }
+        ],
+        "isOptional": false,
+        "selectDocumentName": {
+          "debtLiabilityFileUpload": "CS_PROOF_DEBT"
+        }
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "createdTime": 1728656717114,
+        "lastModifiedTime": 1767704829559
+      }
+    }
+  }
+]

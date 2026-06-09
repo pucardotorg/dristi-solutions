@@ -1,0 +1,42 @@
+package org.pucar.dristi.web.models;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.egov.common.contract.models.AuditDetails;
+import org.springframework.validation.annotation.Validated;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Validated
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class AdvocateOffice {
+
+    @JsonProperty("officeAdvocateId")
+    private String officeAdvocateId = null;
+
+    @JsonProperty("officeAdvocateName")
+    private String officeAdvocateName = null;
+
+    @JsonProperty("officeAdvocateUserUuid")
+    private String officeAdvocateUserUuid = null;
+
+    @JsonProperty("advocates")
+    @Valid
+    @Builder.Default
+    private List<AdvocateOfficeMember> advocates = new ArrayList<>();
+
+    @JsonProperty("clerks")
+    @Valid
+    @Builder.Default
+    private List<AdvocateOfficeMember> clerks = new ArrayList<>();
+
+}

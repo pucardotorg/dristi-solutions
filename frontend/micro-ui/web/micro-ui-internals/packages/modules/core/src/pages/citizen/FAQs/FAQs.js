@@ -8,9 +8,6 @@ const FAQsSection = ({ module }) => {
   const tenantId = user?.info?.tenantId || Digit.ULBService.getCurrentTenantId();
   const { t } = useTranslation();
 
-  const SearchImg = () => {
-    return <SearchIconSvg className="signature-img" />;
-  };
 
   const { isLoading, data } = Digit.Hooks.useGetFAQsJSON(Digit.ULBService.getStateId());
 

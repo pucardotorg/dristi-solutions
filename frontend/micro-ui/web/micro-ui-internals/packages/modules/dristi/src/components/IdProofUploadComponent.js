@@ -91,7 +91,7 @@ const IdProofUploadComponent = ({ t, config, onSelect, formData = {}, errors, fo
                         setuploadedstate={formData?.[config.key]?.[input.name] || []}
                         allowedFileTypesRegex={input.allowedFileTypes}
                         acceptFiles={input?.acceptFiles}
-                        allowedMaxSizeInMB={input.allowedMaxSizeInMB || "5"}
+                        allowedMaxSizeInMB={input.allowedMaxSizeInMB || "10"}
                         hintText={input.hintText}
                         maxFilesAllowed={input.maxFilesAllowed || "1"}
                         extraStyleName={{ padding: "0.5rem" }}

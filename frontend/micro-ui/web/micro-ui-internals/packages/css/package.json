@@ -1,13 +1,10 @@
 {
   "_comment": "This is a comment and will be ignored by npm",
   "name": "dristi-ui-css",
-  "version": "0.0.3-dristi-kerala.6",
+  "version": "0.1.0-dristi-kerala.3",
   "license": "MIT",
   "main": "dist/index.css",
   "author": "Akshay Kumar <akshay.kumar@beehyv.com>",
-  "engines": {
-    "node": ">=14"
-  },
   "cssConfig": {
     "prefix": ""
   },
@@ -46,7 +43,7 @@
     "postcss-prefixer": "2.1.3",
     "postcss-preset-env": "6.7.1",
     "postcss-scss": "3.0.5",
-    "sass": "^1.26.11"
+    "sass": "1.78.0"
   },
   "files": [
     "dist/index.min.css",

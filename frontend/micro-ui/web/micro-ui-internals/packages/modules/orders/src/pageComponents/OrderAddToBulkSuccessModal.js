@@ -4,13 +4,6 @@ import { BlackTickIcon, FileDownloadIcon } from "../../../dristi/src/icons/svgIn
 import CustomCopyTextDiv from "../../../dristi/src/components/CustomCopyTextDiv";
 import { Banner, CardLabel, CloseSvg } from "@egovernments/digit-ui-react-components";
 
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
 
 function OrderAddToBulkSuccessModal({ order, t, handleDownloadOrders, handleCloseSuccessModal }) {
   const orderModalInfo = {
@@ -18,7 +11,8 @@ function OrderAddToBulkSuccessModal({ order, t, handleDownloadOrders, handleClos
     subHeader: "CS_ORDER_ADDED_TO_BULK_SIGN_LIST_SUBTEXT",
     caseInfo: [
       {
-        key: `${t("ORDER_ID")} : ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t("ORDER_TYPE_" + order?.orderType)}`,
+        key: `${t("ORDER_ID")} : ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : order?.orderType ? t(`ORDER_TYPE_${order?.orderType}`) : order?.orderTitle
+          }`,
         value: order?.orderNumber,
         copyData: true,
         isLocalization: false,

@@ -22,6 +22,7 @@ const Modal = ({
   isCustomButtonDisabled,
   isBackButtonDisabled,
   hideSubmit,
+  hideCancel,
   style = {},
   textStyle = { margin: "0px" },
   popupModuleMianStyles,
@@ -44,6 +45,7 @@ const Modal = ({
   cancelClassName,
   customActionClassName,
   submitClassName,
+  cancelTheme,
 }) => {
   /**
    * TODO: It needs to be done from the desgin changes
@@ -58,7 +60,7 @@ const Modal = ({
   return (
     <PopUp popUpStyleMain={popUpStyleMain}>
       <div className={`popup-module ${className}`} style={popupStyles}>
-      {headerBarMain && <HeaderBar main={headerBarMain} end={headerBarEnd} style={headerBarMainStyle ? headerBarMainStyle : {}} />}
+        {headerBarMain && <HeaderBar main={headerBarMain} end={headerBarEnd} style={headerBarMainStyle ? headerBarMainStyle : {}} />}
         <div
           className={`popup-module-main ${popupModuleMianClassName ? popupModuleMianClassName : ""}`}
           style={popupModuleMianStyles ? popupModuleMianStyles : {}}
@@ -75,13 +77,21 @@ const Modal = ({
                   : popupModuleActionBarStyles
               }
             >
-              {actionCancelLabel ? (
+              {actionCancelLabel && !hideCancel ? (
                 <ButtonSelector
-                  textStyles={{ margin: "0px", color: "#007E7E", ...(actionCancelTextStyle ? actionCancelTextStyle : {}) }}
-                  theme="border"
+                  textStyles={{
+                    margin: "0px",
+                    color: cancelTheme === "primary" ? "#FFFFFF" : "#007E7E",
+                    ...(actionCancelTextStyle ? actionCancelTextStyle : {}),
+                  }}
+                  theme={cancelTheme || "border"}
                   label={actionCancelLabel}
                   onSubmit={actionCancelOnSubmit}
-                  style={{ border: "1px solid #007E7E", backgroundColor: "white", ...(actionCancelStyle ? actionCancelStyle : {}) }}
+                  style={
+                    cancelTheme === "primary"
+                      ? { backgroundColor: "#007e7e", border: "none", ...(actionCancelStyle ? actionCancelStyle : {}) }
+                      : { border: "1px solid #007E7E", backgroundColor: "white", ...(actionCancelStyle ? actionCancelStyle : {}) }
+                  }
                   ButtonBody={cancelButtonBody}
                   isDisabled={isBackButtonDisabled}
                   textClassName={cancelTextClassName}

@@ -34,6 +34,29 @@
     text-align: left;
     color: #3d3c3c;
   }
+
+  .info-card-content {
+    color: #3d3c3c;
+    width: 100%;
+    ul {
+      list-style-type: disc;
+      margin-top: 0px;
+      margin-bottom: 0;
+      margin-left: 0;
+      padding-left: 1.5rem;
+      li {
+        margin-bottom: 6px;
+        color: #3d3c3c;
+        padding-left: 8px;
+        &:last-child {
+          margin-bottom: 0;
+        }
+        &::marker {
+          color: #3d3c3c;
+        }
+      }
+    }
+  }
 }
 
 .advocate-document-info {
