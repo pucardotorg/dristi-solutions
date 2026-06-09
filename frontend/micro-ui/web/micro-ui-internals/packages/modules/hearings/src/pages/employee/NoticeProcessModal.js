@@ -30,6 +30,7 @@ const formDataKeyMap = {
   WARRANT: "warrantFor",
   PROCLAMATION: "proclamationFor",
   ATTACHMENT: "attachmentFor",
+  SCHEDULE_OF_HEARING_DATE: "scheduleParty",
 };
 
 const ModalHeading = ({ label }) => {
@@ -88,6 +89,7 @@ function groupOrdersByParty(filteredOrders) {
     } else {
       const party = order?.additionalDetails?.formdata?.[formDataKeyMap[order?.orderType]]?.party;
       parties = Array.isArray(party) ? party : party ? [party] : [];
+      console.log("parties", order?.orderType, party, order);
     }
 
     if (!Array?.isArray(parties) || parties?.length === 0) return;
@@ -171,6 +173,8 @@ const NoticeProcessModal = ({
 
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
+  console.log("hasPendingTasks", hasPendingTasks);
+
   const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
     {
       hearing: { tenantId },
@@ -217,35 +221,159 @@ const NoticeProcessModal = ({
   const orderListFiltered = useMemo(() => {
     if (!ordersData?.list) return [];
 
-    const filteredOrders = ordersData?.list?.flatMap((order) => {
+    const processOrderTypes = ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "MISCELLANEOUS_PROCESS"];
+
+    // Extract process-type orders (composite items and standalone)
+    const filteredOrders = ordersData.list.flatMap((order) => {
       if (order?.orderCategory === "COMPOSITE") {
-        return order?.compositeItems
-          ?.filter((item) => ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "MISCELLANEOUS_PROCESS"].includes(item?.orderType))
-          ?.map((item) => ({
-            ...order,
-            orderType: item?.orderType,
-            additionalDetails: item?.orderSchema?.additionalDetails,
-            orderDetails: item?.orderSchema?.orderDetails,
-            itemId: item?.id,
-          }));
-      } else {
-        return ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "MISCELLANEOUS_PROCESS"].includes(order?.orderType) ? [order] : [];
+        return (
+          order?.compositeItems
+            ?.filter((item) => processOrderTypes.includes(item?.orderType))
+            ?.map((item) => ({
+              ...order,
+              orderType: item?.orderType,
+              additionalDetails: item?.orderSchema?.additionalDetails,
+              orderDetails: item?.orderSchema?.orderDetails,
+              itemId: item?.id,
+            })) || []
+        );
       }
+      return processOrderTypes.includes(order?.orderType) ? [order] : [];
     });
 
-    const sortedOrders = [...filteredOrders]?.sort((a, b) => new Date(b?.createdDate) - new Date(a?.createdDate));
+    // Build uniqueId → party data map from already-extracted process orders so we
+    // can fill in name fields on synthetic SCHEDULE_OF_HEARING_DATE entries below.
+    const partyNameMap = {};
+    filteredOrders.forEach((order) => {
+      const keyInFormdata = formDataKeyMap[order?.orderType];
+      if (!keyInFormdata) return;
+      const partyField = order?.additionalDetails?.formdata?.[keyInFormdata]?.party;
+      const parties = Array.isArray(partyField) ? partyField : partyField ? [partyField] : [];
+      parties.forEach((party) => {
+        const uid = party?.data?.uniqueId || party?.data?.uuid;
+        if (uid && !partyNameMap[uid]) {
+          partyNameMap[uid] = party?.data;
+        }
+      });
+    });
 
+    const buildPartyData = (uniqueId) => {
+      const nameData = partyNameMap[uniqueId] || {};
+      return {
+        data: {
+          uniqueId,
+          partyType: nameData?.partyType,
+          firstName: nameData.firstName || nameData.respondentFirstName || "",
+          middleName: nameData.middleName || nameData.respondentMiddleName || "",
+          lastName: nameData.lastName || nameData.respondentLastName || "",
+          respondentFirstName: nameData.firstName || nameData.respondentFirstName || "",
+          respondentMiddleName: nameData.middleName || nameData.respondentMiddleName || "",
+          respondentLastName: nameData.lastName || nameData.respondentLastName || "",
+        },
+        uniqueId,
+      };
+    };
+
+    // Extract SCHEDULE_OF_HEARING_DATE orders that carry partyUniqueIds,
+    // expanding each into one entry per party uniqueId so they can be
+    // assigned to the correct party group after groupOrdersByParty runs.
+    const scheduleOrdersExpanded = ordersData.list.flatMap((order) => {
+      if (order?.orderCategory === "COMPOSITE") {
+        return (
+          order?.compositeItems
+            ?.filter((item) => item?.orderType === "SCHEDULE_OF_HEARING_DATE" && order?.partyUniqueIds?.length > 0)
+            ?.flatMap((item) => {
+              // Use the WARRANT (or other process-type) composite item's id as itemId so the
+              // UICustomizations filter condition `data.additionalDetails.itemId === additionalDetails.itemId`
+              // matches the tasks that were generated for that process item, not the SCHEDULE_OF_HEARING_DATE item.
+              const processItem = order?.compositeItems?.find(
+                (ci) => ci?.orderType !== "SCHEDULE_OF_HEARING_DATE" && ["WARRANT"].includes(ci?.orderType)
+              );
+              return (order?.partyUniqueIds || []).map((uniqueId) => ({
+                ...order,
+                orderType: "WARRANT",
+                additionalDetails: {
+                  ...item?.orderSchema?.additionalDetails,
+                  formdata: {
+                    ...item?.orderSchema?.additionalDetails?.formdata,
+                    warrantFor: {
+                      party: buildPartyData(uniqueId),
+                    },
+                  },
+                },
+                orderDetails: item?.orderSchema?.orderDetails,
+                itemId: processItem?.id,
+                _schedulePartyUniqueId: uniqueId,
+              }));
+            }) || []
+        );
+      }
+      if (order?.partyUniqueIds?.length > 0) {
+        return (order?.partyUniqueIds || []).map((uniqueId) => ({
+          ...order,
+          orderType: "WARRANT",
+          additionalDetails: {
+            ...order?.additionalDetails,
+            formdata: {
+              ...order?.additionalDetails?.formdata,
+              warrantFor: {
+                party: buildPartyData(uniqueId),
+              },
+            },
+          },
+          _schedulePartyUniqueId: uniqueId,
+        }));
+      }
+      return [];
+    });
+
+    // const sortedOrders = [...filteredOrders, ...scheduleOrdersExpanded].sort((a, b) => new Date(b?.createdDate) - new Date(a?.createdDate));
+
+    const mergedOrders = [...filteredOrders, ...scheduleOrdersExpanded].sort((a, b) => new Date(b?.createdDate) - new Date(a?.createdDate));
+
+    const sortedOrders = Array.from(new Map(mergedOrders.map((item) => [item.id, item])).values());
     const groupedByParty = groupOrdersByParty(sortedOrders);
-    const updatedGrouped = groupedByParty?.map((partyGroup) => {
+    console.log("ordersData.list", ordersData);
+    console.log("filteredOrders", filteredOrders, scheduleOrdersExpanded, sortedOrders, groupedByParty);
+
+    // Append SCHEDULE_OF_HEARING_DATE entries into existing party groups
+    // scheduleOrdersExpanded.forEach(({ _schedulePartyUniqueId, ...order }) => {
+    //   const partyGroup = groupedByParty.find((g) => g.uniqueId === _schedulePartyUniqueId);
+    //   if (partyGroup) {
+    //     partyGroup.ordersList.push(order);
+    //   }
+    // });
+
+    // Deduplicate within each party group by underlying order id:
+    // when the same composite order contributes both a processOrderType item
+    // and a SCHEDULE_OF_HEARING_DATE item, keep the processOrderType one.
+    // groupedByParty.forEach((partyGroup) => {
+    //   const ordersByBaseId = new Map();
+    //   partyGroup.ordersList.forEach((order) => {
+    //     const baseId = order.id;
+    //     if (!ordersByBaseId.has(baseId)) {
+    //       ordersByBaseId.set(baseId, order);
+    //     } else {
+    //       const existing = ordersByBaseId.get(baseId);
+    //       if (processOrderTypes.includes(order.orderType) && !processOrderTypes.includes(existing.orderType)) {
+    //         ordersByBaseId.set(baseId, order);
+    //       }
+    //     }
+    //   });
+    //   partyGroup.ordersList = Array.from(ordersByBaseId.values());
+    //   partyGroup.ordersList.sort((a, b) => (b.auditDetails?.createdTime || 0) - (a.auditDetails?.createdTime || 0));
+    // });
+
+    const updatedGrouped = groupedByParty.map((partyGroup) => {
       const typeCounters = {};
 
-      partyGroup?.ordersList?.forEach((order) => {
+      partyGroup.ordersList.forEach((order) => {
         const type = order?.orderType === "MISCELLANEOUS_PROCESS" ? order?.orderDetails?.processTemplate?.processTitle : order?.orderType;
         if (!typeCounters[type]) typeCounters[type] = 0;
         typeCounters[type]++;
       });
 
-      const updatedOrdersList = partyGroup?.ordersList?.map((order) => {
+      const updatedOrdersList = partyGroup.ordersList.map((order) => {
         const type = order?.orderType === "MISCELLANEOUS_PROCESS" ? order?.orderDetails?.processTemplate?.processTitle : order?.orderType;
         const round = typeCounters[type]--;
         const titleCaseType = type
@@ -395,6 +523,7 @@ const NoticeProcessModal = ({
                 setOrderLoading((prev) => !prev);
               }, 0);
               setCurrentHearingNumber(item?.ordersList?.[0]?.scheduledHearingNumber);
+              console.log("item?.ordersList?.[0]", item?.ordersList?.[0]);
               setHasPendingTasks(true);
             }}
             className={`round-item ${index === activeIndex?.partyIndex ? "active" : ""}`}
