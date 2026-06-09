@@ -118,7 +118,10 @@ public class BSSService {
                             cx = Math.max(cx - offset, 0);
                         }
                     }
-                    cx = Math.max(cx, 0);
+                    double remainingOverflow = cx + sigWidth - pageWidth;
+                    if (remainingOverflow > 0) {
+                        cx = Math.max(cx - remainingOverflow, 0);
+                    }
                 }
                 if (pageHeight > 0) {
                     cy = Math.min(cy, pageHeight - sigHeight);
