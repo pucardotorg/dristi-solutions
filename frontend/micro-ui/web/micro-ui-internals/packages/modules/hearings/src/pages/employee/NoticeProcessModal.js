@@ -282,14 +282,8 @@ const NoticeProcessModal = ({
         return (
           order?.compositeItems
             ?.filter((item) => item?.orderType === "SCHEDULE_OF_HEARING_DATE" && order?.partyUniqueIds?.length > 0)
-            ?.flatMap((item) => {
-              // Use the WARRANT (or other process-type) composite item's id as itemId so the
-              // UICustomizations filter condition `data.additionalDetails.itemId === additionalDetails.itemId`
-              // matches the tasks that were generated for that process item, not the SCHEDULE_OF_HEARING_DATE item.
-              const processItem = order?.compositeItems?.find(
-                (ci) => ci?.orderType !== "SCHEDULE_OF_HEARING_DATE" && ["WARRANT"].includes(ci?.orderType)
-              );
-              return (order?.partyUniqueIds || []).map((uniqueId) => ({
+            ?.flatMap((item) =>
+              (order?.partyUniqueIds || []).map((uniqueId) => ({
                 ...order,
                 orderType: "WARRANT",
                 additionalDetails: {
@@ -302,10 +296,10 @@ const NoticeProcessModal = ({
                   },
                 },
                 orderDetails: item?.orderSchema?.orderDetails,
-                itemId: processItem?.id,
+                itemId: item?.id,
                 _schedulePartyUniqueId: uniqueId,
-              }));
-            }) || []
+              }))
+            ) || []
         );
       }
       if (order?.partyUniqueIds?.length > 0) {
@@ -327,42 +321,36 @@ const NoticeProcessModal = ({
       return [];
     });
 
-    // const sortedOrders = [...filteredOrders, ...scheduleOrdersExpanded].sort((a, b) => new Date(b?.createdDate) - new Date(a?.createdDate));
-
     const mergedOrders = [...filteredOrders, ...scheduleOrdersExpanded].sort((a, b) => new Date(b?.createdDate) - new Date(a?.createdDate));
 
-    const sortedOrders = Array.from(new Map(mergedOrders.map((item) => [item.id, item])).values());
+    // Deduplicate: when two entries share the same id, are both WARRANT type, and cover
+    // the same party uniqueId, drop the schedule-derived one (_schedulePartyUniqueId present)
+    // and keep the original. For different parties or non-WARRANT types, keep all entries.
+    const idGroups = mergedOrders.reduce((acc, order) => {
+      if (!acc[order.id]) acc[order.id] = [];
+      acc[order.id].push(order);
+      return acc;
+    }, {});
+
+    const sortedOrders = Object.values(idGroups).flatMap((group) => {
+      if (group.length === 1) return group;
+
+      const allWarrant = group.every((o) => o?.orderType === "WARRANT");
+      if (!allWarrant) return group;
+
+      const scheduleEntries = group.filter((o) => "_schedulePartyUniqueId" in o);
+      if (scheduleEntries.length === 0) return group;
+
+      const scheduledPartyUids = new Set(scheduleEntries.map((o) => o._schedulePartyUniqueId));
+
+      return group.filter((o) => {
+        if (!("_schedulePartyUniqueId" in o)) return true;
+        const partyUid =
+          o?.additionalDetails?.formdata?.warrantFor?.party?.data?.uniqueId || o?.additionalDetails?.formdata?.warrantFor?.party?.uniqueId;
+        return !scheduledPartyUids.has(partyUid);
+      });
+    });
     const groupedByParty = groupOrdersByParty(sortedOrders);
-    console.log("ordersData.list", ordersData);
-    console.log("filteredOrders", filteredOrders, scheduleOrdersExpanded, sortedOrders, groupedByParty);
-
-    // Append SCHEDULE_OF_HEARING_DATE entries into existing party groups
-    // scheduleOrdersExpanded.forEach(({ _schedulePartyUniqueId, ...order }) => {
-    //   const partyGroup = groupedByParty.find((g) => g.uniqueId === _schedulePartyUniqueId);
-    //   if (partyGroup) {
-    //     partyGroup.ordersList.push(order);
-    //   }
-    // });
-
-    // Deduplicate within each party group by underlying order id:
-    // when the same composite order contributes both a processOrderType item
-    // and a SCHEDULE_OF_HEARING_DATE item, keep the processOrderType one.
-    // groupedByParty.forEach((partyGroup) => {
-    //   const ordersByBaseId = new Map();
-    //   partyGroup.ordersList.forEach((order) => {
-    //     const baseId = order.id;
-    //     if (!ordersByBaseId.has(baseId)) {
-    //       ordersByBaseId.set(baseId, order);
-    //     } else {
-    //       const existing = ordersByBaseId.get(baseId);
-    //       if (processOrderTypes.includes(order.orderType) && !processOrderTypes.includes(existing.orderType)) {
-    //         ordersByBaseId.set(baseId, order);
-    //       }
-    //     }
-    //   });
-    //   partyGroup.ordersList = Array.from(ordersByBaseId.values());
-    //   partyGroup.ordersList.sort((a, b) => (b.auditDetails?.createdTime || 0) - (a.auditDetails?.createdTime || 0));
-    // });
 
     const updatedGrouped = groupedByParty.map((partyGroup) => {
       const typeCounters = {};
