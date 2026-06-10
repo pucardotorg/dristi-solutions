@@ -179,6 +179,25 @@ public class Configuration {
     @Value("${task.join.case.rejected.topic}")
     private String taskJoinCaseRejectedTopic;
 
+    @Value("${kafka.topics.hearing.update}")
+    private String hearingUpdateTopic;
+
+    @Value("${bulk.reschedule.topic}")
+    private String bulkRescheduleTopic;
+
+    @Value("${kafka.topics.order.update}")
+    private String orderUpdateTopic;
+
+    @Value("${egov.kafka.order.update.uniqueid.topic}")
+    private String orderUpdateUniqueIdTopic;
+
+    // BailBond Config
+    @Value("${egov.bailbond.host}")
+    private String bailBondHost;
+
+    @Value("${egov.bailbond.search.path}")
+    private String bailBondSearchPath;
+
     @Value("${egov.idgen.taskNumber}")
     private String taskNumber;
 
@@ -366,4 +385,14 @@ public class Configuration {
 
     @Value("${allowed.content.types}")
     private String[] allowedContentTypes;
+
+    // Order fetch retry config (for hearing→order race condition)
+    @Value("${egov.order.fetch.retry.count:3}")
+    private int orderFetchRetryCount;
+
+    @Value("${egov.order.fetch.retry.interval.ms:2000}")
+    private long orderFetchRetryIntervalMs;
+
+    @Value("${egov.kafka.order.update.party.unique.id.topic}")
+    private String orderUpdatePartyUniqueIdTopic;
 }

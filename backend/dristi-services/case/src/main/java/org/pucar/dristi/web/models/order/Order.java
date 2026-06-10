@@ -119,4 +119,7 @@ public class Order {
     @JsonProperty("nextHearingDate")
     private Long nextHearingDate = null;
 
+    @JsonProperty("partyUniqueIds")
+    private List<String> partyUniqueIds = null;
+
 }

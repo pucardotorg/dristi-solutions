@@ -68,7 +68,7 @@ class ProcessRequestUtilTest {
         // Assert
         assertNotNull(result);
         assertEquals("SUCCESS", result.getAcknowledgementStatus());
-        verify(objectMapper, times(1)).writeValueAsString(processRequest);
+        verify(objectMapper, times(1)).convertValue(any(), eq(ChannelMessage.class));
     }
 
     @Test

@@ -19,6 +19,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
+import static org.pucar.dristi.config.ServiceConstants.PUBLISHED;
+import static org.pucar.dristi.config.ServiceConstants.SCHEDULE_OF_HEARING_DATE;
+
 @Slf4j
 @Component
 public class OrderUtil {
@@ -30,7 +33,8 @@ public class OrderUtil {
     private final ObjectMapper objectMapper;
 
     @Autowired
-    public OrderUtil(RestTemplate restTemplate, ObjectMapper mapper, Configuration configs, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper) {
+    public OrderUtil(RestTemplate restTemplate, ObjectMapper mapper, Configuration configs,
+            ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.mapper = mapper;
         this.configs = configs;
@@ -59,7 +63,7 @@ public class OrderUtil {
             log.error("ERROR_WHILE_FETCHING_FROM_ORDER:: {}", e.toString());
         }
 
-        if(orderExistsResponse.getOrder() == null|| orderExistsResponse.getOrder().isEmpty())
+        if (orderExistsResponse.getOrder() == null || orderExistsResponse.getOrder().isEmpty())
             return false;
 
         return orderExistsResponse.getOrder().get(0).getExists();
@@ -92,11 +96,49 @@ public class OrderUtil {
 
         OrderListResponse orderListResponse = getOrders(orderSearchRequest);
 
-        if(orderListResponse.getList() == null || orderListResponse.getList().isEmpty()) {
+        if (orderListResponse.getList() == null || orderListResponse.getList().isEmpty()) {
             throw new CustomException("ERROR_WHILE_FETCHING_FROM_ORDER",
                     "Order not found for order id: " + orderId);
         }
         return orderListResponse.getList().get(0);
 
+    }
+
+    public String getOrderIdByHearingId(RequestInfo requestInfo, String hearingId, String tenantId) {
+        OrderCriteria orderCriteria = OrderCriteria.builder()
+                .scheduledHearingNumber(hearingId)
+                .tenantId(tenantId)
+                .status(PUBLISHED)
+                .orderType(SCHEDULE_OF_HEARING_DATE)
+                .build();
+        OrderSearchRequest orderSearchRequest = OrderSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(orderCriteria)
+                .build();
+
+        int maxRetries = configs.getOrderFetchRetryCount();
+        long retryIntervalMs = configs.getOrderFetchRetryIntervalMs();
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            OrderListResponse orderListResponse = getOrders(orderSearchRequest);
+            if (orderListResponse != null && orderListResponse.getList() != null
+                    && !orderListResponse.getList().isEmpty()
+                    && orderListResponse.getList().get(0).getId() != null) {
+                return orderListResponse.getList().get(0).getId().toString();
+            }
+            if (attempt < maxRetries) {
+                log.warn("No PUBLISHED order found for scheduledHearingNumber: {} (attempt {}/{}), retrying in {}ms...",
+                        hearingId, attempt, maxRetries, retryIntervalMs);
+                try {
+                    Thread.sleep(retryIntervalMs);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.warn("Retry interrupted for hearingId: {}", hearingId);
+                    break;
+                }
+            }
+        }
+        log.warn("No PUBLISHED order found for scheduledHearingNumber: {} after {} attempts", hearingId, maxRetries);
+        return null;
     }
 }
