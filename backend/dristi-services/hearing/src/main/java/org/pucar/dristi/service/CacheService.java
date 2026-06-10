@@ -141,6 +141,26 @@ public class CacheService {
         }
     }
 
+    public boolean tryLock(String key, int timeoutSeconds) {
+        if (redisTemplate == null) return true;
+        try {
+            Boolean acquired = redisTemplate.opsForValue().setIfAbsent(key, "1", timeoutSeconds, TimeUnit.SECONDS);
+            return Boolean.TRUE.equals(acquired);
+        } catch (Exception e) {
+            log.error("Error acquiring lock for key: {}", key, e);
+            return false;
+        }
+    }
+
+    public void releaseLock(String key) {
+        if (redisTemplate == null) return;
+        try {
+            redisTemplate.delete(key);
+        } catch (Exception e) {
+            log.error("Error releasing lock for key: {}", key, e);
+        }
+    }
+
     public List<Map<String, Object>> hgetAllPipelined(List<String> keys) {
         if (redisTemplate == null || keys == null || keys.isEmpty()) return Collections.emptyList();
         try {
