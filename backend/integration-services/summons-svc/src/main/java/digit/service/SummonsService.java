@@ -56,13 +56,11 @@ public class SummonsService {
 
     private final EvidenceUtil evidenceUtil;
 
-    private final ObjectMapper objectMapper;
-
     @Autowired
     public SummonsService(PdfServiceUtil pdfServiceUtil, Configuration config, Producer producer,
                           FileStorageUtil fileStorageUtil, SummonsRepository summonsRepository,
                           SummonsDeliveryEnrichment summonsDeliveryEnrichment, ExternalChannelUtil externalChannelUtil,
-                          TaskUtil taskUtil, CaseManagementUtil caseManagementUtil, MdmsUtil mdmsUtil, CaseUtil caseUtil, EvidenceUtil evidenceUtil, ObjectMapper objectMapper) {
+                          TaskUtil taskUtil, CaseManagementUtil caseManagementUtil, MdmsUtil mdmsUtil, CaseUtil caseUtil, EvidenceUtil evidenceUtil) {
         this.pdfServiceUtil = pdfServiceUtil;
         this.config = config;
         this.producer = producer;
@@ -75,7 +73,6 @@ public class SummonsService {
         this.mdmsUtil = mdmsUtil;
         this.caseUtil = caseUtil;
         this.evidenceUtil = evidenceUtil;
-        this.objectMapper = objectMapper;
     }
 
     public TaskResponse generateSummonsDocument(TaskRequest taskRequest) {
