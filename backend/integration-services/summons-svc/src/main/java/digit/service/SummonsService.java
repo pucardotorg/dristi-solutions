@@ -1,6 +1,8 @@
 package digit.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import digit.enrichment.SummonsDeliveryEnrichment;
 import digit.kafka.Producer;
@@ -20,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static digit.config.ServiceConstants.*;
@@ -53,11 +56,13 @@ public class SummonsService {
 
     private final EvidenceUtil evidenceUtil;
 
+    private final ObjectMapper objectMapper;
+
     @Autowired
     public SummonsService(PdfServiceUtil pdfServiceUtil, Configuration config, Producer producer,
                           FileStorageUtil fileStorageUtil, SummonsRepository summonsRepository,
                           SummonsDeliveryEnrichment summonsDeliveryEnrichment, ExternalChannelUtil externalChannelUtil,
-                          TaskUtil taskUtil, CaseManagementUtil caseManagementUtil, MdmsUtil mdmsUtil, CaseUtil caseUtil, EvidenceUtil evidenceUtil) {
+                          TaskUtil taskUtil, CaseManagementUtil caseManagementUtil, MdmsUtil mdmsUtil, CaseUtil caseUtil, EvidenceUtil evidenceUtil, ObjectMapper objectMapper) {
         this.pdfServiceUtil = pdfServiceUtil;
         this.config = config;
         this.producer = producer;
@@ -70,6 +75,7 @@ public class SummonsService {
         this.mdmsUtil = mdmsUtil;
         this.caseUtil = caseUtil;
         this.evidenceUtil = evidenceUtil;
+        this.objectMapper = objectMapper;
     }
 
     public TaskResponse generateSummonsDocument(TaskRequest taskRequest) {
@@ -243,6 +249,9 @@ public class SummonsService {
         enrichPoliceStationReport(task, request.getSummonsDelivery());
         Role role = Role.builder().code(config.getSystemAdmin()).tenantId(config.getEgovStateTenantId()).build();
         request.getRequestInfo().getUserInfo().getRoles().add(role);
+
+        task.getTaskDetails().getDeliveryChannel().setStatusChangeDate(formatEpochToDate(System.currentTimeMillis()));
+
         TaskRequest taskRequest = TaskRequest.builder()
                 .requestInfo(request.getRequestInfo()).task(task).build();
         taskUtil.callUpdateTask(taskRequest);
@@ -254,6 +263,13 @@ public class SummonsService {
         if (!documents.isEmpty()) {
             createEvidenceForPoliceReport(taskRequest, documents.get(0));
         }
+    }
+
+    public static String formatEpochToDate(long epochMillis) {
+        Date date = new Date(epochMillis);
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+        sdf.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
+        return sdf.format(date);
     }
 
     public void createEvidenceForPoliceReport(TaskRequest taskRequest, Document document) {
