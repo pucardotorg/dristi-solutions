@@ -486,7 +486,9 @@ public class HearingService {
     }
 
     public List<Map<String, Object>> getCauseList(String courtId, String date, int offset, int limit) {
-        String baseKey = CACHE_KEY_PREFIX + courtId + ":" + date;
+        LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String dateStr = localDate.format(DateTimeFormatter.ofPattern(DATE_FORMAT_REDIS));
+        String baseKey = CACHE_KEY_PREFIX + courtId + ":" + dateStr;
         String causeListKey = baseKey + CACHE_CAUSE_LIST_SUFFIX;
 
         List<Object> hearingKeys = cacheService.lrange(causeListKey, offset, (long) offset + limit - 1);
@@ -508,7 +510,6 @@ public class HearingService {
         // Cache miss — fall back to ES via inbox service
         log.info("Cause-list cache miss for courtId={}, date={} — falling back to ES", courtId, date);
         try {
-            LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern(DATE_FORMAT_REDIS));
             Long fromDateEpoch = dateUtil.getEPochFromLocalDate(localDate);
             Long toDateEpoch = dateUtil.getEpochFromLocalDateTime(localDate.atTime(23, 59, 59));
             InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtId, fromDateEpoch, toDateEpoch, offset, limit);
