@@ -19,9 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -31,6 +32,7 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 public class WarrantReissueService {
 
     private static final long MILLIS_PER_DAY = 24L * 60 * 60 * 1000;
+    private static final long IST_OFFSET_MILLIS = (5L * 60 + 30) * 60 * 1000;
 
     private final TaskService taskService;
     private final Configuration config;
@@ -122,12 +124,22 @@ public class WarrantReissueService {
 
         requestInfo = userService.createInternalMicroserviceRequestInfo();
 
-        // Fetch all ACTIVE warrants and warrants EXPIRED today for this case
+        // Fetch all ACTIVE warrants plus EXPIRED-but-unpaid warrants (excluding bail-driven expiries)
+        // so warrants the hearing service expired on completion can still be reissued
         List<Task> activeWarrants = fetchActiveWarrants(requestInfo, filingNumber, true);
         if (activeWarrants.isEmpty()) {
             log.info("No active or recently expired warrants for filing: {}", filingNumber);
             return;
         }
+
+        // A duplicate hearing event (order publish emits a create + a scheduler-svc update for the
+        // same hearing) must not reissue the same warrant twice. A warrant terminated on the first
+        // event lands in WARRANT_REISSUED_WITH_NEW_WARRANT and so drops out of the active search, but
+        // an EXPIRED warrant we recovered stays EXPIRED and keeps matching the previous hearing date,
+        // so it would be reissued again. Its clone, however, is active and carries this warrant's id
+        // as reissueSourceWarrantId; collect those source ids (from the full set, before scoping to
+        // the previous hearing) and skip any warrant that already has a clone.
+        Set<String> alreadyReissuedSourceIds = collectReissueSourceIds(activeWarrants);
 
         // Only warrants tagged to the previous hearing date are reissued; older warrants are left untouched
         activeWarrants = filterToPreviousHearingDate(activeWarrants, newHearingDate);
@@ -139,6 +151,10 @@ public class WarrantReissueService {
         List<String> collectedPartyUniqueIds = new ArrayList<>();
 
         for (Task warrant : activeWarrants) {
+            if (warrant.getId() != null && alreadyReissuedSourceIds.contains(warrant.getId().toString())) {
+                log.info("Skipping warrant {} - it already has a reissued clone (duplicate hearing event)", warrant.getTaskNumber());
+                continue;
+            }
             String currentState = warrant.getStatus();
             boolean isIcops = isIcopsDeliveryChannel(warrant);
             boolean isAlreadyExpired = EXPIRED.equalsIgnoreCase(currentState);
@@ -290,6 +306,12 @@ public class WarrantReissueService {
             WorkflowObject workflow = new WorkflowObject();
             workflow.setAction(EXPIRE);
             warrant.setWorkflow(workflow);
+            // Mark this as a bail-driven expiry so the reissue flow never resurrects it: per PRD a
+            // warrant expired because bail was granted must stay Expired (closed only by an iCoPS
+            // status update, a manual update, or a second bail) and must NOT be auto-reissued when a
+            // later hearing is scheduled. (EXPIRE is only valid from PENDING_PAYMENT, so only unpaid
+            // warrants are actually expired+tagged here.)
+            setAdditionalDetail(warrant, "expiredByBail", true);
 
             TaskRequest taskRequest = TaskRequest.builder()
                     .requestInfo(requestInfo)
@@ -325,20 +347,21 @@ public class WarrantReissueService {
                 WARRANT_REISSUED.equalsIgnoreCase(status) ||
                 WARRANT_SENT.equalsIgnoreCase(status) ) {
                 activeWarrants.add(task);
-            } else if (includeExpiredToday && EXPIRED.equalsIgnoreCase(status)) {
-                Long oldHearingStartTime = getHearingDateFromTask(task);
-                if (task.getAuditDetails() != null && task.getAuditDetails().getLastModifiedTime() != null && oldHearingStartTime != null) {
-                    long lastModifiedTime = task.getAuditDetails().getLastModifiedTime();
-                    Calendar cal1 = Calendar.getInstance();
-                    cal1.setTimeInMillis(oldHearingStartTime);
-                    Calendar cal2 = Calendar.getInstance();
-                    cal2.setTimeInMillis(lastModifiedTime);
-                    boolean isSameDay = cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
-                            cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR);
-                    if (isSameDay) {
-                        activeWarrants.add(task);
-                    }
-                }
+            } else if (includeExpiredToday && EXPIRED.equalsIgnoreCase(status) && !isExpiredByBail(task)) {
+                // Recover EXPIRED-but-unpaid warrants so the reissue can regenerate them. In the
+                // warrant workflow the EXPIRE action is only valid from PENDING_PAYMENT, so every
+                // EXPIRED warrant was unpaid - exactly the PRD's "payment not completed (or channel
+                // not iCoPS) -> regenerate the payment task" case. The hearing service expires these
+                // the moment the previous hearing is marked COMPLETED, which may be a different
+                // calendar day from the warrant's own scheduled hearing date (e.g. the hearing is
+                // completed ahead of its date), so recovery must NOT be gated on the warrant's
+                // hearing date - the earlier same-day-as-hearing-date check silently dropped exactly
+                // these warrants (the RPAD/unpaid warrant went missing while the issued iCoPS warrant,
+                // never in PENDING_PAYMENT and so never expired, survived to be reissued).
+                // filterToPreviousHearingDate already scopes the recovered set to the previous
+                // hearing, so older expired warrants are not affected. The one expiry we must never
+                // resurrect is a bail-driven one (it must stay Expired per PRD), excluded above.
+                activeWarrants.add(task);
             }
         }
         return activeWarrants;
@@ -349,7 +372,7 @@ public class WarrantReissueService {
      * so that older warrants from earlier hearings are not affected by the reissue flow.
      * The previous hearing date is derived from the warrants themselves
      * (see {@link #resolvePreviousHearingDate(List, Long)}).
-     * All comparisons happen at UTC-day granularity (see {@link #normalizeToUtcDayStart(Long)})
+     * All comparisons happen at IST-day granularity (see {@link #normalizeToIstDayStart(Long)})
      * because different writers tag the same hearing with different epoch encodings.
      */
     private List<Task> filterToPreviousHearingDate(List<Task> warrants, Long newHearingDate) {
@@ -361,7 +384,7 @@ public class WarrantReissueService {
 
         List<Task> filtered = new ArrayList<>();
         for (Task warrant : warrants) {
-            if (previousHearingDay.equals(normalizeToUtcDayStart(getHearingDateFromTask(warrant)))) {
+            if (previousHearingDay.equals(normalizeToIstDayStart(getHearingDateFromTask(warrant)))) {
                 filtered.add(warrant);
             }
         }
@@ -380,11 +403,11 @@ public class WarrantReissueService {
      * Returns null when no warrant carries a usable hearing date.
      */
     private Long resolvePreviousHearingDate(List<Task> warrants, Long newHearingDate) {
-        Long newHearingDay = normalizeToUtcDayStart(newHearingDate);
+        Long newHearingDay = normalizeToIstDayStart(newHearingDate);
         Long latestBeforeNew = null;
         Long latestOverall = null;
         for (Task warrant : warrants) {
-            Long hearingDay = normalizeToUtcDayStart(getHearingDateFromTask(warrant));
+            Long hearingDay = normalizeToIstDayStart(getHearingDateFromTask(warrant));
             if (hearingDay == null) {
                 continue;
             }
@@ -407,21 +430,23 @@ public class WarrantReissueService {
     }
 
     /**
-     * Floors an epoch to the start of its UTC day. Hearing-date tags for the same hearing are
-     * encoded inconsistently by different writers: the backend writes the hearing startTime
-     * (midnight IST = 18:30 UTC of the previous day), while the frontend task payload can
-     * round-trip the date through a UTC date string, yielding midnight UTC of that previous
-     * day (e.g. 1780770600000 vs 1780704000000 for a hearing on 2026-06-07 IST). Both
-     * encodings floor to the same UTC day start, so comparing floored values matches warrants
-     * of the same hearing regardless of writer, while hearings on different IST days still
-     * floor to different UTC days. An exact-equality comparison on the raw epochs silently
-     * splits warrants of the same hearing (only one of them gets reissued).
+     * Buckets an epoch by its IST calendar day. Hearing-date tags for the same hearing are
+     * encoded inconsistently by different writers: the backend writes the hearing startTime as
+     * IST midnight (e.g. 1781461800000 = 2026-06-15 00:00 IST = 2026-06-14 18:30 UTC), while a
+     * warrant created from the order form can carry UTC midnight of the same calendar day
+     * (e.g. 1781481600000 = 2026-06-15 00:00 UTC). These two encodings of the SAME hearing differ
+     * by the 5h30m IST offset and floor to DIFFERENT UTC days (06-14 vs 06-15) — so flooring to the
+     * UTC day split the iCoPS and RPAD warrants of one hearing into different buckets, and only one
+     * channel got picked up for reissue. Shifting by the IST offset before flooring maps both
+     * encodings to the same IST day (06-15), while hearings on different IST days still bucket
+     * apart. The returned value is in IST-shifted epoch space; it is only ever compared against
+     * other values produced by this method, so equality and ordering remain correct.
      */
-    private Long normalizeToUtcDayStart(Long epochMillis) {
+    private Long normalizeToIstDayStart(Long epochMillis) {
         if (epochMillis == null) {
             return null;
         }
-        return Math.floorDiv(epochMillis, MILLIS_PER_DAY) * MILLIS_PER_DAY;
+        return Math.floorDiv(epochMillis + IST_OFFSET_MILLIS, MILLIS_PER_DAY) * MILLIS_PER_DAY;
     }
 
     private Long getHearingDateFromTask(Task task) {
@@ -452,6 +477,37 @@ public class WarrantReissueService {
             log.error("Error checking iCoPS delivery channel: ", e);
         }
         return false;
+    }
+
+    private boolean isExpiredByBail(Task task) {
+        try {
+            if (task.getAdditionalDetails() != null) {
+                JsonNode additionalDetails = objectMapper.convertValue(task.getAdditionalDetails(), JsonNode.class);
+                return additionalDetails != null && additionalDetails.path("expiredByBail").asBoolean(false);
+            }
+        } catch (Exception e) {
+            log.warn("Could not read expiredByBail from task: {}", task.getTaskNumber());
+        }
+        return false;
+    }
+
+    private Set<String> collectReissueSourceIds(List<Task> warrants) {
+        Set<String> sourceIds = new HashSet<>();
+        for (Task warrant : warrants) {
+            try {
+                if (warrant.getAdditionalDetails() == null) {
+                    continue;
+                }
+                JsonNode additionalDetails = objectMapper.convertValue(warrant.getAdditionalDetails(), JsonNode.class);
+                JsonNode sourceId = additionalDetails.path("reissueSourceWarrantId");
+                if (!sourceId.isMissingNode() && !sourceId.isNull()) {
+                    sourceIds.add(sourceId.asText());
+                }
+            } catch (Exception e) {
+                log.warn("Could not read reissueSourceWarrantId from task: {}", warrant.getTaskNumber());
+            }
+        }
+        return sourceIds;
     }
 
     private void setAdditionalDetail(Task task, String key, Object value) {
