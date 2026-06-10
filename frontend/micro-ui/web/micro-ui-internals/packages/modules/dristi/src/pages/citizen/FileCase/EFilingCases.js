@@ -274,6 +274,8 @@ function EFilingCases({ path }) {
     return count;
   }, [fieldsRemaining]);
 
+  console.log("check");
+
   const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
     {
       criteria: [
