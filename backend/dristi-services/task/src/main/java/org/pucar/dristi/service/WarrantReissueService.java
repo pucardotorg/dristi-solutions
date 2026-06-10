@@ -21,7 +21,9 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -141,10 +143,14 @@ public class WarrantReissueService {
         // the previous hearing) and skip any warrant that already has a clone.
         Set<String> alreadyReissuedSourceIds = collectReissueSourceIds(activeWarrants);
 
-        // Only warrants tagged to the previous hearing date are reissued; older warrants are left untouched
-        activeWarrants = filterToPreviousHearingDate(activeWarrants, newHearingDate);
+        // Scope to the single previous cycle by the order that CREATED each warrant, not by hearing
+        // date: a calendar-day comparison drops the previous cycle whenever its warrants happen to be
+        // tagged to the same IST day as the new hearing (e.g. two hearings scheduled for the same day),
+        // and is also sensitive to the IST/UTC-midnight epoch-encoding inconsistency. Order ids are
+        // always distinct per cycle. Falls back to date scoping when orderId is unavailable.
+        activeWarrants = filterToPreviousCycle(activeWarrants, newOrderId, newHearingDate);
         if (activeWarrants.isEmpty()) {
-            log.info("No warrants tagged to the previous hearing date for filing: {}", filingNumber);
+            log.info("No previous-cycle warrants to reissue for filing: {}", filingNumber);
             return;
         }
 
@@ -368,6 +374,76 @@ public class WarrantReissueService {
     }
 
     /**
+     * Scopes the candidate warrants to the single "previous cycle" that should roll forward to the
+     * newly scheduled hearing, keyed by the order that CREATED each warrant (task.orderId) rather
+     * than by hearing date. Every warrant carries its creating order's id, and reissued clones are
+     * stamped with the scheduling order's id, so each scheduling cycle is a distinct orderId. This
+     * is robust to the two failure modes of date-based scoping: the hearing-date epoch-encoding
+     * inconsistency (IST- vs UTC-midnight) and two hearings landing on the same calendar day.
+     *
+     * Rules:
+     *  - The new order's own freshly-created warrants (orderId == newOrderId) are never reissued.
+     *  - Of the remaining warrants, the previous cycle is the orderId group created most recently
+     *    (latest warrant createdTime); only that group is reissued, so older cycles are untouched.
+     *  - Warrants with no orderId (older data), or an unknown newOrderId, fall back to date scoping.
+     */
+    private List<Task> filterToPreviousCycle(List<Task> warrants, String newOrderId, Long newHearingDate) {
+        if (newOrderId == null || newOrderId.isEmpty()) {
+            return filterToPreviousHearingDate(warrants, newHearingDate);
+        }
+
+        Map<String, List<Task>> byOrder = new LinkedHashMap<>();
+        boolean anyWithOrderId = false;
+        for (Task warrant : warrants) {
+            String orderId = warrant.getOrderId() != null ? warrant.getOrderId().toString() : null;
+            if (orderId == null) {
+                continue;
+            }
+            anyWithOrderId = true;
+            if (orderId.equals(newOrderId)) {
+                continue; // never reissue the new order's own warrants
+            }
+            byOrder.computeIfAbsent(orderId, k -> new ArrayList<>()).add(warrant);
+        }
+
+        if (!anyWithOrderId) {
+            log.info("No warrant carries an orderId; falling back to hearing-date scoping");
+            return filterToPreviousHearingDate(warrants, newHearingDate);
+        }
+
+        String previousOrderId = null;
+        long previousCycleCreatedTime = Long.MIN_VALUE;
+        for (Map.Entry<String, List<Task>> entry : byOrder.entrySet()) {
+            long groupCreatedTime = latestCreatedTime(entry.getValue());
+            if (groupCreatedTime > previousCycleCreatedTime) {
+                previousCycleCreatedTime = groupCreatedTime;
+                previousOrderId = entry.getKey();
+            }
+        }
+
+        if (previousOrderId == null) {
+            log.info("Only the new order's own warrants are active; none will be reissued");
+            return Collections.emptyList();
+        }
+
+        List<Task> filtered = byOrder.get(previousOrderId);
+        log.info("Scoped {} warrant(s) down to {} from previous cycle order {}",
+                warrants.size(), filtered.size(), previousOrderId);
+        return filtered;
+    }
+
+    /** Latest createdTime across a group of warrants (Long.MIN_VALUE if none carry audit details). */
+    private long latestCreatedTime(List<Task> warrants) {
+        long latest = Long.MIN_VALUE;
+        for (Task warrant : warrants) {
+            if (warrant.getAuditDetails() != null && warrant.getAuditDetails().getCreatedTime() != null) {
+                latest = Math.max(latest, warrant.getAuditDetails().getCreatedTime());
+            }
+        }
+        return latest;
+    }
+
+    /**
      * Restricts a list of warrants to only those tagged to the "previous hearing date",
      * so that older warrants from earlier hearings are not affected by the reissue flow.
      * The previous hearing date is derived from the warrants themselves
@@ -388,14 +464,14 @@ public class WarrantReissueService {
                 filtered.add(warrant);
             }
         }
-        log.info("Filtered {} warrant(s) down to {} tagged to previous hearing day (UTC day start): {}",
+        log.info("Filtered {} warrant(s) down to {} tagged to previous hearing day (IST day start): {}",
                 warrants.size(), filtered.size(), previousHearingDay);
         return filtered;
     }
 
     /**
      * Determines the previous hearing date from the warrants' own tagged hearing dates
-     * (taskDetails.caseDetails.hearingDate), normalized to UTC day start. Picks the latest
+     * (taskDetails.caseDetails.hearingDate), normalized to IST day start. Picks the latest
      * tagged day strictly before the newly scheduled hearing day; warrants already tagged to
      * the new hearing day are never reissued, so a duplicate hearing event (create +
      * scheduler-svc update) is a no-op.
