@@ -593,6 +593,10 @@ public class HearingService {
 
         if (currentHearingNumber != null && !currentHearingNumber.isEmpty()) {
             List<Object> hearingKeys = cacheService.lrange(causeListKey, 0, -1);
+            if (hearingKeys.isEmpty()) {
+                log.warn("Cache miss: causeList empty for courtId={}, falling back to DB", courtId);
+                return getNextHearingFromDb(courtId, currentHearingNumber);
+            }
             int currentIndex = -1;
             for (int i = 0; i < hearingKeys.size(); i++) {
                 if (String.valueOf(hearingKeys.get(i)).endsWith(CACHE_HEARING_PREFIX + currentHearingNumber)) {
@@ -612,13 +616,103 @@ public class HearingService {
         }
 
         Map<String, Object> meta = cacheService.hgetAll(metaKey);
-        String sessionStatus = meta.isEmpty() ? SESSION_STATUS_NOT_STARTED : String.valueOf(meta.getOrDefault("sessionStatus", SESSION_STATUS_NOT_STARTED));
-        String currentHearingKey = meta.isEmpty() ? "" : String.valueOf(meta.getOrDefault("currentHearingKey", ""));
+        if (meta.isEmpty()) {
+            log.warn("Cache miss: courtMeta empty for courtId={}, falling back to DB", courtId);
+            return getActiveHearingFromDb(courtId);
+        }
+        String sessionStatus = String.valueOf(meta.getOrDefault("sessionStatus", SESSION_STATUS_NOT_STARTED));
+        String currentHearingKey = String.valueOf(meta.getOrDefault("currentHearingKey", ""));
         Map<String, Object> hearingData = Collections.emptyMap();
         if (currentHearingKey != null && !currentHearingKey.isEmpty()) {
             hearingData = cacheService.hgetAll(currentHearingKey);
+            if (hearingData.isEmpty()) {
+                log.warn("Cache miss: hearing data empty for key={}, falling back to DB", currentHearingKey);
+                String hearingId = extractHearingIdFromKey(currentHearingKey);
+                hearingData = getSingleHearingDataFromDb(hearingId);
+            }
         }
         return new CurrentHearingData(sessionStatus, currentHearingKey, hearingData);
+    }
+
+    private CurrentHearingData getNextHearingFromDb(String courtId, String currentHearingNumber) {
+        List<Hearing> hearings = getTodayHearingsFromDb(courtId);
+        boolean foundCurrent = false;
+        for (Hearing h : hearings) {
+            if (!foundCurrent) {
+                if (currentHearingNumber.equals(h.getHearingId())) foundCurrent = true;
+                continue;
+            }
+            String status = h.getStatus();
+            if (!"COMPLETED".equals(status) && !"ABATED".equals(status) && !"OPT_OUT".equals(status)) {
+                return new CurrentHearingData(SESSION_STATUS_ACTIVE, "", buildHearingDataMap(h));
+            }
+        }
+        return new CurrentHearingData(SESSION_STATUS_ACTIVE, "", Collections.emptyMap());
+    }
+
+    private CurrentHearingData getActiveHearingFromDb(String courtId) {
+        List<Hearing> hearings = getTodayHearingsFromDb(courtId);
+        Hearing active = hearings.stream()
+                .filter(h -> IN_PROGRESS.equals(h.getStatus()))
+                .findFirst()
+                .orElse(null);
+        if (active != null) {
+            return new CurrentHearingData(SESSION_STATUS_ACTIVE, "", buildHearingDataMap(active));
+        }
+        return new CurrentHearingData(SESSION_STATUS_NOT_STARTED, "", Collections.emptyMap());
+    }
+
+    private List<Hearing> getTodayHearingsFromDb(String courtId) {
+        try {
+            LocalDate today = dateUtil.getLocalDateFromEpoch(System.currentTimeMillis());
+            Long fromDate = dateUtil.getEPochFromLocalDate(today);
+            Long toDate = dateUtil.getEpochFromLocalDateTime(today.atTime(23, 59, 59));
+            HearingCriteria criteria = HearingCriteria.builder()
+                    .courtId(courtId)
+                    .fromDate(fromDate)
+                    .toDate(toDate)
+                    .build();
+            HearingSearchRequest request = HearingSearchRequest.builder().criteria(criteria).build();
+            List<Hearing> hearings = new ArrayList<>(hearingRepository.getHearings(request));
+            hearings.sort(Comparator.comparingLong(h -> h.getStartTime() != null ? h.getStartTime() : Long.MAX_VALUE));
+            return hearings;
+        } catch (Exception e) {
+            log.error("DB fallback: error fetching today's hearings for courtId={}", courtId, e);
+            return Collections.emptyList();
+        }
+    }
+
+    private Map<String, Object> getSingleHearingDataFromDb(String hearingId) {
+        if (hearingId == null || hearingId.isEmpty()) return Collections.emptyMap();
+        try {
+            HearingCriteria criteria = HearingCriteria.builder().hearingId(hearingId).build();
+            HearingSearchRequest request = HearingSearchRequest.builder().criteria(criteria).build();
+            List<Hearing> hearings = hearingRepository.getHearings(request);
+            return hearings.isEmpty() ? Collections.emptyMap() : buildHearingDataMap(hearings.get(0));
+        } catch (Exception e) {
+            log.error("DB fallback: error fetching hearing for hearingId={}", hearingId, e);
+            return Collections.emptyMap();
+        }
+    }
+
+    private String extractHearingIdFromKey(String key) {
+        int idx = key.lastIndexOf(CACHE_HEARING_PREFIX);
+        return idx >= 0 ? key.substring(idx + CACHE_HEARING_PREFIX.length()) : "";
+    }
+
+    private Map<String, Object> buildHearingDataMap(Hearing hearing) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("hearingNumber", hearing.getHearingId() != null ? hearing.getHearingId() : "");
+        data.put("hearingUuid", hearing.getId() != null ? hearing.getId().toString() : "");
+        data.put("status", hearing.getStatus() != null ? hearing.getStatus() : "");
+        data.put("filingNumber", hearing.getFilingNumber() != null && !hearing.getFilingNumber().isEmpty()
+                ? hearing.getFilingNumber().get(0) : "");
+        data.put("caseUuid", "");
+        data.put("fromDate", hearing.getStartTime() != null ? hearing.getStartTime() : 0L);
+        data.put("toDate", hearing.getEndTime() != null ? hearing.getEndTime() : 0L);
+        data.put("tenantId", hearing.getTenantId() != null ? hearing.getTenantId() : "");
+        data.put("hearingType", hearing.getHearingType() != null ? hearing.getHearingType() : "");
+        return data;
     }
 
 
