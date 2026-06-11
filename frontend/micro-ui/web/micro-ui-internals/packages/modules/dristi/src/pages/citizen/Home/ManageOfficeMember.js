@@ -41,7 +41,7 @@ const ManageOfficeMember = () => {
     };
   }, [advocateInfo, member?.officeAdvocateId, member?.advocateId]);
 
-  const [addToNewCasesAuto, setAddToNewCasesAuto] = useState(member?.addNewCasesAutomatically !== false ? "Yes" : "No");
+  const [, setAddToNewCasesAuto] = useState(member?.addNewCasesAutomatically !== false ? "Yes" : "No");
   const [selectedCasesCount, setSelectedCasesCount] = useState(0);
   const [casesRefreshKey, setCasesRefreshKey] = useState(0);
   const [caseSelectionDiff, setCaseSelectionDiff] = useState({ addCaseIds: [], removeCaseIds: [] });
@@ -65,8 +65,11 @@ const ManageOfficeMember = () => {
 
   const memberName = member?.memberName || t("MANAGE_OFFICE_MEMBER_NAME_PLACEHOLDER");
   const clerkLabel = t("CLERK");
-  const designation =
-    member?.memberType === "ADVOCATE_CLERK" ? clerkLabel : member?.memberType === "ADVOCATE" ? t("ASSISTANT_ADVOCATE") : member?.memberType || "—";
+  const designation = (() => {
+    if (member?.memberType === "ADVOCATE_CLERK") return clerkLabel;
+    if (member?.memberType === "ADVOCATE") return t("ASSISTANT_ADVOCATE");
+    return member?.memberType || "—";
+  })();
   const mobileNumber = member?.memberMobileNumber
     ? `+91 ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(0, 5)} ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(5)}`
     : "—";

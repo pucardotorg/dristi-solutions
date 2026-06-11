@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import { surveyConfig } from "../../configs/InPortalSurveyConfig";
 
 const InPortalSurveyModal = ({ context, onRemindMeLater, onSubmit }) => {
@@ -30,6 +31,7 @@ const InPortalSurveyModal = ({ context, onRemindMeLater, onSubmit }) => {
           {surveyConfig.ratings.map((opt) => (
             <button
               key={opt.value}
+              type="button"
               className={`option-btn ${rating === opt.value ? "selected" : ""}`}
               onClick={() => setRating(opt.value)}
               disabled={loading}
@@ -48,11 +50,12 @@ const InPortalSurveyModal = ({ context, onRemindMeLater, onSubmit }) => {
         />
 
         <div className="survey-actions">
-          <button className="remind-btn" onClick={onRemindMeLater} disabled={loading}>
+          <button type="button" className="remind-btn" onClick={onRemindMeLater} disabled={loading}>
             {surveyConfig.buttons.remindLater}
           </button>
 
           <button
+            type="button"
             className={`submit-btn ${!rating ? "disabled" : ""}`}
             onClick={handleSubmit}
             disabled={!rating || loading}
@@ -63,6 +66,12 @@ const InPortalSurveyModal = ({ context, onRemindMeLater, onSubmit }) => {
       </div>
     </div>
   );
+};
+
+InPortalSurveyModal.propTypes = {
+  context: PropTypes.string.isRequired,
+  onRemindMeLater: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
 };
 
 export default InPortalSurveyModal;

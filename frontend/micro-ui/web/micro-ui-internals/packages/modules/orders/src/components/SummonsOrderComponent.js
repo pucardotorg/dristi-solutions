@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import useSearchCaseService from "../../../dristi/src/hooks/dristi/useSearchCaseService";
 import { Button, Dropdown } from "@egovernments/digit-ui-react-components";
 import isEqual from "lodash/isEqual";
-import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useTranslation } from "react-i18next";
 import { formatAddress, getFormattedName } from "../utils";
 import GetPoliceStationModal from "./GetPoliceStationModal";
@@ -430,26 +429,6 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const partyDetails = selectedChannels.length === 0 ? formData[config.key]?.selectedChannels : selectedChannels;
   const { address, phone_numbers, email } = useMemo(() => party?.data || {}, [party?.data]);
 
-  const getRespondentPincodeDetails = useCallback(
-    async (pincode) => {
-      const pincodeData = await DRISTIService.getrepondentPincodeDetails(
-        {
-          Criteria: {
-            pincode: [pincode],
-          },
-
-          tenantId,
-        },
-        {}
-      );
-      if (pincodeData?.PostalHubs && Array.isArray(pincodeData.PostalHubs) && Boolean(pincodeData.PostalHubs.length)) {
-        return pincodeData.PostalHubs?.[0];
-      }
-      return null;
-    },
-    [tenantId]
-  );
-
   const getEPostAddress = useCallback(
     async (address = []) => {
       const policeStationIdMapping = [];
@@ -460,10 +439,6 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
           )?.value?.geoLocationDetails?.policeStation;
           policeStationIdMapping.push({ id: item?.id, policeStation: policeStationInOrderSaved || item?.geoLocationDetails?.policeStation });
           if (item?.pincode) {
-            // const verifiedPincode = await getRespondentPincodeDetails(item.pincode);
-            // if (Boolean(verifiedPincode)) {
-            //   return item;
-            // }
             return item;
           }
           return null;
@@ -493,23 +468,8 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
           .map((item) => item)
       );
     },
-    [email, getRespondentPincodeDetails, orderType, phone_numbers]
+    [email, orderType, phone_numbers]
   );
-
-  // const summonsPincode = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.address?.pincode, [filteredTasks]);
-
-  // const { data: respondentPincodeDetails, isLoading: isRespondentPincodeLoading } = Digit.Hooks.dristi.useRepondentPincodeDetails(
-  //   {
-  //     Criteria: [
-  //       {
-  //         pincode: [summonsPincode],
-  //       },
-  //     ],
-  //   },
-  //   {},
-  //   "dristi",
-  //   Boolean(filteredTasks)
-  // );
 
   useEffect(() => {
     if (address && Array.isArray(address)) {

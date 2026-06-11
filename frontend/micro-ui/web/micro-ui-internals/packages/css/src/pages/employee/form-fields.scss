@@ -2,7 +2,7 @@
     @apply w-full
 }
 
-@screen dt {
+@media (min-width: 780px) {
     .form-field{
         @apply w-1/2
     }

@@ -63,7 +63,7 @@ export const employeeActionsPermissionsMapping = [
   },
   {
     label: "RECORD_EXAMINATION_OF_ACCUSED",
-    requiredRoles: ["EXAMINATION_CREATOR", "EXAMINATION_EDITOR"], // TODO: update this when backend validation is done.
+    requiredRoles: ["EXAMINATION_CREATOR", "EXAMINATION_EDITOR"], // Align with backend validation when it is finalized.
   },
 ];
 

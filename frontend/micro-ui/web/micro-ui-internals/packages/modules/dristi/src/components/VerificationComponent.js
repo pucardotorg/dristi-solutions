@@ -8,6 +8,7 @@ import Modal from "./Modal";
 import RenderFileCard from "./RenderFileCard";
 import { CloseBtn, Heading } from "./ModalComponents";
 import { EXTENSION_TO_MIME } from "../Utils/constants";
+import PropTypes from "prop-types";
 function VerificationComponent({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) {
   const [{ showModal, verificationType, modalData, isAadharVerified }, setState] = useState({
     showModal: false,
@@ -261,5 +262,21 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
     </div>
   );
 }
+
+VerificationComponent.propTypes = {
+  clearErrors: PropTypes.func,
+  config: PropTypes.shape({
+    disable: PropTypes.bool,
+    key: PropTypes.string.isRequired,
+    populators: PropTypes.shape({
+      inputs: PropTypes.array,
+    }),
+  }).isRequired,
+  errors: PropTypes.object,
+  formData: PropTypes.object,
+  onSelect: PropTypes.func.isRequired,
+  setError: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired,
+};
 
 export default VerificationComponent;

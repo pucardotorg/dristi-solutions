@@ -1,20 +1,26 @@
+import PropTypes from "prop-types";
 import { TextArea } from "@egovernments/digit-ui-components";
-import React, { useEffect } from "react";
+import React from "react";
 import Modal from "./Modal";
 import { SubmitBar } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { DateUtils } from "../Utils";
 import { CloseBtn } from "./ModalComponents";
 
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.heading}</h1>;
+function TranscriptHeading({ heading }) {
+  return <h1 className="heading-m">{heading}</h1>;
+}
+
+TranscriptHeading.propTypes = {
+  heading: PropTypes.string.isRequired,
 };
+
 const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView = false }) => {
   const { t } = useTranslation();
 
   return (
     <Modal
-      headerBarMain={<Heading heading={judgeView ? t("BOTD_SUMMARIES") : t("ALL_BOTD_TRANSCRIPT")} />}
+      headerBarMain={<TranscriptHeading heading={judgeView ? t("BOTD_SUMMARIES") : t("ALL_BOTD_TRANSCRIPT")} />}
       headerBarEnd={<CloseBtn onClick={() => setShowAllTranscript(false)} />}
       actionCancelLabel={null}
       actionCancelOnSubmit={() => {}}
@@ -28,36 +34,26 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView
         {!botdOrderList?.length ? (
           <div style={{ marginTop: "20px" }}>{t("NO_BOTD_SUMMARY_AVAILABLE")}</div>
         ) : (
-          botdOrderList?.map((botdOrder, index) => (
-            <div key={index} style={{ paddingRight: "20px", marginTop: "15px" }}>
-              <div className="transcript-header" style={{ display: "flex", justifyContent: "space-between" }}>
-                <div style={{ marginLeft: "4px" }}>
-                  {botdOrder?.hearingNumber ? `${botdOrder?.hearingType ? t(botdOrder?.hearingType) : ""} ${t("BOTD")}` : t("BOTD")}
+          botdOrderList?.map((botdOrder, index) => {
+            const rowKey = botdOrder?.id ?? `${botdOrder?.hearingNumber ?? "h"}-${botdOrder?.createdDate ?? index}`;
+            return (
+              <div key={rowKey} style={{ paddingRight: "20px", marginTop: "15px" }}>
+                <div className="transcript-header" style={{ display: "flex", justifyContent: "space-between" }}>
+                  <div style={{ marginLeft: "4px" }}>
+                    {botdOrder?.hearingNumber ? `${botdOrder?.hearingType ? t(botdOrder?.hearingType) : ""} ${t("BOTD")}` : t("BOTD")}
+                  </div>
+                  <div style={{ marginRight: "8px" }}>{`${DateUtils.getFormattedDate(botdOrder?.createdDate)}`}</div>
                 </div>
-                <div style={{ marginRight: "8px" }}>{`${DateUtils.getFormattedDate(botdOrder?.createdDate)}`}</div>
+                <div>
+                  <TextArea
+                    style={{ width: "100%", height: "12vh", border: "solid 1px #3d3c3c", resize: "none" }}
+                    value={botdOrder?.businessOfTheDay || ""}
+                    readOnly
+                  />
+                </div>
               </div>
-              <div>
-                <TextArea
-                  style={{ width: "100%", height: "12vh", border: "solid 1px #3d3c3c", resize: "none" }}
-                  value={botdOrder?.businessOfTheDay || ""}
-                  readOnly
-                />
-              </div>
-
-              {/* {hearing?.attendees && hearing?.attendees?.length > 0 && (
-              <div style={{ border: "solid 1px rgb(61, 60, 60)", marginTop: "-5px", padding: "5px" }}>
-                <span>Attendees: </span>
-                <span style={{ whiteSpace: "normal", wordBreak: "normal" }}>
-                  {hearing?.attendees
-                    ?.filter((attendee) => attendee?.wasPresent)
-                    ?.map((attendee, index) => attendee?.name)
-                    ?.filter(Boolean)
-                    ?.join(", ")}
-                </span>
-              </div>
-            )} */}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
       <div className="submit-bar-div">
@@ -70,6 +66,12 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView
       </div>
     </Modal>
   );
+};
+
+ShowAllTranscriptModal.propTypes = {
+  setShowAllTranscript: PropTypes.func.isRequired,
+  botdOrderList: PropTypes.array,
+  judgeView: PropTypes.bool,
 };
 
 export default ShowAllTranscriptModal;

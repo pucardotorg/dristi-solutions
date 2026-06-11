@@ -83,27 +83,17 @@ const isMobileDevice = (options = {}) => {
   // Determine if it's a tablet
   const isTablet = isTabletUserAgent || (hasTouch && !isPhone && (screenWidth > maxWidth || screenHeight > maxWidth));
   
-  // Final mobile determination
-  let isMobile;
-  if (includeTablets) {
-    isMobile = isPhone || isTablet;
-  } else {
-    isMobile = isPhone;
+  // Final mobile determination (phone and/or tablet per includeTablets)
+  const fallbackMobileIndicators = [isSmallScreen, isSmallViewport, hasTouch && hasMobileAPIs, matchesMediaQuery].filter(Boolean).length >= 2;
+  const tabletIncludedMobile = includeTablets ? isPhone || isTablet : isPhone;
+
+  let isMobile = tabletIncludedMobile;
+
+  // Fallback detection when phone/tablet UA did not match
+  if (!isMobile && !isTablet && fallbackMobileIndicators) {
+    isMobile = true;
   }
-  
-  // Fallback detection using multiple indicators
-  if (!isMobile && !isTablet) {
-    const mobileIndicators = [
-      isSmallScreen,
-      isSmallViewport,
-      hasTouch && hasMobileAPIs,
-      matchesMediaQuery
-    ].filter(Boolean).length;
-    
-    // If we have multiple mobile indicators, likely mobile
-    isMobile = mobileIndicators >= 2;
-  }
-  
+
   // Determine device type
   let deviceType;
   if (isPhone) {

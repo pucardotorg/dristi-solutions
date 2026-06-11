@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { LabelFieldPair, CardHeader, CardLabelError } from "@egovernments/digit-ui-react-components";
 
 /**
@@ -25,8 +26,8 @@ const AttendanceSection = ({
         <CardHeader styles={{ fontSize: "16px", fontWeight: "bold" }}>{t("MARK_WHO_IS_PRESENT")}</CardHeader>
 
         <div className="checkbox-group">
-          {attendeesOptions?.map((option, index) => (
-            <div className="checkbox-item" key={index}>
+          {attendeesOptions?.map((option) => (
+            <div className="checkbox-item" key={`present-${option.code}`}>
               <input
                 id={`present-${option.code}`}
                 type="checkbox"
@@ -77,8 +78,8 @@ const AttendanceSection = ({
         <CardHeader styles={{ fontSize: "16px", fontWeight: "bold" }}>{t("MARK_WHO_IS_ABSENT")}</CardHeader>
 
         <div className="checkbox-group">
-          {attendeesOptions?.map((option, index) => (
-            <div className="checkbox-item" key={index}>
+          {attendeesOptions?.map((option) => (
+            <div className="checkbox-item" key={`absent-${option.code}`}>
               <input
                 id={`absent-${option.code}`}
                 type="checkbox"
@@ -128,6 +129,29 @@ const AttendanceSection = ({
       </LabelFieldPair>
     </React.Fragment>
   );
+};
+
+AttendanceSection.propTypes = {
+  absentAttendees: PropTypes.arrayOf(PropTypes.shape({ code: PropTypes.string })),
+  attendeesOptions: PropTypes.arrayOf(PropTypes.shape({ code: PropTypes.string, name: PropTypes.any })),
+  currentOrder: PropTypes.shape({
+    attendance: PropTypes.shape({
+      Absent: PropTypes.arrayOf(PropTypes.string),
+      Present: PropTypes.arrayOf(PropTypes.string),
+    }),
+  }),
+  ErrorAttendeesKey: PropTypes.string.isRequired,
+  errors: PropTypes.objectOf(
+    PropTypes.shape({
+      msg: PropTypes.string,
+    })
+  ),
+  presentAttendees: PropTypes.arrayOf(PropTypes.shape({ code: PropTypes.string })),
+  setAbsentAttendees: PropTypes.func.isRequired,
+  setCurrentOrder: PropTypes.func.isRequired,
+  setErrors: PropTypes.func.isRequired,
+  setPresentAttendees: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired,
 };
 
 export default AttendanceSection;

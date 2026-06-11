@@ -3,10 +3,10 @@ import axiosInstance from "./axiosInstance";
 export const setupRequestInterceptor = () => {
   axiosInstance.interceptors.request.use(
     (config) => {
-      const isFileStoreApi = config.url && config.url.includes("/filestore/v1/files/url");
+      const isFileStoreApi = Boolean(config.url?.includes("/filestore/v1/files/url"));
 
       if (isFileStoreApi) {
-        const fileStoreIds = config.params && config.params.fileStoreIds;
+        const fileStoreIds = config.params?.fileStoreIds;
 
         if (!fileStoreIds) {
           //This is getting called from DIGIT front end repo, and always give {} in response anyways,
@@ -26,7 +26,7 @@ export const setupRequestInterceptor = () => {
       }
 
       // Override apiId in RequestInfo to 'Dristi'
-      if (config.data && config.data.RequestInfo) {
+      if (config.data?.RequestInfo) {
         config.data.RequestInfo.apiId = "Dristi";
       }
       return config;

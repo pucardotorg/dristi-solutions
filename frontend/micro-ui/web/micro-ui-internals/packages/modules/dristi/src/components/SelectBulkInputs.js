@@ -1,5 +1,6 @@
 import { CardLabelError } from "@egovernments/digit-ui-components";
-import { Button, CardLabel, RemoveableTag, TextInput } from "@egovernments/digit-ui-react-components";
+import { Button, RemoveableTag, TextInput } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React, { useMemo, useState } from "react";
 
 function SelectBulkInputs({ t, config, onSelect, formData = {}, errors }) {
@@ -67,8 +68,9 @@ function SelectBulkInputs({ t, config, onSelect, formData = {}, errors }) {
   return inputs.map((input) => {
     const currentValue = (formData && formData[config.key] && formData[config.key].textfieldValue) || "";
     const chipList = (formData && formData[config.key] && formData[config.key][input.name]) || "";
+    const fieldError = errors?.[config?.key]?.[input.name];
     return (
-      <div className={`bulk-input-class ${input.className || ""}`} style={{ width: "100%" }}>
+      <div key={input.name} className={`bulk-input-class ${input.className || ""}`} style={{ width: "100%" }}>
         {!config?.disableScrutinyHeader && <h3 className="bulk-input-header">{t(input.label)}</h3>}
         <div className="bulk-input-main">
           <div className="input-main">
@@ -81,14 +83,8 @@ function SelectBulkInputs({ t, config, onSelect, formData = {}, errors }) {
               name={input.name}
               minlength={input?.validation?.minLength}
               maxlength={input?.validation?.maxLength}
-              // validation={input?.validation}
-              // ValidationRequired={input?.validation}
               title={input?.validation?.title}
               disable={input?.disable || config?.disable}
-              // textInputStyle={{ flex: 1 }}
-              // inputStyle={{ flex: 1, width: "100%" }}
-              // style={{ width: "100%" }}
-              //   inputRef={register(input?.validation)}
               isMandatory={errors[input?.name]}
             />
           </div>
@@ -101,36 +97,52 @@ function SelectBulkInputs({ t, config, onSelect, formData = {}, errors }) {
             }}
           />
         </div>
-        {errors?.[config?.key]?.[input.name] && (
-          <CardLabelError className={errors?.[config?.key]?.[input.name] && "error-text"} style={{ margin: 0, ...input?.errorStyle }}>
-            {t(errors?.[config?.key]?.[input.name] && errors?.[config?.key]?.[input.name])}
+        {fieldError && (
+          <CardLabelError className="error-text" style={{ margin: 0, ...input?.errorStyle }}>
+            {t(
+              typeof fieldError === "string"
+                ? fieldError
+                : fieldError?.message || fieldError?.msg || "CORE_REQUIRED_FIELD_ERROR"
+            )}
           </CardLabelError>
         )}
         {chipList?.length > 0 ? (
           <div className="tag-container" style={{ width: "100%" }}>
-            {chipList?.length > 0 &&
-              chipList?.map((value, index) => {
-                return (
-                  <RemoveableTag
-                    disabled={config?.disable || input?.disabled || input.isDisabled}
-                    extraStyles={{
-                      closeIconStyles: { fill: "#3D3C3C" },
-                      tagStyles: { background: "#E8E8E8", textAlign: "center", maxWidth: "100%" },
-                      textStyles: { display: "flex", alignItems: "center" },
-                    }}
-                    key={index}
-                    text={value}
-                    onClick={() => {
-                      handleRemove(value, input);
-                    }}
-                  />
-                );
-              })}
+            {chipList?.map((value) => (
+              <RemoveableTag
+                disabled={config?.disable || input?.disabled || input.isDisabled}
+                extraStyles={{
+                  closeIconStyles: { fill: "#3D3C3C" },
+                  tagStyles: { background: "#E8E8E8", textAlign: "center", maxWidth: "100%" },
+                  textStyles: { display: "flex", alignItems: "center" },
+                }}
+                key={`${input.name}-${value}`}
+                text={value}
+                onClick={() => {
+                  handleRemove(value, input);
+                }}
+              />
+            ))}
           </div>
         ) : null}
       </div>
     );
   });
 }
+
+SelectBulkInputs.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    disableScrutinyHeader: PropTypes.bool,
+    disable: PropTypes.bool,
+    populators: PropTypes.shape({
+      inputs: PropTypes.arrayOf(PropTypes.object),
+    }),
+  }).isRequired,
+  onSelect: PropTypes.func.isRequired,
+  formData: PropTypes.object,
+  errors: PropTypes.object,
+};
 
 export default SelectBulkInputs;

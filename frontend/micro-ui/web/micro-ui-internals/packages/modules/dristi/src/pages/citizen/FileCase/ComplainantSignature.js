@@ -630,7 +630,7 @@ const ComplainantSignature = ({ path }) => {
 
   const handleCasePdf = () => {
     const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Complaint`;
-    downloadPdf(tenantId, signatureDocumentId ? signatureDocumentId : DocumentFileStoreId, name);
+    downloadPdf(tenantId, signatureDocumentId || DocumentFileStoreId, name);
   };
 
   const getPlaceholder = () => {

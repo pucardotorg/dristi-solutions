@@ -36,7 +36,7 @@
     @apply text-body-s text-text-secondary mb-md;
 }
 
-@screen dt{
+@media (min-width: 780px) {
     .eventAddressAndDirection{
         @apply text-body-s-dt;
     }

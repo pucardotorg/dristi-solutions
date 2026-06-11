@@ -1,64 +1,70 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 import isEqual from "lodash/isEqual";
 import { useTranslation } from "react-i18next";
-import { Card, CardHeader, CardSubHeader, CardText } from "@egovernments/digit-ui-react-components";
+import { Card, CardSubHeader, CardText } from "@egovernments/digit-ui-react-components";
 
 const RadioButtons = (props) => {
   const { t } = useTranslation();
-  var selected = props.selectedOption;
+  const { selectedOption: selected, onSelect, options, optionsKey, isDependent, isPTFlow, disabled, name, inputRef, isRejected, inputStyle, style } =
+    props;
+
   function selectOption(value) {
-    //selected = value;
-    props.onSelect(value);
+    onSelect(value);
   }
+
   return (
-    <div style={props.style} className={`radio-wrap ${props?.additionalWrapperClass}`}>
-      {props?.options?.map((option, ind) => {
-        if (props?.optionsKey && !props?.isDependent) {
-          return (
-            <Card
-              style={{
-                ...props.style,
-              }}
-            >
-              <div className="card-button-wrap" key={ind}>
-                <span className="radio-btn-wrap" style={props && props.isRejected ? { pointerEvents: "none" } : {}}>
-                  <input
-                    className="radio-btn"
-                    type="radio"
-                    value={option}
-                    checked={(props.isPTFlow && selected?.code === option.code) || isEqual(selected, option) ? 1 : 0}
-                    onChange={() => selectOption(option)}
-                    disabled={props?.disabled}
-                    name={props.name}
-                    ref={props.inputRef}
-                  />
-                  <span className="radio-btn-checkmark"></span>
-                </span>
-                <div className="button-label-main">
-                  <CardSubHeader
-                    style={{
-                      marginLeft: "10px",
-                      fontSize: "24px",
-                      ...props.inputStyle,
-                    }}
-                  >
-                    {t(option[props.optionsKey])}
-                  </CardSubHeader>
-                  <CardText
-                    style={{
-                      marginLeft: "10px",
-                      fontSize: "16px",
-                      ...props.inputStyle,
-                    }}
-                  >
-                    {t(option["subText"])}
-                  </CardText>
-                </div>
-              </div>
-            </Card>
-          );
+    <div style={style} className={`radio-wrap ${props?.additionalWrapperClass ?? ""}`}>
+      {options?.map((option, ind) => {
+        if (!optionsKey || isDependent) {
+          return null;
         }
+        const optionKey = option?.[optionsKey] ?? option?.code ?? ind;
+        const isChecked = Boolean((isPTFlow && selected?.code === option.code) || isEqual(selected, option));
+        return (
+          <Card
+            key={String(optionKey)}
+            style={{
+              ...style,
+            }}
+          >
+            <div className="card-button-wrap">
+              <span className="radio-btn-wrap" style={isRejected ? { pointerEvents: "none" } : {}}>
+                <input
+                  className="radio-btn"
+                  type="radio"
+                  value={option}
+                  checked={isChecked}
+                  onChange={() => selectOption(option)}
+                  disabled={disabled}
+                  name={name}
+                  ref={inputRef}
+                />
+                <span className="radio-btn-checkmark" />
+              </span>
+              <div className="button-label-main">
+                <CardSubHeader
+                  style={{
+                    marginLeft: "10px",
+                    fontSize: "24px",
+                    ...inputStyle,
+                  }}
+                >
+                  {t(option[optionsKey])}
+                </CardSubHeader>
+                <CardText
+                  style={{
+                    marginLeft: "10px",
+                    fontSize: "16px",
+                    ...inputStyle,
+                  }}
+                >
+                  {t(option.subText)}
+                </CardText>
+              </div>
+            </div>
+          </Card>
+        );
       })}
     </div>
   );
@@ -67,12 +73,21 @@ const RadioButtons = (props) => {
 RadioButtons.propTypes = {
   selectedOption: PropTypes.any,
   onSelect: PropTypes.func,
-  options: PropTypes.any,
+  options: PropTypes.arrayOf(PropTypes.any),
   optionsKey: PropTypes.string,
-  innerStyles: PropTypes.any,
   style: PropTypes.any,
+  additionalWrapperClass: PropTypes.string,
+  disabled: PropTypes.bool,
+  isPTFlow: PropTypes.bool,
+  inputRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape({ current: PropTypes.any })]),
+  isRejected: PropTypes.any,
+  isDependent: PropTypes.bool,
+  inputStyle: PropTypes.object,
+  name: PropTypes.string,
 };
 
-RadioButtons.defaultProps = {};
+RadioButtons.defaultProps = {
+  additionalWrapperClass: "",
+};
 
 export default RadioButtons;

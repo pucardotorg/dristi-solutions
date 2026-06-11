@@ -7,17 +7,21 @@ const Breadcrumb = (props) => {
     <ol className={`bread-crumb ${props?.className ? props?.className : ""}`} style={props?.breadcrumbStyle}>
       {props?.crumbs?.map((crumb, ci) => {
         const { isLast } = crumb;
-        if (!crumb?.show) return;
+        if (!crumb?.show) return null;
         if (crumb?.isBack)
           return (
-            <li key={ci} style={{ ...props.style }} className="bread-crumb--item">
-              <span style={{ cursor: "pointer" }} onClick={() => window.history.back()}>
+            <li key={crumb.content || ci} style={{ ...props.style }} className="bread-crumb--item">
+              <button
+                type="button"
+                style={{ cursor: "pointer", background: "none", border: "none", padding: 0 }}
+                onClick={() => globalThis.history.back()}
+              >
                 {crumb.content}
-              </span>
+              </button>
             </li>
           );
         return (
-          <li key={ci} style={isLast ? { color: "#0B0C0C" } : { color: "#007E7E" }} className="bread-crumb--item">
+          <li key={crumb.path || ci} style={isLast ? { color: "#0B0C0C" } : { color: "#007E7E" }} className="bread-crumb--item">
             {isLast || !crumb?.path ? (
               <span style={props?.spanStyle ? { ...props?.spanStyle } : {}}>{crumb.content}</span>
             ) : (
@@ -40,10 +44,10 @@ const Breadcrumb = (props) => {
 
 Breadcrumb.propTypes = {
   crumbs: PropTypes.array,
-};
-
-Breadcrumb.defaultProps = {
-  successful: true,
+  className: PropTypes.string,
+  breadcrumbStyle: PropTypes.object,
+  style: PropTypes.object,
+  spanStyle: PropTypes.object,
 };
 
 export default Breadcrumb;

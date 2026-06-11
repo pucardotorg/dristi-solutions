@@ -1,12 +1,13 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
+import PropTypes from "prop-types";
 import { Calendar } from "react-date-range";
 import { CalendarLeftArrow, CalendarRightArrow } from "../icons/svgIndex";
 import { Button, CardHeader } from "@egovernments/digit-ui-react-components";
 
 function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCustomDate, tenantId, minDate, maxDate }) {
   const initialDate = selectedCustomDate ? new Date(selectedCustomDate) : new Date();
-  const [currentMonth, setCurrentMonth] = useState(initialDate); // State to track the current month
-  const [selectedDate, setSelectedDate] = useState(initialDate); // State to track the current month
+  const [currentMonth, setCurrentMonth] = useState(initialDate);
+  const [selectedDate, setSelectedDate] = useState(initialDate);
   const selectedMonth = useMemo(() => new Date(currentMonth).getMonth(), [currentMonth]);
   const selectedYear = useMemo(() => new Date(currentMonth).getFullYear(), [currentMonth]);
   const courtId = localStorage.getItem("courtId");
@@ -40,17 +41,6 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
   });
 
   const hearingDetails = useMemo(() => hearingResponse?.HearingList || null, [hearingResponse]);
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       await refetch(); // Call your refetch function from useGetHearings hook
-  //     } catch (error) {
-  //       console.error("Error refetching data:", error);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, [currentMonth, refetch]);
 
   const hearingCounts = useMemo(() => {
     const counts = {};
@@ -61,18 +51,8 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
       }
     });
 
-    // hearingDetails.forEach((hearing) => {
-    //   const dateObj = new Date(hearing.startTime);
-    //   const date = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(dateObj.getDate()).padStart(2, "0")}`;
-    //   counts[date] = counts[date] ? counts[date] + 1 : 1;
-    // });
-
     return counts;
   }, [hearingDetails]);
-
-  // const monthlyCount = useMemo(() => {
-  //   return Object.values(hearingCounts).reduce((sum, value) => sum + value, 0);
-  // }, [hearingCounts]);
 
   const selectedDateHearingCount = useMemo(() => {
     const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(
@@ -86,7 +66,7 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
   const renderCustomDay = (date) => {
     const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     const formattedDate = date.toLocaleDateString("en-GB");
-    const formattedForCheck = formattedDate.replace(/\//g, "-");
+    const formattedForCheck = formattedDate.replaceAll("/", "-");
     const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
     const hearingCount = hearingCounts[dateStr] || 0;
     return (
@@ -124,7 +104,7 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
     );
   };
 
-  const navigatorRenderer = (currentDate, changeShownDate, props) => {
+  const navigatorRenderer = (currentDate, changeShownDate) => {
     return (
       <div className="custom-navigator">
         <span>{currentDate.toLocaleDateString("default", { month: "long", year: "numeric" })}</span>
@@ -145,13 +125,12 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
       <div>
         <Calendar
           date={selectedCustomDate}
-          minDate={minDate && minDate}
-          maxDate={maxDate ? maxDate : new Date(2080, 11, 31)}
+          minDate={minDate}
+          maxDate={maxDate || new Date(2080, 11, 31)}
           onChange={(date) => {
             handleSelect(date);
             setSelectedDate(date);
           }}
-          // minDate={minDate}
           dayContentRenderer={renderCustomDay}
           navigatorRenderer={navigatorRenderer}
           onShownDateChange={(date) => {
@@ -170,5 +149,20 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
     </div>
   );
 }
+
+CustomCalendar.propTypes = {
+  config: PropTypes.shape({
+    showBottomBar: PropTypes.bool,
+    label: PropTypes.string,
+    buttonText: PropTypes.string,
+  }),
+  t: PropTypes.func,
+  handleSelect: PropTypes.func,
+  onCalendarConfirm: PropTypes.func,
+  selectedCustomDate: PropTypes.any,
+  tenantId: PropTypes.string,
+  minDate: PropTypes.instanceOf(Date),
+  maxDate: PropTypes.instanceOf(Date),
+};
 
 export default CustomCalendar;

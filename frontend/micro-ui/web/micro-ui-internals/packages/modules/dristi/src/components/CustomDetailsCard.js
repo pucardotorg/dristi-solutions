@@ -1,5 +1,5 @@
-import { Card } from "@egovernments/digit-ui-react-components";
 import React from "react";
+import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 
 const CustomDetailsCard = ({ header, subtext, serialNumber, subnote, style }) => {
@@ -81,6 +81,14 @@ const CustomDetailsCard = ({ header, subtext, serialNumber, subnote, style }) =>
       </div>
     </div>
   );
+};
+
+CustomDetailsCard.propTypes = {
+  header: PropTypes.string,
+  subtext: PropTypes.string,
+  serialNumber: PropTypes.string,
+  subnote: PropTypes.string,
+  style: PropTypes.object,
 };
 
 export default CustomDetailsCard;

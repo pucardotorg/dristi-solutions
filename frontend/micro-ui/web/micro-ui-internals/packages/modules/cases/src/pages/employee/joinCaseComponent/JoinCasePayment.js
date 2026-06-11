@@ -1,5 +1,6 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
+import PropTypes from "prop-types";
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import usePaymentProcess from "../../../../../home/src/hooks/usePaymentProcess";
@@ -60,7 +61,7 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
         label={t("CS_COMMON_NOTE")}
         style={{ backgroundColor: "#ECF3FD", marginBottom: "8px" }}
         additionalElements={[
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <div key="payment-popup-note" style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <span>{t("PLEASE_ALLOW_POPUP_PAYMENT")}</span>
           </div>,
         ]}
@@ -78,7 +79,7 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
           .filter((item) => !item.isTotalFee)
           .map((item, index) => (
             <div
-              key={index}
+              key={item.key ?? `payment-line-${index}`}
               style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -96,9 +97,9 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
       <div className="payment-calculator-wrapper" style={{ display: "flex", flexDirection: "column" }}>
         {paymentCalculation
           .filter((item) => item.isTotalFee)
-          .map((item, index) => (
+          .map((item) => (
             <div
-              key={paymentCalculation?.length}
+              key="payment-total-row"
               style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -123,7 +124,7 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
           label={t("CS_COMMON_NOTE")}
           style={{ backgroundColor: "#ECF3FD" }}
           additionalElements={[
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div key="offline-payment-note" style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <span>{t("CS_OFFLINE_PAYMENT_STEP_TEXT")}</span>
             </div>,
           ]}
@@ -169,6 +170,13 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
       {SurveyUI}
     </div>
   );
+};
+
+JoinCasePayment.propTypes = {
+  taskNumber: PropTypes.string,
+  setPendingTaskActionModals: PropTypes.func,
+  refetch: PropTypes.func,
+  type: PropTypes.string,
 };
 
 export default JoinCasePayment;

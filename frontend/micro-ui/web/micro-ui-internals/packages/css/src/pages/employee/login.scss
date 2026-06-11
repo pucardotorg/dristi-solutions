@@ -17,7 +17,7 @@
   padding: 7px;
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .employeeForgotPassword .employeeCard .field .field-container .component-in-front {
     padding: 7px;
   }

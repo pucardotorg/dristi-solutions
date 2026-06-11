@@ -60,7 +60,7 @@
   display: none;
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .filters-wrapper {
     display: flex;
   }

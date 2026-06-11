@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { Route, Switch, useRouteMatch } from "react-router-dom";
 import { loginConfig as defaultLoginConfig } from "./config";
@@ -10,17 +11,14 @@ const EmployeeLogin = ({ tenantsData, isTenantsDataLoading }) => {
   const [loginConfig, setloginConfig] = useState(defaultLoginConfig);
 
   const { data: mdmsData, isLoading } = Digit.Hooks.useCommonMDMS(Digit.ULBService.getStateId(), "commonUiConfig", ["LoginConfig"], {
-    select: (data) => {
-      return {
-        config: data?.commonUiConfig?.LoginConfig,
-      };
-    },
+    select: (data) => ({
+      config: data?.commonUiConfig?.LoginConfig,
+    }),
     retry: false,
   });
 
-  //let loginConfig = mdmsData?.config ? mdmsData?.config : defaultLoginConfig;
   useEffect(() => {
-    if (isLoading == false && mdmsData?.config) {
+    if (isLoading === false && mdmsData?.config) {
       setloginConfig(mdmsData?.config);
     }
   }, [mdmsData, isLoading]);
@@ -45,6 +43,11 @@ const EmployeeLogin = ({ tenantsData, isTenantsDataLoading }) => {
       </Route>
     </Switch>
   );
+};
+
+EmployeeLogin.propTypes = {
+  tenantsData: PropTypes.array,
+  isTenantsDataLoading: PropTypes.bool,
 };
 
 export default EmployeeLogin;

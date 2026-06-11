@@ -1,5 +1,6 @@
 import { Loader } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
+import PropTypes from "prop-types";
 import { useRouteMatch } from "react-router-dom";
 import AddressComponent from "./components/AddressComponent";
 import SelectComponents from "./components/SelectComponents";
@@ -35,7 +36,7 @@ import Login from "./pages/citizen/Login";
 import AdvocateClerkAdditionalDetail from "./pages/citizen/registration/AdvocateClerkAdditionalDetail";
 import CitizenResponse from "./pages/citizen/registration/Response";
 import Inbox from "./pages/employee/Inbox";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory } from "react-router-dom";
 import CustomRadioInfoComponent from "./components/CustomRadioInfoComponent";
 import Modal from "./components/Modal";
 import CustomCaseInfoDiv from "./components/CustomCaseInfoDiv";
@@ -147,6 +148,12 @@ export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   );
 };
 
+DRISTIModule.propTypes = {
+  stateCode: PropTypes.string,
+  tenants: PropTypes.arrayOf(PropTypes.shape({ code: PropTypes.string })),
+  userType: PropTypes.string,
+};
+
 const componentsToRegister = {
   ImageModal,
   SelectComponents,
@@ -188,7 +195,6 @@ const componentsToRegister = {
   MultiUploadWrapper,
   Button,
   CustomCopyTextDiv,
-  SelectCustomNote,
   UploadSignatureModal,
   DRISTIService,
   CustomChooseDate,

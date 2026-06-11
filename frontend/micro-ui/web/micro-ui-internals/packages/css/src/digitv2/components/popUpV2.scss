@@ -4,7 +4,7 @@
   z-index: 10000;
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .digit-popup-wrap {
     background: rgba(0, 0, 0, 0.7);
     @apply min-h-screen;

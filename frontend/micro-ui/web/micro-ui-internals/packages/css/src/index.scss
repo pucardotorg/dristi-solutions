@@ -27,7 +27,6 @@
 @import "./components/inputotp.scss";
 @import "./components/map.scss";
 @import "./pages/employee/tooltip.scss";
-@import "./components/menu.scss";
 @import "./components/submiterrors.scss";
 @import "./components/ratingstar.scss";
 @import "./components/keynote.scss";
@@ -137,7 +136,6 @@
 @import "../src/submissions/submissionApplication.scss";
 
 @import "./components/microplanning.scss";
-@import "./pages/employee/index.scss";
 @import "./pages/employee/evidenceheader.scss";
 @import "./pages/employee/hearingsidecard.scss";
 @import "./components/upcomingHearing.scss";
@@ -237,7 +235,7 @@ h6 {
   @apply hidden;
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .desktop-only {
     @apply block;
   }
@@ -247,7 +245,7 @@ h6 {
   @apply block;
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .mobile-only {
     @apply hidden;
   }

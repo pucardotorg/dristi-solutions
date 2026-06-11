@@ -1,5 +1,6 @@
 import { Card, CustomButton, SubmitBar } from "@egovernments/digit-ui-react-components";
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import Background from "../../../components/Background";
@@ -16,7 +17,7 @@ const LanguageSelection = ({ tenantsData }) => {
     Digit.LocalizationService.changeLanguage(language.value, stateInfo.code);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = () => {
     history.push(`/${window?.contextPath}/employee/user/login`);
   };
 
@@ -31,8 +32,8 @@ const LanguageSelection = ({ tenantsData }) => {
           <p>{t(tenantsData?.[0]?.state)}</p>
         </div>
         <div className="language-selector" style={{ justifyContent: "space-around", marginBottom: "24px", padding: "0 5%" }}>
-          {languages.map((language, index) => (
-            <div className="language-button-container" key={index}>
+          {languages.map((language) => (
+            <div className="language-button-container" key={language.value}>
               <CustomButton
                 selected={language.value === selected}
                 text={language.label}
@@ -45,6 +46,10 @@ const LanguageSelection = ({ tenantsData }) => {
       </Card>
     </Background>
   );
+};
+
+LanguageSelection.propTypes = {
+  tenantsData: PropTypes.array,
 };
 
 export default LanguageSelection;

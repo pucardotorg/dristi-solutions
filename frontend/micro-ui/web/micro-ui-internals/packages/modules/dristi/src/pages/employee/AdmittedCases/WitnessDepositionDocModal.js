@@ -1,7 +1,7 @@
 import { Loader } from "@egovernments/digit-ui-react-components";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { DRISTIService } from "../../../services";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";

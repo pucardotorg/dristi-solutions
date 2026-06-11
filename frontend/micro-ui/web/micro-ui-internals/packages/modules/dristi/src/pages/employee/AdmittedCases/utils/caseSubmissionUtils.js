@@ -22,7 +22,9 @@ export const handleAdmitDismissCaseOrder = async ({
       caseDetails?.courtCaseNumber ||
       caseDetails?.cmpNumber ||
       caseDetails?.filingNumber;
-    const orderType = type === "reject" ? "DISMISS_CASE" : type === "accept" ? "TAKE_COGNIZANCE" : null;
+    let orderType = null;
+    if (type === "reject") orderType = "DISMISS_CASE";
+    else if (type === "accept") orderType = "TAKE_COGNIZANCE";
     const formdata = {
       orderType: {
         code: orderType,

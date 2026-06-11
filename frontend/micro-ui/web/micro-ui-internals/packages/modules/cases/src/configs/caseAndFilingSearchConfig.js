@@ -56,7 +56,6 @@ export const caseAndFilingSearchConfig = () => {
               populators: {
                 name: "caseNumber",
                 error: "Should not be empty",
-                // validation: { pattern: /^[A-Za-z]+$/i }
                 // validation: {
                 //     // pattern: /^[A-Za-z]+$/,
                 //     // required: true, // Ensures the field is not empty

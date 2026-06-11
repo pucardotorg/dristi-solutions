@@ -63,20 +63,6 @@ function ScheduleNextHearing({
   isCaseAdmitted = false,
   showPurposeOfHearing = false,
 }) {
-  const getSuggestedDates = (dateResponse) => {
-    if (dateResponse?.Hearings?.[0]?.suggestedDates && dateResponse?.Hearings?.[0]?.availableDates) {
-      return dateResponse?.Hearings?.[0]?.suggestedDates;
-    }
-    return [];
-  };
-
-  const getAvailableDates = (dateResponse) => {
-    if (dateResponse?.Hearings?.[0]?.suggestedDates && dateResponse?.Hearings?.[0]?.availableDates) {
-      return dateResponse?.Hearings?.[0]?.availableDates;
-    }
-    return [];
-  };
-
   const fetchBasicUserInfo = async () => {
     const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
       {
@@ -93,7 +79,7 @@ function ScheduleNextHearing({
   };
 
   const { filingNumber, status } = Digit.Hooks.useQueryParams();
-  const [selectedChip, setSelectedChip] = React.useState(null);
+  const [selectedChip] = React.useState(null);
   const [scheduleHearingParams, setScheduleHearingParam] = useState({ purpose: "Admission Purpose" });
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const location = useLocation();
@@ -138,7 +124,7 @@ function ScheduleNextHearing({
   const caseDetails = useMemo(() => caseData?.criteria[0]?.responseList[0], [caseData]);
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
 
-  const { data: dateResponse } = Digit.Hooks.home.useSearchReschedule(
+  Digit.Hooks.home.useSearchReschedule(
     {
       SearchCriteria: {
         tenantId: Digit.ULBService.getCurrentTenantId(),

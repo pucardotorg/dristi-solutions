@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { FSOErrorIcon } from "../icons/svgIndex";
 
 function ScrutinyInfo({ config, t }) {
@@ -12,5 +13,15 @@ function ScrutinyInfo({ config, t }) {
     </div>
   );
 }
+
+ScrutinyInfo.propTypes = {
+  config: PropTypes.shape({
+    populators: PropTypes.shape({
+      isWarning: PropTypes.bool,
+      scrutinyMessage: PropTypes.string.isRequired,
+    }).isRequired,
+  }).isRequired,
+  t: PropTypes.func.isRequired,
+};
 
 export default ScrutinyInfo;

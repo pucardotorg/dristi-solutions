@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { LabelFieldPair, CardLabel, CardLabelError, CustomDropdown, CardSectionHeader } from "@egovernments/digit-ui-react-components";
 import SelectCustomNote from "./SelectCustomNote";
 
@@ -9,7 +10,7 @@ const extractValue = (data, key) => {
   const keyParts = key?.split(".");
   let value = data;
   keyParts?.forEach((part) => {
-    if (value && value?.hasOwnProperty(part)) {
+    if (value && Object.hasOwn(value, part)) {
       value = value[part];
     } else {
       value = undefined;
@@ -55,35 +56,61 @@ const CustomRadioInfoComponent = ({ t, config, onSelect, formData = {}, errors, 
           : extractValue(formData, config?.noteDependentOn) && <SelectCustomNote t={t} config={config?.notes} onClick={() => {}} />)}
       <CardSectionHeader style={{ margin: "5px 0px" }}>{t(config.head)}</CardSectionHeader>
       <div className="select-user-type-component">
-        <React.Fragment>
-          <LabelFieldPair>
-            {!config?.disableScrutinyHeader && (
-              <CardLabel className="card-label-smaller" style={{ display: "flex", ...config?.labelStyles }}>
-                {t(config.label)}
-              </CardLabel>
-            )}
+        <LabelFieldPair>
+          {!config?.disableScrutinyHeader && (
+            <CardLabel className="card-label-smaller" style={{ display: "flex", ...config?.labelStyles }}>
+              {t(config.label)}
+            </CardLabel>
+          )}
 
-            <div className="field">
-              <CustomDropdown
-                t={t}
-                label={config?.populators?.label}
-                type={"radio"}
-                value={formData?.[config.key] || {}}
-                onChange={(e) => {
-                  setValue(e, config.name);
-                }}
-                config={config.populators}
-                errorStyle={errors?.[config.name]}
-                disable={config?.disable}
-                additionalWrapperClass={config?.disable && "radio-disabled"}
-              />
-              {errors[config.name] && <CardLabelError>{t(config.error)}</CardLabelError>}
-            </div>
-          </LabelFieldPair>
-        </React.Fragment>
+          <div className="field">
+            <CustomDropdown
+              t={t}
+              label={config?.populators?.label}
+              type={"radio"}
+              value={formData?.[config.key] || {}}
+              onChange={(e) => {
+                setValue(e, config.name);
+              }}
+              config={config.populators}
+              errorStyle={errors?.[config.name]}
+              disable={config?.disable}
+              additionalWrapperClass={config?.disable && "radio-disabled"}
+            />
+            {errors?.[config.name] && <CardLabelError>{t(config.error)}</CardLabelError>}
+          </div>
+        </LabelFieldPair>
       </div>
     </div>
   );
+};
+
+CustomRadioInfoComponent.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    key: PropTypes.string,
+    name: PropTypes.string,
+    head: PropTypes.string,
+    label: PropTypes.string,
+    error: PropTypes.string,
+    isProfileEdit: PropTypes.bool,
+    resetFormData: PropTypes.bool,
+    disableScrutinyHeader: PropTypes.bool,
+    disable: PropTypes.bool,
+    notes: PropTypes.object,
+    noteDependentOn: PropTypes.string,
+    noteDependentOnValue: PropTypes.any,
+    populators: PropTypes.shape({
+      label: PropTypes.string,
+    }),
+    labelStyles: PropTypes.object,
+  }).isRequired,
+  onSelect: PropTypes.func.isRequired,
+  formData: PropTypes.object,
+  errors: PropTypes.object,
+  formState: PropTypes.object,
+  control: PropTypes.object,
+  setError: PropTypes.func,
 };
 
 export default CustomRadioInfoComponent;

@@ -1,25 +1,16 @@
+import PropTypes from "prop-types";
 import React from "react";
-import { useTranslation } from "react-i18next";
 import { AppModules } from "../../../components/AppModules";
 
-const CitizenApp = ({
-  stateInfo,
-  userDetails,
-  CITIZEN,
-  cityDetails,
-  mobileView,
-  handleUserDropdownSelection,
-  logoUrl,
-  DSO,
-  stateCode,
-  modules,
-  appTenants,
-  sourceUrl,
-  pathname,
-}) => {
-  const { t } = useTranslation();
-
+/** Alternate citizen entry reused by legacy routes; forwards to shared module mounting. */
+const CitizenAllServices = ({ stateCode, modules, appTenants }) => {
   return <AppModules stateCode={stateCode} userType="citizen" modules={modules} appTenants={appTenants} />;
 };
 
-export default CitizenApp;
+CitizenAllServices.propTypes = {
+  stateCode: PropTypes.string,
+  modules: PropTypes.arrayOf(PropTypes.any),
+  appTenants: PropTypes.arrayOf(PropTypes.any),
+};
+
+export default CitizenAllServices;

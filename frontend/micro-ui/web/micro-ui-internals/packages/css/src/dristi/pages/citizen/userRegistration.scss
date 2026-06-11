@@ -77,7 +77,7 @@
     }
     .card-text {
       margin: 0px;
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 19px;
       font-weight: 400;
       line-height: 28.5px;
@@ -115,7 +115,7 @@
         margin: 0px !important;
         .card-section-header:first-child {
           margin: 0px !important;
-          font-family: Roboto !important;
+          font-family: Roboto, sans-serif !important;
           font-size: 24px !important;
           font-weight: 700 !important;
           line-height: 30px !important;
@@ -125,7 +125,7 @@
         }
         .card-section-header:nth-child(2) {
           margin: 0px !important;
-          font-family: Roboto !important;
+          font-family: Roboto, sans-serif !important;
           font-size: 16px !important;
           font-weight: 400 !important;
           line-height: 24px !important;
@@ -173,7 +173,7 @@
         margin: 0px !important;
         .card-header {
           margin: 0px;
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 40px;
           font-weight: 700;
           line-height: 30px;
@@ -183,7 +183,7 @@
         }
         .card-text {
           margin: 0px;
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 16px;
           font-weight: 400;
           line-height: 24px;
@@ -195,7 +195,7 @@
           h2 {
             margin: 0px;
             padding-bottom: 8px;
-            font-family: Roboto;
+            font-family: Roboto, sans-serif;
             font-size: 16px;
             font-weight: 400;
             line-height: 18.75px;
@@ -226,7 +226,7 @@
         justify-content: center;
         gap: 4px;
         margin: 0px;
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 400;
         line-height: 24px;
@@ -295,7 +295,7 @@
         }
         .card-section-header:nth-child(2) {
           margin: 0px;
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 14px !important;
           font-weight: 400 !important;
           line-height: 21px;
@@ -306,7 +306,7 @@
         .label-field-pair {
           .field {
             h2 {
-              font-family: Roboto;
+              font-family: Roboto, sans-serif;
               font-size: 16px;
               font-weight: 400;
               line-height: 18.75px;
@@ -352,7 +352,7 @@
 
         .label-field-pair {
           .card-header {
-            font-family: Roboto;
+            font-family: Roboto, sans-serif;
             font-size: 24px;
             font-weight: 700;
             line-height: 30px;
@@ -364,7 +364,7 @@
           .card-text {
             margin: 0px;
             padding-top: 8px;
-            font-family: Roboto;
+            font-family: Roboto, sans-serif;
             font-size: 14px;
             font-weight: 400 !important;
             line-height: 24px;
@@ -402,7 +402,7 @@
                 align-items: flex-start;
                 .card-sub-header {
                   margin: 0px !important;
-                  font-family: Roboto;
+                  font-family: Roboto, sans-serif;
                   font-size: 16px !important;
                   font-weight: 500;
                   line-height: 18.75px;
@@ -413,7 +413,7 @@
                 .card-text {
                   margin: 0px !important;
                   padding: 0px !important;
-                  font-family: Roboto;
+                  font-family: Roboto, sans-serif;
                   font-size: 14px !important;
                   font-weight: 400;
                   line-height: 20px;
@@ -443,7 +443,7 @@
         padding: 0px !important;
 
         .card-section-header {
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 24px;
           font-weight: 700;
           line-height: 30px;
@@ -454,7 +454,7 @@
 
         .card-label {
           width: 100%;
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 16px;
           font-weight: 400;
           line-height: 18.75px;
@@ -511,7 +511,7 @@
         display: flex;
         align-items: center;
         .card-header {
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 24px;
           font-weight: 700;
           line-height: 30px;
@@ -521,7 +521,7 @@
         }
         .card-text {
           width: 75%;
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 14px;
           font-weight: 400;
           line-height: 21px;
@@ -533,7 +533,7 @@
           width: 100%;
           .card-label {
             margin: 32px 0px 8px 0px;
-            font-family: Roboto;
+            font-family: Roboto, sans-serif;
             font-size: 16px;
             font-weight: 400;
             line-height: 18.75px;
@@ -589,7 +589,7 @@
       h1 {
         padding: 28px 0px 0px;
         margin: 0px;
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 24px;
         font-weight: 700;
         line-height: 28.13px;
@@ -599,7 +599,7 @@
 
       p {
         margin: 0px;
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 14px;
         font-weight: 400;
         line-height: 24px;
@@ -636,7 +636,7 @@
             margin: 0px;
             margin-bottom: 32px;
             margin-top: 16px;
-            font-family: Roboto;
+            font-family: Roboto, sans-serif;
             font-size: 14px;
             font-weight: 400;
             line-height: 24px;
@@ -694,7 +694,7 @@ body {
     align-items: center !important;
     flex-direction: column;
     .card-section-header {
-      font-family: Roboto !important;
+      font-family: Roboto, sans-serif !important;
       font-size: 24px !important;
       font-weight: 700 !important;
       line-height: 30px !important;
@@ -705,7 +705,7 @@ body {
     }
     #select-name-subtext_DES {
       width: 75% !important;
-      font-family: Roboto !important;
+      font-family: Roboto, sans-serif !important;
       font-size: 14px !important;
       font-weight: 400 !important;
       line-height: 21px !important;
@@ -717,7 +717,7 @@ body {
       width: 100%;
       .card-label {
         margin: 32px 0px 8px 0px;
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 400;
         line-height: 18.75px;
@@ -757,7 +757,7 @@ body {
     padding: 0px;
     align-items: center;
     .card-section-header {
-      font-family: Roboto !important;
+      font-family: Roboto, sans-serif !important;
       font-size: 24px;
       font-weight: 700;
       line-height: 30px !important;
@@ -768,7 +768,7 @@ body {
     }
     #select-name-subtext_DES {
       width: 75%;
-      font-family: Roboto !important;
+      font-family: Roboto, sans-serif !important;
       font-size: 14px !important;
       font-weight: 400 !important;
       line-height: 21px !important;
@@ -780,7 +780,7 @@ body {
       width: 100%;
       .card-label {
         margin: 32px 0px 8px 0px;
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 400;
         line-height: 18.75px;

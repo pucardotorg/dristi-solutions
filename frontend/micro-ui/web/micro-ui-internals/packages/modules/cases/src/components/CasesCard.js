@@ -3,15 +3,12 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 
 const CasesCard = () => {
-
   const { t } = useTranslation();
 
   const propsForModuleCard = {
     Icon: <PropertyHouse />,
     moduleName: t("Cases"),
-    kpis: [
-
-    ],
+    kpis: [],
     links: [
       {
         label: t("Join Case"),
@@ -32,14 +29,11 @@ const CasesCard = () => {
       {
         label: t("Advocate join-case"),
         link: `/${window?.contextPath}/employee/cases/advocate-join-case`,
-      }
-    
-      
+      },
     ],
   };
 
-  return <div />;
-  // return <EmployeeModuleCard {...propsForModuleCard} />;
+  return <EmployeeModuleCard {...propsForModuleCard} />;
 };
 
 export default CasesCard;

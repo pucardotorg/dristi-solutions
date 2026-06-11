@@ -1,5 +1,6 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
-import React, { useState, useMemo, useEffect } from "react";
+import PropTypes from "prop-types";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import Modal from "./Modal";
 import { Button } from "@egovernments/digit-ui-react-components";
 import { FileUploadIcon } from "../icons/svgIndex";
@@ -33,7 +34,7 @@ function ESignSignatureModal({
 
   const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
-  const onSelect = (key, value) => {
+  const onSelect = useCallback((key, value) => {
     if (value?.Signature === null) {
       setFormData({});
       setIsSigned(false);
@@ -44,7 +45,7 @@ function ESignSignatureModal({
       }));
     }
     setFileUploadError(null);
-  };
+  }, []);
 
   const onSubmit = async (combineResult) => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
@@ -55,7 +56,6 @@ function ESignSignatureModal({
         setIsSigned(true);
         setOpenUploadSignatureModal(false);
       } catch (error) {
-        console.error("error", error);
         setFormData({});
         const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("CS_ESIGN_ERROR"), error: true, errorId });
@@ -67,7 +67,7 @@ function ESignSignatureModal({
 
   useEffect(() => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
-  }, [checkSignStatus]);
+  }, [checkSignStatus, name, formData, uploadModalConfig, onSelect, setIsSigned]);
 
   const saveFileToLocalStorage = (docData) => {
     const file = docData?.file;
@@ -99,7 +99,36 @@ function ESignSignatureModal({
     }
   };
 
-  return !openUploadSignatureModal ? (
+  const toastOverlay = showToast ? (
+    <CustomToast
+      error={showToast?.error}
+      label={showToast?.label}
+      errorId={showToast?.errorId}
+      onClose={() => setShowToast(null)}
+      duration={showToast?.errorId ? 7000 : 5000}
+    />
+  ) : null;
+
+  if (openUploadSignatureModal) {
+    return (
+      <React.Fragment>
+        <UploadModal
+          t={t}
+          key={name}
+          name={name}
+          setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+          onSelect={onSelect}
+          formData={formData}
+          onSubmit={onSubmit}
+          fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
+        />
+        {toastOverlay}
+      </React.Fragment>
+    );
+  }
+
+  return (
     <Modal
       headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
       headerBarEnd={<CloseBtn onClick={handleGoBackSignatureModal} />}
@@ -117,7 +146,7 @@ function ESignSignatureModal({
           variant={"default"}
           label={t("PLEASE_NOTE")}
           additionalElements={[
-            <p>
+            <p key="esign-signature-note">
               {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")} <span style={{ fontWeight: "bold" }}>{t(`${doctype}`)}</span>
             </p>,
           ]}
@@ -126,15 +155,18 @@ function ESignSignatureModal({
           className={`custom-info-card`}
         />
 
-        {!isSigned ? (
+        {isSigned ? (
+          <div className="signed">
+            <h1>{t("YOUR_SIGNATURE")}</h1>
+            <h2>{t("SIGNED")}</h2>
+          </div>
+        ) : (
           <div className="not-signed">
             <h1>{t("YOUR_SIGNATURE")}</h1>
             <div className="sign-button-wrap">
               <Button
                 label={t("CS_ESIGN")}
                 onButtonClick={() => {
-                  // setOpenAadharModal(true);
-                  // setIsSigned(true);
                   sessionStorage.setItem("docSubmission", JSON.stringify(documentSubmission));
                   sessionStorage.setItem("formUploadData", JSON.stringify(formUploadData));
                   saveFileToLocalStorage(formUploadData?.SelectUserTypeComponent?.doc?.[0]?.[1]);
@@ -148,7 +180,6 @@ function ESignSignatureModal({
                 label={t("UPLOAD_DIGITAL_SIGN_CERTI")}
                 onButtonClick={() => {
                   setOpenUploadSignatureModal(true);
-                  // setOpenUploadSignatureModal(true);
                 }}
                 className={"upload-signature"}
                 labelClassName={"upload-signature-label"}
@@ -165,46 +196,26 @@ function ESignSignatureModal({
               ></AuthenticatedLink>
             </div>
           </div>
-        ) : (
-          <div className="signed">
-            <h1>{t("YOUR_SIGNATURE")}</h1>
-            <h2>{t("SIGNED")}</h2>
-          </div>
         )}
       </div>
-      {showToast && (
-        <CustomToast
-          error={showToast?.error}
-          label={showToast?.label}
-          errorId={showToast?.errorId}
-          onClose={() => setShowToast(null)}
-          duration={showToast?.errorId ? 7000 : 5000}
-        />
-      )}
+      {toastOverlay}
     </Modal>
-  ) : (
-    <React.Fragment>
-      <UploadModal
-        t={t}
-        key={name}
-        name={name}
-        onClose={() => setOpenUploadSignatureModal(false)}
-        onSelect={onSelect}
-        formData={formData}
-        onSubmit={onSubmit}
-        fileUploadError={fileUploadError}
-      />
-      {showToast && (
-        <CustomToast
-          error={showToast?.error}
-          label={showToast?.label}
-          errorId={showToast?.errorId}
-          onClose={() => setShowToast(null)}
-          duration={showToast?.errorId ? 7000 : 5000}
-        />
-      )}
-    </React.Fragment>
   );
 }
+
+ESignSignatureModal.propTypes = {
+  documentSubmission: PropTypes.any,
+  doctype: PropTypes.string,
+  formUploadData: PropTypes.shape({
+    SelectUserTypeComponent: PropTypes.shape({
+      doc: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.any)),
+    }),
+  }),
+  handleGoBackSignatureModal: PropTypes.func.isRequired,
+  handleIssueOrder: PropTypes.func.isRequired,
+  saveOnsubmitLabel: PropTypes.string,
+  setSignedDocumentUploadID: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired,
+};
 
 export default ESignSignatureModal;

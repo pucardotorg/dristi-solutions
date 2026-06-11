@@ -1,8 +1,8 @@
+import PropTypes from "prop-types";
 import React from "react";
 import Modal from "./Modal";
 import { Loader, TextArea } from "@egovernments/digit-ui-react-components";
 import SelectCustomNote from "./SelectCustomNote";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { sanitizeData } from "../Utils";
 import { CloseBtn, Heading } from "./ModalComponents";
 
@@ -25,9 +25,6 @@ function SendCaseBackModal({
     setComment(newValue);
   };
 
-  
-  const history = useHistory();
-  
   const textAreaHeader = {
     registerCase: t("COMMENTS_FOR_JUDGE"),
     sendCaseBack: t("COMMENTS_FOR_SEND_BACK"),
@@ -56,7 +53,13 @@ function SendCaseBackModal({
       headerBarEnd={
         <CloseBtn
           onClick={() => {
-            if (!loading) handleCloseModal ? handleCloseModal() : onCancel();
+            if (!loading) {
+              if (handleCloseModal) {
+                handleCloseModal();
+              } else {
+                onCancel();
+              }
+            }
           }}
         />
       }
@@ -79,7 +82,11 @@ function SendCaseBackModal({
               config={nodeConfig}
               t={t}
               onClick={() => {
-                handleCloseModal ? handleCloseModal() : onCancel();
+                if (handleCloseModal) {
+                  handleCloseModal();
+                } else {
+                  onCancel();
+                }
               }}
             />
           </div>
@@ -101,5 +108,20 @@ function SendCaseBackModal({
     </Modal>
   );
 }
+
+SendCaseBackModal.propTypes = {
+  loading: PropTypes.bool,
+  comment: PropTypes.string,
+  setComment: PropTypes.func.isRequired,
+  totalErrors: PropTypes.number,
+  onCancel: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired,
+  heading: PropTypes.string.isRequired,
+  type: PropTypes.string.isRequired,
+  actionCancelLabel: PropTypes.string.isRequired,
+  actionSaveLabel: PropTypes.string.isRequired,
+  handleCloseModal: PropTypes.func,
+};
 
 export default SendCaseBackModal;

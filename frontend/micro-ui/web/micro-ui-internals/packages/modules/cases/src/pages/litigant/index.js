@@ -1,14 +1,13 @@
 import { AppContainer, BreadCrumb, PrivateRoute } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Switch } from "react-router-dom";
+import { Switch, useLocation } from "react-router-dom";
 import JoinCaseHome from "./JoinCaseHome";
-import caseAndFilingSearch from "../employee/CaseAndFilingSearch";
-import CasesResponse from "./CasesResponse";
-import CasesCreate from "./CasesCreate";
-import CasesSearch from "./CasesSearch";
+
 const bredCrumbStyle = { maxWidth: "min-content" };
-const ProjectBreadCrumb = ({ location }) => {
+
+function ProjectBreadCrumb({ location }) {
   const { t } = useTranslation();
   const crumbs = [
     {
@@ -23,19 +22,31 @@ const ProjectBreadCrumb = ({ location }) => {
     },
   ];
   return <BreadCrumb crumbs={crumbs} spanStyle={bredCrumbStyle} />;
+}
+
+ProjectBreadCrumb.propTypes = {
+  location: PropTypes.shape({
+    pathname: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 const App = ({ path, stateCode, userType, tenants }) => {
+  const location = useLocation();
   return (
     <Switch>
       <AppContainer className="ground-container">
-        <React.Fragment>
-          <ProjectBreadCrumb location={location} />
-        </React.Fragment>
-        <PrivateRoute path={`${path}/join-case`} component={() => <JoinCaseHome></JoinCaseHome>} />
+        <ProjectBreadCrumb location={location} />
+        <PrivateRoute path={`${path}/join-case`} component={JoinCaseHome} />
       </AppContainer>
     </Switch>
   );
+};
+
+App.propTypes = {
+  path: PropTypes.string.isRequired,
+  stateCode: PropTypes.string,
+  userType: PropTypes.string,
+  tenants: PropTypes.array,
 };
 
 export default App;

@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import React, { useMemo, useState } from "react";
 import { LabelFieldPair, CardLabel, TextInput, CardLabelError, CustomDropdown } from "@egovernments/digit-ui-react-components";
 import MultiUploadWrapper from "./MultiUploadWrapper";
@@ -143,6 +144,24 @@ const IdProofUploadComponent = ({ t, config, onSelect, formData = {}, errors, fo
       })}
     </React.Fragment>
   );
+};
+
+const idProofConfigPropType = PropTypes.shape({
+  key: PropTypes.string.isRequired,
+  populators: PropTypes.shape({
+    inputs: PropTypes.arrayOf(PropTypes.object),
+  }),
+});
+
+IdProofUploadComponent.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: idProofConfigPropType.isRequired,
+  onSelect: PropTypes.func.isRequired,
+  formData: PropTypes.object,
+  errors: PropTypes.object,
+  formState: PropTypes.object,
+  control: PropTypes.object,
+  setError: PropTypes.func,
 };
 
 export default IdProofUploadComponent;

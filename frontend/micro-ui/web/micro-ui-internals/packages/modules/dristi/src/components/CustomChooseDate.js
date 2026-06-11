@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { formatDateInMonth } from "../Utils";
 
 function isEpoch(item) {
@@ -21,18 +22,31 @@ const Chip = ({ label, isSelected, handleClick, item, isDisabled }) => {
   };
 
   return (
-    <div style={chipStyle} onClick={() => !isDisabled && handleClick(isEpoch(item) ? item : label)}>
+    <button
+      type="button"
+      style={{ ...chipStyle, background: "none", border: chipStyle.border }}
+      disabled={isDisabled}
+      onClick={() => !isDisabled && handleClick(isEpoch(item) ? item : label)}
+    >
       {label}
-    </div>
+    </button>
   );
+};
+
+Chip.propTypes = {
+  label: PropTypes.string,
+  isSelected: PropTypes.bool,
+  handleClick: PropTypes.func,
+  item: PropTypes.any,
+  isDisabled: PropTypes.bool,
 };
 
 const CustomChooseDate = ({ data, selectedChip, handleClick, scheduleHearingParams, isSelectMulti = false, enabledData }) => {
   return (
     <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", border: "1px solid lightgrey", padding: "10px", marginBottom: "10px" }}>
-      {data.map((item, index) => (
+      {data.map((item) => (
         <Chip
-          key={index}
+          key={item}
           label={isEpoch(item) ? formatDateInMonth(convertEpochToDate(item)) : item}
           item={item}
           isSelected={isSelectMulti ? selectedChip.includes(item) : selectedChip === item}
@@ -42,6 +56,15 @@ const CustomChooseDate = ({ data, selectedChip, handleClick, scheduleHearingPara
       ))}
     </div>
   );
+};
+
+CustomChooseDate.propTypes = {
+  data: PropTypes.array,
+  selectedChip: PropTypes.any,
+  handleClick: PropTypes.func,
+  scheduleHearingParams: PropTypes.any,
+  isSelectMulti: PropTypes.bool,
+  enabledData: PropTypes.array,
 };
 
 export default CustomChooseDate;

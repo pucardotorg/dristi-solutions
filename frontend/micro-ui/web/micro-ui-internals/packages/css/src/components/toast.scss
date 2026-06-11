@@ -28,7 +28,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .toast-success {
     right: 16px;
     bottom: 64px;
@@ -76,7 +76,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .success-toast {
     right: 20px;
     bottom: 22px;

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import { Redirect, Route, Switch, useHistory, useLocation } from "react-router-dom";
 import CitizenApp from "./pages/citizen";
 import EmployeeApp from "./pages/employee";
@@ -39,9 +40,7 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
   const { stateInfo } = storeData || {};
 
   const DSO = Digit.UserService.hasAccess(["FSM_DSO"]);
-  let CITIZEN = userDetails?.info?.type === "CITIZEN" || !window.location.pathname.split("/").includes("employee") ? true : false;
-
-  if (window.location.pathname.split("/").includes("employee")) CITIZEN = false;
+  const CITIZEN = !pathname.split("/").includes("employee");
 
   useEffect(() => {
     if (!pathname?.includes("application-details")) {
@@ -171,4 +170,13 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
       </Route>
     </Switch>
   );
+};
+
+DigitApp.propTypes = {
+  stateCode: PropTypes.string,
+  modules: PropTypes.arrayOf(PropTypes.any),
+  appTenants: PropTypes.arrayOf(PropTypes.any),
+  logoUrl: PropTypes.string,
+  initData: PropTypes.object,
+  defaultLanding: PropTypes.string,
 };

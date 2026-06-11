@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import PropTypes from "prop-types";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 function splitStringIntoChunks(numberString) {
   const chunks = [];
@@ -12,25 +13,27 @@ function splitStringIntoChunks(numberString) {
 }
 
 const AadhaarInput = (props) => {
-  const { formData = {}, onSelect, config, t, value } = props;
+  const { formData = {}, onSelect, config } = props;
 
-  const [boxCount, setboxCount] = useState(() => setInitialboxCount());
+  const [boxCount, setboxCount] = useState(() => {
+    const slice = formData?.[config.key]?.aadharNumber;
+    if (slice) {
+      return splitStringIntoChunks(slice);
+    }
+    return ["", "", ""];
+  });
   const [focusedInput, setFocusedInput] = useState(null);
-  const inputRefs = [useRef(), useRef(), useRef()];
-  const inputs = useMemo(() => config?.populators?.inputs, [config?.populators?.inputs]);
-
-  function setInitialboxCount() {
-    if (formData && formData[config.key].aadharNumber) {
-      return splitStringIntoChunks(formData[config.key].aadharNumber);
-    } else return ["", "", ""];
-  }
+  const inputRef0 = useRef(null);
+  const inputRef1 = useRef(null);
+  const inputRef2 = useRef(null);
+  const inputRefs = useMemo(() => [inputRef0, inputRef1, inputRef2], []);
+  const inputs = useMemo(() => config?.populators?.inputs ?? [], [config?.populators?.inputs]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!inputRefs?.some((ref) => ref.current?.contains(event.target))) {
-        if (focusedInput !== null) {
-          inputRefs[focusedInput].current?.focus();
-        }
+      const clickedOutside = !inputRefs.some((ref) => ref.current?.contains(event.target));
+      if (clickedOutside && focusedInput !== null) {
+        inputRefs[focusedInput].current?.focus();
       }
     };
 
@@ -38,7 +41,22 @@ const AadhaarInput = (props) => {
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
-  }, [focusedInput]);
+  }, [focusedInput, inputRefs]);
+
+  const setValue = (value, input) => {
+    const slice = formData?.[config.key] ?? {};
+    if (Array.isArray(input)) {
+      onSelect(config.key, {
+        ...slice,
+        ...input.reduce((res, curr) => {
+          res[curr] = value[curr];
+          return res;
+        }, {}),
+      });
+    } else {
+      onSelect(config.key, { ...slice, [input]: value });
+    }
+  };
 
   const handleChange = (key, value, index) => {
     const newInputs = [...boxCount];
@@ -51,24 +69,14 @@ const AadhaarInput = (props) => {
     const fullValue = newInputs.join("");
     setValue(fullValue, key);
   };
-  function setValue(value, input) {
-    if (Array.isArray(input)) {
-      onSelect(config.key, {
-        ...formData[config.key],
-        ...input.reduce((res, curr) => {
-          res[curr] = value[curr];
-          return res;
-        }, {}),
-      });
-    } else onSelect(config.key, { ...formData[config.key], [input]: value });
-  }
+
   const handleFocus = (index) => {
     setFocusedInput(index);
   };
 
   const focusNextInput = (index) => {
     if (index < inputRefs.length) {
-      inputRefs[index].current.focus();
+      inputRefs[index].current?.focus();
     }
   };
 
@@ -80,26 +88,26 @@ const AadhaarInput = (props) => {
 
   const focusPreviousInput = (index) => {
     if (index >= 0) {
-      inputRefs[index].current.focus();
+      inputRefs[index].current?.focus();
     }
   };
 
   return (
     <React.Fragment>
-      {inputs.map((input, index1) => {
-        let currentValue = (formData && formData[config.key] && formData[config.key][input.name]) || "";
+      {inputs.map((input) => {
         return (
-          <div className="input-otp-wrap">
+          <div className="input-otp-wrap" key={input.name}>
             {boxCount.map((value, index) => (
               <input
-                key={index}
+                key={`${input.name}-aadhaar-${index}`}
                 ref={inputRefs[index]}
                 type="text"
                 maxLength={4}
+                aria-label={`Aadhaar number segment ${index + 1} of 3`}
                 onInput={(e) => {
-                  const value = e.target.value.replace(/\D/, "");
-                  if (value !== e.target.value) {
-                    e.target.value = value;
+                  const next = e.target.value.replaceAll(/\D/g, "");
+                  if (next !== e.target.value) {
+                    e.target.value = next;
                   }
                 }}
                 value={value}
@@ -114,6 +122,23 @@ const AadhaarInput = (props) => {
       })}
     </React.Fragment>
   );
+};
+
+const adhaarInputConfigPropType = PropTypes.shape({
+  key: PropTypes.string.isRequired,
+  populators: PropTypes.shape({
+    inputs: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string.isRequired,
+      })
+    ),
+  }),
+});
+
+AadhaarInput.propTypes = {
+  formData: PropTypes.object,
+  onSelect: PropTypes.func.isRequired,
+  config: adhaarInputConfigPropType.isRequired,
 };
 
 export default AadhaarInput;

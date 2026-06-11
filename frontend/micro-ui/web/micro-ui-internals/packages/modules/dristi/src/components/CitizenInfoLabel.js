@@ -1,9 +1,8 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { InfoBannerIcon } from "@egovernments/digit-ui-react-components";
 
 const CitizenInfoLabel = (props) => {
-  //if type is "component", then props will come from props?.props.
-  //if the component has props passed directly, then props will be used.
   props = props?.props ? props?.props : props;
   const showInfo = props?.showInfo ? props?.showInfo : true;
 
@@ -19,6 +18,19 @@ const CitizenInfoLabel = (props) => {
       {props?.children && <p style={{ fontSize: "16px" }}>{props?.children}</p>}
     </div>
   );
+};
+
+CitizenInfoLabel.propTypes = {
+  props: PropTypes.object,
+  showInfo: PropTypes.bool,
+  className: PropTypes.string,
+  style: PropTypes.object,
+  fill: PropTypes.string,
+  iconStyle: PropTypes.object,
+  textStyle: PropTypes.object,
+  info: PropTypes.string,
+  text: PropTypes.string,
+  children: PropTypes.node,
 };
 
 export default CitizenInfoLabel;

@@ -24,7 +24,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .digit-info-banner-wrap {
     h2 {
       @apply text-heading-m-dt;

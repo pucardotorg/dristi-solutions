@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CardLabelError, TextInput, CustomDropdown, Header } from "@egovernments/digit-ui-react-components";
 import CustomErrorTooltip from "./CustomErrorTooltip";
@@ -291,6 +292,27 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
       )}
     </React.Fragment>
   );
+};
+
+SuretyComponent.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    header: PropTypes.string,
+    name: PropTypes.string,
+    disable: PropTypes.bool,
+    formDisbalityCount: PropTypes.number,
+    populators: PropTypes.shape({
+      inputs: PropTypes.array,
+    }),
+  }).isRequired,
+  onSelect: PropTypes.func.isRequired,
+  formData: PropTypes.object,
+  errors: PropTypes.object,
+  setError: PropTypes.func,
+  clearErrors: PropTypes.func.isRequired,
+  control: PropTypes.any,
+  watch: PropTypes.func,
 };
 
 export default SuretyComponent;

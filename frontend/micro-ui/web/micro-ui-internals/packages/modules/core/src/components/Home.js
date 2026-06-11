@@ -4,7 +4,6 @@ import {
   CitizenHomeCard,
   CitizenInfoLabel,
   FSMIcon,
-  HelpOutlineIcon,
   Loader,
   MCollectIcon,
   OBPSIcon,
@@ -13,8 +12,10 @@ import {
   TLIcon,
   WSICon,
 } from "@egovernments/digit-ui-react-components";
-import React, { Fragment } from "react";
+import PropTypes from "prop-types";
+import React from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 
 /* 
 Feature :: Citizen All service screen cards
@@ -22,8 +23,9 @@ Feature :: Citizen All service screen cards
 export const processLinkData = (newData, code, t) => {
   const obj = newData?.[`${code}`];
   if (obj) {
-    obj.map((link) => {
-      (link.link = link["navigationURL"]), (link.i18nKey = t(link["name"]));
+    obj.forEach((link) => {
+      link.link = link["navigationURL"];
+      link.i18nKey = t(link["name"]);
     });
   }
   const newObj = {
@@ -41,7 +43,7 @@ export const processLinkData = (newData, code, t) => {
       },
     ];
     //RAIN-7297
-    roleBasedLoginRoutes.map(({ role, from, loginLink, dashoardLink }) => {
+    roleBasedLoginRoutes.forEach(({ role, from, loginLink, dashoardLink }) => {
       if (Digit.UserService.hasAccess(role))
         newObj?.links?.push({
           link: from,
@@ -81,6 +83,7 @@ const iconSelector = (code) => {
   }
 };
 const CitizenHome = ({ modules, getCitizenMenu, fetchedCitizen, isLoading }) => {
+  const { pathname } = useLocation();
   const paymentModule = modules.filter(({ code }) => code === "Payment")[0];
   const moduleArr = modules.filter(({ code }) => code !== "Payment");
   const moduleArray = [paymentModule, ...moduleArr];
@@ -92,13 +95,13 @@ const CitizenHome = ({ modules, getCitizenMenu, fetchedCitizen, isLoading }) => 
   return (
     <React.Fragment>
       <div className="citizen-all-services-wrapper">
-        {location.pathname.includes("sanitation-ui/citizen/all-services") ? null : <BackButton />}
+        {pathname.includes("sanitation-ui/citizen/all-services") ? null : <BackButton />}
         <div className="citizenAllServiceGrid">
           {moduleArray
             .filter((mod) => mod)
-            .map(({ code }, index) => {
+            .map(({ code }) => {
               let mdmsDataObj;
-              if (fetchedCitizen) mdmsDataObj = fetchedCitizen ? processLinkData(getCitizenMenu, code, t) : undefined;
+              if (fetchedCitizen) mdmsDataObj = processLinkData(getCitizenMenu, code, t);
               if (mdmsDataObj?.links?.length > 0) {
                 return (
                   <CitizenHomeCard
@@ -117,10 +120,11 @@ const CitizenHome = ({ modules, getCitizenMenu, fetchedCitizen, isLoading }) => 
                           )
                         : null
                     }
-                    isInfo={code === "OBPS" ? true : false}
+                    isInfo={code === "OBPS"}
                   />
                 );
-              } else return <React.Fragment />;
+              }
+              return null;
             })}
         </div>
       </div>
@@ -139,19 +143,19 @@ const EmployeeHome = ({ modules, additionalComponent }) => {
           <HelpOutlineIcon />
         </div> */}
         <div className={isJudge ? "ground-container" : "ground-container moduleCardWrapper gridModuleWrapper"}>
-          {modules.map(({ code }, index) => {
+          {modules.map(({ code }) => {
             const Card = Digit.ComponentRegistryService.getComponent(`${code}Card`) || (() => <React.Fragment />);
-            return <Card key={index} />;
+            return <Card key={code} />;
           })}
         </div>
       </div>
 
       {additionalComponent &&
         additionalComponent?.length > 0 &&
-        additionalComponent.map((i) => {
+        additionalComponent.map((i, idx) => {
           const Component = typeof i === "string" ? Digit.ComponentRegistryService.getComponent(i) : null;
           return Component ? (
-            <div className="additional-component-wrapper">
+            <div className="additional-component-wrapper" key={`additional-${idx}`}>
               <Component />
             </div>
           ) : null;
@@ -165,4 +169,25 @@ export const AppHome = ({ userType, modules, getCitizenMenu, fetchedCitizen, isL
     return <CitizenHome modules={modules} getCitizenMenu={getCitizenMenu} fetchedCitizen={fetchedCitizen} isLoading={isLoading} />;
   }
   return <EmployeeHome modules={modules} additionalComponent={additionalComponent} />;
+};
+
+CitizenHome.propTypes = {
+  modules: PropTypes.arrayOf(PropTypes.any),
+  getCitizenMenu: PropTypes.object,
+  fetchedCitizen: PropTypes.bool,
+  isLoading: PropTypes.bool,
+};
+
+EmployeeHome.propTypes = {
+  modules: PropTypes.arrayOf(PropTypes.any),
+  additionalComponent: PropTypes.arrayOf(PropTypes.any),
+};
+
+AppHome.propTypes = {
+  userType: PropTypes.string,
+  modules: PropTypes.arrayOf(PropTypes.any),
+  getCitizenMenu: PropTypes.object,
+  fetchedCitizen: PropTypes.bool,
+  isLoading: PropTypes.bool,
+  additionalComponent: PropTypes.arrayOf(PropTypes.any),
 };

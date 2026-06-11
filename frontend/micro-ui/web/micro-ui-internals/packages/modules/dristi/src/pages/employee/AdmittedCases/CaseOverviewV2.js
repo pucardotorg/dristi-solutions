@@ -1,5 +1,6 @@
 import { Card, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import useGetBotdOrders from "../../../hooks/dristi/useGetBotdOrders";
 import TasksComponent from "@egovernments/digit-ui-module-home/src/components/TaskComponent";
@@ -18,18 +19,13 @@ const CaseOverviewV2 = ({
   hearingsDataFromParent = null,
 }) => {
   const { t } = useTranslation();
-  const cnrNumber = caseData.cnrNumber;
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [taskType, setTaskType] = useState({});
   const [showAllTranscript, setShowAllTranscript] = useState(false);
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const userRoles = useMemo(() => userInfo?.roles?.map((role) => role.code), [userInfo]);
 
-  const NoticeProcessModal = useMemo(
-    () => Digit.ComponentRegistryService.getComponent("NoticeProcessModal") || <React.Fragment></React.Fragment>,
-    []
-  );
+  const NoticeProcessModalComponent = useMemo(() => Digit.ComponentRegistryService.getComponent("NoticeProcessModal"), []);
 
   const { data: botdOrdersRes, isLoading: isBotdOrdersLoading } = useGetBotdOrders(
     {
@@ -79,12 +75,23 @@ const CaseOverviewV2 = ({
                     {t("PREVIOUS")} {previousBotdOrders?.[0]?.hearingType ? t(previousBotdOrders?.[0]?.hearingType) : ""} {t("BOTD")}
                   </span>
                 </div>
-                <div
-                  style={{ color: "#007E7E", cursor: "pointer", fontWeight: 700, fontSize: "16px", lineHeight: "18.75px" }}
+                <button
+                  type="button"
+                  style={{
+                    color: "#007E7E",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    fontSize: "16px",
+                    lineHeight: "18.75px",
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    font: "inherit",
+                  }}
                   onClick={() => setShowAllTranscript(true)}
                 >
                   {t("VIEW_ALL_SUMMARIES")}
-                </div>
+                </button>
               </div>
               <hr style={{ borderTop: "1px solid #E8E8E8", margin: "10px -15px 0px -15px" }} />
               <div
@@ -117,19 +124,17 @@ const CaseOverviewV2 = ({
           needRefresh={isBailBondTaskExists}
         />
       </div>
-      {showNoticeProcessModal && (
+      {showNoticeProcessModal && NoticeProcessModalComponent && (
         <div className="process-summary-container">
           <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
-            {
-              <NoticeProcessModal
-                showModal={false}
-                filingNumber={filingNumber}
-                currentHearingId={currentHearingId}
-                caseDetails={caseDetails}
-                ordersDataFromParent={ordersDataFromParent}
-                hearingsDataFromParent={hearingsDataFromParent}
-              />
-            }
+            <NoticeProcessModalComponent
+              showModal={false}
+              filingNumber={filingNumber}
+              currentHearingId={currentHearingId}
+              caseDetails={caseDetails}
+              ordersDataFromParent={ordersDataFromParent}
+              hearingsDataFromParent={hearingsDataFromParent}
+            />
           </Card>
         </div>
       )}
@@ -138,6 +143,17 @@ const CaseOverviewV2 = ({
       )}
     </div>
   );
+};
+
+CaseOverviewV2.propTypes = {
+  caseData: PropTypes.shape({}).isRequired,
+  filingNumber: PropTypes.string.isRequired,
+  currentHearingId: PropTypes.string,
+  caseDetails: PropTypes.object,
+  showNoticeProcessModal: PropTypes.bool,
+  isBailBondTaskExists: PropTypes.bool,
+  ordersDataFromParent: PropTypes.object,
+  hearingsDataFromParent: PropTypes.object,
 };
 
 export default CaseOverviewV2;

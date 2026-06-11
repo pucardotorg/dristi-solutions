@@ -1,6 +1,7 @@
 import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getFileByFileStore } from "../../../Utils";
 
@@ -372,6 +373,14 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
       )}
     </div>
   );
+};
+
+SelectUserType.propTypes = {
+  config: PropTypes.arrayOf(PropTypes.object).isRequired,
+  params: PropTypes.object,
+  pathOnRefresh: PropTypes.string.isRequired,
+  setParams: PropTypes.func,
+  t: PropTypes.func.isRequired,
 };
 
 export default SelectUserType;

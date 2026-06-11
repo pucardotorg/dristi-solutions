@@ -1,6 +1,5 @@
 import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useState } from "react";
-import { useHistory } from "react-router-dom";
 import NextHearingModal from "../../components/NextHearingModal";
 import SummaryModal from "../../components/SummaryModal";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
@@ -15,9 +14,6 @@ const AdjournHearing = ({ hearing, updateTranscript, transcriptText, setAdjournH
   const { t } = useTranslation();
   const [reasonFormData, setReasonFormData] = useState({});
   const [transcript, setTranscript] = useState(transcriptText);
-
-  const history = useHistory();
-
 
   const onSubmit = (data) => {
     setStepper(stepper + 1);
@@ -181,7 +177,6 @@ const AdjournHearing = ({ hearing, updateTranscript, transcriptText, setAdjournH
       {stepper === 3 && (
         <NextHearingModal
           transcript={transcript}
-          hearingId={hearingId}
           hearing={hearing}
           stepper={stepper}
           setStepper={setStepper}

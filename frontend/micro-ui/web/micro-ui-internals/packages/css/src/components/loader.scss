@@ -22,15 +22,13 @@
 }
 
 .ldio-pjg92h09b2o div {
+  box-sizing: content-box;
   position: absolute;
   width: 52px;
   height: 52px;
   border: 12px solid theme(colors.secondary);
   border-top-color: transparent;
   border-radius: 50%;
-}
-
-.ldio-pjg92h09b2o div {
   animation: ldio-pjg92h09b2o 1s linear infinite;
   top: 50px;
   left: 50px;
@@ -51,46 +49,4 @@
   transform: translateZ(0) scale(0.48);
   backface-visibility: hidden;
   transform-origin: 0 0;
-  /* see note above */
 }
-
-.ldio-pjg92h09b2o div {
-  box-sizing: content-box;
-}
-
-/*
-.loader {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 1;
-  width: 80px;
-  height: 80px;
-  margin: -80px 0 0 -40px;
-  border: 8px solid #f3f3f3;
-  border-radius: 50%;
-  border-top-color: #3498db;
-  -webkit-animation: loader-spin 1s linear infinite;
-  animation: loader-spin 1s linear infinite;
-}
-
-@-webkit-keyframes loader-spin {
-  0% {
-    -webkit-transform: rotate(0deg);
-  }
-
-  100% {
-    -webkit-transform: rotate(360deg);
-  }
-}
-
-@keyframes loader-spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-*/

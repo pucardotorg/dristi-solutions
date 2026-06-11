@@ -1,4 +1,4 @@
-import React, { Fragment } from "react";
+import React from "react";
 import { CheckSvg } from "@egovernments/digit-ui-react-components";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
@@ -59,14 +59,12 @@ const CheckBox = ({
             {...props}
             ref={inputRef}
             disabled={disable}
-            // {(checked ? (checked = { checked }) : null)}
             checked={checked}
           />
           <p
             className={userType === "employee" ? "custom-checkbox-emp" : "custom-checkbox"}
             style={disable ? { opacity: 0.5 } : props?.checkboxWidth ? { ...props?.checkboxWidth } : null}
           >
-            {/* <img src={check} alt="" /> */}
             <CheckSvg />
           </p>
         </div>

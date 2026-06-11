@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import OverlayDropdown from "./OverlayDropdown";
 
 const AsyncOverlayDropdown = ({ row, getDropdownItems, ...props }) => {
@@ -22,10 +23,15 @@ const AsyncOverlayDropdown = ({ row, getDropdownItems, ...props }) => {
   }, [row, getDropdownItems]);
 
   if (isLoading) {
-    return null; // Or a loading spinner if you prefer
+    return null;
   }
 
   return <OverlayDropdown {...props} row={row} cutomDropdownItems={dropdownItems} />;
+};
+
+AsyncOverlayDropdown.propTypes = {
+  row: PropTypes.object,
+  getDropdownItems: PropTypes.func,
 };
 
 export default AsyncOverlayDropdown;

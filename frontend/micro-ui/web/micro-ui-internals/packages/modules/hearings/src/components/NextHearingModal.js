@@ -1,8 +1,5 @@
-import React, { useEffect, useMemo } from "react";
-import { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button, Modal } from "@egovernments/digit-ui-react-components";
-import { Card } from "@egovernments/digit-ui-react-components";
-import useGetAvailableDates from "../hooks/hearings/useGetAvailableDates";
 import { useHistory } from "react-router-dom";
 import CustomCalendar from "../../../dristi/src/components/CustomCalendar";
 import { useTranslation } from "react-i18next";
@@ -16,15 +13,28 @@ const Close = () => (
   </svg>
 );
 
-const CloseBtn = (props) => {
+const CloseBtn = ({ onClick }) => {
   return (
-    <div style={{ padding: "10px" }} onClick={props.onClick}>
+    <button
+      type="button"
+      aria-label="Close"
+      onClick={onClick}
+      style={{
+        padding: "10px",
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <Close />
-    </div>
+    </button>
   );
 };
 
-const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript, handleConfirmationModal }) => {
+const NextHearingModal = ({ hearing, stepper, setStepper, transcript, handleConfirmationModal }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [isCustomDateSelected, setIsCustomDateSelected] = useState(false);
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
@@ -68,17 +78,9 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
     }
   };
 
-  // const { data: datesResponse, refetch: refetchGetAvailableDates } = useGetAvailableDates(true);
-  // const Dates = useMemo(() => datesResponse || [], [datesResponse]);
-
-  const { data: MdmsCourtList, isLoading: loading } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "common-masters",
-    [{ name: "Court_Rooms" }],
-    {
-      cacheTime: 0,
-    }
-  );
+  const { data: MdmsCourtList } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "common-masters", [{ name: "Court_Rooms" }], {
+    cacheTime: 0,
+  });
   const mdmsCourtRoom = {
     name: "Court of the Judicial First Class Magistrate Kollam",
     place: "Kollam",
@@ -277,14 +279,11 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
               }}
               t={t}
               onCalendarConfirm={(date) => {
-                // setScheduleHearingParam({ ...scheduleHearingParams, date: formatDateInMonth(date) });
-                // setSelectedCustomDate(date);
                 setSelectedDate(selectedCustomDate);
                 setIsCustomDateSelected(true);
                 setIsCalendarModalOpen(false);
               }}
               handleSelect={(date) => {
-                // setScheduleHearingParam({ ...scheduleHearingParams, date: formatDateInMonth(date) });
                 if (date <= new Date()) {
                   setError("The date chosen must be a future date");
                 } else {
