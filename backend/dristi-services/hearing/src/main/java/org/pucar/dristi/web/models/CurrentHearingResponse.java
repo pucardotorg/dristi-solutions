@@ -22,6 +22,9 @@ public class CurrentHearingResponse {
     @JsonProperty("currentHearingKey")
     private String currentHearingKey;
 
+    @JsonProperty("nextHearing")
+    private NextHearingInfo nextHearing;
+
     @JsonProperty("hearingData")
     private Map<String, Object> hearingData;
 }

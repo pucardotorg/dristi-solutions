@@ -37,4 +37,13 @@ public class CauseListRequest {
     @JsonProperty("limit")
     @Builder.Default
     private int limit = 100;
+
+    @JsonProperty("status")
+    private String status;
+
+    @JsonProperty("hearingType")
+    private String hearingType;
+
+    @JsonProperty("searchableFields")
+    private String searchableFields;
 }

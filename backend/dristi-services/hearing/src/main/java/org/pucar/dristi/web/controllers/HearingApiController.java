@@ -175,27 +175,43 @@ public class HearingApiController {
 
     @PostMapping(value = "/v1/cause-list")
     public ResponseEntity<CauseListResponse> getCauseList(@Valid @RequestBody CauseListRequest body) {
-        log.info("api=/v1/cause-list, courtId={}, date={}", body.getCourtId(), body.getDate());
-        List<Map<String, Object>> hearings = hearingService.getCauseList(body.getCourtId(), body.getDate(), body.getOffset(), body.getLimit());
+        log.info("api=/v1/cause-list, courtId={}, date={}, status={}, hearingType={}, searchableFields={}",
+                body.getCourtId(), body.getDate(), body.getStatus(), body.getHearingType(), body.getSearchableFields());
+        CauseListResult result = hearingService.getCauseList(
+                body.getCourtId(), body.getDate(), body.getOffset(), body.getLimit(),
+                body.getStatus(), body.getHearingType(), body.getSearchableFields());
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         CauseListResponse response = CauseListResponse.builder()
                 .responseInfo(responseInfo)
-                .hearings(hearings)
-                .totalCount(hearings.size())
+                .hearings(result.getHearings())
+                .totalCount(result.getTotalCount())
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping(value = "/v1/current-hearing")
-    public ResponseEntity<CurrentHearingResponse> getCurrentHearing(@Valid @RequestBody CauseListRequest body) {
-        log.info("api=/v1/current-hearing, courtId={}", body.getCourtId());
-        HearingService.CurrentHearingData data = hearingService.getCurrentHearing(body.getCourtId());
+    public ResponseEntity<CurrentHearingResponse> getCurrentHearing(@Valid @RequestBody CurrentHearingRequest body) {
+        log.info("api=/v1/current-hearing, courtId={}, currentHearingNumber={}", body.getCourtId(), body.getCurrentHearingNumber());
+        CurrentHearingData data = hearingService.getCurrentHearing(body.getCourtId(), body.getCurrentHearingNumber());
+        NextHearingInfo nextHearing = null;
+        if (data.getHearingData() != null && !data.getHearingData().isEmpty()) {
+            Map<String, Object> hd = data.getHearingData();
+            Object fromDateRaw = hd.get("fromDate");
+            Long fromDate = fromDateRaw instanceof Number ? ((Number) fromDateRaw).longValue() : null;
+            nextHearing = NextHearingInfo.builder()
+                    .hearingNumber((String) hd.getOrDefault("hearingNumber", null))
+                    .caseId((String) hd.getOrDefault("caseUuid", null))
+                    .filingNumber((String) hd.getOrDefault("filingNumber", null))
+                    .fromDate(fromDate)
+                    .build();
+        }
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         CurrentHearingResponse response = CurrentHearingResponse.builder()
                 .responseInfo(responseInfo)
-                .sessionStatus(data.sessionStatus)
-                .currentHearingKey(data.currentHearingKey)
-                .hearingData(data.hearingData)
+                .sessionStatus(data.getSessionStatus())
+                .currentHearingKey(data.getCurrentHearingKey())
+                .nextHearing(nextHearing)
+                .hearingData(data.getHearingData())
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

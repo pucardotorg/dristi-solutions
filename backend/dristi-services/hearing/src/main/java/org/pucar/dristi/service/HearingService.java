@@ -485,26 +485,29 @@ public class HearingService {
         }
     }
 
-    public List<Map<String, Object>> getCauseList(String courtId, String date, int offset, int limit) {
+    public CauseListResult getCauseList(String courtId, String date, int offset, int limit, String status, String hearingType, String searchableFields) {
         LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String dateStr = localDate.format(DateTimeFormatter.ofPattern(DATE_FORMAT_REDIS));
         String baseKey = CACHE_KEY_PREFIX + courtId + ":" + dateStr;
         String causeListKey = baseKey + CACHE_CAUSE_LIST_SUFFIX;
 
-        List<Object> hearingKeys = cacheService.lrange(causeListKey, offset, (long) offset + limit - 1);
-        if (!hearingKeys.isEmpty()) {
-            List<Map<String, Object>> result = new ArrayList<>();
-            for (Object keyObj : hearingKeys) {
-                Map<String, Object> hearingData = cacheService.hgetAll(String.valueOf(keyObj));
-                if (!hearingData.isEmpty()) {
-                    result.add(hearingData);
-                }
+        List<Object> allKeys = cacheService.lrange(causeListKey, 0, -1);
+        if (!allKeys.isEmpty()) {
+            List<String> keyStrings = new ArrayList<>();
+            for (Object k : allKeys) keyStrings.add(String.valueOf(k));
+            List<Map<String, Object>> allHearings = cacheService.hgetAllPipelined(keyStrings);
+            boolean partialMiss = allHearings.size() != allKeys.size();
+            for (int i = 0; !partialMiss && i < allHearings.size(); i++) {
+                if (allHearings.get(i).isEmpty()) partialMiss = true;
             }
-            if (result.size() == hearingKeys.size()) {
-                return result;
+            if (!partialMiss) {
+                List<Map<String, Object>> filtered = applyFilters(allHearings, status, hearingType, searchableFields);
+                int totalCount = filtered.size();
+                int fromIdx = Math.min(offset, filtered.size());
+                int toIdx = Math.min(offset + limit, filtered.size());
+                return new CauseListResult(new ArrayList<>(filtered.subList(fromIdx, toIdx)), totalCount);
             }
-            log.warn("Cache partial-read: causeListKey={} had {} keys but only {} hashes resolved; falling back to ES",
-                    causeListKey, hearingKeys.size(), result.size());
+            log.warn("Cache partial-read: causeListKey={} had {} keys — falling back to ES", causeListKey, allKeys.size());
         }
 
         // Cache miss — fall back to ES via inbox service
@@ -513,8 +516,13 @@ public class HearingService {
             Long fromDateEpoch = dateUtil.getEPochFromLocalDate(localDate);
             Long toDateEpoch = dateUtil.getEpochFromLocalDateTime(localDate.atTime(23, 59, 59));
             InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtId, fromDateEpoch, toDateEpoch, offset, limit);
+            Map<String, Object> moduleSearchCriteria = inboxRequest.getInbox().getModuleSearchCriteria();
+            if (status != null && !status.isEmpty()) moduleSearchCriteria.put("status", status);
+            if (hearingType != null && !hearingType.isEmpty()) moduleSearchCriteria.put("hearingType", hearingType);
+            if (searchableFields != null && !searchableFields.isEmpty()) moduleSearchCriteria.put("searchableFields", searchableFields);
+
             List<OpenHearing> openHearings = inboxUtil.getOpenHearings(inboxRequest);
-            if (openHearings == null || openHearings.isEmpty()) return Collections.emptyList();
+            if (openHearings == null || openHearings.isEmpty()) return new CauseListResult(Collections.emptyList(), 0);
 
             List<Map<String, Object>> result = new ArrayList<>();
             for (OpenHearing h : openHearings) {
@@ -542,21 +550,70 @@ public class HearingService {
                 }
                 result.add(map);
             }
-            return result;
+            return new CauseListResult(result, result.size());
         } catch (Exception e) {
             log.error("ES fallback failed for cause-list courtId={}, date={}", courtId, date, e);
-            return Collections.emptyList();
+            return new CauseListResult(Collections.emptyList(), 0);
         }
     }
 
-    public CurrentHearingData getCurrentHearing(String courtId) {
+    private static List<Map<String, Object>> applyFilters(List<Map<String, Object>> hearings, String status, String hearingType, String searchableFields) {
+        boolean hasStatus = status != null && !status.isEmpty();
+        boolean hasHearingType = hearingType != null && !hearingType.isEmpty();
+        boolean hasSearch = searchableFields != null && !searchableFields.isEmpty();
+        if (!hasStatus && !hasHearingType && !hasSearch) {
+            return hearings;
+        }
+        String lowerSearch = hasSearch ? searchableFields.toLowerCase() : null;
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map<String, Object> h : hearings) {
+            if (hasStatus && !status.equalsIgnoreCase(String.valueOf(h.getOrDefault("status", "")))) continue;
+            if (hasHearingType && !hearingType.equalsIgnoreCase(String.valueOf(h.getOrDefault("hearingType", "")))) continue;
+            if (hasSearch) {
+                boolean found = false;
+                for (String field : new String[]{"caseNumber", "caseTitle", "filingNumber", "hearingNumber"}) {
+                    if (String.valueOf(h.getOrDefault(field, "")).toLowerCase().contains(lowerSearch)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) continue;
+            }
+            result.add(h);
+        }
+        return result;
+    }
+
+
+    public CurrentHearingData getCurrentHearing(String courtId, String currentHearingNumber) {
         String date = dateUtil.getCurrentDate();
-        String metaKey = CACHE_KEY_PREFIX + courtId + ":" + date + CACHE_COURT_META_SUFFIX;
+        String baseKey = CACHE_KEY_PREFIX + courtId + ":" + date;
+        String metaKey = baseKey + CACHE_COURT_META_SUFFIX;
+        String causeListKey = baseKey + CACHE_CAUSE_LIST_SUFFIX;
+
+        if (currentHearingNumber != null && !currentHearingNumber.isEmpty()) {
+            List<Object> hearingKeys = cacheService.lrange(causeListKey, 0, -1);
+            int currentIndex = -1;
+            for (int i = 0; i < hearingKeys.size(); i++) {
+                if (String.valueOf(hearingKeys.get(i)).endsWith(CACHE_HEARING_PREFIX + currentHearingNumber)) {
+                    currentIndex = i;
+                    break;
+                }
+            }
+            for (int i = currentIndex + 1; i < hearingKeys.size(); i++) {
+                String nextKey = String.valueOf(hearingKeys.get(i));
+                Map<String, Object> nextData = cacheService.hgetAll(nextKey);
+                String status = String.valueOf(nextData.getOrDefault("status", ""));
+                if (!status.isEmpty() && !"COMPLETED".equals(status) && !"ABATED".equals(status) && !"OPT_OUT".equals(status)) {
+                    return new CurrentHearingData(SESSION_STATUS_ACTIVE, nextKey, nextData);
+                }
+            }
+            return new CurrentHearingData(SESSION_STATUS_ACTIVE, "", Collections.emptyMap());
+        }
 
         Map<String, Object> meta = cacheService.hgetAll(metaKey);
         String sessionStatus = meta.isEmpty() ? SESSION_STATUS_NOT_STARTED : String.valueOf(meta.getOrDefault("sessionStatus", SESSION_STATUS_NOT_STARTED));
         String currentHearingKey = meta.isEmpty() ? "" : String.valueOf(meta.getOrDefault("currentHearingKey", ""));
-
         Map<String, Object> hearingData = Collections.emptyMap();
         if (currentHearingKey != null && !currentHearingKey.isEmpty()) {
             hearingData = cacheService.hgetAll(currentHearingKey);
@@ -564,17 +621,6 @@ public class HearingService {
         return new CurrentHearingData(sessionStatus, currentHearingKey, hearingData);
     }
 
-    public static class CurrentHearingData {
-        public final String sessionStatus;
-        public final String currentHearingKey;
-        public final Map<String, Object> hearingData;
-
-        public CurrentHearingData(String sessionStatus, String currentHearingKey, Map<String, Object> hearingData) {
-            this.sessionStatus = sessionStatus;
-            this.currentHearingKey = currentHearingKey;
-            this.hearingData = hearingData;
-        }
-    }
 
     public HearingExists isHearingExist(HearingExistsRequest body) {
         try {
