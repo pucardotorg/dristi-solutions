@@ -13,4 +13,5 @@ public class CurrentHearingData {
     private String sessionStatus;
     private String currentHearingKey;
     private Map<String, Object> hearingData;
+    private Map<String, Object> nextHearingData;
 }

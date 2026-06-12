@@ -194,14 +194,15 @@ public class HearingApiController {
         log.info("api=/v1/current-hearing, courtId={}, currentHearingNumber={}", body.getCourtId(), body.getCurrentHearingNumber());
         CurrentHearingData data = hearingService.getCurrentHearing(body.getCourtId(), body.getCurrentHearingNumber());
         NextHearingInfo nextHearing = null;
-        if (data.getHearingData() != null && !data.getHearingData().isEmpty()) {
-            Map<String, Object> hd = data.getHearingData();
-            Object fromDateRaw = hd.get("fromDate");
+        Map<String, Object> nextHd = data.getNextHearingData() != null && !data.getNextHearingData().isEmpty()
+                ? data.getNextHearingData() : data.getHearingData();
+        if (nextHd != null && !nextHd.isEmpty()) {
+            Object fromDateRaw = nextHd.get("fromDate");
             Long fromDate = fromDateRaw instanceof Number ? ((Number) fromDateRaw).longValue() : null;
             nextHearing = NextHearingInfo.builder()
-                    .hearingNumber((String) hd.getOrDefault("hearingNumber", null))
-                    .caseId((String) hd.getOrDefault("caseUuid", null))
-                    .filingNumber((String) hd.getOrDefault("filingNumber", null))
+                    .hearingNumber((String) nextHd.getOrDefault("hearingNumber", null))
+                    .caseId((String) nextHd.getOrDefault("caseUuid", null))
+                    .filingNumber((String) nextHd.getOrDefault("filingNumber", null))
                     .fromDate(fromDate)
                     .build();
         }
