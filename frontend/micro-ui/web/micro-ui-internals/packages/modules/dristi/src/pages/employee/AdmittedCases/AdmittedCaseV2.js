@@ -300,6 +300,8 @@ const AdmittedCaseV2 = () => {
 
   const [data, setData] = useState([]);
   const [currentHearingDetails, setCurrentHearingDetails] = useState(null);
+  const currentHearingDetailsRef = useRef(null);
+  const homeNextHearingFilterRef = useRef(null);
 
   const fetchInbox = useCallback(async () => {
     try {
@@ -1693,14 +1695,17 @@ const AdmittedCaseV2 = () => {
     history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
   }, [filingNumber, history]);
 
+  currentHearingDetailsRef.current = currentHearingDetails;
+  homeNextHearingFilterRef.current = homeNextHearingFilter;
+
   const hideNextHearingButton = useMemo(() => {
     const nextHearingData = currentHearingDetails?.nextHearing;
     return !nextHearingData?.hearingNumber || nextHearingData?.hearingNumber === homeNextHearingFilter?.homeHearingNumber;
   }, [currentHearingDetails, homeNextHearingFilter]);
 
   const customNextHearing = useCallback(() => {
-    const nextHearingData = currentHearingDetails?.nextHearing;
-    if (!nextHearingData?.hearingNumber || nextHearingData?.hearingNumber === homeNextHearingFilter?.homeHearingNumber) {
+    const nextHearingData = currentHearingDetailsRef.current?.nextHearing;
+    if (!nextHearingData?.hearingNumber || nextHearingData?.hearingNumber === homeNextHearingFilterRef.current?.homeHearingNumber) {
       history.push(`/${window?.contextPath}/employee/home/home-screen`);
     } else {
       const updatedFilter = {
@@ -1713,7 +1718,7 @@ const AdmittedCaseV2 = () => {
         `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${nextHearingData?.caseId}&filingNumber=${nextHearingData?.filingNumber}&tab=Overview`
       );
     }
-  }, [currentHearingDetails, history, homeNextHearingFilter]);
+  }, [history]);
 
   const nextHearing = useCallback(
     (isStartHearing) => {
@@ -2150,10 +2155,8 @@ const AdmittedCaseV2 = () => {
     const hearingData = currentHearingDetails?.hearingData;
     if (!hearingData?.caseTitle || hearingData?.filingNumber !== filingNumber) return null;
     return {
-      caseTitle: hearingData?.caseTitle,
-      ...(hearingData?.caseNumber?.startsWith("CMP/") ? { cmpNumber: hearingData?.caseNumber } : { courtCaseNumber: hearingData?.caseNumber }),
-      filingNumber: hearingData?.filingNumber,
-      stage: hearingData?.stage,
+      ...hearingData,
+      status: hearingData?.caseStatus,
     };
   }, [currentHearingDetails, filingNumber]);
 

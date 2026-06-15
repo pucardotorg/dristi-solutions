@@ -6,6 +6,9 @@ function useGetHearingCauseList({ limit = 300, offset = 0 } = {}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const today = new Date();
+  const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+
   const parseAdvocate = (advocate) => {
     if (!advocate) return {};
     if (typeof advocate === "object") return advocate;
@@ -25,7 +28,7 @@ function useGetHearingCauseList({ limit = 300, offset = 0 } = {}) {
         const payload = {
           tenantId,
           courtId: localStorage.getItem("courtId"),
-          date: filters?.date,
+          date: filters?.date || todayStr,
         };
         const res = await HomeService.getHearingCauseList(payload, { tenantId });
         let hearings = Array.isArray(res?.hearings) ? res.hearings : [];
