@@ -1694,12 +1694,12 @@ const AdmittedCaseV2 = () => {
   }, [filingNumber, history]);
 
   const hideNextHearingButton = useMemo(() => {
-    const nextHearingData = currentHearingDetails?.hearingData;
+    const nextHearingData = currentHearingDetails?.nextHearing;
     return !nextHearingData?.hearingNumber || nextHearingData?.hearingNumber === homeNextHearingFilter?.homeHearingNumber;
   }, [currentHearingDetails, homeNextHearingFilter]);
 
   const customNextHearing = useCallback(() => {
-    const nextHearingData = currentHearingDetails?.hearingData;
+    const nextHearingData = currentHearingDetails?.nextHearing;
     if (!nextHearingData?.hearingNumber || nextHearingData?.hearingNumber === homeNextHearingFilter?.homeHearingNumber) {
       history.push(`/${window?.contextPath}/employee/home/home-screen`);
     } else {
@@ -1710,7 +1710,7 @@ const AdmittedCaseV2 = () => {
       localStorage.setItem("Digit.homeNextHearingFilter", JSON.stringify(updatedFilter));
       setHomeNextHearingFilter(updatedFilter);
       history.push(
-        `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${nextHearingData?.caseUuid}&filingNumber=${nextHearingData?.filingNumber}&tab=Overview`
+        `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${nextHearingData?.caseId}&filingNumber=${nextHearingData?.filingNumber}&tab=Overview`
       );
     }
   }, [currentHearingDetails, history, homeNextHearingFilter]);
