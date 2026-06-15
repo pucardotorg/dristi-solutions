@@ -1,5 +1,6 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
@@ -608,11 +609,13 @@ public class HearingService {
             }
             String currentHearingCacheKey = baseKey + CACHE_HEARING_PREFIX + currentHearingNumber;
             Map<String, Object> currentHearingData = cacheService.hgetAll(currentHearingCacheKey);
+            parseSecondaryStageInMap(currentHearingData);
             for (int i = currentIndex + 1; i < hearingKeys.size(); i++) {
                 String nextKey = String.valueOf(hearingKeys.get(i));
                 Map<String, Object> nextData = cacheService.hgetAll(nextKey);
                 String status = String.valueOf(nextData.getOrDefault("status", ""));
                 if (!status.isEmpty() && !"COMPLETED".equals(status) && !"ABATED".equals(status) && !"OPT_OUT".equals(status)) {
+                    parseSecondaryStageInMap(nextData);
                     return new CurrentHearingData(SESSION_STATUS_ACTIVE, nextKey, currentHearingData, nextData);
                 }
             }
@@ -633,6 +636,8 @@ public class HearingService {
                 log.warn("Cache miss: hearing data empty for key={}, falling back to inbox service", currentHearingKey);
                 String hearingNumber = extractHearingIdFromKey(currentHearingKey);
                 hearingData = getHearingDataFromInbox(courtId, hearingNumber, requestInfo);
+            } else {
+                parseSecondaryStageInMap(hearingData);
             }
         }
         return new CurrentHearingData(sessionStatus, currentHearingKey, hearingData, null);
@@ -706,7 +711,7 @@ public class HearingService {
         data.put("courtId", h.getCourtId() != null ? h.getCourtId() : "");
         data.put("serialNumber", h.getSerialNumber());
         data.put("stage", h.getStage() != null ? h.getStage() : "");
-        data.put("secondaryStage", caseFields.getOrDefault("secondaryStage", "[]"));
+        data.put("secondaryStage", parseJsonArray(caseFields.getOrDefault("secondaryStage", "[]")));
         data.put("cmpNumber", caseFields.getOrDefault("cmpNumber", ""));
         data.put("courtCaseNumber", caseFields.getOrDefault("courtCaseNumber", ""));
         data.put("lprNumber", caseFields.getOrDefault("lprNumber", ""));
@@ -754,6 +759,23 @@ public class HearingService {
             }
         }
         return "[]";
+    }
+
+    private List<String> parseJsonArray(String json) {
+        try {
+            if (json == null || json.isEmpty() || "[]".equals(json)) return Collections.emptyList();
+            return objectMapper.readValue(json, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to parse JSON array: {}", json, e);
+            return Collections.emptyList();
+        }
+    }
+
+    private void parseSecondaryStageInMap(Map<String, Object> data) {
+        Object val = data.get("secondaryStage");
+        if (val instanceof String) {
+            data.put("secondaryStage", parseJsonArray((String) val));
+        }
     }
 
     private CurrentHearingData getNextHearingFromDb(String courtId, String currentHearingNumber) {
