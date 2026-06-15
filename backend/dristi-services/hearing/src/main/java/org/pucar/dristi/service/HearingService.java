@@ -699,7 +699,7 @@ public class HearingService {
             LocalDate today = dateUtil.getLocalDateFromEpoch(System.currentTimeMillis());
             Long fromDate = dateUtil.getEPochFromLocalDate(today);
             Long toDate = dateUtil.getEpochFromLocalDateTime(today.atTime(23, 59, 59));
-            InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtId, fromDate, toDate, 0, 500);
+            InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtId, fromDate, toDate, 0, 300);
             List<OpenHearing> hearings = inboxUtil.getOpenHearings(inboxRequest);
             if (hearings == null) return Collections.emptyList();
             hearings.sort(Comparator.comparingLong(h -> h.getFromDate() != null ? h.getFromDate() : Long.MAX_VALUE));
