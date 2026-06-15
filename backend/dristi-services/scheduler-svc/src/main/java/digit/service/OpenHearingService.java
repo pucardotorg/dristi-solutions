@@ -22,12 +22,13 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static digit.config.ServiceConstants.*;
 
 @Service
 @Slf4j
-public class OpenHearingService {
+public class OpenHearingService  {
 
     private final InboxUtil inboxUtil;
     private final CaseUtil caseUtil;
@@ -76,6 +77,16 @@ public class OpenHearingService {
                 List<OpenHearing> sorted = new ArrayList<>(openHearings);
                 sorted.sort(hearingComparator());
 
+                // Fetch case fields once per unique filing number (also caches the case object)
+                Set<String> filingNumbers = sorted.stream()
+                        .map(OpenHearing::getFilingNumber)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet());
+                Map<String, Map<String, String>> caseFieldsByFilingNumber = new HashMap<>();
+                for (String fn : filingNumbers) {
+                    caseFieldsByFilingNumber.put(fn, fetchCaseFieldsAndCache(fn));
+                }
+
                 // Write per-hearing Redis hashes + collect ordered hearing keys
                 List<String> hearingKeys = new ArrayList<>();
                 for (OpenHearing hearing : sorted) {
@@ -83,7 +94,10 @@ public class OpenHearingService {
                     if (hearingIdentifier == null) continue;
                     String hKey = baseKey + CACHE_HEARING_PREFIX + hearingIdentifier;
                     hearingKeys.add(hKey);
-                    cacheService.hmset(hKey, buildHearingHashData(hearing));
+                    Map<String, String> caseFields = hearing.getFilingNumber() != null
+                            ? caseFieldsByFilingNumber.getOrDefault(hearing.getFilingNumber(), Collections.emptyMap())
+                            : Collections.emptyMap();
+                    cacheService.hmset(hKey, buildHearingHashData(hearing, caseFields));
                 }
 
                 // Write ordered CAUSE_LIST
@@ -96,13 +110,6 @@ public class OpenHearingService {
                 metaData.put("sessionStatus", SESSION_STATUS_NOT_STARTED);
                 metaData.put("currentHearingKey", "");
                 cacheService.hmset(metaKey, metaData);
-
-                // Enrich and cache case details
-                for (OpenHearing hearing : sorted) {
-                    if (hearing.getFilingNumber() != null) {
-                        enrichAndCacheCase(hearing.getFilingNumber());
-                    }
-                }
             }
             log.info("operation = loadOpenHearingsToCache, result = SUCCESS");
         } catch (Exception e) {
@@ -110,7 +117,7 @@ public class OpenHearingService {
         }
     }
 
-    private Map<String, Object> buildHearingHashData(OpenHearing hearing) {
+    private Map<String, Object> buildHearingHashData(OpenHearing hearing, Map<String, String> caseFields) {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("hearingNumber", hearing.getHearingNumber() != null ? hearing.getHearingNumber() : "");
         data.put("hearingUuid", hearing.getHearingUuid() != null ? hearing.getHearingUuid() : "");
@@ -120,6 +127,7 @@ public class OpenHearingService {
         data.put("caseTitle", hearing.getCaseTitle() != null ? hearing.getCaseTitle() : "");
         data.put("hearingType", hearing.getHearingType() != null ? hearing.getHearingType() : "");
         data.put("stage", hearing.getStage() != null ? hearing.getStage() : "");
+        data.put("secondaryStage", hearing.getSubStage() != null ? hearing.getSubStage() : "");
         data.put("filingNumber", hearing.getFilingNumber() != null ? hearing.getFilingNumber() : "");
         data.put("caseUuid", hearing.getCaseUuid() != null ? hearing.getCaseUuid() : "");
         data.put("serialNumber", hearing.getSerialNumber());
@@ -128,6 +136,12 @@ public class OpenHearingService {
         data.put("tenantId", hearing.getTenantId() != null ? hearing.getTenantId() : "");
         data.put("courtId", hearing.getCourtId() != null ? hearing.getCourtId() : "");
         data.put("hearingTypeOrder", hearing.getHearingTypeOrder() != null ? hearing.getHearingTypeOrder() : 99);
+        data.put("cmpNumber", caseFields.getOrDefault("cmpNumber", ""));
+        data.put("courtCaseNumber", caseFields.getOrDefault("courtCaseNumber", ""));
+        data.put("lprNumber", caseFields.getOrDefault("lprNumber", ""));
+        data.put("outcome", caseFields.getOrDefault("outcome", ""));
+        data.put("accessCode", caseFields.getOrDefault("accessCode", ""));
+        data.put("caseStatus", caseFields.getOrDefault("caseStatus", ""));
         try {
             data.put("advocate", objectMapper.writeValueAsString(hearing.getAdvocate()));
         } catch (Exception e) {
@@ -201,11 +215,12 @@ public class OpenHearingService {
         return Integer.MAX_VALUE;
     }
 
-    private void enrichAndCacheCase(String filingNumber) {
+    private Map<String, String> fetchCaseFieldsAndCache(String filingNumber) {
         try {
+            RequestInfo requestInfo = createInternalRequestInfo();
             CaseCriteria criteria = CaseCriteria.builder().filingNumber(filingNumber).build();
             SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder()
-                    .RequestInfo(createInternalRequestInfo())
+                    .RequestInfo(requestInfo)
                     .tenantId(config.getEgovStateTenantId())
                     .criteria(Collections.singletonList(criteria))
                     .flow(FLOW_JAC)
@@ -214,13 +229,25 @@ public class OpenHearingService {
             JsonNode caseList = caseUtil.getCases(searchCaseRequest);
             if (caseList != null && caseList.isArray() && !caseList.isEmpty()) {
                 JsonNode caseNode = caseList.get(0);
-                String caseId = caseNode.get("id").asText();
-                String redisKey = getRedisKey(searchCaseRequest.getRequestInfo(), caseId);
-                cacheService.updateCache(redisKey, caseNode);
+                cacheService.updateCache(getRedisKey(requestInfo, caseNode.get("id").asText()), caseNode);
+                Map<String, String> fields = new HashMap<>();
+                fields.put("cmpNumber", getTextOrEmpty(caseNode, "cmpNumber"));
+                fields.put("courtCaseNumber", getTextOrEmpty(caseNode, "courtCaseNumber"));
+                fields.put("lprNumber", getTextOrEmpty(caseNode, "lprNumber"));
+                fields.put("outcome", getTextOrEmpty(caseNode, "outcome"));
+                fields.put("accessCode", getTextOrEmpty(caseNode, "accessCode"));
+                fields.put("caseStatus", getTextOrEmpty(caseNode, "status"));
+                return fields;
             }
         } catch (Exception e) {
-            log.error("Error enriching and caching case for filing number: {}", filingNumber, e);
+            log.error("Error fetching case fields for filingNumber={}", filingNumber, e);
         }
+        return Collections.emptyMap();
+    }
+
+    private String getTextOrEmpty(JsonNode node, String field) {
+        JsonNode n = node.get(field);
+        return n != null && !n.isNull() ? n.asText() : "";
     }
 
     public void clearOpenHearingsCache() {

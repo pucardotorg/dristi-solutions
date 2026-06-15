@@ -192,7 +192,7 @@ public class HearingApiController {
     @PostMapping(value = "/v1/current-hearing")
     public ResponseEntity<CurrentHearingResponse> getCurrentHearing(@Valid @RequestBody CurrentHearingRequest body) {
         log.info("api=/v1/current-hearing, courtId={}, currentHearingNumber={}", body.getCourtId(), body.getCurrentHearingNumber());
-        CurrentHearingData data = hearingService.getCurrentHearing(body.getCourtId(), body.getCurrentHearingNumber());
+        CurrentHearingData data = hearingService.getCurrentHearing(body.getCourtId(), body.getCurrentHearingNumber(), body.getRequestInfo());
         NextHearingInfo nextHearing = null;
         Map<String, Object> nextHd = data.getNextHearingData() != null && !data.getNextHearingData().isEmpty()
                 ? data.getNextHearingData() : data.getHearingData();
