@@ -35,6 +35,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -487,13 +488,17 @@ public class HearingService {
     }
 
     public CauseListResult getCauseList(String courtId, String date, int offset, int limit, String status, String hearingType, String searchableFields) {
+        long t0 = System.currentTimeMillis();
         LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String dateStr = localDate.format(DateTimeFormatter.ofPattern(DATE_FORMAT_REDIS));
         String baseKey = CACHE_KEY_PREFIX + courtId + ":" + dateStr;
         String causeListKey = baseKey + CACHE_CAUSE_LIST_SUFFIX;
 
-        // Single Lua round trip: LRANGE + all HGETALLs (replaces lrange + hgetAllPipelined = 2 round trips)
+        long t1 = System.currentTimeMillis();
         List<Map<String, Object>> allHearings = cacheService.lrangeAndHGetAll(causeListKey, true);
+        long t2 = System.currentTimeMillis();
+        log.info("[PERF] getCauseList: redisLua={}ms hearings={}", t2 - t1, allHearings.size());
+
         if (!allHearings.isEmpty()) {
             boolean partialMiss = allHearings.stream().anyMatch(Map::isEmpty);
             if (!partialMiss) {
@@ -501,13 +506,16 @@ public class HearingService {
                 int totalCount = filtered.size();
                 int fromIdx = Math.min(offset, filtered.size());
                 int toIdx = Math.min(offset + limit, filtered.size());
+                log.info("[PERF] getCauseList: cacheHit total={}ms", System.currentTimeMillis() - t0);
                 return new CauseListResult(new ArrayList<>(filtered.subList(fromIdx, toIdx)), totalCount);
             }
             log.warn("Cache partial-read: causeListKey={} had {} entries with misses — falling back to ES", causeListKey, allHearings.size());
         }
 
-        log.info("Cause-list cache miss for courtId={}, date={} — falling back to ES", courtId, date);
-        return getCauseListFromES(courtId, localDate, offset, limit, status, hearingType, searchableFields);
+        log.info("[PERF] getCauseList: cacheMiss redisMs={} — falling back to ES", t2 - t1);
+        CauseListResult result = getCauseListFromES(courtId, localDate, offset, limit, status, hearingType, searchableFields);
+        log.info("[PERF] getCauseList: esFallback={}ms total={}ms", System.currentTimeMillis() - t2, System.currentTimeMillis() - t0);
+        return result;
     }
 
     private CauseListResult getCauseListFromES(String courtId, LocalDate date, int offset, int limit,
@@ -590,17 +598,23 @@ public class HearingService {
 
 
     public CurrentHearingData getCurrentHearing(String courtId, String currentHearingNumber, RequestInfo requestInfo) {
+        long t0 = System.currentTimeMillis();
         String date = dateUtil.getCurrentDate();
         String baseKey = CACHE_KEY_PREFIX + courtId + ":" + date;
         String metaKey = baseKey + CACHE_COURT_META_SUFFIX;
         String causeListKey = baseKey + CACHE_CAUSE_LIST_SUFFIX;
 
         if (currentHearingNumber != null && !currentHearingNumber.isEmpty()) {
+            long t1 = System.currentTimeMillis();
             List<Map<String, Object>> currentAndNext = cacheService.findCurrentAndNextHearing(causeListKey, currentHearingNumber);
+            long t2 = System.currentTimeMillis();
+            log.info("[PERF] getCurrentHearing path=1 redisLua={}ms hit={}", t2 - t1, !currentAndNext.isEmpty() && !currentAndNext.get(0).isEmpty());
+
             if (currentAndNext.isEmpty() || currentAndNext.get(0).isEmpty()) {
                 log.warn("Cache miss: causeList empty for courtId={}, falling back to inbox service", courtId);
                 Map<String, Object> currentData = getHearingDataFromInbox(courtId, currentHearingNumber, requestInfo);
                 Map<String, Object> nextData = getNextHearingDataFromInbox(courtId, currentHearingNumber, requestInfo);
+                log.info("[PERF] getCurrentHearing path=1 inboxFallback={}ms total={}ms", System.currentTimeMillis() - t2, System.currentTimeMillis() - t0);
                 return new CurrentHearingData(SESSION_STATUS_ACTIVE, "", currentData, nextData);
             }
             Map<String, Object> currentHearingData = currentAndNext.get(0);
@@ -611,14 +625,20 @@ public class HearingService {
                 parseSecondaryStageInMap(nextData);
                 nextKey = baseKey + CACHE_HEARING_PREFIX + String.valueOf(nextData.getOrDefault("hearingNumber", ""));
             }
+            log.info("[PERF] getCurrentHearing path=1 cacheHit total={}ms", System.currentTimeMillis() - t0);
             return new CurrentHearingData(SESSION_STATUS_ACTIVE, nextKey, currentHearingData, nextData);
         }
 
-        // Single Lua round trip: HGETALL metaKey + HGETALL currentHearingKey (replaces 2 sequential round trips)
+        long t1 = System.currentTimeMillis();
         List<Map<String, Object>> metaAndHearing = cacheService.getMetaAndCurrentHearing(metaKey);
+        long t2 = System.currentTimeMillis();
+        log.info("[PERF] getCurrentHearing path=2 redisLua={}ms hit={}", t2 - t1, !metaAndHearing.isEmpty() && !metaAndHearing.get(0).isEmpty());
+
         if (metaAndHearing.isEmpty() || metaAndHearing.get(0).isEmpty()) {
             log.warn("Cache miss: courtMeta empty for courtId={}, falling back to inbox service", courtId);
-            return getActiveHearingFromInbox(courtId, requestInfo);
+            CurrentHearingData result = getActiveHearingFromInbox(courtId, requestInfo);
+            log.info("[PERF] getCurrentHearing path=2 inboxFallback={}ms total={}ms", System.currentTimeMillis() - t2, System.currentTimeMillis() - t0);
+            return result;
         }
         Map<String, Object> meta = metaAndHearing.get(0);
         String sessionStatus = String.valueOf(meta.getOrDefault("sessionStatus", SESSION_STATUS_NOT_STARTED));
@@ -629,11 +649,14 @@ public class HearingService {
             if (hearingData.isEmpty()) {
                 log.warn("Cache miss: hearing data empty for key={}, falling back to inbox service", currentHearingKey);
                 String hearingNumber = extractHearingIdFromKey(currentHearingKey);
+                long t3 = System.currentTimeMillis();
                 hearingData = getHearingDataFromInbox(courtId, hearingNumber, requestInfo);
+                log.info("[PERF] getCurrentHearing path=2 inboxFallbackHearing={}ms total={}ms", System.currentTimeMillis() - t3, System.currentTimeMillis() - t0);
             } else {
                 parseSecondaryStageInMap(hearingData);
             }
         }
+        log.info("[PERF] getCurrentHearing path=2 cacheHit total={}ms", System.currentTimeMillis() - t0);
         return new CurrentHearingData(sessionStatus, currentHearingKey, hearingData, null);
     }
 
