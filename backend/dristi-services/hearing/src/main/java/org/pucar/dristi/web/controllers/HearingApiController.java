@@ -194,8 +194,7 @@ public class HearingApiController {
         log.info("api=/v1/current-hearing, courtId={}, currentHearingNumber={}", body.getCourtId(), body.getCurrentHearingNumber());
         CurrentHearingData data = hearingService.getCurrentHearing(body.getCourtId(), body.getCurrentHearingNumber(), body.getRequestInfo());
         NextHearingInfo nextHearing = null;
-        Map<String, Object> nextHd = data.getNextHearingData() != null && !data.getNextHearingData().isEmpty()
-                ? data.getNextHearingData() : data.getHearingData();
+        Map<String, Object> nextHd = data.getNextHearingData();
         if (nextHd != null && !nextHd.isEmpty()) {
             Object fromDateRaw = nextHd.get("fromDate");
             Long fromDate = fromDateRaw instanceof Number ? ((Number) fromDateRaw).longValue() : null;
