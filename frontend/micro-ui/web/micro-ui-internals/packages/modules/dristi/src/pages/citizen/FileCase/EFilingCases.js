@@ -2694,6 +2694,10 @@ function EFilingCases({ path }) {
         let message = t("E_FILING_SUBMISSION_FAILED");
         if (error instanceof DocumentUploadError) {
           message = `${t(error?.code || "DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`;
+        } else if (error?.response?.data?.Errors?.some?.((err) => err?.code === "INDIVIDUAL_ALREADY_EXISTS_FOR_USER")) {
+          // Idempotency guard: backend rejects creating a second individual for the same user
+          // (e.g. same mobile number verified and continued from two tabs simultaneously).
+          message = t("USER_ALREADY_EXISTS_WITH_THIS_MOBILE_NUMBER");
         } else if (extractCodeFromErrorMsg(error) === 413) {
           message = t("FAILED_TO_UPLOAD_FILE");
         }
