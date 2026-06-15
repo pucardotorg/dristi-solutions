@@ -3,6 +3,8 @@ package org.pucar.dristi.service;
 import lombok.extern.slf4j.Slf4j;
 import org.pucar.dristi.config.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.ReturnType;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.serializer.RedisSerializer;
@@ -189,7 +191,10 @@ public class CacheService {
     public List<Map<String, Object>> lrangeAndHGetAll(String listKey, boolean includeEmpty) {
         if (redisTemplate == null) return Collections.emptyList();
         try {
-            List raw = redisTemplate.execute(LRANGE_HGETALL_SCRIPT, Collections.singletonList(listKey));
+            byte[] scriptBytes = LRANGE_HGETALL_SCRIPT.getScriptAsString().getBytes(StandardCharsets.UTF_8);
+            byte[] keyBytes = listKey.getBytes(StandardCharsets.UTF_8);
+            List raw = redisTemplate.execute((RedisCallback<List>) conn ->
+                    (List) conn.eval(scriptBytes, ReturnType.MULTI, 1, keyBytes));
             if (raw == null || raw.isEmpty()) return Collections.emptyList();
             RedisSerializer valSer = redisTemplate.getHashValueSerializer();
             List<Map<String, Object>> result = new ArrayList<>(raw.size());
@@ -213,7 +218,10 @@ public class CacheService {
     public List<Map<String, Object>> getMetaAndCurrentHearing(String metaKey) {
         if (redisTemplate == null) return Collections.emptyList();
         try {
-            List raw = redisTemplate.execute(META_CURRENT_HEARING_SCRIPT, Collections.singletonList(metaKey));
+            byte[] scriptBytes = META_CURRENT_HEARING_SCRIPT.getScriptAsString().getBytes(StandardCharsets.UTF_8);
+            byte[] keyBytes = metaKey.getBytes(StandardCharsets.UTF_8);
+            List raw = redisTemplate.execute((RedisCallback<List>) conn ->
+                    (List) conn.eval(scriptBytes, ReturnType.MULTI, 1, keyBytes));
             if (raw == null || raw.isEmpty()) return Collections.emptyList();
             RedisSerializer valSer = redisTemplate.getHashValueSerializer();
             List<Map<String, Object>> result = new ArrayList<>(raw.size());
@@ -235,8 +243,12 @@ public class CacheService {
     public List<Map<String, Object>> findCurrentAndNextHearing(String causeListKey, String currentHearingNumber) {
         if (redisTemplate == null) return Collections.emptyList();
         try {
-            List raw = redisTemplate.execute(FIND_CURRENT_NEXT_SCRIPT,
-                    Collections.singletonList(causeListKey), currentHearingNumber);
+            byte[] scriptBytes = FIND_CURRENT_NEXT_SCRIPT.getScriptAsString().getBytes(StandardCharsets.UTF_8);
+            byte[] keyBytes = causeListKey.getBytes(StandardCharsets.UTF_8);
+            // Serialize arg with value serializer (Jackson) so comparison with stored Jackson-serialized value works
+            byte[] argBytes = (byte[]) redisTemplate.getValueSerializer().serialize(currentHearingNumber);
+            List raw = redisTemplate.execute((RedisCallback<List>) conn ->
+                    (List) conn.eval(scriptBytes, ReturnType.MULTI, 1, keyBytes, argBytes));
             if (raw == null || raw.isEmpty()) return Collections.emptyList();
             RedisSerializer valSer = redisTemplate.getHashValueSerializer();
             List<Map<String, Object>> result = new ArrayList<>(raw.size());
