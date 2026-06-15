@@ -84,7 +84,7 @@ public class OpenHearingService  {
                         .collect(Collectors.toSet());
                 Map<String, Map<String, String>> caseFieldsByFilingNumber = new HashMap<>();
                 for (String fn : filingNumbers) {
-                    caseFieldsByFilingNumber.put(fn, fetchCaseFieldsAndCache(fn));
+                    caseFieldsByFilingNumber.put(fn, fetchCaseFields(fn));
                 }
 
                 // Write per-hearing Redis hashes + collect ordered hearing keys
@@ -215,12 +215,11 @@ public class OpenHearingService  {
         return Integer.MAX_VALUE;
     }
 
-    private Map<String, String> fetchCaseFieldsAndCache(String filingNumber) {
+    private Map<String, String> fetchCaseFields(String filingNumber) {
         try {
-            RequestInfo requestInfo = createInternalRequestInfo();
             CaseCriteria criteria = CaseCriteria.builder().filingNumber(filingNumber).build();
             SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder()
-                    .RequestInfo(requestInfo)
+                    .RequestInfo(createInternalRequestInfo())
                     .tenantId(config.getEgovStateTenantId())
                     .criteria(Collections.singletonList(criteria))
                     .flow(FLOW_JAC)
@@ -229,7 +228,6 @@ public class OpenHearingService  {
             JsonNode caseList = caseUtil.getCases(searchCaseRequest);
             if (caseList != null && caseList.isArray() && !caseList.isEmpty()) {
                 JsonNode caseNode = caseList.get(0);
-                cacheService.updateCache(getRedisKey(requestInfo, caseNode.get("id").asText()), caseNode);
                 Map<String, String> fields = new HashMap<>();
                 fields.put("cmpNumber", getTextOrEmpty(caseNode, "cmpNumber"));
                 fields.put("courtCaseNumber", getTextOrEmpty(caseNode, "courtCaseNumber"));
