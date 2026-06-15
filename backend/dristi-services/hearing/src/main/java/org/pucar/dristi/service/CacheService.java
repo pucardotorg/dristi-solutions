@@ -246,7 +246,8 @@ public class CacheService {
             byte[] scriptBytes = FIND_CURRENT_NEXT_SCRIPT.getScriptAsString().getBytes(StandardCharsets.UTF_8);
             byte[] keyBytes = causeListKey.getBytes(StandardCharsets.UTF_8);
             // Serialize arg with value serializer (Jackson) so comparison with stored Jackson-serialized value works
-            byte[] argBytes = (byte[]) redisTemplate.getValueSerializer().serialize(currentHearingNumber);
+            @SuppressWarnings("unchecked")
+            byte[] argBytes = ((RedisSerializer<Object>) redisTemplate.getValueSerializer()).serialize(currentHearingNumber);
             List raw = redisTemplate.execute((RedisCallback<List>) conn ->
                     (List) conn.eval(scriptBytes, ReturnType.MULTI, 1, keyBytes, argBytes));
             if (raw == null || raw.isEmpty()) return Collections.emptyList();
