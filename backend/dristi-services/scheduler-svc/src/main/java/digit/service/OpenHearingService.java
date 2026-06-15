@@ -127,7 +127,7 @@ public class OpenHearingService  {
         data.put("caseTitle", hearing.getCaseTitle() != null ? hearing.getCaseTitle() : "");
         data.put("hearingType", hearing.getHearingType() != null ? hearing.getHearingType() : "");
         data.put("stage", hearing.getStage() != null ? hearing.getStage() : "");
-        data.put("secondaryStage", hearing.getSubStage() != null ? hearing.getSubStage() : "");
+        data.put("secondaryStage", caseFields.getOrDefault("secondaryStage", "[]"));
         data.put("filingNumber", hearing.getFilingNumber() != null ? hearing.getFilingNumber() : "");
         data.put("caseUuid", hearing.getCaseUuid() != null ? hearing.getCaseUuid() : "");
         data.put("serialNumber", hearing.getSerialNumber());
@@ -235,6 +235,7 @@ public class OpenHearingService  {
                 fields.put("outcome", getTextOrEmpty(caseNode, "outcome"));
                 fields.put("accessCode", getTextOrEmpty(caseNode, "accessCode"));
                 fields.put("caseStatus", getTextOrEmpty(caseNode, "status"));
+                fields.put("secondaryStage", getArrayAsJson(caseNode, "secondaryStage"));
                 return fields;
             }
         } catch (Exception e) {
@@ -246,6 +247,18 @@ public class OpenHearingService  {
     private String getTextOrEmpty(JsonNode node, String field) {
         JsonNode n = node.get(field);
         return n != null && !n.isNull() ? n.asText() : "";
+    }
+
+    private String getArrayAsJson(JsonNode node, String field) {
+        JsonNode n = node.get(field);
+        if (n != null && n.isArray()) {
+            try {
+                return objectMapper.writeValueAsString(n);
+            } catch (Exception e) {
+                log.warn("Failed to serialize array field={}", field, e);
+            }
+        }
+        return "[]";
     }
 
     public void clearOpenHearingsCache() {

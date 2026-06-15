@@ -706,7 +706,7 @@ public class HearingService {
         data.put("courtId", h.getCourtId() != null ? h.getCourtId() : "");
         data.put("serialNumber", h.getSerialNumber());
         data.put("stage", h.getStage() != null ? h.getStage() : "");
-        data.put("secondaryStage", h.getSubStage() != null ? h.getSubStage() : "");
+        data.put("secondaryStage", caseFields.getOrDefault("secondaryStage", "[]"));
         data.put("cmpNumber", caseFields.getOrDefault("cmpNumber", ""));
         data.put("courtCaseNumber", caseFields.getOrDefault("courtCaseNumber", ""));
         data.put("lprNumber", caseFields.getOrDefault("lprNumber", ""));
@@ -730,6 +730,7 @@ public class HearingService {
                 fields.put("outcome", getTextOrEmpty(caseNode, "outcome"));
                 fields.put("accessCode", getTextOrEmpty(caseNode, "accessCode"));
                 fields.put("caseStatus", getTextOrEmpty(caseNode, "status"));
+                fields.put("secondaryStage", getArrayAsJson(caseNode, "secondaryStage"));
                 return fields;
             }
         } catch (Exception e) {
@@ -741,6 +742,18 @@ public class HearingService {
     private String getTextOrEmpty(JsonNode node, String field) {
         JsonNode n = node.get(field);
         return n != null && !n.isNull() ? n.asText() : "";
+    }
+
+    private String getArrayAsJson(JsonNode node, String field) {
+        JsonNode n = node.get(field);
+        if (n != null && n.isArray()) {
+            try {
+                return objectMapper.writeValueAsString(n);
+            } catch (Exception e) {
+                log.warn("Failed to serialize array field={}", field, e);
+            }
+        }
+        return "[]";
     }
 
     private CurrentHearingData getNextHearingFromDb(String courtId, String currentHearingNumber) {
