@@ -492,15 +492,10 @@ public class HearingService {
         String baseKey = CACHE_KEY_PREFIX + courtId + ":" + dateStr;
         String causeListKey = baseKey + CACHE_CAUSE_LIST_SUFFIX;
 
-        List<Object> allKeys = cacheService.lrange(causeListKey, 0, -1);
-        if (!allKeys.isEmpty()) {
-            List<String> keyStrings = new ArrayList<>();
-            for (Object k : allKeys) keyStrings.add(String.valueOf(k));
-            List<Map<String, Object>> allHearings = cacheService.hgetAllPipelined(keyStrings);
-            boolean partialMiss = allHearings.size() != allKeys.size();
-            for (int i = 0; !partialMiss && i < allHearings.size(); i++) {
-                if (allHearings.get(i).isEmpty()) partialMiss = true;
-            }
+        // Single Lua round trip: LRANGE + all HGETALLs (replaces lrange + hgetAllPipelined = 2 round trips)
+        List<Map<String, Object>> allHearings = cacheService.lrangeAndHGetAll(causeListKey, true);
+        if (!allHearings.isEmpty()) {
+            boolean partialMiss = allHearings.stream().anyMatch(Map::isEmpty);
             if (!partialMiss) {
                 List<Map<String, Object>> filtered = applyFilters(allHearings, status, hearingType, searchableFields);
                 int totalCount = filtered.size();
@@ -508,54 +503,62 @@ public class HearingService {
                 int toIdx = Math.min(offset + limit, filtered.size());
                 return new CauseListResult(new ArrayList<>(filtered.subList(fromIdx, toIdx)), totalCount);
             }
-            log.warn("Cache partial-read: causeListKey={} had {} keys — falling back to ES", causeListKey, allKeys.size());
+            log.warn("Cache partial-read: causeListKey={} had {} entries with misses — falling back to ES", causeListKey, allHearings.size());
         }
 
-        // Cache miss — fall back to ES via inbox service
         log.info("Cause-list cache miss for courtId={}, date={} — falling back to ES", courtId, date);
+        return getCauseListFromES(courtId, localDate, offset, limit, status, hearingType, searchableFields);
+    }
+
+    private CauseListResult getCauseListFromES(String courtId, LocalDate date, int offset, int limit,
+                                               String status, String hearingType, String searchableFields) {
         try {
-            Long fromDateEpoch = dateUtil.getEPochFromLocalDate(localDate);
-            Long toDateEpoch = dateUtil.getEpochFromLocalDateTime(localDate.atTime(23, 59, 59));
+            Long fromDateEpoch = dateUtil.getEPochFromLocalDate(date);
+            Long toDateEpoch = dateUtil.getEpochFromLocalDateTime(date.atTime(23, 59, 59));
             InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtId, fromDateEpoch, toDateEpoch, offset, limit);
-            Map<String, Object> moduleSearchCriteria = inboxRequest.getInbox().getModuleSearchCriteria();
-            if (status != null && !status.isEmpty()) moduleSearchCriteria.put("status", status);
-            if (hearingType != null && !hearingType.isEmpty()) moduleSearchCriteria.put("hearingType", hearingType);
-            if (searchableFields != null && !searchableFields.isEmpty()) moduleSearchCriteria.put("searchableFields", searchableFields);
+            Map<String, Object> criteria = inboxRequest.getInbox().getModuleSearchCriteria();
+            if (status != null && !status.isEmpty()) criteria.put("status", status);
+            if (hearingType != null && !hearingType.isEmpty()) criteria.put("hearingType", hearingType);
+            if (searchableFields != null && !searchableFields.isEmpty()) criteria.put("searchableFields", searchableFields);
 
             List<OpenHearing> openHearings = inboxUtil.getOpenHearings(inboxRequest);
             if (openHearings == null || openHearings.isEmpty()) return new CauseListResult(Collections.emptyList(), 0);
 
-            List<Map<String, Object>> result = new ArrayList<>();
+            List<Map<String, Object>> result = new ArrayList<>(openHearings.size());
             for (OpenHearing h : openHearings) {
-                Map<String, Object> map = new LinkedHashMap<>();
-                map.put("hearingNumber", h.getHearingNumber() != null ? h.getHearingNumber() : "");
-                map.put("hearingUuid", h.getHearingUuid() != null ? h.getHearingUuid() : "");
-                map.put("status", h.getStatus() != null ? h.getStatus() : "");
-                map.put("statusOrder", h.getStatusOrder() != null ? h.getStatusOrder() : 99);
-                map.put("caseNumber", h.getCaseNumber() != null ? h.getCaseNumber() : "");
-                map.put("caseTitle", h.getCaseTitle() != null ? h.getCaseTitle() : "");
-                map.put("hearingType", h.getHearingType() != null ? h.getHearingType() : "");
-                map.put("stage", h.getStage() != null ? h.getStage() : "");
-                map.put("filingNumber", h.getFilingNumber() != null ? h.getFilingNumber() : "");
-                map.put("caseUuid", h.getCaseUuid() != null ? h.getCaseUuid() : "");
-                map.put("serialNumber", h.getSerialNumber());
-                map.put("fromDate", h.getFromDate() != null ? h.getFromDate() : 0L);
-                map.put("toDate", h.getToDate() != null ? h.getToDate() : 0L);
-                map.put("tenantId", h.getTenantId() != null ? h.getTenantId() : "");
-                map.put("courtId", h.getCourtId() != null ? h.getCourtId() : "");
-                map.put("hearingTypeOrder", h.getHearingTypeOrder() != null ? h.getHearingTypeOrder() : 99);
-                try {
-                    map.put("advocate", objectMapper.writeValueAsString(h.getAdvocate()));
-                } catch (Exception ex) {
-                    map.put("advocate", "{}");
-                }
-                result.add(map);
+                result.add(toHearingMap(h));
             }
             return new CauseListResult(result, result.size());
         } catch (Exception e) {
             log.error("ES fallback failed for cause-list courtId={}, date={}", courtId, date, e);
             return new CauseListResult(Collections.emptyList(), 0);
         }
+    }
+
+    private Map<String, Object> toHearingMap(OpenHearing h) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("hearingNumber", h.getHearingNumber() != null ? h.getHearingNumber() : "");
+        map.put("hearingUuid", h.getHearingUuid() != null ? h.getHearingUuid() : "");
+        map.put("status", h.getStatus() != null ? h.getStatus() : "");
+        map.put("statusOrder", h.getStatusOrder() != null ? h.getStatusOrder() : 99);
+        map.put("caseNumber", h.getCaseNumber() != null ? h.getCaseNumber() : "");
+        map.put("caseTitle", h.getCaseTitle() != null ? h.getCaseTitle() : "");
+        map.put("hearingType", h.getHearingType() != null ? h.getHearingType() : "");
+        map.put("stage", h.getStage() != null ? h.getStage() : "");
+        map.put("filingNumber", h.getFilingNumber() != null ? h.getFilingNumber() : "");
+        map.put("caseUuid", h.getCaseUuid() != null ? h.getCaseUuid() : "");
+        map.put("serialNumber", h.getSerialNumber());
+        map.put("fromDate", h.getFromDate() != null ? h.getFromDate() : 0L);
+        map.put("toDate", h.getToDate() != null ? h.getToDate() : 0L);
+        map.put("tenantId", h.getTenantId() != null ? h.getTenantId() : "");
+        map.put("courtId", h.getCourtId() != null ? h.getCourtId() : "");
+        map.put("hearingTypeOrder", h.getHearingTypeOrder() != null ? h.getHearingTypeOrder() : 99);
+        try {
+            map.put("advocate", objectMapper.writeValueAsString(h.getAdvocate()));
+        } catch (Exception ex) {
+            map.put("advocate", "{}");
+        }
+        return map;
     }
 
     private static List<Map<String, Object>> applyFilters(List<Map<String, Object>> hearings, String status, String hearingType, String searchableFields) {
@@ -593,45 +596,36 @@ public class HearingService {
         String causeListKey = baseKey + CACHE_CAUSE_LIST_SUFFIX;
 
         if (currentHearingNumber != null && !currentHearingNumber.isEmpty()) {
-            List<Object> hearingKeys = cacheService.lrange(causeListKey, 0, -1);
-            if (hearingKeys.isEmpty()) {
+            List<Map<String, Object>> currentAndNext = cacheService.findCurrentAndNextHearing(causeListKey, currentHearingNumber);
+            if (currentAndNext.isEmpty() || currentAndNext.get(0).isEmpty()) {
                 log.warn("Cache miss: causeList empty for courtId={}, falling back to inbox service", courtId);
                 Map<String, Object> currentData = getHearingDataFromInbox(courtId, currentHearingNumber, requestInfo);
                 Map<String, Object> nextData = getNextHearingDataFromInbox(courtId, currentHearingNumber, requestInfo);
                 return new CurrentHearingData(SESSION_STATUS_ACTIVE, "", currentData, nextData);
             }
-            int currentIndex = -1;
-            for (int i = 0; i < hearingKeys.size(); i++) {
-                if (String.valueOf(hearingKeys.get(i)).endsWith(CACHE_HEARING_PREFIX + currentHearingNumber)) {
-                    currentIndex = i;
-                    break;
-                }
-            }
-            String currentHearingCacheKey = baseKey + CACHE_HEARING_PREFIX + currentHearingNumber;
-            Map<String, Object> currentHearingData = cacheService.hgetAll(currentHearingCacheKey);
+            Map<String, Object> currentHearingData = currentAndNext.get(0);
             parseSecondaryStageInMap(currentHearingData);
-            for (int i = currentIndex + 1; i < hearingKeys.size(); i++) {
-                String nextKey = String.valueOf(hearingKeys.get(i));
-                Map<String, Object> nextData = cacheService.hgetAll(nextKey);
-                String status = String.valueOf(nextData.getOrDefault("status", ""));
-                if (!status.isEmpty() && !"COMPLETED".equals(status) && !"ABATED".equals(status) && !"OPT_OUT".equals(status)) {
-                    parseSecondaryStageInMap(nextData);
-                    return new CurrentHearingData(SESSION_STATUS_ACTIVE, nextKey, currentHearingData, nextData);
-                }
+            Map<String, Object> nextData = currentAndNext.size() > 1 ? currentAndNext.get(1) : Collections.emptyMap();
+            String nextKey = "";
+            if (!nextData.isEmpty()) {
+                parseSecondaryStageInMap(nextData);
+                nextKey = baseKey + CACHE_HEARING_PREFIX + String.valueOf(nextData.getOrDefault("hearingNumber", ""));
             }
-            return new CurrentHearingData(SESSION_STATUS_ACTIVE, "", currentHearingData, Collections.emptyMap());
+            return new CurrentHearingData(SESSION_STATUS_ACTIVE, nextKey, currentHearingData, nextData);
         }
 
-        Map<String, Object> meta = cacheService.hgetAll(metaKey);
-        if (meta.isEmpty()) {
+        // Single Lua round trip: HGETALL metaKey + HGETALL currentHearingKey (replaces 2 sequential round trips)
+        List<Map<String, Object>> metaAndHearing = cacheService.getMetaAndCurrentHearing(metaKey);
+        if (metaAndHearing.isEmpty() || metaAndHearing.get(0).isEmpty()) {
             log.warn("Cache miss: courtMeta empty for courtId={}, falling back to inbox service", courtId);
             return getActiveHearingFromInbox(courtId, requestInfo);
         }
+        Map<String, Object> meta = metaAndHearing.get(0);
         String sessionStatus = String.valueOf(meta.getOrDefault("sessionStatus", SESSION_STATUS_NOT_STARTED));
         String currentHearingKey = String.valueOf(meta.getOrDefault("currentHearingKey", ""));
         Map<String, Object> hearingData = Collections.emptyMap();
         if (currentHearingKey != null && !currentHearingKey.isEmpty()) {
-            hearingData = cacheService.hgetAll(currentHearingKey);
+            hearingData = metaAndHearing.size() > 1 ? metaAndHearing.get(1) : Collections.emptyMap();
             if (hearingData.isEmpty()) {
                 log.warn("Cache miss: hearing data empty for key={}, falling back to inbox service", currentHearingKey);
                 String hearingNumber = extractHearingIdFromKey(currentHearingKey);
