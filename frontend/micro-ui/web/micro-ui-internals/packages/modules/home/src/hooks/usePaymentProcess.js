@@ -211,7 +211,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
         let isResolved = false;
         let pollCount = 0;
         let graceCount = 0;
-        const maxPolls = 300; // safety cap (~5 min) so the interval can never run forever
+        const maxPolls = 600; // safety cap (~10 min) so the interval can never run forever
         const graceAfterClose = 5; // keep polling ~5s after the user closes the popup, to let the async reconciliation catch up
 
         const finish = (intervalId, result) => {
