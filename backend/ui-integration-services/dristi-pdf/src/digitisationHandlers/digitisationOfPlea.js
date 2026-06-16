@@ -8,6 +8,7 @@ const {
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("../applicationHandlers/formatDate");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 const digitisationOfPlea = async (req, res, courtCaseJudgeDetails, qrCode) => {
   const { cnrNumber, tenantId, entityId, code, documentNumber } = req.query;
@@ -113,9 +114,7 @@ const digitisationOfPlea = async (req, res, courtCaseJudgeDetails, qrCode) => {
     }
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
-    const caseNumber = courtCase?.isLPRCase
-      ? courtCase?.lprNumber
-      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = getCaseNumber(courtCase);
 
     const place = mdmsCourtRoom?.place || digitisationRecord?.place || "";
     const state = mdmsCourtRoom?.state || digitisationRecord?.state || "";

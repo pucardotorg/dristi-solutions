@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Button, CardText, CustomDropdown, SubmitBar, TextInput, Toast, Modal, Loader, Banner } from "@egovernments/digit-ui-react-components";
+import { Button, CardText, CustomDropdown, SubmitBar, TextInput, Modal, Loader, Banner } from "@egovernments/digit-ui-react-components";
 import { formatDateInMonth } from "../../utils";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
@@ -8,6 +8,7 @@ import { HomeService, Urls } from "../../hooks/services";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const hearingTypeOptions = [{}];
 
@@ -71,6 +72,7 @@ function ScheduleHearing({
   isCaseAdmitted = false,
   showPurposeOfHearing = false,
 }) {
+  const [showToast, setShowToast] = useState(null);
   const { data: availableDateResponse } = window?.Digit.Hooks.dristi.useJudgeAvailabilityDates(
     {
       SearchCriteria: {
@@ -153,7 +155,6 @@ function ScheduleHearing({
   const { filingNumber, status } = Digit.Hooks.useQueryParams();
   const [modalInfo, setModalInfo] = useState(null);
   const [selectedChip, setSelectedChip] = React.useState(status === "OPTOUT" ? [] : null);
-  const [showErrorToast, setShowErrorToast] = useState(false);
   const [scheduleHearingParams, setScheduleHearingParam] = useState({ purpose: "Admission Purpose" });
   const [selectedCustomDate, setSelectedCustomDate] = useState(new Date());
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
@@ -217,7 +218,7 @@ function ScheduleHearing({
 
   const nextFourDates = status === "OPTOUT" ? getSuggestedDates(dateResponse) : nextFiveDates;
 
-  const { data: OptOutLimit, isLoading: loading } = Digit.Hooks.useCustomMDMS(
+  const { data: OptOutLimit } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "SCHEDULER-CONFIG",
     [
@@ -229,10 +230,6 @@ function ScheduleHearing({
       cacheTime: 0,
     }
   );
-
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
 
   const setPurposeValue = (value, input) => {
     setScheduleHearingParam({ ...scheduleHearingParams, purpose: isCaseAdmitted ? value : value.code });
@@ -321,32 +318,34 @@ function ScheduleHearing({
         },
       };
 
-      setIsSubmitDisabled(true);
-      HomeService.customApiService(Urls.orderCreate, reqBody, { tenantId })
-        .then(async (res) => {
-          await HomeService.customApiService(Urls.pendingTask, {
-            pendingTask: {
-              name: "Schedule Hearing",
-              entityType: "case-default",
-              referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-              status: "SCHEDULE_HEARING",
-              assignedTo: [],
-              assignedRole: ["PENDING_TASK_ORDER"],
-              cnrNumber: caseDetails?.cnrNumber,
-              filingNumber: caseDetails?.filingNumber,
-              caseId: caseDetails?.id,
-              caseTitle: caseDetails?.caseTitle,
-              isCompleted: true,
-              additionalDetails: {},
-              tenantId,
-            },
-          });
-          history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
-          setIsSubmitDisabled(false);
-        })
-        .catch((err) => {
-          setIsSubmitDisabled(false);
+      try {
+        setIsSubmitDisabled(true);
+        const res = await HomeService.customApiService(Urls.orderCreate, reqBody, { tenantId });
+        await HomeService.customApiService(Urls.pendingTask, {
+          pendingTask: {
+            name: "Schedule Hearing",
+            entityType: "case-default",
+            referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+            status: "SCHEDULE_HEARING",
+            assignedTo: [],
+            assignedRole: ["PENDING_TASK_ORDER"],
+            cnrNumber: caseDetails?.cnrNumber,
+            filingNumber: caseDetails?.filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
+            isCompleted: true,
+            additionalDetails: {},
+            tenantId,
+          },
         });
+        history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+      } catch (err) {
+        console.error("Error creating order:", err);
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ error: true, label: t("CS_ORDER_CREATION_FAILED"), errorId });
+      } finally {
+        setIsSubmitDisabled(false);
+      }
     } else if (status && status === "OPTOUT") {
       const individualId = await fetchBasicUserInfo();
       const judgeId = localStorage.getItem("judgeId");
@@ -500,8 +499,6 @@ function ScheduleHearing({
             }
           ></SubmitBar>
         </div>
-
-        {showErrorToast && <Toast error={true} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />}
         {modalInfo?.showDate && (
           <Modal
             headerBarMain={<Heading label={t(customDateConfig.headModal)} />}
@@ -557,6 +554,15 @@ function ScheduleHearing({
               />
             </div>
           </Modal>
+        )}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
+          />
         )}
       </div>
     </Modal>

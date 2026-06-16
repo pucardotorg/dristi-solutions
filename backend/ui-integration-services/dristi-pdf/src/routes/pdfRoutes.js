@@ -31,8 +31,6 @@ router.post(
       );
     }
 
-    logger.info("[CaseBundle] POST /case-bundle started", { tenantId, caseNumber });
-
     try {
       // Call buildCasePdf and get updated index with pageCount
       const result = await buildCasePdf(
@@ -45,8 +43,6 @@ router.post(
       // Extract pageCount and remove it from updatedIndex
       const { pageCount, ...updatedIndex } = result;
 
-      logger.info("[CaseBundle] POST /case-bundle completed", { tenantId, caseNumber, pageCount });
-
       // Send success response with pageCount included but removed from updatedIndex
       res.status(200).json({
         ResponseInfo: RequestInfo,
@@ -54,7 +50,6 @@ router.post(
         pageCount: pageCount, // Page count sent separately
       });
     } catch (error) {
-      logger.error("[CaseBundle] POST /case-bundle failed", { tenantId, caseNumber, error: error?.message });
       renderError(
         res,
         "An error occurred while creating the case bundle PDF.",
@@ -96,15 +91,12 @@ router.post(
         isRebuild
       );
 
-      logger.info("[CaseBundle] POST /process-case-bundle completed", { tenantId, caseId });
-
       // Return the updated index
       res.status(200).json({
         message: "Case bundle processed successfully",
         index: updatedIndex,
       });
     } catch (error) {
-      logger.error("[CaseBundle] POST /process-case-bundle failed", { tenantId, caseId, error: error?.message });
       console.error("Error processing case bundle:", error);
       res.status(400).json({
         message: "An error occurred while processing the case bundle.",

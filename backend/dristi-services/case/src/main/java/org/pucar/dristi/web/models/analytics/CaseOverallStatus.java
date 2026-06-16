@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
 import org.pucar.dristi.web.models.ProcessHandler;
+import org.pucar.dristi.web.models.enums.LifecycleStatus;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;
@@ -32,18 +33,6 @@ public class CaseOverallStatus {
     @JsonProperty("stage")
     private String stage = null;
 
-    @JsonProperty("substage")
-    private String substage = null;
-
-    @JsonProperty("processHandler")
-    private ProcessHandler processHandler = ProcessHandler.RESET_BACKUP;
-
-    @JsonProperty("stageBackup")
-    private String stageBackup = null;
-
-    @JsonProperty("substageBackup")
-    private String substageBackup = null;
-
     @JsonProperty("secondaryStage")
     private List<String> secondaryStage = new ArrayList<>();
 
@@ -51,11 +40,10 @@ public class CaseOverallStatus {
     @Valid
     private AuditDetails auditDetails = null;
 
-    public CaseOverallStatus(String filingNumber, String tenantId, String stage, String substage) {
+    public CaseOverallStatus(String filingNumber, String tenantId, String stage) {
         this.filingNumber = filingNumber;
         this.tenantId = tenantId;
         this.stage = stage;
-        this.substage = substage;
     }
 
 }

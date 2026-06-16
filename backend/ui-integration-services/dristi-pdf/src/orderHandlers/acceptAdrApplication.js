@@ -11,6 +11,7 @@ const {
   create_pdf,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 function formatDate(epochMillis) {
   // Convert epoch milliseconds to a Date object
@@ -195,12 +196,7 @@ async function acceptAdrApplication(req, res, qrCode) {
       console.error("Cannot convert epoch time to date");
     }
     const caseNumber =
-      (courtCase?.isLPRCase
-        ? courtCase?.lprNumber
-        : courtCase?.courtCaseNumber) ||
-      courtCase?.courtCaseNumber ||
-      courtCase?.cmpNumber ||
-      "";
+      getCaseNumber(courtCase);
     const data = {
       Data: [
         {

@@ -93,7 +93,6 @@ async function processFilingsSection(
     (section) => section.name === "filings"
   );
   filingsIndexSection.lineItems = filingsLineItems?.filter(Boolean);
-  logger.info(`[processFilingsSection] Completed | lineItems: ${filingsIndexSection.lineItems?.length || 0}`);
 }
 
 module.exports = {

@@ -11,6 +11,7 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 const { extractOrderNumber } = require("../utils/extractOrderNumber");
+const { getCaseNumber } = require("../utils/commonUtils");
 const {
   getNameByUuid,
   getComplaintAndAccusedList,
@@ -216,9 +217,7 @@ async function applicationSubmissionExtension(
         )
       : "";
     const benefitOfExtension = application?.benefitOfExtension;
-    const caseNumber = courtCase?.isLPRCase
-      ? courtCase?.lprNumber
-      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = getCaseNumber(courtCase);
 
     const { complainantList, accusedList } = getComplaintAndAccusedList(
       courtCase || {},

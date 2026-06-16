@@ -10,6 +10,7 @@ import { HomeService } from "../../hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { witnessDepositionWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
 import { useLocation } from "react-router-dom/cjs/react-router-dom";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
 
 export const clearWitnessDepositionSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -27,7 +28,7 @@ export const WitnessDepositionSignModal = ({
   setShowBulkSignModal = () => {},
   witnessDepositionPaginationData,
   setCounter = () => {},
-  setShowErrorToast = () => {},
+  setShowToast = () => {},
 }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
   const location = useLocation();
@@ -68,9 +69,8 @@ export const WitnessDepositionSignModal = ({
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
+  const { handleEsign, checkSignStatus, showToast: apiErrorToast, setShowToast: setApiErrorToast, CustomToast } = Digit.Hooks.orders.useESign();
 
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [isSigned, setIsSigned] = useState(false);
 
   const [formData, setFormData] = useState({});
@@ -157,25 +157,7 @@ export const WitnessDepositionSignModal = ({
     );
   }, []);
 
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
+  const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const onSelect = (key, value) => {
     if (value?.Signature === null) {
@@ -190,23 +172,30 @@ export const WitnessDepositionSignModal = ({
     setFileUploadError(null);
   };
 
-  const onUploadSubmit = useCallback(async () => {
-    if (formData?.uploadSignature?.Signature?.length > 0) {
-      try {
-        setLoader(true);
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
-        setIsSigned(true);
-        setOpenUploadSignatureModal(false);
-        setWitnessDepositionSignedPdf(uploadedFileId?.[0]?.fileStoreId);
-        clearWitnessDepositionSessionData();
-      } catch (error) {
-        console.error("error", error);
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
-      } finally {
-        setLoader(false);
+  const onUploadSubmit = useCallback(
+    async (combineResult) => {
+      if (formData?.uploadSignature?.Signature?.length > 0) {
+        try {
+          setLoader(true);
+          const filesToUpload = combineResult?.combinedFiles || formData?.uploadSignature?.Signature;
+          const uploadedFileId = await uploadDocuments(filesToUpload, tenantId);
+          setIsSigned(true);
+          setOpenUploadSignatureModal(false);
+          setWitnessDepositionSignedPdf(uploadedFileId?.[0]?.fileStoreId);
+          clearWitnessDepositionSessionData();
+        } catch (error) {
+          console.error("error", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+          setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
+          setShowToast({ label: t(errorCode), error: true, errorId });
+        } finally {
+          setLoader(false);
+        }
       }
-    }
-  }, [formData, uploadDocuments, tenantId]);
+    },
+    [formData, uploadDocuments, tenantId, t]
+  );
 
   const updateWitnessDeposition = async ({ artifactNumber, action, fileStoreId }) => {
     try {
@@ -262,7 +251,7 @@ export const WitnessDepositionSignModal = ({
       });
     } catch (error) {
       console.error("Error while updating witness deposition:", error);
-      setShowErrorToast({
+      setShowToast({
         error: true,
         label: t("ERROR_WITNESS_DEPOSITION_BULK_SIGN_MSG"),
       });
@@ -327,7 +316,7 @@ export const WitnessDepositionSignModal = ({
           sessionStorage.setItem("bulkWitnessDepositionSignCaseTitle", witnessDepositionPaginationData?.caseTitle);
         if (witnessDepositionPaginationData?.offset)
           sessionStorage.setItem("bulkWitnessDepositionSignoffset", witnessDepositionPaginationData?.offset);
-        handleEsign(name, pageModule, selectedWitnessDepositionFilestoreid, judgeDesignation);
+        handleEsign(name, pageModule, selectedWitnessDepositionFilestoreid, setShowToast, t, judgeDesignation);
       } catch (error) {
         console.error("E-sign navigation error:", error);
         setLoader(false);
@@ -348,10 +337,7 @@ export const WitnessDepositionSignModal = ({
         newFilestore = witnessDepositionSignedPdf || localStorageID;
       }
       if (!mockESignEnabled && (!newFilestore || newFilestore === selectedWitnessDepositionFilestoreid)) {
-        setShowErrorToast({
-          error: true,
-          label: t("UPDATE_FAILED_ERROR"),
-        });
+        setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
         return;
       }
       // fileStoreIds.delete(newFilestore);
@@ -523,6 +509,7 @@ export const WitnessDepositionSignModal = ({
                   displayFilename={"CLICK_HERE"}
                   t={t}
                   pdf={true}
+                  name={`${effectiveRowData?.artifactNumber}_Witness_Deposition`}
                 />
               </div>
             </div>
@@ -531,18 +518,19 @@ export const WitnessDepositionSignModal = ({
       )}
       {/* upload doc modal */}
       {stepper === 1 && openUploadSignatureModal && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key={name}
           name={name}
-          setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+          onClose={() => setOpenUploadSignatureModal(false)}
           onSelect={onSelect}
-          config={uploadModalConfig}
           formData={formData}
           onSubmit={onUploadSubmit}
           isDisabled={loader}
+          isParentLoading={loader}
           fileUploadError={fileUploadError}
           setFileUploadError={setFileUploadError}
+          downloadedFileName={`${effectiveRowData?.artifactNumber}_Witness_Deposition`}
         />
       )}
       {/* after signing showing signed modal */}
@@ -608,7 +596,8 @@ export const WitnessDepositionSignModal = ({
         <Modal
           actionCancelLabel={t("DOWNLOAD_WITNESS_DEPOSITION")}
           actionCancelOnSubmit={() => {
-            downloadPdf(tenantId, witnessDepositionSignedPdf || sessionStorage.getItem("fileStoreId"));
+            const name = `${effectiveRowData?.artifactNumber}_Witness_Deposition`;
+            downloadPdf(tenantId, witnessDepositionSignedPdf || sessionStorage.getItem("fileStoreId"), name);
           }}
           actionSaveLabel={t("BULK_SUCCESS_CLOSE")}
           actionSaveOnSubmit={() => {

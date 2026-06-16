@@ -1,10 +1,6 @@
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
-const {
-  duplicateExistingFileStore,
-} = require("../utils/duplicateExistingFileStore");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { duplicateExistingFileStore } = require("../utils/duplicateExistingFileStore");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 const { logger } = require("../../logger");
 
@@ -157,10 +153,8 @@ async function processVakalatSection(
       })
     );
     vakalatsIndexSection.lineItems = vakalatLineItems?.filter(Boolean);
-    logger.info(`[processVakalatSection] Completed | lineItems: ${vakalatsIndexSection.lineItems?.length || 0}`);
   } else {
     vakalatsIndexSection.lineItems = [];
-    logger.info(`[processVakalatSection] Skipped | section not active in MDMS`);
   }
 }
 

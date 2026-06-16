@@ -32,9 +32,6 @@ public class CaseSummary {
     @JsonProperty("stage")
     private String stage;
 
-    @JsonProperty("subStage")
-    private String subStage;
-
     @JsonProperty("outcome")
     private String outcome;
 

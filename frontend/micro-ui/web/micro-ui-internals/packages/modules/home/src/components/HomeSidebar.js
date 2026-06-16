@@ -1,8 +1,9 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import HomeAccordian from "./HomeAccordian";
 import SidebarItem from "./SideBarItem";
 import { HomeService } from "../hooks/services";
 import HomeHeader from "./HomeHeader";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const HomeSidebar = ({
   t,
@@ -14,7 +15,7 @@ const HomeSidebar = ({
   applicationOptions,
   hearingCount = 0,
   pendingTaskCount,
-  showToast = () => {},
+  setShowToast = () => {},
 }) => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
@@ -157,14 +158,15 @@ const HomeSidebar = ({
                   const res = await HomeService.InboxSearch(payload, { tenantId });
                   shouldProceed = res?.totalCount > 0;
                 } catch (err) {
-                  showToast("error", t("ISSUE_IN_FETCHING"), 5000);
+                  const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+                  setShowToast({ label: t("ISSUE_IN_FETCHING"), error: true, errorId });
                   shouldProceed = false;
                   return;
                 }
                 if (shouldProceed) {
                   onTabChange("CS_HOME_ORDERS");
                 } else {
-                  showToast("error", t("NO_BULK_SIGN_ORDERS"), 5000);
+                  setShowToast({ error: true, label: t("NO_BULK_SIGN_ORDERS") });
                 }
               }}
             />

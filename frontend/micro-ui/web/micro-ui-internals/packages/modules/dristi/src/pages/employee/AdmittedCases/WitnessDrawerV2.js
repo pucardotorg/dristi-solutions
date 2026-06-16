@@ -1,17 +1,13 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Dropdown, LabelFieldPair, CardLabel, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Dropdown, LabelFieldPair, CardLabel, Loader } from "@egovernments/digit-ui-react-components";
 import { LeftArrow, CustomAddIcon, CustomDeleteIcon } from "../../../icons/svgIndex";
 import Button from "../../../components/Button";
 import { getFormattedName } from "../../../../../hearings/src/utils";
 import isEmpty from "lodash/isEmpty";
-import { TextArea } from "@egovernments/digit-ui-components";
-import TranscriptComponent from "../../../../../hearings/src/pages/employee/Transcription";
-import { Urls } from "../../../hooks";
 import { getAuthorizedUuid, getFilingType } from "../../../Utils";
-import { hearingService } from "../../../../../hearings/src/hooks/services";
 import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
-import { constructFullName, removeInvalidNameParts } from "@egovernments/digit-ui-module-orders/src/utils";
+import { removeInvalidNameParts } from "@egovernments/digit-ui-module-orders/src/utils";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
 import { DRISTIService } from "../../../services";
 import { submissionService } from "../../../../../submissions/src/hooks/services";
@@ -28,6 +24,7 @@ import ConfirmDepositionDeleteModal from "./ConfirmDepositionDeleteModal";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
 import { searchIndividualUserWithUuid } from "../../../../../cases/src/utils/joinCaseUtils";
 import SelectCustomFormatterTextArea from "../../../components/SelectCustomFormatterTextArea";
+import CustomToast from "../../../components/CustomToast";
 
 const formatAddress = (addr) => {
   if (!addr) return "";
@@ -59,7 +56,6 @@ const WitnessDrawerV2 = ({
   courtId,
 }) => {
   const { t } = useTranslation();
-  const textAreaRef = useRef(null);
   const [options, setOptions] = useState([]);
   const [witnessTypeOptions] = useState([
     { label: "PW", value: "PW" },
@@ -69,18 +65,12 @@ const WitnessDrawerV2 = ({
   const [selectedWitnessType, setSelectedWitnessType] = useState({});
   const [selectedWitness, setSelectedWitness] = useState({});
   const [witnessDepositionText, setWitnessDepositionText] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [isProceeding, setIsProceeding] = useState(false);
-  const [hearingData, setHearingData] = useState(hearing);
   const [witnessModalOpen, setWitnessModalOpen] = useState(false);
-  const [signedDocumentUploadID, setSignedDocumentUploadID] = useState("");
-  const [additionalDetails, setAdditionalDetails] = useState({});
   const [activeTabs, setActiveTabs] = useState([]);
   const [activeTabIndex, setActiveTabIndex] = useState(0); // set activetabindex based on new or already existing tab.
   const [currentEvidence, setCurrentEvidence] = useState(null);
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const userInfo = Digit?.UserService?.getUser?.()?.info;
-  const urlParams = new URLSearchParams(window.location.search);
   const [showWitnessDepositionReview, setShowWitnessDepositionReview] = useState(localStorage.getItem("showPdfPreview") || false);
   const [witnessDepositionFileStoreId, setWitnessDepositionFileStoreId] = useState("");
   const [showSignatureModal, setShowsignatureModal] = useState(false);
@@ -103,25 +93,12 @@ const WitnessDrawerV2 = ({
   const userUuid = userInfo?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
 
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
   const formatDepositionText = (text) => {
     if (!text) return "";
     return text.replace(/\\n/g, "<wbr>").replace(/\n/g, "<wbr>");
   };
 
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
-
-  const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
+  const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData } = useCaseDetailSearchService(
     {
       criteria: {
         caseId: caseId,
@@ -487,7 +464,7 @@ const WitnessDrawerV2 = ({
       })) || [];
 
     setOptions(partiesOption);
-  }, [caseDetails, hearingData, allParties, activeTabs.length]);
+  }, [caseDetails, allParties, activeTabs.length]);
 
   useEffect(() => {
     if (!(currentArtifactNumber || localStorage.getItem("artifactNumber"))) {
@@ -606,7 +583,7 @@ const WitnessDrawerV2 = ({
 
   const handleSaveDraft = async (submit = false, newCurrentArtifactNumber = null, backAction = false) => {
     if (!selectedWitness?.value) {
-      setShowErrorToast({ label: t("PLEASE_SELECT_WITNESS_FIRST"), error: true });
+      setShowToast({ label: t("PLEASE_SELECT_WITNESS_FIRST"), error: true });
       if (backAction) {
         onClose();
       }
@@ -614,7 +591,7 @@ const WitnessDrawerV2 = ({
     }
 
     if (!selectedWitnessType?.value) {
-      setShowErrorToast({ label: t("PLEASE_MARK_WITNESS"), error: true });
+      setShowToast({ label: t("PLEASE_MARK_WITNESS"), error: true });
       if (backAction) {
         onClose();
       }
@@ -623,7 +600,7 @@ const WitnessDrawerV2 = ({
 
     const formattedText = formatDepositionText(witnessDepositionText);
     if (!formattedText.trim() && submit) {
-      setShowErrorToast({ label: t("PLEASE_ENTER_DEPOSITION"), error: true });
+      setShowToast({ label: t("PLEASE_ENTER_DEPOSITION"), error: true });
       if (backAction) {
         onClose();
       }
@@ -690,7 +667,7 @@ const WitnessDrawerV2 = ({
             setObtainedTag(updatedEvidence?.artifact?.tag);
           }
 
-          setShowErrorToast({ label: t("WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY"), error: false });
+          setShowToast({ label: t("WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY"), error: false });
         }
       } else {
         // Create new evidence
@@ -743,7 +720,7 @@ const WitnessDrawerV2 = ({
           }
         }
 
-        setShowErrorToast({ label: t("WITNESS_DEPOSITION_CREATED_SUCCESSFULLY"), error: false });
+        setShowToast({ label: t("WITNESS_DEPOSITION_CREATED_SUCCESSFULLY"), error: false });
       }
 
       // Also refresh evidence list to ensure server and client are in sync
@@ -757,8 +734,9 @@ const WitnessDrawerV2 = ({
         }
       }
     } catch (error) {
-      console.error("Error saving draft:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to save witness deposition draft:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("WITNESS_DEPOSITION_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
       if (backAction) {
@@ -810,7 +788,7 @@ const WitnessDrawerV2 = ({
         //   setCurrentEvidence(updatedEvidence?.artifact);
         // }
 
-        setShowErrorToast({ label: t("WITNESS_MARKED_SUCCESSFULLY"), error: false });
+        setShowToast({ label: t("WITNESS_MARKED_SUCCESSFULLY"), error: false });
         localStorage.setItem("artifactNumber", updatedEvidence?.artifact?.artifactNumber);
         localStorage.setItem("showPdfPreview", true);
         setCurrentEvidence(updatedEvidence?.artifact);
@@ -827,7 +805,8 @@ const WitnessDrawerV2 = ({
       refetchCaseData();
     } catch (error) {
       console.error("Failed to save witness marking:", error);
-      setShowErrorToast({ label: t("FAILED_TO_SAVE_WITNESS_MARKING"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("FAILED_TO_SAVE_WITNESS_MARKING"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -839,7 +818,10 @@ const WitnessDrawerV2 = ({
   };
 
   const handleDownload = () => {
-    downloadPdf(tenantId, witnessDepositionFileStoreId);
+    const name = `${
+      caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"
+    }_${currentArtifactNumber}_Witness_Deposition_draft`;
+    downloadPdf(tenantId, witnessDepositionFileStoreId, name);
   };
 
   const updateWitnessDepositionDocument = async (fileStoreId = null, action, witnessMobileNumbers) => {
@@ -924,8 +906,9 @@ const WitnessDrawerV2 = ({
       refetchCaseData();
       setCurrentArtifactNumber(null);
     } catch (error) {
-      console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to update witness deposition:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("WITNESS_DEPOSITION_UPDATE_FAILED"), error: true, errorId });
     } finally {
       // evidenceRefetch();
       setLoader(false);
@@ -937,7 +920,7 @@ const WitnessDrawerV2 = ({
     // TODO: api call with fileStoreID then
     try {
       setLoader(true);
-      const res = await updateWitnessDepositionDocument(fileStoreId, "UPLOAD");
+      await updateWitnessDepositionDocument(fileStoreId, "UPLOAD");
       setShowsignatureModal(false);
       setShowUploadSignature(false);
       setShowSuccessModal(true);
@@ -945,8 +928,9 @@ const WitnessDrawerV2 = ({
       refetchCaseData();
       setCurrentArtifactNumber(null);
     } catch (error) {
-      console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to update bail bond signature:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BAIL_BOND_UPDATE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
       setShowsignatureModal(false);
@@ -978,7 +962,6 @@ const WitnessDrawerV2 = ({
 
       // If the witness deposition has artifact number.
       const evidence = activeTabs?.find((tab) => tab?.artifactNumber === selectedTab?.artifactNumber);
-      const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
       const deletedEvidenceIndex = activeTabs?.findIndex((tab) => tab?.artifactNumber === selectedTab?.artifactNumber);
 
       if (evidence?.artifactNumber) {
@@ -997,8 +980,8 @@ const WitnessDrawerV2 = ({
           },
         };
 
-        const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
-        setShowErrorToast({ label: t("WITNESS_DEPOSITION_DELETED_SUCCESSFULLY"), error: false });
+        await DRISTIService.updateEvidence(updateEvidenceReqBody);
+        setShowToast({ label: t("WITNESS_DEPOSITION_DELETED_SUCCESSFULLY"), error: false });
         const updatedActiveTabs = activeTabs?.filter((tab) => tab?.artifactNumber !== selectedTab?.artifactNumber);
         setActiveTabs(updatedActiveTabs);
         if (deletedEvidenceIndex === activeTabs?.length - 1) {
@@ -1024,8 +1007,9 @@ const WitnessDrawerV2 = ({
         refetchCaseData();
       }
     } catch (error) {
-      console.error("Error while deleting witness deposition bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to delete witness deposition:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("WITNESS_DELETE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -1033,13 +1017,12 @@ const WitnessDrawerV2 = ({
 
   const handleAddNewDepositionDraft = async () => {
     if (!selectedWitness?.value) {
-      setShowErrorToast({ label: t("PLEASE_SELECT_WITNESS_FIRST"), error: true });
-
+      setShowToast({ label: t("PLEASE_SELECT_WITNESS_FIRST"), error: true });
       return;
     }
 
     if (!selectedWitnessType?.value) {
-      setShowErrorToast({ label: t("PLEASE_MARK_WITNESS"), error: true });
+      setShowToast({ label: t("PLEASE_MARK_WITNESS"), error: true });
       return;
     }
 
@@ -1096,7 +1079,7 @@ const WitnessDrawerV2 = ({
               updatedTabs[currentActiveIndex] = updatedEvidence.artifact;
               setActiveTabs(updatedTabs);
               setCurrentEvidence(updatedEvidence.artifact);
-              setShowErrorToast({ label: t("WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY"), error: false });
+              setShowToast({ label: t("WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY"), error: false });
               setCurrentArtifactNumber(null);
               createNewDraft(updatedTabs, true);
             }
@@ -1147,7 +1130,7 @@ const WitnessDrawerV2 = ({
             updatedTabs[currentActiveIndex] = updatedEvidence.artifact;
             setActiveTabs(updatedTabs);
             setCurrentEvidence(updatedEvidence.artifact);
-            setShowErrorToast({ label: t("WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY"), error: false });
+            setShowToast({ label: t("WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY"), error: false });
             setCurrentArtifactNumber(null);
             createNewDraft(updatedTabs, true);
           }
@@ -1157,8 +1140,9 @@ const WitnessDrawerV2 = ({
       // Also refresh evidence list to ensure server and client are in sync
       refetchCaseData();
     } catch (error) {
-      console.error("Error saving draft:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to save examination draft:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("EXAMINATION_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -1183,11 +1167,9 @@ const WitnessDrawerV2 = ({
     return <Loader />;
   }
 
-  const isDisabled = isProceeding;
-
   const config = {
     key: CONFIG_KEY,
-    disable: isDisabled,
+    disable: false,
     populators: {
       inputs: [
         {
@@ -1198,10 +1180,10 @@ const WitnessDrawerV2 = ({
             width: "100%",
             minHeight: "40vh",
             fontSize: "large",
-            opacity: isDisabled ? 0.5 : 1,
+            opacity: 1,
             pointerEvents: !IsSelectedWitness ? "unset !important" : "auto",
-            backgroundColor: isDisabled ? "#f5f5f5" : "white",
-            color: isDisabled ? "#666" : "black",
+            backgroundColor: "white",
+            color: "black",
           },
         },
       ],
@@ -1320,7 +1302,6 @@ const WitnessDrawerV2 = ({
                     optionKey={"label"}
                     select={handleDropdownChange}
                     freeze={true}
-                    disable={isProceeding}
                     selected={selectedWitness}
                     style={{ width: "100%", height: "40px", fontSize: "16px", marginBottom: "0px" }}
                   />
@@ -1333,7 +1314,7 @@ const WitnessDrawerV2 = ({
                     optionKey={"label"}
                     select={handleWitnessTypeChange}
                     freeze={true}
-                    disable={isProceeding || isWitnessTypeDisabled}
+                    disable={isWitnessTypeDisabled}
                     selected={selectedWitnessType}
                     style={{ width: "100%", height: "40px", fontSize: "16px", marginBottom: "0px" }}
                   />
@@ -1369,19 +1350,11 @@ const WitnessDrawerV2 = ({
                   onSelect={onSelect}
                   errors={{}}
                 />
-                {IsSelectedWitness && (
-                  <TranscriptComponent
-                    setWitnessDepositionText={setWitnessDepositionText}
-                    isRecording={isRecording}
-                    setIsRecording={setIsRecording}
-                    activeTab={"Witness Deposition"}
-                  ></TranscriptComponent>
-                )}
               </div>
               <div className="drawer-footer" style={{ display: "flex", justifyContent: "end", flexDirection: "row", gap: "16px" }}>
                 <Button
                   label={t("SAVE_DRAFT")}
-                  isDisabled={!IsSelectedWitness || isProceeding}
+                  isDisabled={!IsSelectedWitness}
                   onButtonClick={() => handleSaveDraft()}
                   style={{
                     width: "130px",
@@ -1393,7 +1366,7 @@ const WitnessDrawerV2 = ({
                 />
                 <Button
                   label={t("SUBMIT_BUTTON")}
-                  isDisabled={!IsSelectedWitness || isProceeding || witnessDepositionText?.length === 0}
+                  isDisabled={!IsSelectedWitness || witnessDepositionText?.length === 0}
                   className={"order-drawer-save-btn"}
                   onButtonClick={() => handleSaveDraft(true)}
                   style={{
@@ -1404,11 +1377,9 @@ const WitnessDrawerV2 = ({
             </div>
           </div>
         </div>
-
         {witnessModalOpen && (
           <AddWitnessModal
             onCancel={() => setWitnessModalOpen(false)}
-            onDismiss={() => setWitnessModalOpen(false)}
             tenantId={tenantId}
             caseDetails={caseDetails}
             isEmployee={true}
@@ -1416,11 +1387,9 @@ const WitnessDrawerV2 = ({
               setWitnessModalOpen(false);
               refetchCaseData();
             }}
-            showToast={setShowErrorToast}
             style={{ top: "57%" }}
           ></AddWitnessModal>
         )}
-
         {showWitnessDepositionReview && (
           <WitnessDepositionReviewModal
             t={t}
@@ -1439,7 +1408,6 @@ const WitnessDrawerV2 = ({
             tag={obtainedTag || selectedWitnessType?.value}
           />
         )}
-
         {showSignatureModal && (
           <WitnessDepositionSignatureModal
             t={t}
@@ -1452,9 +1420,10 @@ const WitnessDrawerV2 = ({
             setLoader={setWitnessDepositionUploadLoader}
             loader={witnessDepositionUploadLoader}
             witnessDepositionFileStoreId={witnessDepositionFileStoreId}
+            caseDetails={caseDetails}
+            currentArtifactNumber={currentArtifactNumber}
           />
         )}
-
         {showAddWitnessMobileNumberModal && (
           <AddWitnessMobileNumberModal
             t={t}
@@ -1472,7 +1441,6 @@ const WitnessDrawerV2 = ({
             selectedPartyId={selectedWitness?.value}
           />
         )}
-
         {showWitnessDepositionESign && (
           <WitnessDepositionESignLockModal
             t={t}
@@ -1484,7 +1452,6 @@ const WitnessDrawerV2 = ({
             header={"WITNESS_DEPOSITION_BANNER_HEADER"}
           />
         )}
-
         {showConfirmWitnessModal && (
           <ConfirmWitnessModal
             t={t}
@@ -1495,7 +1462,6 @@ const WitnessDrawerV2 = ({
             allParties={allParties}
           />
         )}
-
         {showConfirmDeleteDepositionModal?.show && (
           <ConfirmDepositionDeleteModal
             t={t}
@@ -1523,8 +1489,15 @@ const WitnessDrawerV2 = ({
             message={"WITNESS_DEPOSITION_SUCCESS_BANNER_HEADER"}
           />
         )}
-
-        {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
+          />
+        )}
       </div>
     </React.Fragment>
   );

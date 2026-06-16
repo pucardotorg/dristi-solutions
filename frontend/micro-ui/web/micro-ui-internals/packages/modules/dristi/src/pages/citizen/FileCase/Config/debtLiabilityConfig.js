@@ -101,13 +101,8 @@ const debtLiabilityFromconfig = [
             {
               name: "document",
               type: "DragDropComponent",
-              fileTypes: ["JPG", "JPEG", "PDF", "PNG"],
               isOptional: "CS_IS_OPTIONAL",
-              maxFileSize: 10,
               documentHeader: "CS_PROOF_DEBT",
-              isMultipleUpload: false,
-              uploadGuidelines: "UPLOAD_DOC_10",
-              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             },
           ],
         },

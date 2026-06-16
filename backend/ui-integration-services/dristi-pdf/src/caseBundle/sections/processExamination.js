@@ -1,6 +1,4 @@
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { search_digitalizedDocuments } = require("../../api");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
@@ -31,12 +29,8 @@ async function processExamination(
     sectionPosition
   );
 
-  if (!sortedSection || sortedSection.length === 0) {
-    logger.info(`[processExamination] Skipped | section not active in MDMS`);
-    return;
-  }
+  if (!sortedSection || sortedSection.length === 0) return;
 
-  logger.info(`[processExamination] search_digitalizedDocuments`);
   const resDigitizedDocuments = await search_digitalizedDocuments(
     tenantId,
     requestInfo,
@@ -62,10 +56,8 @@ async function processExamination(
   if (
     !resDigitizedDocuments?.data?.documents ||
     resDigitizedDocuments?.data?.documents.length === 0
-  ) {
-    logger.info(`[processExamination] Completed | lineItems: 0 (no digitized documents)`);
+  )
     return;
-  }
 
   const allDocumentsLineItems = [];
   let docketIndex = 0;
@@ -148,9 +140,6 @@ async function processExamination(
     digitalizedDocumentsIndexSection.lineItems =
       allDocumentsLineItems.filter(Boolean);
   }
-  logger.info(
-    `[processExamination] Completed | lineItems: ${digitalizedDocumentsIndexSection?.lineItems?.length || 0}`
-  );
 }
 
 module.exports = {

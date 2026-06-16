@@ -10,6 +10,7 @@ import digit.util.*;
 import digit.web.models.*;
 import digit.web.models.cases.AddressDetails;
 import digit.web.models.cases.CourtCase;
+import digit.web.models.cases.LifecycleStatus;
 import digit.web.models.cases.POAHolder;
 import digit.web.models.cases.Party;
 import digit.web.models.cases.PartyAddress;
@@ -564,7 +565,7 @@ public class TaskCreationService {
                                 .isPendingCollection(channel != null &&
                                         RPAD.equalsIgnoreCase(channel.getChannelCode()) &&
                                         channel.getFeePaidDate() != null &&
-                                        !Boolean.TRUE.equals(courtCase.getIsLPRCase())
+                                        !LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus())
                                 )
                                 .build())
                         .build());

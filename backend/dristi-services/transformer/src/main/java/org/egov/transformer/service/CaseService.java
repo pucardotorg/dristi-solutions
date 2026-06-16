@@ -182,7 +182,7 @@ public class CaseService {
         caseSearch.setCaseStatus(courtCase.getStatus());
         caseSearch.setYearOfFiling(dateUtil.getYearFromDate(courtCase.getFilingDate()));
         caseSearch.setHearingType(latestScheduledHearing!=null? latestScheduledHearing.getHearingType(): null);
-        caseSearch.setCaseSubStage(courtCase.getSubstage());
+        caseSearch.setCaseSubStage(courtCase.getStage());
         caseSearch.setOutcome(courtCase.getOutcome());
         return caseSearch;
     }

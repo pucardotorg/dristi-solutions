@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Banner, Button, CardLabel, CloseSvg, Dropdown, LabelFieldPair, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Banner, Button, CardLabel, CloseSvg, Dropdown, LabelFieldPair, Loader } from "@egovernments/digit-ui-react-components";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
@@ -12,6 +12,8 @@ import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks
 import get from "lodash/get";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const CloseBtn = ({ onClick }) => {
@@ -43,16 +45,15 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
 
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
 
+  const [showToast, setShowToast] = useState(null);
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState(""); //signed notification filestore id
   const [loader, setLoader] = useState(false);
-  const [toastMsg, setToastMsg] = useState(null);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const accessToken = window.localStorage.getItem("token");
@@ -119,13 +120,6 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
 
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${notificationFileStoreId}`;
 
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
-
   useEffect(() => {
     const esignProcess = sessionStorage.getItem("esignProcess");
     if (esignProcess) {
@@ -186,25 +180,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     setFileUploadError(null);
   };
 
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
+  const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const clearLocalStorage = () => {
     sessionStorage.removeItem("bulkNotificationStepper");
@@ -236,7 +212,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
 
       const newFileStoreId = signedDocumentUploadID || localStorageID;
       if (!newFileStoreId || newFileStoreId === notificationFileStoreId) {
-        showToast("error", t("UPDATE_FAILED_ERROR"), 5000);
+        setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
         return;
       }
       fileStoreIds.delete(newFileStoreId);
@@ -309,7 +285,8 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     } catch (error) {
       console.error("Error :", error);
       setLoader(false);
-      showToast("error", t("ISSUE_IN_BULK_HEARING"), 5000);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ error: true, label: t("ISSUE_IN_BULK_HEARING"), errorId });
       setStepper(1);
       setIsSigned(false);
       setSignedDocumentUploadID("");
@@ -388,6 +365,8 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     } catch (error) {
       setLoader(false);
       console.error("Error generating notificationReviewPdf:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ error: true, label: t("ERROR_GENERATING_NOTIFICATION_PDF"), errorId });
     }
   };
 
@@ -402,7 +381,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         setNotificationFileStoreId(fileStoreId);
         setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, fileStoreId]));
       } else if (!notificationFileStoreId) {
-        showToast("error", t("SOME_ERRORS_IN_HEARING_RESCHEDULE"), 5000);
+        setShowToast({ error: true, label: t("SOME_ERRORS_IN_HEARING_RESCHEDULE") });
         return;
       }
       const caseNumbers = newHearingData?.filter((hearing) => hearing?.caseId).map((hearing) => hearing.caseId);
@@ -430,6 +409,8 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       if (stepper === 2) setStepper(3);
     } catch (error) {
       console.error("Error:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ error: true, label: t("SOME_ERRORS_IN_HEARING_RESCHEDULE"), errorId });
     } finally {
       setLoader(false);
     }
@@ -439,11 +420,12 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     downloadPdf(tenantId, downloadFileStoreId);
   };
 
-  const onUploadSubmit = async () => {
+  const onUploadSubmit = async (combineResult) => {
     if (signFormData?.uploadSignature?.Signature?.length > 0) {
       try {
         setSignLoader(true);
-        const uploadedFileId = await uploadDocuments(signFormData?.uploadSignature?.Signature, tenantId);
+        const filesToUpload = combineResult?.combinedFiles || signFormData?.uploadSignature?.Signature;
+        const uploadedFileId = await uploadDocuments(filesToUpload, tenantId);
         const newFileStoreId = uploadedFileId?.[0]?.fileStoreId;
         setSignedDocumentUploadID(newFileStoreId);
         setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, newFileStoreId]));
@@ -451,12 +433,15 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
-        setSignLoader(false);
         setSignFormData({});
         setIsSigned(false);
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+        setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
+        setShowToast({ label: t(errorCode), error: true, errorId });
+      } finally {
+        setSignLoader(false);
       }
-      setSignLoader(false);
     }
   };
 
@@ -479,10 +464,12 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       setAllHearings(tentativeDates?.Hearings || []);
       setNewHearingData(tentativeDates?.Hearings || []);
       if (tentativeDates?.Hearings?.length === 0) {
-        showToast("error", t("NO_NEW_HEARINGS_AVAILABLE"), 2000);
+        setShowToast({ error: true, label: t("NO_NEW_HEARINGS_AVAILABLE") });
       }
     } catch (error) {
       console.error(error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ error: true, label: t("BULK_RESCHEDULE_ERROR_FETCHING"), errorId });
     } finally {
       setIsLoader(false);
     }
@@ -493,7 +480,6 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       <NewBulkRescheduleTable
         t={t}
         loader={isRescheduleReasonLoading}
-        showToast={showToast}
         setStepper={setStepper}
         setNewHearingData={setNewHearingData}
         newHearingData={newHearingData}
@@ -614,7 +600,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
                     sessionStorage.setItem("bulkNotificationNumber", JSON.stringify(notificationNumber));
                     sessionStorage.setItem("bulkNotificationFileStoreId", JSON.stringify(notificationFileStoreId));
                     sessionStorage.setItem("homeActiveTab", "CS_HOME_BULK_RESCHEDULE");
-                    handleEsign(name, pageModule, notificationFileStoreId, "Signature");
+                    handleEsign(name, pageModule, notificationFileStoreId, setShowToast, t, "Signature");
                   }} //as sending null throwing error in esign
                   className="aadhar-sign-in"
                   labelClassName="aadhar-sign-in"
@@ -644,18 +630,17 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         </Modal>
       )}
       {stepper === 3 && openUploadSignatureModal && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key={name}
           name={name}
-          setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+          onClose={() => setOpenUploadSignatureModal(false)}
           onSelect={onSelect}
-          config={uploadModalConfig}
           formData={signFormData}
           onSubmit={onUploadSubmit}
           isDisabled={issignLoader}
+          isParentLoading={issignLoader}
           fileUploadError={fileUploadError}
-          setFileUploadError={setFileUploadError}
         />
       )}
       {stepper === 3 && !openUploadSignatureModal && isSigned && (
@@ -761,13 +746,13 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
           </div>
         </Modal>
       )}
-      {toastMsg && (
-        <Toast
-          error={toastMsg.key === "error"}
-          label={t(toastMsg.action)}
-          onClose={() => setToastMsg(null)}
-          isDleteBtn={true}
-          style={{ maxWidth: "500px" }}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
         />
       )}
     </React.Fragment>

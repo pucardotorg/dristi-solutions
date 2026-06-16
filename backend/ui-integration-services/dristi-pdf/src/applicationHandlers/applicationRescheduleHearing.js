@@ -10,6 +10,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { cleanName } = require("./cleanName");
 const { getStringAddressDetails } = require("../utils/addressUtils");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -279,9 +280,7 @@ async function applicationRescheduleHearing(
       : [rawProposedHearingDate];
     const reasonForReschedule =
       application?.applicationDetails?.reasonForRequest || "";
-    const caseNumber = courtCase?.isLPRCase
-      ? courtCase?.lprNumber
-      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = getCaseNumber(courtCase);
     const partyName = application?.additionalDetails?.onBehalOfName || "";
     const purposeOfHearing =
       application?.applicationDetails?.initialHearingPurpose || "";

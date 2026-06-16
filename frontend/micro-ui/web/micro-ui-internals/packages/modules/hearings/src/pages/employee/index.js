@@ -2,10 +2,7 @@ import { AppContainer, PrivateRoute } from "@egovernments/digit-ui-react-compone
 import React, { useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
-import AdjournHearing from "./AdjournHearing";
 import MonthlyCalendar from "./CalendarView";
-import EndHearing from "./EndHearing";
-import InsideHearingMainPage from "./InsideHearingMainPage";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import BreadCrumbHearings from "../../components/BreadCrumbHearings";
@@ -77,9 +74,6 @@ const App = ({ path }) => {
         <React.Fragment>
           <ProjectBreadCrumb location={window.location} />
         </React.Fragment>
-        <PrivateRoute path={`${path}/inside-hearing`} component={() => <InsideHearingMainPage />} />
-        <PrivateRoute path={`${path}/end-hearing`} component={() => <EndHearing />} />
-        <PrivateRoute path={`${path}/adjourn-hearing`} component={() => <AdjournHearing />} />
         <PrivateRoute exact path={`${path}/`} component={() => <MonthlyCalendar />} />
       </AppContainer>
     </Switch>

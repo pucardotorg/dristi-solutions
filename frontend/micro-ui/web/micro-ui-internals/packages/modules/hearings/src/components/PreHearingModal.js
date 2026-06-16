@@ -1,4 +1,5 @@
-import { Button, InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
+import { Button, Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Modal from "../../../dristi/src/components/Modal";
@@ -26,7 +27,6 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
 
   const DateFormat = "DD-MM-YYYY";
 
-  
   const openRescheduleModal = (caseDetails) => {
     setPurposeModalData(caseDetails);
     setPurposeModalOpen(true);
@@ -65,9 +65,9 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
       ...configCopy.sections.searchResult.uiConfig.columns.map((column) => {
         return column.label === "Actions"
           ? {
-            ...column,
-            openRescheduleDialog: openRescheduleModal,
-          }
+              ...column,
+              openRescheduleDialog: openRescheduleModal,
+            }
           : column;
       }),
     ];
@@ -114,7 +114,6 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
     height: "fit-content",
     borderRadius: "0.3rem",
   };
-
 
   const closeFunc = () => {
     setPurposeModalOpen(false);

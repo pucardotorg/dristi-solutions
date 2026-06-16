@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.pucar.dristi.web.models.enums.LifecycleStatus;
 
 import java.util.UUID;
 
@@ -32,8 +33,8 @@ public class CaseMemberInfo {
     @JsonProperty("caseTitle")
     private String caseTitle;
 
-    @JsonProperty("isLPRCase")
-    private Boolean isLPRCase;
+    @JsonProperty("lifecycleStatus")
+    private LifecycleStatus lifecycleStatus;
 
     @JsonProperty("isActive")
     private Boolean isActive;

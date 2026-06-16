@@ -16,6 +16,7 @@ import {
   getAuthorizedUuid,
   getClerkMembersForPartiesTab,
   getDate,
+  isLPRCase,
   modifiedEvidenceNumber,
   removeInvalidNameParts,
 } from "../Utils";
@@ -852,14 +853,7 @@ export const UICustomizations = {
           ...requestCriteria.config,
           select: (data) => {
             // if (requestCriteria.url.split("/").includes("order")) {
-            return userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order")
-              ? { ...data, list: data.list?.filter((order) => order.status !== "DRAFT_IN_PROGRESS") }
-              : userRoles.includes("EMPLOYEE") && requestCriteria.url.split("/").includes("application")
-              ? {
-                  ...data,
-                  applicationList: data.applicationList?.filter((application) => !["PENDINGESIGN", "PENDINGPAYMENT"].includes(application.status)),
-                }
-              : data;
+            return data;
             // }
           },
         },
@@ -1329,7 +1323,6 @@ export const UICustomizations = {
   },
   PartiesConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
-      const { limit, offset } = requestCriteria.state?.tableForm || {};
       return {
         ...requestCriteria,
         config: {
@@ -1490,14 +1483,13 @@ export const UICustomizations = {
               ...advocateOfficeClerks,
               ...advocateOfficeAssistantAdvocates,
             ];
-            const paginatedParties = allParties.slice(offset, offset + limit);
             return {
               ...data,
               criteria: {
                 ...data.criteria[0],
                 responseList: {
                   ...data.criteria[0].responseList[0],
-                  parties: paginatedParties,
+                  parties: allParties,
                 },
               },
               totalCount: allParties?.length,
@@ -2378,16 +2370,7 @@ export const UICustomizations = {
               {value ? value : "-"}
             </Link>
           ) : row?.tab === "RESCHEDULE_REQUEST" ? (
-            <Link
-              style={{ color: "black", textDecoration: "underline" }}
-              to={{
-                pathname: `/${window?.contextPath}/employee/dristi/home/view-case`,
-                search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Submissions&fromHome=true`,
-                state: { homeActiveTab: row?.tab, refApplicationNumber: row?.referenceId },
-              }}
-            >
-              {value ? value : "-"}
-            </Link>
+            <span style={{ cursor: "pointer", textDecoration: "underline" }}>{value ? value : "-"}</span>
           ) : ["BAIL_BOND_STATUS", "NOTICE_SUMMONS_MANAGEMENT"]?.includes(row?.tab) ? (
             <OrderName rowData={row} colData={column} value={value} />
           ) : (
@@ -2847,7 +2830,7 @@ export const UICustomizations = {
           return rawTitle ? rawTitle : t("CASE_UNTITLED") || "Case Untitled";
         }
         case "CASE_NUMBER": {
-          const caseNumber = row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
+          const caseNumber = isLPRCase(row) ? row?.lprNumber : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
           return caseNumber || "";
         }
         default:
