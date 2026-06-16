@@ -949,7 +949,7 @@ const ComplainantSignature = ({ path }) => {
     if (!mockESignEnabled && (!signatureDocumentId || signatureDocumentId === caseDetails?.additionalDetails?.signedCaseDocument)) {
       setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
       setLoader(false);
-      return;
+      return false;
     }
     try {
       await DRISTIService.caseUpdateService(
@@ -1078,6 +1078,7 @@ const ComplainantSignature = ({ path }) => {
           taggedError.originalError = error;
           throw taggedError;
         });
+      return true;
     } catch (error) {
       console.error("E-sign process failed:", error);
       if (!error?.isPendingTaskError) {
@@ -1087,6 +1088,7 @@ const ComplainantSignature = ({ path }) => {
       }
       setEsignSuccess(false);
       setLoader(false);
+      return false;
     }
   };
 
@@ -1135,8 +1137,10 @@ const ComplainantSignature = ({ path }) => {
           console.error("Failed to release case lock before eSign update", err);
         }
 
-        await updateCase(state);
-        await refetchCaseData();
+        const updateSucceeded = await updateCase(state);
+        if (updateSucceeded) {
+          await refetchCaseData();
+        }
         setEsignSuccess(false);
       }
     };
