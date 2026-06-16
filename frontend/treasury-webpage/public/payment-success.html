@@ -5,62 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Payment Confirmation</title>
     <style>
+      * {
+        box-sizing: border-box;
+      }
       body {
         font-family: sans-serif;
-        margin: 2rem;
-        text-align: center;
-        color: #0b0c0c;
-      }
-      h1 {
-        font-size: 2.5rem;
-        color: #2e8b2e;
-        margin-bottom: 0.5rem;
-      }
-      p {
-        font-size: 1.2rem;
-      }
-      .subtext {
-        margin-top: 0;
-      }
-      .info-card {
-        display: flex;
-        align-items: flex-start;
-        gap: 16px;
-        text-align: left;
-        max-width: 540px;
-        margin: 1.5rem auto;
-        padding: 20px 24px;
-        background-color: #eef4fc;
-        border: 1px solid #d3e3f8;
-        border-radius: 8px;
-      }
-      .info-card .info-icon {
-        flex-shrink: 0;
-        margin-top: 4px;
-      }
-      .info-card .info-title {
-        margin: 0 0 6px 0;
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: #1a5dd6;
-      }
-      .info-card .info-line {
         margin: 0;
-        font-size: 1.15rem;
-        color: #0b0c0c;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f3f4f6;
+        color: #1f2937;
       }
-      .info-card .info-warning {
-        margin: 4px 0 0 0;
-        font-size: 1.15rem;
-        font-weight: 700;
-        color: #0b0c0c;
+      .card {
+        position: relative;
+        width: 100%;
+        max-width: 440px;
+        margin: 1.5rem;
+        padding: 48px 40px 40px 40px;
+        background-color: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+        text-align: center;
+        overflow: hidden;
+      }
+      .card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background-color: #3b82f6;
       }
       .spinner {
-        margin: 2rem auto 0 auto;
-        width: 56px;
-        height: 56px;
-        border: 6px solid #e2e8f5;
-        border-top-color: #1a5dd6;
+        margin: 0 auto 28px auto;
+        width: 64px;
+        height: 64px;
+        border: 6px solid #e5e9f2;
+        border-top-color: #3b82f6;
         border-radius: 50%;
         animation: spin 1s linear infinite;
       }
@@ -69,26 +53,36 @@
           transform: rotate(360deg);
         }
       }
+      .card h1 {
+        margin: 0 0 12px 0;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #1f2937;
+      }
+      .card .subtext {
+        margin: 0 auto 28px auto;
+        max-width: 320px;
+        font-size: 1.05rem;
+        line-height: 1.5;
+        color: #6b7280;
+      }
+      .pill {
+        display: inline-block;
+        padding: 9px 20px;
+        background-color: #eceef1;
+        border-radius: 9999px;
+        font-size: 0.95rem;
+        color: #4b5563;
+      }
     </style>
   </head>
   <body>
-    <h1>Payment Successful!</h1>
-    <p class="subtext">Your transaction has been processed successfully.</p>
-
-    <div class="info-card" role="status">
-      <svg class="info-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <circle cx="12" cy="12" r="12" fill="#2563eb" />
-        <rect x="11" y="10" width="2" height="7" rx="1" fill="#ffffff" />
-        <circle cx="12" cy="7" r="1.3" fill="#ffffff" />
-      </svg>
-      <div>
-        <p class="info-title">Please wait while we redirect you.</p>
-        <p class="info-line">This window will close automatically.</p>
-        <p class="info-warning">Do not close or refresh this window.</p>
-      </div>
+    <div class="card" role="status">
+      <div class="spinner" aria-hidden="true"></div>
+      <h1>Processing Your Payment</h1>
+      <p class="subtext">Please wait a moment while we securely update your transaction.</p>
+      <span class="pill">Do not close or refresh this window</span>
     </div>
-
-    <div class="spinner" aria-hidden="true"></div>
 
     <script src="main.js"></script>
     <script>
