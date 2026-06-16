@@ -1,7 +1,5 @@
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 const { logger } = require("../../logger");
 
@@ -122,7 +120,6 @@ async function processAffidavitSection(
     (section) => section.name === "affidavit"
   );
   affidavitsIndexSection.lineItems = affidavitsLineItems?.filter(Boolean);
-  logger.info(`[processAffidavitSection] Completed | lineItems: ${affidavitsIndexSection.lineItems?.length || 0}`);
 }
 
 module.exports = {

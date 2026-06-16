@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Toast } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { EditPencilIcon } from "../icons/svgIndex";
 import { CloseBtn } from "./ModalComponents";
@@ -48,7 +48,7 @@ const Chip = ({ label, isSelected, handleClick, icon }) => {
 };
 function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors }) {
   const [showPicker, setShowPicker] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
 
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const CustomCalendar = Digit.ComponentRegistryService.getComponent("CustomCalendarV2");
@@ -67,13 +67,6 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
     return selectedValue && !internalSuggestedDates.includes(selectedValue);
   }, [selectedValue, internalSuggestedDates]);
 
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => setShowErrorToast(null), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
-
   const convertToMillis = (dateStr) => {
     if (!dateStr) return new Date().getTime();
     const internal = toInternal(dateStr);
@@ -90,7 +83,7 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
     const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
 
     if (isNonWorkingDay) {
-      setShowErrorToast({ error: true, label: t("CS_COMMON_COURT_NON_WORKING") });
+      setShowToast({ error: true, label: t("CS_COMMON_COURT_NON_WORKING"), errorId: null });
       return;
     }
 
@@ -163,8 +156,14 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
         </Modal>
       )}
 
-      {showErrorToast && (
-        <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={() => setShowErrorToast(null)} />
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
 
       {errors?.[config.key] && <p style={{ color: "#BB2C2F", fontSize: "12px", marginTop: "4px" }}>{t("REQUIRED_FIELD")}</p>}

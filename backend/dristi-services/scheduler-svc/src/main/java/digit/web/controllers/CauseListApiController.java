@@ -1,6 +1,7 @@
 package digit.web.controllers;
 
 
+import digit.exception.RuntimeCustomException;
 import digit.service.CauseListService;
 import digit.util.ResponseInfoFactory;
 import digit.web.models.*;
@@ -62,7 +63,11 @@ public class CauseListApiController {
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                     .contentType(MediaType.APPLICATION_PDF)
                     .body(resource);
-        } catch (Exception e) {
+        }
+        catch (RuntimeCustomException e) {
+            return new ResponseEntity<>(CAUSE_LIST_NOT_FOUND, HttpStatus.BAD_REQUEST);
+        }
+        catch (Exception e) {
             log.error("api = /causelist/v1/_download, result = FAILED, error = {}", e.getMessage());
             return new ResponseEntity<>(CAUSE_LIST_NOT_FOUND, HttpStatus.BAD_REQUEST);
         }

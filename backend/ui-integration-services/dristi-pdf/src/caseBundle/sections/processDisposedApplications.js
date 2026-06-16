@@ -1,14 +1,8 @@
 const { search_application_v2, search_order_v2 } = require("../../api");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
-const {
-  combineMultipleFilestores,
-} = require("../utils/combineMultipleFilestores");
-const {
-  duplicateExistingFileStore,
-} = require("../utils/duplicateExistingFileStore");
+const { combineMultipleFilestores } = require("../utils/combineMultipleFilestores");
+const { duplicateExistingFileStore } = require("../utils/duplicateExistingFileStore");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 const { logger } = require("../../logger");
 
@@ -57,7 +51,6 @@ async function processDisposedApplications(
 
   if (applicationSection?.length !== 0) {
     const section = applicationSection[0];
-    logger.info(`[processDisposedApplications] search_application_v2 | status: COMPLETED`);
     const completedApplications = await search_application_v2(
       tenantId,
       requestInfo,
@@ -385,9 +378,6 @@ async function processDisposedApplications(
   } else {
     applicationsIndexSection.lineItems = [];
   }
-  logger.info(
-    `[processDisposedApplications] Completed | lineItems: ${applicationsIndexSection?.lineItems?.length || 0}`
-  );
 }
 
 module.exports = {

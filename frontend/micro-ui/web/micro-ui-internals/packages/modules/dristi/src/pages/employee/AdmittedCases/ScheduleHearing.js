@@ -5,13 +5,14 @@ import { Modal } from "@egovernments/digit-ui-react-components";
 import AdmissionActionModal from "../admission/AdmissionActionModal";
 import { DRISTIService } from "../../../services";
 import { CloseBtn } from "../../../components/ModalComponents";
+import { isLPRCase } from "../../../Utils";
 
 const ScheduleHearing = ({
   tenantId,
   setShowModal,
   caseData,
   setUpdateCounter,
-  showToast,
+  setShowToast,
   advocateDetails,
   caseAdmittedSubmit,
   isCaseAdmitted,
@@ -42,7 +43,7 @@ const ScheduleHearing = ({
           filingNumber: [caseData.filingNumber],
           hearingType: data.purpose,
           courtCaseNumber:
-            (caseData?.case?.isLPRCase ? caseData?.case?.lprNumber : caseData?.case?.courtCaseNumber) || caseData?.case?.courtCaseNumber,
+            (isLPRCase(caseData?.case) ? caseData?.case?.lprNumber : caseData?.case?.courtCaseNumber) || caseData?.case?.courtCaseNumber,
           cmpNumber: caseData?.case?.cmpNumber,
           status: true,
           attendees: [
@@ -77,7 +78,6 @@ const ScheduleHearing = ({
     );
   };
 
-  
   const Heading = (props) => {
     return (
       <div className="evidence-title">
@@ -107,13 +107,13 @@ const ScheduleHearing = ({
     await scheduleHearing(props).then((res) => {
       setShowModal(false);
       res.responseInfo.status === "successful"
-        ? showToast({
-            isError: false,
-            message: "HEARING_CREATE_SUCCESSFUL",
+        ? setShowToast({
+            label: t("HEARING_CREATE_SUCCESSFUL"),
+            error: false,
           })
-        : showToast({
-            isError: true,
-            message: "HEARING_CREATE_UNSUCCESSFUL",
+        : setShowToast({
+            label: t("HEARING_CREATE_UNSUCCESSFUL"),
+            error: true,
           });
     });
   };

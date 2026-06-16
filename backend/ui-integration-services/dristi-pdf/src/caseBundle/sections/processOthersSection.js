@@ -1,6 +1,4 @@
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { search_digitalizedDocuments } = require("../../api");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
@@ -28,10 +26,7 @@ async function processOthersSection(
     sectionPosition
   );
 
-  if (!sortedSection || sortedSection.length === 0) {
-    logger.info(`[processOthersSection] Skipped | section not active in MDMS`);
-    return;
-  }
+  if (!sortedSection || sortedSection.length === 0) return;
 
   let cachedDigitizedDocs = null;
 
@@ -39,7 +34,6 @@ async function processOthersSection(
   const fetchDigitizedDocuments = async () => {
     // If cached already, return cached value, in this manner we will call search api's only for active sections instead of calling for all sections.
     if (cachedDigitizedDocs) return cachedDigitizedDocs;
-    logger.info(`[processOthersSection] search_digitalizedDocuments`);
     const res = await search_digitalizedDocuments(tenantId, requestInfo, {
       caseFilingNumber: courtCase.filingNumber,
       courtId: courtCase.courtId,
@@ -163,9 +157,6 @@ async function processOthersSection(
     otherDocumentsIndexSection.lineItems =
       allDocumentsLineItems.filter(Boolean);
   }
-  logger.info(
-    `[processOthersSection] Completed | lineItems: ${otherDocumentsIndexSection?.lineItems?.length || 0}`
-  );
 }
 
 module.exports = {

@@ -1,10 +1,7 @@
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { search_table_task } = require("../../api");
-const {
-  duplicateExistingFileStore,
-} = require("../utils/duplicateExistingFileStore");
+const { getCaseNumber } = require("../../utils/commonUtils");
+const { duplicateExistingFileStore } = require("../utils/duplicateExistingFileStore");
 const { logger } = require("../../logger");
 
 async function processTaskProcesses(
@@ -51,9 +48,7 @@ async function processTaskProcesses(
         searchText:
           courtCase.cnrNumber ||
           courtCase.cmpNumber ||
-          (courtCase?.isLPRCase
-            ? courtCase?.lprNumber
-            : courtCase.courtCaseNumber),
+          getCaseNumber(courtCase),
         courtId: courtCase.courtId,
         tenantId,
       },
@@ -132,9 +127,6 @@ async function processTaskProcesses(
   } else {
     processesIndexSection.lineItems = [];
   }
-  logger.info(
-    `[processTaskProcesses] Completed | lineItems: ${processesIndexSection?.lineItems?.length || 0}`
-  );
 }
 
 module.exports = {

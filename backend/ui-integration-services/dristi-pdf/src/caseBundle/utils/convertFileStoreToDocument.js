@@ -9,40 +9,53 @@ async function convertFileStoreToDocument(
   documentFileStoreId,
   requestInfo
 ) {
-  logger.info(`[convertFileStoreToDocument] search_pdf_v2 | fileStoreId: ${documentFileStoreId}`);
-  const { data: stream, headers } = await search_pdf_v2(
-    tenantId,
-    documentFileStoreId,
-    requestInfo
-  );
-  const mimeType = headers["content-type"];
-  let filingPDFDocument;
-  if (mimeType === "application/pdf") {
-    filingPDFDocument = await PDFDocument.load(stream, {
-      ignoreEncryption: true,
-    });
-  } else if (["image/jpeg", "image/png", "image/jpg"].includes(mimeType)) {
-    filingPDFDocument = await PDFDocument.create();
-    let img;
-    if (mimeType === "image/png") {
-      img = await filingPDFDocument.embedPng(stream);
-    } else {
-      const repairedImage = await fixJpg(stream);
-      img = await filingPDFDocument.embedJpg(repairedImage);
-    }
-
-    const { width, height } = img.scale(1);
-    const scale = Math.min(A4_WIDTH / width, A4_HEIGHT / height);
-    const xOffset = (A4_WIDTH - width * scale) / 2;
-    const yOffset = (A4_HEIGHT - height * scale) / 2;
-    const page = filingPDFDocument.addPage([A4_WIDTH, A4_HEIGHT]);
-    page.drawImage(img, {
-      x: xOffset,
-      y: yOffset,
-      width: width * scale,
-      height: height * scale,
-    });
+  logger.info(`[convertFileStoreToDocument] Fetching | fileStoreId: ${documentFileStoreId}`);
+  let stream, mimeType;
+  try {
+    const response = await search_pdf_v2(tenantId, documentFileStoreId, requestInfo);
+    stream = response.data;
+    mimeType = response.headers["content-type"];
+  } catch (err) {
+    logger.error(`[convertFileStoreToDocument] FileStore fetch failed | fileStoreId: ${documentFileStoreId} | error: ${err.message}`);
+    throw err;
   }
+
+  logger.info(`[convertFileStoreToDocument] Converting | fileStoreId: ${documentFileStoreId}, mimeType: ${mimeType}`);
+  let filingPDFDocument;
+  try {
+    if (mimeType === "application/pdf") {
+      filingPDFDocument = await PDFDocument.load(stream, {
+        ignoreEncryption: true,
+      });
+    } else if (["image/jpeg", "image/png", "image/jpg"].includes(mimeType)) {
+      filingPDFDocument = await PDFDocument.create();
+      let img;
+      if (mimeType === "image/png") {
+        img = await filingPDFDocument.embedPng(stream);
+      } else {
+        const repairedImage = await fixJpg(stream);
+        img = await filingPDFDocument.embedJpg(repairedImage);
+      }
+
+      const { width, height } = img.scale(1);
+      const scale = Math.min(A4_WIDTH / width, A4_HEIGHT / height);
+      const xOffset = (A4_WIDTH - width * scale) / 2;
+      const yOffset = (A4_HEIGHT - height * scale) / 2;
+      const page = filingPDFDocument.addPage([A4_WIDTH, A4_HEIGHT]);
+      page.drawImage(img, {
+        x: xOffset,
+        y: yOffset,
+        width: width * scale,
+        height: height * scale,
+      });
+    } else {
+      throw new Error(`Unsupported mimeType: ${mimeType}`);
+    }
+  } catch (err) {
+    logger.error(`[convertFileStoreToDocument] Conversion failed | fileStoreId: ${documentFileStoreId}, mimeType: ${mimeType} | error: ${err.message}`);
+    throw err;
+  }
+
   return filingPDFDocument;
 }
 

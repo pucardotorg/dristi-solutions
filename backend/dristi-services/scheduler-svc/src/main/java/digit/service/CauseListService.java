@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import digit.config.ServiceConstants;
+import digit.exception.RuntimeCustomException;
 import digit.kafka.producer.Producer;
 import digit.repository.CauseListRepository;
 import digit.repository.HearingRepository;
@@ -368,7 +369,7 @@ public class CauseListService {
         log.info("operation = downloadCauseListForTomorrow, with searchRequest : {}", searchRequest.toString());
         List<String> fileStoreIds = getFileStoreForCauseList(searchRequest.getCauseListSearchCriteria());
         if(CollectionUtils.isEmpty(fileStoreIds)){
-            throw new CustomException("DK_CL_APP_ERR", "No CauseList found for the given search criteria");
+            throw new RuntimeCustomException("DK_CL_APP_ERR", "No CauseList found for the given search criteria");
         }
         byte[] pdfBytes = fileStoreUtil.getFile(config.getEgovStateTenantId(), fileStoreIds.get(0));
         return new ByteArrayResource(pdfBytes);

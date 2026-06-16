@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
-import { Header, Button, ActionBar, SubmitBar, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Header, Button, ActionBar, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
 import { OutlinedInfoIcon, RightArrow } from "../../../../dristi/src/icons/svgIndex";
 import ReactTooltip from "react-tooltip";
 import AddOrderTypeModal from "../../pageComponents/AddOrderTypeModal";
@@ -22,6 +22,8 @@ import { applicationTypes } from "../../utils/applicationTypes";
 import { ordersService, taskService } from "../../hooks/services";
 import { createDefaultOrderData } from "../../configs/generateOrdersConstants";
 import { getSafeFileExtension } from "../../utils";
+import { ORDER_TYPES, ORDER_CATEGORIES } from "../../utils/constants";
+import { userRolesEnum } from "@egovernments/digit-ui-module-dristi/src/Utils/constants";
 import {
   checkValidation,
   compositeOrderAllowedTypes,
@@ -38,7 +40,6 @@ import OrderReviewModal from "../../pageComponents/OrderReviewModal";
 import OrderSignatureModal from "../../pageComponents/OrderSignatureModal";
 import OrderSucessModal from "../../pageComponents/OrderSucessModal";
 import OrderAddToBulkSuccessModal from "../../pageComponents/OrderAddToBulkSuccessModal";
-import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
 import MandatoryFieldsErrorModal from "./MandatoryFieldsErrorModal";
 import TasksComponent from "../../../../home/src/components/TaskComponent";
 import CompositeOrdersErrorModal from "./CompositeOrdersErrorModal";
@@ -48,9 +49,12 @@ import {
   getAuthorizedUuid,
   getOrderActionName,
   getOrderTypes,
+  isLPRCase,
   setApplicationStatus,
 } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import useSearchMiscellaneousTemplate from "../../hooks/orders/useSearchMiscellaneousTemplate";
+import { CaseWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/caseWorkflow";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const GenerateOrdersV2 = () => {
   const { t } = useTranslation();
@@ -65,7 +69,6 @@ const GenerateOrdersV2 = () => {
   const EditSendBackModal = Digit?.ComponentRegistryService?.getComponent("EditSendBackModal");
   const [orderType, setOrderType] = useState({});
   const [showOrderValidationModal, setShowOrderValidationModal] = useState({ showModal: false, errorMessage: "" });
-  const [orderTitle, setOrderTitle] = useState(null);
   const setValueRef = useRef([]);
   const clearFormErrors = useRef([]);
   const setFormErrors = useRef([]);
@@ -83,9 +86,9 @@ const GenerateOrdersV2 = () => {
   const userUuid = userInfo?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const userType = useMemo(() => (userInfo?.type === userRolesEnum.CITIZEN ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [addOrderTypeLoader, setAddOrderTypeLoader] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const judgeName = localStorage.getItem("judgeName");
@@ -100,21 +103,20 @@ const GenerateOrdersV2 = () => {
   const [showsignatureModal, setShowsignatureModal] = useState(null);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [currentPublishedOrder, setCurrentPublishedOrder] = useState(null);
-  const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
-  const canSaveSignLater = roles?.some((role) => role.code === "ALLOW_SEND_FOR_SIGN_LATER");
+  const canESign = roles?.some((role) => role.code === userRolesEnum.ORDER_ESIGN);
+  const canSaveSignLater = roles?.some((role) => role.code === userRolesEnum.ALLOW_SEND_FOR_SIGN_LATER);
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
-  const toast = useToast();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
-  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const userInfoType = useMemo(() => (userInfo?.type === userRolesEnum.CITIZEN ? "citizen" : "employee"), [userInfo]);
   const [showMandatoryFieldsErrorModal, setShowMandatoryFieldsErrorModal] = useState({ showModal: false, errorsData: [] });
   const [taskType, setTaskType] = useState({});
   const [errors, setErrors] = useState({});
   const [warrantSubtypeCode, setWarrantSubtypeCode] = useState("");
   const [data, setData] = useState([]);
-  const isJudge = roles?.some((role) => role.code === "JUDGE_ROLE");
-  const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
-  const hasOrderUpdateAccess = useMemo(() => roles?.some((role) => role?.code === "ORDER_APPROVER"), [roles]);
+  const isJudge = roles?.some((role) => role.code === userRolesEnum.JUDGE_ROLE);
+  const isTypist = roles?.some((role) => role.code === userRolesEnum.TYPIST_ROLE);
+  const hasOrderUpdateAccess = useMemo(() => roles?.some((role) => role?.code === userRolesEnum.ORDER_APPROVER), [roles]);
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const SelectCustomFormatterTextArea = window?.Digit?.ComponentRegistryService?.getComponent("SelectCustomFormatterTextArea");
   const [bailBondRequired, setBailBondRequired] = useState(false);
@@ -151,6 +153,8 @@ const GenerateOrdersV2 = () => {
         isBreadCrumbsParamsDataSet.current = true;
       }
     } catch (err) {
+      const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_FETCHING_CASE_DETAILS"), error: true, errorId });
       return null;
     } finally {
       setIsCaseDetailsLoading(false);
@@ -193,7 +197,7 @@ const GenerateOrdersV2 = () => {
     },
     {},
     filingNumber,
-    Boolean(filingNumber && caseCourtId && orderType?.code === "MISCELLANEOUS_PROCESS" && showAddOrderModal === true)
+    Boolean(filingNumber && caseCourtId && orderType?.code === ORDER_TYPES.MISCELLANEOUS_PROCESS && showAddOrderModal === true)
   );
 
   const miscellaneousProcessTemplateDropDown = useMemo(() => {
@@ -211,7 +215,7 @@ const GenerateOrdersV2 = () => {
 
   // Checking if the current order is for approving/rejecting the litigant's profile edit request.
   const isApproveRejectLitigantDetailsChange = useMemo(() => {
-    if (currentOrder?.orderCategory === "COMPOSITE") {
+    if (currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
       if (currentOrder?.compositeItems?.find((item) => item?.orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE")) {
         return true;
       } else return false;
@@ -222,7 +226,7 @@ const GenerateOrdersV2 = () => {
 
   // If current order is Judgement type, then we require published bail orders list.
   const isJudgementOrder = useMemo(() => {
-    if (currentOrder?.orderCategory === "COMPOSITE") {
+    if (currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
       if (currentOrder?.compositeItems?.find((item) => item?.orderType === "JUDGEMENT")) {
         return true;
       } else return false;
@@ -312,7 +316,7 @@ const GenerateOrdersV2 = () => {
   }, [bailPendingTaskExpiry]);
 
   // Extract task-related handlers to reduce component complexity
-  const { createPendingTaskForJudge, createPendingTaskForEmployee, createPendingTask, handleIssueSummons, handleIssueNotice } = useOrderTaskHandlers({
+  const { createPendingTaskForJudge, createPendingTaskForEmployee, handleIssueSummons, handleIssueNotice } = useOrderTaskHandlers({
     filingNumber,
     tenantId,
     courtId,
@@ -323,6 +327,7 @@ const GenerateOrdersV2 = () => {
     cnrNumber,
     t,
     orderType,
+    setShowToast,
   });
 
   const applicationTypeConfigUpdated = useMemo(() => {
@@ -334,7 +339,7 @@ const GenerateOrdersV2 = () => {
       else if (isBailApplicationPending) baseSet = ORDER_TYPE_SETS.PENDING_BAIL;
       else baseSet = ORDER_TYPE_SETS.PENDING_DEFAULT;
     } else if (caseDetails?.courtCaseNumber) {
-      if (caseDetails?.isLPRCase) baseSet = ORDER_TYPE_SETS.ADMITTED_LPR;
+      if (isLPRCase(caseDetails)) baseSet = ORDER_TYPE_SETS.ADMITTED_LPR;
       else if (!caseDetails?.lprNumber) baseSet = ORDER_TYPE_SETS.ADMITTED_NO_LPR;
       else baseSet = ORDER_TYPE_SETS.ADMITTED_DEFAULT;
     } else {
@@ -354,19 +359,6 @@ const GenerateOrdersV2 = () => {
   }, [orderTypeData, caseDetails, isDelayApplicationPending, isBailApplicationPending, currentInProgressHearing, currentOrder]);
 
   const courtRooms = useMemo(() => courtRoomDetails?.Court_Rooms || [], [courtRoomDetails]);
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
@@ -455,7 +447,7 @@ const GenerateOrdersV2 = () => {
       );
 
       if (!validData?.length) {
-        setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
+        setShowToast({ error: true, label: t("No next hearing with a draft order found") });
         return;
       }
 
@@ -497,9 +489,10 @@ const GenerateOrdersV2 = () => {
         }
       }
 
-      setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
+      setShowToast({ error: true, label: t("No next hearing with a draft order found") });
     } catch (e) {
-      setShowErrorToast({ error: true, label: t("No next hearing with a draft order found") });
+      const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ error: true, label: t("No next hearing with a draft order found"), errorId });
     }
   }, [data, currentInProgressHearing, todayScheduledHearing, ordersService, tenantId, caseCourtId, history, userType, t]);
 
@@ -522,7 +515,7 @@ const GenerateOrdersV2 = () => {
       let formConfig = [...newConfig];
       let selectedOrderType = "";
       let currentSelectedOrder = {};
-      if (currentOrder?.orderCategory === "COMPOSITE") {
+      if (currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
         selectedOrderType = currentOrder?.compositeItems?.[compositeActiveOrderIndex]?.orderType || orderType?.code || "";
         const item = currentOrder?.compositeItems?.[compositeActiveOrderIndex];
         const schema = item?.orderSchema;
@@ -778,7 +771,7 @@ const GenerateOrdersV2 = () => {
           });
         }
 
-        if (selectedOrderType === "WARRANT") {
+        if (selectedOrderType === ORDER_TYPES.WARRANT) {
           orderTypeForm = orderTypeForm?.map((section) => {
             const updatedBody = section.body
               .map((field) => {
@@ -1003,10 +996,10 @@ const GenerateOrdersV2 = () => {
 
   const successModalActionSaveLabel = useMemo(() => {
     if (
-      (prevOrder?.orderCategory === "COMPOSITE"
+      (prevOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE
         ? prevOrder?.compositeItems?.some((item) => item?.orderType === "RESCHEDULE_OF_HEARING_DATE")
         : prevOrder?.orderType === "RESCHEDULE_OF_HEARING_DATE" ||
-          (currentOrder?.orderCategory === "COMPOSITE"
+          (currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE
             ? currentOrder?.compositeItems?.some(
                 (item) =>
                   item?.orderType === "SCHEDULE_OF_HEARING_DATE" &&
@@ -1017,7 +1010,7 @@ const GenerateOrdersV2 = () => {
       isCaseAdmitted
     ) {
       if (
-        currentOrder?.orderCategory === "COMPOSITE"
+        currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE
           ? currentOrder?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.isReIssueNotice)
           : currentOrder?.additionalDetails?.isReIssueNotice
       ) {
@@ -1039,7 +1032,7 @@ const GenerateOrdersV2 = () => {
   }, [currentOrder, prevOrder?.orderType, t, isCaseAdmitted]);
 
   const extractedHearingDate = useMemo(() => {
-    if (currentOrder?.orderCategory === "INTERMEDIATE") {
+    if (currentOrder?.orderCategory === ORDER_CATEGORIES.INTERMEDIATE) {
       // check and add condition for ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes orderType if its needed,
       // and take "newHearingDate" value
       return currentOrder?.additionalDetails?.formdata?.hearingDate;
@@ -1075,7 +1068,7 @@ const GenerateOrdersV2 = () => {
 
       const requiredDateFormat = "YYYY-MM-DD";
       const newCurrentOrder =
-        currentOrder?.orderCategory === "COMPOSITE"
+        currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE
           ? {
               ...currentOrder,
               additionalDetails: currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails,
@@ -1105,7 +1098,7 @@ const GenerateOrdersV2 = () => {
         updatedFormdata.nameofRespondentAdvocate = uuidNameMap?.[allAdvocates?.[respondentPrimary?.additionalDetails?.uuid]] || "";
         setValueRef?.current?.[index]?.("nameofRespondentAdvocate", updatedFormdata.nameofRespondentAdvocate);
 
-        updatedFormdata.caseNumber = (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.courtCaseNumber;
+        updatedFormdata.caseNumber = (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.courtCaseNumber;
         setValueRef?.current?.[index]?.("caseNumber", updatedFormdata.caseNumber);
 
         updatedFormdata.nameOfCourt = courtRooms.find((room) => room.code === caseDetails?.courtId)?.name;
@@ -1191,7 +1184,7 @@ const GenerateOrdersV2 = () => {
         }
       }
 
-      if (currentOrderType === "SUMMONS") {
+      if (currentOrderType === ORDER_TYPES.SUMMONS) {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
@@ -1245,7 +1238,7 @@ const GenerateOrdersV2 = () => {
           setValueRef?.current?.[index]?.("SummonsOrder", updatedFormdata.SummonsOrder);
         }
       }
-      if (currentOrderType === "NOTICE") {
+      if (currentOrderType === ORDER_TYPES.NOTICE) {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
@@ -1301,10 +1294,10 @@ const GenerateOrdersV2 = () => {
         }
       }
       if (
-        currentOrderType === "WARRANT" ||
-        currentOrderType === "PROCLAMATION" ||
-        currentOrderType === "ATTACHMENT" ||
-        currentOrderType === "MISCELLANEOUS_PROCESS"
+        currentOrderType === ORDER_TYPES.WARRANT ||
+        currentOrderType === ORDER_TYPES.PROCLAMATION ||
+        currentOrderType === ORDER_TYPES.ATTACHMENT ||
+        currentOrderType === ORDER_TYPES.MISCELLANEOUS_PROCESS
       ) {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
@@ -1396,6 +1389,9 @@ const GenerateOrdersV2 = () => {
       applicationData?.applicationList,
       orderTypeData,
       caseDetails?.litigants,
+      caseDetails?.lifecycleStatus,
+      isLPRCase(caseDetails),
+      caseDetails?.lprNumber,
       caseDetails?.courtCaseNumber,
       caseDetails?.additionalDetails?.respondentDetails?.formdata,
       caseDetails?.caseDetails?.chequeDetails?.formdata,
@@ -1406,11 +1402,11 @@ const GenerateOrdersV2 = () => {
       courtRooms,
       publishedBailOrder?.auditDetails?.lastModifiedTime,
       hearingsList,
-      t,
       isHearingScheduled,
       isHearingInPassedOver,
-      isHearingInProgress,
+      skipScheduling,
       hearingDetails?.startTime,
+      purposeOfHearingData,
     ]
   );
 
@@ -1426,7 +1422,7 @@ const GenerateOrdersV2 = () => {
     } else {
       const formListNew = structuredClone([...(ordersData?.list || [])].reverse());
       const updatedFormList = formListNew?.map((order, index) => {
-        if (order?.orderCategory === "COMPOSITE") {
+        if (order?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
           const updatedCompositeItems = order?.compositeItems?.map((compItem, i) => {
             return {
               ...compItem,
@@ -1458,7 +1454,7 @@ const GenerateOrdersV2 = () => {
   };
 
   const handleEditConfirmationOrder = async () => {
-    if (orderType?.code === "MISCELLANEOUS_PROCESS") {
+    if (orderType?.code === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
       await refectMiscellaneous();
     }
     setAddOrderModal(true);
@@ -1503,23 +1499,6 @@ const GenerateOrdersV2 = () => {
       orderTitle: updatedItems.orderTitle || t("DEFAULT_ORDER_TITLE"),
       compositeItems: updatedItems.compositeItems,
     });
-
-    if (
-      !currentOrder?.orderNumber ||
-      ordersData?.list?.find((order) => order?.orderNumber === currentOrder?.orderNumber)?.orderCategory === "INTERMEDIATE"
-    ) {
-      let compositeItemsNew = currentOrder?.compositeItems ? [...currentOrder.compositeItems] : [];
-      const totalEnabled = currentOrder?.compositeItems?.filter((o) => o?.isEnabled)?.length;
-
-      if (compositeItemsNew?.length === 0) {
-        setOrderTitle(`${t(currentOrder?.orderType)} and Other Items`);
-      }
-
-      if (totalEnabled === 1) {
-        const enabledItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType);
-        setOrderTitle(`${t(enabledItem?.orderType)} and Other Items`);
-      }
-    }
   };
 
   const updateOrder = async (order, action, unsignedFileStoreId) => {
@@ -1530,7 +1509,7 @@ const GenerateOrdersV2 = () => {
       const newCompositeItems = [];
       const isSigning = [OrderWorkflowAction.ESIGN, OrderWorkflowAction.SUBMIT_BULK_E_SIGN]?.includes(action);
       if (isSigning) {
-        if (order?.orderCategory === "COMPOSITE") {
+        if (order?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
           const updatedOrders = order?.compositeItems?.map((item) => {
             return {
               order: {
@@ -1576,7 +1555,7 @@ const GenerateOrdersV2 = () => {
       if (!mockESignEnabled && [OrderWorkflowAction.ESIGN]?.includes(action)) {
         const effectiveSignedId = signedDoucumentUploadedID || localStorageID;
         if (!effectiveSignedId || effectiveSignedId === orderPdfFileStoreID) {
-          setShowErrorToast({ label: t("UPDATE_FAILED_ERROR"), error: true });
+          setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
           return null;
         }
       }
@@ -1589,7 +1568,7 @@ const GenerateOrdersV2 = () => {
               fileStore: signedDoucumentUploadedID || localStorageID,
               documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
               additionalDetails: {
-                name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.${fileExtension}`,
+                name: `Order: ${order?.orderCategory === ORDER_CATEGORIES.COMPOSITE ? order?.orderTitle : t(order?.orderType)}.${fileExtension}`,
               },
             }
           : unsignedFileStoreId
@@ -1598,7 +1577,7 @@ const GenerateOrdersV2 = () => {
               fileStore: unsignedFileStoreId,
               documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
               additionalDetails: {
-                name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.${fileExtension}`,
+                name: `Order: ${order?.orderCategory === ORDER_CATEGORIES.COMPOSITE ? order?.orderTitle : t(order?.orderType)}.${fileExtension}`,
               },
             }
           : null;
@@ -1646,7 +1625,7 @@ const GenerateOrdersV2 = () => {
       });
 
       const caseNumber =
-        (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+        (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
         caseDetails?.courtCaseNumber ||
         caseDetails?.cmpNumber ||
         caseDetails?.filingNumber;
@@ -1730,7 +1709,12 @@ const GenerateOrdersV2 = () => {
           return response;
         });
     } catch (error) {
-      setShowErrorToast({ label: action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        label: action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("ORDER_SAVE_FAILED"),
+        error: true,
+        errorId,
+      });
     }
   };
 
@@ -1798,7 +1782,8 @@ const GenerateOrdersV2 = () => {
       }
       return updateOrderResponse;
     } catch (error) {
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ORDER_SAVE_FAILED"), error: true, errorId });
       throw error;
     } finally {
       setIsApiCallLoading(false);
@@ -1807,7 +1792,7 @@ const GenerateOrdersV2 = () => {
 
   const handleAddOrder = async (orderFormData, compOrderIndex) => {
     try {
-      if (checkValidation(t, orderFormData, compOrderIndex, setFormErrors, setShowErrorToast)) {
+      if (checkValidation(t, orderFormData, compOrderIndex, setFormErrors, setShowToast)) {
         return;
       }
       setAddOrderTypeLoader(true);
@@ -1816,7 +1801,7 @@ const GenerateOrdersV2 = () => {
       const requestBailBond = orderFormData?.requestBailBond;
       let updatedOrderData = prepareUpdatedOrderData(currentOrder, updatedFormData, compOrderIndex);
 
-      if (orderFormData?.orderType?.code === "MISCELLANEOUS_PROCESS") {
+      if (orderFormData?.orderType?.code === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
         const miscItemText = orderFormData?.processTemplate?.orderText || "";
         const baseOrder = updatedOrderData && typeof updatedOrderData === "object" ? updatedOrderData : {};
 
@@ -1839,10 +1824,37 @@ const GenerateOrdersV2 = () => {
         }
       }
 
-      const updateOrderResponse = await handleSaveDraft(updatedOrderData);
+      let updateOrderResponse;
+      try {
+        updateOrderResponse = await handleSaveDraft(updatedOrderData);
+      } catch (error) {
+        console.error("Failed to save order draft:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ORDER_SAVE_FAILED"), error: true, errorId });
+        setAddOrderTypeLoader(false);
+        return;
+      }
+
       if (isAcceptBailOrder && requestBailBond) {
-        await createPendingTaskForJudge(updateOrderResponse?.order);
-        await createPendingTaskForEmployee(updateOrderResponse?.order, false);
+        try {
+          await createPendingTaskForJudge(updateOrderResponse?.order);
+        } catch (error) {
+          console.error("Failed to create pending task for judge:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("FAILED_TO_CREATE_TASK_FOR_JUDGE"), error: true, errorId });
+          setAddOrderTypeLoader(false);
+          return;
+        }
+
+        try {
+          await createPendingTaskForEmployee(updateOrderResponse?.order, false);
+        } catch (error) {
+          console.error("Failed to create pending task for employee:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("FAILED_TO_CREATE_TASK_FOR_EMPLOYEE"), error: true, errorId });
+          setAddOrderTypeLoader(false);
+          return;
+        }
       }
       setCurrentOrder(updateOrderResponse?.order);
       setAddOrderModal(false);
@@ -1854,11 +1866,18 @@ const GenerateOrdersV2 = () => {
           `/${window.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${updateOrderResponse?.order?.orderNumber}`
         );
       } else {
-        await refetchOrdersData();
+        try {
+          await refetchOrdersData();
+        } catch (error) {
+          console.error("Failed to refetch orders data:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("FAILED_TO_REFETCH_ORDERS"), error: true, errorId });
+        }
       }
     } catch (error) {
-      console.error("Error while saving draft:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Unexpected error while adding order:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ORDER_SAVE_FAILED"), error: true, errorId });
     } finally {
       setAddOrderTypeLoader(false);
     }
@@ -1959,7 +1978,7 @@ const GenerateOrdersV2 = () => {
             return false;
           });
           if (isPublished) {
-            setShowErrorToast({
+            setShowToast({
               label: t("AN_ORDER_HAS_ALREADY_BEEN_PUBLISHED_FOR_THIS_PROFILE_EDIT_REQUEST"),
               error: true,
             });
@@ -1977,7 +1996,7 @@ const GenerateOrdersV2 = () => {
             },
           });
           if (["APPROVED", "REJECTED"].includes(taskSearch?.list?.[0]?.status)) {
-            setShowErrorToast({
+            setShowToast({
               label: t("AN_ORDER_HAS_ALREADY_BEEN_PUBLISHED_FOR_THIS_ADVOCATE_REPLACEMENT_REQUEST"),
               error: true,
             });
@@ -1991,7 +2010,7 @@ const GenerateOrdersV2 = () => {
           "ACCEPTANCE_REJECTION_DCA" === orderType &&
           [SubmissionWorkflowState.COMPLETED, SubmissionWorkflowState.REJECTED].includes(newApplicationDetails?.status)
         ) {
-          setShowErrorToast({
+          setShowToast({
             label:
               newApplicationDetails?.status === SubmissionWorkflowState.COMPLETED ? t("DCA_APPLICATION_ACCEPTED") : t("DCA_APPLICATION_REJECTED"),
             error: true,
@@ -2001,11 +2020,11 @@ const GenerateOrdersV2 = () => {
         }
 
         if (
-          (orderType === "TAKE_COGNIZANCE" && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) ||
-          (orderType === "DISMISS_CASE" && ["CASE_DISMISSED"].includes(caseDetails?.status))
+          (orderType === "TAKE_COGNIZANCE" && [CaseWorkflowState.CASE_DISMISSED, CaseWorkflowState.CASE_ADMITTED].includes(caseDetails?.status)) ||
+          (orderType === "DISMISS_CASE" && [CaseWorkflowState.CASE_DISMISSED].includes(caseDetails?.status))
         ) {
-          setShowErrorToast({
-            label: "CASE_ADMITTED" === caseDetails?.status ? t("CASE_ALREADY_ADMITTED") : t("CASE_ALREADY_REJECTED"),
+          setShowToast({
+            label: CaseWorkflowState.CASE_ADMITTED === caseDetails?.status ? t("CASE_ALREADY_ADMITTED") : t("CASE_ALREADY_REJECTED"),
             error: true,
           });
           hasError = true;
@@ -2033,7 +2052,7 @@ const GenerateOrdersV2 = () => {
             return acceptIndex !== -1 && scheduleIndex > acceptIndex;
           })();
           if (!hasValidRescheduleBypass) {
-            setShowErrorToast({
+            setShowToast({
               label: isHearingScheduled
                 ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE")
                 : isHearingInProgress
@@ -2047,7 +2066,7 @@ const GenerateOrdersV2 = () => {
         }
 
         if (["SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
-          setShowErrorToast({
+          setShowToast({
             label: isHearingScheduled ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE") : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
             error: true,
           });
@@ -2056,7 +2075,7 @@ const GenerateOrdersV2 = () => {
         }
 
         if (["INITIATING_RESCHEDULING_OF_HEARING_DATE"].includes(orderType) && !isHearingScheduled) {
-          setShowErrorToast({
+          setShowToast({
             label: t("CURRENTLY_NO_HEARING_IS_IN_SCHEDULED_STATE"),
             error: true,
           });
@@ -2065,7 +2084,7 @@ const GenerateOrdersV2 = () => {
         }
 
         if (["ASSIGNING_DATE_RESCHEDULED_HEARING"].includes(orderType) && !isHearingOptout) {
-          setShowErrorToast({
+          setShowToast({
             label: t("CURRENTLY_NO_HEARING_IS_IN_OPTOUT_STATE"),
             error: true,
           });
@@ -2077,7 +2096,7 @@ const GenerateOrdersV2 = () => {
           const rescheduleStatus = hearingsData?.HearingList?.find((data) => data?.hearingId === additionalDetails?.refHearingId);
 
           if (!["SCHEDULED", "IN_PROGRESS", "PASSED_OVER"]?.includes(rescheduleStatus?.status)) {
-            setShowErrorToast({
+            setShowToast({
               label: t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST"),
               error: true,
             });
@@ -2089,7 +2108,7 @@ const GenerateOrdersV2 = () => {
           const todayDate = new Date().toISOString().split("T")[0];
 
           if ((currentInProgressHearing || currentOrder?.hearingNumber) && !skipScheduling && newHearingDate !== todayDate) {
-            setShowErrorToast({
+            setShowToast({
               label: t("SAME_HEARING_RESCHEDULE_DATE"),
               error: true,
             });
@@ -2109,9 +2128,9 @@ const GenerateOrdersV2 = () => {
             "WITHDRAWAL_REJECT",
             "WITHDRAWAL_ACCEPT",
           ].includes(orderType) &&
-          caseDetails?.isLPRCase
+          isLPRCase(caseDetails)
         ) {
-          setShowErrorToast({
+          setShowToast({
             label: t("ORDER_NOT_ALLOWED_FOR_LPR_CASE"),
             error: true,
           });
@@ -2122,7 +2141,7 @@ const GenerateOrdersV2 = () => {
           formData?.refApplicationId &&
           ![SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(newApplicationDetails?.status)
         ) {
-          setShowErrorToast({
+          setShowToast({
             label:
               SubmissionWorkflowState.COMPLETED === newApplicationDetails?.status
                 ? t("SUBMISSION_ALREADY_ACCEPTED")
@@ -2199,7 +2218,8 @@ const GenerateOrdersV2 = () => {
         await handleSaveDraft(currentOrder);
         setShowReviewModal(true);
       } catch (error) {
-        setShowErrorToast({ label: t("ERROR_CREATING_ORDER"), error: true });
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ERROR_CREATING_ORDER"), error: true, errorId });
       } finally {
         setIsLoading(false);
       }
@@ -2287,7 +2307,7 @@ const GenerateOrdersV2 = () => {
         compositeItems: updatedCompositeItems,
       });
     } else {
-      if (currentOrder?.orderCategory === "INTERMEDIATE") {
+      if (currentOrder?.orderCategory === ORDER_CATEGORIES.INTERMEDIATE) {
         await updateOrder(
           {
             ...currentOrder,
@@ -2347,25 +2367,6 @@ const GenerateOrdersV2 = () => {
       }
     }
     setDeleteOrderItemIndex(null);
-  };
-
-  const handleUpdateBusinessOfDayEntry = async () => {
-    try {
-      await DRISTIService.aDiaryEntryUpdate(
-        {
-          diaryEntry: {
-            ...currentDiaryEntry,
-            businessOfDay: businessOfTheDay,
-          },
-        },
-        {}
-      ).then(async () => {
-        history.goBack();
-      });
-    } catch (error) {
-      console.error("error: ", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
-    }
   };
 
   const handleReviewGoBack = () => {
@@ -2467,15 +2468,19 @@ const GenerateOrdersV2 = () => {
 
   const handleDownloadOrders = () => {
     const fileStoreId = sessionStorage.getItem("fileStoreId");
-    downloadPdf(tenantId, signedDoucumentUploadedID || fileStoreId);
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${prevOrder?.orderNumber}_Order`;
+    downloadPdf(tenantId, signedDoucumentUploadedID || fileStoreId, name);
   };
 
   const handleBulkDownloadOrder = () => {
     const fileStoreId = prevOrder?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore;
-    downloadPdf(tenantId, fileStoreId);
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${
+      currentOrder?.orderNumber
+    }_Order`;
+    downloadPdf(tenantId, fileStoreId, name);
   };
 
-  const handleBulkCloseSuccessModal = () => {
+  const handleBulkGoToSignList = () => {
     setShowBulkModal(false);
     // redirecting to the home screen with the "orders tab active" only if user has corresponding roles
     if (hasViewSignOrdersAccess) {
@@ -2483,6 +2488,11 @@ const GenerateOrdersV2 = () => {
     } else {
       history.replace(`/${window.contextPath}/${userInfoType}/home/home-screen`);
     }
+  };
+
+  const handleBulkGoHome = () => {
+    setShowBulkModal(false);
+    history.replace(`/${window.contextPath}/${userInfoType}/home/home-screen`);
   };
 
   const handleClose = async () => {
@@ -2530,13 +2540,25 @@ const GenerateOrdersV2 = () => {
   };
 
   const handleNextHearingClick = async () => {
-    await handleSaveDraft(currentOrder);
+    try {
+      await handleSaveDraft(currentOrder);
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ORDER_SAVE_FAILED"), error: true, errorId });
+    }
     nextHearing();
   };
 
   const handleGoBack = async () => {
-    await handleSaveDraft(currentOrder);
-    history.goBack();
+    try {
+      await handleSaveDraft(currentOrder);
+      history.goBack();
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ORDER_SAVE_FAILED"), error: true, errorId });
+    }
   };
 
   const handleApplicationAction = async (type) => {
@@ -2546,7 +2568,7 @@ const GenerateOrdersV2 = () => {
       const applicationCMPNumber = documentSubmission?.[0]?.applicationList?.applicationCMPNumber;
       const currentHearingPurpose = documentSubmission?.[0]?.applicationList?.applicationDetails?.initialHearingPurpose || "";
       const caseNumber =
-        (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+        (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
         caseDetails?.courtCaseNumber ||
         caseDetails?.cmpNumber ||
         caseDetails?.filingNumber;
@@ -2590,7 +2612,7 @@ const GenerateOrdersV2 = () => {
         ...(refHearingId && { refHearingId: refHearingId }),
       };
       const isSameOrder =
-        currentOrder?.orderCategory === "COMPOSITE"
+        currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE
           ? currentOrder?.compositeItems?.some(
               (item) => item?.isEnabled && item?.orderSchema?.additionalDetails?.formdata?.refApplicationId === refApplicationId
             )
@@ -2692,8 +2714,10 @@ const GenerateOrdersV2 = () => {
             } catch (error) {
               const errorCode = error?.response?.data?.Errors?.[0]?.code;
               const errorMsg =
-                errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
-              toast.error(errorMsg);
+                errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("HEARING_RESCHEDULE_FAILED");
+              const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+              setShowToast({ label: errorMsg, error: true, errorId });
+              return;
             }
           } else {
             const compositeItems = [
@@ -2768,8 +2792,9 @@ const GenerateOrdersV2 = () => {
         } catch (error) {
           const errorCode = error?.response?.data?.Errors?.[0]?.code;
           const errorMsg =
-            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
-          toast.error(errorMsg);
+            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("HEARING_RESCHEDULE_FAILED");
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: errorMsg, error: true, errorId });
         }
       } else {
         const reqbody = {
@@ -2840,15 +2865,17 @@ const GenerateOrdersV2 = () => {
         } catch (error) {
           const errorCode = error?.response?.data?.Errors?.[0]?.code;
           const errorMsg =
-            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
-          toast.error(errorMsg);
+            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("HEARING_RESCHEDULE_FAILED");
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: errorMsg, error: true, errorId });
         }
       }
     } catch (error) {
       const errorCode = error?.response?.data?.Errors?.[0]?.code;
       const errorMsg =
-        errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
-      toast.error(errorMsg);
+        errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("HEARING_RESCHEDULE_FAILED");
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: errorMsg, error: true, errorId });
     }
   };
 
@@ -3073,9 +3100,11 @@ const GenerateOrdersV2 = () => {
                   onButtonClick={async () => {
                     try {
                       await handleSaveDraft(currentOrder);
-                      setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
+                      setShowToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
                     } catch (error) {
-                      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+                      console.error("Error saving draft:", error);
+                      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+                      setShowToast({ label: t("ORDER_SAVE_FAILED"), error: true, errorId });
                     }
                   }}
                   style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}
@@ -3168,11 +3197,7 @@ const GenerateOrdersV2 = () => {
           setOrderPdfFileStoreID={setOrderPdfFileStoreID}
           showActions={canESign && !currentDiaryEntry}
           saveSignLater={canSaveSignLater && !currentDiaryEntry}
-          setBusinessOfTheDay={setBusinessOfTheDay}
-          currentDiaryEntry={currentDiaryEntry}
-          handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
           handleReviewGoBack={handleReviewGoBack}
-          businessOfDay={businessOfTheDay}
           updateOrder={updateOrder}
           setShowBulkModal={setShowBulkModal}
           courtId={caseCourtId}
@@ -3189,6 +3214,7 @@ const GenerateOrdersV2 = () => {
           orderPdfFileStoreID={orderPdfFileStoreID}
           saveOnsubmitLabel={"ISSUE_ORDER"}
           businessOfDay={businessOfTheDay}
+          caseDetails={caseDetails}
         />
       )}
       {showSuccessModal && (
@@ -3213,10 +3239,19 @@ const GenerateOrdersV2 = () => {
           t={t}
           order={currentOrder}
           handleDownloadOrders={handleBulkDownloadOrder}
-          handleCloseSuccessModal={handleBulkCloseSuccessModal}
+          handleGoToBulkSignList={handleBulkGoToSignList}
+          handleGoHome={handleBulkGoHome}
         ></OrderAddToBulkSuccessModal>
       )}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

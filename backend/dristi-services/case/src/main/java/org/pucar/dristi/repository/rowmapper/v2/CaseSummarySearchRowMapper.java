@@ -59,7 +59,6 @@ public class CaseSummarySearchRowMapper implements ResultSetExtractor<List<CaseS
                             .cmpNumber(rs.getString("cmpnumber"))
                             .judgeId(rs.getString("judgeid"))
                             .stage(rs.getString("stage"))
-                            .substage(rs.getString("substage"))
                             .advocateCount(rs.getInt("advocatecount"))
                             .filingDate(parseDateToLong(rs.getString("filingdate")))
                             .judgementDate(parseDateToLong(rs.getString("judgementdate")))

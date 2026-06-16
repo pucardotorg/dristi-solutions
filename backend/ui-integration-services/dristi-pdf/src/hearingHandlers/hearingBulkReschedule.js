@@ -9,7 +9,7 @@ const {
   search_message,
 } = require("../api");
 const { formatDate } = require("./formatDate");
-const { getCourtAndJudgeDetails } = require("../utils/commonUtils");
+const { getCourtAndJudgeDetails, getCaseNumber } = require("../utils/commonUtils");
 
 // compare time and return slots
 function formatTimeFromEpoch(epoch) {
@@ -167,11 +167,7 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
       );
 
       const caseNumber =
-        (caseDate?.isLPRCase
-          ? caseDate?.lprNumber
-          : caseDate?.courtCaseNumber) ||
-        caseDate?.cmpNumber ||
-        "";
+        getCaseNumber(caseDate);
       const caseTitle = caseDate?.caseTitle || "";
       const originalHearingDate =
         formatDate(

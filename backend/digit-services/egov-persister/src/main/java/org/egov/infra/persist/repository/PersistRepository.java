@@ -104,7 +104,7 @@ public class PersistRepository {
                     continue;
 
                 }
-                
+
                 else if (type.equals(TypeEnum.UUID)) {
                     try {
                         value = JsonPath.read(jsonObj, jsonPath);

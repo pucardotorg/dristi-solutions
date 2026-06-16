@@ -59,6 +59,7 @@ public class SmsNotificationService {
 
         String templateId = switch (messageCode) {
             case DOCUMENT_SUBMITTED -> config.getSmsNotificationDocumentSubmittedTemplateId();
+            case WITNESS_DEPOSITION_MESSAGE -> config.getSmsNotificationWitnessDeposition();
             default -> null;
         };
 

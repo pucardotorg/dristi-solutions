@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Header, Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import {
   applicationTypeConfig,
   configsCaseTransfer,
@@ -38,6 +39,7 @@ import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/p
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { validateSuretyContactNumber } from "../../utils/bailBondUtils";
+import { ORDER_TYPES } from "../../utils/constants";
 import {
   _getApplicationAmount,
   BAIL_APPLICATION_EXCLUDED_STATUSES,
@@ -55,6 +57,7 @@ import {
   _getFinalDocumentList,
   replaceUploadedDocsWithFile,
 } from "../../utils/application";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 const requiredDateFormat = "YYYY-MM-DD";
@@ -100,7 +103,7 @@ const SubmissionsCreate = ({ path }) => {
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
   const authorizedUuid = getAuthorizedUuid(userUuid);
 
@@ -193,6 +196,8 @@ const SubmissionsCreate = ({ path }) => {
           isBreadCrumbsParamsDataSet.current = true;
         }
       } catch (err) {
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ERROR_FETCHING_CASE_DETAILS"), error: true, errorId });
         return null;
       } finally {
         setIsCaseDetailsLoading(false);
@@ -580,7 +585,7 @@ const SubmissionsCreate = ({ path }) => {
   }, [itemId, orderDetails]);
 
   const compositeWarrantItem = useMemo(() => {
-    return orderDetails?.compositeItems?.find((item) => item?.orderType === "WARRANT" && item?.id === itemId);
+    return orderDetails?.compositeItems?.find((item) => item?.orderType === ORDER_TYPES.WARRANT && item?.id === itemId);
   }, [itemId, orderDetails]);
 
   const { data: allOrdersData, isloading: isAllOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
@@ -1229,6 +1234,8 @@ const SubmissionsCreate = ({ path }) => {
                 toUpload = combined || docsArr;
               } catch (e) {
                 console.error("Error combining files:", e);
+                const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+                setShowToast({ label: t("ERROR_COMBINING_FILES"), error: true, errorId });
                 throw e;
               }
             }
@@ -1442,7 +1449,7 @@ const SubmissionsCreate = ({ path }) => {
         // Only add this check for esign flow
         const effectiveSignedId = sessionStorage.getItem("fileStoreId");
         if (!effectiveSignedId || effectiveSignedId === applicationPdfFileStoreId) {
-          setShowErrorToast({ label: t("UPDATE_FAILED_ERROR"), error: true });
+          setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
           return null;
         }
       }
@@ -1539,17 +1546,7 @@ const SubmissionsCreate = ({ path }) => {
 
   const handleOpenReview = async (formData) => {
     if (
-      handleDocumentUploadValidation(
-        t,
-        formData,
-        applicationType,
-        setFormState,
-        setFormErrors,
-        clearFormDataErrors,
-        userInfo,
-        setShowErrorToast,
-        formdata
-      )
+      handleDocumentUploadValidation(t, formData, applicationType, setFormState, setFormErrors, clearFormDataErrors, userInfo, setShowToast, formdata)
     ) {
       return;
     }
@@ -1563,7 +1560,7 @@ const SubmissionsCreate = ({ path }) => {
         const reversedOriginalDate = `${y}-${m}-${d}`;
 
         if (selectedNewHearingDates.includes(reversedOriginalDate)) {
-          setShowErrorToast({
+          setShowToast({
             label: t("ERR_SAME_DATE_AS_ORIGINAL_HEARING"),
             error: true,
           });
@@ -1574,7 +1571,7 @@ const SubmissionsCreate = ({ path }) => {
 
     if (applicationType === "REQUEST_FOR_BAIL") {
       const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
-      const validateSuretyContactNumbers = validateSuretyContactNumber(individualData, formData, setShowErrorToast, t);
+      const validateSuretyContactNumbers = validateSuretyContactNumber(individualData, formData, setShowToast, t);
 
       if (!validateSuretyContactNumbers) {
         return;
@@ -1584,12 +1581,12 @@ const SubmissionsCreate = ({ path }) => {
     try {
       setLoader(true);
       if (applicationType && ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)) {
-        const updatedFormData = await replaceUploadedDocsWithCombinedFile(t, formdata, tenantId);
+        const updatedFormData = await replaceUploadedDocsWithCombinedFile(t, formdata, tenantId, setShowToast);
         setFormdata(updatedFormData);
       }
 
       if (applicationType && ["ADVANCEMENT_OR_ADJOURNMENT_APPLICATION"].includes(applicationType)) {
-        const updatedFormData = await replaceUploadedDocsWithFile(t, formdata, tenantId);
+        const updatedFormData = await replaceUploadedDocsWithFile(t, formdata, tenantId, setShowToast);
         setFormdata(updatedFormData);
       }
 
@@ -1649,7 +1646,8 @@ const SubmissionsCreate = ({ path }) => {
       }
     } catch (error) {
       console.error("Error While Updatting:", error);
-      setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_PROCESSING_CREATE_UPDATE_REQUEST"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -1659,25 +1657,25 @@ const SubmissionsCreate = ({ path }) => {
     try {
       if (!formdata?.applicationType?.type) {
         setFormErrors?.current("applicationType", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-        setShowErrorToast({ label: t("CORE_REQUIRED_FIELD_ERROR_MESSAGE"), error: true });
+        setShowToast({ label: t("CORE_REQUIRED_FIELD_ERROR_MESSAGE"), error: true });
         return;
       }
 
       setLoader(true);
       if (applicationType && ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)) {
-        const updatedFormData = await replaceUploadedDocsWithCombinedFile(t, formdata, tenantId);
+        const updatedFormData = await replaceUploadedDocsWithCombinedFile(t, formdata, tenantId, setShowToast);
         setFormdata(updatedFormData);
       }
 
       if (applicationType && ["ADVANCEMENT_OR_ADJOURNMENT_APPLICATION"].includes(applicationType)) {
-        const updatedFormData = await replaceUploadedDocsWithFile(t, formdata, tenantId);
+        const updatedFormData = await replaceUploadedDocsWithFile(t, formdata, tenantId, setShowToast);
         setFormdata(updatedFormData);
       }
 
       if (applicationNumber) {
-        const res = await submitSubmission({ update: true, action: SubmissionWorkflowAction.SAVEDRAFT });
+        await submitSubmission({ update: true, action: SubmissionWorkflowAction.SAVEDRAFT });
         await applicationRefetch();
-        setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
+        setShowToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
       } else {
         const res = await submitSubmission({ update: false, action: SubmissionWorkflowAction.SAVEDRAFT });
         const newapplicationNumber = res?.application?.applicationNumber;
@@ -1692,7 +1690,8 @@ const SubmissionsCreate = ({ path }) => {
       }
     } catch (error) {
       console.error("Error While Updatting:", error);
-      setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_PROCESSING_DRAFT_SAVE"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -1727,37 +1726,78 @@ const SubmissionsCreate = ({ path }) => {
   const handleReviewModalSubmit = async ({ applicationPreviewPdf, applicationPreviewFileName, isUpload = false }) => {
     try {
       if (applicationDetails?.status === SubmissionWorkflowState.DRAFT_IN_PROGRESS) {
-        const res = await updateSubmission(SubmissionWorkflowAction.SUBMIT, false);
+        let res;
+        try {
+          res = await updateSubmission(SubmissionWorkflowAction.SUBMIT, false);
+        } catch (error) {
+          console.error("Failed to update submission:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("SUBMISSION_UPDATE_FAILED"), error: true, errorId });
+          return;
+        }
+
         const newapplicationNumber = res?.application?.applicationNumber;
         if (newapplicationNumber) {
           if (isCitizen) {
-            await createPendingTask({
-              name: t("ESIGN_THE_SUBMISSION"),
-              status: "ESIGN_THE_SUBMISSION",
-              refId: newapplicationNumber,
-              stateSla: todayDate + stateSla.ESIGN_THE_SUBMISSION,
-            });
-            if (applicationType === "DELAY_CONDONATION")
+            try {
               await createPendingTask({
-                name: "Create DCA Applications",
-                status: "CREATE_DCA_SUBMISSION",
-                refId: `DCA_${filingNumber}`,
-                isCompleted: true,
+                name: t("ESIGN_THE_SUBMISSION"),
+                status: "ESIGN_THE_SUBMISSION",
+                refId: newapplicationNumber,
+                stateSla: todayDate + stateSla.ESIGN_THE_SUBMISSION,
               });
+            } catch (error) {
+              console.error("Failed to create e-sign task:", error);
+              const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+              setShowToast({ label: t("FAILED_TO_CREATE_ESIGN_TASK"), error: true, errorId });
+              return;
+            }
+
+            if (applicationType === "DELAY_CONDONATION") {
+              try {
+                await createPendingTask({
+                  name: "Create DCA Applications",
+                  status: "CREATE_DCA_SUBMISSION",
+                  refId: `DCA_${filingNumber}`,
+                  isCompleted: true,
+                });
+              } catch (error) {
+                console.error("Failed to create DCA task:", error);
+                const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+                setShowToast({ label: t("FAILED_TO_CREATE_DCA_TASK"), error: true, errorId });
+                return;
+              }
+            }
           } else if (hasSubmissionRole) {
-            await createPendingTask({
-              name: t("ESIGN_THE_SUBMISSION"),
-              status: "ESIGN_THE_SUBMISSION",
-              refId: newapplicationNumber,
-              stateSla: todayDate + stateSla.ESIGN_THE_SUBMISSION,
-              isAssignedRole: true,
-              assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
-            });
+            try {
+              await createPendingTask({
+                name: t("ESIGN_THE_SUBMISSION"),
+                status: "ESIGN_THE_SUBMISSION",
+                refId: newapplicationNumber,
+                stateSla: todayDate + stateSla.ESIGN_THE_SUBMISSION,
+                isAssignedRole: true,
+                assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
+              });
+            } catch (error) {
+              console.error("Failed to create e-sign task for role:", error);
+              const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+              setShowToast({ label: t("FAILED_TO_CREATE_ESIGN_TASK"), error: true, errorId });
+              return;
+            }
           }
         }
       }
+
       const pdfFile = new File([applicationPreviewPdf], applicationPreviewFileName, { type: "application/pdf" });
-      const document = await onDocumentUpload(pdfFile, pdfFile.name, tenantId);
+      let document;
+      try {
+        document = await onDocumentUpload(pdfFile, pdfFile.name, tenantId);
+      } catch (error) {
+        console.error("Failed to upload document:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("SUBMISSION_DOCUMENT_UPLOAD_FAILED"), error: true, errorId });
+        return;
+      }
       const fileStoreId = document?.file?.files?.[0]?.fileStoreId;
       if (!fileStoreId) {
         throw new Error("FileStoreId not generated");
@@ -1778,7 +1818,7 @@ const SubmissionsCreate = ({ path }) => {
         if (!isSendForEsign) {
           setShowsignatureModal(true);
         } else {
-          setShowErrorToast({ label: t("SUCCESFULLY_SENT_FOR_ESIGN"), error: false });
+          setShowToast({ label: t("SUCCESFULLY_SENT_FOR_ESIGN"), error: false });
           history.replace(
             `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
           );
@@ -1788,7 +1828,8 @@ const SubmissionsCreate = ({ path }) => {
       setShowReviewModal(false);
     } catch (error) {
       console.error("Error while submitting the application:", error);
-      setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_SUBMITTING_APPLICATION"), error: true, errorId });
     }
   };
 
@@ -1817,7 +1858,8 @@ const SubmissionsCreate = ({ path }) => {
       }
     } catch (error) {
       console.error("Error while Edit Applications:", error);
-      setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_EDITING_APPLICATION"), error: true, errorId });
     }
   };
 
@@ -1872,6 +1914,8 @@ const SubmissionsCreate = ({ path }) => {
         });
       }
     } catch (error) {
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_DOING_ESIGN_OR_PENDING_TASK_CREATION"), error: true, errorId });
       setLoader(false);
     }
     setLoader(false);
@@ -1926,30 +1970,22 @@ const SubmissionsCreate = ({ path }) => {
       }
     } catch (error) {
       console.error(error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_PROCESSING_PAYMENT"), error: true, errorId });
     }
   };
 
   const handleDownloadSubmission = () => {
-    downloadPdf(tenantId, applicationDetails?.documents?.filter((doc) => doc?.documentType === "SIGNED")?.[0]?.fileStore);
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${
+      applicationNumber || ""
+    }_Application`;
+    downloadPdf(tenantId, applicationDetails?.documents?.filter((doc) => doc?.documentType === "SIGNED")?.[0]?.fileStore, name);
   };
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   useEffect(() => {
     const saveDraft = sessionStorage.getItem("DRAFT_SAVED_SUCCESSFULLY");
     if (saveDraft === "success") {
-      setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
+      setShowToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
       sessionStorage.removeItem("DRAFT_SAVED_SUCCESSFULLY");
     }
   }, [t]);
@@ -2038,6 +2074,8 @@ const SubmissionsCreate = ({ path }) => {
             setSignedDocumentUploadID={setSignedDocumentUploadID}
             applicationPdfFileStoreId={applicationPdfFileStoreId}
             applicationType={applicationType}
+            applicationNumber={applicationNumber}
+            caseDetails={caseDetails}
           />
         )}
         {showPaymentModal && (
@@ -2079,7 +2117,15 @@ const SubmissionsCreate = ({ path }) => {
           />
         )}
         {SurveyUI}
-        {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
+          />
+        )}
       </div>
     </React.Fragment>
   );

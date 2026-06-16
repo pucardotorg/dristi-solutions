@@ -1,4 +1,6 @@
-import { BackButton, FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { BackButton, Header, Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useEffect, useMemo, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
@@ -87,7 +89,7 @@ const delayCondonationTextStyle = {
 function CaseFileAdmission({ t, path }) {
   const [isDisabled, setIsDisabled] = useState(false);
   const history = useHistory();
-  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [modalInfo, setModalInfo] = useState(null);
   const [submitModalInfo, setSubmitModalInfo] = useState(null);
@@ -484,9 +486,8 @@ function CaseFileAdmission({ t, path }) {
               setIsDisabled(true);
               await createDcaAndPendingTasks();
             } catch (error) {
-              setShowErrorToast("INTERNAL_ERROR_OCCURRED");
               setIsDisabled(false);
-              throw new Error("Delay condonation application creation failed: " + error.message);
+              throw error;
             }
           }
           await handleRegisterCase();
@@ -494,7 +495,8 @@ function CaseFileAdmission({ t, path }) {
           setCreateAdmissionOrder(true);
           setLoader(false);
         } catch (error) {
-          setShowErrorToast("INTERNAL_ERROR_OCCURRED");
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("UNABLE_TO_REGISTER_CASE"), error: true, errorId });
           console.error("some error occurred:", error);
           setLoader(false);
         }
@@ -566,14 +568,15 @@ function CaseFileAdmission({ t, path }) {
     setModalInfo({ type: "sendCaseBack", page: 0 });
   };
 
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
-
   const handleSendCaseBack = (props) => {
-    updateCaseDetails("SEND_BACK", { comment: props?.commentForLitigant }).then((res) => {
-      setModalInfo({ ...modalInfo, page: 1 });
-    });
+    updateCaseDetails("SEND_BACK", { comment: props?.commentForLitigant })
+      .then(() => {
+        setModalInfo({ ...modalInfo, page: 1 });
+      })
+      .catch((error) => {
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("CASE_UPDATE_FAILED"), error: true, errorId });
+      });
   };
 
   const fetchBasicUserInfo = async () => {
@@ -656,7 +659,8 @@ function CaseFileAdmission({ t, path }) {
       })),
     ].flat();
 
-    updateCaseDetails("REGISTER", formdata).then(async (res) => {
+    try {
+      const res = await updateCaseDetails("REGISTER", formdata);
       await Promise.all(
         documentList
           ?.filter((data) => data)
@@ -721,7 +725,16 @@ function CaseFileAdmission({ t, path }) {
       setModalInfo({ ...modalInfo, page: 4 });
       setIsDisabled(false);
       setShowModal(true);
-    });
+    } catch (error) {
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("CASE_UPDATE_FAILED"), error: true, errorId });
+      setCaseADmitLoader(false);
+      setIsDisabled(false);
+      const taggedError = new Error(error?.message || "CASE_UPDATE_FAILED");
+      taggedError.isRegisterCaseError = true;
+      taggedError.originalError = error;
+      throw taggedError;
+    }
   };
 
   const isDelayCondonationApplicable = useMemo(
@@ -884,6 +897,8 @@ function CaseFileAdmission({ t, path }) {
       })
       .catch((error) => {
         console.error("Error while creating order", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ISSUE_IN_HEARING_UPDATE"), error: true, errorId });
       });
   };
 
@@ -972,7 +987,10 @@ function CaseFileAdmission({ t, path }) {
           `/${window.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       })
-      .catch((err) => {});
+      .catch((err) => {
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ISSUE_IN_HEARING_UPDATE"), error: true, errorId });
+      });
   };
 
   const handleDownloadPdf = () => {
@@ -980,7 +998,8 @@ function CaseFileAdmission({ t, path }) {
       caseDetails?.documents?.find((doc) => doc?.key === "case.complaint.signed")?.fileStore || caseDetails?.additionalDetails?.signedCaseDocument;
 
     if (fileStoreId) {
-      downloadPdf(tenantId, fileStoreId);
+      const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Complaint`;
+      downloadPdf(tenantId, fileStoreId, name);
       return;
     } else {
       console.error("No fileStoreId available for download.");
@@ -1098,7 +1117,16 @@ function CaseFileAdmission({ t, path }) {
                   noBreakLine
                   skipStyle={{ position: "fixed", left: "20px", bottom: "18px", color: "#007E7E", fontWeight: "700" }}
                 />
-                {showErrorToast && <Toast error={true} label={t(showErrorToast)} isDleteBtn={true} onClose={closeToast} />}
+                {showToast && (
+                  <CustomToast
+                    error={showToast?.error}
+                    label={showToast?.label}
+                    errorId={showToast?.errorId}
+                    onClose={() => setShowToast(null)}
+                    duration={showToast?.errorId ? 7000 : 5000}
+                    style={{ zIndex: 10001 }}
+                  />
+                )}
                 {showScheduleHearingModal && (
                   <ScheduleHearing
                     setUpdateCounter={setUpdateCounter}

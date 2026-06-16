@@ -1,11 +1,7 @@
 const { search_evidence_v2 } = require("../../api");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
-const {
-  duplicateExistingFileStore,
-} = require("../utils/duplicateExistingFileStore");
+const { duplicateExistingFileStore } = require("../utils/duplicateExistingFileStore");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 const { logger } = require("../../logger");
 
@@ -39,7 +35,6 @@ async function processAdditionalFilings(
 
   if (additionalFilingsSection?.length !== 0) {
     const section = additionalFilingsSection[0];
-    logger.info(`[processAdditionalFilings] search_evidence_v2 | filingType: DIRECT`);
     const directDocs = await search_evidence_v2(
       tenantId,
       requestInfo,
@@ -61,7 +56,6 @@ async function processAdditionalFilings(
 
     const directList = directDocs?.data?.artifacts;
 
-    logger.info(`[processAdditionalFilings] search_evidence_v2 | filingType: APPLICATION`);
     const applicationDocs = await search_evidence_v2(
       tenantId,
       requestInfo,
@@ -196,7 +190,6 @@ async function processAdditionalFilings(
   } else {
     additionalFilingsIndexSection.lineItems = [];
   }
-  logger.info(`[processAdditionalFilings] Completed | lineItems: ${additionalFilingsIndexSection?.lineItems?.length || 0}`);
 }
 
 module.exports = {
