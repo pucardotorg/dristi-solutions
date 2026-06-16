@@ -931,12 +931,6 @@ function EFilingCases({ path }) {
                   },
               condonationFileUpload: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload,
             };
-            if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload) {
-              setFormDataValue.current?.(
-                "condonationFileUpload",
-                caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload
-              );
-            }
             return data;
           } else {
             return {
@@ -948,14 +942,6 @@ function EFilingCases({ path }) {
                 isEnabled: true,
               },
             };
-          }
-        }
-        if (selected === "delayApplications") {
-          if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload && prevIsDcaSkipped === "NO") {
-            setFormDataValue.current?.(
-              "condonationFileUpload",
-              caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload
-            );
           }
         }
         return (
@@ -995,12 +981,6 @@ function EFilingCases({ path }) {
                 },
             condonationFileUpload: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload,
           };
-          if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload) {
-            setFormDataValue.current?.(
-              "condonationFileUpload",
-              caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload
-            );
-          }
 
           return data;
         } else {
