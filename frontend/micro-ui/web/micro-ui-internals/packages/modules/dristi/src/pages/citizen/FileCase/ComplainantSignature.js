@@ -938,7 +938,7 @@ const ComplainantSignature = ({ path }) => {
     if (!mockESignEnabled && (!signatureDocumentId || signatureDocumentId === caseDetails?.additionalDetails?.signedCaseDocument)) {
       toast.error(t("UPDATE_FAILED_ERROR"));
       setLoader(false);
-      return;
+      return false;
     }
     try {
       await DRISTIService.caseUpdateService(
@@ -1058,11 +1058,13 @@ const ComplainantSignature = ({ path }) => {
           setEsignSuccess(false);
           throw error;
         });
+      return true;
     } catch (error) {
       console.error("Error:", error);
       toast.error(t("SOMETHING_WENT_WRONG"));
       setEsignSuccess(false);
       setLoader(false);
+      return false;
     }
   };
 
@@ -1111,8 +1113,10 @@ const ComplainantSignature = ({ path }) => {
           console.error("Failed to release case lock before eSign update", err);
         }
 
-        await updateCase(state);
-        await refetchCaseData();
+        const updateSucceeded = await updateCase(state);
+        if (updateSucceeded) {
+          await refetchCaseData();
+        }
         setEsignSuccess(false);
       }
     };
