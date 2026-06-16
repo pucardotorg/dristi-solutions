@@ -1,15 +1,9 @@
 const { search_evidence_v2 } = require("../../api");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
-const {
-  duplicateExistingFileStore,
-} = require("../utils/duplicateExistingFileStore");
+const { duplicateExistingFileStore } = require("../utils/duplicateExistingFileStore");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
-const {
-  combineMultipleFilestores,
-} = require("../utils/combineMultipleFilestores");
+const { combineMultipleFilestores } = require("../utils/combineMultipleFilestores");
 const { logger } = require("../../logger");
 
 async function processAccusedEvidence(
@@ -44,7 +38,6 @@ async function processAccusedEvidence(
   const accusedEvidenceLineItems = [];
 
   if (complainantDepositionSection?.length !== 0) {
-    logger.info(`[processAccusedEvidence] search_evidence_v2 | depositions`);
     const courtDocs = await search_evidence_v2(
       tenantId,
       requestInfo,
@@ -97,7 +90,6 @@ async function processAccusedEvidence(
 
   if (accusedEvidenceSection?.length !== 0) {
     const section = accusedEvidenceSection[0];
-    logger.info(`[processAccusedEvidence] search_evidence_v2 | exhibits`);
     const accusedDocs = await search_evidence_v2(
       tenantId,
       requestInfo,
@@ -243,7 +235,6 @@ async function processAccusedEvidence(
   );
   accusedEvidenceIndexSection.lineItems =
     accusedEvidenceLineItems?.filter(Boolean);
-  logger.info(`[processAccusedEvidence] Completed | lineItems: ${accusedEvidenceIndexSection.lineItems?.length || 0}`);
 }
 
 module.exports = {

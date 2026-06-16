@@ -65,7 +65,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
         return false;
       }
     } catch (e) {
-      return false;
+      throw e;
     }
   };
 

@@ -1,11 +1,11 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
-import { CardLabel, FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { CardLabel } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useCallback, useMemo, useState } from "react";
 import { idProofVerificationConfig } from "../configs/component";
 import Button from "./Button";
 import Modal from "./Modal";
 import RenderFileCard from "./RenderFileCard";
-import { useToast } from "./Toast/useToast";
 import { CloseBtn, Heading } from "./ModalComponents";
 import { EXTENSION_TO_MIME } from "../Utils/constants";
 function VerificationComponent({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) {

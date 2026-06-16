@@ -89,9 +89,6 @@ public class CaseSummarySearch {
     @JsonProperty("stage")
     private String stage = null;
 
-    @JsonProperty("substage")
-    private String substage = null;
-
     @JsonProperty("natureOfPleading")
     private String natureOfPleading = null;
 

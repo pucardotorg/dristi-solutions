@@ -22,7 +22,7 @@ import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/Mo
 //   </svg>
 // );
 
-// 
+//
 // const RescheduleHearing = ({ onSelect, onCancel, onDismiss , rescheduleAll}) => {
 //   const { t } = useTranslation();
 //   const history = useHistory();
@@ -51,7 +51,6 @@ import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/Mo
 //   let a = "FSM-2018-22-3-001";
 //   let b = "John vs Doe";
 //   let c = "NIA S";
-
 
 //   return isMobileView ? (
 //     <Modal

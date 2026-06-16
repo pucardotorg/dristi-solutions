@@ -2,9 +2,8 @@ const { PDFDocument } = require("pdf-lib");
 const { create_pdf_v2 } = require("../../api");
 const { persistPDF } = require("../utils/persistPDF");
 const { logger } = require("../../logger");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { getCaseNumber } = require("../../utils/commonUtils");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 
 async function processTitlePageSection(
   courtCase,
@@ -23,19 +22,13 @@ async function processTitlePageSection(
   if (titlepageSection.length !== 0) {
     const coverCaseName = courtCase.caseTitle;
     const coverCaseType = courtCase.caseType;
-    const coverCaseNumber =
-      (courtCase?.isLPRCase
-        ? courtCase?.lprNumber
-        : courtCase.courtCaseNumber) ||
-      courtCase.cmpNumber ||
-      courtCase.filingNumber;
+    const coverCaseNumber = getCaseNumber(courtCase);
     const coverYear = (
       courtCase?.filingDate ? new Date(courtCase?.filingDate) : new Date()
     )?.getFullYear();
     const data = {
       Data: [{ coverCaseName, coverCaseType, coverCaseNumber, coverYear }],
     };
-    logger.info("[processTitlePageSection] create_pdf_v2 | key: cover-page-pdf");
     const caseCoverPdfResponse = await create_pdf_v2(
       tenantId,
       "cover-page-pdf",
@@ -73,9 +66,6 @@ async function processTitlePageSection(
         sortParam: null,
       },
     ];
-    logger.info(`[processTitlePageSection] Completed | fileStoreId: ${titlepageFileStoreId}`);
-  } else {
-    logger.info("[processTitlePageSection] Skipped | section not active in MDMS");
   }
 }
 

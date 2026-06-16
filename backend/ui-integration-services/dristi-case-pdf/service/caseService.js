@@ -324,7 +324,7 @@ function getPrayerSwornStatementDetails(cases) {
           getComplaintAdditionalDocumentFileStore(
             swornStatementData?.SelectUploadDocWithName,
           ),
-          synopsisText:
+        synopsisText:
           (swornStatementData.synopsis && swornStatementData.synopsis.text) ||
           null,
       };

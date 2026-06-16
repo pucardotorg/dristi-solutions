@@ -5,7 +5,8 @@ import HomeHearingsTab from "./HomeHearingsTab";
 import { pendingTaskConfig } from "../../configs/PendingTaskConfig";
 import { HomeService, Urls } from "../../hooks/services";
 import { useHistory } from "react-router-dom";
-import { Loader, Toast, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import BulkBailBondSignView from "./BulkBailBondSignView";
 import BailBondModal from "./BailBondModal";
@@ -28,7 +29,18 @@ import BulkSignDigitalizationView from "./BulkSignDigitalizationView";
 import TemplateOrConfigurationPage from "./TemplateOrConfigurationPage";
 import CTCApplications from "./CTCApplications";
 import BulkIssueCTC from "./BulkIssueCTC";
-
+import { ORDER_TYPES } from "../../utils/constants";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { getAuthorizedUuid, getDate } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import {
+  getStatue,
+  getLitigants,
+  getFinalLitigantsData,
+  getReps,
+  getFinalRepresentativesData,
+  getWitnesses,
+  getUnJoinedLitigant,
+} from "@egovernments/digit-ui-module-dristi/src/pages/employee/AdmittedCases/utils/caseDataProcessingUtils";
 const sectionsParentStyle = {
   height: "50%",
   display: "flex",
@@ -88,7 +100,7 @@ const MainHomeScreen = () => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [loader, setLoader] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [showBailBondModal, setShowBailBondModal] = useState(false);
   const [selectedBailBond, setSelectedBailBond] = useState(null);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
@@ -101,6 +113,219 @@ const MainHomeScreen = () => {
   const CourierService = useMemo(() => Digit.ComponentRegistryService.getComponent("CourierService"), []);
   const [isProcessLoader, setIsProcessLoader] = useState(false);
   const courtId = localStorage.getItem("courtId");
+
+  const EvidenceModal = useMemo(() => Digit.ComponentRegistryService.getComponent("EvidenceModal"), []);
+
+  const [rescheduleEvidenceSession, setRescheduleEvidenceSession] = useState(null);
+  const [homeRescheduleEvidenceSubmission, setHomeRescheduleEvidenceSubmission] = useState(null);
+  const [showHomeRescheduleEvidence, setShowHomeRescheduleEvidence] = useState(false);
+  const lastRescheduleEvidenceBuildKey = useRef("");
+
+  const userUuid = userInfo?.uuid;
+  const authorizedUuidForRescheduleEvidence = useMemo(() => getAuthorizedUuid(userUuid), [userUuid]);
+
+  const rescheduleEvidenceCaseId = rescheduleEvidenceSession?.caseId;
+  const rescheduleEvidenceFilingNumber = rescheduleEvidenceSession?.filingNumber;
+  const rescheduleEvidenceReferenceId = rescheduleEvidenceSession?.referenceId;
+
+  const {
+    data: rescheduleEvidenceCaseSearchData,
+    isLoading: rescheduleEvidenceCaseLoading,
+    error: rescheduleEvidenceCaseError,
+  } = useCaseDetailSearchService(
+    {
+      criteria: {
+        caseId: rescheduleEvidenceCaseId,
+        ...(courtId && { courtId }),
+      },
+      tenantId,
+    },
+    {},
+    `home-reschedule-evidence-${rescheduleEvidenceCaseId}`,
+    rescheduleEvidenceCaseId,
+    Boolean(rescheduleEvidenceCaseId)
+  );
+
+  const rescheduleEvidenceCaseDetails = useMemo(() => rescheduleEvidenceCaseSearchData?.cases || {}, [rescheduleEvidenceCaseSearchData]);
+
+  const {
+    data: rescheduleEvidenceApplicationData,
+    isLoading: rescheduleEvidenceApplicationLoading,
+    error: rescheduleEvidenceApplicationError,
+  } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        filingNumber: rescheduleEvidenceFilingNumber,
+        tenantId,
+        asUser: authorizedUuidForRescheduleEvidence,
+      },
+      tenantId,
+      ...(courtId && { courtId }),
+    },
+    {},
+    rescheduleEvidenceFilingNumber ? `${rescheduleEvidenceFilingNumber}-home-reschedule-evidence` : "home-reschedule-evidence-idle",
+    Boolean(rescheduleEvidenceFilingNumber && courtId && rescheduleEvidenceCaseId && rescheduleEvidenceSession)
+  );
+
+  const resetRescheduleEvidenceSession = useCallback(() => {
+    lastRescheduleEvidenceBuildKey.current = "";
+    setRescheduleEvidenceSession(null);
+    setHomeRescheduleEvidenceSubmission(null);
+    setShowHomeRescheduleEvidence(false);
+  }, []);
+
+  const openRescheduleRequestEvidence = useCallback((row) => {
+    if (!row?.caseId || !row?.filingNumber || !row?.referenceId) {
+      return;
+    }
+    lastRescheduleEvidenceBuildKey.current = "";
+    setHomeRescheduleEvidenceSubmission(null);
+    setShowHomeRescheduleEvidence(false);
+    setRescheduleEvidenceSession({
+      caseId: row.caseId,
+      filingNumber: row.filingNumber,
+      referenceId: row.referenceId,
+    });
+  }, []);
+
+  const handleRescheduleRequestRowClick = useCallback(
+    (row) => {
+      const data = row.original ? row?.original : null;
+      openRescheduleRequestEvidence(data);
+    },
+    [openRescheduleRequestEvidence]
+  );
+
+  useEffect(() => {
+    if (activeTab !== "RESCHEDULE_REQUEST") {
+      resetRescheduleEvidenceSession();
+    }
+  }, [activeTab, resetRescheduleEvidenceSession]);
+
+  useEffect(() => {
+    if (!rescheduleEvidenceSession?.referenceId) {
+      lastRescheduleEvidenceBuildKey.current = "";
+      setHomeRescheduleEvidenceSubmission(null);
+      setShowHomeRescheduleEvidence(false);
+      return;
+    }
+    const sessionKey = `${rescheduleEvidenceSession.caseId}|${rescheduleEvidenceSession.filingNumber}|${rescheduleEvidenceSession.referenceId}`;
+    if (lastRescheduleEvidenceBuildKey.current === sessionKey && homeRescheduleEvidenceSubmission?.length > 0) {
+      return;
+    }
+    if (rescheduleEvidenceCaseLoading || rescheduleEvidenceApplicationLoading) {
+      return;
+    }
+    if (rescheduleEvidenceCaseError || rescheduleEvidenceApplicationError) {
+      const isCaseFetchError = Boolean(rescheduleEvidenceCaseError);
+      const error = isCaseFetchError ? rescheduleEvidenceCaseError : rescheduleEvidenceApplicationError;
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      lastRescheduleEvidenceBuildKey.current = "";
+      setShowToast({
+        label: isCaseFetchError ? t("FAILED_TO_FETCH_CASE_DETAILS") : t("FAILED_TO_FETCH_APPLICATION_DETAILS"),
+        error: true,
+        errorId,
+      });
+      setRescheduleEvidenceSession(null);
+      return;
+    }
+    const caseLoaded = rescheduleEvidenceCaseSearchData?.cases && Object.keys(rescheduleEvidenceCaseDetails).length > 0;
+    if (!caseLoaded) {
+      lastRescheduleEvidenceBuildKey.current = "";
+      setShowToast({ label: t("FAILED_TO_FETCH_CASE_DETAILS"), error: true });
+      setRescheduleEvidenceSession(null);
+      return;
+    }
+    const applicationDetails = rescheduleEvidenceApplicationData?.applicationList?.find(
+      (application) => application?.applicationNumber === rescheduleEvidenceReferenceId
+    );
+    if (!applicationDetails) {
+      lastRescheduleEvidenceBuildKey.current = "";
+      setShowToast({ label: t("FAILED_TO_FETCH_APPLICATION_DETAILS"), error: true });
+      setRescheduleEvidenceSession(null);
+      return;
+    }
+    const mapped =
+      applicationDetails?.documents?.map((doc) => ({
+        status: applicationDetails?.status,
+        details: {
+          applicationType: applicationDetails?.applicationType,
+          applicationSentOn: getDate(parseInt(applicationDetails?.auditDetails?.createdTime)),
+          sender: applicationDetails?.additionalDetails?.owner,
+          additionalDetails: applicationDetails?.additionalDetails,
+          applicationId: applicationDetails?.id,
+          auditDetails: applicationDetails?.auditDetails,
+        },
+        applicationContent: {
+          tenantId: applicationDetails?.tenantId,
+          fileStoreId: doc.fileStore,
+          id: doc.id,
+          documentType: doc.documentType,
+          documentUid: doc.documentUid,
+          additionalDetails: doc.additionalDetails,
+        },
+        comments: applicationDetails?.comment ? applicationDetails?.comment : [],
+        applicationList: applicationDetails,
+      })) || [];
+    if (!mapped.length) {
+      lastRescheduleEvidenceBuildKey.current = "";
+      setShowToast({ label: t("PREVIEW_DOC_NOT_AVAILABLE"), error: true });
+      setRescheduleEvidenceSession(null);
+      return;
+    }
+    lastRescheduleEvidenceBuildKey.current = sessionKey;
+    setHomeRescheduleEvidenceSubmission(mapped);
+    setShowHomeRescheduleEvidence(true);
+  }, [
+    rescheduleEvidenceSession,
+    rescheduleEvidenceReferenceId,
+    rescheduleEvidenceCaseLoading,
+    rescheduleEvidenceApplicationLoading,
+    rescheduleEvidenceCaseError,
+    rescheduleEvidenceApplicationError,
+    rescheduleEvidenceCaseSearchData,
+    rescheduleEvidenceCaseDetails,
+    rescheduleEvidenceApplicationData,
+    homeRescheduleEvidenceSubmission,
+    t,
+  ]);
+
+  const homeRescheduleStatue = useMemo(() => getStatue(rescheduleEvidenceCaseDetails), [rescheduleEvidenceCaseDetails]);
+  const homeRescheduleLitigants = useMemo(() => getLitigants(rescheduleEvidenceCaseDetails), [rescheduleEvidenceCaseDetails]);
+  const homeRescheduleFinalLitigantsData = useMemo(() => getFinalLitigantsData(homeRescheduleLitigants), [homeRescheduleLitigants]);
+  const homeRescheduleReps = useMemo(() => getReps(rescheduleEvidenceCaseDetails), [rescheduleEvidenceCaseDetails]);
+  const homeRescheduleFinalRepresentativesData = useMemo(() => getFinalRepresentativesData(homeRescheduleReps), [homeRescheduleReps]);
+  const homeRescheduleWitnesses = useMemo(() => getWitnesses(rescheduleEvidenceCaseDetails), [rescheduleEvidenceCaseDetails]);
+  const homeRescheduleUnJoinedLitigant = useMemo(() => getUnJoinedLitigant(rescheduleEvidenceCaseDetails), [rescheduleEvidenceCaseDetails]);
+
+  const homeRescheduleCaseRelatedData = useMemo(() => {
+    if (!rescheduleEvidenceSession || !rescheduleEvidenceCaseDetails || Object.keys(rescheduleEvidenceCaseDetails).length === 0) {
+      return null;
+    }
+    return {
+      caseId: rescheduleEvidenceSession.caseId,
+      filingNumber: rescheduleEvidenceSession.filingNumber,
+      cnrNumber: rescheduleEvidenceCaseDetails?.cnrNumber || "",
+      title: rescheduleEvidenceCaseDetails?.caseTitle || "",
+      stage: rescheduleEvidenceCaseDetails?.stage,
+      parties: [
+        ...homeRescheduleFinalLitigantsData,
+        ...homeRescheduleFinalRepresentativesData,
+        ...homeRescheduleUnJoinedLitigant,
+        ...homeRescheduleWitnesses,
+      ],
+      case: rescheduleEvidenceCaseDetails,
+      statue: homeRescheduleStatue,
+    };
+  }, [
+    rescheduleEvidenceSession,
+    rescheduleEvidenceCaseDetails,
+    homeRescheduleFinalLitigantsData,
+    homeRescheduleFinalRepresentativesData,
+    homeRescheduleUnJoinedLitigant,
+    homeRescheduleWitnesses,
+    homeRescheduleStatue,
+  ]);
 
   const hasViewRegisterUserAccess = useMemo(() => assignedRoles?.includes("ADVOCATE_APPROVER"), [assignedRoles]);
   const hasViewCollectOfflinePaymentsAccess = useMemo(() => assignedRoles?.includes("PAYMENT_COLLECTOR"), [assignedRoles]);
@@ -201,12 +426,6 @@ const MainHomeScreen = () => {
     const toDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59, 999).getTime();
     return { fromDate, toDate };
   };
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
   const fetchHearingCount = async (filters, activeTab) => {
     if (filters && activeTab === "TOTAL_HEARINGS_TAB" && filters.date) {
       try {
@@ -241,7 +460,8 @@ const MainHomeScreen = () => {
         const res = await HomeService.InboxSearch(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
         setHearingCount(res?.totalCount || 0);
       } catch (err) {
-        showToast("error", t("ISSUE_IN_FETCHING"), 5000);
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ error: true, label: t("ISSUE_IN_FETCHING_HEARINGS"), errorId });
         console.error(err);
       }
     } else {
@@ -275,7 +495,8 @@ const MainHomeScreen = () => {
         });
         // }
       } catch (err) {
-        showToast("error", t("ISSUE_IN_FETCHING"), 5000);
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ error: true, label: t("ISSUE_IN_FETCHING_HEARINGS"), errorId });
         console.error(err);
       }
     }
@@ -420,7 +641,8 @@ const MainHomeScreen = () => {
         OTHERS: otherApplicationsCount,
       });
     } catch (err) {
-      showToast("error", t("ISSUE_IN_FETCHING"), 5000);
+      const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ error: true, label: t("ISSUE_IN_FETCHING"), errorId });
       console.error(err);
     } finally {
       setLoader(false);
@@ -632,7 +854,7 @@ const MainHomeScreen = () => {
               let noticeCourierService = [];
               let summonsCourierService = [];
 
-              if (orderType === "SUMMONS") {
+              if (orderType === ORDER_TYPES.SUMMONS) {
                 summonsCourierService = partyDetails?.deliveryChannels;
               } else {
                 noticeCourierService = partyDetails?.deliveryChannels;
@@ -668,16 +890,32 @@ const MainHomeScreen = () => {
       const existingTask = taskManagementList?.find((item) => item?.taskType === orderType);
       setIsProcessLoader(true);
       try {
-        await createOrUpdateTask({
-          type: orderType,
-          existingTask: existingTask,
-          courierData: courierData,
-          formData: formData,
-          filingNumber: courierOrderDetails?.filingNumber,
-          tenantId,
-          isLast,
-        });
-        await refetchTaskManagement();
+        try {
+          await createOrUpdateTask({
+            type: orderType,
+            existingTask: existingTask,
+            courierData: courierData,
+            formData: formData,
+            filingNumber: courierOrderDetails?.filingNumber,
+            tenantId,
+            isLast,
+          });
+        } catch (error) {
+          console.error("Failed to create or update courier task:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ error: true, label: t("FAILED_TO_UPDATE_COURIER_TASK"), errorId });
+          return { continue: false };
+        }
+
+        try {
+          await refetchTaskManagement();
+        } catch (error) {
+          console.error("Failed to refetch task management:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ error: true, label: t("FAILED_TO_REFETCH_TASKS"), errorId });
+          return { continue: false };
+        }
+
         if (isLast) {
           setCourierServicePendingTask(null);
           setCourierOrderDetails({});
@@ -687,8 +925,9 @@ const MainHomeScreen = () => {
         }
         return { continue: true };
       } catch (error) {
-        console.error("Error creating or updating task:", error);
-        showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+        console.error("Unexpected error in courier processing:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ error: true, label: t("HOME_SCREEN_UPDATE_FAILED"), errorId });
         return { continue: false };
       } finally {
         setIsProcessLoader(false);
@@ -705,7 +944,7 @@ const MainHomeScreen = () => {
       if (updatedOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party?.[index]) {
         const updatedParties = [...updatedOrderDetails.additionalDetails.formdata[formDataKey].party];
         const updatedParty = { ...updatedParties[index] };
-        updatedParty[type === "notice" ? "noticeCourierService" : "summonsCourierService"] = value;
+        updatedParty[type === ORDER_TYPES.NOTICE.toLocaleLowerCase() ? "noticeCourierService" : "summonsCourierService"] = value;
         updatedParties[index] = updatedParty;
         updatedOrderDetails.additionalDetails.formdata[formDataKey].party = updatedParties;
       }
@@ -885,7 +1124,7 @@ const MainHomeScreen = () => {
             isTaskManagementLoading ||
             isCaseLoading ||
             isProcessLoader ||
-            (orderType === "SUMMONS" ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0),
+            (orderType === ORDER_TYPES.SUMMONS ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0),
         };
       }) || [];
     return courierServiceSteps;
@@ -1209,9 +1448,22 @@ const MainHomeScreen = () => {
 
   const inboxSearchComposer = useMemo(
     () => (
-      <InboxSearchComposer key={`${activeTab}-${updateCounter}`} customStyle={sectionsParentStyle} configs={modifiedConfig}></InboxSearchComposer>
+      <InboxSearchComposer
+        key={`${activeTab}-${updateCounter}`}
+        customStyle={sectionsParentStyle}
+        configs={modifiedConfig}
+        {...(activeTab === "RESCHEDULE_REQUEST"
+          ? {
+              additionalConfig: {
+                resultsTable: {
+                  onClickRow: handleRescheduleRequestRowClick,
+                },
+              },
+            }
+          : {})}
+      ></InboxSearchComposer>
     ),
-    [activeTab, updateCounter, modifiedConfig]
+    [activeTab, updateCounter, modifiedConfig, handleRescheduleRequestRowClick]
   );
 
   const scrutinyInboxSearchComposer = useMemo(
@@ -1241,7 +1493,11 @@ const MainHomeScreen = () => {
   return (
     <React.Fragment>
       {" "}
-      {(loader || ((isTaskManagementLoading || isCaseLoading || orderLoader) && courierServiceSteps?.length === 0) || isPaymentTypeLoading) && (
+      {(loader ||
+        rescheduleEvidenceCaseLoading ||
+        rescheduleEvidenceApplicationLoading ||
+        ((isTaskManagementLoading || isCaseLoading || orderLoader) && courierServiceSteps?.length === 0) ||
+        isPaymentTypeLoading) && (
         <div
           style={{
             width: "100vw",
@@ -1271,7 +1527,7 @@ const MainHomeScreen = () => {
           applicationOptions={applicationOptions}
           hearingCount={hearingCount}
           pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount, CTC_APPLICATIONS: ctcApplicationCount }}
-          showToast={showToast}
+          setShowToast={setShowToast}
         />
         {activeTab === "TEMPLATE_OR_CONFIGURATION" ? (
           <div className="home-bulk-sign">
@@ -1287,7 +1543,7 @@ const MainHomeScreen = () => {
               showEndHearingModal={showEndHearingModal}
               setFilters={setFilters}
               filters={filters}
-              showToast={showToast}
+              setShowToast={setShowToast}
               hearingCount={hearingCount}
             />
           </div>
@@ -1301,7 +1557,7 @@ const MainHomeScreen = () => {
           </div>
         ) : activeTab === "BULK_BAIL_BOND_SIGN" ? (
           <div className="home-bulk-sign">
-            <BulkBailBondSignView showToast={showToast} />
+            <BulkBailBondSignView setShowToast={setShowToast} />
           </div>
         ) : activeTab === "REGISTER_USERS" ? (
           <div className="home-bulk-sign">
@@ -1317,15 +1573,15 @@ const MainHomeScreen = () => {
           </div>
         ) : activeTab === "CS_HOME_A_DAIRY" ? (
           <div className="home-bulk-sign">
-            <BulkSignADiaryView showToast={showToast} />
+            <BulkSignADiaryView />
           </div>
         ) : activeTab === "BULK_EVIDENCE_SIGN" ? (
           <div className="home-bulk-sign">
-            <BulkMarkAsEvidenceView showToast={showToast} />
+            <BulkMarkAsEvidenceView setShowToast={setShowToast} />
           </div>
         ) : activeTab === "BULK_WITNESS_DEPOSITION_SIGN" ? (
           <div className="home-bulk-sign">
-            <BulkWitnessDepositionView showToast={showToast} />
+            <BulkWitnessDepositionView setShowToast={setShowToast} />
           </div>
         ) : activeTab === "CS_HOME_ORDERS" ? (
           <div className="home-bulk-sign">
@@ -1352,19 +1608,35 @@ const MainHomeScreen = () => {
         {showBailBondModal && (
           <BailBondModal
             t={t}
-            showToast={showToast}
+            setShowToast={setShowToast}
             setShowBailModal={setShowBailBondModal}
             row={selectedBailBond}
             setUpdateCounter={setUpdateCounter}
           />
         )}
-        {toastMsg && (
-          <Toast
-            error={toastMsg.key === "error"}
-            label={t(toastMsg.action)}
-            onClose={() => setToastMsg(null)}
-            isDleteBtn={true}
-            style={{ maxWidth: "500px" }}
+        {showHomeRescheduleEvidence && EvidenceModal && homeRescheduleCaseRelatedData && homeRescheduleEvidenceSubmission?.length > 0 && (
+          <EvidenceModal
+            documentSubmission={homeRescheduleEvidenceSubmission}
+            setShow={setShowHomeRescheduleEvidence}
+            userRoles={assignedRoles}
+            modalType="Submissions"
+            setUpdateCounter={setUpdateCounter}
+            setShowToast={setShowToast}
+            caseData={homeRescheduleCaseRelatedData}
+            caseId={rescheduleEvidenceSession?.caseId}
+            setIsDelayApplicationPending={undefined}
+            currentDiaryEntry={undefined}
+            artifact={undefined}
+            setShowMakeAsEvidenceModal={() => {}}
+          />
+        )}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
           />
         )}
         {courierServicePendingTask && Object?.keys(courierServicePendingTask)?.length > 0 && courierServiceSteps?.length > 0 && (

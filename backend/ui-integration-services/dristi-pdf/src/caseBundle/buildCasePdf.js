@@ -43,11 +43,12 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
 
     // Create a new PDF document to merge all sections
     const mergedPdf = await PDFDocument.create();
+    let totalPagesAdded = 0;
 
     // Iterate through sections in the index
     for (const section of index.sections) {
       if (!section || !section.name) {
-        logger.warn("[buildCasePdf] Skipping section with no name");
+        logger.warn(`[buildCasePdf] Skipping section with no name`);
         continue;
       }
 
@@ -56,26 +57,27 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
       );
 
       if (!sectionConfig) {
-        logger.warn(`[buildCasePdf] Section '${section.name}' is not enabled in the design`);
+        logger.warn(`[buildCasePdf] Section '${section.name}' is not enabled in the design, skipping`);
         continue;
       }
 
       if (!section.lineItems || section.lineItems.length === 0) {
-        logger.warn(`[buildCasePdf] Section '${section.name}' has no line items`);
+        logger.info(`[buildCasePdf] Section '${section.name}' has no line items, skipping`);
         continue;
       }
 
       logger.info(`[buildCasePdf] Processing section: '${section.name}' | lineItems: ${section.lineItems.length}`);
 
       // Process each line item
-      for (const item of section.lineItems) {
+      for (let itemIdx = 0; itemIdx < section.lineItems.length; itemIdx++) {
+        const item = section.lineItems[itemIdx];
         if (!item || !item.fileStoreId || !item.content) {
-          logger.warn(`[buildCasePdf] Skipping invalid line item | section: '${section.name}'`);
+          logger.warn(`[buildCasePdf] Skipping invalid line item at index ${itemIdx} in section '${section.name}'`);
           continue;
         }
 
         try {
-          logger.info(`[buildCasePdf] Fetching fileStore | section: '${section.name}', fileStoreId: ${item.fileStoreId}`);
+          logger.info(`[buildCasePdf] Fetching document | section: '${section.name}', item: ${itemIdx + 1}/${section.lineItems.length}, fileStoreId: ${item.fileStoreId}`);
           // Fetch PDF from fileStoreId
           const itemPdf = await convertFileStoreToDocument(
             tenantId,
@@ -101,9 +103,11 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
             itemPdf.getPageIndices()
           );
           copiedPages.forEach((page) => mergedPdf.addPage(page));
+          totalPagesAdded += pages.length;
+          logger.info(`[buildCasePdf] Merged ${pages.length} page(s) | section: '${section.name}', fileStoreId: ${item.fileStoreId}, totalPages: ${totalPagesAdded}`);
         } catch (error) {
           logger.error(
-            `[buildCasePdf] Error processing fileStoreId '${item.fileStoreId}' | section: '${section.name}' | error: ${error.message}`
+            `[buildCasePdf] Failed to process item | section: '${section.name}', item: ${itemIdx + 1}/${section.lineItems.length}, fileStoreId: '${item.fileStoreId}' | error: ${error.message}`
           );
         }
       }
@@ -135,12 +139,12 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
     const filePath = path.join(directoryPath, tempFileName);
 
     try {
-      logger.info(`[buildCasePdf] Saving merged PDF | totalPages: ${mergedPages.length}`);
+      logger.info(`[buildCasePdf] Saving merged PDF | totalPages: ${mergedPages.length}, tempFile: ${tempFileName}`);
       // Save the merged PDF
       const pdfBytes = await mergedPdf.save();
       fs.writeFileSync(filePath, pdfBytes);
 
-      logger.info(`[buildCasePdf] Uploading to fileStore | tenantId: ${tenantId}`);
+      logger.info(`[buildCasePdf] Uploading merged PDF to FileStore | tenantId: ${tenantId}`);
       // Upload the merged PDF and update the index
       const fileStoreResponse = await create_file(
         filePath,
@@ -150,10 +154,14 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
       );
       const fileStoreId = fileStoreResponse?.data?.files?.[0].fileStoreId;
 
+      if (!fileStoreId) {
+        throw new Error("FileStore upload returned no fileStoreId");
+      }
+
       index.fileStoreId = fileStoreId;
       index.pdfCreatedDate = Date.now();
 
-      logger.info(`[buildCasePdf] Completed | caseNumber: ${caseNumber}, fileStoreId: ${fileStoreId}, pageCount: ${mergedPages.length}`);
+      logger.info(`[buildCasePdf] Completed | caseNumber: ${caseNumber}, fileStoreId: ${fileStoreId}, totalPages: ${mergedPages.length}`);
       return { ...index, pageCount: mergedPages.length };
     } finally {
       // Ensure cleanup of the temporary file

@@ -9,7 +9,7 @@ const submitButtonTextStyle = {
   textAlign: "center",
   margin: "0px",
 };
-const Heading = ({ heading, isStatus = true }) => {
+const Heading = ({ heading, isStatus = false }) => {
   return (
     <div className="evidence-title">
       <h1 className="heading-m">{heading.label}</h1>

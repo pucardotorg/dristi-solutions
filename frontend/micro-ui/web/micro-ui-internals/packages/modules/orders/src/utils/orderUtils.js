@@ -2,6 +2,7 @@ import React from "react";
 import { formatAddress, mapAddressDetails, getComplainantName, getRespondantName } from ".";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { getCourtFee } from "./orderApiCallUtils";
+import { ORDER_CATEGORIES, ORDER_TYPES } from "./constants";
 
 export { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
@@ -9,7 +10,7 @@ export const prepareUpdatedOrderData = (currentOrder, orderFormData, compOrderIn
   let updatedCompositeItems = null;
   let updatedCurrentOrder = { ...currentOrder };
 
-  if (updatedCurrentOrder?.orderCategory === "COMPOSITE") {
+  if (updatedCurrentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
     updatedCompositeItems = updatedCurrentOrder?.compositeItems?.map((compItem, compIndex) => {
       if (compIndex === compOrderIndex) {
         return {
@@ -57,10 +58,10 @@ export const getUpdateDocuments = (documents, documentsFile, signedDoucumentUplo
       return documents?.map((doc) =>
         doc?.documentType === "UNSIGNED"
           ? {
-            ...doc,
-            fileStore: documentsFile?.fileStore,
-            additionalDetails: documentsFile?.additionalDetails,
-          }
+              ...doc,
+              fileStore: documentsFile?.fileStore,
+              additionalDetails: documentsFile?.additionalDetails,
+            }
           : doc
       );
     }
@@ -114,8 +115,9 @@ export const generateAddress = ({
   if (address) {
     return address;
   }
-  return `${locality ? `${locality},` : ""} ${district ? `${district},` : ""} ${city ? `${city},` : ""} ${state ? `${state},` : ""} ${pincode ? `- ${pincode}` : ""
-    }`.trim();
+  return `${locality ? `${locality},` : ""} ${district ? `${district},` : ""} ${city ? `${city},` : ""} ${state ? `${state},` : ""} ${
+    pincode ? `- ${pincode}` : ""
+  }`.trim();
 };
 
 export const channelTypeEnum = {
@@ -170,8 +172,8 @@ export const getParties = (type, orderSchema, allParties) => {
     parties = orderSchema?.orderDetails?.respondentName?.name
       ? [orderSchema?.orderDetails?.respondentName?.name]
       : orderSchema?.orderDetails?.respondentName
-        ? [orderSchema?.orderDetails?.respondentName]
-        : [];
+      ? [orderSchema?.orderDetails?.respondentName]
+      : [];
   } else if (["SUMMONS", "NOTICE"].includes(type)) {
     parties = orderSchema?.orderDetails?.respondentName;
   } else if (type === "SECTION_202_CRPC") {
@@ -215,7 +217,7 @@ export const getParties = (type, orderSchema, allParties) => {
     parties = [...updatedComplainants, ...updatedRespondents];
 
     return parties;
-  } else if (type === "MISCELLANEOUS_PROCESS") {
+  } else if (type === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
     let updatedPartiesdata = [];
     if (orderSchema?.orderDetails?.selectedPartiesDetails?.length > 0) {
       updatedPartiesdata = orderSchema?.orderDetails?.selectedPartiesDetails?.map((party) => {
@@ -250,7 +252,7 @@ export const getParties = (type, orderSchema, allParties) => {
   return updatedParties;
 };
 
-export const checkValidation = (t, formData, index, setFormErrors, setShowErrorToast) => {
+export const checkValidation = (t, formData, index, setFormErrors, setShowToast) => {
   let hasError = false;
   const currentOrderType = formData?.orderType?.code || "";
   if (currentOrderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
@@ -282,28 +284,7 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
     }
   }
 
-  // if (currentOrderType === "NOTICE") {
-  //   if (formData?.noticeOrder?.selectedChannels?.length === 0) {
-  //     setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_NOTICE_ORDER"), error: true });
-  //     hasError = true;
-  //   }
-  // }
-
-  // if (currentOrderType === "SUMMONS") {
-  //   if (formData?.SummonsOrder?.selectedChannels?.length === 0) {
-  //     setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_SUMMONS_ORDER"), error: true });
-  //     hasError = true;
-  //   } else if (
-  //     formData?.SummonsOrder?.selectedChannels?.some(
-  //       (channel) => channel?.code === "POLICE" && (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
-  //     )
-  //   ) {
-  //     setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
-  //     hasError = true;
-  //   }
-  // }
-
-  if (currentOrderType === "WARRANT") {
+  if (currentOrderType === ORDER_TYPES.WARRANT) {
     if (!formData?.bailInfo?.noOfSureties && formData?.bailInfo?.isBailable?.code === true) {
       setFormErrors?.current?.[index]?.("noOfSureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
       hasError = true;
@@ -317,7 +298,7 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
     }
 
     if (formData?.warrantFor?.selectedChannels?.length === 0) {
-      setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
+      setShowToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
       hasError = true;
     }
 
@@ -328,14 +309,14 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
           (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
       )
     ) {
-      setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
+      setShowToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
       hasError = true;
     }
   }
 
-  if (currentOrderType === "PROCLAMATION") {
+  if (currentOrderType === ORDER_TYPES.PROCLAMATION) {
     if (formData?.proclamationFor?.selectedChannels?.length === 0) {
-      setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
+      setShowToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
       hasError = true;
     }
 
@@ -346,14 +327,14 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
           (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
       )
     ) {
-      setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
+      setShowToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
       hasError = true;
     }
   }
 
-  if (currentOrderType === "ATTACHMENT") {
+  if (currentOrderType === ORDER_TYPES.ATTACHMENT) {
     if (formData?.attachmentFor?.selectedChannels?.length === 0) {
-      setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
+      setShowToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
       hasError = true;
     }
 
@@ -364,7 +345,7 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
           (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
       )
     ) {
-      setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
+      setShowToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
       hasError = true;
     }
   }
@@ -405,7 +386,7 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
 export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, currentInProgressHearing, skipScheduling) => {
   let errors = [];
 
-  if (currentOrder?.orderCategory === "COMPOSITE") {
+  if (currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
     for (let i = 0; i < currentOrder?.compositeItems?.length; i++) {
       const item = currentOrder?.compositeItems?.[i];
       if (!item?.isEnabled) continue;
@@ -619,7 +600,7 @@ export const _getPartiesOptions = (caseDetails, type = "all", isFlat = false) =>
   if (!caseDetails?.additionalDetails) return [];
 
   const mapParty = (item, index, partyRole) => {
-    const addressData = item?.data?.addressDetails || item?.addressDetails;
+    const addressData = item?.data?.addressDetails || item?.addressDetails || item?.data?.addressCompanyDetails;
     const addressArray = Array.isArray(addressData) ? addressData : addressData ? [addressData] : [];
     const mappedAddresses = mapAddressDetails(addressArray) || [];
     const complaintUUID = item?.data?.complainantVerification?.individualDetails?.userUuid;
@@ -773,11 +754,7 @@ export const getRaiseBailBondReferenceId = ({ accusedKey, filingNumber }) => {
   }
 };
 
-export const createTaskPayload = async (
-  orderType,
-  orderDetails,
-  { caseDetails, courtRoomData, tenantId, judgeName }
-) => {
+export const createTaskPayload = async (orderType, orderDetails, { caseDetails, courtRoomData, tenantId, judgeName }) => {
   let payload = {};
   const { litigants } = caseDetails;
   const complainantIndividualId = litigants?.find((item) => item?.partyType === "complainant.primary")?.individualId;
@@ -798,8 +775,8 @@ export const createTaskPayload = async (
   const respondentAddress = orderFormData?.addressDetails
     ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
     : respondentNameData?.address
-      ? respondentNameData?.address
-      : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
+    ? respondentNameData?.address
+    : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
   const partyIndex = orderFormData?.party?.data?.partyIndex || "";
   const result = getRespondantName(respondentNameData);
   const respondentName = result?.name || result;
@@ -955,7 +932,9 @@ export const createTaskPayload = async (
           fees: await getCourtFee(
             "POLICE",
             respondentAddress?.[0]?.pincode,
-            orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+            orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
+              ? "WARRANT"
+              : orderType,
             tenantId
           ),
           feesStatus: "",
@@ -995,7 +974,7 @@ export const createTaskPayload = async (
           fees: await getCourtFee(
             "POLICE",
             respondentAddress?.[0]?.pincode,
-            orderType === "WARRANT" || orderType === "PROCLAMATION" ? "WARRANT" : orderType,
+            orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION ? "WARRANT" : orderType,
             tenantId
           ),
           feesStatus: "",
@@ -1038,7 +1017,9 @@ export const createTaskPayload = async (
           fees: await getCourtFee(
             "POLICE",
             respondentAddress?.[0]?.pincode,
-            orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+            orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
+              ? "WARRANT"
+              : orderType,
             tenantId
           ),
           feesStatus: "",
@@ -1085,7 +1066,7 @@ export const createTaskPayload = async (
     default:
       break;
   }
-  if (orderType === "MISCELLANEOUS_PROCESS") return payload;
+  if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) return payload;
   if (Object.keys(payload || {}).length > 0 && !Array.isArray(selectedChannel)) return [payload];
   else if (Object.keys(payload || {}).length > 0 && Array.isArray(selectedChannel)) {
     const channelPayloads = await Promise.all(
@@ -1099,7 +1080,7 @@ export const createTaskPayload = async (
         let courtFees = await getCourtFee(
           item?.code,
           pincode,
-          orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+          orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT ? "WARRANT" : orderType,
           tenantId
         );
 
@@ -1113,7 +1094,12 @@ export const createTaskPayload = async (
           };
 
           let address = {};
-          if (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" || item?.type === "Via Police") {
+          if (
+            orderType === ORDER_TYPES.WARRANT ||
+            orderType === ORDER_TYPES.PROCLAMATION ||
+            orderType === ORDER_TYPES.ATTACHMENT ||
+            item?.type === "Via Police"
+          ) {
             address = {
               ...item?.value,
               locality: item?.value?.locality || "",

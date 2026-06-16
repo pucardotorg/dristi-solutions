@@ -1,4 +1,5 @@
-import { Request } from "@egovernments/digit-ui-libraries";
+import { Request } from "@egovernments/digit-ui-module-common/src/utils/Request";
+
 export const Urls = {
   getEvidencesToSign: "/evidence/v1/_getArtifactsToSign",
   updateSignedEvidences: "/evidence/v1/_updateSignedArtifacts",

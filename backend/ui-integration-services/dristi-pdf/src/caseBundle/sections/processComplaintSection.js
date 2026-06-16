@@ -1,6 +1,4 @@
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 const { logger } = require("../../logger");
@@ -35,14 +33,13 @@ async function processComplaintSection(
       (doc) => doc.documentType === "case.complaint.signed"
     )?.fileStore;
     if (!complaintFileStoreId) {
-      logger.error(`[processComplaintSection] No case.complaint.signed document found`);
+      logger.error(`[processComplaintSection] No complaint document found | filingNumber: ${courtCase?.filingNumber}, expected documentType: case.complaint.signed`);
       throw new Error("no case complaint");
     }
 
     let complaintNewFileStoreId = complaintFileStoreId;
 
     if (section.docketpagerequired === "yes") {
-      logger.info(`[processComplaintSection] applyDocketToDocument | fileStoreId: ${complaintFileStoreId}`);
       const complainant = courtCase.litigants?.find((litigant) =>
         litigant.partyType.includes("complainant.primary")
       );
@@ -89,9 +86,6 @@ async function processComplaintSection(
       content: "complaint",
       sortParam: null,
     };
-    logger.info(`[processComplaintSection] Completed | fileStoreId: ${complaintNewFileStoreId}`);
-  } else {
-    logger.info(`[processComplaintSection] Skipped | section not active in MDMS`);
   }
 }
 
