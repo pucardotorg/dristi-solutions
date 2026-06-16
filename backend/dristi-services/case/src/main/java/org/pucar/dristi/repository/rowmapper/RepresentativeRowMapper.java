@@ -83,7 +83,7 @@ public class RepresentativeRowMapper implements ResultSetExtractor<Map<UUID, Lis
                     try {
                         if (advocate.getAdditionalDetails() != null) {
                             com.fasterxml.jackson.databind.JsonNode advNode = (com.fasterxml.jackson.databind.JsonNode) advocate.getAdditionalDetails();
-                            if (advNode.has("advocateUuid") && !advNode.get("advocateUuid").isNull()) {
+                            if (advNode.hasNonNull("advocateUuid")) {
                                 try { advocate.setAdvocateUuid(UUID.fromString(advNode.get("advocateUuid").asText())); } catch (Exception ignored) {}
                             }
                             if (advNode.hasNonNull("firstName")) advocate.setFirstName(advNode.get("firstName").asText());
