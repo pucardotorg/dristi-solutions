@@ -289,7 +289,12 @@ public class OrderRegistrationService {
     private String getMessageCode(String orderType, String updatedStatus, Boolean hearingCompleted, String submissionType, String purpose) {
 
         log.info("Operation: getMessageCode for OrderType: {}, UpdatedStatus: {}, HearingCompleted: {}, SubmissionType: {}, Purpose: {}", orderType, updatedStatus, hearingCompleted, submissionType, purpose);
-        if(SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(orderType)){
+        if(ACCEPT_RESCHEDULING_REQUEST.equalsIgnoreCase(orderType)
+                && PUBLISHED.equalsIgnoreCase(updatedStatus)){
+            return HEARING_RESCHEDULED;
+        }
+        if(SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(orderType)
+             && PUBLISHED.equalsIgnoreCase(updatedStatus)){
             return HEARING_SCHEDULED;
         }
         if (ASSIGNING_DATE_RESCHEDULED_HEARING.equalsIgnoreCase(orderType) &&

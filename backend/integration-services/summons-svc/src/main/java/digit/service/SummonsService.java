@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static digit.config.ServiceConstants.*;
@@ -243,6 +244,9 @@ public class SummonsService {
         enrichPoliceStationReport(task, request.getSummonsDelivery());
         Role role = Role.builder().code(config.getSystemAdmin()).tenantId(config.getEgovStateTenantId()).build();
         request.getRequestInfo().getUserInfo().getRoles().add(role);
+
+        task.getTaskDetails().getDeliveryChannel().setStatusChangeDate(formatEpochToDate(System.currentTimeMillis()));
+
         TaskRequest taskRequest = TaskRequest.builder()
                 .requestInfo(request.getRequestInfo()).task(task).build();
         taskUtil.callUpdateTask(taskRequest);
@@ -254,6 +258,13 @@ public class SummonsService {
         if (!documents.isEmpty()) {
             createEvidenceForPoliceReport(taskRequest, documents.get(0));
         }
+    }
+
+    public static String formatEpochToDate(long epochMillis) {
+        Date date = new Date(epochMillis);
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+        sdf.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
+        return sdf.format(date);
     }
 
     public void createEvidenceForPoliceReport(TaskRequest taskRequest, Document document) {

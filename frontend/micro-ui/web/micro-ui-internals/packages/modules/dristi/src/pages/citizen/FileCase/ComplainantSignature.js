@@ -949,7 +949,7 @@ const ComplainantSignature = ({ path }) => {
     if (!mockESignEnabled && (!signatureDocumentId || signatureDocumentId === caseDetails?.additionalDetails?.signedCaseDocument)) {
       setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
       setLoader(false);
-      return;
+      return false;
     }
     try {
       await DRISTIService.caseUpdateService(
@@ -1078,6 +1078,7 @@ const ComplainantSignature = ({ path }) => {
           taggedError.originalError = error;
           throw taggedError;
         });
+      return true;
     } catch (error) {
       console.error("E-sign process failed:", error);
       if (!error?.isPendingTaskError) {
@@ -1087,6 +1088,7 @@ const ComplainantSignature = ({ path }) => {
       }
       setEsignSuccess(false);
       setLoader(false);
+      return false;
     }
   };
 
@@ -1129,10 +1131,17 @@ const ComplainantSignature = ({ path }) => {
       const ifRemountCheck = isLitigant ? !updatedOnceRef.current : !updatedOnceRef.current && isTopbarMounted;
 
       if (!isLoading && isEsignSuccess && caseDetails?.filingNumber && ifRemountCheck) {
-        await updateCase(state).then(async () => {
+        try {
+          await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId });
+        } catch (err) {
+          console.error("Failed to release case lock before eSign update", err);
+        }
+
+        const updateSucceeded = await updateCase(state);
+        if (updateSucceeded) {
           await refetchCaseData();
-          setEsignSuccess(false);
-        });
+        }
+        setEsignSuccess(false);
       }
     };
 
@@ -1142,14 +1151,10 @@ const ComplainantSignature = ({ path }) => {
 
   useEffect(() => {
     if (!caseDetails?.filingNumber || isLoading) return;
-    const handleCaseUnlocking = async () => {
-      await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
-    };
 
     const isSignSuccess = sessionStorage.getItem("isSignSuccess");
     const storedESignObj = sessionStorage.getItem("signStatus");
     const parsedESignObj = JSON.parse(storedESignObj);
-    const esignProcess = sessionStorage.getItem("esignProcess");
 
     if (isSignSuccess) {
       const matchedSignStatus = parsedESignObj?.find((obj) => obj.name === name && obj.isSigned === true);
@@ -1158,9 +1163,6 @@ const ComplainantSignature = ({ path }) => {
         setSignatureDocumentId(fileStoreId);
         setEsignSuccess(true);
       }
-    }
-    if (esignProcess && caseDetails?.filingNumber) {
-      handleCaseUnlocking();
     }
 
     if (!isLitigant) {
