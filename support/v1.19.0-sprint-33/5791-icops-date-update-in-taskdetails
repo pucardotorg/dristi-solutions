@@ -1,0 +1,22 @@
+UPDATE public.dristi_task dt
+SET taskdetails = jsonb_set(
+    COALESCE(dt.taskdetails, '{}'::jsonb),
+    '{deliveryChannels,statusChangeDate}',
+    to_jsonb(
+        to_char(
+            src.received_date::timestamp,
+            'DD-MM-YYYY'
+        )
+    ),
+    true
+)
+FROM (
+    SELECT DISTINCT ON (task_number)
+           task_number,
+           received_date
+    FROM public.dristi_kerala_icops
+    WHERE delivery_status IN ('DELIVERED_ICOPS', 'NOT_DELIVERED_ICOPS')
+      AND received_date IS NOT NULL
+    ORDER BY task_number, received_date::timestamp DESC
+) src
+WHERE dt.tasknumber = src.task_number;
