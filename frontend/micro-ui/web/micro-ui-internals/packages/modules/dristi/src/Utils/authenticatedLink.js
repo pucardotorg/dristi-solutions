@@ -1,8 +1,9 @@
 import React from "react";
+import PropTypes from "prop-types";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const AuthenticatedLink = ({ t, uri, displayFilename = false, pdf = false, name = "downloadedFile" }) => {
-  const handleClick = (e) => {
+  const handleActivate = (e) => {
     e.preventDefault();
 
     const authToken = localStorage.getItem("token");
@@ -36,8 +37,9 @@ const AuthenticatedLink = ({ t, uri, displayFilename = false, pdf = false, name 
   };
 
   return (
-    <span
-      onClick={handleClick}
+    <button
+      type="button"
+      onClick={handleActivate}
       style={{
         display: "flex",
         color: "#007e7e",
@@ -49,11 +51,24 @@ const AuthenticatedLink = ({ t, uri, displayFilename = false, pdf = false, name 
         cursor: "pointer",
         textDecoration: "underline",
         marginLeft: "5px",
+        background: "none",
+        border: "none",
+        padding: 0,
+        font: "inherit",
+        textAlign: "left",
       }}
     >
       {displayFilename ? t(displayFilename) : t("CS_CLICK_TO_DOWNLOAD")}
-    </span>
+    </button>
   );
+};
+
+AuthenticatedLink.propTypes = {
+  displayFilename: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+  name: PropTypes.string,
+  pdf: PropTypes.bool,
+  t: PropTypes.func.isRequired,
+  uri: PropTypes.string.isRequired,
 };
 
 export default AuthenticatedLink;

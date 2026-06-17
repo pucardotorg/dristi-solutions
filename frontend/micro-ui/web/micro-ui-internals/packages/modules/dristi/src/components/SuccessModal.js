@@ -1,5 +1,6 @@
+import PropTypes from "prop-types";
 import React from "react";
-import { Banner, CardLabel } from "@egovernments/digit-ui-react-components";
+import { Banner } from "@egovernments/digit-ui-react-components";
 import Modal from "./Modal";
 
 function SuccessModal({ t, onCancel, onSubmit, bannerMessage, actionSaveLabel, actionCancelLabel, type, data }) {
@@ -40,5 +41,20 @@ function SuccessModal({ t, onCancel, onSubmit, bannerMessage, actionSaveLabel, a
     </Modal>
   );
 }
+
+SuccessModal.propTypes = {
+  t: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  bannerMessage: PropTypes.string.isRequired,
+  actionSaveLabel: PropTypes.string.isRequired,
+  actionCancelLabel: PropTypes.string.isRequired,
+  type: PropTypes.string,
+  data: PropTypes.shape({
+    caseId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    caseName: PropTypes.string,
+    errorsMarked: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  }),
+};
 
 export default SuccessModal;

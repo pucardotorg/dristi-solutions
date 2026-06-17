@@ -1,9 +1,10 @@
 import { Dropdown } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 
 const stringReplaceAll = (str = "", searcher = "", replaceWith = "") => {
-  if (searcher == "") return str;
+  if (searcher === "") return str;
   while (str?.includes(searcher)) {
     str = str?.replace(searcher, replaceWith);
   }
@@ -13,10 +14,8 @@ const stringReplaceAll = (str = "", searcher = "", replaceWith = "") => {
 const ChangeCity = (prop) => {
   const [dropDownData, setDropDownData] = useState(null);
   const [selectCityData, setSelectCityData] = useState([]);
-  const [selectedCity, setSelectedCity] = useState([]); //selectedCities?.[0]?.value
   const history = useHistory();
-  const isDropdown = prop.dropdown || false;
-  let selectedCities = [];
+  const location = useLocation();
 
   const handleChangeCity = (city) => {
     const loggedInData = Digit.SessionStorage.get("citizen.userRequestObject");
@@ -47,7 +46,6 @@ const ChangeCity = (prop) => {
         value: uniCode,
       });
     });
-    selectedCities = filteredArray?.filter((select) => select.value == Digit.SessionStorage.get("Employee.tenantId"));
     setSelectCityData(filteredArray);
   }, [dropDownData]);
 
@@ -87,6 +85,12 @@ const ChangeCity = (prop) => {
   //     </React.Fragment>
   //   );
   // }
+};
+
+ChangeCity.propTypes = {
+  dropdown: PropTypes.bool,
+  t: PropTypes.func,
+  mobileView: PropTypes.bool,
 };
 
 export default ChangeCity;

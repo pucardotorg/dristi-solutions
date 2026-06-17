@@ -1,7 +1,6 @@
 import { CardText } from "@egovernments/digit-ui-react-components";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom";
 import NextHearingModal from "../../components/NextHearingModal";
 import SummaryModal from "../../components/SummaryModal";
 import { hearingService } from "../../hooks/services";
@@ -31,14 +30,25 @@ const Close = () => (
   </svg>
 );
 
-const CloseBtn = (props) => {
+const CloseBtn = ({ onClick }) => {
   return (
-    <div onClick={props?.onClick} style={{ paddingTop: 10 }}>
-      <div className={"icon-bg-secondary"} style={{ backgroundColor: "#ffff", cursor: "pointer" }}>
-        {" "}
-        <Close />{" "}
-      </div>
-    </div>
+    <button
+      type="button"
+      aria-label="Close"
+      onClick={onClick}
+      style={{
+        paddingTop: 10,
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        paddingLeft: 0,
+        paddingRight: 0,
+      }}
+    >
+      <span className="icon-bg-secondary" style={{ backgroundColor: "#ffff", display: "inline-flex" }}>
+        <Close />
+      </span>
+    </button>
   );
 };
 
@@ -56,10 +66,8 @@ const EndHearing = ({
   const [stepper, setStepper] = useState(1);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [transcript, setTranscript] = useState(transcriptText);
-  const history = useHistory();
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
-
 
   const endHearing = async (updatedTranscriptText) => {
     try {
@@ -164,7 +172,6 @@ const EndHearing = ({
       {stepper === 3 && (
         <NextHearingModal
           transcript={transcript}
-          hearingId={hearingId}
           hearing={hearing}
           stepper={stepper}
           setStepper={setStepper}

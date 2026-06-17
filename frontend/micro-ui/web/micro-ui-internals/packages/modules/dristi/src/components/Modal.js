@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import PropTypes from "prop-types";
 
 import { HeaderBar } from "@egovernments/digit-ui-react-components";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
@@ -131,6 +132,50 @@ const Modal = ({
       {error && <CustomToast error={true} label={error} errorId={null} onClose={() => setError(null)} duration={5000} />}
     </PopUp>
   );
+};
+
+Modal.propTypes = {
+  headerBarMain: PropTypes.node,
+  headerBarEnd: PropTypes.node,
+  popupStyles: PropTypes.object,
+  children: PropTypes.node,
+  actionCancelLabel: PropTypes.string,
+  actionCancelOnSubmit: PropTypes.func,
+  actionSaveLabel: PropTypes.string,
+  actionCustomLabelSubmit: PropTypes.func,
+  actionCustomLabel: PropTypes.string,
+  actionSaveOnSubmit: PropTypes.func,
+  error: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+  setError: PropTypes.func,
+  formId: PropTypes.string,
+  isDisabled: PropTypes.bool,
+  isCustomButtonDisabled: PropTypes.bool,
+  isBackButtonDisabled: PropTypes.bool,
+  hideSubmit: PropTypes.bool,
+  hideCancel: PropTypes.bool,
+  style: PropTypes.object,
+  textStyle: PropTypes.object,
+  popupModuleMianStyles: PropTypes.object,
+  headerBarMainStyle: PropTypes.object,
+  isOBPSFlow: PropTypes.bool,
+  popupModuleActionBarStyles: PropTypes.object,
+  submitTextClassName: PropTypes.string,
+  className: PropTypes.string,
+  cancelButtonBody: PropTypes.node,
+  popUpStyleMain: PropTypes.object,
+  actionCancelStyle: PropTypes.object,
+  customActionStyle: PropTypes.object,
+  customActionTextStyle: PropTypes.object,
+  customActionTextClassName: PropTypes.string,
+  actionCancelTextStyle: PropTypes.object,
+  cancelTextClassName: PropTypes.string,
+  titleSaveButton: PropTypes.string,
+  hideModalActionbar: PropTypes.bool,
+  popupModuleMianClassName: PropTypes.string,
+  cancelClassName: PropTypes.string,
+  customActionClassName: PropTypes.string,
+  submitClassName: PropTypes.string,
+  cancelTheme: PropTypes.string,
 };
 
 export default Modal;

@@ -889,7 +889,7 @@ export const demandNoticeFileValidation = ({ t, formData, selected, setShowToast
   }
 };
 
-export const chequeDetailFileValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
+export const chequeDetailFileValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => { // NOSONAR S3776 — explicit per-field cheque validation
   if (selected === "chequeDetails") {
     for (const key of ["bouncedChequeFileUpload", "returnMemoFileUpload"]) {
       if (!(key in formData) || formData[key]?.document?.length === 0 || !formData[key] || Object.keys(formData[key] || {}).length === 0) {
@@ -1280,51 +1280,51 @@ export const debtLiabilityValidation = ({ t, formData, selected, setShowToast, s
 };
 
 export const prayerAndSwornValidation = ({ t, formData, selected, setShowToast, setFormErrors, clearFormDataErrors }) => {
-  if (selected === "prayerSwornStatement") {
-    let hasError = false;
-
-    if ("SelectUploadDocWithName" in formData && Array.isArray(formData?.SelectUploadDocWithName)) {
-      let index = 0;
-      for (const key of formData?.SelectUploadDocWithName) {
-        if (!key?.document || key.document?.length === 0) {
-          setFormErrors("SelectUploadDocWithName", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS", documentIndex: index });
-          setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
-          hasError = true;
-        } else {
-          clearFormDataErrors("SelectUploadDocWithName");
-        }
-        index = index++;
-      }
-    }
-
-    if (formData?.prayer?.text === "<p></p>\n" || formData?.memorandumOfComplaint?.text === "<p></p>\n") {
-      setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
-      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
-      hasError = true;
-    }
-
-    if (isRichTextEmpty(formData?.prayer?.text)) {
-      setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
-      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
-      hasError = true;
-    }
-
-    if (isRichTextEmpty(formData?.memorandumOfComplaint?.text)) {
-      setFormErrors("memorandumOfComplaint", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
-      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
-      hasError = true;
-    }
-
-    if (isRichTextEmpty(formData?.synopsis?.text)) {
-      setFormErrors("synopsis", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
-      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
-      hasError = true;
-    }
-
-    return hasError;
-  } else {
+  if (selected !== "prayerSwornStatement") {
     return false;
   }
+
+  let hasError = false;
+
+  if ("SelectUploadDocWithName" in formData && Array.isArray(formData?.SelectUploadDocWithName)) {
+    formData.SelectUploadDocWithName.forEach((key, index) => {
+      if (!key?.document || key.document?.length === 0) {
+        setFormErrors("SelectUploadDocWithName", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS", documentIndex: index });
+        setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
+        hasError = true;
+      } else {
+        clearFormDataErrors("SelectUploadDocWithName");
+      }
+    });
+  }
+
+  const isEmptyTaggedParagraph = (text) => text === "<p></p>\n";
+
+  if (isEmptyTaggedParagraph(formData?.prayer?.text) || isEmptyTaggedParagraph(formData?.memorandumOfComplaint?.text)) {
+    setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
+    setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
+    hasError = true;
+  }
+
+  if (isRichTextEmpty(formData?.prayer?.text)) {
+    setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
+    setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
+    hasError = true;
+  }
+
+  if (isRichTextEmpty(formData?.memorandumOfComplaint?.text)) {
+    setFormErrors("memorandumOfComplaint", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
+    setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
+    hasError = true;
+  }
+
+  if (isRichTextEmpty(formData?.synopsis?.text)) {
+    setFormErrors("synopsis", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
+    setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
+    hasError = true;
+  }
+
+  return hasError;
 };
 
 export const createIndividualUser = async ({ data, documentData, tenantId, isComplainant = true }) => {

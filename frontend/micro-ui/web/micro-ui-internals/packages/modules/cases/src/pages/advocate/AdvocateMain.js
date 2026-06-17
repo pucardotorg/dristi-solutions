@@ -2,17 +2,13 @@ import { Header } from "@egovernments/digit-ui-react-components";
 import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom";
 import { advocateSearchconfig } from "../../configs/advocateSearchConfig";
-import { useLocation } from "react-router-dom";
 
 const defaultSearchValues = {
   barRegistrationNumber: "",
 };
 
 const AdvocateMain = () => {
-  const location = useLocation();
-  const caseData = location.state || {};
   const { t } = useTranslation();
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues); // State to hold default values for search fields
   const indConfigs = advocateSearchconfig();
@@ -21,8 +17,6 @@ const AdvocateMain = () => {
     // Set default values when component mounts
     setDefaultValues(defaultSearchValues);
   }, []);
-
-  const history = useHistory();
 
   return (
     <div>

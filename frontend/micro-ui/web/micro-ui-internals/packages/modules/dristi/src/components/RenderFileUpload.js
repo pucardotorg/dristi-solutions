@@ -1,11 +1,12 @@
+import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
 import { CloseIcon, FileIcon } from "../icons/svgIndex";
-import { Urls } from "../hooks";
 import useDownloadCasePdf from "../hooks/dristi/useDownloadCasePdf";
 
 function RenderFileUpload({ handleDeleteFile, fileData, index, disableUploadDelete = false, displayName, fileStoreId }) {
   const [file, setFile] = useState(null);
-  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const digit = globalThis.Digit ?? window.Digit;
+  const tenantId = digit?.ULBService?.getCurrentTenantId();
   const { downloadPdf } = useDownloadCasePdf();
   useEffect(() => {
     if (fileData?.fileStore) {
@@ -21,7 +22,7 @@ function RenderFileUpload({ handleDeleteFile, fileData, index, disableUploadDele
       <div className={`uploaded-file-div-sub ${fileData?.uploadErrorInfo ? "error" : ""}`}>
         <div className="uploaded-file-div-icon-area">
           <div className="uploaded-file-icon">
-            <button onClick={() => downloadPdf(tenantId, fileStoreId?.fileStoreId)}>
+            <button type="button" onClick={() => downloadPdf(tenantId, fileStoreId?.fileStoreId)}>
               <FileIcon />
             </button>
           </div>
@@ -30,25 +31,42 @@ function RenderFileUpload({ handleDeleteFile, fileData, index, disableUploadDele
           </span>
         </div>
         <div className="reupload-or-delete-div">
-          <div
+          <button
+            type="button"
             style={{
               padding: "0",
               cursor: disableUploadDelete ? "not-allowed" : "pointer",
               opacity: disableUploadDelete ? 0.5 : 1,
+              background: "none",
+              border: "none",
             }}
+            disabled={disableUploadDelete}
             onClick={() => {
               if (!disableUploadDelete) {
-                handleDeleteFile(index); // Pass the index to the handleDeleteFile function
+                handleDeleteFile(index);
               }
             }}
             className="delete-button"
+            aria-label="Delete file"
           >
             <CloseIcon />
-          </div>
+          </button>
         </div>
       </div>
     </div>
   );
 }
+
+RenderFileUpload.propTypes = {
+  handleDeleteFile: PropTypes.func.isRequired,
+  fileData: PropTypes.object,
+  index: PropTypes.number,
+  disableUploadDelete: PropTypes.bool,
+  displayName: PropTypes.string,
+  fileStoreId: PropTypes.shape({
+    fileStoreId: PropTypes.string,
+  }),
+  t: PropTypes.func,
+};
 
 export default RenderFileUpload;

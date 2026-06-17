@@ -15,7 +15,7 @@ $button-color: white;
   border-radius: 0%;
   padding: 0px;
   .header {
-    font-family: Roboto;
+    font-family: Roboto, sans-serif;
     font-size: 40px;
     font-weight: 700;
     line-height: 46.88px;
@@ -42,7 +42,7 @@ $button-color: white;
     border: 1px #007e7e solid;
     background-color: #ffffff !important;
     h2 {
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 16px;
       font-weight: 700;
       line-height: 18.75px;
@@ -62,7 +62,7 @@ $button-color: white;
       font-size: 14px;
       color: #fff;
       background-color: #3d3c3c;
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 12px;
       font-weight: 700;
       line-height: 14.06px;
@@ -72,7 +72,7 @@ $button-color: white;
 
     .dateNumber {
       padding: 8px;
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 24px;
       font-weight: 700;
       line-height: 28.13px;
@@ -82,7 +82,7 @@ $button-color: white;
     .dayText {
       border-top: 1px #e8e8e8 solid;
       padding: 2px 8px;
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 14px;
       font-weight: 400;
       line-height: 16.41px;
@@ -96,7 +96,7 @@ $button-color: white;
   }
 
   .timeText {
-    font-family: Roboto;
+    font-family: Roboto, sans-serif;
     font-size: 24px;
     font-weight: 700;
     line-height: 28.13px;
@@ -105,7 +105,7 @@ $button-color: white;
   }
 
   .hearingType {
-    font-family: Roboto;
+    font-family: Roboto, sans-serif;
     font-size: 16px;
     font-weight: 400;
     line-height: 18.75px;
@@ -146,7 +146,7 @@ $button-color: white;
 
   p {
     margin: 0px;
-    font-family: Roboto;
+    font-family: Roboto, sans-serif;
     font-size: 16px;
     font-weight: 400;
     line-height: 18.75px;

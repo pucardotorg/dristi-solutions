@@ -86,10 +86,10 @@ export function isEmptyObject(obj) {
 }
 
 export const getMDMSObj = (mdmsdata = [], codekey, code) => {
-  if (!code || !mdmsdata || mdmsdata?.length == 0) {
+  if (!code || !mdmsdata || mdmsdata?.length === 0) {
     return {};
   }
-  return mdmsdata?.find((item) => item[codekey] == code) || {};
+  return mdmsdata?.find((item) => item[codekey] === code) || {};
 };
 
 export const getSuffixByBusinessCode = (paymentType = [], businessCode) => {
@@ -368,7 +368,7 @@ export const extractValue = (data, key) => {
   const keyParts = key.split(".");
   let value = data;
   keyParts.forEach((part) => {
-    if (value && value.hasOwnProperty(part)) {
+    if (value && Object.prototype.hasOwnProperty.call(value, part)) {
       value = value[part];
     } else {
       value = undefined;
@@ -442,7 +442,6 @@ const RICH_TEXT_FIELDS = [
   "reasonForApplicationOfBail",
   "additionalInformation",
   "reasonForDelay",
-  "additionalInformation",
 ];
 
 export const runComprehensiveSanitizer = ({ formData, setValue, ignoredKeys = [] }) => {

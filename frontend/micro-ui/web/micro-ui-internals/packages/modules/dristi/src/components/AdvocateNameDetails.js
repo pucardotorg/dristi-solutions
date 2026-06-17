@@ -1,6 +1,7 @@
 import { CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
 import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { idProofVerificationConfig } from "../configs/component";
 import { userTypeOptions } from "../pages/citizen/registration/config";
 
@@ -27,7 +28,7 @@ function splitNamesPartiallyFromFullName(fullName) {
   return {
     firstName: firstName,
     middleName: middleName,
-    lastName: lastName ? lastName : "",
+    lastName: lastName || "",
   };
 }
 
@@ -202,18 +203,16 @@ function AdvocateNameDetails({ t, config, onSelect, formData = {}, errors, regis
     <div className={"advocate-basic-info"} style={config?.componentStyle}>
       {formData?.advocateBarRegNumberWithName && (
         <React.Fragment>
-          {inputs?.map((input, index) => {
+          {inputs?.map((input) => {
             let currentValue = advocateName?.[input.name] || "";
             return (
-              <React.Fragment key={index}>
+              <React.Fragment key={input.name}>
                 <CardLabel>{t(input?.label)}</CardLabel>
                 <LabelFieldPair>
                   <div className={`field ${input?.inputFieldClassName}`}>
-                    {
-                      <React.Fragment>
-                        <TextInput className="field desktop-w-full" name={input?.name} disable={input?.isDisabled} value={currentValue} />
-                      </React.Fragment>
-                    }
+                    <React.Fragment>
+                      <TextInput className="field desktop-w-full" name={input?.name} disable={input?.isDisabled} value={currentValue} />
+                    </React.Fragment>
                   </div>
                 </LabelFieldPair>
               </React.Fragment>
@@ -225,5 +224,19 @@ function AdvocateNameDetails({ t, config, onSelect, formData = {}, errors, regis
     </div>
   );
 }
+
+AdvocateNameDetails.propTypes = {
+  t: PropTypes.func,
+  config: PropTypes.shape({
+    populators: PropTypes.shape({
+      inputs: PropTypes.array,
+    }),
+    componentStyle: PropTypes.object,
+  }),
+  onSelect: PropTypes.func,
+  formData: PropTypes.object,
+  errors: PropTypes.object,
+  register: PropTypes.func,
+};
 
 export default AdvocateNameDetails;

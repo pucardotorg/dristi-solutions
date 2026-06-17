@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 
-function BoxComplainant({ t, config, onSelect, formData, errors, setError, clearErrors }) {
+function BoxComplainant({ formData }) {
   return (
     <div
       style={{
@@ -16,5 +17,14 @@ function BoxComplainant({ t, config, onSelect, formData, errors, setError, clear
     </div>
   );
 }
+
+BoxComplainant.propTypes = {
+  formData: PropTypes.shape({
+    boxComplainant: PropTypes.shape({
+      index: PropTypes.number,
+      firstName: PropTypes.string,
+    }),
+  }),
+};
 
 export default BoxComplainant;

@@ -46,7 +46,7 @@
             border-radius: 8px;
             .card-label {
               margin-top: 0px;
-              font-family: Roboto;
+              font-family: Roboto, sans-serif;
               font-size: 24px;
               font-weight: 600;
               line-height: 28.13px;
@@ -156,7 +156,7 @@
                 box-shadow: none;
                 width: 100px;
                 header {
-                  font-family: Roboto;
+                  font-family: Roboto, sans-serif;
                   font-size: 16px;
                   font-weight: 500;
                   line-height: 24px;
@@ -169,7 +169,7 @@
         }
         .search-component-table {
           .link {
-            font-family: Roboto;
+            font-family: Roboto, sans-serif;
             font-size: 16px;
             font-weight: 400;
             line-height: 18.75px;
@@ -189,7 +189,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: Roboto;
+            font-family: Roboto, sans-serif;
             font-size: 19px;
             font-weight: 600;
             line-height: 22.27px;

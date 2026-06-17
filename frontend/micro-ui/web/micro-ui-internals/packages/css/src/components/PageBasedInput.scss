@@ -11,7 +11,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .PageBasedInputWrapper {
     .SubmitBar {
       @apply hidden;

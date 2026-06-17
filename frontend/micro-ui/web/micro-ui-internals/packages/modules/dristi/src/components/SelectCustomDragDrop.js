@@ -1,11 +1,20 @@
+import PropTypes from "prop-types";
 import { UploadIcon } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useEffect } from "react";
 import { FileUploader } from "react-drag-drop-files";
+import { UploadIcon } from "@egovernments/digit-ui-react-components";
 import { FileUploadIcon } from "../icons/svgIndex";
 import { isEmptyObject, combineMultipleFiles } from "../Utils";
 import { EXTENSION_TO_MIME } from "../Utils/constants";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import RenderFileCard from "./RenderFileCard";
+
+function normalizeJpegJpgFileTypes(fileTypes) {
+  if (!Array.isArray(fileTypes)) return fileTypes;
+  if (fileTypes.includes("JPG") && !fileTypes.includes("JPEG")) return [...fileTypes, "JPEG"];
+  if (fileTypes.includes("JPEG") && !fileTypes.includes("JPG")) return [...fileTypes, "JPG"];
+  return fileTypes;
+}
 
 const DragDropJSX = ({ t, currentValue, error }) => {
   return (
@@ -13,7 +22,8 @@ const DragDropJSX = ({ t, currentValue, error }) => {
       <div className={`drag-drop-container-desktop${error ? " alert-error-border" : ""}`}>
         <UploadIcon />
         <p className="drag-drop-text">
-          {t("WBH_DRAG_DROP")} <text className="browse-text">{t("WBH_BULK_BROWSE_FILES")}</text>
+          {t("WBH_DRAG_DROP")}{" "}
+          <span className="browse-text">{t("WBH_BULK_BROWSE_FILES")}</span>
         </p>
       </div>
       <div className="drag-drop-container-mobile">
@@ -27,7 +37,6 @@ const DragDropJSX = ({ t, currentValue, error }) => {
           <h3>{t("CS_COMMON_CHOOSE_FILE")}</h3>
         </div>
       </div>
-      {/* {error && <span className="alert-error">{t(error.msg || error.message || "CORE_REQUIRED_FIELD_ERROR")}</span>} */}
     </React.Fragment>
   );
 };
@@ -164,7 +173,7 @@ function SelectCustomDragDrop({
     if (clearErrors) {
       clearErrors(config.key);
     }
-    setValue(currentValue, input?.name);
+    setValue(next, input?.name);
   };
   return inputs.map((input) => {
     let currentValue = (formData && formData[config.key] && formData[config.key][input?.name]) || [];
@@ -175,7 +184,7 @@ function SelectCustomDragDrop({
         ? formData?.[config?.isDocDependentOn]?.[config?.isDocDependentKey]
         : !input?.hideDocument;
     return (
-      <React.Fragment>
+      <React.Fragment key={input?.name}>
         {showDocument && (
           <div className="drag-drop-visible-main">
             <div className="drag-drop-heading-main">
@@ -220,15 +229,8 @@ function SelectCustomDragDrop({
                   handleChange(data, input);
                 }}
                 name="file"
-                types={
-                  input?.fileTypes.includes("JPG") && !input?.fileTypes.includes("JPEG")
-                    ? [...input?.fileTypes, "JPEG"]
-                    : input?.fileTypes.includes("JPEG") && !input?.fileTypes.includes("JPG")
-                    ? [...input?.fileTypes, "JPG"]
-                    : input?.fileTypes
-                }
+                types={normalizeJpegJpgFileTypes(input?.fileTypes)}
                 children={<DragDropJSX t={t} currentValue={currentValue} error={errors?.[config.key]} />}
-                key={input?.name}
                 onTypeError={() => {
                   setError(config.key, { message: t("CS_INVALID_FILE_TYPE") });
                 }}
@@ -280,5 +282,29 @@ function SelectCustomDragDrop({
     );
   });
 }
+
+DragDropJSX.propTypes = {
+  t: PropTypes.func.isRequired,
+  currentValue: PropTypes.array,
+  error: PropTypes.any,
+};
+
+SelectCustomDragDrop.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    disable: PropTypes.any,
+    populators: PropTypes.any,
+    isDocDependentOn: PropTypes.string,
+    isDocDependentKey: PropTypes.string,
+    disableScrutinyHeader: PropTypes.bool,
+  }).isRequired,
+  formData: PropTypes.object,
+  onSelect: PropTypes.func.isRequired,
+  errors: PropTypes.object,
+  setError: PropTypes.func,
+  clearErrors: PropTypes.func,
+  formDisbalityCount: PropTypes.any,
+};
 
 export default SelectCustomDragDrop;

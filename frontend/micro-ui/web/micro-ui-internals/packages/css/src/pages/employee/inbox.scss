@@ -194,7 +194,7 @@
   @apply inline ml-sm p-sm bg-primary-main rounded-full text-white text-heading-s align-middle text-center font-regular;
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .complaint-links-container {
     @apply bg-white;
 
@@ -436,12 +436,12 @@
   line-height: 28px;
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .complaint-links-container .header .removeBorderRadiusLogo {
     border-radius: 2px !important;
   }
 }
-@screen dt {
+@media (min-width: 780px) {
   .customEmployeeCard {
     width: 263px !important;
     height: 263px !important;
@@ -453,7 +453,7 @@
   text-decoration: none;
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .groupBill-custom {
     .custom-group-merge-container {
       display: flex !important;
@@ -541,7 +541,7 @@
     .search-tab-head {
       border: none !important;
       background-color: transparent;
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 16px;
       font-weight: 400;
       line-height: 18.75px;
@@ -657,7 +657,7 @@
   box-shadow: none;
   width: 30%;
   margin-top: 0px;
-  font-family: Roboto !important;
+  font-family: Roboto, sans-serif !important;
   font-size: 24px;
   font-weight: 600;
   line-height: 28.13px;
@@ -722,7 +722,7 @@
   }
   .action-button-width {
     width: 90%;
-    font-family: Roboto !important;
+    font-family: Roboto, sans-serif !important;
     font-size: 24px;
     font-weight: 600;
     line-height: 28.13px;

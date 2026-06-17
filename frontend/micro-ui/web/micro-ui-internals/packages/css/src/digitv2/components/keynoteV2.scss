@@ -23,7 +23,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .digit-key-note-pair {
     p {
       @apply text-body-l-dt;

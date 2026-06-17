@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import Modal from "../../../dristi/src/components/Modal";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
@@ -332,5 +333,41 @@ function ReviewSubmissionModal({
     </Modal>
   );
 }
+
+ReviewSubmissionModal.propTypes = {
+  additionalDetails: PropTypes.string,
+  application: PropTypes.shape({
+    additionalDetails: PropTypes.shape({
+      formdata: PropTypes.shape({
+        initialHearingDate: PropTypes.string,
+        initialHearingPurpose: PropTypes.string,
+        isAllPartiesAgreed: PropTypes.shape({ code: PropTypes.string }),
+        newHearingDates: PropTypes.array,
+      }),
+    }),
+    applicationNumber: PropTypes.string,
+    applicationType: PropTypes.string,
+    asUser: PropTypes.string,
+    cnrNumber: PropTypes.string,
+    courtId: PropTypes.string,
+    createdBy: PropTypes.string,
+    filingNumber: PropTypes.string,
+    onBehalfOf: PropTypes.arrayOf(PropTypes.string),
+    status: PropTypes.string,
+  }),
+  applicationType: PropTypes.string.isRequired,
+  cancelLabel: PropTypes.string.isRequired,
+  courtId: PropTypes.string,
+  documents: PropTypes.array,
+  handleBack: PropTypes.func.isRequired,
+  handleCancel: PropTypes.func.isRequired,
+  handleSubmit: PropTypes.func.isRequired,
+  sender: PropTypes.string,
+  setApplicationPdfFileStoreId: PropTypes.func.isRequired,
+  setShowReviewModal: PropTypes.func.isRequired,
+  setShowsignatureModal: PropTypes.func.isRequired,
+  submissionDate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  t: PropTypes.func.isRequired,
+};
 
 export default ReviewSubmissionModal;

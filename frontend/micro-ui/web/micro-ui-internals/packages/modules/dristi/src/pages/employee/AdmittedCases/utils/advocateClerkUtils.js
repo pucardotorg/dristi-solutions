@@ -16,12 +16,13 @@ export const getPopupForJuniorAdvocate = (t, showPopupForClerkOrAdvocate, setSho
         />
       }
       actionSaveLabel={t("ADVOCATE_CONFIRM_OK")}
-      children={<div style={{ margin: "25px 0px" }}>{showPopupForClerkOrAdvocate?.message || ""}</div>}
       actionSaveOnSubmit={() => {
         sessionStorage.removeItem("showPopupIfCaseAccessThroughMultipleAdvocates");
         setShowPopupForClerkOrAdvocate({ show: false, message: "" });
       }}
-    ></Modal>
+    >
+      <div style={{ margin: "25px 0px" }}>{showPopupForClerkOrAdvocate?.message || ""}</div>
+    </Modal>
   );
 };
 

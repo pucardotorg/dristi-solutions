@@ -1,6 +1,7 @@
 import { CloseSvg, CardLabelError } from "@egovernments/digit-ui-react-components";
 import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import PropTypes from "prop-types";
 import React, { useMemo, useState } from "react";
 
 const RemovalChip = ({ label, onRemove }) => {
@@ -8,16 +9,28 @@ const RemovalChip = ({ label, onRemove }) => {
     <div className="removal-custom-chip">
       <span>{label}</span>
 
-      <span
+      <button
+        type="button"
         onClick={onRemove}
         className="removal-custom-chip__close"
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#a9a9a9")}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#cfcfcf")}
+        aria-label={`Remove ${label}`}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = "#a9a9a9";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = "#cfcfcf";
+        }}
+        style={{ border: "none", background: "#cfcfcf", cursor: "pointer", display: "inline-flex", alignItems: "center" }}
       >
         <CloseSvg />
-      </span>
+      </button>
     </div>
   );
+};
+
+RemovalChip.propTypes = {
+  label: PropTypes.string.isRequired,
+  onRemove: PropTypes.func.isRequired,
 };
 
 function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors, clearErrors }) {
@@ -47,8 +60,7 @@ function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors, clea
       return;
     }
 
-    const newList = [...chipList, formattedDate];
-    const sortedList = newList.sort((a, b) => {
+    const sortedList = [...chipList, formattedDate].sort((a, b) => {
       const [ad, am, ay] = a.split("-");
       const [bd, bm, by] = b.split("-");
       return new Date(ay, am - 1, ad) - new Date(by, bm - 1, bd);
@@ -91,8 +103,8 @@ function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors, clea
 
             {chipList?.length > 0 && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                {chipList.map((date, index) => (
-                  <RemovalChip key={index} label={date} onRemove={() => handleRemove(date)} />
+                {chipList.map((date) => (
+                  <RemovalChip key={date} label={date} onRemove={() => handleRemove(date)} />
                 ))}
               </div>
             )}
@@ -121,5 +133,21 @@ function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors, clea
     </div>
   );
 }
+
+SelectBulkDateInputs.propTypes = {
+  clearErrors: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    disable: PropTypes.bool,
+    disableScrutinyHeader: PropTypes.bool,
+    key: PropTypes.string.isRequired,
+    populators: PropTypes.shape({
+      inputs: PropTypes.array,
+    }),
+  }).isRequired,
+  errors: PropTypes.object,
+  formData: PropTypes.object,
+  onSelect: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired,
+};
 
 export default SelectBulkDateInputs;

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { LabelFieldPair, CardLabel, TextInput, CardLabelError, CustomDropdown } from "@egovernments/digit-ui-react-components";
 import MultiUploadWrapper from "./MultiUploadWrapper";
 import CitizenInfoLabel from "./CitizenInfoLabel";
@@ -7,6 +7,7 @@ import useInterval from "../hooks/useInterval";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
 import ImageModal from "./ImageModal";
 import CustomToast from "./CustomToast";
+import PropTypes from "prop-types";
 const TYPE_REGISTER = { type: "register" };
 const TYPE_LOGIN = { type: "login" };
 const DEFAULT_USER = "digit-user";
@@ -15,13 +16,13 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
   const [removeFile, setRemoveFile] = useState();
   const [timeLeft, setTimeLeft] = useState(10);
   const [showDoc, setShowDoc] = useState(false);
-  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const Digit = globalThis.Digit ?? {};
+  const tenantId = Digit.ULBService?.getCurrentTenantId?.();
   const [fileStoreId, setFileStoreID] = useState();
   const [fileName, setFileName] = useState();
   const [showToast, setShowToast] = useState(null);
-  const getUserType = () => window?.Digit.UserService.getType();
-  const stateCode = window?.Digit.ULBService.getStateId();
-  const Digit = window.Digit || {};
+  const getUserType = () => Digit.UserService?.getType?.();
+  const stateCode = Digit.ULBService?.getStateId?.();
   const onDocumentUpload = async (fileData, filename) => {
     try {
       const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
@@ -81,38 +82,28 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
   }
   function getFileStoreData(filesData, input) {
     const numberOfFiles = filesData.length;
-    let finalDocumentData = [];
     if (numberOfFiles > 0) {
-      filesData.forEach((value) => {
-        finalDocumentData.push({
-          fileName: value?.[0],
-          fileStoreId: value?.[1]?.fileStoreId?.fileStoreId,
-          documentType: value?.[1]?.file?.type,
-        });
+      onDocumentUpload(filesData[0][1]?.file, filesData[0][0]).then((document) => {
+        const newFileStoreId = document.file?.files?.[0]?.fileStoreId;
+
+        filesData[0][1].fileStoreId = {
+          fileStoreId: newFileStoreId,
+        };
+        setFileName(filesData[0][0]);
+
+        setFileStoreID(document.file?.files?.[0]?.fileStoreId);
+        setShowDoc(true);
+        setValue(filesData, input.name, input);
       });
+    } else {
+      setShowDoc(false);
     }
-    numberOfFiles > 0
-      ? onDocumentUpload(filesData[0][1]?.file, filesData[0][0]).then((document) => {
-          const newFileStoreId = document.file?.files?.[0]?.fileStoreId;
-
-          // Update filesData with the new fileStoreId
-          filesData[0][1].fileStoreId = {
-            fileStoreId: newFileStoreId,
-          };
-          setFileName(filesData[0][0]);
-
-          setFileStoreID(document.file?.files?.[0]?.fileStoreId);
-          setShowDoc(true);
-          // Set the updated filesData after setting the fileStoreId
-          setValue(filesData, input.name, input);
-        })
-      : setShowDoc(false);
     setValue(numberOfFiles > 0 ? filesData : [], input.name, input);
   }
 
   const checkIfAadharValidationNotSuccessful = (currentValue, input) => {
     if (!input?.checkAadharVerification) {
-      return !currentValue.match(window?.Digit.Utils.getPattern(input.validation.patternType) || input.validation.pattern);
+      return !currentValue.match(Digit.Utils?.getPattern?.(input.validation.patternType) || input.validation.pattern);
     }
     let isValidated = true;
     const ifOnlyNumeric = /^\d*$/.test(currentValue);
@@ -124,7 +115,7 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
 
   const sendOtp = async (data) => {
     try {
-      const res = await window?.Digit.UserService.sendOtp(data, stateCode);
+      const res = await Digit.UserService?.sendOtp?.(data, stateCode);
       return [res, null];
     } catch (err) {
       return [null, err];
@@ -137,19 +128,17 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
       tenantId: stateCode,
       userType: getUserType(),
     };
-    const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
-    if (!err) {
-      return;
-    } else {
-      const [res, err] = await sendOtp({ otp: { ...data, name: DEFAULT_USER, ...TYPE_REGISTER } });
+    const [, loginErr] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
+    if (!loginErr) {
       return;
     }
+    await sendOtp({ otp: { ...data, name: DEFAULT_USER, ...TYPE_REGISTER } });
   };
 
-  const handleImageModalOpen = (fileStoreId, fileName) => {
+  const handleImageModalOpen = useCallback((id, fname) => {
     setIsImageModalOpen(true);
-    setImageInfo({ data: { fileStore: fileStoreId, fileName: fileName, docViewerStyle: { minWidth: "100%", height: "calc(100vh - 154px)" } } });
-  };
+    setImageInfo({ data: { fileStore: id, fileName: fname, docViewerStyle: { minWidth: "100%", height: "calc(100vh - 154px)" } } });
+  }, []);
 
   const handleImageModalClose = () => {
     setIsImageModalOpen(false);
@@ -157,13 +146,26 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
 
   const showUploadedDocument = useMemo(() => {
     return (
-      <div onClick={() => handleImageModalOpen(fileStoreId, fileName)}>
+      <button
+        type="button"
+        onClick={() => handleImageModalOpen(fileStoreId, fileName)}
+        style={{
+          display: "block",
+          width: "100%",
+          padding: 0,
+          margin: 0,
+          border: "none",
+          background: "transparent",
+          cursor: "pointer",
+          textAlign: "inherit",
+        }}
+      >
         <div className="documentDetails_row_items" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           <DocViewerWrapper fileStoreId={fileStoreId} tenantId={tenantId} displayFilename={fileName} />
         </div>
-      </div>
+      </button>
     );
-  }, [fileStoreId, tenantId, fileName]);
+  }, [fileStoreId, tenantId, fileName, handleImageModalOpen]);
 
   return (
     <div className="select-user-type-component">
@@ -183,7 +185,7 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
               }, true)
             : true;
         return (
-          <React.Fragment key={index}>
+          <React.Fragment key={input?.name ?? `field-${index}`}>
             {showDependentFields && (
               <LabelFieldPair style={{ display: "flex", flexDirection: "column", alignItems: "start" }}>
                 {!config?.disableScrutinyHeader && (
@@ -241,7 +243,7 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
                     <MultiUploadWrapper
                       t={t}
                       module="works"
-                      tenantId={window?.Digit.ULBService.getCurrentTenantId()}
+                      tenantId={tenantId}
                       getFormState={(fileData) => getFileStoreData(fileData, input)}
                       showHintBelow={input?.showHintBelow ? true : false}
                       setuploadedstate={formData?.[config.key]?.[input.name] || []}
@@ -308,7 +310,7 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
                       </CardLabelError>
                     )}
 
-                  {errors[input.name] && (
+                  {errors?.[input.name] && (
                     <CardLabelError style={{ width: "70%", marginLeft: "30%", fontSize: "12px" }}>
                       {errors[input.name]?.message ? errors[input.name]?.message : t(errors[input.name]) || t(input.error)}
                     </CardLabelError>
@@ -325,17 +327,23 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
                 info={t("ES_COMMON_INFO")}
                 text={t(input?.bannerLabel)}
                 className="doc-banner"
-                children={t("CS_AADHAR_NUMBER_INPUT_INFO")}
-              ></CitizenInfoLabel>
+              >
+                {t("CS_AADHAR_NUMBER_INPUT_INFO")}
+              </CitizenInfoLabel>
             )}
             {input?.hasResendOTP && (
               <React.Fragment>
                 {timeLeft > 0 ? (
                   <CardText>{`${t("CS_RESEND_ANOTHER_OTP")} ${timeLeft} ${t("CS_RESEND_SECONDS")}`}</CardText>
                 ) : (
-                  <p className="card-text" onClick={() => resendOtp(input)} style={{ backgroundColor: "#fff", color: "#007E7E", cursor: "pointer" }}>
+                  <button
+                    type="button"
+                    className="card-text"
+                    onClick={() => resendOtp(input)}
+                    style={{ backgroundColor: "#fff", color: "#007E7E", cursor: "pointer", border: "none", font: "inherit" }}
+                  >
                     {t("CS_RESEND_OTP")}
-                  </p>
+                  </button>
                 )}
               </React.Fragment>
             )}
@@ -353,6 +361,24 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
       })}
     </div>
   );
+};
+
+SelectUserTypeComponent.propTypes = {
+  config: PropTypes.shape({
+    disable: PropTypes.any,
+    disableScrutinyHeader: PropTypes.bool,
+    key: PropTypes.string.isRequired,
+    populators: PropTypes.shape({
+      inputs: PropTypes.array,
+    }),
+  }).isRequired,
+  control: PropTypes.any,
+  errors: PropTypes.object,
+  formData: PropTypes.object,
+  formState: PropTypes.any,
+  onSelect: PropTypes.func.isRequired,
+  setError: PropTypes.func,
+  t: PropTypes.func.isRequired,
 };
 
 export default SelectUserTypeComponent;

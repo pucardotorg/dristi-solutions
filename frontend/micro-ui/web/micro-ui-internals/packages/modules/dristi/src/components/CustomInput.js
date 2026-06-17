@@ -1,5 +1,6 @@
 import { Button, CardLabel, RemoveableTag, TextInput } from "@egovernments/digit-ui-react-components";
 import React from "react";
+import PropTypes from "prop-types";
 import { useForm } from "react-hook-form";
 
 function CustomInput({ onChange, value, isDisabled, componentInFront, config, _defaultValues = {}, canAdd, handleAdd, handleRemove, chipList, t }) {
@@ -11,14 +12,13 @@ function CustomInput({ onChange, value, isDisabled, componentInFront, config, _d
 
   return inputs.map((input) => {
     return (
-      <div style={{ width: "100%" }}>
+      <div key={input.name} style={{ width: "100%" }}>
         <CardLabel>{t(input.label)}</CardLabel>
         <div style={{ display: "flex", justifyContent: "left", gap: "20px" }}>
           <div style={{ display: "flex", width: "100%" }}>
             {componentInFront ? <span className="citizen-card-input citizen-card-input--front">{componentInFront}</span> : null}
             <TextInput
               value={"99999"}
-              // onChange={onChange}
               prefix={""}
               name={input.name}
               minlength={input?.validation?.minLength}
@@ -27,9 +27,6 @@ function CustomInput({ onChange, value, isDisabled, componentInFront, config, _d
               ValidationRequired={input?.validation}
               title={input?.validation?.title}
               disable={input?.disable ? input?.disable : false}
-              // textInputStyle={{ flex: 1 }}
-              // inputStyle={{ flex: 1, width: "100%" }}
-              // style={{ width: "100%" }}
               inputRef={register(input?.validation)}
               isMandatory={errors[input?.name]}
             />
@@ -46,7 +43,7 @@ function CustomInput({ onChange, value, isDisabled, componentInFront, config, _d
         {chipList?.length > 0 ? (
           <div className="tag-container" style={{ width: "100%" }}>
             {chipList?.length > 0 &&
-              chipList?.map((value, index) => {
+              chipList?.map((chipValue) => {
                 return (
                   <RemoveableTag
                     extraStyles={{
@@ -54,10 +51,10 @@ function CustomInput({ onChange, value, isDisabled, componentInFront, config, _d
                       tagStyles: { background: "#E8E8E8", textAlign: "center" },
                       textStyles: { display: "flex", alignItems: "center" },
                     }}
-                    key={index}
-                    text={value}
+                    key={chipValue}
+                    text={chipValue}
                     onClick={() => {
-                      handleRemove(value);
+                      handleRemove(chipValue);
                     }}
                   />
                 );
@@ -68,5 +65,23 @@ function CustomInput({ onChange, value, isDisabled, componentInFront, config, _d
     );
   });
 }
+
+CustomInput.propTypes = {
+  onChange: PropTypes.func,
+  value: PropTypes.any,
+  isDisabled: PropTypes.bool,
+  componentInFront: PropTypes.node,
+  config: PropTypes.shape({
+    canDisable: PropTypes.bool,
+    inputs: PropTypes.array,
+    key: PropTypes.string,
+  }),
+  _defaultValues: PropTypes.object,
+  canAdd: PropTypes.bool,
+  handleAdd: PropTypes.func,
+  handleRemove: PropTypes.func,
+  chipList: PropTypes.array,
+  t: PropTypes.func,
+};
 
 export default CustomInput;

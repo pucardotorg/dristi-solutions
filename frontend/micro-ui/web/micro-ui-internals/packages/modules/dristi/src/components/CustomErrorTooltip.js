@@ -1,6 +1,6 @@
 import React from "react";
-import { InfoToolTipIcon } from "../icons/svgIndex";
-import { InfoIcon } from "../icons/svgIndex";
+import PropTypes from "prop-types";
+import { InfoToolTipIcon, InfoIcon } from "../icons/svgIndex";
 
 const CustomErrorTooltip = ({ message, showTooltip, icon }) => {
   if (!showTooltip) {
@@ -19,7 +19,6 @@ const CustomErrorTooltip = ({ message, showTooltip, icon }) => {
             whiteSpace: "unset",
             width: "max-content",
             maxWidth: "25vw",
-            position: "absolute",
             top: "100%",
             left: "100%",
             bottom: "unset",
@@ -32,6 +31,12 @@ const CustomErrorTooltip = ({ message, showTooltip, icon }) => {
       )}
     </div>
   );
+};
+
+CustomErrorTooltip.propTypes = {
+  message: PropTypes.string,
+  showTooltip: PropTypes.bool,
+  icon: PropTypes.node,
 };
 
 export default CustomErrorTooltip;

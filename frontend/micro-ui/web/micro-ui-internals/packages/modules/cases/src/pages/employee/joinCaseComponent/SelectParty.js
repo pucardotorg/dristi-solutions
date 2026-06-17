@@ -4,8 +4,18 @@ import { CardLabel, Dropdown, LabelFieldPair, RadioButtons } from "@egovernments
 import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useEffect, useMemo, useRef } from "react";
 import isEqual from "lodash/isEqual";
+import PropTypes from "prop-types";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import CustomTextArea from "@egovernments/digit-ui-module-dristi/src/components/CustomTextArea";
+
+function respondentHasRepresentative(representatives, litigantIndividualId) {
+  return Boolean(
+    representatives?.some((representative) =>
+      representative?.representing?.some((rep) => rep?.individualId === litigantIndividualId)
+    )
+  );
+}
 
 const SelectParty = ({
   selectPartyData,
@@ -24,7 +34,7 @@ const SelectParty = ({
   advocateId,
 }) => {
   const { t } = useTranslation();
-  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userInfo = JSON.parse(window.localStorage?.getItem("user-info"));
   const setFormError = useRef(null);
   const clearFormError = useRef(null);
 
@@ -33,14 +43,11 @@ const SelectParty = ({
   const targetRef = useRef(null);
 
   const pipAccuseds = useMemo(() => {
-    return caseDetails?.litigants
-      ?.filter((litigant) => litigant.partyType.includes("respondent"))
-      ?.filter(
-        (litigant) =>
-          !caseDetails?.representatives?.some((representative) =>
-            representative?.representing?.some((rep) => rep?.individualId === litigant?.individualId)
-          )
-      );
+    return (
+      caseDetails?.litigants
+        ?.filter((litigant) => litigant?.partyType?.includes("respondent"))
+        ?.filter((litigant) => !respondentHasRepresentative(caseDetails?.representatives, litigant?.individualId)) ?? []
+    );
   }, [caseDetails]);
 
   const pipAccusedIds = useMemo(() => {
@@ -55,7 +62,7 @@ const SelectParty = ({
             type: "component",
             component: "SelectCustomDragDrop",
             key: "affidavitData",
-            isMandatory: selectPartyData?.userType?.value === "Litigant" ? true : false,
+            isMandatory: selectPartyData?.userType?.value === "Litigant",
             withoutLabel: true,
             populators: {
               inputs: [
@@ -111,7 +118,7 @@ const SelectParty = ({
         ? (pipAccusedIds.has(party?.individualId) && !party?.advocateId) || party?.advocateId
         : true
     );
-  }, [selectPartyData?.userType, party, caseDetails, searchLitigantInRepresentives, t, selectPartyData?.partyInvolve?.value]);
+  }, [selectPartyData?.userType, party, caseDetails, searchLitigantInRepresentives, t, selectPartyData?.partyInvolve?.value, pipAccusedIds]);
 
   const caseInfo = useMemo(() => {
     if (caseDetails?.caseCategory) {
@@ -150,7 +157,7 @@ const SelectParty = ({
     if (partyCount > 1) return `${party[0]?.fullName} + ${partyCount - 1} ${t("CS_OTHERS")}`;
 
     return "";
-  }, [t, party, selectPartyData?.userType]);
+  }, [t, party, selectPartyData?.userType, selectPartyData?.isPoaRightsClaiming?.value]);
 
   const customLabelAdvocate = useMemo(() => {
     if (selectPartyData?.userType?.value !== "Advocate") return "";
@@ -181,19 +188,172 @@ const SelectParty = ({
     }
   }, [uploadErrorMessage]);
 
-  const getDisableParty = (party) => {
-    if (party?.advocateRepresentingLength > 0) {
-      if (party?.isPoaAvailable?.code === "NO" && party?.uuid === userInfo?.uuid) {
-        return true;
-      } else if (party?.isPoaAvailable?.code === "YES" && party?.poaVerification?.individualDetails?.userUuid === userInfo?.uuid) {
-        return true;
-      } else {
+  const filteredPartiesSingle = useMemo(
+    () =>
+      parties?.filter((filterParty) =>
+        selectPartyData?.partyInvolve?.value === "COMPLAINANTS"
+          ? filterParty?.partyType?.includes("complainant")
+          : filterParty?.partyType?.includes("respondent")
+      ),
+    [parties, selectPartyData?.partyInvolve?.value]
+  );
+
+  const filteredPartiesAdvocateReplace = useMemo(
+    () =>
+      parties?.filter((p) => {
+        if (selectPartyData?.partyInvolve?.value === "COMPLAINANTS") {
+          return p?.partyType?.includes("complainant");
+        }
+        const isRespondent = p?.partyType?.includes("respondent");
+        const excludePip = selectPartyData?.isReplaceAdvocate?.value !== "YES" && pipAccusedIds.has(p?.individualId);
+        return isRespondent && !excludePip;
+      }),
+    [parties, selectPartyData?.partyInvolve?.value, selectPartyData?.isReplaceAdvocate?.value, pipAccusedIds]
+  );
+
+  const getDisableParty = useCallback(
+    (p) => {
+      if (p?.advocateRepresentingLength > 0) {
+        if (p?.isPoaAvailable?.code === "NO" && p?.uuid === userInfo?.uuid) {
+          return true;
+        }
+        if (p?.isPoaAvailable?.code === "YES" && p?.poaVerification?.individualDetails?.userUuid === userInfo?.uuid) {
+          return true;
+        }
         return false;
       }
-    } else {
       return true;
-    }
+    },
+    [userInfo?.uuid]
+  );
+
+  const partiesMultiSelectOptions = useMemo(
+    () => filteredPartiesSingle?.map((row) => ({ ...row, isDisabled: getDisableParty(row) })),
+    [filteredPartiesSingle, getDisableParty]
+  );
+
+  const advocateReplaceDropdownOptions = useMemo(
+    () =>
+      filteredPartiesAdvocateReplace?.map((partyRow) => ({
+        ...partyRow,
+        isDisabled: partyRow?.isAdvocateRepresenting,
+      })),
+    [filteredPartiesAdvocateReplace]
+  );
+
+  const resetPartyAdjacentFormState = () => {
+    setSelectPartyData((selectPartyData) => ({
+      ...selectPartyData,
+      advocateToReplaceList: [],
+      approver: { label: "", value: "" },
+      reasonForReplacement: "",
+      affidavit: {},
+    }));
   };
+
+  const renderLitigantPartyChooser = () => {
+    const poa = selectPartyData?.isPoaRightsClaiming?.value;
+    if (poa === "NO") {
+      return (
+        <Dropdown
+          t={t}
+          option={filteredPartiesSingle}
+          selected={party}
+          optionKey={"fullName"}
+          select={(e) => {
+            setParty(e);
+            setPartyInPerson({});
+            resetPartyAdjacentFormState();
+          }}
+          freeze={true}
+          topbarOptionsClassName={"top-bar-option"}
+          disable={isLitigantJoined}
+          style={{
+            marginBottom: "1px",
+          }}
+        />
+      );
+    }
+    if (poa === "YES") {
+      return (
+        <MultiSelectDropdown
+          options={partiesMultiSelectOptions}
+          selected={party}
+          optionsKey={"fullName"}
+          onSelect={(value) => {
+            setParty(value?.map((val) => val[1]));
+            resetPartyAdjacentFormState();
+          }}
+          customLabel={customLabel}
+          config={{
+            isSelectAll: true,
+          }}
+          parentRef={targetRef}
+        />
+      );
+    }
+    return null;
+  };
+
+  const renderAdvocatePartyChooser = () => {
+    if (!selectPartyData?.isReplaceAdvocate?.value) {
+      return null;
+    }
+    return (
+      <MultiSelectDropdown
+        options={advocateReplaceDropdownOptions}
+        selected={party}
+        optionsKey={"fullName"}
+        onSelect={(value) => {
+          setParty(value?.map((val) => val[1]));
+          resetPartyAdjacentFormState();
+        }}
+        customLabel={customLabel}
+        config={{
+          isSelectAll: true,
+        }}
+        parentRef={targetRef}
+      />
+    );
+  };
+
+  const handleAffidavitFormValueChange = useCallback(
+    (_, formData, _formState, _reset, setError, clearErrors) => {
+      setFormError.current = setError;
+      clearFormError.current = clearErrors;
+      const currentAffidavitDoc = formData?.affidavitData?.document;
+      const previousAffidavitDoc = selectPartyData?.affidavit?.affidavitData?.document;
+      const hasPreviousDoc = Array.isArray(previousAffidavitDoc) && previousAffidavitDoc.length > 0;
+      const hasCurrentDoc = Array.isArray(currentAffidavitDoc) && currentAffidavitDoc.length > 0;
+      if (uploadErrorMessage && hasCurrentDoc && hasPreviousDoc && !isEqual(currentAffidavitDoc, previousAffidavitDoc)) {
+        clearUploadError();
+      }
+      if (!isEqual(formData, selectPartyData?.affidavit)) {
+        setSelectPartyData((selectPartyDataState) => ({
+          ...selectPartyDataState,
+          affidavit: formData,
+        }));
+      }
+    },
+    [uploadErrorMessage, selectPartyData?.affidavit, clearUploadError, setSelectPartyData]
+  );
+
+  const partyLitigantOrAdvocateSelectionVisible =
+    (selectPartyData?.userType?.value === "Litigant" &&
+      Boolean(selectPartyData?.partyInvolve?.value && selectPartyData?.isPoaRightsClaiming?.value)) ||
+    Boolean(selectPartyData?.isReplaceAdvocate?.value);
+
+  const advocateAffidavitSectionVisible =
+    (partyInPerson?.value === "YES" && party?.uuid === userInfo?.uuid) ||
+    (partyInPerson?.value === "YES" && !party?.uuid) ||
+    (selectPartyData?.isReplaceAdvocate?.value === "YES" && party?.length > 0);
+
+  const showAffidavitFormComposer =
+    (selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES") ||
+    (selectPartyData?.userType?.value === "Advocate" &&
+      selectPartyData?.isReplaceAdvocate?.value === "YES" &&
+      party?.length > 0 &&
+      (selectPartyData?.advocateToReplaceList?.length > 0 || advocateToReplaceList?.length === 0));
 
   return (
     <div ref={targetRef} className="select-user-join-case" style={{ width: "712px" }}>
@@ -202,7 +362,7 @@ const SelectParty = ({
       <InfoCard
         variant={"default"}
         label={t("PLEASE_NOTE")}
-        additionalElements={[<p>{t("ACKNOWLEDGE_RECEIPT_OF_SUMMONS")}</p>]}
+        additionalElements={[<p key="summons-note">{t("ACKNOWLEDGE_RECEIPT_OF_SUMMONS")}</p>]}
         inline
         textStyle={{}}
         className={`custom-info-card`}
@@ -308,109 +468,12 @@ const SelectParty = ({
           />
         </LabelFieldPair>
       )}
-      {((selectPartyData?.userType?.value === "Litigant" && selectPartyData?.partyInvolve?.value && selectPartyData?.isPoaRightsClaiming?.value) ||
-        selectPartyData?.isReplaceAdvocate?.value) && (
+      {partyLitigantOrAdvocateSelectionVisible && (
         <LabelFieldPair className="case-label-field-pair">
           <CardLabel className="case-input-label">{`${t(
             selectPartyData?.userType?.value === "Litigant" ? "WHICH_LITIGANT" : "WHICH_LITIGANTS_REPRESENTING"
           )}`}</CardLabel>
-          {selectPartyData?.userType?.value === "Litigant" ? (
-            selectPartyData?.isPoaRightsClaiming?.value === "NO" ? (
-              <Dropdown
-                t={t}
-                option={parties?.filter((filterParty) =>
-                  selectPartyData?.partyInvolve?.value === "COMPLAINANTS"
-                    ? filterParty?.partyType?.includes("complainant")
-                    : filterParty?.partyType?.includes("respondent")
-                )}
-                selected={party}
-                optionKey={"fullName"}
-                select={(e) => {
-                  setParty(e);
-                  setPartyInPerson({});
-                  setSelectPartyData((selectPartyData) => ({
-                    ...selectPartyData,
-                    advocateToReplaceList: [],
-                    approver: { label: "", value: "" },
-                    reasonForReplacement: "",
-                    affidavit: {},
-                  }));
-                }}
-                freeze={true}
-                topbarOptionsClassName={"top-bar-option"}
-                disable={isLitigantJoined}
-                style={{
-                  marginBottom: "1px",
-                }}
-              />
-            ) : selectPartyData?.isPoaRightsClaiming?.value === "YES" ? (
-              <MultiSelectDropdown
-                options={parties
-                  ?.filter((filterParty) =>
-                    selectPartyData?.partyInvolve?.value === "COMPLAINANTS"
-                      ? filterParty?.partyType?.includes("complainant")
-                      : filterParty?.partyType?.includes("respondent")
-                  )
-                  ?.map((party) => ({
-                    ...party,
-                    isDisabled: getDisableParty(party),
-                  }))}
-                selected={party}
-                optionsKey={"fullName"}
-                onSelect={(value) => {
-                  setParty(value?.map((val) => val[1]));
-                  setSelectPartyData((selectPartyData) => ({
-                    ...selectPartyData,
-                    advocateToReplaceList: [],
-                    approver: { label: "", value: "" },
-                    reasonForReplacement: "",
-                    affidavit: {},
-                  }));
-                }}
-                customLabel={customLabel}
-                config={{
-                  isSelectAll: true,
-                }}
-                parentRef={targetRef}
-              />
-            ) : null
-          ) : (
-            selectPartyData?.isReplaceAdvocate?.value && (
-              <MultiSelectDropdown
-                options={parties
-                  ?.filter((party) => {
-                    if (selectPartyData?.partyInvolve?.value === "COMPLAINANTS") {
-                      return party?.partyType?.includes("complainant");
-                    } else {
-                      const isRespondent = party?.partyType?.includes("respondent");
-                      const shouldExcludePip = selectPartyData?.isReplaceAdvocate?.value !== "YES" && pipAccusedIds.has(party?.individualId);
-                      return isRespondent && !shouldExcludePip;
-                    }
-                  })
-                  ?.map((party) => ({
-                    ...party,
-                    isDisabled: party?.isAdvocateRepresenting,
-                  }))}
-                selected={party}
-                optionsKey={"fullName"}
-                onSelect={(value) => {
-                  setParty(value?.map((val) => val[1]));
-                  setSelectPartyData((selectPartyData) => ({
-                    ...selectPartyData,
-                    advocateToReplaceList: [],
-                    approver: { label: "", value: "" },
-                    reasonForReplacement: "",
-                    affidavit: {},
-                  }));
-                }}
-                customLabel={customLabel}
-                config={{
-                  isSelectAll: true,
-                }}
-                parentRef={targetRef}
-              />
-            )
-          )}
+          {selectPartyData?.userType?.value === "Litigant" ? renderLitigantPartyChooser() : renderAdvocatePartyChooser()}
         </LabelFieldPair>
       )}
       {selectPartyData?.userType?.value === "Litigant" && party?.label && selectPartyData?.isPoaRightsClaiming?.value === "NO" && (
@@ -431,24 +494,20 @@ const SelectParty = ({
         </LabelFieldPair>
       )}
       {partyInPerson?.value === "YES" && party?.uuid === userInfo?.uuid && (
-        <React.Fragment>
-          <InfoCard
-            variant={"default"}
-            label={t("PLEASE_NOTE")}
-            additionalElements={[
-              <p>
-                {t("AFFIDAVIT_STATING_PARTY_IN_PERSON")} <span style={{ fontWeight: "bold" }}>{`(${t("PARTY_IN_PERSON_TEXT")})`}</span>{" "}
-              </p>,
-            ]}
-            inline
-            textStyle={{}}
-            className={`custom-info-card`}
-          />
-        </React.Fragment>
+        <InfoCard
+          variant={"default"}
+          label={t("PLEASE_NOTE")}
+          additionalElements={[
+            <p key="affidavit-party-in-person-note">
+              {t("AFFIDAVIT_STATING_PARTY_IN_PERSON")} <span style={{ fontWeight: "bold" }}>{`(${t("PARTY_IN_PERSON_TEXT")})`}</span>{" "}
+            </p>,
+          ]}
+          inline
+          textStyle={{}}
+          className={`custom-info-card`}
+        />
       )}
-      {((partyInPerson?.value === "YES" && party?.uuid === userInfo?.uuid) ||
-        (partyInPerson?.value === "YES" && !party?.uuid) ||
-        (selectPartyData?.isReplaceAdvocate?.value === "YES" && party?.length > 0)) && (
+      {advocateAffidavitSectionVisible && (
         <React.Fragment key={3}>
           {selectPartyData?.isReplaceAdvocate?.value === "YES" && party?.length > 0 && (
             <React.Fragment>
@@ -481,7 +540,7 @@ const SelectParty = ({
               )}
 
               {(selectPartyData?.advocateToReplaceList?.length > 0 || advocateToReplaceList?.length === 0) && (
-                <React.Fragment>
+                <div className="advocate-replace-approver-block">
                   <LabelFieldPair className="case-label-field-pair">
                     <CardLabel className="case-input-label">{`${t("SELECT_APPROVER")}`}</CardLabel>
                     <RadioButtons
@@ -516,35 +575,15 @@ const SelectParty = ({
                       placeholder={t("TYPE_HERE_PLACEHOLDER")}
                     />
                   </LabelFieldPair>
-                </React.Fragment>
+                </div>
               )}
             </React.Fragment>
           )}
-          {((selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES") ||
-            (selectPartyData?.userType?.value === "Advocate" &&
-              selectPartyData?.isReplaceAdvocate?.value === "YES" &&
-              party?.length > 0 &&
-              (selectPartyData?.advocateToReplaceList?.length > 0 || advocateToReplaceList?.length === 0))) && (
+          {showAffidavitFormComposer && (
             <FormComposerV2
               key={2}
               config={advocateVakalatnamaConfig}
-              onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors) => {
-                setFormError.current = setError;
-                clearFormError.current = clearErrors;
-                const currentAffidavitDoc = formData?.affidavitData?.document;
-                const previousAffidavitDoc = selectPartyData?.affidavit?.affidavitData?.document;
-                const hasPreviousDoc = Array.isArray(previousAffidavitDoc) && previousAffidavitDoc.length > 0;
-                const hasCurrentDoc = Array.isArray(currentAffidavitDoc) && currentAffidavitDoc.length > 0;
-                if (uploadErrorMessage && hasCurrentDoc && hasPreviousDoc && !isEqual(currentAffidavitDoc, previousAffidavitDoc)) {
-                  clearUploadError();
-                }
-                if (!isEqual(formData, selectPartyData?.affidavit)) {
-                  setSelectPartyData((selectPartyData) => ({
-                    ...selectPartyData,
-                    affidavit: formData,
-                  }));
-                }
-              }}
+              onFormValueChange={handleAffidavitFormValueChange}
               defaultValues={selectPartyData?.affidavit}
               className={`party-in-person-affidavit-upload`}
               noBreakLine
@@ -560,7 +599,7 @@ const SelectParty = ({
             variant={"warning"}
             label={t("WARNING")}
             additionalElements={[
-              <p>
+              <p key="already-joined-warning">
                 {t("ABOVE_SELECTED_PARTY")} <span style={{ fontWeight: "bold" }}>{`${party?.label}`}</span> {t("ALREADY_JOINED_CASE")}
               </p>,
             ]}
@@ -571,6 +610,64 @@ const SelectParty = ({
         )}
     </div>
   );
+};
+
+const dropdownOptionShape = PropTypes.shape({
+  label: PropTypes.string,
+  value: PropTypes.string,
+});
+
+const litigantShape = PropTypes.shape({
+  partyType: PropTypes.string,
+  individualId: PropTypes.string,
+  fullName: PropTypes.string,
+  uuid: PropTypes.string,
+  label: PropTypes.string,
+  advocateId: PropTypes.any,
+  advocateRepresentingLength: PropTypes.any,
+  isAdvocateRepresenting: PropTypes.any,
+  isPoaAvailable: PropTypes.shape({
+    code: PropTypes.any,
+  }),
+  poaVerification: PropTypes.shape({
+    individualDetails: PropTypes.shape({
+      userUuid: PropTypes.any,
+    }),
+  }),
+});
+
+SelectParty.propTypes = {
+  selectPartyData: PropTypes.shape({
+    userType: dropdownOptionShape,
+    partyInvolve: dropdownOptionShape,
+    isPoaRightsClaiming: dropdownOptionShape,
+    isReplaceAdvocate: dropdownOptionShape,
+    advocateToReplaceList: PropTypes.arrayOf(PropTypes.any),
+    approver: PropTypes.any,
+    reasonForReplacement: PropTypes.any,
+    affidavit: PropTypes.any,
+  }).isRequired,
+  setSelectPartyData: PropTypes.func.isRequired,
+  uploadErrorMessage: PropTypes.any,
+  clearUploadError: PropTypes.func.isRequired,
+  caseDetails: PropTypes.shape({
+    caseCategory: PropTypes.any,
+    caseTitle: PropTypes.any,
+    cnrNumber: PropTypes.any,
+    filingNumber: PropTypes.any,
+    cmpNumber: PropTypes.any,
+    litigants: PropTypes.arrayOf(litigantShape),
+    representatives: PropTypes.array,
+  }),
+  parties: PropTypes.arrayOf(litigantShape),
+  party: PropTypes.oneOfType([PropTypes.array, litigantShape]),
+  setParty: PropTypes.func.isRequired,
+  partyInPerson: dropdownOptionShape,
+  setPartyInPerson: PropTypes.func.isRequired,
+  isLitigantJoined: PropTypes.bool,
+  isAdvocateJoined: PropTypes.bool,
+  searchLitigantInRepresentives: PropTypes.func.isRequired,
+  advocateId: PropTypes.any,
 };
 
 export default SelectParty;

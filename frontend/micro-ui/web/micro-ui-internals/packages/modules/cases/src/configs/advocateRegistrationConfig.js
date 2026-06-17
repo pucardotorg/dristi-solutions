@@ -9,7 +9,7 @@ export const advocateRegistrationConfig = [
           key: "firstName",
           type: "text",
           disable: false,
-          populators: { name: "firstName", error: "Required", validation: { pattern: /^[A-Za-z]+$/i } },
+          populators: { name: "firstName", error: "Required", validation: { pattern: /^[a-z]+$/i } },
         },
         {
             inline: true,
@@ -18,7 +18,7 @@ export const advocateRegistrationConfig = [
             key: "middleName",
             type: "text",
             disable: false,
-            populators: { name: "middleName", error: "Required", validation: { pattern: /^[A-Za-z]+$/i } },
+            populators: { name: "middleName", error: "Required", validation: { pattern: /^[a-z]+$/i } },
           },
           {
             inline: true,
@@ -27,7 +27,7 @@ export const advocateRegistrationConfig = [
             key: "lastName",
             type: "text",
             disable: false,
-            populators: { name: "lastName", error: "Required", validation: { pattern: /^[A-Za-z]+$/i } },
+            populators: { name: "lastName", error: "Required", validation: { pattern: /^[a-z]+$/i } },
           },
           
             // {
@@ -62,7 +62,7 @@ export const advocateRegistrationConfig = [
             mdmsModuleName :"pucar-ui",
             localePrefix: "PROJECT",
             populators: { name: "documentUpload", error: "Required", module:"cases-advocate",
-              mdmsModuleName :"pucar-ui",validation: { pattern: /^[A-Za-z]+$/i } },
+              mdmsModuleName :"pucar-ui",validation: { pattern: /^[a-z]+$/i } },
           },
           {
             inline: true,
@@ -71,7 +71,7 @@ export const advocateRegistrationConfig = [
             key: "enterCode",
             type: "text",
             disable: false,
-            populators: { name: "enterCode", error: "Required", validation: { pattern: /^[A-Za-z]+$/i } },
+            populators: { name: "enterCode", error: "Required", validation: { pattern: /^[a-z]+$/i } },
           }
       ],
     },

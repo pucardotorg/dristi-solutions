@@ -6,7 +6,7 @@
       max-width: 960px;
       h2.verification-button-text-modal {
         text-align: left;
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 700;
         line-height: 18.75px;
@@ -21,7 +21,7 @@
       }
       h2.secondary-label-selector {
         text-align: left;
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 700;
         line-height: 18.75px;
@@ -30,7 +30,7 @@
       }
       h2.tertiary-label-selector {
         text-align: left;
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 700;
         line-height: 18.75px;
@@ -124,7 +124,7 @@
   margin-bottom: 0;
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .header-wrap {
     border-bottom: 1px solid lightgrey;
     margin-bottom: 0;

@@ -8,16 +8,18 @@ const Menu = (props) => {
   return (
     <div className="menu-wrap" style={props.style}>
       {props.options.map((option, index) => {
+        const labelKey = option.forcedName || `${keyPrefix}_${props.optionKey ? option[props.optionKey] : option}`;
         return (
-          <div key={index} onClick={() => props.onSelect(option)} style={props?.menuItemStyle}>
+          <button
+            key={option?.code ?? option?.[props.optionKey] ?? index}
+            type="button"
+            onClick={() => props.onSelect(option)}
+            style={{ ...props?.menuItemStyle, width: "100%", background: "none", border: "none", textAlign: "inherit", cursor: "pointer", padding: 0 }}
+          >
             <p style={props?.textStyles}>
-              {props.t
-                ? props.t(
-                    Digit.Utils.locale.getTransformedLocale(option.forcedName || `${keyPrefix}_${props.optionKey ? option[props.optionKey] : option}`)
-                  )
-                : option}
+              {props.t ? props.t(Digit.Utils.locale.getTransformedLocale(labelKey)) : option}
             </p>
-          </div>
+          </button>
         );
       })}
     </div>
@@ -27,6 +29,12 @@ const Menu = (props) => {
 Menu.propTypes = {
   options: PropTypes.array,
   onSelect: PropTypes.func,
+  localeKeyPrefix: PropTypes.string,
+  style: PropTypes.object,
+  menuItemStyle: PropTypes.object,
+  textStyles: PropTypes.object,
+  optionKey: PropTypes.string,
+  t: PropTypes.func,
 };
 
 Menu.defaultProps = {

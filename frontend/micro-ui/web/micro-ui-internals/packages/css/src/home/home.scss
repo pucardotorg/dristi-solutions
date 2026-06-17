@@ -6,7 +6,7 @@
     justify-content: space-between;
     margin-bottom: 20px;
     .header {
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 32px;
       font-weight: 700;
       line-height: 37.5px;
@@ -661,7 +661,6 @@
   border: none;
   border-radius: 0.375rem;
   cursor: pointer;
-  cursor: pointer;
   padding: 4px;
 }
 
@@ -1055,9 +1054,15 @@
   .inbox-search-component-wrapper {
     .sections-parent {
       grid-gap: 0 !important;
+      .section {
+        border: none;
+        box-shadow: none;
+        background-color: transparent;
+        padding: 0;
+        min-height: 5rem !important;
+      }
     }
     .sections-parent.search {
-
       .search-wrapper {
         padding-top: 0 !important;
         padding-bottom: 0 !important;
@@ -1073,18 +1078,6 @@
     max-width: 60px !important;
     text-align: left;
     padding-left: 16px;
-  }
-
-  .inbox-search-component-wrapper {
-    .sections-parent {
-      .section {
-        border: none;
-        box-shadow: none;
-        background-color: transparent;
-        padding: 0;
-        min-height: 5rem !important;
-      }
-    }
   }
 }
 
@@ -1112,7 +1105,21 @@
   z-index: 9999;
 }
 
+/* Full-area hit target behind the dialog; keeps dimming on the overlay container. */
+.manage-office-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+}
+
 .manage-office-modal {
+  position: relative;
+  z-index: 1;
   box-sizing: border-box;
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -1356,7 +1363,7 @@
   width: 100vw;
   border-top: 1px #e6e6e6 solid;
   .header {
-    font-family: Roboto;
+    font-family: Roboto, sans-serif;
     font-weight: 700;
     font-size: 28px;
     line-height: 100%;
@@ -1618,7 +1625,7 @@
       }
 
       .pay-online-button {
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px !important;
         font-weight: 700;
         padding: 8px 24px;
@@ -1668,7 +1675,7 @@
   padding: 30px 26px;
 
   .header {
-    font-family: Roboto;
+    font-family: Roboto, sans-serif;
     font-weight: 700;
     font-size: 28px;
     line-height: 100%;
@@ -2072,7 +2079,7 @@
   input {
     margin-bottom: 0 !important;
     border: 1px solid black;
-    font-family: "Roboto";
+    font-family: "Roboto", sans-serif;
   }
 }
 
@@ -2456,7 +2463,7 @@
           padding: 10px 24px;
 
           h2 {
-            font-family: Roboto;
+            font-family: Roboto, sans-serif;
             font-size: 16px;
             font-weight: 700;
             line-height: 18.75px;

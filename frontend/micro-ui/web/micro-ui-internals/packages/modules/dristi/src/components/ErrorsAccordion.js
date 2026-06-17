@@ -1,5 +1,17 @@
+import PropTypes from "prop-types";
 import React, { useState } from "react";
 import { CustomArrowDownIcon, CustomArrowUpIcon } from "../icons/svgIndex";
+
+const iconButtonStyle = {
+  cursor: "pointer",
+  border: "none",
+  background: "none",
+  padding: 0,
+  display: "inline-flex",
+  alignItems: "center",
+  font: "inherit",
+  color: "inherit",
+};
 
 function ErrorsAccordion({ handlePageChange, pages, t, showConfirmModal, totalErrorCount, totalWarningCount, handleGoToPage, selected, onSubmit }) {
   const [isOpen, setIsOpen] = useState(true);
@@ -31,63 +43,111 @@ function ErrorsAccordion({ handlePageChange, pages, t, showConfirmModal, totalEr
   };
 
   return (
-    <div key={"ErrorAccordion"} className="accordion-wrapper">
-      <div className={`accordion-title ${isOpen ? "open" : ""} total-error-count`} style={{ cursor: "pointer" }} onClick={handleAccordionClick}>
-        <span
+    <div className="accordion-wrapper">
+      <div className={`accordion-title ${isOpen ? "open" : ""} total-error-count`} style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+        <button
+          type="button"
           className="reverse-arrow"
-          style={{ cursor: "pointer", marginRight: "8px" }}
+          style={{ ...iconButtonStyle, marginRight: "8px" }}
+          aria-expanded={isOpen}
           onClick={(e) => {
             e.stopPropagation();
             setIsOpen((prev) => !prev);
           }}
         >
           {isOpen ? <CustomArrowUpIcon /> : <CustomArrowDownIcon />}
-        </span>
-        <span style={{ color: "#BB2C2F" }}>{`${totalErrorCount - totalWarningCount} ${t("CS_ERRORS_MARKED")}`}</span>
-        <div className="icon">
-          <span
+        </button>
+        <button
+          type="button"
+          onClick={handleAccordionClick}
+          style={{
+            ...iconButtonStyle,
+            color: "#BB2C2F",
+            flex: "1 1 auto",
+            textAlign: "left",
+            justifyContent: "flex-start",
+            minWidth: 0,
+          }}
+        >
+          {`${totalErrorCount - totalWarningCount} ${t("CS_ERRORS_MARKED")}`}
+        </button>
+        <div className="icon" style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+          <button
+            type="button"
             className="reverse-arrow"
-            style={{ cursor: "pointer" }}
+            style={iconButtonStyle}
             onClick={(e) => {
               e.stopPropagation();
               handleGoToNext();
             }}
+            aria-label="Go to next errors section"
           >
             <CustomArrowDownIcon />
-          </span>
+          </button>
           <span>{`${resultIndex}/${pages.length}`}</span>
-          <span
+          <button
+            type="button"
             className="reverse-arrow"
-            style={{ cursor: "pointer" }}
+            style={iconButtonStyle}
             onClick={(e) => {
               e.stopPropagation();
               handleGoToPrev();
             }}
+            aria-label="Go to previous errors section"
           >
             <CustomArrowUpIcon />
-          </span>
+          </button>
         </div>
       </div>
       {isOpen && (
-        <div className={`accordion-item`}>
-          <div className={`accordion-item`}>
-            {pages?.map((item, index) => (
-              <div
-                style={{ padding: "10px", color: "#BB2C2F", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}
-                onClick={() => {
-                  handlePageChange(item?.key, !showConfirmModal);
-                }}
-                key={index}
-              >
-                <label>{t(item?.label)}</label>
-                <label> {`${item?.errorCount || 0} ${t("CS_ERRORS")}`} </label>
-              </div>
-            ))}
-          </div>
+        <div className="accordion-item">
+          {pages?.map((item) => (
+            <button
+              type="button"
+              key={item.key}
+              style={{
+                padding: "10px",
+                color: "#BB2C2F",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+                border: "none",
+                background: "none",
+                font: "inherit",
+                textAlign: "left",
+              }}
+              onClick={() => {
+                handlePageChange(item?.key, !showConfirmModal);
+              }}
+            >
+              <span>{t(item?.label)}</span>
+              <span> {`${item?.errorCount || 0} ${t("CS_ERRORS")}`} </span>
+            </button>
+          ))}
         </div>
       )}
     </div>
   );
 }
+
+const pageItemPropType = PropTypes.shape({
+  key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  label: PropTypes.string.isRequired,
+  errorCount: PropTypes.number,
+});
+
+ErrorsAccordion.propTypes = {
+  handlePageChange: PropTypes.func.isRequired,
+  pages: PropTypes.arrayOf(pageItemPropType).isRequired,
+  t: PropTypes.func.isRequired,
+  showConfirmModal: PropTypes.bool,
+  totalErrorCount: PropTypes.number.isRequired,
+  totalWarningCount: PropTypes.number.isRequired,
+  handleGoToPage: PropTypes.func.isRequired,
+  selected: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onSubmit: PropTypes.func.isRequired,
+};
 
 export default ErrorsAccordion;

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { LabelFieldPair, CardLabel, TextInput, Dropdown, CardLabelError, RadioButtons, Button } from "@egovernments/digit-ui-react-components";
 import SelectCustomNote from "./SelectCustomNote";
 import CustomErrorTooltip from "./CustomErrorTooltip";
@@ -79,7 +80,6 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
 
       return individualData;
     } catch (error) {
-      console.error("Error fetching police station by location:", error);
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("GEOLOCATION_ERROR"), error: true, errorId });
     } finally {
@@ -217,8 +217,8 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
           label={t(config?.policeStationDropdown?.label)}
           isDisabled={disable || locationButtonDisable || isLoading}
           onButtonClick={() => {
-            var lat = locationFormData?.[config.key]?.["latitude"];
-            var long = locationFormData?.[config.key]?.["longitude"];
+            const lat = locationFormData?.[config.key]?.["latitude"];
+            const long = locationFormData?.[config.key]?.["longitude"];
 
             getPoliceStationByLocation(lat, long);
           }}
@@ -263,6 +263,36 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
       )}
     </div>
   );
+};
+
+const geoLocationConfigPropType = PropTypes.shape({
+  key: PropTypes.string.isRequired,
+  juridictionRadioButton: PropTypes.shape({
+    label: PropTypes.string,
+    options: PropTypes.array,
+    defaultValue: PropTypes.any,
+  }),
+  latitudeInput: PropTypes.shape({
+    label: PropTypes.string,
+    validation: PropTypes.object,
+  }),
+  longitudeInput: PropTypes.shape({
+    label: PropTypes.string,
+    validation: PropTypes.object,
+  }),
+  policeStationDropdown: PropTypes.shape({
+    label: PropTypes.string,
+    name: PropTypes.string,
+    header: PropTypes.string,
+  }),
+});
+
+GeoLocationComponent.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: geoLocationConfigPropType.isRequired,
+  locationFormData: PropTypes.object,
+  onGeoLocationSelect: PropTypes.func.isRequired,
+  disable: PropTypes.bool,
 };
 
 export default GeoLocationComponent;

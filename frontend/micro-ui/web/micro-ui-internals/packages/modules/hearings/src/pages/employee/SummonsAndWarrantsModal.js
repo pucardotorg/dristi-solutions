@@ -148,8 +148,8 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const isCaseAdmitted = useMemo(() => caseDetails?.status === CaseWorkflowState.CASE_ADMITTED, [caseDetails]);
 
-  const { caseId, cnrNumber, caseTitle } = useMemo(
-    () => ({ cnrNumber: caseDetails.cnrNumber || "", caseId: caseDetails?.id, caseTitle: caseDetails?.caseTitle }),
+  const { caseId, cnrNumber } = useMemo(
+    () => ({ cnrNumber: caseDetails.cnrNumber || "", caseId: caseDetails?.id }),
     [caseDetails]
   );
 
@@ -255,16 +255,16 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   const orderListFiltered = useMemo(() => {
     if (!ordersData?.list) return [];
 
+    const matchesTaskOrderType = (orderType) =>
+      taskOrderType === ORDER_TYPES.NOTICE
+        ? orderType === ORDER_TYPES.NOTICE
+        : [ORDER_TYPES.SUMMONS, ORDER_TYPES.WARRANT, ORDER_TYPES.PROCLAMATION, ORDER_TYPES.ATTACHMENT].includes(orderType);
+
     const filteredOrders = ordersData?.list?.flatMap((order) => {
+      const hearingMatches = (order?.scheduledHearingNumber || order?.hearingNumber) === hearingId;
       if (order?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
         return order?.compositeItems
-          ?.filter(
-            (item) =>
-              (taskOrderType === ORDER_TYPES.NOTICE
-                ? item?.orderType === ORDER_TYPES.NOTICE
-                : [ORDER_TYPES.SUMMONS, ORDER_TYPES.WARRANT, ORDER_TYPES.PROCLAMATION, ORDER_TYPES.ATTACHMENT].includes(item?.orderType)) &&
-              (order?.scheduledHearingNumber || order?.hearingNumber) === hearingId
-          )
+          ?.filter((item) => matchesTaskOrderType(item?.orderType) && hearingMatches)
           ?.map((item) => ({
             ...order,
             orderType: item?.orderType,
@@ -272,14 +272,8 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
             orderDetails: item?.orderSchema?.orderDetails,
             itemId: item?.id,
           }));
-      } else {
-        return (taskOrderType === ORDER_TYPES.NOTICE
-          ? order?.orderType === ORDER_TYPES.NOTICE
-          : [ORDER_TYPES.SUMMONS, ORDER_TYPES.WARRANT, ORDER_TYPES.PROCLAMATION, ORDER_TYPES.ATTACHMENT].includes(order?.orderType)) &&
-          (order?.scheduledHearingNumber || order?.hearingNumber) === hearingId
-          ? [order]
-          : [];
       }
+      return matchesTaskOrderType(order?.orderType) && hearingMatches ? [order] : [];
     });
 
     // make orders list by partyTypes Accused and Witness.

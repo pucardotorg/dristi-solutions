@@ -4,6 +4,128 @@ import PropTypes from "prop-types";
 import ButtonSelector from "./ButtonSelector";
 import { RoundedCheck, DeleteBtn, ErrorIcon } from "../icons/svgIndex";
 
+function CustomToastError({ label, labelstyle, errorId, isDeleteBtn, onClose, handleCopy, copied, t, style }) {
+  return (
+    <div className="success-toast error" style={{ backgroundColor: "#D4351C", ...style }}>
+      <ErrorIcon />
+      <div className="toast-label" style={{ ...labelstyle }}>
+        {label}
+        {errorId && (
+          <span
+            className="help-error"
+            style={{ fontWeight: "400", marginLeft: "8px", borderLeft: "1px solid rgba(255,255,255,0.3)", paddingLeft: "8px" }}
+          >
+            {t("SHARE_ERROR_TO_HELPDESK")}: {errorId}
+          </span>
+        )}
+      </div>
+      {errorId && (
+        <button
+          type="button"
+          onClick={handleCopy}
+          style={{
+            background: "rgba(255,255,255,0.15)",
+            border: "1px solid rgba(255,255,255,0.4)",
+            borderRadius: "4px",
+            color: "#FFFFFF",
+            fontSize: "12px",
+            padding: "4px 8px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+            transition: "background 0.2s",
+            marginLeft: "10px",
+            marginTop: "0px",
+            whiteSpace: "nowrap",
+            width: "fit-content",
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>
+          {copied ? t("COPIED") : t("COPY_ERROR_ID")}
+        </button>
+      )}
+      {isDeleteBtn ? <DeleteBtn fill="none" className="toast-close-btn" onClick={onClose} /> : null}
+    </div>
+  );
+}
+
+CustomToastError.propTypes = {
+  copied: PropTypes.bool.isRequired,
+  errorId: PropTypes.string,
+  handleCopy: PropTypes.func.isRequired,
+  isDeleteBtn: PropTypes.bool.isRequired,
+  label: PropTypes.string.isRequired,
+  labelstyle: PropTypes.object.isRequired,
+  onClose: PropTypes.func,
+  style: PropTypes.object.isRequired,
+  t: PropTypes.func.isRequired,
+};
+
+function CustomToastWarningContent({ isWarningButtons, label, labelstyle, isDeleteBtn, onClose, style, onYes, onNo }) {
+  return (
+    <>
+      {!isWarningButtons ? (
+        <div className="success-toast" style={{ backgroundColor: "#EA8A3B", ...style }}>
+          <ErrorIcon />
+          <div className="toast-label" style={{ marginLeft: "10px", ...labelstyle }}>
+            {label}
+          </div>
+          {isDeleteBtn ? <DeleteBtn fill="none" className="toast-close-btn" onClick={onClose} /> : null}
+        </div>
+      ) : (
+        <div style={{ display: "flex" }}>
+          <ErrorIcon />
+          <div className="toast-label" style={{ marginLeft: "10px", ...labelstyle }}>
+            {label}
+          </div>
+          {isDeleteBtn ? <DeleteBtn fill="none" className="toast-close-btn" onClick={onClose} /> : null}
+        </div>
+      )}
+      {isWarningButtons ? (
+        <div style={{ width: "100%", display: "flex", justifyContent: "flex-end" }}>
+          <ButtonSelector theme="border" label={"NO"} onSubmit={onNo} style={{ marginLeft: "10px" }} />
+          <ButtonSelector label={"YES"} onSubmit={onYes} style={{ marginLeft: "10px" }} />
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+CustomToastWarningContent.propTypes = {
+  isDeleteBtn: PropTypes.bool.isRequired,
+  isWarningButtons: PropTypes.bool.isRequired,
+  label: PropTypes.string.isRequired,
+  labelstyle: PropTypes.object.isRequired,
+  onClose: PropTypes.func,
+  onNo: PropTypes.func,
+  onYes: PropTypes.func,
+  style: PropTypes.object.isRequired,
+};
+
+function CustomToastSuccess({ label, labelstyle, isDeleteBtn, onClose, style }) {
+  return (
+    <div className="success-toast" style={{ backgroundColor: "#00703C", ...style }}>
+      <RoundedCheck />
+      <div className="toast-label" style={{ ...labelstyle }}>
+        {label}
+      </div>
+      {isDeleteBtn ? <DeleteBtn fill="none" className="toast-close-btn" onClick={onClose} /> : null}
+    </div>
+  );
+}
+
+CustomToastSuccess.propTypes = {
+  isDeleteBtn: PropTypes.bool.isRequired,
+  label: PropTypes.string.isRequired,
+  labelstyle: PropTypes.object.isRequired,
+  onClose: PropTypes.func,
+  style: PropTypes.object.isRequired,
+};
+
 /**
  * CustomToast – Toast notification component.
  * Supports error, warning, and success states with optional YES/NO buttons.
@@ -70,57 +192,24 @@ const CustomToast = ({
     el.value = errorId;
     document.body.appendChild(el);
     el.select();
-    document.execCommand("copy");
+    document.execCommand("copy"); // NOSONAR
     document.body.removeChild(el);
     cb();
   };
 
   if (error) {
     return (
-      <div className="success-toast error" style={{ backgroundColor: "#D4351C", ...style }}>
-        <ErrorIcon />
-        <div className="toast-label" style={{ ...labelstyle }}>
-          {label}
-          {errorId && (
-            <span
-              className="help-error"
-              style={{ fontWeight: "400", marginLeft: "8px", borderLeft: "1px solid rgba(255,255,255,0.3)", paddingLeft: "8px" }}
-            >
-              {t("SHARE_ERROR_TO_HELPDESK")}: {errorId}
-            </span>
-          )}
-        </div>
-        {errorId && (
-          <button
-            type="button"
-            onClick={handleCopy}
-            style={{
-              background: "rgba(255,255,255,0.15)",
-              border: "1px solid rgba(255,255,255,0.4)",
-              borderRadius: "4px",
-              color: "#FFFFFF",
-              fontSize: "12px",
-              padding: "4px 8px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              transition: "background 0.2s",
-              marginLeft: "10px",
-              marginTop: "0px",
-              whiteSpace: "nowrap",
-              width: "fit-content",
-            }}
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-            </svg>
-            {copied ? t("COPIED") : t("COPY_ERROR_ID")}
-          </button>
-        )}
-        {isDeleteBtn ? <DeleteBtn fill="none" className="toast-close-btn" onClick={onClose} /> : null}
-      </div>
+      <CustomToastError
+        label={label}
+        labelstyle={labelstyle}
+        errorId={errorId}
+        isDeleteBtn={isDeleteBtn}
+        onClose={onClose}
+        handleCopy={handleCopy}
+        copied={copied}
+        t={t}
+        style={style}
+      />
     );
   }
 
@@ -131,43 +220,22 @@ const CustomToast = ({
           className="success-toast warning"
           style={isWarningButtons ? { backgroundColor: "#EA8A3B", display: "block", ...style } : { backgroundColor: "#EA8A3B", ...style }}
         >
-          {!isWarningButtons ? (
-            <div className="success-toast" style={{ backgroundColor: "#EA8A3B", ...style }}>
-              <ErrorIcon />
-              <div className="toast-label" style={{ marginLeft: "10px", ...labelstyle }}>
-                {label}
-              </div>
-              {isDeleteBtn ? <DeleteBtn fill="none" className="toast-close-btn" onClick={onClose} /> : null}
-            </div>
-          ) : (
-            <div style={{ display: "flex" }}>
-              <ErrorIcon />
-              <div className="toast-label" style={{ marginLeft: "10px", ...labelstyle }}>
-                {label}
-              </div>
-              {isDeleteBtn ? <DeleteBtn fill="none" className="toast-close-btn" onClick={onClose} /> : null}
-            </div>
-          )}
-          {isWarningButtons ? (
-            <div style={{ width: "100%", display: "flex", justifyContent: "flex-end" }}>
-              <ButtonSelector theme="border" label={"NO"} onSubmit={onNo} style={{ marginLeft: "10px" }} />
-              <ButtonSelector label={"YES"} onSubmit={onYes} style={{ marginLeft: "10px" }} />
-            </div>
-          ) : null}
+          <CustomToastWarningContent
+            isWarningButtons={isWarningButtons}
+            label={label}
+            labelstyle={labelstyle}
+            isDeleteBtn={isDeleteBtn}
+            onClose={onClose}
+            style={style}
+            onYes={onYes}
+            onNo={onNo}
+          />
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="success-toast" style={{ backgroundColor: "#00703C", ...style }}>
-      <RoundedCheck />
-      <div className="toast-label" style={{ ...labelstyle }}>
-        {label}
-      </div>
-      {isDeleteBtn ? <DeleteBtn fill="none" className="toast-close-btn" onClick={onClose} /> : null}
-    </div>
-  );
+  return <CustomToastSuccess label={label} labelstyle={labelstyle} isDeleteBtn={isDeleteBtn} onClose={onClose} style={style} />;
 };
 
 CustomToast.propTypes = {

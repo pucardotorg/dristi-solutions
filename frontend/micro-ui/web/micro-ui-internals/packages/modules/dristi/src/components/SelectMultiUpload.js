@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import React, { useMemo, useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
 import { UploadIcon } from "../icons/svgIndex";
@@ -39,9 +40,17 @@ const DragDropComponent = ({ config, label }) => {
   );
 };
 
+DragDropComponent.propTypes = {
+  config: PropTypes.shape({
+    disable: PropTypes.bool,
+  }),
+  label: PropTypes.string,
+};
+
 const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) => {
   const [showToast, setShowToast] = useState(null);
-  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const digit = globalThis.Digit ?? window.Digit;
+  const tenantId = digit?.ULBService?.getCurrentTenantId();
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [imageInfo, setImageInfo] = useState(null);
   const [selectedDocs, setSelectedDocs] = useState([]);
@@ -109,7 +118,7 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
     const currentValue = formData?.[config.key]?.[input?.name] || [];
 
     return (
-      <React.Fragment>
+      <React.Fragment key={`multi-upload-${input?.name ?? "upload"}`}>
         <style>
           {`
             .file-uploader {
@@ -171,7 +180,6 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                 handleChange={(data) => handleAddFiles(data, input, currentValue)}
                 name="file"
                 types={input?.fileTypes}
-                children={<DragDropComponent config={config} label={currentValue?.length > 0 ? t("UPLOAD_MORE") : t("UPLOAD")} />}
                 key={input?.name}
                 onTypeError={() =>
                   setShowToast({
@@ -179,7 +187,9 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                     error: true,
                   })
                 }
-              />
+              >
+                <DragDropComponent config={config} label={currentValue?.length > 0 ? t("UPLOAD_MORE") : t("UPLOAD")} />
+              </FileUploader>
             )}
           </div>
           <div className="upload-guidelines-div">
@@ -210,7 +220,12 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
             {currentValue?.map((file, index) => {
               return (
                 <div key={(file?.additionalDetails?.name || file?.name) + index} style={{ position: "relative", display: "inline-block" }}>
-                  <div onClick={() => handleImageModalOpen(file?.fileStore, file?.additionalDetails?.name || file?.name, file)}>
+                  <button
+                    type="button"
+                    aria-label="Preview document"
+                    style={{ padding: 0, margin: 0, border: "none", background: "none", display: "block", cursor: "pointer" }}
+                    onClick={() => handleImageModalOpen(file?.fileStore, file?.additionalDetails?.name || file?.name, file)}
+                  >
                     <DocViewerWrapper
                       fileStoreId={file?.fileStore}
                       selectedDocs={[file]}
@@ -219,7 +234,7 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                       style={{ flexShrink: 0 }}
                       tenantId={tenantId}
                     />
-                  </div>
+                  </button>
                   <p style={{ marginTop: "10px", fontSize: "14px", color: "#888" }}>{file?.additionalDetails?.name || file?.name}</p>
 
                   {!config?.disable && (
@@ -228,7 +243,6 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                       onButtonClick={() => {
                         handleRemoveFile(file, index, currentValue, input);
                       }}
-                      children={<CloseBtn />}
                       label=""
                       style={{
                         position: "absolute",
@@ -247,7 +261,9 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                         border: "none",
                         boxShadow: "none",
                       }}
-                    />
+                    >
+                      <CloseBtn />
+                    </Button>
                   )}
                 </div>
               );
@@ -286,6 +302,22 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
       </React.Fragment>
     );
   });
+};
+
+SelectMultiUpload.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    disable: PropTypes.bool,
+    populators: PropTypes.shape({
+      inputs: PropTypes.array,
+    }),
+  }).isRequired,
+  onSelect: PropTypes.func.isRequired,
+  formData: PropTypes.object,
+  errors: PropTypes.object,
+  setError: PropTypes.func,
+  clearErrors: PropTypes.func,
 };
 
 export default SelectMultiUpload;

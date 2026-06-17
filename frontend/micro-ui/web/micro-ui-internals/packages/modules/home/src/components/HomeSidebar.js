@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
+import PropTypes from "prop-types";
 import HomeAccordian from "./HomeAccordian";
 import SidebarItem from "./SideBarItem";
 import { HomeService } from "../hooks/services";
 import HomeHeader from "./HomeHeader";
-import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const HomeSidebar = ({
   t,
@@ -213,6 +213,19 @@ const HomeSidebar = ({
       )}
     </div>
   );
+};
+
+HomeSidebar.propTypes = {
+  activeTab: PropTypes.string,
+  applicationOptions: PropTypes.array,
+  hearingCount: PropTypes.number,
+  isOptionsLoading: PropTypes.bool,
+  onTabChange: PropTypes.func.isRequired,
+  options: PropTypes.array,
+  pendingTaskCount: PropTypes.number,
+  setShowToast: PropTypes.func,
+  t: PropTypes.func.isRequired,
+  tenantId: PropTypes.string.isRequired,
 };
 
 export default HomeSidebar;

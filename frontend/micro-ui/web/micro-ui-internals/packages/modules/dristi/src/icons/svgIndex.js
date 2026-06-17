@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { COLOR_FILL } from "../contants";
 
 const RegisterIcon = () => (
@@ -2041,6 +2042,18 @@ const ErrorIcon = ({ className }) => (
     />
   </svg>
 );
+
+DeleteBtn.propTypes = {
+  className: PropTypes.string,
+  fill: PropTypes.string,
+  onClick: PropTypes.func,
+};
+RoundedCheck.propTypes = {
+  className: PropTypes.string,
+};
+ErrorIcon.propTypes = {
+  className: PropTypes.string,
+};
 
 export {
   AdvocateIcon,

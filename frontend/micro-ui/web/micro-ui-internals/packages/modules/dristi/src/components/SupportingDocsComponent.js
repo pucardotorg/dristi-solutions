@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import React, { useEffect, useMemo, useState } from "react";
 import SelectMultiUpload from "./SelectMultiUpload";
 import { CardLabelError, TextInput, CustomDropdown, Header } from "@egovernments/digit-ui-react-components";
@@ -139,7 +140,7 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
             const obj = formInstances?.[formIndex]?.[config?.key] ? formInstances[formIndex]?.[config?.key] : formInstances[formIndex];
 
             return (
-              <React.Fragment key={inputIndex}>
+              <React.Fragment key={`${input?.key}-${formIndex}-${inputIndex}`}>
                 {input?.type === "text" && (
                   <div className="text-Input">
                     <div style={{ marginBottom: "8px" }}>
@@ -207,6 +208,24 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
       )}
     </React.Fragment>
   );
+};
+
+SupportingDocsComponent.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    header: PropTypes.string,
+    name: PropTypes.string,
+    disable: PropTypes.bool,
+    populators: PropTypes.shape({
+      inputs: PropTypes.array,
+    }),
+  }).isRequired,
+  onSelect: PropTypes.func.isRequired,
+  formData: PropTypes.object,
+  errors: PropTypes.object,
+  setError: PropTypes.func,
+  clearErrors: PropTypes.func.isRequired,
 };
 
 export default SupportingDocsComponent;

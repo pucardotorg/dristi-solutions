@@ -107,17 +107,13 @@ export const getTabConfig = ({
             uiConfig: {
               ...tabConfig.sections.searchResult.uiConfig,
               columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
-                return column.label === "ORDER_TITLE"
-                  ? {
-                      ...column,
-                      clickFunc: orderSetFunc,
-                    }
-                  : column.label === "CS_ACTIONS"
-                  ? {
-                      ...column,
-                      clickFunc: orderDeleteFunc,
-                    }
-                  : column;
+                if (column.label === "ORDER_TITLE") {
+                  return { ...column, clickFunc: orderSetFunc };
+                }
+                if (column.label === "CS_ACTIONS") {
+                  return { ...column, clickFunc: orderDeleteFunc };
+                }
+                return column;
               }),
             },
           },
@@ -159,7 +155,7 @@ export const getTabConfig = ({
                     })),
                   },
                 },
-                ...tabConfig?.sections?.search?.uiConfig?.fields?.map((field) => {
+                ...(tabConfig?.sections?.search?.uiConfig?.fields ?? []).map((field) => {
                   if (field.key === "hearingType") {
                     return {
                       ...field,
@@ -304,7 +300,7 @@ export const getTabConfig = ({
                       .sort((a, b) => a.name.localeCompare(b.name)),
                   },
                 },
-                ...tabConfig?.sections?.search?.uiConfig?.fields?.map((field) => {
+                ...(tabConfig?.sections?.search?.uiConfig?.fields ?? []).map((field) => {
                   if (field.key === "applicationType") {
                     return {
                       ...field,

@@ -1,18 +1,17 @@
+import PropTypes from "prop-types";
 import React, { useState, useEffect } from "react";
 import { FileAttachIcon } from "../icons/svgIndex";
 import RenderFileUpload from "./RenderFileUpload";
 import UploadDocument from "./UploadDocument";
 import ESignSignatureModal from "./ESignSignatureModal";
 
-const DragDropJSX = ({ t, currentValue, error }) => {
+const DragDropJSX = () => {
   return (
-    <React.Fragment>
-      <div style={{ marginTop: "10px", cursor: "pointer" }}>
-        <div style={{ color: "#505A5F" }}>
-          <FileAttachIcon />
-        </div>
+    <div style={{ marginTop: "10px", cursor: "pointer" }}>
+      <div style={{ color: "#505A5F" }}>
+        <FileAttachIcon />
       </div>
-    </React.Fragment>
+    </div>
   );
 };
 
@@ -55,7 +54,9 @@ function SelectCustomDocUpload({ t, config, formUploadData = {}, setData, docume
             prevData.SelectUserTypeComponent.doc[0][0],
             {
               ...prevData.SelectUserTypeComponent.doc[0][1],
-              fileStoreId: { fileStoreId: localStorageID ? localStorageID : prevData.SelectUserTypeComponent.doc[0][1].fileStoreId },
+              fileStoreId: {
+                fileStoreId: localStorageID ?? prevData.SelectUserTypeComponent.doc[0][1].fileStoreId,
+              },
             },
           ],
         ],
@@ -145,7 +146,7 @@ function SelectCustomDocUpload({ t, config, formUploadData = {}, setData, docume
     <React.Fragment>
       {!showDocument && (
         <div className="file-uploader-div-main show-file-uploader">
-          <button style={{ background: "none" }} onClick={handleOpenUploadModal}>
+          <button type="button" style={{ background: "none", border: "none", padding: 0 }} onClick={handleOpenUploadModal}>
             <DragDropJSX />
           </button>
         </div>
@@ -190,5 +191,15 @@ function SelectCustomDocUpload({ t, config, formUploadData = {}, setData, docume
     </React.Fragment>
   );
 }
+
+SelectCustomDocUpload.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.any,
+  formUploadData: PropTypes.object,
+  setData: PropTypes.func.isRequired,
+  documentSubmission: PropTypes.any,
+  showDocument: PropTypes.bool,
+  setShowDocument: PropTypes.func.isRequired,
+};
 
 export default SelectCustomDocUpload;

@@ -1,7 +1,7 @@
 import { CardLabelError } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import { isEmptyObject } from "../Utils";
-import { Button, TextArea } from "@egovernments/digit-ui-components";
 
 function SelectTranscriptTextArea({ t, config, formData = {}, onSelect, errors }) {
   const [formdata, setFormData] = useState(formData);
@@ -47,7 +47,7 @@ function SelectTranscriptTextArea({ t, config, formData = {}, onSelect, errors }
         textAreaSubHeader: "please provide some more details.",
         isOptional: false,
       },
-    [config?.populators?.inputs]
+    [config?.populators?.input]
   );
 
   function setValue(value, input) {
@@ -436,9 +436,25 @@ function SelectTranscriptTextArea({ t, config, formData = {}, onSelect, errors }
         </div>
       </div>
       {/* </TextArea> */}
-      {errors[config.key] && <CardLabelError>{t(errors[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>}
+      {errors?.[config.key] && <CardLabelError>{t(errors[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>}
     </div>
   );
 }
+
+SelectTranscriptTextArea.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    populators: PropTypes.shape({
+      input: PropTypes.object,
+      validation: PropTypes.shape({
+        pattern: PropTypes.object,
+      }),
+    }),
+  }).isRequired,
+  formData: PropTypes.object,
+  onSelect: PropTypes.func.isRequired,
+  errors: PropTypes.object,
+};
 
 export default SelectTranscriptTextArea;

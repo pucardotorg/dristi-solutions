@@ -81,49 +81,14 @@ const redactSensitiveData = (data) => {
   return redactObject(redacted);
 };
 
-// Console logging with colors
-const logWithColors = (type, method, url, status, duration, requestSize, responseSize, error = null) => {
+// Slow / large response warnings when console logging is enabled
+const logWithColors = ({ url, duration, responseSize }) => {
   if (!config.logToConsole) return;
-
-  const getStatusColor = (status) => {
-    if (!status) return "color: #f44336"; // Red for no status (error)
-    if (status < 300) return "color: #4caf50"; // Green for 2xx
-    if (status < 400) return "color: #ff9800"; // Orange for 3xx
-    if (status < 500) return "color: #ff9800"; // Orange for 4xx
-    return "color: #f44336"; // Red for 5xx
-  };
-
-  const getTypeColor = (type) => {
-    if (type === "OUT") return "color: #2196f3"; // Blue for outgoing
-    if (type === "IN") return getStatusColor(status);
-    return "color: #9c27b0"; // Purple for other
-  };
-
-  const typeStyle = getTypeColor(type);
-  const statusStyle = getStatusColor(status);
-
-  // Format the log message
-  if (type === "OUT") {
-    // console.groupCollapsed(`%c[API OUT] ${method} ${url}`, `${typeStyle}; font-weight: bold;`);
-    // console.log(`→ Request: ${formatDataSize(requestSize)}`);
-    // console.groupEnd();
-  } else if (type === "IN") {
-    // console.groupCollapsed(`%c[API IN] ${method} ${url} - ${status}`, `${statusStyle}; font-weight: bold;`);
-    // console.log(`→ Duration: ${duration}ms | Response: ${formatDataSize(responseSize)} | Total: ${formatDataSize(requestSize + responseSize)}`);
-    // console.groupEnd();
-  } else if (type === "ERROR") {
-    // console.groupCollapsed(`%c[API ERROR] ${method} ${url} - ${status || "FAILED"}`, "color: #f44336; font-weight: bold;");
-    // console.log(`→ Error: ${(error && error.message) || "Unknown error"} | Duration: ${duration}ms`);
-    // console.groupEnd();
+  if (typeof duration === "number" && duration > config.warnSlowRequestsMs && url) {
+    console.warn(`⚠️ Slow request detected: ${url} (${duration}ms)`);
   }
-
-  // Add warnings for slow requests or large responses
-  if (duration > config.warnSlowRequestsMs) {
-    // console.warn(`⚠️ Slow request detected: ${url} (${duration}ms)`);
-  }
-
-  if (responseSize / 1024 > config.warnLargeResponseKb) {
-    // console.warn(`⚠️ Large response detected: ${url} (${formatDataSize(responseSize)})`);
+  if (typeof responseSize === "number" && responseSize / 1024 > config.warnLargeResponseKb && url) {
+    console.warn(`⚠️ Large response detected: ${url} (${formatDataSize(responseSize)})`);
   }
 };
 
@@ -146,8 +111,8 @@ const setupInterceptors = () => {
   axiosInstance.interceptors.request.use(
     (config) => {
       // Skip filestore API calls with no fileStoreIds
-      const isFileStoreApi = config.url && config.url.includes("/filestore/v1/files/url");
-      if (isFileStoreApi && (!config.params || !config.params.fileStoreIds)) {
+      const isFileStoreApi = config.url?.includes("/filestore/v1/files/url");
+      if (isFileStoreApi && !config.params?.fileStoreIds) {
         // Skip monitoring for these calls
         return config;
       }
@@ -158,7 +123,6 @@ const setupInterceptors = () => {
         apiCallData.startTime = Date.now();
         interactionPending = false;
 
-        // console.log("%c[API Monitor] New interaction detected → logs reset", "color:#38bdf8;font-weight:bold;");
       }
 
       // Add timestamp to track duration
@@ -175,20 +139,16 @@ const setupInterceptors = () => {
       const method = (config.method && config.method.toUpperCase()) || "UNKNOWN";
       const url = config.url;
 
-      // Log outgoing request
-      logWithColors("OUT", method, url, null, null, requestSize, 0);
+      logWithColors({ url, duration: null, responseSize: 0 });
 
-      // console.log("config.includeHeaders", config.includeHeaders, "h", config.includeFullPayload);
-
-      // Store initial call data
       const callData = {
-        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
         timestamp: Date.now(),
         startPerf: performance.now(),
         page,
         method,
         url,
-        endpoint: url.split("?")[0], // URL without query params
+        endpoint: url?.split("?")[0], // URL without query params
         requestSize,
         status: null,
         duration: null,
@@ -225,10 +185,8 @@ const setupInterceptors = () => {
     (response) => {
       // Skip if no metadata (not tracked by our request interceptor)
       // or if it's a filestore API call with no fileStoreIds
-      const isFileStoreApi = response.config.url && response.config.url.includes("/filestore/v1/files/url");
-      if (!response.config.metadata || (isFileStoreApi && (!response.config.params || !response.config.params.fileStoreIds))) {
-        if (response.config.url && response.config.url.includes("/filestore/v1/files/")) {
-        }
+      const isFileStoreApi = response.config.url?.includes("/filestore/v1/files/url");
+      if (!response.config.metadata || (isFileStoreApi && !response.config.params?.fileStoreIds)) {
         return response;
       }
 
@@ -239,8 +197,8 @@ const setupInterceptors = () => {
 
         // Check for Content-Length header for file downloads
         let responseSize = 0;
-        const contentLength = response.headers && response.headers["content-length"];
-        const contentType = response.headers && response.headers["content-type"];
+        const contentLength = response.headers?.["content-length"];
+        const contentType = response.headers?.["content-type"];
 
         // If it's a binary response or has content-length, use that value
         if (contentLength) {
@@ -263,15 +221,13 @@ const setupInterceptors = () => {
           responseSize = calculateDataSize(response.data);
         }
 
-        const requestSize = calculateDataSize(response.config.data);
-
         // Get request details
         const method = (response.config.method && response.config.method.toUpperCase()) || "UNKNOWN";
         const url = response.config.url;
         const status = response.status;
 
         // Log successful response
-        logWithColors("IN", method, url, status, duration, requestSize, responseSize);
+        logWithColors({ url, duration, responseSize });
 
         // Find and update the stored call data
         const callIndex = apiCallData.calls.findIndex((call) => call.method === method && call.url === url && !call.status);
@@ -300,22 +256,19 @@ const setupInterceptors = () => {
         const config = error.config;
 
         // Skip if no metadata or if it's a filestore API call with no fileStoreIds
-        const isFileStoreApi = config && config.url && config.url.includes("/filestore/v1/files/url");
-        if (!config || !config.metadata || (isFileStoreApi && (!config.params || !config.params.fileStoreIds))) {
+        const isFileStoreApi = config?.url?.includes("/filestore/v1/files/url");
+        if (!config?.metadata || (isFileStoreApi && !config.params?.fileStoreIds)) {
           return Promise.reject(error);
         }
 
-        // Calculate timing
         const endPerf = performance.now();
-        const duration = endPerf - response.config.metadata.startPerf;
+        const duration = endPerf - config.metadata.startPerf;
         const method = (config.method && config.method.toUpperCase()) || "UNKNOWN";
         const url = config.url;
-        const status = response && response.status;
-        const requestSize = calculateDataSize(config.data);
-        const responseSize = calculateDataSize(response && response.data);
+        const status = response?.status;
+        const responseSize = calculateDataSize(response?.data);
 
-        // Log error
-        logWithColors("ERROR", method, url, status, duration, requestSize, responseSize, error);
+        logWithColors({ url, duration, responseSize });
 
         // Find and update the stored call data
         const callIndex = apiCallData.calls.findIndex((call) => call.method === method && call.url === url && !call.status);
@@ -360,7 +313,6 @@ const apiMonitor = {
   init: () => {
     setupInteractionListeners();
     setupInterceptors();
-    // console.log("%c[API Monitor] Initialized and monitoring API calls", "color: #4caf50; font-weight: bold;");
   },
 
   // Get all recorded API calls
@@ -380,7 +332,6 @@ const apiMonitor = {
   // Start recording
   start: () => {
     apiCallData.isRecording = true;
-    // console.log("API Monitor: Recording started");
   },
 
   // Get calls for a specific page

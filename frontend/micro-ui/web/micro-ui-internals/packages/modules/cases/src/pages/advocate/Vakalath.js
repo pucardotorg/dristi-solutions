@@ -48,7 +48,7 @@ const Vakalath = () => {
 
   return (
     <div>
-      Vakalath Display Page
+      Vakalath Display Page{" "}
       <button
         onClick={() => onSubmit(selectedCase?.caseData)}
         style={{

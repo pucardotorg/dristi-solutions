@@ -4,19 +4,19 @@ import { FileUploader } from "react-drag-drop-files";
 import RenderFileCard from "./RenderFileCard";
 import { ReactComponent as DeleteFileIcon } from "../images/delete.svg";
 
-import { UploadIcon } from "@egovernments/digit-ui-react-components";
-import { CustomAddIcon } from "../icons/svgIndex";
+import { CustomAddIcon, UploadIcon } from "../icons/svgIndex";
 import Button from "./Button";
-import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import { DRISTIService } from "../services";
 import { getAuthorizedUuid, getFilingType, sanitizeData } from "../Utils";
 import { EXTENSION_TO_MIME } from "../Utils/constants";
+import PropTypes from "prop-types";
 
 function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError, errors, clearErrors }) {
   const [documentData, setDocumentData] = useState(formData?.[config.key] ? formData?.[config.key] : []);
-  const tenantId = Digit.ULBService.getCurrentTenantId();
-  const { caseId } = window?.Digit.Hooks.useQueryParams();
-  const userInfo = Digit.UserService.getUser()?.info;
+  const Digit = globalThis.Digit ?? {};
+  const tenantId = Digit.ULBService?.getCurrentTenantId?.();
+  const { caseId } = Digit.Hooks.useQueryParams();
+  const userInfo = Digit.UserService?.getUser()?.info;
   const userUuid = userInfo?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
 
@@ -54,12 +54,12 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError,
     <div className="drag-drop-container-desktop">
       <UploadIcon />
       <p className="drag-drop-text">
-        {t("WBH_DRAG_DROP")} <text className="browse-text">{t("WBH_BULK_BROWSE_FILES")}</text>
+        {t("WBH_DRAG_DROP")} <span className="browse-text">{t("WBH_BULK_BROWSE_FILES")}</span>
       </p>
     </div>
   );
 
-  const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
+  const { data: filingTypeData } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
   ]);
 
@@ -126,7 +126,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError,
 
   const handleDeleteDocument = async (index) => {
     let currentDocumentDataCopy = structuredClone(documentData);
-    if (currentDocumentDataCopy?.[index].document?.[0]?.artifactId)
+    if (currentDocumentDataCopy?.[index].document?.[0]?.artifactId) {
       await DRISTIService.createEvidence({
         artifact: {
           artifactType: "DOCUMENTARY",
@@ -143,6 +143,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError,
           },
         },
       });
+    }
     currentDocumentDataCopy.splice(index, 1);
     setDocumentData(currentDocumentDataCopy);
     onSelect(config.key, currentDocumentDataCopy);
@@ -162,12 +163,14 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError,
       {documentData.length > 0 &&
         documentData.map((data, index) => {
           return (
-            <div key={index} className="file-uploader-with-name-sub">
+            <div key={`doc-${index}-${data?.docName ?? ""}`} className="file-uploader-with-name-sub">
               <div className="file-uploader-with-name-header">
                 <h1>{`${t("DOCUMENT_NUMBER_HEADING")} ${index + 1}`}</h1>
 
                 {!config?.disable && (["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"]?.includes(config?.state) || index >= config?.doclength) && (
-                  <span
+                  <button
+                    type="button"
+                    disabled={Boolean(config?.disable)}
                     onClick={() => {
                       if (!config?.disable && (["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"]?.includes(config?.state) || index >= config?.doclength)) {
                         clearErrors(`${config?.key}_${index}`);
@@ -177,10 +180,14 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError,
                     style={{
                       cursor: config?.disable ? "not-allowed" : "pointer",
                       opacity: config?.disable ? 0.5 : 1,
+                      background: "none",
+                      border: "none",
+                      padding: 0,
                     }}
+                    aria-label={t("CS_COMMON_DELETE")}
                   >
                     <DeleteFileIcon />
-                  </span>
+                  </button>
                 )}
               </div>
               <div className="drag-drop-visible-main-with-custom-name">
@@ -188,7 +195,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError,
                   let currentValue = data && data[input.name];
                   if (input.type === "text") {
                     return (
-                      <div className="file-name-field">
+                      <div className="file-name-field" key={`${input?.name}-${index}`}>
                         <h1>{t("DOCUMENT_NAME_TITLE")}</h1>
                         <TextInput
                           className="field desktop-w-full"
@@ -208,7 +215,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError,
                     let fileErrors = fileValidator(currentValue, input);
                     const showFileUploader = currentValue.length ? input?.isMultipleUpload : true;
                     return (
-                      <div className="drag-drop-visible-main">
+                      <div className="drag-drop-visible-main" key={`${input?.name}-${index}`}>
                         <div className="drag-drop-heading-main">
                           <div className="drag-drop-heading">
                             <span>
@@ -241,19 +248,19 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError,
                               }}
                               name="file"
                               types={input?.fileTypes}
-                              children={dragDropJSX}
-                              key={input?.name}
-                              // disabled={config?.disable}
-                              onTypeError={(file) => {
+                              key={`${input?.name}-${index}`}
+                              onTypeError={() => {
                                 setError(`${config.key}_${index}`, { message: t("CS_INVALID_FILE_TYPE") });
                               }}
-                            />
+                            >
+                              {dragDropJSX}
+                            </FileUploader>
                             <div className="upload-guidelines-div">{input.uploadGuidelines && <p>{t(input.uploadGuidelines)}</p>}</div>
                           </div>
                         )}
                         {errors?.[`${config.key}_${index}`] && (
                           <span className="alert-error">
-                            {t(errors?.[`${config.key}_${index}`]?.msg || errors?.[`${config.key}_${index}`].message || "CORE_REQUIRED_FIELD_ERROR")}
+                            {t(errors?.[`${config.key}_${index}`]?.msg || errors?.[`${config.key}_${index}`]?.message || "CORE_REQUIRED_FIELD_ERROR")}
                           </span>
                         )}
                       </div>
@@ -265,7 +272,6 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError,
           );
         })}
       <Button
-        // isDisabled={config?.disable || (config?.state && config?.state !== CaseWorkflowState.DRAFT_IN_PROGRESS)}
         variation="secondary"
         onButtonClick={handleAddDocument}
         className="add-new-document"
@@ -273,9 +279,27 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError,
         label={t("ADD_DOCUMENT")}
         labelClassName="add-new-document-label"
       />
-      {/* {<span onClick={handleAddDocument}> + {t("ADD_DOCUMENT")}</span>} */}
     </div>
   );
 }
+
+SelectUploadDocWithName.propTypes = {
+  clearErrors: PropTypes.func,
+  config: PropTypes.shape({
+    disable: PropTypes.bool,
+    doclength: PropTypes.number,
+    filingNumber: PropTypes.string,
+    key: PropTypes.string.isRequired,
+    populators: PropTypes.shape({
+      inputs: PropTypes.array,
+    }),
+    state: PropTypes.any,
+  }).isRequired,
+  errors: PropTypes.object,
+  formData: PropTypes.object,
+  onSelect: PropTypes.func.isRequired,
+  setError: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired,
+};
 
 export default SelectUploadDocWithName;

@@ -13,7 +13,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .image-viewer-wrap {
     @apply flex fixed top-0 left-0 w-full h-full z-20 bg-text-primary p-md;
 

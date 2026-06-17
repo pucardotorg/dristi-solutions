@@ -1,5 +1,60 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { CardLabelError } from "@egovernments/digit-ui-react-components";
+
+const buildNamesFromSelectedAttendees = (attendees, t) =>
+  attendees?.length > 0 ? attendees.map((item) => t(item?.name)).join(", ") : "";
+
+const buildNamesFromOrderAttendance = (codes, attendeeOptions, t) => {
+  if (!codes?.length || !attendeeOptions?.length) return "";
+  return attendeeOptions
+    .filter((option) => codes.includes(option.code))
+    .map((item) => t(item?.name))
+    .join(", ");
+};
+
+const getPresentAttendanceText = ({ presentAttendees, currentOrder, attendeeOptions, t }) => {
+  const fromSelections = buildNamesFromSelectedAttendees(presentAttendees, t);
+  if (fromSelections) return fromSelections;
+  return buildNamesFromOrderAttendance(currentOrder?.attendance?.Present, attendeeOptions, t);
+};
+
+const getAbsentAttendanceText = ({ absentAttendees, currentOrder, attendeeOptions, t }) => {
+  const fromSelections = buildNamesFromSelectedAttendees(absentAttendees, t);
+  if (fromSelections) return fromSelections;
+  return buildNamesFromOrderAttendance(currentOrder?.attendance?.Absent, attendeeOptions, t);
+};
+
+const formatAttendanceSummary = ({ presentAttendees, absentAttendees, currentOrder, attendeeOptions, t }) => {
+  const presentNames = getPresentAttendanceText({ presentAttendees, currentOrder, attendeeOptions, t });
+  const absentNames = getAbsentAttendanceText({ absentAttendees, currentOrder, attendeeOptions, t });
+  const presentText = presentNames ? `Present: ${presentNames}` : "";
+  const absentText = absentNames ? `Absent: ${absentNames}` : "";
+  const newline = presentText && absentText ? "\n" : "";
+  return `${presentText}${newline}${absentText}`;
+};
+
+const resolvePurposeForNextHearingLabel = (purposeOfHearing, currentOrder) => {
+  if (purposeOfHearing && typeof purposeOfHearing === "object" && purposeOfHearing.code != null) {
+    return purposeOfHearing.code;
+  }
+  if (purposeOfHearing != null && purposeOfHearing !== "" && typeof purposeOfHearing !== "object") {
+    return purposeOfHearing;
+  }
+  return currentOrder?.purposeOfNextHearing;
+};
+
+const formatNextHearingSummary = (t, skipScheduling, purposeOfHearing, currentOrder, nextHearingDate) => {
+  if (skipScheduling) {
+    return t("NO_NEXT_HEARING");
+  }
+  const purposeKey = resolvePurposeForNextHearingLabel(purposeOfHearing, currentOrder);
+  const purposeLine = purposeKey ? `${t("PURPOSE_OF_NEXT_HEARING")} ${t(purposeKey)}` : "";
+  const dateRaw = nextHearingDate || currentOrder?.nextHearingDate;
+  const divider = purposeLine && dateRaw ? "\n" : "";
+  const dateLine = dateRaw ? `${t("DATE_TEXT")} ${new Date(dateRaw).toLocaleDateString()}` : "";
+  return `${purposeLine}${divider}${dateLine}`;
+};
 
 /**
  * Renders the "Order Text" right column including:
@@ -22,8 +77,6 @@ const OrderTextSection = ({
   skipScheduling,
   purposeOfHearing,
   nextHearingDate,
-  purposeOfHearingConfig,
-  nextDateOfHearing,
 }) => {
   return (
     <div className="generate-orders-v2-column">
@@ -32,35 +85,7 @@ const OrderTextSection = ({
         <div>
           <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>{t("ORDER_ATTENDANCE")}</div>
           <textarea
-            value={(() => {
-              // Use presentAttendees if available, otherwise use currentOrder.attendance.Present
-              const presentNames =
-                presentAttendees?.length > 0
-                  ? presentAttendees?.map((item) => t(item?.name))?.join(", ")
-                  : currentOrder?.attendance?.Present?.length > 0
-                  ? attendeeOptions
-                      ?.filter((option) => currentOrder.attendance.Present.includes(option.code))
-                      ?.map((item) => t(item?.name))
-                      ?.join(", ")
-                  : "";
-
-              // Use absentAttendees if available, otherwise use currentOrder.attendance.Absent
-              const absentNames =
-                absentAttendees?.length > 0
-                  ? absentAttendees?.map((item) => t(item?.name))?.join(", ")
-                  : currentOrder?.attendance?.Absent?.length > 0
-                  ? attendeeOptions
-                      ?.filter((option) => currentOrder.attendance.Absent.includes(option.code))
-                      ?.map((item) => t(item?.name))
-                      ?.join(", ")
-                  : "";
-
-              const presentText = presentNames ? `Present: ${presentNames}` : "";
-              const absentText = absentNames ? `Absent: ${absentNames}` : "";
-              const newline = presentText && absentText ? "\n" : "";
-
-              return `${presentText}${newline}${absentText}`;
-            })()}
+            value={formatAttendanceSummary({ presentAttendees, absentAttendees, currentOrder, attendeeOptions, t })}
             rows={3}
             maxLength={1000}
             className={`custom-textarea-style`}
@@ -86,19 +111,7 @@ const OrderTextSection = ({
         <div>
           <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>{t("NEXT_HEARING_TEXT")}</div>
           <textarea
-            value={
-              skipScheduling
-                ? `${t("NO_NEXT_HEARING")}`
-                : `${
-                    purposeOfHearing || currentOrder?.purposeOfNextHearing
-                      ? `${t("PURPOSE_OF_NEXT_HEARING")} ${t(purposeOfHearing?.code || purposeOfHearing || currentOrder?.purposeOfNextHearing)}`
-                      : ``
-                  }${(purposeOfHearing || currentOrder?.purposeOfNextHearing) && (nextHearingDate || currentOrder?.nextHearingDate) ? "\n" : ""}${
-                    nextHearingDate || currentOrder?.nextHearingDate
-                      ? `${t("DATE_TEXT")} ${new Date(nextHearingDate || currentOrder?.nextHearingDate).toLocaleDateString()}`
-                      : ``
-                  }`
-            }
+            value={formatNextHearingSummary(t, skipScheduling, purposeOfHearing, currentOrder, nextHearingDate)}
             rows={3}
             maxLength={1000}
             className={`custom-textarea-style`}
@@ -109,6 +122,31 @@ const OrderTextSection = ({
       )}
     </div>
   );
+};
+
+OrderTextSection.propTypes = {
+  absentAttendees: PropTypes.arrayOf(PropTypes.object),
+  attendeeOptions: PropTypes.arrayOf(PropTypes.shape({ code: PropTypes.string, name: PropTypes.any })),
+  currentInProgressHearing: PropTypes.any,
+  currentOrder: PropTypes.shape({
+    attendance: PropTypes.shape({
+      Absent: PropTypes.array,
+      Present: PropTypes.array,
+    }),
+    hearingNumber: PropTypes.any,
+    itemText: PropTypes.any,
+    nextHearingDate: PropTypes.any,
+    purposeOfNextHearing: PropTypes.any,
+  }),
+  errors: PropTypes.object,
+  itemTextConfig: PropTypes.object,
+  nextHearingDate: PropTypes.any,
+  onItemTextSelect: PropTypes.func.isRequired,
+  presentAttendees: PropTypes.arrayOf(PropTypes.object),
+  purposeOfHearing: PropTypes.any,
+  SelectCustomFormatterTextArea: PropTypes.elementType.isRequired,
+  skipScheduling: PropTypes.bool,
+  t: PropTypes.func.isRequired,
 };
 
 export default OrderTextSection;

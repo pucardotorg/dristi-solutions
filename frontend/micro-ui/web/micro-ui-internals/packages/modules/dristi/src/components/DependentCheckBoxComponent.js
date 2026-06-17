@@ -1,4 +1,5 @@
-import { CardText, CheckBox } from "@egovernments/digit-ui-react-components";
+import { CheckBox } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React, { Fragment } from "react";
 
 function CheckboxItem({ name, checked, onToggle, t }) {
@@ -14,6 +15,13 @@ function CheckboxItem({ name, checked, onToggle, t }) {
   );
 }
 
+CheckboxItem.propTypes = {
+  name: PropTypes.string.isRequired,
+  checked: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired,
+};
+
 function DependentFields({ t, option, selectedValues, handleInputChange }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", margin: "10px 0px" }}>
@@ -23,7 +31,7 @@ function DependentFields({ t, option, selectedValues, handleInputChange }) {
       </span>
       <div style={{ display: "flex", flexDirection: "row", gap: "30px", maxHeight: "40px" }}>
         {option?.dependentFields?.map((field) => (
-          <div key={field} style={{ display: "flex", flexDirection: "row", gap: "40px", justifyContent: "flex-start" }}>
+          <div key={`${field.name}-${field.individualId}`} style={{ display: "flex", flexDirection: "row", gap: "40px", justifyContent: "flex-start" }}>
             <label>
               <CheckBox
                 value={JSON.stringify(field)}
@@ -45,6 +53,23 @@ function DependentFields({ t, option, selectedValues, handleInputChange }) {
   );
 }
 
+const optionShape = PropTypes.shape({
+  name: PropTypes.string,
+  dependentText: PropTypes.string,
+  dependentFields: PropTypes.array,
+});
+
+const selectedAttendeesShape = PropTypes.shape({
+  attendees: PropTypes.arrayOf(PropTypes.string),
+});
+
+DependentFields.propTypes = {
+  t: PropTypes.func.isRequired,
+  option: optionShape.isRequired,
+  selectedValues: selectedAttendeesShape,
+  handleInputChange: PropTypes.func.isRequired,
+};
+
 function DependentCheckBoxComponent({ t, options, onInputChange, selectedValues }) {
   const toggleCheckbox = (option) => {
     const updatedValues = {
@@ -56,9 +81,8 @@ function DependentCheckBoxComponent({ t, options, onInputChange, selectedValues 
 
   const handleInputChange = (e, option) => {
     const { value, checked } = e.target;
-    const index = selectedValues[option].attendees
-      .map((attendee) => JSON.parse(attendee).individualId)
-      .findIndex((id) => id === JSON.parse(value).individualId);
+    const attendeeIds = selectedValues[option].attendees.map((attendee) => JSON.parse(attendee).individualId);
+    const index = attendeeIds.indexOf(JSON.parse(value).individualId);
     const newSelectedValues = {
       ...selectedValues,
       [option]: {
@@ -86,7 +110,7 @@ function DependentCheckBoxComponent({ t, options, onInputChange, selectedValues 
           {options?.checkBoxes?.map(
             (option) =>
               option?.dependentFields && (
-                <Fragment>
+                <Fragment key={option?.name}>
                   {selectedValues[option?.name] && (
                     <DependentFields t={t} option={option} selectedValues={selectedValues[option?.name]} handleInputChange={handleInputChange} />
                   )}
@@ -98,5 +122,14 @@ function DependentCheckBoxComponent({ t, options, onInputChange, selectedValues 
     </div>
   );
 }
+
+DependentCheckBoxComponent.propTypes = {
+  t: PropTypes.func.isRequired,
+  options: PropTypes.shape({
+    checkBoxes: PropTypes.arrayOf(optionShape),
+  }),
+  onInputChange: PropTypes.func.isRequired,
+  selectedValues: PropTypes.object,
+};
 
 export default DependentCheckBoxComponent;

@@ -24,7 +24,7 @@ const FormStep = ({
   childrenAtTheBottom = true,
   textInputStyle,
 }) => {
-  const { register, watch, errors, handleSubmit } = useForm({
+  const { register, errors, handleSubmit } = useForm({
     defaultValues: _defaultValues,
   });
 
@@ -32,20 +32,21 @@ const FormStep = ({
     onSelect(data);
   };
 
-  var isDisable = isDisabled ? true : config.canDisable && Object.keys(errors).filter((i) => errors[i]).length;
+  const isDisable = Boolean(isDisabled || (config?.canDisable && Object.keys(errors).some((key) => Boolean(errors[key]))));
 
   const inputs = config.inputs?.map((input, index) => {
+    const inputKey = input.name ?? String(index);
     if (input.type === "text") {
       return (
-        <React.Fragment key={index}>
+        <React.Fragment key={inputKey}>
           <div>
             <CardLabel>{t(input.label)}</CardLabel>
             <div className="field-container">
               {componentInFront ? <span className="citizen-card-input citizen-card-input--front">{componentInFront}</span> : null}
               <TextInput
-                key={index}
+                key={inputKey}
                 name={input.name}
-                defaultValue={defaultValue && defaultValue[input.name]}
+                defaultValue={defaultValue?.[input.name]}
                 value={value}
                 onChange={onChange}
                 minlength={input.validation.minlength}
@@ -63,13 +64,15 @@ const FormStep = ({
         </React.Fragment>
       );
     }
-    if (input.type === "textarea")
+    if (input.type === "textarea") {
       return (
-        <React.Fragment key={index}>
+        <React.Fragment key={inputKey}>
           <CardLabel>{t(input.label)}</CardLabel>
-          <TextArea key={index} name={input.name} value={value} onChange={onChange} inputRef={register(input.validation)} maxLength="1024"></TextArea>
+          <TextArea key={inputKey} name={input.name} value={value} onChange={onChange} inputRef={register(input.validation)} maxLength="1024" />
         </React.Fragment>
       );
+    }
+    return null;
   });
 
   return (
@@ -93,11 +96,27 @@ const FormStep = ({
 };
 
 FormStep.propTypes = {
-  config: PropTypes.shape({}),
+  t: PropTypes.func,
+  children: PropTypes.node,
+  config: PropTypes.shape({
+    inputs: PropTypes.arrayOf(PropTypes.object),
+    canDisable: PropTypes.bool,
+  }),
   onSelect: PropTypes.func,
   onSkip: PropTypes.func,
+  onChange: PropTypes.func,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  isDisabled: PropTypes.bool,
   onAdd: PropTypes.func,
-  t: PropTypes.func,
+  defaultValue: PropTypes.object,
+  forcedError: PropTypes.string,
+  componentInFront: PropTypes.node,
+  cardStyle: PropTypes.object,
+  isMultipleAllow: PropTypes.bool,
+  showErrorBelowChildren: PropTypes.bool,
+  childrenAtTheBottom: PropTypes.bool,
+  textInputStyle: PropTypes.object,
+  _defaultValues: PropTypes.object,
 };
 
 FormStep.defaultProps = {

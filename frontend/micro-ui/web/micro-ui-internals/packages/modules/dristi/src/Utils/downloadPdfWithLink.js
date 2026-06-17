@@ -1,7 +1,7 @@
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const downloadPdfWithLink = async (url, fileName) => {
-  if (!Boolean(url)) {
+  if (!url) {
     return;
   }
 

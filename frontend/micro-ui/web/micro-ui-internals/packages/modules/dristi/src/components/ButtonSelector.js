@@ -35,7 +35,7 @@ ButtonSelector.propTypes = {
   /**
    * ButtonSelector content
    */
-  label: PropTypes.string.isRequired,
+  label: PropTypes.string,
   /**
    * button border theme
    */

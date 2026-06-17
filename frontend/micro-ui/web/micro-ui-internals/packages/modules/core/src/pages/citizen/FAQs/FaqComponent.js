@@ -1,9 +1,9 @@
 import { ArrowForward } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-const FaqComponent = (props) => {
-  const { question, answer, lastIndex } = props;
+const FaqComponent = ({ question, answer, lastIndex }) => {
   const [isOpen, toggleOpen] = useState(false);
   const { t } = useTranslation();
 
@@ -12,7 +12,7 @@ const FaqComponent = (props) => {
       <div className="faq-question" style={{ justifyContent: "space-between", display: "flex" }}>
         <span>{t(question)}</span>
         <span className={isOpen ? "faqicon rotate" : "faqicon"} style={{ float: "right" }}>
-          {isOpen ? <ArrowForward /> : <ArrowForward />}
+          <ArrowForward />
         </span>
       </div>
 
@@ -22,6 +22,12 @@ const FaqComponent = (props) => {
       {!lastIndex ? <div className="cs-box-border" /> : null}
     </div>
   );
+};
+
+FaqComponent.propTypes = {
+  question: PropTypes.string.isRequired,
+  answer: PropTypes.string.isRequired,
+  lastIndex: PropTypes.bool.isRequired,
 };
 
 export default FaqComponent;

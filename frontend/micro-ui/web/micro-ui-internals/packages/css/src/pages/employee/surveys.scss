@@ -181,7 +181,7 @@ border-left-width: calc(2px * calc(1 - var(--tw-divide-x-reverse)));
 }
 
 
-@screen dt {
+@media (min-width: 780px) {
   .surveydetailsform-wrapper {
     .surveyformfield {
       @apply items-center;

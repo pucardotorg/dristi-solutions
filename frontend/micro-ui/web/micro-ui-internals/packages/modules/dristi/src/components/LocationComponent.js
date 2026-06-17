@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import React, { useCallback, useMemo, useState } from "react";
 import { LabelFieldPair, CardLabel, TextInput, CardLabelError, RadioButtons } from "@egovernments/digit-ui-react-components";
 import LocationSearch, { defaultCoordinates } from "./LocationSearch";
@@ -269,6 +270,26 @@ const LocationComponent = ({
       })}
     </div>
   );
+};
+
+const locationConfigPropType = PropTypes.shape({
+  key: PropTypes.string.isRequired,
+  populators: PropTypes.shape({
+    inputs: PropTypes.arrayOf(PropTypes.object),
+  }),
+});
+
+LocationComponent.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: locationConfigPropType.isRequired,
+  onLocationSelect: PropTypes.func.isRequired,
+  locationFormData: PropTypes.object,
+  errors: PropTypes.object,
+  setError: PropTypes.func,
+  clearErrors: PropTypes.func,
+  mapIndex: PropTypes.number,
+  disable: PropTypes.bool,
+  isAutoFilledDisabled: PropTypes.bool,
 };
 
 export default LocationComponent;

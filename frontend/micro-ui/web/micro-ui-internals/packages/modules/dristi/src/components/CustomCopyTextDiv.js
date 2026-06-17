@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import { CardText } from "@egovernments/digit-ui-react-components";
 import { CopyIcon } from "../icons/svgIndex";
 
@@ -14,23 +15,23 @@ const CustomCopyTextDiv = ({
   isShowValue = true,
   customTextStyle,
 }) => {
-  const [copiedIndex, setCopiedIndex] = useState(null); // Track the index of the copied item
+  const [copiedIndex, setCopiedIndex] = useState(null);
 
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
   };
 
   const dataCopy = (index, duration = 3000) => {
-    setCopiedIndex(index); // Set the copied index
+    setCopiedIndex(index);
     setTimeout(() => {
-      setCopiedIndex(null); // Reset after the duration
+      setCopiedIndex(null);
     }, duration);
   };
 
   return (
     <div style={{ borderRadius: "10px", backgroundColor: "#F7F5F3", padding: "10px", width: "100%", ...cardStyle }}>
       {data.map(({ key, value, copyData = true, isLocalization = true, customText = "" }, index) => (
-        <div key={index} style={{ display: "flex", marginBottom: "10px", ...subCardStyle }}>
+        <div key={key} style={{ display: "flex", marginBottom: "10px", ...subCardStyle }}>
           {!isCenter && (
             <div style={{ flex: 1, ...textWrapperStyle }}>
               <CardText className={"copy-key-text"} style={keyStyle}>
@@ -52,11 +53,11 @@ const CustomCopyTextDiv = ({
                 }}
                 onClick={() => {
                   handleCopy(value);
-                  dataCopy(index); // Pass the current index to the dataCopy function
+                  dataCopy(index);
                 }}
               >
                 <CopyIcon />
-                {copiedIndex === index ? "Copied" : `Copy ${customText}`} {/* Show "Copied" only for the clicked item */}
+                {copiedIndex === index ? "Copied" : `Copy ${customText}`}
               </button>
             )}
           </div>
@@ -64,6 +65,27 @@ const CustomCopyTextDiv = ({
       ))}
     </div>
   );
+};
+
+CustomCopyTextDiv.propTypes = {
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      key: PropTypes.string,
+      value: PropTypes.string,
+      copyData: PropTypes.bool,
+      isLocalization: PropTypes.bool,
+      customText: PropTypes.string,
+    })
+  ),
+  t: PropTypes.func,
+  keyStyle: PropTypes.object,
+  valueStyle: PropTypes.object,
+  textWrapperStyle: PropTypes.object,
+  cardStyle: PropTypes.object,
+  subCardStyle: PropTypes.object,
+  isCenter: PropTypes.bool,
+  isShowValue: PropTypes.bool,
+  customTextStyle: PropTypes.object,
 };
 
 export default CustomCopyTextDiv;

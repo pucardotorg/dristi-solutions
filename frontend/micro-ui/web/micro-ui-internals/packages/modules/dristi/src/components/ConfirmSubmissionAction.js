@@ -1,8 +1,26 @@
-import React, { useState } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import Modal from "./Modal";
-import { CheckBox, TextArea } from "@egovernments/digit-ui-react-components";
+import { TextArea } from "@egovernments/digit-ui-react-components";
 import { sanitizeData } from "../Utils";
 import { CloseBtn } from "./ModalComponents";
+
+const SubmissionHeading = ({ label }) => (
+  <div className="evidence-title">
+    <h1 className="heading-m">{label}</h1>
+  </div>
+);
+
+SubmissionHeading.propTypes = {
+  label: PropTypes.string,
+};
+
+const getActionSaveLabel = (generateOrder, type, t) => {
+  if (generateOrder) {
+    return type === "reject" ? t("GENERATE_REJECTION_ORDER") : t("GENERATE_ACCEPTANCE_ORDER");
+  }
+  return type === "reject" ? t("REJECT_SUBMISSION") : t("ACCEPT_SUBMISSION");
+};
 
 function ConfirmSubmissionAction({
   t,
@@ -15,30 +33,12 @@ function ConfirmSubmissionAction({
   handleBack,
   applicationType,
 }) {
-  const [generateOrder, setGenerateOrder] = useState(true);
-  
-  const Heading = (props) => {
-    return (
-      <div className="evidence-title">
-        <h1 className="heading-m">{props.label}</h1>
-      </div>
-    );
-  };
-
-  const checkBoxLabel = type === "reject" ? t("GENERATE_ORDER_FOR_REJECTION") : t("GENERATE_ORDER_FOR_ACCEPTANCE");
-  const header = type === "reject" ? t("REJECT_SUBMISSION_HEADER") : t("ACCEPT_SUBMISSION_HEADER");
-  const actionSaveLabel = generateOrder
-    ? type === "reject"
-      ? t("GENERATE_REJECTION_ORDER")
-      : t("GENERATE_ACCEPTANCE_ORDER")
-    : type === "reject"
-    ? t("REJECT_SUBMISSION")
-    : t("ACCEPT_SUBMISSION");
+  const generateOrder = true;
 
   return (
     <Modal
       headerBarEnd={<CloseBtn onClick={handleBack} />}
-      headerBarMain={<Heading label={`${t("ADD")} ${t(applicationType)} ${t("DETAILS")}`} />}
+      headerBarMain={<SubmissionHeading label={`${t("ADD")} ${t(applicationType)} ${t("DETAILS")}`} />}
       actionCancelLabel={t("CS_COMMON_BACK")}
       actionSaveLabel={t("CONFIRM")}
       actionCancelOnSubmit={handleBack}
@@ -49,22 +49,6 @@ function ConfirmSubmissionAction({
       isDisabled={!reasonOfApplication}
     >
       <div>
-        {/* <div style={{ marginTop: 10 }}>{t("REJECT_ACCEPT_SUBMISSION_TEXT")}</div>
-        {!generateOrder && type === "reject" && <h1 style={{ margin: "10px 0px 3px 0px" }}>{t("PURPOSE_OF_REJECTION")}</h1>}
-        {!generateOrder && type === "reject" && (
-          <TextArea style={{ marginTop: "0px" }} placeholder={t("TYPE_HERE_PLACEHOLDER")} name={t("PURPOSE_OF_REJECTION")} />
-        )}
-        <div className="confirm-submission-checkbox">
-          <CheckBox
-            onChange={() => {
-              setGenerateOrder((prev) => !prev);
-            }}
-            label={checkBoxLabel}
-            checked={generateOrder}
-            disable={disableCheckBox}
-          />
-        </div> */}
-
         <div style={{ padding: "10px 0px" }}>
           <h3 style={{ margin: "10px 0px 6px 0px" }}>{type === "reject" ? t("REASON_FOR_REJECTION_APPLICATION") : t("REASON_FOR_ACCEPTANCE")}</h3>
           <TextArea
@@ -79,5 +63,17 @@ function ConfirmSubmissionAction({
     </Modal>
   );
 }
+
+ConfirmSubmissionAction.propTypes = {
+  t: PropTypes.func,
+  type: PropTypes.string,
+  setShowConfirmationModal: PropTypes.func,
+  handleAction: PropTypes.func,
+  disableCheckBox: PropTypes.bool,
+  setReasonOfApplication: PropTypes.func,
+  reasonOfApplication: PropTypes.string,
+  handleBack: PropTypes.func,
+  applicationType: PropTypes.string,
+};
 
 export default ConfirmSubmissionAction;
