@@ -981,6 +981,11 @@ function EFilingCases({ path }) {
                 },
             condonationFileUpload: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload,
           };
+          let condonationDoc =
+            formdata?.[index]?.data?.condonationFileUpload || caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload;
+          if (condonationDoc) {
+            setFormDataValue.current?.("condonationFileUpload", condonationDoc);
+          }
 
           return data;
         } else {
