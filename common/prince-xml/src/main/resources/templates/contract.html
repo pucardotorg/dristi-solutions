@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Contract</title>
+    <style>
+        body { font-family: Times, serif; margin: 40px; line-height: 1.6; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .section { margin-bottom: 30px; }
+        .parties { display: flex; justify-content: space-between; margin-bottom: 30px; }
+        .party { width: 45%; }
+        .signature-section { margin-top: 60px; display: flex; justify-content: space-between; }
+        .signature-box { width: 45%; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>CONTRACT AGREEMENT</h1>
+        <p>Contract No: ${contractNumber}</p>
+        <p>Date: ${contractDate}</p>
+    </div>
+
+    <div class="parties">
+        <div class="party">
+            <h3>Party A:</h3>
+            <p><strong>${partyA.name}</strong></p>
+            <p>${partyA.address}</p>
+            <p>${partyA.city}, ${partyA.state} ${partyA.zipCode}</p>
+        </div>
+        <div class="party">
+            <h3>Party B:</h3>
+            <p><strong>${partyB.name}</strong></p>
+            <p>${partyB.address}</p>
+            <p>${partyB.city}, ${partyB.state} ${partyB.zipCode}</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Terms and Conditions:</h3>
+        <p>${terms}</p>
+    </div>
+
+    <div class="section">
+        <h3>Duration:</h3>
+        <p>From: ${startDate} To: ${endDate}</p>
+    </div>
+
+    <div class="section">
+        <h3>Amount:</h3>
+        <p>Total Contract Value: $${amount}</p>
+    </div>
+
+    <div class="signature-section">
+        <div class="signature-box">
+            <p>Party A Signature:</p>
+            <div class="signature-area">
+                <p>Authorized Signature:</p>
+                <!-- Signature field will be added automatically if enabled -->
+            </div>
+            <p>${partyA.name}</p>
+            <p>Date: _________________</p>
+        </div>
+        <div class="signature-box">
+            <p>Party B Signature:</p>
+            <div class="signature-area">
+                <p>Authorized Signature:</p>
+                <!-- Signature field will be added automatically if enabled -->
+            </div>
+            <p>${partyB.name}</p>
+            <p>Date: _________________</p>
+        </div>
+    </div>
+</body>
+</html>
