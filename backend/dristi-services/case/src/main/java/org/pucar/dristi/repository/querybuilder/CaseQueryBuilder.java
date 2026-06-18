@@ -144,13 +144,23 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addCriteria(criteria.getFilingNumber() == null ? null : "%" + criteria.getFilingNumber() + "%", query, firstCriteria, "LOWER(cases.filingnumber) LIKE LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
-                firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+               // firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
-                firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+               // firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
                 firstCriteria = addJsonbArrayCriteria(criteria.getSecondaryStage(), query, firstCriteria, "cases.secondaryStage", preparedStmtList, preparedStmtArgList);
 
-                addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+               // addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+
+                firstCriteria = addUserVisibilityCriteria(
+                        criteria.getAdvocateId(),
+                        criteria.getPoaHolderIndividualId(),
+                        criteria.getIsClerk(),
+                        preparedStmtList,
+                        preparedStmtArgList,
+                        requestInfo,
+                        query,
+                        firstCriteria);
             }
 
             return query.toString();
@@ -185,10 +195,30 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addCaseSearchTextCriteria(criteria, query, firstCriteria, preparedStmtList, preparedStmtArgList);
 
-                firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                if (criteria.getAdvocateId() != null && !criteria.getAdvocateId().isEmpty()) {
 
-                firstCriteria = addAdvocateCriteriaForListSearch(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), criteria.getOfficeAdvocateId(), criteria.getIsMemberActiveInCase(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                    firstCriteria = addAdvocateCriteriaForListSearch(
+                            criteria.getAdvocateId(),
+                            criteria.getPoaHolderIndividualId(),
+                            criteria.getOfficeAdvocateId(),
+                            criteria.getIsMemberActiveInCase(),
+                            preparedStmtList,
+                            preparedStmtArgList,
+                            requestInfo,
+                            query,
+                            firstCriteria);
 
+                } else {
+
+                    firstCriteria = addLitigantCriteria(
+                            criteria.getLitigantId(),
+                            criteria.getPoaHolderIndividualId(),
+                            preparedStmtList,
+                            preparedStmtArgList,
+                            requestInfo,
+                            query,
+                            firstCriteria);
+                }
                 firstCriteria = addJsonbArrayCriteria(criteria.getSecondaryStage(), query, firstCriteria, "cases.secondaryStage", preparedStmtList, preparedStmtArgList);
 
                 firstCriteria = addListCriteria(criteria.getStatus(), query, firstCriteria, "cases.status", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
@@ -267,15 +297,32 @@ public class CaseQueryBuilder {
                     "        SELECT dcr.case_id" +
                     "        FROM dristi_case_representatives dcr" +
                     "        WHERE dcr.advocateId = ? AND dcr.isactive = true" +
+
                     "        UNION" +
+
+                    "        SELECT litigant.case_id" +
+                    "        FROM dristi_case_litigants litigant" +
+                    "        WHERE litigant.individualId = ? AND litigant.isactive = true" +
+
+                    "        UNION" +
+
                     "        SELECT poaholders.case_id" +
                     "        FROM dristi_case_poaholders poaholders" +
                     "        WHERE poaholders.individual_id = ? AND poaholders.is_active = true))" +
-                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('DELETED_DRAFT'))");
+
+                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) )" +
+                    " AND (cases.status NOT IN ('DELETED_DRAFT'))");
             preparedStmtList.add(advocateId);
             preparedStmtArgList.add(Types.VARCHAR);
+
+// litigant visibility
             preparedStmtList.add(poaHolderIndividualId);
             preparedStmtArgList.add(Types.VARCHAR);
+
+// poa visibility
+            preparedStmtList.add(poaHolderIndividualId);
+            preparedStmtArgList.add(Types.VARCHAR);
+
             preparedStmtList.add(advocateId);
             preparedStmtArgList.add(Types.VARCHAR);
             firstCriteria = false;
@@ -317,6 +364,107 @@ public class CaseQueryBuilder {
             firstCriteria = false;
         }
         return firstCriteria;
+    }
+
+    private boolean addUserVisibilityCriteria(
+            String advocateId,
+            String poaHolderIndividualId,
+            Boolean isClerk,
+            List<Object> preparedStmtList,
+            List<Integer> preparedStmtArgList,
+            RequestInfo requestInfo,
+            StringBuilder query,
+            boolean firstCriteria) {
+
+        addClauseIfRequired(query, firstCriteria);
+
+        String userUuid = requestInfo.getUserInfo().getUuid();
+
+        query.append("(");
+
+        // Base visibility for everyone (Litigant + POA)
+        query.append("""
+        cases.id IN (
+
+            SELECT litigant.case_id
+            FROM dristi_case_litigants litigant
+            WHERE litigant.individualId = ? AND litigant.isactive = true
+
+            UNION
+
+            SELECT poaholders.case_id
+            FROM dristi_case_poaholders poaholders
+            WHERE poaholders.individual_id = ? AND poaholders.is_active = true
+    """);
+
+        preparedStmtList.add(poaHolderIndividualId);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add(poaHolderIndividualId);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        // Advocate visibility
+        if (advocateId != null && !advocateId.isEmpty()) {
+            query.append("""
+            UNION
+
+            SELECT dcr.case_id
+            FROM dristi_case_representatives dcr
+            WHERE dcr.advocateId = ? AND dcr.isactive = true
+        """);
+
+            preparedStmtList.add(advocateId);
+            preparedStmtArgList.add(Types.VARCHAR);
+        }
+
+        // Clerk visibility
+        if (Boolean.TRUE.equals(isClerk)) {
+            query.append("""
+            UNION
+
+            SELECT aocm.case_id
+            FROM dristi_advocate_office_case_member aocm
+            WHERE aocm.member_user_uuid = ?
+              AND aocm.is_active = true
+        """);
+
+            preparedStmtList.add(userUuid);
+            preparedStmtArgList.add(Types.VARCHAR);
+        }
+
+        query.append(")");
+
+        // Draft visibility
+        query.append("""
+        OR (
+            cases.status = 'DRAFT_IN_PROGRESS'
+            AND cases.createdby = ?
+        )
+    """);
+
+        preparedStmtList.add(userUuid);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        // Pending advocate requests only for advocates
+        if (advocateId != null && !advocateId.isEmpty()) {
+
+            query.append("""
+            OR EXISTS (
+                SELECT 1
+                FROM jsonb_array_elements(pendingAdvocateRequests) elem
+                WHERE elem->>'advocateId' = ?
+            )
+        """);
+
+            preparedStmtList.add(advocateId);
+            preparedStmtArgList.add(Types.VARCHAR);
+        }
+
+        query.append(")");
+
+        query.append(" AND cases.status NOT IN ('DELETED_DRAFT')");
+
+        return false;
     }
 
     private boolean addClerkCriteria(Boolean isClerk, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
@@ -409,11 +557,21 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addCaseSearchTextCriteria(criteria, query, firstCriteria, preparedStmtList, preparedStmtArgList);
 
-                firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+//                firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+//
+//                firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+//
+//                firstCriteria = addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
-                firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
-
-                firstCriteria = addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                firstCriteria = addUserVisibilityCriteria(
+                        criteria.getAdvocateId(),
+                        criteria.getPoaHolderIndividualId(),
+                        criteria.getIsClerk(),
+                        preparedStmtList,
+                        preparedStmtArgList,
+                        requestInfo,
+                        query,
+                        firstCriteria);
 
                 firstCriteria = addJsonbArrayCriteria(criteria.getSecondaryStage(), query, firstCriteria, "cases.secondaryStage", preparedStmtList, preparedStmtArgList);
 
