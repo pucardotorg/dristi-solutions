@@ -13,8 +13,12 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(js)$/,
-        exclude: /node_modules/,
+        test: /\.(js|mjs)$/,
+        // Transpile app source plus the modern (ES2020+) PDF viewer packages,
+        // which ship untranspiled syntax that webpack 4's parser cannot read.
+        exclude: (modulePath) =>
+          /node_modules/.test(modulePath) &&
+          !/[\\/]node_modules[\\/](@cyntler[\\/]react-doc-viewer|react-pdf|pdfjs-dist)[\\/]/.test(modulePath),
         use: {
           loader: "babel-loader",
           options: {
