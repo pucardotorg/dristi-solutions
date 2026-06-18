@@ -144,23 +144,26 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addCriteria(criteria.getFilingNumber() == null ? null : "%" + criteria.getFilingNumber() + "%", query, firstCriteria, "LOWER(cases.filingnumber) LIKE LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
-               // firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                // firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
-               // firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                // firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
                 firstCriteria = addJsonbArrayCriteria(criteria.getSecondaryStage(), query, firstCriteria, "cases.secondaryStage", preparedStmtList, preparedStmtArgList);
 
-               // addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
-
-                firstCriteria = addUserVisibilityCriteria(
-                        criteria.getAdvocateId(),
-                        criteria.getPoaHolderIndividualId(),
-                        criteria.getIsClerk(),
-                        preparedStmtList,
-                        preparedStmtArgList,
-                        requestInfo,
-                        query,
-                        firstCriteria);
+                // addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                if (criteria.getPoaHolderIndividualId() != null
+                        || criteria.getAdvocateId() != null
+                        || Boolean.TRUE.equals(criteria.getIsClerk())) {
+                    firstCriteria = addUserVisibilityCriteria(
+                            criteria.getAdvocateId(),
+                            criteria.getPoaHolderIndividualId(),
+                            criteria.getIsClerk(),
+                            preparedStmtList,
+                            preparedStmtArgList,
+                            requestInfo,
+                            query,
+                            firstCriteria);
+                }
             }
 
             return query.toString();
@@ -562,16 +565,19 @@ public class CaseQueryBuilder {
 //                firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 //
 //                firstCriteria = addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
-
-                firstCriteria = addUserVisibilityCriteria(
-                        criteria.getAdvocateId(),
-                        criteria.getPoaHolderIndividualId(),
-                        criteria.getIsClerk(),
-                        preparedStmtList,
-                        preparedStmtArgList,
-                        requestInfo,
-                        query,
-                        firstCriteria);
+                if (criteria.getPoaHolderIndividualId() != null
+                        || criteria.getAdvocateId() != null
+                        || Boolean.TRUE.equals(criteria.getIsClerk())) {
+                    firstCriteria = addUserVisibilityCriteria(
+                            criteria.getAdvocateId(),
+                            criteria.getPoaHolderIndividualId(),
+                            criteria.getIsClerk(),
+                            preparedStmtList,
+                            preparedStmtArgList,
+                            requestInfo,
+                            query,
+                            firstCriteria);
+                }
 
                 firstCriteria = addJsonbArrayCriteria(criteria.getSecondaryStage(), query, firstCriteria, "cases.secondaryStage", preparedStmtList, preparedStmtArgList);
 
