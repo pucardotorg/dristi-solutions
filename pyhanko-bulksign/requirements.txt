@@ -1,0 +1,10 @@
+# PDF signing engine, with PKCS#11 (DSC token) + image-support for visible signatures
+pyHanko[pkcs11,image-support]>=0.25
+# HTTP service
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9    # FastAPI Form() / urlencoded bodies
+python-dotenv>=1.0         # load .env (optional, non-secret config)
+# Test / verification helpers
+requests>=2.31
+cryptography>=42.0         # used by gen_test_cert.py (software-mode testing)

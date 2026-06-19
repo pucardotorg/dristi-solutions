@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.p12
+*.pfx
+.env
+signed-out.pdf
+*-signed.pdf
