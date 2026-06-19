@@ -221,6 +221,25 @@ const DocViewerWrapper = ({
               max-height: none !important;
               height: auto !important;
             }
+            /* react-pdf v9 upgrade fix: the text/annotation layers must overlay
+               the canvas (position:absolute). Without these rules they render as
+               in-flow block elements at full page height (e.g. A4 841.89px),
+               leaving large blank space below every rendered page. */
+            .docviewer-wrapper .react-pdf__Page {
+              position: relative !important;
+            }
+            .docviewer-wrapper .react-pdf__Page__canvas {
+              max-width: 100% !important;
+              height: auto !important;
+            }
+            .docviewer-wrapper .react-pdf__Page__annotations,
+            .docviewer-wrapper .annotationLayer,
+            .docviewer-wrapper .react-pdf__Page__textLayer,
+            .docviewer-wrapper .textLayer {
+              position: absolute !important;
+              top: 0 !important;
+              left: 0 !important;
+            }
           `}
         </style>
 
