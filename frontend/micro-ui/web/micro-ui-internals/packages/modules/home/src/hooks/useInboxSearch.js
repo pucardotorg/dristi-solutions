@@ -14,6 +14,10 @@ function useInboxSearch({ limit = 300, offset = 0 } = {}) {
 
   const fetchInbox = useCallback(
     async (filters, setHearingCount) => {
+      console.log("FETCH_INBOX_CALLED", {
+        caller: new Error().stack.split("\n").slice(1, 5).join(" | "),
+        time: new Date().toLocaleString("en-GB"),
+      });
       setLoading(true);
       setError(null);
       try {
