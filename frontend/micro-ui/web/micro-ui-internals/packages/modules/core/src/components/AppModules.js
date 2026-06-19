@@ -14,6 +14,16 @@ export const AppModules = ({ stateCode, userType, modules, appTenants, additiona
   const { path } = useRouteMatch();
   const location = useLocation();
 
+  const _appModulesRenderCount = React.useRef(0);
+  React.useEffect(() => {
+    _appModulesRenderCount.current++;
+    console.log("APP_MODULES_RENDERED", { count: _appModulesRenderCount.current, time: new Date().toLocaleString("en-GB") });
+  });
+  React.useEffect(() => {
+    console.log("APP_MODULES_MOUNTED", new Date().toLocaleString("en-GB"));
+    return () => console.log("APP_MODULES_UNMOUNTED", new Date().toLocaleString("en-GB"));
+  }, []);
+
   const user = Digit.UserService.getUser();
 
   if (!user || !user?.access_token || !user?.info) {
