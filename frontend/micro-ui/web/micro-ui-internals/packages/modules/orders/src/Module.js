@@ -37,6 +37,16 @@ export const OrdersModule = ({ stateCode, userType, tenants }) => {
     language,
   });
 
+  const _ordersModuleRenderCount = React.useRef(0);
+  React.useEffect(() => {
+    _ordersModuleRenderCount.current++;
+    console.log("ORDERS_MODULE_RENDERED", { count: _ordersModuleRenderCount.current, isLoading, time: new Date().toLocaleString("en-GB") });
+  });
+  React.useEffect(() => {
+    console.log("ORDERS_MODULE_MOUNTED", new Date().toLocaleString("en-GB"));
+    return () => console.log("ORDERS_MODULE_UNMOUNTED", new Date().toLocaleString("en-GB"));
+  }, []);
+
   if (isLoading) {
     return <Loader />;
   }

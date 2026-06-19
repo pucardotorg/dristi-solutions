@@ -129,6 +129,10 @@ const GenerateOrdersV2 = () => {
 
   const fetchCaseDetails = async () => {
     try {
+      console.log("FETCH_CASE_DETAILS_CALLED", {
+        caller: new Error().stack.split("\n").slice(1, 5).join(" | "),
+        time: new Date().toLocaleString("en-GB"),
+      });
       setIsCaseDetailsLoading(true);
       const caseData = await DRISTIService.searchCaseService(
         {
@@ -163,12 +167,21 @@ const GenerateOrdersV2 = () => {
 
   const fetchInbox = useCallback(async () => {
     try {
+      console.log("GENERATE_ORDERS_FETCH_INBOX_CALLED", {
+        caller: new Error().stack.split("\n").slice(1, 5).join(" | "),
+        time: new Date().toLocaleString("en-GB"),
+      });
       const data = await fetchInboxData({ tenantId: tenantId });
       setData(data);
     } catch (err) {
       console.error("error", err);
     }
   }, [tenantId]);
+
+  useEffect(() => {
+    console.log("GENERATE_ORDERS_V2_MOUNTED", new Date().toLocaleString("en-GB"));
+    return () => console.log("GENERATE_ORDERS_V2_UNMOUNTED", new Date().toLocaleString("en-GB"));
+  }, []);
 
   // Fetch case details on component mount
   useEffect(() => {
@@ -1414,6 +1427,14 @@ const GenerateOrdersV2 = () => {
   const defaultOrderData = useMemo(() => createDefaultOrderData({ tenantId, cnrNumber, filingNumber }), [cnrNumber, filingNumber, tenantId]);
 
   useEffect(() => {
+    console.log("ORDERS_DATA_EFFECT_FIRED", {
+      isOrdersLoading,
+      isOrdersFetching,
+      hasOrderNumber: Boolean(orderNumber),
+      ordersListLength: ordersData?.list?.length ?? 0,
+      caller: new Error().stack.split("\n").slice(1, 5).join(" | "),
+      time: new Date().toLocaleString("en-GB"),
+    });
     if (isOrdersLoading || isOrdersFetching) {
       return;
     }

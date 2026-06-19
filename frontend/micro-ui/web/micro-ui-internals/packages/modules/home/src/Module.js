@@ -20,6 +20,16 @@ export const HomeModule = ({ stateCode, userType, tenants }) => {
     language,
   });
 
+  const _homeModuleRenderCount = React.useRef(0);
+  React.useEffect(() => {
+    _homeModuleRenderCount.current++;
+    console.log("HOME_MODULE_RENDERED", { count: _homeModuleRenderCount.current, isLoading, time: new Date().toLocaleString("en-GB") });
+  });
+  React.useEffect(() => {
+    console.log("HOME_MODULE_MOUNTED", new Date().toLocaleString("en-GB"));
+    return () => console.log("HOME_MODULE_UNMOUNTED", new Date().toLocaleString("en-GB"));
+  }, []);
+
   if (isLoading) {
     return <Loader />;
   }
