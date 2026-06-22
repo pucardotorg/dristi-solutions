@@ -24,9 +24,14 @@ import time
 import tkinter as tk
 from tkinter import messagebox, scrolledtext, ttk
 
-# Run from the app's own folder so .env / app.py / pyhanko_signer.py resolve,
-# including when launched by double-click or from a PyInstaller bundle.
-APP_DIR = os.path.dirname(os.path.abspath(sys.argv[0] if getattr(sys, "frozen", False) else __file__))
+# Run from the app's own folder so .env (and, when running from source, app.py /
+# pyhanko_signer.py) resolve -- including when launched by double-click or from a
+# PyInstaller bundle. For a frozen build, the folder is where the executable lives
+# (sys.executable), so staff drop a .env next to PucarBulkSign(.exe).
+if getattr(sys, "frozen", False):
+    APP_DIR = os.path.dirname(os.path.abspath(sys.executable))
+else:
+    APP_DIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(APP_DIR)
 
 try:
@@ -188,6 +193,14 @@ class BulkSignApp:
 
     def _start_worker(self):
         try:
+            if MODE == "software":
+                # Zero-setup testing: make the self-signed cert if it's missing.
+                from gen_test_cert import ensure_test_cert
+
+                ensure_test_cert(
+                    os.environ.get("SIGNER_P12_PATH", "test-cert.p12"),
+                    os.environ.get("SIGNER_P12_PASSWORD", "test").encode("utf-8"),
+                )
             if MODE == "pkcs11":
                 self._log("Checking token and PIN…")
                 from pyhanko_signer import validate_signer

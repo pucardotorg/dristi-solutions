@@ -21,6 +21,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
   --collect-submodules multipart \
   --hidden-import app \
   --hidden-import pyhanko_signer \
+  --hidden-import gen_test_cert \
   bulk_sign_app.py
 
 echo

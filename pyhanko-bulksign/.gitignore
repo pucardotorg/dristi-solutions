@@ -2,7 +2,9 @@
 __pycache__/
 *.p12
 *.pfx
-.env
+# .env is committed as a TESTING (software-mode) default so the app works out of
+# the box. It holds no secrets (the token PIN is never stored). For a real token,
+# edit it locally; take care not to commit machine-specific paths if not desired.
 signed-out.pdf
 *-signed.pdf
 # PyInstaller build artifacts

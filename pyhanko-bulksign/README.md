@@ -53,6 +53,13 @@ status light, and an activity log.
 Either way the app listens on `http://localhost:1620` — the same `BULK_SIGN_URL`
 the frontend already uses. STOP shuts the service down cleanly.
 
+**Test vs token mode:** `.env` ships set to **TEST mode** (`SIGNER_MODE=software`,
+no token — the app auto-creates a self-signed `test-cert.p12` on first START), so
+you can try the whole build → double-click flow immediately. To use a real DSC
+token, edit `.env`: set `SIGNER_MODE=pkcs11` and uncomment the `PKCS11_*` block
+with this machine's module path + labels. The token PIN is never stored; the app
+prompts for it.
+
 The sections below describe the underlying agent (HTTP contract, CLI run, config)
 for developers; staff only need the app above.
 
