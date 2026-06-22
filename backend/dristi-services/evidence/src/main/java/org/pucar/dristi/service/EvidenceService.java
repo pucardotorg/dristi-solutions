@@ -1025,12 +1025,55 @@ public class EvidenceService {
             }
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
-                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
+                double cx = coordinate.getX();
+                double cy = coordinate.getY();
+                double pageWidth = coordinate.getPageWidth();
+                double pageHeight = coordinate.getPageHeight();
+                int sigWidth = config.getEsignSignatureWidth();
+                int sigHeight = config.getEsignSignatureHeight();
+                if (pageWidth > 0) {
+                    double overflow = cx + sigWidth - pageWidth;
+                    if (overflow > 0) {
+                        // Phase 1: reduce width first, down to preferredWidthThreshold
+                        int phase1MaxReduction = sigWidth - config.getEsignSignaturePreferredWidthThreshold();
+                        int phase1Reduction = (int) Math.min(overflow, phase1MaxReduction);
+                        sigWidth -= phase1Reduction;
+                        overflow -= phase1Reduction;
+                        if (overflow > 0) {
+                            // Phase 2: balance offset and width reduction equally
+                            int widthBudget = sigWidth - config.getEsignSignatureMinWidth();
+                            int maxOffset = config.getEsignSignatureMaxLeftOffset();
+                            int half = (int) (overflow / 2);
+                            int wReduce, offset;
+                            if (half <= widthBudget && half <= maxOffset) {
+                                wReduce = (int) overflow / 2;
+                                offset = (int) overflow - wReduce;
+                            } else if (half > widthBudget) {
+                                wReduce = widthBudget;
+                                offset = (int) Math.min(overflow - wReduce, maxOffset);
+                            } else {
+                                offset = maxOffset;
+                                wReduce = (int) Math.min(overflow - offset, widthBudget);
+                            }
+                            sigWidth -= wReduce;
+                            cx = Math.max(cx - offset, 0);
+                        }
+                    }
+                    double remainingOverflow = cx + sigWidth - pageWidth;
+                    if (remainingOverflow > 0) {
+                        cx = Math.max(cx - remainingOverflow, 0);
+                    }
+                }
+                if (pageHeight > 0) {
+                    cy = Math.min(cy, pageHeight - sigHeight);
+                    cy = Math.max(cy, 0);
+                }
+                String coord = (int) Math.floor(cx) + "," + (int) Math.floor(cy);
                 String txnId = java.util.UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
                 java.time.ZonedDateTime timestamp = java.time.ZonedDateTime.now(java.time.ZoneId.of(config.getZoneId()));
 
-                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
+                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo, sigWidth);
                 String artifactId = artifactCriteriaMap.get(coordinate.getFileStoreId()).getArtifactNumber();
                 artifactToSign.setArtifactNumber(artifactId);
                 artifactToSign.setRequest(xmlRequest);
@@ -1134,7 +1177,7 @@ public class EvidenceService {
     }
 
 
-    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
+    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber, int effectiveWidth) {
         log.info("generating request, result= IN_PROGRESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
         Map<String, Object> requestData = new LinkedHashMap<>();
 
@@ -1161,7 +1204,7 @@ public class EvidenceService {
         Map<String, Object> pdf = new LinkedHashMap<>();
         pdf.put(PAGE, pageNumber);
         pdf.put(CO_ORDINATES, coordination);
-        pdf.put(SIZE, config.getEsignSignatureWidth() + "," + config.getEsignSignatureHeight());
+        pdf.put(SIZE, effectiveWidth + "," + config.getEsignSignatureHeight());
         pdf.put(DATE_FORMAT, ESIGN_DATE_FORMAT);
         requestData.put(PDF, pdf);
 
