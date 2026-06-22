@@ -5,3 +5,9 @@ __pycache__/
 .env
 signed-out.pdf
 *-signed.pdf
+# PyInstaller build artifacts
+build/
+dist/
+*.spec
+# Machine-specific desktop launcher (copy from the .example)
+PucarBulkSign.desktop

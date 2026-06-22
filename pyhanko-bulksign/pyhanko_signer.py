@@ -71,6 +71,30 @@ def _build_signer():
     raise RuntimeError(f"Unknown SIGNER_MODE '{mode}' (use 'software' or 'pkcs11')")
 
 
+def validate_signer():
+    """
+    Build the configured signer and confirm it is usable.
+
+    For pkcs11 mode this opens a token session and logs in, which validates the
+    PIN and that the token is reachable -- so the desktop app can give the user
+    immediate feedback on Start instead of failing on every order.
+
+    Returns the signer certificate's Common Name if available (else None).
+    Raises on failure (wrong PIN, token not present, bad config, ...).
+    """
+    def _cn(s):
+        try:
+            return s.subject_name
+        except Exception:
+            return None
+
+    signer_obj = _build_signer()
+    if hasattr(signer_obj, "__enter__"):
+        with signer_obj as real_signer:
+            return _cn(real_signer)
+    return _cn(signer_obj)
+
+
 def sign_pdf_bytes(pdf_bytes: bytes, page: int, x: float, y: float,
                    width: float, height: float, field_name: str = "Signature") -> bytes:
     """

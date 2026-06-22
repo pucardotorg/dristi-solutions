@@ -15,6 +15,49 @@ change is required** — only the `BULK_SIGN_URL` config is repointed at this ag
 
 ---
 
+## Desktop app for court staff (no terminal / Python needed)
+
+`bulk_sign_app.py` is a small window so non-technical staff never touch a command
+line. It embeds the agent and shows: a **PIN box**, **START** / **STOP** buttons, a
+status light, and an activity log.
+
+**Daily use (staff):**
+1. Plug in the DSC token.
+2. Open **PUCAR Bulk Sign**.
+3. Type the token **PIN** → click **START** (status turns green = "ready to sign").
+4. Do the bulk signing in the browser as usual.
+5. Click **STOP** (or close the window) when finished.
+
+**One-time setup (admin/IT), two options:**
+
+- *Option A — packaged executable (best for staff machines, no Python at all):*
+  build once per OS, then just copy two files to each machine.
+  ```bash
+  ./build_app.sh        # Linux  -> dist/PucarBulkSign
+  build_app.bat         # Windows-> dist\PucarBulkSign.exe
+  ```
+  Ship the produced binary **plus a `.env`** (from `.env.example`, with this
+  machine's `PKCS11_MODULE_PATH` + cert/key labels) sitting **next to it**.
+  Double-click to launch. (PyInstaller is not a cross-compiler: build the Windows
+  `.exe` on Windows, the Linux binary on Linux.)
+
+- *Option B — run from source (needs Python on the machine):*
+  ```bash
+  ./run_app.sh          # Linux/macOS  (needs: sudo apt install python3-tk)
+  run_app.bat           # Windows      (python.org Python includes Tkinter)
+  ```
+  First launch auto-creates the venv and installs deps, then opens the window.
+  For a double-click icon on Linux, copy `PucarBulkSign.desktop.example` →
+  `PucarBulkSign.desktop`, set its `Exec=` path, and mark it "Allow Launching".
+
+Either way the app listens on `http://localhost:1620` — the same `BULK_SIGN_URL`
+the frontend already uses. STOP shuts the service down cleanly.
+
+The sections below describe the underlying agent (HTTP contract, CLI run, config)
+for developers; staff only need the app above.
+
+---
+
 ## How it fits the existing bulk-sign flow
 
 Nothing about the court app's flow changes. For reference, the unchanged path is:

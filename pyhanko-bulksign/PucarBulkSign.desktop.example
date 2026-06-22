@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=PUCAR Bulk Sign
+Comment=Sign court documents in bulk with your DSC token
+# Edit Exec to the absolute path on this machine, then copy this file (renamed to
+# PucarBulkSign.desktop) to ~/.local/share/applications/ or the Desktop and mark
+# it executable (right-click -> Allow Launching).
+#   - from source:  Exec=/full/path/to/pyhanko-bulksign/run_app.sh
+#   - packaged exe:  Exec=/full/path/to/pyhanko-bulksign/dist/PucarBulkSign
+Exec=/full/path/to/pyhanko-bulksign/run_app.sh
+Terminal=false
+Categories=Office;Utility;
