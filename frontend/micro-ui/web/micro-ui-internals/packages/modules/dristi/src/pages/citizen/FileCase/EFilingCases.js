@@ -931,12 +931,6 @@ function EFilingCases({ path }) {
                   },
               condonationFileUpload: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload,
             };
-            if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload) {
-              setFormDataValue.current?.(
-                "condonationFileUpload",
-                caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload
-              );
-            }
             return data;
           } else {
             return {
@@ -948,14 +942,6 @@ function EFilingCases({ path }) {
                 isEnabled: true,
               },
             };
-          }
-        }
-        if (selected === "delayApplications") {
-          if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload && prevIsDcaSkipped === "NO") {
-            setFormDataValue.current?.(
-              "condonationFileUpload",
-              caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload
-            );
           }
         }
         return (
@@ -995,11 +981,10 @@ function EFilingCases({ path }) {
                 },
             condonationFileUpload: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload,
           };
-          if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload) {
-            setFormDataValue.current?.(
-              "condonationFileUpload",
-              caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload
-            );
+          let condonationDoc =
+            formdata?.[index]?.data?.condonationFileUpload || caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload;
+          if (condonationDoc) {
+            setFormDataValue.current?.("condonationFileUpload", condonationDoc);
           }
 
           return data;
@@ -1822,7 +1807,7 @@ function EFilingCases({ path }) {
                       {
                         type: "component",
                         component: "ScrutinyInfo",
-                        key: `${key}Scrutiny`,
+                        key: `${key.replace(/\./g, "_")}Scrutiny`,
                         label: modifiedFormComponent.label,
                         populators: {
                           scrutinyMessage: scrutiny?.[selected].form[index][key].FSOError,
@@ -2694,6 +2679,10 @@ function EFilingCases({ path }) {
         let message = t("E_FILING_SUBMISSION_FAILED");
         if (error instanceof DocumentUploadError) {
           message = `${t(error?.code || "DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`;
+        } else if (error?.response?.data?.Errors?.some?.((err) => err?.code === "INDIVIDUAL_ALREADY_EXISTS_FOR_USER")) {
+          // Idempotency guard: backend rejects creating a second individual for the same user
+          // (e.g. same mobile number verified and continued from two tabs simultaneously).
+          message = t("USER_ALREADY_EXISTS_WITH_THIS_MOBILE_NUMBER");
         } else if (extractCodeFromErrorMsg(error) === 413) {
           message = t("FAILED_TO_UPLOAD_FILE");
         }

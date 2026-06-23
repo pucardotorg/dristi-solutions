@@ -2169,7 +2169,6 @@ const GenerateOrdersV2 = () => {
     const mandatoryOrderFields = [{ itemText: currentOrder?.itemText }];
 
     if (currentInProgressHearing || currentOrder?.hearingNumber) {
-      mandatoryOrderFields?.push({ presentAttendees: currentOrder?.attendance?.Present }, { absentAttendees: currentOrder?.attendance?.Absent });
       if (!skipScheduling) {
         mandatoryOrderFields?.push({ nextHearingDate: currentOrder?.nextHearingDate }, { hearingPurpose: currentOrder?.purposeOfNextHearing });
       }

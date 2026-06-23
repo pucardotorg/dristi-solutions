@@ -587,7 +587,7 @@ public class HearingService {
                 scheduleHearing.setOriginalHearingDate(hearing.getFromDate());
                 scheduleHearing.setCaseId(hearing.getCaseNumber());
                 scheduleHearing.setFilingNumber(Collections.singletonList(hearing.getFilingNumber()));
-                scheduleHearing.setCaseStage(hearing.getSubStage());
+                scheduleHearing.setCaseStage(hearing.getStage());
             }
         }
 

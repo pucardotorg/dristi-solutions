@@ -997,14 +997,25 @@ export const UICustomizations = {
       const courtId = localStorage.getItem("courtId");
       if (date) sessionStorage.setItem("diaryDateFilter", date);
 
+      const limit = requestCriteria?.state?.tableForm?.limit || 10;
+      const offSet = requestCriteria?.state?.tableForm?.offset || 0;
+
       return {
         ...requestCriteria,
+        // useCustomAPIHook keys the query on [url, changeQueryName] (body is NOT in the key),
+        // so pagination/date changes must be reflected here to re-trigger the API call.
+        changeQueryName: `adiary_${date}_${limit}_${offSet}`,
         body: {
           ...requestCriteria?.body,
           criteria: {
             ...requestCriteria?.body?.criteria,
             date,
             courtId,
+          },
+          pagination: {
+            ...requestCriteria?.body?.pagination,
+            limit,
+            offSet,
           },
         },
         config: {
@@ -1086,6 +1097,8 @@ export const UICustomizations = {
               moduleName: moduleName,
               tenantId: window?.Digit.ULBService.getStateId(),
             },
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offset: requestCriteria?.state?.tableForm?.offset,
             tenantId: window?.Digit.ULBService.getStateId(),
           },
         },
