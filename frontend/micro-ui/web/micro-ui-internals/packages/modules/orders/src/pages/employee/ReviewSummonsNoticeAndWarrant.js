@@ -725,7 +725,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData) },
         {
           key: "NEXT_HEARING_DATE",
           value: caseDetails?.caseDetails?.hearingDate ? DateUtils.getFormattedDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
@@ -757,7 +757,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData) },
         { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
         { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
         { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
@@ -774,7 +774,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData) },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         {
           key: "NEXT_HEARING_DATE",
@@ -1852,7 +1852,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [rowData]);
 
   const handleRowClick = (props) => {
-    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER"].includes(props?.original?.status)) {
+    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER", "WARRANT_REISSUED_WITH_NEW_WARRANT"].includes(props?.original?.status)) {
       setRowData(props?.original);
       setshowNoticeModal(true);
       return;
