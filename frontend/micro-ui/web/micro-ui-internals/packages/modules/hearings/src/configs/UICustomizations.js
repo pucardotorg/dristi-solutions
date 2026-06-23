@@ -304,7 +304,10 @@ export const UICustomizations = {
                 (data) =>
                   data?.filingNumber === additionalDetails?.filingNumber &&
                   data?.orderId === additionalDetails?.orderId &&
-                  (!additionalDetails?.itemId || data?.additionalDetails?.itemId === additionalDetails?.itemId)
+                  (additionalDetails?.orderType === "SCHEDULE_OF_HEARING_DATE" ||
+                    !additionalDetails?.itemId ||
+                    data?.additionalDetails?.itemId === additionalDetails?.itemId ||
+                    data?.additionalDetails?.reissueSourceWarrantId)
               )
               ?.map((data) => {
                 let taskDetail = structuredClone(data?.taskDetails);
