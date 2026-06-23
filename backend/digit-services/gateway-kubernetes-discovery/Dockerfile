@@ -1,5 +1,5 @@
 
-FROM golang:1.13-alpine as build
+FROM golang:1.13-alpine AS build
 
 ENV GO111MODULE=on
 ENV GOCACHE=/tmp
@@ -12,9 +12,9 @@ COPY ${WORK_DIR}/go.sum .
 
 RUN go mod download
 
-COPY . .
+COPY ${WORK_DIR} .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o zuul-kubernetes-discovery
 
 
 # Create runtime image
