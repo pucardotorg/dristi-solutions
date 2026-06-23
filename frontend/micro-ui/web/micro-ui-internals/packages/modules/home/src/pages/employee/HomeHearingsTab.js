@@ -288,14 +288,14 @@ const HomeHearingsTab = ({
 
       const startDate = hearingDetails?.fromDate || hearingDetails?.toDate;
       const isFutureHearing = startDate ? new Date(startDate).setHours(0, 0, 0, 0) > new Date().setHours(0, 0, 0, 0) : false;
-      if ((hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") && isFutureHearing) {
-        dropDownitems.push({
-          label: "FUTURE_HEARING_CANNOT_BE_STARTED",
-          id: "start_hearing_disabled",
-          action: () => {},
-        });
-        return dropDownitems;
-      }
+      // if ((hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") && isFutureHearing) {
+      //   dropDownitems.push({
+      //     label: "FUTURE_HEARING_CANNOT_BE_STARTED",
+      //     id: "start_hearing_disabled",
+      //     action: () => {},
+      //   });
+      //   return dropDownitems;
+      // }
 
       if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
         if (!hasHearingPriorityView) {

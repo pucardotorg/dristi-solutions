@@ -170,6 +170,7 @@ const NoticeProcessModal = ({
   const [hasPendingTasks, setHasPendingTasks] = useState(true);
   const [partyUniqueId, setPartyUniqueId] = useState("");
   const [partyType, setPartyType] = useState(null);
+  const [hearingDateInfo, setHearingDateInfo] = useState({ originalHearingDate: null, hearingDate: null });
 
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
@@ -213,10 +214,10 @@ const NoticeProcessModal = ({
     { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber,
-    Boolean(filingNumber && caseCourtId && !ordersDataFromParent)
+    Boolean(filingNumber && caseCourtId)
   );
 
-  const ordersData = useMemo(() => ordersDataFromParent || ordersFetchedData, [ordersDataFromParent, ordersFetchedData]);
+  const ordersData = useMemo(() => ordersFetchedData, [ordersFetchedData]);
 
   const orderListFiltered = useMemo(() => {
     if (!ordersData?.list) return [];
@@ -322,7 +323,6 @@ const NoticeProcessModal = ({
     });
 
     const mergedOrders = [...filteredOrders, ...scheduleOrdersExpanded].sort((a, b) => new Date(b?.createdDate) - new Date(a?.createdDate));
-
     // Deduplicate: when two entries share the same id, are both WARRANT type, and cover
     // the same party uniqueId, drop the schedule-derived one (_schedulePartyUniqueId present)
     // and keep the original. For different parties or non-WARRANT types, keep all entries.
@@ -513,6 +513,7 @@ const NoticeProcessModal = ({
               setCurrentHearingNumber(item?.ordersList?.[0]?.scheduledHearingNumber);
               console.log("item?.ordersList?.[0]", item?.ordersList?.[0]);
               setHasPendingTasks(true);
+              setHearingDateInfo({ originalHearingDate: null, hearingDate: null });
             }}
             className={`round-item ${index === activeIndex?.partyIndex ? "active" : ""}`}
             style={{
@@ -562,6 +563,7 @@ const NoticeProcessModal = ({
                   }, 0);
                   setCurrentHearingNumber(item?.scheduledHearingNumber);
                   setHasPendingTasks(true);
+                  setHearingDateInfo({ originalHearingDate: null, hearingDate: null });
                 }}
                 className={`round-item ${index === activeIndex?.orderIndex ? "active" : ""}`}
                 style={{
@@ -597,8 +599,21 @@ const NoticeProcessModal = ({
                 <hr className="vertical-line" />
                 <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
                   <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("HEARING_DATE")}:</span>
-                  <span>{DateUtils.getFormattedDate(new Date(hearingByNumber?.HearingList?.[0]?.startTime), "DD-MM-YYYY")}</span>
+                  {console.log("hearingDateInfo", hearingDateInfo)}
+                  <span>
+                    {hearingDateInfo?.originalHearingDate
+                      ? DateUtils.getFormattedDate(new Date(hearingDateInfo.originalHearingDate), "DD-MM-YYYY")
+                      : DateUtils.getFormattedDate(new Date(hearingByNumber?.HearingList?.[0]?.startTime), "DD-MM-YYYY")}
+                  </span>
                 </div>
+                {hearingDateInfo?.hearingDate &&
+                  hearingDateInfo?.originalHearingDate &&
+                  hearingDateInfo.hearingDate !== hearingDateInfo.originalHearingDate && (
+                    <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
+                      <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("RESCHEDULED_HEARING_DATE")}:</span>
+                      <span>{DateUtils.getFormattedDate(new Date(hearingDateInfo.hearingDate), "DD-MM-YYYY")}</span>
+                    </div>
+                  )}
               </div>
               <div style={{ marginLeft: "10px" }}>
                 <a
@@ -635,6 +650,7 @@ const NoticeProcessModal = ({
                   additionalDetails: {
                     ...config?.additionalDetails,
                     setHasTasks: setHasPendingTasks,
+                    setHearingDateInfo: setHearingDateInfo,
                   },
                 }}
                 defaultValues={filingNumber}
