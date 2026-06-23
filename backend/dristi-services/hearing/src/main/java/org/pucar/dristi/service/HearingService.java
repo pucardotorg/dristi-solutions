@@ -260,9 +260,6 @@ public class HearingService {
             cacheService.hset(metaKey, "currentHearingKey", hKey);
         } else {
             cacheService.hset(metaKey, "currentHearingKey", "");
-            if (CLOSE.equalsIgnoreCase(action)) {
-                advanceToNextScheduledHearing(courtId, date, metaKey, hearingRequest);
-            }
         }
 
         asyncPersistenceService.persistStatusChange(hearingRequest);
