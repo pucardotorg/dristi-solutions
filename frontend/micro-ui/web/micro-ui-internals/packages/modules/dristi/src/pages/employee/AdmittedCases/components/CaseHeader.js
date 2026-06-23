@@ -29,6 +29,8 @@ const CaseHeader = ({
   homeNextHearingFilter,
   JoinCaseHome,
   advocateName,
+  fallbackCaseDetails,
+  fallbackAdvocateName,
   delayCondonationData,
   isDelayApplicationCompleted,
   isDelayApplicationPending,
@@ -47,16 +49,20 @@ const CaseHeader = ({
   onTabChange,
   handleAllNoticeGeneratedForHearing,
 }) => {
+  const isCaseLoading = caseApiLoading || isCaseFetching;
+  const showFallback = Boolean(fallbackCaseDetails);
+  const displayCaseDetails = showFallback ? fallbackCaseDetails : caseDetails;
+  const displayAdvocateName = showFallback ? fallbackAdvocateName : advocateName;
   return (
     <div
       className="admitted-case-header"
       style={{ position: showJoinCase ? "" : "", top: "72px", width: "100%", zIndex: 150, background: "white", gap: "0px" }}
     >
       <div className="admitted-case-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        {caseApiLoading || isCaseFetching ? (
+        {isCaseLoading && !showFallback ? (
           <Loader />
-        ) : caseDetails?.caseTitle ? (
-          <Header styles={{ marginBottom: "0px" }}>{caseDetails?.caseTitle}</Header>
+        ) : displayCaseDetails?.caseTitle ? (
+          <Header styles={{ marginBottom: "0px" }}>{displayCaseDetails?.caseTitle}</Header>
         ) : null}
         <CaseActionBar
           t={t}
@@ -95,8 +101,8 @@ const CaseHeader = ({
       </div>
       <CaseDetailsStrip
         t={t}
-        caseDetails={caseDetails}
-        advocateName={advocateName}
+        caseDetails={displayCaseDetails}
+        advocateName={displayAdvocateName}
         delayCondonationData={delayCondonationData}
         isDelayApplicationCompleted={isDelayApplicationCompleted}
         isDelayApplicationPending={isDelayApplicationPending}

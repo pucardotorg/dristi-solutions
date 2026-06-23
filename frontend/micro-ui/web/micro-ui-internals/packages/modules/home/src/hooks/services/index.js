@@ -35,6 +35,8 @@ export const Urls = {
   issueDocument: "/ctc/applications/documents/issue-reject",
   _getDocForSignCTCApplication: "/ctc/applications/documents/_getDocsToSign",
   updateSignDocsForCTCApplication: "/ctc/applications/documents/_updateSignedDocs",
+  getCurrentHearingDetails: "/hearing/v1/current-hearing",
+  getHearingCauseList: "/hearing/v1/cause-list",
 };
 export const HomeService = {
   InboxSearch: (data, params) =>
@@ -252,6 +254,22 @@ export const HomeService = {
   updateSignedDocCTCApplication: (data, params) =>
     Request({
       url: Urls.updateSignDocsForCTCApplication,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  getCurrentHearingDetails: (data, params) =>
+    Request({
+      url: Urls.getCurrentHearingDetails,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  getHearingCauseList: (data, params) =>
+    Request({
+      url: Urls.getHearingCauseList,
       useCache: false,
       userService: true,
       data,
