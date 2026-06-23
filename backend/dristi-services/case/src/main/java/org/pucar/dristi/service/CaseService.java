@@ -4207,8 +4207,8 @@ public class CaseService {
 
         if (courtCaseRedis != null) {
             courtCaseRedis.setStage(caseOverallStatus.getStage());
+            updateCourtCaseInRedis(caseOverallStatus.getTenantId(), courtCaseRedis);
         }
-        updateCourtCaseInRedis(caseOverallStatus.getTenantId(), courtCaseRedis);
     }
 
     public void updateCaseOverallStatusV2(CaseStageSubStage caseStageSubStage) {
@@ -4220,8 +4220,8 @@ public class CaseService {
 
         if (courtCaseRedis != null) {
             courtCaseRedis.setSecondaryStage(caseOverallStatus.getSecondaryStage());
+            updateCourtCaseInRedis(caseOverallStatus.getTenantId(), courtCaseRedis);
         }
-        updateCourtCaseInRedis(caseOverallStatus.getTenantId(), courtCaseRedis);
     }
 
     public void updateCaseOutcome(CaseOutcome caseOutcome) {
@@ -4234,8 +4234,8 @@ public class CaseService {
         if (courtCaseRedis != null) {
             courtCaseRedis.setOutcome(outcome.getOutcome());
             courtCaseRedis.setNatureOfDisposal(outcome.getNatureOfDisposal());
+            updateCourtCaseInRedis(outcome.getTenantId(), courtCaseRedis);
         }
-        updateCourtCaseInRedis(outcome.getTenantId(), courtCaseRedis);
 
     }
 
@@ -5338,7 +5338,8 @@ public class CaseService {
                 });
         producer.push(config.getUpdateRepresentativeJoinCaseTopic(), courtCase);
 
-        updateCourtCaseInRedis(courtCase.getTenantId(), courtCase);
+        CourtCase encryptedCourtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
+        updateCourtCaseInRedis(courtCase.getTenantId(), encryptedCourtCase);
         log.info("operation=inactivateOldAdvocate, status=SUCCESS");
     }
 
