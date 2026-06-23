@@ -45,9 +45,10 @@ public class OrderService {
     private final CaseUtil caseUtil;
     private final Configuration configuration;
     private final DateUtil dateUtil;
+    private final OrderSignValidationExecutor orderSignValidationExecutor;
 
     @Autowired
-    public OrderService(OrderUtil orderUtil, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil, CaseUtil caseUtil, Configuration configuration, DateUtil dateUtil) {
+    public OrderService(OrderUtil orderUtil, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil, CaseUtil caseUtil, Configuration configuration, DateUtil dateUtil, OrderSignValidationExecutor orderSignValidationExecutor) {
         this.orderUtil = orderUtil;
         this.factoryProvider = factoryProvider;
         this.aDiaryUtil = aDiaryUtil;
@@ -55,6 +56,7 @@ public class OrderService {
         this.caseUtil = caseUtil;
         this.configuration = configuration;
         this.dateUtil = dateUtil;
+        this.orderSignValidationExecutor = orderSignValidationExecutor;
     }
 
 
@@ -108,6 +110,10 @@ public class OrderService {
 
         OrderFactory orderFactory = factoryProvider.getFactory(order.getOrderCategory());
         OrderProcessor orderProcessor = orderFactory.createProcessor();
+
+        if (E_SIGN.equalsIgnoreCase(order.getWorkflow().getAction())) {
+            orderSignValidationExecutor.validate(order, request.getRequestInfo());
+        }
 
         orderProcessor.preProcessOrder(request);
 

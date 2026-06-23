@@ -22,6 +22,7 @@ import pucar.web.models.hearing.HearingSearchRequest;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static pucar.config.ServiceConstants.*;
 
@@ -38,9 +39,10 @@ public class BSSService {
     private final OrderServiceFactoryProvider factoryProvider;
     private final ADiaryUtil aDiaryUtil;
     private final HearingUtil hearingUtil;
+    private final OrderSignValidationExecutor orderSignValidationExecutor;
 
     @Autowired
-    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil) {
+    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil, OrderSignValidationExecutor orderSignValidationExecutor) {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.eSignUtil = eSignUtil;
         this.fileStoreUtil = fileStoreUtil;
@@ -50,12 +52,38 @@ public class BSSService {
         this.factoryProvider = factoryProvider;
         this.aDiaryUtil = aDiaryUtil;
         this.hearingUtil = hearingUtil;
+        this.orderSignValidationExecutor = orderSignValidationExecutor;
     }
 
     public List<OrderToSign> createOrderToSignRequest(OrdersToSignRequest request) {
 
         // get location to sign here from esign
         log.info("creating order to sign request, result= IN_PROGRESS, orderCriteria:{}", request.getCriteria().size());
+
+        // batch fetch orders and run pre-sign validation before any expensive operations
+        List<String> orderNumbers = request.getCriteria().stream()
+                .map(OrdersCriteria::getOrderNumber)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        String tenantId = request.getCriteria().get(0).getTenantId();
+
+        OrderListResponse ordersResponse = orderUtil.getOrders(OrderSearchRequest.builder()
+                .requestInfo(request.getRequestInfo())
+                .criteria(OrderCriteria.builder()
+                        .orderNumbers(orderNumbers)
+                        .tenantId(tenantId)
+                        .build())
+                .pagination(Pagination.builder().limit((double) orderNumbers.size()).offSet(0.0).build())
+                .build());
+
+        List<Order> orders = (ordersResponse != null && ordersResponse.getList() != null)
+                ? ordersResponse.getList()
+                : Collections.emptyList();
+
+        log.info("fetched {} orders for pre-sign validation", orders.size());
+        orderSignValidationExecutor.validateBatch(orders, request.getRequestInfo());
 
         List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
 
