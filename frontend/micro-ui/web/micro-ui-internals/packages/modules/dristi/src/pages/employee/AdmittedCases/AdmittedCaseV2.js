@@ -81,7 +81,7 @@ import {
 } from "./utils/permissionMappings";
 
 // Import breadcrumb utilities
-import { getEmployeeCrumbs, getAdvocateName } from "./utils/breadcrumbUtils";
+import { getEmployeeCrumbs, getAdvocateName, getAdvocateNameFromHearingData } from "./utils/breadcrumbUtils";
 
 // Import party filter utilities
 import { getPipComplainants, getPipAccuseds, getComplainantsList } from "./utils/partyFilterUtils";
@@ -299,7 +299,9 @@ const AdmittedCaseV2 = () => {
   );
 
   const [data, setData] = useState([]);
-  const [dataForNextHearings, setDataForNextHearings] = useState([]);
+  const [currentHearingDetails, setCurrentHearingDetails] = useState(null);
+  const currentHearingDetailsRef = useRef(null);
+  const homeNextHearingFilterRef = useRef(null);
 
   const fetchInbox = useCallback(async () => {
     try {
@@ -334,36 +336,21 @@ const AdmittedCaseV2 = () => {
     }
   }, []);
 
-  const homeNextHearingFilter = useMemo(() => JSON.parse(localStorage.getItem("Digit.homeNextHearingFilter")), []);
+  const [homeNextHearingFilter, setHomeNextHearingFilter] = useState(() => JSON.parse(localStorage.getItem("Digit.homeNextHearingFilter")));
 
   useEffect(() => {
     const fetchInboxForNextHearingData = async () => {
       try {
-        const payload = (fromDate, toDate) => {
-          return {
-            inbox: {
-              processSearchCriteria: {
-                businessService: ["hearing-default"],
-                moduleName: "Hearing Service",
-                tenantId,
-              },
-              moduleSearchCriteria: {
-                tenantId,
-                ...(fromDate && toDate ? { fromDate, toDate } : {}),
-              },
+        if (homeNextHearingFilter?.homeHearingNumber) {
+          const res = await HomeService.getCurrentHearingDetails(
+            {
+              courtId,
               tenantId,
-              limit: 300,
-              offset: 0,
+              currentHearingNumber: homeNextHearingFilter?.homeHearingNumber,
             },
-          };
-        };
-
-        if (homeNextHearingFilter) {
-          const fromDateForNextHearings = new Date(homeNextHearingFilter.homeFilterDate).setHours(0, 0, 0, 0);
-          const toDateForNextHearings = new Date(homeNextHearingFilter.homeFilterDate).setHours(23, 59, 59, 999);
-
-          const resForNextHearings = await HomeService.InboxSearch(payload(fromDateForNextHearings, toDateForNextHearings), { tenantId });
-          setDataForNextHearings(resForNextHearings?.items || []);
+            { tenantId }
+          );
+          setCurrentHearingDetails(res || null);
         }
       } catch (err) {
         console.error("error", err);
@@ -373,6 +360,13 @@ const AdmittedCaseV2 = () => {
       }
     };
     fetchInboxForNextHearingData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [homeNextHearingFilter?.homeHearingNumber]);
+
+  useEffect(() => {
+    return () => {
+      localStorage.removeItem("Digit.homeNextHearingFilter");
+    };
   }, []);
 
   useEffect(() => {
@@ -1701,39 +1695,30 @@ const AdmittedCaseV2 = () => {
     history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
   }, [filingNumber, history]);
 
+  currentHearingDetailsRef.current = currentHearingDetails;
+  homeNextHearingFilterRef.current = homeNextHearingFilter;
+
   const hideNextHearingButton = useMemo(() => {
-    const validData = dataForNextHearings?.filter((item) =>
-      ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS", "COMPLETED"]?.includes(item?.businessObject?.hearingDetails?.status)
-    );
-    const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === homeNextHearingFilter?.homeHearingNumber);
-    return index === -1 || validData?.length <= 1;
-  }, [dataForNextHearings, homeNextHearingFilter]);
+    const nextHearingData = currentHearingDetails?.nextHearing;
+    return !nextHearingData?.hearingNumber || nextHearingData?.hearingNumber === homeNextHearingFilter?.homeHearingNumber;
+  }, [currentHearingDetails, homeNextHearingFilter]);
 
   const customNextHearing = useCallback(() => {
-    if (dataForNextHearings?.length === 0) {
+    const nextHearingData = currentHearingDetailsRef.current?.nextHearing;
+    if (!nextHearingData?.hearingNumber || nextHearingData?.hearingNumber === homeNextHearingFilterRef.current?.homeHearingNumber) {
       history.push(`/${window?.contextPath}/employee/home/home-screen`);
     } else {
-      const validData = dataForNextHearings?.filter((item) =>
-        ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS", "COMPLETED"]?.includes(item?.businessObject?.hearingDetails?.status)
+      const updatedFilter = {
+        homeFilterDate: nextHearingData?.fromDate,
+        homeHearingNumber: nextHearingData?.hearingNumber,
+      };
+      localStorage.setItem("Digit.homeNextHearingFilter", JSON.stringify(updatedFilter));
+      setHomeNextHearingFilter(updatedFilter);
+      history.push(
+        `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${nextHearingData?.caseId}&filingNumber=${nextHearingData?.filingNumber}&tab=Overview`
       );
-      const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === homeNextHearingFilter?.homeHearingNumber);
-      if (index === -1 || validData?.length === 1) {
-        history.push(`/${window?.contextPath}/employee/home/home-screen`);
-      } else {
-        const row = validData[(index + 1) % validData?.length];
-        localStorage.setItem(
-          "Digit.homeNextHearingFilter",
-          JSON.stringify({
-            homeFilterDate: row?.businessObject?.hearingDetails?.fromDate,
-            homeHearingNumber: row?.businessObject?.hearingDetails?.hearingNumber,
-          })
-        );
-        history.push(
-          `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
-        );
-      }
     }
-  }, [dataForNextHearings, history, homeNextHearingFilter]);
+  }, [history]);
 
   const nextHearing = useCallback(
     (isStartHearing) => {
@@ -2165,6 +2150,21 @@ const AdmittedCaseV2 = () => {
 
   const advocateName = useMemo(() => getAdvocateName({ caseDetails, t }), [caseDetails, t]);
 
+  // Case details from the current-hearing response's hearingData, shown in the header while the case API loads
+  const fallbackCaseDetails = useMemo(() => {
+    const hearingData = currentHearingDetails?.hearingData;
+    if (!hearingData?.caseTitle || hearingData?.filingNumber !== filingNumber) return null;
+    return {
+      ...hearingData,
+      status: hearingData?.caseStatus,
+    };
+  }, [currentHearingDetails, filingNumber]);
+
+  const fallbackAdvocateName = useMemo(() => getAdvocateNameFromHearingData({ advocate: currentHearingDetails?.hearingData?.advocate, t }), [
+    currentHearingDetails,
+    t,
+  ]);
+
   // outcome always null unless case went on final stage
   const showActionBar = useMemo(
     () =>
@@ -2383,6 +2383,8 @@ const AdmittedCaseV2 = () => {
         homeNextHearingFilter={homeNextHearingFilter}
         JoinCaseHome={JoinCaseHome}
         advocateName={advocateName}
+        fallbackCaseDetails={fallbackCaseDetails}
+        fallbackAdvocateName={fallbackAdvocateName}
         delayCondonationData={delayCondonationData}
         isDelayApplicationCompleted={isDelayApplicationCompleted}
         isDelayApplicationPending={isDelayApplicationPending}
