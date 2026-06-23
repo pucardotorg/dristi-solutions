@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useState } from "react";
+import React, { useEffect, useReducer, useRef, useState } from "react";
 import UploadFile from "./UploadFile";
 import isEqual from "lodash/isEqual";
 import { EXTENSION_TO_MIME } from "../Utils/constants";
@@ -187,7 +187,15 @@ const MultiUploadWrapper = ({
     }
   };
 
-  useEffect(() => getFormState(state), [state]);
+  const getFormStateRef = useRef(getFormState);
+
+  useEffect(() => {
+    getFormStateRef.current = getFormState;
+  }, [getFormState]);
+
+  useEffect(() => {
+    getFormStateRef.current?.(state);
+  }, [state]);
 
   useEffect(() => {
     if (requestSpecifcFileRemoval) {

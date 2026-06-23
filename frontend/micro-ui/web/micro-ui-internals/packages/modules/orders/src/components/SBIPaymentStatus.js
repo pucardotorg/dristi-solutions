@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Banner } from "@egovernments/digit-ui-react-components";
@@ -9,7 +10,6 @@ import { paymentType } from "../utils/paymentType";
 import { ordersService } from "../hooks/services";
 import { Urls } from "../hooks/services/Urls";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { ORDER_TYPES } from "../utils/constants";
 
 const getStatusMessage = (status) => {
   switch (status) {
@@ -38,8 +38,8 @@ const SBIPaymentStatus = ({ path }) => {
   const receiptData = storedData?.receiptData;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [amount, setAmount] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [showToast, setShowToast] = useState(null);
+
   useEffect(() => {
     const fetchData = async () => {
       const billAfterPayment = await DRISTIService.callSearchBill(
@@ -48,8 +48,6 @@ const SBIPaymentStatus = ({ path }) => {
       );
       setAmount(billAfterPayment?.Bill?.[0]?.totalAmount);
       if (status === "SUCCESS" && billAfterPayment?.Bill?.[0]?.status === "PAID" && receiptData?.isCourtBillPaid) {
-        setLoading(true);
-        setError(null);
         try {
           await Promise.all([
             ordersService.customApiService(Urls.orders.pendingTask, {
@@ -73,9 +71,8 @@ const SBIPaymentStatus = ({ path }) => {
           ]);
         } catch (err) {
           console.error("Error fetching payment tasks:", err);
-          setError("Failed to fetch payment tasks. Please try again later."); // Set error message
-        } finally {
-          setLoading(false); // Reset loading state
+          const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("FAILED_TO_FETCH_PAYMENT_TASKS"), error: true, errorId });
         }
       }
     };
@@ -96,58 +93,69 @@ const SBIPaymentStatus = ({ path }) => {
   };
 
   return (
-    <div className="user-registration">
-      <div className="e-filing-payment" style={{ minHeight: "100%", height: "100%" }}>
-        <Banner
-          successful={status === "SUCCESS"}
-          message={status === "SUCCESS" ? t("CS_PAYMENT_SUCCESS") : t(getStatusMessage(status))}
-          info={`${state?.showID ? t("SUBMISSION_ID") : ""}`}
-          whichSvg={status === "SUCCESS" ? "tick" : null}
-          {...bannerProps}
-        />
-        {status === "SUCCESS" ? (
-          <div>
-            <CustomCopyTextDiv
-              t={t}
-              keyStyle={{ margin: "8px 0px" }}
-              valueStyle={{ margin: "8px 0px", fontWeight: 700 }}
-              data={receiptData?.caseInfo}
-              tableDataClassName={"e-filing-table-data-style"}
-              tableValueClassName={"e-filing-table-value-style"}
+    <React.Fragment>
+      <div className="user-registration">
+        <div className="e-filing-payment" style={{ minHeight: "100%", height: "100%" }}>
+          <Banner
+            successful={status === "SUCCESS"}
+            message={status === "SUCCESS" ? t("CS_PAYMENT_SUCCESS") : t(getStatusMessage(status))}
+            info={`${state?.showID ? t("SUBMISSION_ID") : ""}`}
+            whichSvg={status === "SUCCESS" ? "tick" : null}
+            {...bannerProps}
+          />
+          {status === "SUCCESS" ? (
+            <div>
+              <CustomCopyTextDiv
+                t={t}
+                keyStyle={{ margin: "8px 0px" }}
+                valueStyle={{ margin: "8px 0px", fontWeight: 700 }}
+                data={receiptData?.caseInfo}
+                tableDataClassName={"e-filing-table-data-style"}
+                tableValueClassName={"e-filing-table-value-style"}
+              />
+            </div>
+          ) : (
+            <InfoCard
+              className="payment-status-info-card"
+              headerWrapperClassName="payment-status-info-header"
+              populators={{
+                name: "infocard",
+              }}
+              variant="default"
+              text={getPaymentDueMessage(status, amount)}
+              label={"Note"}
+              style={{ marginTop: "1.5rem" }}
+              textStyle={{
+                color: "#3D3C3C",
+                margin: "0.5rem 0",
+              }}
+            />
+          )}
+
+          <div className="button-field" style={{ width: "100%", marginTop: 16 }}>
+            <Button
+              className="tertiary-button-selector"
+              label={t("CS_GO_TO_HOME")}
+              style={{ width: "100%" }}
+              labelClassName="tertiary-label-selector"
+              onClick={() => {
+                sessionStorage.removeItem("paymentReceiptData");
+                history.replace(`/${window?.contextPath}/citizen/home/home-pending-task`);
+              }}
             />
           </div>
-        ) : (
-          <InfoCard
-            className="payment-status-info-card"
-            headerWrapperClassName="payment-status-info-header"
-            populators={{
-              name: "infocard",
-            }}
-            variant="default"
-            text={getPaymentDueMessage(status, amount)}
-            label={"Note"}
-            style={{ marginTop: "1.5rem" }}
-            textStyle={{
-              color: "#3D3C3C",
-              margin: "0.5rem 0",
-            }}
-          />
-        )}
-
-        <div className="button-field" style={{ width: "100%", marginTop: 16 }}>
-          <Button
-            className="tertiary-button-selector"
-            label={t("CS_GO_TO_HOME")}
-            style={{ width: "100%" }}
-            labelClassName="tertiary-label-selector"
-            onClick={() => {
-              sessionStorage.removeItem("paymentReceiptData");
-              history.replace(`/${window?.contextPath}/citizen/home/home-pending-task`);
-            }}
-          />
         </div>
       </div>
-    </div>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
+    </React.Fragment>
   );
 };
 

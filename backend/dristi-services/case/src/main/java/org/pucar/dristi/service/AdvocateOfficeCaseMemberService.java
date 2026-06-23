@@ -386,7 +386,7 @@ public class AdvocateOfficeCaseMemberService {
             List<CaseMemberInfo> caseMembers = repository.searchCaseMembers(criteria, pagination);
 
             log.info("Found {} case members in current page", caseMembers.size());
-            
+
             return CaseMemberSearchResponse.builder()
                     .cases(caseMembers)
                     .totalCount(totalCount)

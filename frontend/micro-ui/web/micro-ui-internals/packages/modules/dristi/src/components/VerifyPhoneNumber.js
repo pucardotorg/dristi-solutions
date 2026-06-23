@@ -10,6 +10,7 @@ import Modal from "./Modal";
 import OTPInput from "./OTPInput";
 import { maskEmail } from "../Utils";
 import { CloseBtn, Heading } from "./ModalComponents";
+import CustomToast from "./CustomToast";
 const TYPE_REGISTER = { type: "register" };
 const TYPE_LOGIN = { type: "login" };
 const DEFAULT_USER = "digit-user";
@@ -23,11 +24,10 @@ const RoundedCheck = ({ className, height = "24", width = "24", style = {}, fill
   );
 };
 function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setError }) {
-  const [{ showModal, mobileNumber, isUserVerified, errorMsg }, setState] = useState({
+  const [{ showModal, mobileNumber, isUserVerified }, setState] = useState({
     showModal: false,
     mobileNumber: null,
     isUserVerified: false,
-    errorMsg: "",
   });
   const isUserVerifiedRef = useRef(isUserVerified);
 
@@ -42,6 +42,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
   const stateCode = window?.Digit.ULBService.getStateId();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [user, setUser] = useState(null);
+  const [showToast, setShowToast] = useState(false);
 
   useInterval(
     () => {
@@ -74,14 +75,17 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
   };
 
   const modalOnSubmit = () => {
-    if (!otp)
+    if (!otp) {
+      setShowToast({
+        error: true,
+        label: t("CS_INVALID_OTP"),
+      });
       setState((prev) => ({
         ...prev,
         isUserVerified: false,
         showModal: true,
-        errorMsg: "CS_INVALID_OTP",
       }));
-    else selectOtp(input);
+    } else selectOtp(input);
   };
 
   const onConfirmClick = async () => {
@@ -169,7 +173,6 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
     setState((prev) => ({
       ...prev,
       showModal: false,
-      errorMsg: "",
     }));
     onSelect(config?.key, { ...formData?.[config.key], otpNumber: "" });
   };
@@ -182,7 +185,6 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
     };
     setState((prev) => ({
       ...prev,
-      errorMsg: "",
     }));
     const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
     setTimeLeft(10);
@@ -373,15 +375,19 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
           ...prev,
           isUserVerified: true,
           showModal: false,
-          errorMsg: "",
         }));
       }
     } catch (err) {
+      const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        error: true,
+        errorId,
+        label: err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_OTP"),
+      });
       setState((prev) => ({
         ...prev,
         isUserVerified: false,
         showModal: true,
-        errorMsg: err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_OTP"),
       }));
     }
   };
@@ -464,7 +470,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
           actionSaveLabel={t("VERIFY")}
           actionSaveOnSubmit={() => modalOnSubmit()}
           formId="modal-action"
-          isDisabled={formData?.[config.key]?.[input.name]?.length !== 6 || errorMsg}
+          isDisabled={formData?.[config.key]?.[input.name]?.length !== 6 || showToast}
           headerBarMain={<Heading label={t("VERIFY_MOBILE_NUMBER")} />}
           submitTextClassName={"verification-button-text-modal"}
           className={"verify-mobile-modal"}
@@ -493,14 +499,6 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
                     length={6}
                     onChange={(otp) => {
                       const updatedValue = otp?.replace(/[^0-9]/g, "");
-                      if (errorMsg) {
-                        setState((prev) => {
-                          return {
-                            ...prev,
-                            errorMsg: "",
-                          };
-                        });
-                      }
                       onSelect(config?.key, { ...formData?.[config.key], [input?.name]: updatedValue });
                     }}
                     value={formData && formData[config.key] ? formData[config.key][input.name] : undefined}
@@ -522,11 +520,11 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
             </LabelFieldPair>
             {input?.hasResendOTP && (
               <React.Fragment>
-                {timeLeft && !errorMsg > 0 ? (
+                {timeLeft && !showToast > 0 ? (
                   <CardText>{`${t("CS_RESEND_ANOTHER_OTP")} ${timeLeft} ${t("CS_RESEND_SECONDS")}`}</CardText>
                 ) : (
                   <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                    <CardText style={{ margin: 0 }}>{errorMsg ? `${t(errorMsg)}` : `${t("CS_HAVE_NOT_RECEIVED_OTP")}`}</CardText>
+                    <CardText style={{ margin: 0 }}>{showToast ? `${showToast?.label}` : `${t("CS_HAVE_NOT_RECEIVED_OTP")}`}</CardText>
 
                     <p
                       className="card-text"
@@ -538,6 +536,15 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
                   </div>
                 )}
               </React.Fragment>
+            )}
+            {showToast && (
+              <CustomToast
+                error={showToast?.error}
+                label={showToast?.label}
+                errorId={showToast?.errorId}
+                onClose={() => setShowToast(null)}
+                duration={showToast?.errorId ? 7000 : 5000}
+              />
             )}
           </div>
         </Modal>
@@ -567,6 +574,15 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
         >
           <div className="verify-mobile-modal-main">{t("PLEASE_ENSURE_DETAILS_CORRECT_ACCOUNT_CREATE")}</div>
         </Modal>
+      )}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
     </div>
   );

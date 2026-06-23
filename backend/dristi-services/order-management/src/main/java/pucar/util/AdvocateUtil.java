@@ -149,6 +149,7 @@ public class AdvocateUtil {
                     .stream()
                     .filter(rep -> rep.getRepresenting() != null && rep.getRepresenting()
                             .stream()
+                            .filter(lit -> lit.getIndividualId() != null)
                             .anyMatch(lit -> lit.getIndividualId().equals(litigant.getIndividualId()))
                             && getUUIDFromAdditionalDetails(rep.getAdditionalDetails()) != null)
                     .map(rep -> getUUIDFromAdditionalDetails(rep.getAdditionalDetails()))

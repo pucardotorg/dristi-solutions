@@ -1,4 +1,5 @@
-import { Toast, CloseSvg, InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { CloseSvg, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { bulkBailBondSignConfig } from "../../configs/BulkBailBondSignConfig";
@@ -10,6 +11,7 @@ import { HomeService } from "../../hooks/services";
 import { numberToWords } from "@egovernments/digit-ui-module-orders/src/utils";
 import { Banner } from "@egovernments/digit-ui-react-components";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlString, "application/xml");
@@ -25,14 +27,14 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-function BulkBailBondSignView({ showToast = () => {} }) {
+function BulkBailBondSignView({ setShowToast = () => {} }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
   const userInfo = Digit.UserService.getUser()?.info;
   const [bulkSignList, setBulkSignList] = useState(null);
   const [showBulkSignConfirmModal, setShowBulkSignConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [toast, setToast] = useState(null);
   const [selectedBailBond, setSelectedBailBond] = useState(
     sessionStorage.getItem("bulkBailBondSignSelectedItem") ? JSON.parse(sessionStorage.getItem("bulkBailBondSignSelectedItem")) : null
   );
@@ -109,10 +111,6 @@ function BulkBailBondSignView({ showToast = () => {} }) {
     };
   }, [needConfigRefresh]);
 
-  const closeToast = useCallback(() => {
-    setShowErrorToast(null);
-  }, []);
-
   const getFormattedDate = () => {
     const currentDate = new Date();
     const year = String(currentDate.getFullYear());
@@ -148,7 +146,7 @@ function BulkBailBondSignView({ showToast = () => {} }) {
   const fetchResponseFromXmlRequest = async (bailBondRequestList) => {
     const responses = [];
 
-    const requests = bailBondRequestList?.map(async (bailBond) => {
+    for (const bailBond of bailBondRequestList || []) {
       try {
         // URL encoding the XML request
         const formData = qs.stringify({ response: bailBond?.request });
@@ -180,9 +178,8 @@ function BulkBailBondSignView({ showToast = () => {} }) {
       } catch (error) {
         console.error(`Error fetching bailBond ${bailBond?.bailId}:`, error?.message);
       }
-    });
+    }
 
-    await Promise.allSettled(requests);
     return responses;
   };
 
@@ -210,7 +207,7 @@ function BulkBailBondSignView({ showToast = () => {} }) {
             {}
           );
           await fetchResponseFromXmlRequest(response?.bailList).then(async (responseArray) => {
-            const updatedBailBondResponse = await HomeService.updateSignedBailBonds(
+            await HomeService.updateSignedBailBonds(
               {
                 signedBails: responseArray,
               },
@@ -219,15 +216,17 @@ function BulkBailBondSignView({ showToast = () => {} }) {
               setShowBulkSignConfirmModal(false);
               setShowBulkSignSuccessModal(true);
               setSuccessCount(response?.bails?.length);
-              showToast("success", t("BAIL_BULK_SIGN_SUCCESS_MSG"));
+              setShowToast({ error: false, label: t("BAIL_BULK_SIGN_SUCCESS_MSG") });
             });
           });
         }
       }
     } catch (error) {
-      setShowErrorToast({
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setToast({
         error: true,
-        label: error?.message ? error?.message : t("ERROR_BAIL_BULK_SIGN_MSG"),
+        label: t("ERROR_BAIL_BULK_SIGN_MSG"),
+        errorId,
       });
       setShowBulkSignConfirmModal(false);
     } finally {
@@ -284,7 +283,6 @@ function BulkBailBondSignView({ showToast = () => {} }) {
           </div>
         )}
       </React.Fragment>
-
       {showBulkSignConfirmModal && (
         <Modal
           headerBarMain={<Heading label={t("CONFIRM_BULK_SIGN")} />}
@@ -339,7 +337,15 @@ function BulkBailBondSignView({ showToast = () => {} }) {
           </div>
         </Modal>
       )}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {toast && (
+        <CustomToast
+          error={toast?.error}
+          label={toast?.label}
+          errorId={toast?.errorId}
+          onClose={() => setToast(null)}
+          duration={toast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 }

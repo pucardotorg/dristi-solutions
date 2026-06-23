@@ -4,7 +4,6 @@ import { Button, Loader } from "@egovernments/digit-ui-react-components";
 import isEqual from "lodash/isEqual";
 import { getFormattedName } from "../utils";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
-import { Toast } from "@egovernments/digit-ui-components";
 import { CustomMultiSelectDropdown } from "@egovernments/digit-ui-module-dristi/src/components/CustomMultiSelectDropdown";
 
 const displayPartyType = {
@@ -21,7 +20,6 @@ const NoticeSummonPartyComponent = ({ t, config, formData, onSelect, clearErrors
   const inputs = useMemo(() => config?.populators?.inputs || [], [config?.populators?.inputs]);
   const [userList, setUserList] = useState([]);
   const courtId = localStorage.getItem("courtId");
-  const [showErrorToast, setShowErrorToast] = useState(null);
   const [dropdownActive, setDropdownActive] = useState(false);
   const [isPartyModalOpen, setIsPartyModalOpen] = useState(false);
 
@@ -54,19 +52,6 @@ const NoticeSummonPartyComponent = ({ t, config, formData, onSelect, clearErrors
       ...(address?.geoLocationDetails && { geoLocationDetails: address.geoLocationDetails }),
     }));
   };
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -234,10 +219,8 @@ const NoticeSummonPartyComponent = ({ t, config, formData, onSelect, clearErrors
             handleAddParty();
             refetch();
           }}
-          showToast={setShowErrorToast}
         ></AddWitnessModal>
       )}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.message} isDleteBtn={true} onClose={closeToast} />}
     </div>
   );
 };

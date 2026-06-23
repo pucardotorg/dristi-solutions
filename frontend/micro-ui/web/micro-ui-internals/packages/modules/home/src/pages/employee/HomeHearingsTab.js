@@ -8,7 +8,7 @@ import { CheckBox } from "@egovernments/digit-ui-react-components";
 import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 import useGetHearingLink from "@egovernments/digit-ui-module-hearings/src/hooks/hearings/useGetHearingLink";
-import useInboxSearch from "../../hooks/useInboxSearch";
+import useGetHearingCauseList from "../../hooks/useGetHearingCauseList";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { ConferenceIcon, DocumentSignedIcon, DocumentNotSignedIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
@@ -23,13 +23,13 @@ const HomeHearingsTab = ({
   setLoader = () => {},
   setFilters = () => {},
   filters,
-  showToast = () => {},
+  setShowToast = () => {},
   hearingCount,
 }) => {
   const history = useHistory();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(30);
-  const { data: tableData, loading, error, fetchInbox } = useInboxSearch({ limit: rowsPerPage, offset: page * rowsPerPage });
+  const { data: tableData, loading, error, fetchCauseList } = useGetHearingCauseList({ limit: rowsPerPage, offset: page * rowsPerPage });
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
@@ -57,18 +57,24 @@ const HomeHearingsTab = ({
     setFilters(cleared);
     setPage(0);
     setRowsPerPage(30);
-    fetchInbox(cleared, setHearingCount);
-  }, [fetchInbox, setHearingCount]);
+    fetchCauseList(cleared, setHearingCount);
+  }, [fetchCauseList, setHearingCount]);
 
   const handleSearch = useCallback(() => {
     setPage(0);
     setRowsPerPage(30);
-    fetchInbox(filters, setHearingCount);
-  }, [fetchInbox, filters, setHearingCount]);
+    fetchCauseList(filters, setHearingCount);
+  }, [fetchCauseList, filters, setHearingCount]);
 
   useEffect(() => {
-    fetchInbox(filters, setHearingCount);
+    fetchCauseList(filters, setHearingCount);
   }, [page, rowsPerPage]);
+
+  useEffect(() => {
+    if (!error) return;
+    const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+    setShowToast({ error: true, label: t("ISSUE_IN_FETCH_HEARINGS"), errorId });
+  }, [error, setShowToast, t]);
 
   const stateId = React.useMemo(() => Digit.ULBService.getStateId(), []);
 
@@ -132,7 +138,7 @@ const HomeHearingsTab = ({
         const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentHearing?.hearingNumber);
         if (index === -1 || validData?.length === 1) {
           setLoader(false);
-          showToast("error", t("NO_MORE_HEARINGS_TO_START"), 5000);
+          setShowToast({ error: true, label: t("NO_MORE_HEARINGS_TO_START") });
           return;
         } else {
           const row = validData[(index + 1) % validData?.length];
@@ -155,27 +161,28 @@ const HomeHearingsTab = ({
                     hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
                       setTimeout(() => {
                         setLoader(false);
-                        if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                        if (res?.hearing?.status === "IN_PROGRESS") fetchCauseList(filters, setHearingCount);
                       }, 100);
                     });
                   } else {
                     setLoader(false);
-                    showToast("error", t("NEXT_HEARING_ALREADY_STARTED"), 5000);
+                    setShowToast({ error: true, label: t("NEXT_HEARING_ALREADY_STARTED") });
                   }
                 } else {
                   setLoader(false);
-                  showToast("error", t("ISSUE_IN_NEXT_START_HEARING"), 5000);
+                  setShowToast({ error: true, label: t("ISSUE_IN_NEXT_START_HEARING") });
                 }
               })
               .catch((error) => {
                 setLoader(false);
-                showToast("error", t("ISSUE_IN_NEXT_START_HEARING"), 5000);
+                const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+                setShowToast({ error: true, label: t("ISSUE_IN_NEXT_START_HEARING"), errorId });
                 console.error("Error starting hearing", error);
               });
           } else {
             setTimeout(() => {
               setLoader(false);
-              fetchInbox(filters, setHearingCount);
+              fetchCauseList(filters, setHearingCount);
             }, 100);
           }
         }
@@ -207,24 +214,30 @@ const HomeHearingsTab = ({
                     hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
                       setTimeout(() => {
                         setLoader(false);
-                        if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                        if (res?.hearing?.status === "IN_PROGRESS") fetchCauseList(filters, setHearingCount);
                       }, 100);
                     });
                   } else {
                     setLoader(false);
-                    fetchInbox(filters, setHearingCount);
-                    showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
+                    fetchCauseList(filters, setHearingCount);
+                    setShowToast({ error: true, label: t("HEARING_STATUS_ALREADY_CHANGED") });
                   }
                 } else {
                   setLoader(false);
-                  showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
+                  setShowToast({ error: true, label: t("ISSUE_IN_START_HEARING") });
                 }
+              })
+              .catch((e) => {
+                setLoader(false);
+                const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+                setShowToast({ error: true, label: t("ISSUE_IN_START_HEARING"), errorId });
               });
             return;
           } catch (e) {
             console.error(e);
             setLoader(false);
-            showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
+            const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+            setShowToast({ error: true, label: t("ISSUE_IN_START_HEARING"), errorId });
           }
         } else if (["IN_PROGRESS"].includes(hearingDetails?.status)) {
           setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: hearingDetails });
@@ -254,7 +267,8 @@ const HomeHearingsTab = ({
           } catch (error) {
             const errorCode = error?.response?.data?.Errors?.[0]?.code;
             const errorMsg = errorCode === "ORDER_ALREADY_PUBLISHED" ? t("ORDER_ALREADY_PUBLISHED") : t("CORE_SOMETHING_WENT_WRONG");
-            showToast("error", errorMsg, 5000);
+            const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+            setShowToast({ error: true, label: errorMsg, errorId });
           }
         }
         return;
@@ -310,24 +324,30 @@ const HomeHearingsTab = ({
                           //   { homeFilteredData: filters }
                           // );
                           setTimeout(() => {
-                            if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                            if (res?.hearing?.status === "IN_PROGRESS") fetchCauseList(filters, setHearingCount);
                             setLoader(false);
                           }, 100);
                         });
                       } else {
                         setLoader(false);
-                        fetchInbox(filters, setHearingCount);
-                        showToast("error", t("HEARING_ALREADY_STARTED"), 5000);
+                        fetchCauseList(filters, setHearingCount);
+                        setShowToast({ error: true, label: t("HEARING_ALREADY_STARTED") });
                       }
                     } else {
                       setLoader(false);
-                      showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
+                      setShowToast({ error: true, label: t("ISSUE_IN_START_HEARING") });
                     }
+                  })
+                  .catch((e) => {
+                    setLoader(false);
+                    const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+                    setShowToast({ error: true, label: t("ISSUE_IN_START_HEARING"), errorId });
                   });
               } catch (e) {
                 console.error(e);
                 setLoader(false);
-                showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
+                const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+                setShowToast({ error: true, label: t("ISSUE_IN_START_HEARING"), errorId });
               }
             },
           });
@@ -400,17 +420,17 @@ const HomeHearingsTab = ({
                           .then((res) => {
                             setTimeout(() => {
                               setLoader(false);
-                              if (res?.hearing?.status === "PASSED_OVER") fetchInbox(filters, setHearingCount);
+                              if (res?.hearing?.status === "PASSED_OVER") fetchCauseList(filters, setHearingCount);
                             }, 100);
                           });
                       } else {
                         setLoader(false);
-                        fetchInbox(filters, setHearingCount);
-                        showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
+                        fetchCauseList(filters, setHearingCount);
+                        setShowToast({ error: true, label: t("HEARING_STATUS_ALREADY_CHANGED") });
                       }
                     } else {
                       setLoader(false);
-                      showToast("error", t("ISSUE_IN_PASS_OVER"), 5000);
+                      setShowToast({ error: true, label: t("ISSUE_IN_PASS_OVER") });
                     }
                   });
               } else {
@@ -440,20 +460,22 @@ const HomeHearingsTab = ({
                       setTimeout(() => {
                         setLoader(false);
                         if (res?.hearing?.status === "PASSED_OVER") {
-                          fetchInbox(filters, setHearingCount);
+                          fetchCauseList(filters, setHearingCount);
                         }
                       }, 100);
                     })
-                    .catch(() => {
+                    .catch((e) => {
                       setLoader(false);
-                      showToast("error", t("ISSUE_IN_PASS_OVER"), 5000);
+                      const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+                      setShowToast({ error: true, label: t("ISSUE_IN_PASS_OVER"), errorId });
                     });
                 }
               }
             } catch (e) {
               console.error(e);
               setLoader(false);
-              showToast("error", t("ISSUE_IN_PASS_OVER"), 5000);
+              const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+              setShowToast({ error: true, label: t("ISSUE_IN_PASS_OVER"), errorId });
             } finally {
               // setLoader(false);
             }
@@ -734,7 +756,7 @@ const HomeHearingsTab = ({
                 if (!loading) {
                   setPage(0);
                   setRowsPerPage(10);
-                  fetchInbox(filters, setHearingCount);
+                  fetchCauseList(filters, setHearingCount);
                 }
               }}
             >
@@ -753,7 +775,7 @@ const HomeHearingsTab = ({
                   if (e.key === "Enter" && !loading) {
                     setPage(0);
                     setRowsPerPage(10);
-                    fetchInbox(filters, setHearingCount);
+                    fetchCauseList(filters, setHearingCount);
                   }
                 }}
               />
@@ -943,18 +965,25 @@ const HomeHearingsTab = ({
                     } else {
                       setLoader(false);
                       setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-                      fetchInbox(filters, setHearingCount);
-                      showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
+                      fetchCauseList(filters, setHearingCount);
+                      setShowToast({ error: true, label: t("HEARING_STATUS_ALREADY_CHANGED") });
                     }
                   } else {
                     setLoader(false);
                     setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-                    showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
+                    setShowToast({ error: true, label: t("ISSUE_IN_HEARING_UPDATE") });
                   }
+                })
+                .catch((e) => {
+                  setLoader(false);
+                  setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                  const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+                  setShowToast({ error: true, label: t("ISSUE_IN_HEARING_UPDATE"), errorId });
                 });
             } catch (e) {
               setLoader(false);
-              showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
+              const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+              setShowToast({ error: true, label: t("ISSUE_IN_HEARING_UPDATE"), errorId });
             } finally {
               setPassOver(false);
             }
@@ -989,24 +1018,31 @@ const HomeHearingsTab = ({
                           setTimeout(() => {
                             setLoader(false);
                             setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-                            if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED") fetchInbox(filters, setHearingCount);
+                            if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED") fetchCauseList(filters, setHearingCount);
                           }, 100);
                         });
                     } else {
                       setLoader(false);
-                      fetchInbox(filters, setHearingCount);
-                      showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
+                      fetchCauseList(filters, setHearingCount);
+                      setShowToast({ error: true, label: t("HEARING_STATUS_ALREADY_CHANGED") });
                       setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
                     }
                   } else {
                     setLoader(false);
-                    showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
+                    setShowToast({ error: true, label: t("ISSUE_IN_HEARING_UPDATE") });
                     setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
                   }
+                })
+                .catch((e) => {
+                  setLoader(false);
+                  setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                  const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+                  setShowToast({ error: true, label: t("ISSUE_IN_HEARING_UPDATE"), errorId });
                 });
             } catch (e) {
               setLoader(false);
-              showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
+              const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+              setShowToast({ error: true, label: t("ISSUE_IN_HEARING_UPDATE"), errorId });
               setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
             } finally {
               setPassOver(false);

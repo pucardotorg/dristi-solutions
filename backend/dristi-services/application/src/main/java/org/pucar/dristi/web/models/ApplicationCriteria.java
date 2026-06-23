@@ -68,4 +68,11 @@ public class ApplicationCriteria {
 
     @JsonProperty("asUser")
     private String asUser = null;
+
+    // Backend-only flag: when true, PENDINGPAYMENT applications are NOT excluded
+    // from the search. Used by the payment-update consumer to fetch the
+    // application that is still in PENDINGPAYMENT so its workflow can advance.
+    @JsonIgnore
+    @Builder.Default
+    private Boolean includePendingPayment = false;
 }

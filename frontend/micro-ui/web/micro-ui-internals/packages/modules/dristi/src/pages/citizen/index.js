@@ -9,6 +9,7 @@ import CitizenHome from "./Home";
 import LandingPage from "./Home/LandingPage";
 import ManageOffice from "./Home/ManageOffice";
 import ManageOfficeMember from "./Home/ManageOfficeMember";
+import AdvocateProfileUpdate from "./Home/AdvocateProfileUpdate";
 import { newConfig, userTypeOptions } from "./registration/config";
 import Breadcrumb from "../../components/BreadCrumb";
 import SelectEmail from "./registration/SelectEmail";
@@ -94,7 +95,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${moduleCode}-${refetchAdvocateData}`,
     Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
-  );  
+  );
 
   const userTypeDetail = useMemo(() => {
     return userTypeOptions.find((item) => item.code === userType) || {};
@@ -208,7 +209,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     history.push(`${path}/home/login`);
   }
   if (
-    !isSearchLoading && 
+    !isSearchLoading &&
     !(isRejected || searchResult?.length === 0) &&
     individualId &&
     !isLitigantPartialRegistered &&
@@ -307,11 +308,15 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
               location.pathname.includes("/response") ||
               location.pathname.includes("/login") ||
               location.pathname.includes("/registration") ||
+              location.pathname.includes("/advocate-profile-update") ||
               location.pathname.endsWith("/home")
                 ? `user-registration`
                 : ""
             }
           >
+          <PrivateRoute path={`${path}/home/advocate-profile-update`}>
+            <AdvocateProfileUpdate tenantId={tenantId} />
+          </PrivateRoute>
             <PrivateRoute exact path={`${path}/home`}>
               <CitizenHome tenantId={tenantId} setHideBack={setHideBack} />
             </PrivateRoute>

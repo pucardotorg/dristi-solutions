@@ -94,8 +94,8 @@ public class CaseSummaryListCriteria {
     @Valid
     private Pagination pagination = null;
 
-    @JsonProperty("isLPRCase")
-    private Boolean isLPRCase = null;
+    @JsonProperty("lifecycleStatus")
+    private LifecycleStatus lifecycleStatus = null;
 
     @JsonProperty("officeAdvocateId")
     private String officeAdvocateId = null;

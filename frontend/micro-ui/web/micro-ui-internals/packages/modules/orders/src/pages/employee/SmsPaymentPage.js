@@ -5,11 +5,12 @@ import PaymentStatusMessage from "./PaymentStatusMessage";
 // Import useTranslation when needed for localization
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
-import { Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import useOpenApiOrderSearch from "../../hooks/SmsPayment/useOpenApiOrderSearch";
 import useOpenApiTaskManagementSearch from "../../hooks/SmsPayment/useOpenApiTaskManagementSearch";
 import useOpenApiSummonsPaymentBreakUp from "../../hooks/SmsPayment/useOpenApiSummonsPaymentBreakup";
-import { getFormattedName, getSuffixByBusinessCode } from "../../utils";
+import { getSuffixByBusinessCode } from "../../utils";
 import { openApiService } from "../../hooks/services";
 import { prepareTaskPayload, formDataKeyMap, formatAddress } from "../../utils/PaymentUtitls";
 import useOpenApiPaymentProcess from "../../hooks/SmsPayment/useOpenApiPaymentProcess";
@@ -31,7 +32,7 @@ const SmsPaymentPage = () => {
   const [loader, setLoader] = useState(false);
   const [noticeData, setNoticeData] = useState([]);
   const filingNumber = orderNumber?.split("-OR")?.[0] || "";
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [paymentBreakDown, setPaymentBreakDown] = useState({});
   const [receiptFilstoreId, setReceiptFilstoreId] = useState(null);
   const [isPaymentLocked, setIsPaymentLocked] = useState(false);
@@ -381,7 +382,8 @@ const SmsPaymentPage = () => {
       setStep(step + 1);
     } catch (error) {
       console.error("Error in proceeding to payment:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("SMS_PAYMENT_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -406,19 +408,12 @@ const SmsPaymentPage = () => {
     scenario,
   });
 
-  const showToast = (type, message, duration = 5000) => {
-    setShowErrorToast({ error: type, label: message });
-    setTimeout(() => {
-      setShowErrorToast(null);
-    }, duration);
-  };
-
   const handlePyament = async () => {
     try {
       setLoader(true);
       const bill = await fetchBill(taskManagement?.taskManagementNumber + `_${suffix}`, tenantId, "task-management-payment");
       if (!bill?.Bill?.length) {
-        showToast("success", t("CS_NO_PENDING_PAYMENT"), 5000);
+        showToast({ label: t("CS_NO_PENDING_PAYMENT"), error: false });
         setIsPaymentLocked(true);
         setStep(4);
         return;
@@ -433,7 +428,7 @@ const SmsPaymentPage = () => {
       );
       if (caseLockStatus?.Lock?.isLocked) {
         setIsPaymentLocked(true);
-        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 5000);
+        setShowToast({ label: t("CS_CASE_LOCKED_BY_ANOTHER_USER"), error: false });
         return;
       }
       await openApiService.setCaseLock(
@@ -453,20 +448,22 @@ const SmsPaymentPage = () => {
       }
     } catch (error) {
       console.error("Error in proceeding to payment:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("SMS_PAYMENT_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
   };
 
-  const handleDownloadReciept = async () => {
+  const handleDownloadReceipt = async () => {
     try {
       setLoader(true);
       const fileName = `${orderData?.orderType ? t(orderData?.orderType) + "-" : ""}${t("PAY_RECIEPT_FILENAME")}.pdf`;
       await download(receiptFilstoreId, tenantId, "treasury", fileName);
     } catch (err) {
       console.error("Error in downloading reciept:", err);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("SMS_PAYMENT_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -524,19 +521,6 @@ const SmsPaymentPage = () => {
       setStep(1);
     }
   }, [taskManagementList, taskManagementList?.length]);
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   useEffect(() => {
     if (!isUserLoggedIn && !isAuthorised) {
@@ -596,7 +580,7 @@ const SmsPaymentPage = () => {
           breakupResponse={breakupResponse}
           tenantId={tenantId}
           filingNumber={filingNumber}
-          setShowErrorToast={setShowErrorToast}
+          setShowToast={setShowToast}
         />
       ) : step === 2 ? (
         <PaymentPage
@@ -614,7 +598,7 @@ const SmsPaymentPage = () => {
           paymentStatus={"PAYMENTDONE"}
           paymentCardButtonLabel={"DOWNLOAD_RECIEPT"}
           paymentDetails={paymentBreakDown}
-          handleDownloadReciept={handleDownloadReciept}
+          handleDownloadReciept={handleDownloadReceipt}
           onNext={handleNext}
         />
       ) : step === 4 ? (
@@ -626,7 +610,15 @@ const SmsPaymentPage = () => {
           onClose={handleClose}
         />
       ) : null}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 };

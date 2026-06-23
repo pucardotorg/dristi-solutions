@@ -6,7 +6,6 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { getFormattedName } from "../utils";
 import WarrantRenderDeliveryChannels from "./WarrantRenderDeliveryChannels";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
-import { Toast } from "@egovernments/digit-ui-components";
 import { ORDER_TYPES } from "../utils/constants";
 
 // Helper function to compare addresses without police station data
@@ -66,7 +65,6 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const orderType = useMemo(() => formData?.orderType?.code, [formData?.orderType?.code]);
   const [userList, setUserList] = useState([]);
   const [policeStationIdMapping, setPoliceStationIdMapping] = useState([]);
-  const [showErrorToast, setShowErrorToast] = useState(null);
   const courtId = localStorage.getItem("courtId");
   const [deliveryChannels, setDeliveryChannels] = useState([
     {
@@ -126,18 +124,6 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       ...(address?.geoLocationDetails && { geoLocationDetails: address.geoLocationDetails }),
     }));
   };
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -465,10 +451,8 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             handleAddParty();
             refetch();
           }}
-          showToast={setShowErrorToast}
         ></AddWitnessModal>
       )}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.message} isDleteBtn={true} onClose={closeToast} />}
     </div>
   );
 };

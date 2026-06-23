@@ -70,12 +70,12 @@ public class AdvocateDetailBlockBuilder {
                         try {
                             if (litigant.getAdditionalDetails() != null) {
                                 JsonNode litNode = objectMapper.convertValue(litigant.getAdditionalDetails(), JsonNode.class);
-                                if (litNode.has("firstName")) complainant.setFirstName(litNode.get("firstName").asText());
-                                if (litNode.has("middleName")) complainant.setMiddleName(litNode.get("middleName").asText());
-                                if (litNode.has("lastName")) complainant.setLastName(litNode.get("lastName").asText());
-                                if (litNode.has("mobileNumber")) complainant.setMobileNumber(litNode.get("mobileNumber").asText());
+                                if (litNode.hasNonNull("firstName")) complainant.setFirstName(litNode.get("firstName").asText());
+                                if (litNode.hasNonNull("middleName")) complainant.setMiddleName(litNode.get("middleName").asText());
+                                if (litNode.hasNonNull("lastName")) complainant.setLastName(litNode.get("lastName").asText());
+                                if (litNode.hasNonNull("mobileNumber")) complainant.setMobileNumber(litNode.get("mobileNumber").asText());
                                 // if additionalDetails contains a display/full name, prefer that
-                                if (litNode.has("fullName")) complainant.setFullName(litNode.get("fullName").asText());
+                                if (litNode.hasNonNull("fullName")) complainant.setFullName(litNode.get("fullName").asText());
                             }
                         } catch (Exception e) {
                             log.trace("Could not parse additionalDetails for litigant: {}", e.getMessage());
@@ -96,34 +96,26 @@ public class AdvocateDetailBlockBuilder {
                             if (nameBuilder.length() > 0) complainant.setFullName(nameBuilder.toString());
                         }
 
-            List<Document> vakalatnama = getVakalatnamaDocumentsForLitigant(courtCase, litigant);
-            List<Document> pipAffidavit = Optional.ofNullable(litigant.getDocuments())
-                                         .orElse(Collections.emptyList())
-                                         .stream()
-                                         .filter(d -> d != null
+                        List<Document> vakalatnama = getVakalatnamaDocumentsForLitigant(courtCase, litigant);
+                        List<Document> pipAffidavit = Optional.ofNullable(litigant.getDocuments())
+                                .orElse(Collections.emptyList())
+                                .stream()
+                                .filter(d -> d != null
                                         && d.getDocumentType() != null
                                         && d.getDocumentType().equalsIgnoreCase("COMPLAINANT_PIP_AFFIDAVIT"))
-                                       .collect(Collectors.toList());
+                                .collect(Collectors.toList());
 
-            Documents docs = Documents.builder()
-                .vakalatnama(vakalatnama)
-                .pipAffidavit(pipAffidavit)
-                .build();
+                        Documents docs = Documents.builder()
+                                .vakalatnama(vakalatnama)
+                                .pipAffidavit(pipAffidavit)
+                                .build();
 
                         // Build advocates list by finding representatives who represent this litigant (match by individualId)
                         List<Advocate> advocates = new ArrayList<>();
                         if (courtCase.getRepresentatives() != null && litigant.getIndividualId() != null) {
                             for (AdvocateMapping rep : courtCase.getRepresentatives()) {
                                 if (rep == null) continue;
-                                boolean representsLitigant = false;
-                                if (rep.getRepresenting() != null) {
-                                    for (Party p : rep.getRepresenting()) {
-                                        if (p != null && p.getIndividualId() != null && p.getIndividualId().equalsIgnoreCase(litigant.getIndividualId())) {
-                                            representsLitigant = true;
-                                            break;
-                                        }
-                                    }
-                                }
+                                boolean representsLitigant = isRepresentsLitigant(litigant, rep);
                                 if (!representsLitigant) continue;
 
                                 Advocate adv = Advocate.builder().build();
@@ -157,11 +149,11 @@ public class AdvocateDetailBlockBuilder {
                                         if (repNode.has("advocateUuid") && !repNode.get("advocateUuid").isNull() && adv.getAdvocateUuid() == null) {
                                             try { adv.setAdvocateUuid(UUID.fromString(repNode.get("advocateUuid").asText())); } catch (Exception ignored) {}
                                         }
-                                        if (repNode.has("firstName") && (adv.getFirstName() == null || adv.getFirstName().isBlank())) adv.setFirstName(repNode.get("firstName").asText());
-                                        if (repNode.has("middleName") && (adv.getMiddleName() == null || adv.getMiddleName().isBlank())) adv.setMiddleName(repNode.get("middleName").asText());
-                                        if (repNode.has("lastName") && (adv.getLastName() == null || adv.getLastName().isBlank())) adv.setLastName(repNode.get("lastName").asText());
-                                        if (repNode.has("mobileNumber") && (adv.getMobileNumber() == null || adv.getMobileNumber().isBlank())) adv.setMobileNumber(repNode.get("mobileNumber").asText());
-                                        if (repNode.has("advocateName") && (adv.getFirstName() == null || adv.getFirstName().isBlank())) adv.setFirstName(repNode.get("advocateName").asText());
+                                        if (repNode.hasNonNull("firstName") && (adv.getFirstName() == null || adv.getFirstName().isBlank())) adv.setFirstName(repNode.get("firstName").asText());
+                                        if (repNode.hasNonNull("middleName") && (adv.getMiddleName() == null || adv.getMiddleName().isBlank())) adv.setMiddleName(repNode.get("middleName").asText());
+                                        if (repNode.hasNonNull("lastName") && (adv.getLastName() == null || adv.getLastName().isBlank())) adv.setLastName(repNode.get("lastName").asText());
+                                        if (repNode.hasNonNull("mobileNumber") && (adv.getMobileNumber() == null || adv.getMobileNumber().isBlank())) adv.setMobileNumber(repNode.get("mobileNumber").asText());
+                                        if (repNode.hasNonNull("advocateName") && (adv.getFirstName() == null || adv.getFirstName().isBlank())) adv.setFirstName(repNode.get("advocateName").asText());
                                     }
                                 } catch (Exception ignored) { }
 
@@ -181,10 +173,10 @@ public class AdvocateDetailBlockBuilder {
                                                                 JsonNode nameDetails = n.path("advocateNameDetails");
                                                                 JsonNode bar = n.path("advocateBarRegNumberWithName");
                                                                 if (bar.has("advocateId") && adv.getIndividualId() != null && adv.getIndividualId().equalsIgnoreCase(bar.path("individualId").asText())) {
-                                                                    if (nameDetails.has("firstName")) adv.setFirstName(nameDetails.get("firstName").asText());
-                                                                    if (nameDetails.has("middleName")) adv.setMiddleName(nameDetails.get("middleName").asText());
-                                                                    if (nameDetails.has("lastName")) adv.setLastName(nameDetails.get("lastName").asText());
-                                                                    if (nameDetails.has("advocateMobileNumber")) adv.setMobileNumber(nameDetails.get("advocateMobileNumber").asText());
+                                                                    if (nameDetails.hasNonNull("firstName")) adv.setFirstName(nameDetails.get("firstName").asText());
+                                                                    if (nameDetails.hasNonNull("middleName")) adv.setMiddleName(nameDetails.get("middleName").asText());
+                                                                    if (nameDetails.hasNonNull("lastName")) adv.setLastName(nameDetails.get("lastName").asText());
+                                                                    if (nameDetails.hasNonNull("advocateMobileNumber")) adv.setMobileNumber(nameDetails.get("advocateMobileNumber").asText());
                                                                 }
                                                             }
                                                         }
@@ -212,18 +204,22 @@ public class AdvocateDetailBlockBuilder {
                                 .showVakalatNamaUpload(pipAffidavit.isEmpty())
                                 .build();
 
+                        boolean isFormCompleted = "YES".equalsIgnoreCase(pipStatus.getCode())
+                                ? pipAffidavit != null && !pipAffidavit.isEmpty()
+                                : advocates != null && !advocates.isEmpty() && vakalatnama != null && !vakalatnama.isEmpty();
 
-            AdvocateDetailBlock block = AdvocateDetailBlock.builder()
-                .complainant(complainant)
-                .documents(docs)
-                .advocates(advocates)
-                .advocateCount(advocates != null ? advocates.size() : 0)
-                .isEnabled(true)
-                .isFormCompleted(!advocates.isEmpty())
-                .displayIndex(0)
-                .isComplainantPip(pipStatus)
-                .uiFlags(uiFlags)
-                .build();
+
+                        AdvocateDetailBlock block = AdvocateDetailBlock.builder()
+                                .complainant(complainant)
+                                .documents(docs)
+                                .advocates(advocates)
+                                .advocateCount(advocates != null ? advocates.size() : 0)
+                                .isEnabled(true)
+                                .isFormCompleted(isFormCompleted)
+                                .displayIndex(0)
+                                .isComplainantPip(pipStatus)
+                                .uiFlags(uiFlags)
+                                .build();
 
                         blocks.add(block);
                     }
@@ -234,6 +230,19 @@ public class AdvocateDetailBlockBuilder {
         } catch (Exception e) {
             log.error("Error while building AdvocateDetailBlock: {}", e.toString());
         }
+    }
+
+    private static boolean isRepresentsLitigant(Party litigant, AdvocateMapping rep) {
+        boolean representsLitigant = false;
+        if (rep.getRepresenting() != null) {
+            for (Party p : rep.getRepresenting()) {
+                if (p != null && p.getIndividualId() != null && p.getIndividualId().equalsIgnoreCase(litigant.getIndividualId())) {
+                    representsLitigant = true;
+                    break;
+                }
+            }
+        }
+        return representsLitigant;
     }
 
     private List<Document> getVakalatnamaDocumentsForLitigant(CourtCase courtCase, Party litigant) {
@@ -281,7 +290,7 @@ public class AdvocateDetailBlockBuilder {
 
     private String getDocumentIdentity(Document document) {
         if (document == null) {
-           return "NULL_DOCUMENT";
+            return "NULL_DOCUMENT";
         }
         if (document.getFileStore() != null && !document.getFileStore().isBlank()) {
             return "filestore:" + document.getFileStore();

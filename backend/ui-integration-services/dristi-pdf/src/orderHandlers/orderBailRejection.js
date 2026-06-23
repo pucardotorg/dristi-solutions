@@ -12,6 +12,7 @@ const { renderError } = require("../utils/renderError");
 const { getAdvocates } = require("../applicationHandlers/getAdvocates");
 const { formatDate } = require("./formatDate");
 const { handleApiCall } = require("../utils/handleApiCall");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 const orderBailRejection = async (
   req,
@@ -154,12 +155,7 @@ const orderBailRejection = async (
       messagesMap?.[order?.orderDetails?.bailType] ||
       order?.orderDetails?.bailType;
     const caseNumber =
-      (courtCase?.isLPRCase
-        ? courtCase?.lprNumber
-        : courtCase?.courtCaseNumber) ||
-      courtCase?.courtCaseNumber ||
-      courtCase?.cmpNumber ||
-      "";
+      getCaseNumber(courtCase);
     const data = {
       Data: [
         {

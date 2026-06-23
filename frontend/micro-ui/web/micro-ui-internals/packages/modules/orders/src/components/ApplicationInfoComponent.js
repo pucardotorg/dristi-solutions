@@ -19,21 +19,6 @@ const ApplicationInfoComponent = ({ infos, links }) => {
               </div>
             ))}
         </div>
-        <div className="info-link-wrapper">
-          {/* {links &&
-            links?.map((link, index) => (
-              <h3
-                key={index}
-                className="review-summon-order"
-                onClick={() => {
-                  if (link?.onClick) link.onClick();
-                  else return;
-                }}
-              >
-                {link?.text}
-              </h3>
-            ))} */}
-        </div>
       </div>
     </React.Fragment>
   );

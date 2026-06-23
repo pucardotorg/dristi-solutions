@@ -33,8 +33,8 @@ public class CaseMemberInfo {
     @JsonProperty("lprNumber")
     private String lprNumber = null;
 
-    @JsonProperty("isLPRCase")
-    private Boolean isLPRCase;
+    @JsonProperty("lifecycleStatus")
+    private LifecycleStatus lifecycleStatus = null;
 
     @JsonProperty("caseTitle")
     private String caseTitle = null;

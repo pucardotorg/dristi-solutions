@@ -107,14 +107,9 @@ const prayerAndSwornFormConfig = [
             {
               name: "document",
               type: "DragDropComponent",
-              fileTypes: ["JPG", "PDF", "PNG"],
-              isMandatory: true,
-              maxFileSize: 10,
               documentHeader: "CS_SWORN_STATEMENT_HEADER",
               documentSubText: "CS_SWORN_STATEMENT_SUBTEXT",
               isMultipleUpload: true,
-              uploadGuidelines: "UPLOAD_DOC_10",
-              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             },
           ],
         },
@@ -195,7 +190,7 @@ const prayerAndSwornFormConfig = [
             {
               name: "document",
               type: "DragDropComponent",
-              fileTypes: ["JPG", "PDF", "PNG"],
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               isMandatory: true,
               maxFileSize: 10,
               documentHeader: "CS_SWORN_ADDITIONAL_ACTS_DOCUMENT_HEADER",

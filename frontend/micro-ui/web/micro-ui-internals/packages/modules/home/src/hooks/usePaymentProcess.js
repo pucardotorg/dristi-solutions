@@ -65,7 +65,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
         return false;
       }
     } catch (e) {
-      return false;
+      throw e;
     }
   };
 
@@ -205,28 +205,51 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
           setPaymentLoader(true);
           popup.document.body.removeChild(form);
         }
-        let retryCount = 0;
-        const maxRetries = 3;
-        const checkPopupClosed = setInterval(async () => {
-          if (popup.closed) {
-            setPaymentLoader(false);
-            if (retryCount < maxRetries) {
-              retryCount++;
-              const billAfterPayment = await DRISTIService.callSearchBill(
-                {},
-                { tenantId, consumerCode: consumerCode || billConsumerCode, service: service || billBusinessService }
-              );
-              if (billAfterPayment?.Bill?.[0]?.status === "PAID") {
-                clearInterval(checkPopupClosed);
-                resolve(true);
-              } else if (retryCount === maxRetries) {
-                clearInterval(checkPopupClosed);
-                resolve(false);
-              }
-            } else {
-              clearInterval(checkPopupClosed);
-              resolve(false);
+        // Poll the bill status every second instead of waiting for the success popup's
+        // auto-close. The moment the bill is PAID we close the popup and resolve(true),
+        // so the user no longer waits out the success page timer.
+        let isResolved = false;
+        let pollCount = 0;
+        let graceCount = 0;
+        const maxPolls = 600; // safety cap (~10 min) so the interval can never run forever
+        const graceAfterClose = 5; // keep polling ~5s after the user closes the popup, to let the async reconciliation catch up
+
+        const finish = (intervalId, result) => {
+          if (isResolved) return;
+          isResolved = true;
+          clearInterval(intervalId);
+          setPaymentLoader(false);
+          popup?.close();
+          resolve(result);
+        };
+
+        const checkBillStatus = setInterval(async () => {
+          pollCount++;
+          try {
+            const billAfterPayment = await DRISTIService.callSearchBill(
+              {},
+              { tenantId, consumerCode: consumerCode || billConsumerCode, service: service || billBusinessService }
+            );
+            if (billAfterPayment?.Bill?.[0]?.status === "PAID") {
+              finish(checkBillStatus, true);
+              return;
             }
+          } catch (error) {
+            console.error("Error checking bill status:", error);
+          }
+
+          // Once the user closes the popup, give the async reconciliation a short grace
+          // window to mark the bill PAID before treating the attempt as failed.
+          if (popup?.closed) {
+            graceCount++;
+            if (graceCount >= graceAfterClose) {
+              finish(checkBillStatus, false);
+              return;
+            }
+          }
+
+          if (pollCount >= maxPolls) {
+            finish(checkBillStatus, false);
           }
         }, 1000);
         if (!["applicationSubmission", "EfillingCase"?.includes(scenario)]) {

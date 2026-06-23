@@ -1,7 +1,7 @@
 import React from "react";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
-const AuthenticatedLink = ({ t, uri, displayFilename = false, pdf = false }) => {
+const AuthenticatedLink = ({ t, uri, displayFilename = false, pdf = false, name = "downloadedFile" }) => {
   const handleClick = (e) => {
     e.preventDefault();
 
@@ -21,7 +21,7 @@ const AuthenticatedLink = ({ t, uri, displayFilename = false, pdf = false }) => 
           const blobUrl = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = blobUrl;
-          link.download = `downloadedFile.${extension}`;
+          link.download = `${name}.${extension}`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);

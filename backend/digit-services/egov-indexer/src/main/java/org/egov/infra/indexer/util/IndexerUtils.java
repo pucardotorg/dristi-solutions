@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.infra.indexer.consumer.config.CoreIndexConsumerConfig;
-import org.egov.infra.indexer.consumer.config.LegacyIndexConsumerConfig;
 import org.egov.infra.indexer.consumer.config.ReindexConsumerConfig;
 import org.egov.infra.indexer.models.AuditDetails;
 import org.egov.infra.indexer.producer.IndexerProducer;
@@ -30,7 +29,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -113,7 +111,6 @@ public class IndexerUtils {
 	public void orchestrateListenerOnESHealth() {
 		ReindexConsumerConfig.pauseContainer();
 		CoreIndexConsumerConfig.pauseContainer();
-		LegacyIndexConsumerConfig.pauseContainer();
 		log.info("Polling ES....");
 		final Runnable esPoller = new Runnable() {
 			boolean threadRun = true;
@@ -135,7 +132,6 @@ public class IndexerUtils {
 						log.info("ES is UP!");
 						ReindexConsumerConfig.resumeContainer();
 						CoreIndexConsumerConfig.resumeContainer();
-						LegacyIndexConsumerConfig.resumeContainer();
 						threadRun = false;
 					}
 				}

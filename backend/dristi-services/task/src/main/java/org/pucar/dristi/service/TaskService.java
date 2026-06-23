@@ -101,7 +101,7 @@ public class TaskService {
 
             enrichmentUtil.enrichTaskRegistration(body);
 
-            if (body.getTask().getTaskType().equalsIgnoreCase(GENERIC)) {
+            if(body.getTask().getTaskType().equalsIgnoreCase(GENERIC)) {
                 updateAssignedToList(body);
                 createDemandForPayment(body);
             }
@@ -164,10 +164,10 @@ public class TaskService {
             List<AssignedTo> newAssignedToList = new ArrayList<>(assignedToList); // Create a new list to avoid ConcurrentModificationException
             List<CourtCase> courtCases = caseUtil.getCaseDetails(body);
 
-            for (AssignedTo assignedTo : newAssignedToList) {
+            for(AssignedTo assignedTo : newAssignedToList) {
                 String uuid = assignedTo.getUuid().toString();
                 List<AdvocateMapping> representatives = courtCases.get(0).getRepresentatives();
-                if (representatives != null) {
+                if(representatives != null) {
                     for (AdvocateMapping advocateMapping : representatives) {
                         List<Party> parties = advocateMapping.getRepresenting();
                         List<String> individualIds = parties.stream().filter(party -> uuid.equalsIgnoreCase(objectMapper.convertValue(party.getAdditionalDetails(), JsonNode.class).get("uuid").textValue()))
@@ -179,13 +179,13 @@ public class TaskService {
                     }
                 }
             }
-            if (!assignedToList.isEmpty()) {
+            if(!assignedToList.isEmpty()){
                 body.getTask().getWorkflow().setAssignes(assignedToList.stream().map(assignedTo -> assignedTo.getUuid().toString()).toList());
                 body.getTask().getWorkflow().setAdditionalDetails(getAdditionalDetails(body.getTask()));
             }
         } catch (Exception e) {
             log.error("Error occurred while updating assignedTo list :: {}", e.toString());
-            throw new CustomException("ERROR_UPDATING_ASSIGNED_TO_LIST", e.getMessage());
+            throw new CustomException("ERROR_UPDATING_ASSIGNED_TO_LIST",e.getMessage());
         }
     }
 
@@ -238,22 +238,22 @@ public class TaskService {
             String status = body.getTask().getStatus();
             String taskType = body.getTask().getTaskType();
             log.info("status , taskType : {} , {} ", status, taskType);
-            if (PROCESS_SENT.equalsIgnoreCase(status) || SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status) || PROCLAMATION_SENT.equalsIgnoreCase(status) || ATTACHMENT_SENT.equalsIgnoreCase(status)) {
+            if (PROCESS_SENT.equalsIgnoreCase(status) || SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status) || PROCLAMATION_SENT.equalsIgnoreCase(status) || ATTACHMENT_SENT.equalsIgnoreCase(status)){
                 String acknowledgementId = summonUtil.sendSummons(body);
                 updateAcknowledgementId(body, acknowledgementId);
-                if (!PROCESS_SENT.equalsIgnoreCase(status))
-                    closeEnvelopePendingTaskOfRpad(body);
+                if(!PROCESS_SENT.equalsIgnoreCase(status))
+                 closeEnvelopePendingTaskOfRpad(body);
             }
 
             List<String> fileStoreIds = new ArrayList<>();
-            if (body.getTask().getDocuments() != null) {
+            if(body.getTask().getDocuments() != null){
                 for (Document document : body.getTask().getDocuments()) {
                     if (!document.getIsActive()) {
                         fileStoreIds.add(document.getFileStore());
                     }
                 }
             }
-            if (!fileStoreIds.isEmpty()) {
+            if(!fileStoreIds.isEmpty()){
                 fileStoreUtil.deleteFilesByFileStore(fileStoreIds, body.getTask().getTenantId());
                 log.info("Deleted files from file store: {}", fileStoreIds);
             }
@@ -278,12 +278,12 @@ public class TaskService {
 
             if (!isValidTask) {
                 // join case pending task is not valid
-                throw new CustomException(INVALID_PENDING_TASK, "the pending task is not valid");
+                throw new CustomException(INVALID_PENDING_TASK,"the pending task is not valid");
             }
 
             String messageCode = status != null ? getMessageCode(taskType, status) : null;
             log.info("Message Code :: {}", messageCode);
-            if (messageCode != null) {
+            if(messageCode != null){
                 callNotificationService(body, messageCode);
             }
 
@@ -357,7 +357,7 @@ public class TaskService {
                     config.getTaskSummonBusinessServiceName(), workflow, config.getTaskSummonBusinessName());
             case WARRANT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskWarrantBusinessServiceName(), workflow, config.getTaskWarrantBusinessName());
-            case PROCLAMATION -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+            case PROCLAMATION-> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskProclamationBusinessServiceName(), workflow, config.getTaskProclamationBusinessName());
             case ATTACHMENT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskAttachmentBusinessServiceName(), workflow, config.getTaskAttachmentBusinessName());
@@ -406,7 +406,7 @@ public class TaskService {
             log.info("Task validateApplicationUploadDocumentExistence response :: {}", task);
 
             // Enrich application upon update
-            TaskRequest taskRequest = TaskRequest.builder().requestInfo(body.getRequestInfo()).task(task).build();
+           TaskRequest taskRequest = TaskRequest.builder().requestInfo(body.getRequestInfo()).task(task).build();
             enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
             enrichmentUtil.enrichIsPendingCollectionUponUpdate(taskRequest, body);
 
@@ -517,7 +517,7 @@ public class TaskService {
     private void callNotificationService(TaskRequest taskRequest, String messageCode) {
         try {
             JsonNode caseList = caseUtil.searchCaseDetails(taskRequest.getRequestInfo(), taskRequest.getTask().getTenantId(), null, taskRequest.getTask().getFilingNumber(), null);
-            if (caseList.isEmpty()) {
+            if(caseList.isEmpty()) {
                 throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, "Case Not Found!");
             }
             JsonNode caseDetails = caseList.get(0);
@@ -530,21 +530,21 @@ public class TaskService {
             extractPowerOfAttorneyIds(caseDetails, individualIds);
 
             if (Objects.equals(messageCode, WARRANT_ISSUED)) {
-                accusedName = accusedName.split(" \\(")[0];
-                individualIds = extractIndividualIds(caseDetails, accusedName);
+                 accusedName = accusedName.split(" \\(")[0];
+                individualIds = extractIndividualIds(caseDetails,accusedName);
             }
 
-            if (PROCESS_FEE_PAYMENT.equalsIgnoreCase(messageCode)) {
+            if(PROCESS_FEE_PAYMENT.equalsIgnoreCase(messageCode)) {
                 individualIds.clear();
                 Object workflowAdditionalDetailsObj = taskRequest.getTask().getWorkflow().getAdditionalDetails();
                 JsonNode workflowAdditionalDetails = objectMapper.readTree(objectMapper.writeValueAsString(workflowAdditionalDetailsObj));
                 ArrayNode litigants = (ArrayNode) workflowAdditionalDetails.get("litigants");
-                for (JsonNode litigant : litigants) {
+                for(JsonNode litigant : litigants) {
                     individualIds.add(litigant.asText());
                 }
             }
             Set<String> phoneNumbers = callIndividualService(taskRequest.getRequestInfo(), individualIds);
-            if (PROCESS_FEE_PAYMENT.equalsIgnoreCase(messageCode)) {
+            if(PROCESS_FEE_PAYMENT.equalsIgnoreCase(messageCode)) {
                 CourtCase courtCase = objectMapper.convertValue(caseDetails, CourtCase.class);
                 List<String> advocateIds = courtCase.getRepresentatives().stream()
                         .map(AdvocateMapping::getAdvocateId)
@@ -564,7 +564,8 @@ public class TaskService {
             for (String number : phoneNumbers) {
                 notificationService.sendNotification(taskRequest.getRequestInfo(), smsTemplateData, messageCode, number);
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred while sending notification: {}", e.toString());
         }
     }
@@ -579,7 +580,7 @@ public class TaskService {
 
             // Extract mobile numbers for complainants, their POA, and advocates
             Set<String> mobileNumbers = new HashSet<>();
-            
+
             // Get complainant mobile numbers
             extractComplainantMobileNumbers(caseDetails, mobileNumbers,taskRequest.getRequestInfo());
             extractComplainantAdvocateMobileNumbers(caseDetails, taskRequest.getRequestInfo(), mobileNumbers);
@@ -994,6 +995,7 @@ public class TaskService {
     }
 
 
+
     private CourtCase getCourtCase(TaskRequest taskRequest) {
         List<CourtCase> caseDetails = caseUtil.getCaseDetails(taskRequest);
         if (caseDetails.isEmpty()) {
@@ -1036,7 +1038,7 @@ public class TaskService {
         return additionalDetails;
     }
 
-    public List<TaskToSign> createTasksToSignRequest(TasksToSignRequest request) {
+    public List<TaskToSign> createTasksToSignRequest(TasksToSignRequest request){
         log.info("Method=createTasksToSignRequest, result= IN_PROGRESS, tasksCriteria:{}", request.getCriteria().size());
 
         List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
@@ -1071,12 +1073,53 @@ public class TaskService {
             }
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
-                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
+                double cx = coordinate.getX();
+                double cy = coordinate.getY();
+                double pageWidth = coordinate.getPageWidth();
+                double pageHeight = coordinate.getPageHeight();
+                int sigWidth = config.getEsignSignatureWidth();
+                int sigHeight = config.getEsignSignatureHeight();
+                if (pageWidth > 0) {
+                    double overflow = cx + sigWidth - pageWidth;
+                    if (overflow > 0) {
+                        int phase1MaxReduction = sigWidth - config.getEsignSignaturePreferredWidthThreshold();
+                        int phase1Reduction = (int) Math.min(overflow, phase1MaxReduction);
+                        sigWidth -= phase1Reduction;
+                        overflow -= phase1Reduction;
+                        if (overflow > 0) {
+                            int widthBudget = sigWidth - config.getEsignSignatureMinWidth();
+                            int maxOffset = config.getEsignSignatureMaxLeftOffset();
+                            int half = (int) (overflow / 2);
+                            int wReduce, offset;
+                            if (half <= widthBudget && half <= maxOffset) {
+                                wReduce = (int) overflow / 2;
+                                offset = (int) overflow - wReduce;
+                            } else if (half > widthBudget) {
+                                wReduce = widthBudget;
+                                offset = (int) Math.min(overflow - wReduce, maxOffset);
+                            } else {
+                                offset = maxOffset;
+                                wReduce = (int) Math.min(overflow - offset, widthBudget);
+                            }
+                            sigWidth -= wReduce;
+                            cx = Math.max(cx - offset, 0);
+                        }
+                    }
+                    double remainingOverflow = cx + sigWidth - pageWidth;
+                    if (remainingOverflow > 0) {
+                        cx = Math.max(cx - remainingOverflow, 0);
+                    }
+                }
+                if (pageHeight > 0) {
+                    cy = Math.min(cy, pageHeight - sigHeight);
+                    cy = Math.max(cy, 0);
+                }
+                String coord = (int) Math.floor(cx) + "," + (int) Math.floor(cy);
                 String txnId = UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
                 ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of(config.getZoneId()));
 
-                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
+                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo, sigWidth);
                 TasksCriteria mapped = tasksCriteriaMap.get(coordinate.getFileStoreId());
                 if (mapped == null) {
                     throw new CustomException(COORDINATES_ERROR, "No matching criteria for fileStoreId: " + coordinate.getFileStoreId());
@@ -1095,7 +1138,7 @@ public class TaskService {
         return tasksToSigns;
     }
 
-    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
+    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber, int effectiveWidth) {
         log.info("generating request, result= IN_PROGRESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
         Map<String, Object> requestData = new LinkedHashMap<>();
 
@@ -1122,7 +1165,7 @@ public class TaskService {
         Map<String, Object> pdf = new LinkedHashMap<>();
         pdf.put(PAGE, pageNumber);
         pdf.put(CO_ORDINATES, coordination);
-        pdf.put(SIZE, config.getEsignSignatureWidth() + "," + config.getEsignSignatureHeight());
+        pdf.put(SIZE, effectiveWidth + "," + config.getEsignSignatureHeight());
         pdf.put(DATE_FORMAT, ESIGN_DATE_FORMAT);
         requestData.put(PDF, pdf);
 
@@ -1143,7 +1186,7 @@ public class TaskService {
         return attribute;
     }
 
-    public List<Task> updateTaskWithSignedDoc(@Valid UpdateSignedTaskRequest request) {
+    public List<Task> updateTaskWithSignedDoc(@Valid UpdateSignedTaskRequest request){
 
         log.info("Method=updateTaskWithSignedDoc, result= IN_PROGRESS, signedTasks:{}", request.getSignedTasks().size());
         List<Task> updatedTasks = new ArrayList<>();
@@ -1182,7 +1225,7 @@ public class TaskService {
                         }
                     }
 
-                    if (isTaskSigned) {
+                    if(isTaskSigned){
                         log.warn("Skipping task {} which has already been signed", task.getTaskNumber());
                         continue;
                     }
@@ -1225,8 +1268,7 @@ public class TaskService {
         // Convert Object → Map
         Map<String, Object> taskDetails = objectMapper.convertValue(
                 task.getTaskDetails(),
-                new TypeReference<Map<String, Object>>() {
-                }
+                new TypeReference<Map<String, Object>>() {}
         );
 
         // Navigate to deliveryChannels
@@ -1254,7 +1296,7 @@ public class TaskService {
                 task.setWorkflow(workflowObject);
                 updateTask(TaskRequest.builder().task(task).requestInfo(bulkSendRequest.getRequestInfo()).build());
 
-            } catch (Exception e) {
+            }catch (Exception e) {
                 bulkSendTask.setErrorMessage(e.getMessage());
                 bulkSendTask.setSuccess(false);
             }
@@ -1281,52 +1323,52 @@ public class TaskService {
             TaskDetailsDTO taskDetailsDTO = request.getTaskDetailsDTO();
             String taskNumber = taskDetailsDTO.getTaskNumber();
             String uniqueId = taskDetailsDTO.getUniqueId();
-
+            
             log.info("Processing task details for taskNumber: {} and uniqueId: {}", taskNumber, uniqueId);
-
+            
             // Search for the task using taskNumber
             TaskSearchRequest searchRequest = new TaskSearchRequest();
             searchRequest.setCriteria(TaskCriteria.builder()
                     .taskNumber(taskNumber)
                     .build());
             searchRequest.setRequestInfo(request.getRequestInfo());
-
+            
             List<Task> tasks = searchTask(searchRequest);
-
+            
             if (tasks == null || tasks.isEmpty()) {
                 log.error("No task found with taskNumber: {}", taskNumber);
-                throw new CustomException(TASK_NOT_FOUND,
+                throw new CustomException(TASK_NOT_FOUND, 
                         "No task found with taskNumber: " + taskNumber);
             }
-
+            
             Task task = tasks.get(0);
             Object taskDetails = task.getTaskDetails();
             taskDetailsDTO.setAuditDetails(task.getAuditDetails());
 
             taskDetailsDTO.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
             taskDetailsDTO.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
-
+            
             // Log the taskDetails
             log.info("Task details before update for task number : {} , {}", taskNumber, objectMapper.writeValueAsString(taskDetails));
-
+            
             // Create a request to push to Kafka topic
             TaskDetailsRequest kafkaRequest = TaskDetailsRequest.builder()
                     .requestInfo(request.getRequestInfo())
                     .taskDetailsDTO(taskDetailsDTO)
                     .build();
-
+            
             producer.push(config.getTaskUpdateUniqueIdTopic(), kafkaRequest);
 
             log.info("Task details after update for task number : {} , {}", taskNumber, objectMapper.writeValueAsString(taskDetailsDTO.getTaskDetails()));
-
+            
             return taskDetailsDTO;
-
+            
         } catch (CustomException e) {
             log.error("Custom exception while processing task details", e);
             throw e;
         } catch (Exception e) {
             log.error("Error processing task details", e);
-            throw new CustomException("TASK_DETAILS_PROCESSING_ERROR",
+            throw new CustomException("TASK_DETAILS_PROCESSING_ERROR", 
                     "Error processing task details: " + e.getMessage());
         }
     }

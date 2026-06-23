@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
 import { UploadIcon } from "../icons/svgIndex";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
-import { CardLabelError, TextInput, Toast } from "@egovernments/digit-ui-react-components";
+import { CardLabelError, TextInput } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Button from "./Button";
 import ImageModal from "./ImageModal";
 import { CloseBtn } from "./ModalComponents";
@@ -39,15 +40,11 @@ const DragDropComponent = ({ config, label }) => {
 };
 
 const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) => {
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [imageInfo, setImageInfo] = useState(null);
   const [selectedDocs, setSelectedDocs] = useState([]);
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
 
   const inputs = useMemo(
     () =>
@@ -70,15 +67,6 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
     [config?.populators?.inputs]
   );
 
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
-
   function setValue(value, input) {
     if (Array.isArray(input)) {
       onSelect(config.key, {
@@ -94,7 +82,7 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
   function handleAddFiles(data, input, currentValue) {
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
     if (data.size > maxFileSize) {
-      setShowErrorToast({ label: t("FILE_SIZE_EXCEEDS"), error: true });
+      setShowToast({ label: t("FILE_SIZE_EXCEEDS"), error: true, errorId: null });
       return;
     }
 
@@ -185,6 +173,12 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                 types={input?.fileTypes}
                 children={<DragDropComponent config={config} label={currentValue?.length > 0 ? t("UPLOAD_MORE") : t("UPLOAD")} />}
                 key={input?.name}
+                onTypeError={() =>
+                  setShowToast({
+                    label: t("NOT_SUPPORTED_FILE_TYPE"),
+                    error: true,
+                  })
+                }
               />
             )}
           </div>
@@ -279,7 +273,15 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
               {errors[input.name]?.message ? errors[input.name]?.message : t(errors[input.name]) || t(input.error)}
             </CardLabelError>
           )}
-          {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+          {showToast && (
+            <CustomToast
+              error={showToast?.error}
+              label={showToast?.label}
+              errorId={showToast?.errorId}
+              onClose={() => setShowToast(null)}
+              duration={showToast?.errorId ? 7000 : 5000}
+            />
+          )}
         </div>
       </React.Fragment>
     );

@@ -1,4 +1,4 @@
-import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
 import NextHearingModal from "../../components/NextHearingModal";
@@ -17,6 +17,7 @@ const AdjournHearing = ({ hearing, updateTranscript, transcriptText, setAdjournH
   const [transcript, setTranscript] = useState(transcriptText);
 
   const history = useHistory();
+
 
   const onSubmit = (data) => {
     setStepper(stepper + 1);
@@ -140,19 +141,19 @@ const AdjournHearing = ({ hearing, updateTranscript, transcriptText, setAdjournH
             defaultValues={
               reasonFormData?.reason
                 ? {
-                    reason: {
-                      code: reasonFormData?.reason?.code,
-                      name: reasonFormData?.reason?.name,
-                      isEnabled: true,
-                    },
-                  }
+                  reason: {
+                    code: reasonFormData?.reason?.code,
+                    name: reasonFormData?.reason?.name,
+                    isEnabled: true,
+                  },
+                }
                 : {
-                    reason: {
-                      code: "Select a Reason",
-                      name: "Select a Reason",
-                      isEnabled: true,
-                    },
-                  }
+                  reason: {
+                    code: "Select a Reason",
+                    name: "Select a Reason",
+                    isEnabled: true,
+                  },
+                }
             }
             fieldStyle={{ width: "100%" }}
           ></FormComposerV2>

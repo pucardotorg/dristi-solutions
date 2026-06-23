@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useHistory } from "react-router-dom";
-import { Modal, CloseSvg, Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { Modal, CloseSvg, Button, Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import { useTranslation } from "react-i18next";
 import { summonsConfig } from "../../configs/SummonsNWarrantConfig";
 import useSearchOrdersService from "../../../../orders/src/hooks/orders/useSearchOrdersService";
 import { hearingService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
-import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { CaseWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/caseWorkflow";
 import {
@@ -118,6 +118,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   const [orderType, setOrderType] = useState(null);
   const [itemId, setItemId] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
   const userType = Digit.UserService.getType();
   const courtId = localStorage.getItem("courtId");
 
@@ -175,14 +176,8 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     } else history.goBack();
   };
 
-  const handleNavigate = () => {
-    const contextPath = window?.contextPath || "";
-    history.push(
-      `/${contextPath}/employee/home/home-pending-task/reissue-summons-modal?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&hearingId=${hearingId}&cnrNumber=${cnrNumber}&orderType=${orderType}`
-    );
-  };
-
   const handleIssueWarrant = async ({ cnrNumber, filingNumber, orderType, hearingId }) => {
+    setIsActionLoading(true);
     let reqBody = {
       order: {
         createdDate: null,
@@ -241,7 +236,11 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
         },
       });
       history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error issuing warrant:", error);
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   const { data: ordersData } = useSearchOrdersService(
@@ -413,7 +412,9 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     );
   }, [caseDetails, filingNumber, respondentName, hearingDetails, orderList, userType, caseId]);
 
-  const modalLabel = [ORDER_TYPES.SUMMONS, ORDER_TYPES.WARRANT, ORDER_TYPES.PROCLAMATION, ORDER_TYPES.ATTACHMENT].includes(orderType) ? "SUMMON_WARRANT_STATUS" : "NOTICE_STATUS";
+  const modalLabel = [ORDER_TYPES.SUMMONS, ORDER_TYPES.WARRANT, ORDER_TYPES.PROCLAMATION, ORDER_TYPES.ATTACHMENT].includes(orderType)
+    ? "SUMMON_WARRANT_STATUS"
+    : "NOTICE_STATUS";
 
   function removeAccusedSuffix(partyName) {
     return partyName.replace(/\s*\(Accused\)$/, "");
@@ -504,6 +505,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
                   hearingId,
                 });
               }}
+              isDisabled={isActionLoading}
               style={{ marginRight: "1rem", fontWeight: "900" }}
             />
           ) : (

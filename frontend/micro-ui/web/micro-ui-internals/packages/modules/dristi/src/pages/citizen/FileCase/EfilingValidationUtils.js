@@ -140,7 +140,7 @@ export const validateDateForDelayApplication = ({
   selected,
   setValue,
   caseDetails,
-  toast,
+  setShowToast,
   t,
   history,
   caseId,
@@ -159,7 +159,7 @@ export const validateDateForDelayApplication = ({
       (caseDetails?.caseDetails && !caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.[0]?.data?.dateOfAccrual)
     ) {
       setValue("delayCondonationType", null);
-      toast.error(t("SELECT_ACCRUAL_DATE_BEFORE_DELAY_APP"));
+      setShowToast({ label: t("SELECT_ACCRUAL_DATE_BEFORE_DELAY_APP"), error: true });
       setTimeout(() => {
         history.push(`?caseId=${caseId}&selected=demandNoticeDetails`);
       }, 3000);
@@ -182,15 +182,14 @@ export const validateDateForDelayApplication = ({
   }
 };
 
-export const showToastForComplainant = ({ formData, setValue, selected, setSuccessToast, formState, clearErrors }) => {
+export const showToastForComplainant = ({ t, formData, setValue, selected, setShowToast, formState, clearErrors }) => {
   if (selected === "complainantDetails") {
     if (formData?.complainantId?.complainantId && formData?.complainantId?.verificationType && formData?.complainantId?.isFirstRender) {
       setValue("complainantId", { ...formData?.complainantId, isFirstRender: false });
-      setSuccessToast((prev) => ({
-        ...prev,
-        showSuccessToast: true,
-        successMsg: "CS_AADHAR_VERIFIED_SUCCESS_MSG",
-      }));
+      setShowToast({
+        label: t("CS_AADHAR_VERIFIED_SUCCESS_MSG"),
+        error: false,
+      });
     }
     const formDataCopy = structuredClone(formData);
     const addressDet = formDataCopy?.complainantVerification?.individualDetails?.addressDetails;
@@ -826,17 +825,7 @@ export const checkOnlyCharInCheque = ({ formData, setValue, selected }) => {
   }
 };
 
-export const respondentValidation = ({
-  setErrorMsg,
-  t,
-  formData,
-  selected,
-  caseDetails,
-  setShowErrorToast,
-  toast,
-  setFormErrors,
-  clearFormDataErrors,
-}) => {
+export const respondentValidation = ({ t, formData, selected, caseDetails, setShowToast, setFormErrors, clearFormDataErrors }) => {
   if (selected === "respondentDetails") {
     const formDataCopy = structuredClone(formData);
     if ("inquiryAffidavitFileUpload" in formDataCopy) {
@@ -856,7 +845,7 @@ export const respondentValidation = ({
       }
     }
     if (!formDataCopy?.respondentType?.code) {
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       return true;
     }
   }
@@ -871,7 +860,7 @@ export const respondentValidation = ({
     respondentMobileNUmbers &&
     respondentMobileNUmbers === complainantMobileNumber
   ) {
-    toast.error(t("RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM"));
+    setShowToast({ label: t("RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM"), error: true });
     setFormErrors("phonenumbers", { mobileNumber: "RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM" });
     return true;
   } else {
@@ -880,19 +869,19 @@ export const respondentValidation = ({
   }
 };
 
-export const demandNoticeFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors }) => {
+export const demandNoticeFileValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
   if (selected === "demandNoticeDetails") {
     for (const key of ["legalDemandNoticeFileUpload", "proofOfDispatchFileUpload"]) {
       if (!(key in formData) || formData[key]?.document?.length === 0) {
         setFormErrors(key, { type: "required" });
-        setShowErrorToast(true);
+        setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
         return true;
       }
     }
 
     if (formData?.proofOfService?.code === "YES" && formData?.["proofOfAcknowledgmentFileUpload"]?.document.length === 0) {
       setFormErrors("proofOfAcknowledgmentFileUpload", { type: "required" });
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       return true;
     }
   } else {
@@ -900,18 +889,18 @@ export const demandNoticeFileValidation = ({ formData, selected, setShowErrorToa
   }
 };
 
-export const chequeDetailFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors }) => {
+export const chequeDetailFileValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
   if (selected === "chequeDetails") {
     for (const key of ["bouncedChequeFileUpload", "returnMemoFileUpload"]) {
       if (!(key in formData) || formData[key]?.document?.length === 0 || !formData[key] || Object.keys(formData[key] || {}).length === 0) {
         setFormErrors(key, { type: "required" });
-        setShowErrorToast(true);
+        setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
         return true;
       }
     }
     if (formData?.chequeAmount === "0") {
       setFormErrors("chequeAmount", { message: "Amount cannot be zero" });
-      setShowErrorToast(true);
+      setShowToast({ label: "Amount cannot be zero", error: true });
       return true;
     }
     for (const field of ["payeeIfscField", "payerIfscField"]) {
@@ -925,19 +914,19 @@ export const chequeDetailFileValidation = ({ formData, selected, setShowErrorToa
 
       if (!ifscValue) {
         setFormErrors(field, { msg: "CORE_REQUIRED_FIELD_ERROR" });
-        setShowErrorToast(true);
+        setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
         return true;
       }
 
       if (ifscValue.length !== 11) {
         setFormErrors(field, { msg: "CS_INVALID_IFSC" });
-        setShowErrorToast(true);
+        setShowToast({ label: t("CS_INVALID_IFSC"), error: true });
         return true;
       }
 
       if (!bank || !branch) {
         setFormErrors(field, { msg: "PLEASE_SEARCH_IFSC" });
-        setShowErrorToast(true);
+        setShowToast({ label: t("PLEASE_SEARCH_IFSC"), error: true });
         return true;
       }
     }
@@ -1042,7 +1031,6 @@ export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation
         errorObject.SUMMON_PROCESS_COURIER_INFORMATION_MISSING = true;
       }
     }
-    
     let mandatoryLeft = false;
     for (let key in errorObject) {
       if (errorObject[key] === true) {
@@ -1070,13 +1058,11 @@ export const complainantValidation = ({
   t,
   caseDetails,
   selected,
-  setShowErrorToast,
-  toast,
+  setShowToast,
   setFormErrors,
   formState,
   clearFormDataErrors,
   displayindex,
-  setErrorMsg,
 }) => {
   if (selected === "complainantDetails") {
     const complainantFields = sideMenuConfig
@@ -1089,8 +1075,7 @@ export const complainantValidation = ({
       const value = extractValue(formData, key);
       const isValueEmpty = isEmptyValue(value);
       if (isValueEmpty) {
-        setShowErrorToast(true);
-        setErrorMsg(`Mandatory field missing- Complainant ${displayindex + 1} (${key})`);
+        setShowToast({ label: `Mandatory field missing- Complainant ${displayindex + 1} (${key})`, error: true });
         return true;
       }
     }
@@ -1100,8 +1085,7 @@ export const complainantValidation = ({
         const value = extractValue(formData, obj?.field);
         const isValueEmpty = isEmptyValue(value);
         if (isValueEmpty) {
-          setShowErrorToast(true);
-          setErrorMsg(`Mandatory field missing- Complainant ${displayindex + 1} (${obj?.field})`);
+          setShowToast({ label: `Mandatory field missing- Complainant ${displayindex + 1} (${obj?.field})`, error: true });
           return true;
         }
       }
@@ -1111,12 +1095,12 @@ export const complainantValidation = ({
       !formData?.complainantTypeOfEntity?.code &&
       !Object.keys(formState?.errors).includes("complainantTypeOfEntity")
     ) {
-      setShowErrorToast(true);
+      setShowToast({ label: t("CORE_REQUIRED_FIELD_ERROR"), error: true });
       setFormErrors("complainantTypeOfEntity", { message: "CORE_REQUIRED_FIELD_ERROR" });
       return true;
     }
     if (!formData?.complainantVerification?.mobileNumber || !formData?.complainantVerification?.otpNumber) {
-      setShowErrorToast(true);
+      setShowToast({ label: t("PLEASE_VERIFY_YOUR_PHONE_NUMBER"), error: true });
       setFormErrors("complainantVerification", { mobileNumber: "PLEASE_VERIFY_YOUR_PHONE_NUMBER" });
       return true;
     } else {
@@ -1129,7 +1113,7 @@ export const complainantValidation = ({
       if (respondentMobileNumbers && complainantMobileNumber) {
         for (let i = 0; i < respondentMobileNumbers.length; i++) {
           if (respondentMobileNumbers[i] === complainantMobileNumber) {
-            toast.error(t("CHANGE_RESPONDENT_MOBILE_NUMBER_REGISTERED"));
+            setShowToast({ label: t("CHANGE_RESPONDENT_MOBILE_NUMBER_REGISTERED"), error: true });
             return true;
           }
         }
@@ -1140,7 +1124,7 @@ export const complainantValidation = ({
   }
 };
 
-export const accusedAddressValidation = ({ formData, selected, setAddressError, config }) => {
+export const accusedAddressValidation = ({ t, formData, selected, setShowToast, config }) => {
   const addressKey = "addressDetails";
   if (
     config
@@ -1156,7 +1140,7 @@ export const accusedAddressValidation = ({ formData, selected, setAddressError, 
         })
       )
   ) {
-    setAddressError({ show: true, message: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT" });
+    setShowToast({ label: t("CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT"), error: true });
     return true;
   }
 };
@@ -1186,7 +1170,7 @@ export const ageValidation = ({ formData, selected, setFormErrors, clearFormData
   }
 };
 
-export const addressValidation = ({ formData, selected, setAddressError, config }) => {
+export const addressValidation = ({ t, formData, selected, setShowToast, config }) => {
   if (
     config
       ?.find((item) =>
@@ -1220,7 +1204,7 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
                 );
         }))
   ) {
-    setAddressError({ show: true, message: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT" });
+    setShowToast({ label: t("CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT"), error: true });
     return true;
   }
 };
@@ -1256,7 +1240,7 @@ export const chequeDateValidation = ({ selected, formData, setError, clearErrors
   }
 };
 
-export const delayApplicationValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
+export const delayApplicationValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
   if (selected === "delayApplications") {
     if (
       formData?.delayCondonationType?.code === "NO" &&
@@ -1264,7 +1248,7 @@ export const delayApplicationValidation = ({ t, formData, selected, setShowError
       (!formData?.condonationFileUpload?.document || formData?.condonationFileUpload?.document.length === 0)
     ) {
       setFormErrors("condonationFileUpload", { type: "required" });
-      toast.error(t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"));
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       return true;
     }
   } else {
@@ -1272,12 +1256,10 @@ export const delayApplicationValidation = ({ t, formData, selected, setShowError
   }
 };
 
-export const witnessDetailsValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
+export const witnessDetailsValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
   if (selected === "witnessDetails") {
     if (!(formData?.firstName || formData?.witnessDesignation)) {
-      // setFormErrors("firstName", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
-      // setFormErrors("witnessDesignation",{ message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" })
-      toast.error(t("AT_LEAST_ONE_OUT_OF_FIRST_NAME_AND_WITNESS_DESIGNATION_IS_MANDATORY"));
+      setShowToast({ label: t("AT_LEAST_ONE_OUT_OF_FIRST_NAME_AND_WITNESS_DESIGNATION_IS_MANDATORY"), error: true });
       return true;
     }
   } else {
@@ -1285,11 +1267,11 @@ export const witnessDetailsValidation = ({ t, formData, selected, setShowErrorTo
   }
 };
 
-export const debtLiabilityValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
+export const debtLiabilityValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
   if (selected === "debtLiabilityDetails") {
     if (formData?.totalAmount === "0") {
       setFormErrors("totalAmount", { message: "Amount cannot be zero" });
-      setShowErrorToast(true);
+      setShowToast({ label: "Amount cannot be zero", error: true });
       return true;
     }
   } else {
@@ -1297,7 +1279,7 @@ export const debtLiabilityValidation = ({ t, formData, selected, setShowErrorToa
   }
 };
 
-export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors, clearFormDataErrors }) => {
+export const prayerAndSwornValidation = ({ t, formData, selected, setShowToast, setFormErrors, clearFormDataErrors }) => {
   if (selected === "prayerSwornStatement") {
     let hasError = false;
 
@@ -1306,7 +1288,7 @@ export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorTo
       for (const key of formData?.SelectUploadDocWithName) {
         if (!key?.document || key.document?.length === 0) {
           setFormErrors("SelectUploadDocWithName", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS", documentIndex: index });
-          setShowErrorToast(true);
+          setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
           hasError = true;
         } else {
           clearFormDataErrors("SelectUploadDocWithName");
@@ -1317,25 +1299,25 @@ export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorTo
 
     if (formData?.prayer?.text === "<p></p>\n" || formData?.memorandumOfComplaint?.text === "<p></p>\n") {
       setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       hasError = true;
     }
 
     if (isRichTextEmpty(formData?.prayer?.text)) {
       setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       hasError = true;
     }
 
     if (isRichTextEmpty(formData?.memorandumOfComplaint?.text)) {
       setFormErrors("memorandumOfComplaint", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       hasError = true;
     }
 
     if (isRichTextEmpty(formData?.synopsis?.text)) {
       setFormErrors("synopsis", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       hasError = true;
     }
 
@@ -1478,12 +1460,14 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
   return response;
 };
 
-export const updateIndividualUser = async ({ data, documentData, tenantId, individualData }) => {
+export const updateIndividualUser = async ({ data, documentData, tenantId, individualData, isComplainant = true }) => {
+  const complainantVerification = isComplainant ? data?.complainantVerification : data?.poaVerification;
+  const complainantId = isComplainant ? data?.complainantId?.complainantId : data?.poaComplainantId?.poaComplainantId;
   const identifierId = documentData
     ? documentData?.fileStore
       ? documentData?.fileStore
       : documentData?.file?.files?.[0]?.fileStoreId
-    : data?.complainantId?.complainantId;
+    : complainantId;
   const identifierIdDetails = documentData
     ? {
         fileStoreId: identifierId,
@@ -1491,10 +1475,38 @@ export const updateIndividualUser = async ({ data, documentData, tenantId, indiv
         documentType: documentData?.fileType,
       }
     : {};
-  const identifierType = documentData ? data?.complainantId?.complainantId?.selectIdTypeType?.type : "AADHAR";
+  const identifierType = documentData ? complainantId?.selectIdTypeType?.type : "AADHAR";
+  const address =
+    individualData?.address?.length > 0
+      ? individualData?.address
+      : [
+          {
+            tenantId: tenantId,
+            type: "PERMANENT",
+            latitude: data?.addressDetails?.coordinates?.latitude,
+            longitude: data?.addressDetails?.coordinates?.longitude,
+            city: data?.addressDetails?.city,
+            pincode: data?.addressDetails?.pincode || data?.["addressDetails-select"]?.pincode,
+            addressLine1: data?.addressDetails?.state,
+            addressLine2: data?.addressDetails?.district,
+            street: data?.addressDetails?.locality,
+          },
+          {
+            tenantId: tenantId,
+            type: "CORRESPONDENCE",
+            latitude: data?.currentAddressDetails?.coordinates?.latitude,
+            longitude: data?.currentAddressDetails?.coordinates?.longitude,
+            city: data?.currentAddressDetails?.city,
+            pincode: data?.currentAddressDetails?.pincode || data?.["currentAddressDetails-select"]?.pincode,
+            addressLine1: data?.currentAddressDetails?.state,
+            addressLine2: data?.currentAddressDetails?.district,
+            street: data?.currentAddressDetails?.locality,
+          },
+        ];
   let Individual = {
     Individual: {
       ...individualData,
+      address,
       identifiers: [
         {
           ...individualData?.identifiers?.[0],
@@ -1504,17 +1516,18 @@ export const updateIndividualUser = async ({ data, documentData, tenantId, indiv
       ],
       additionalFields: {
         ...individualData.additionalFields,
-        fields: individualData.additionalFields.fields.map((field) =>
-          field.key === "identifierIdDetails" ? { ...field, value: JSON.stringify(identifierIdDetails) } : field
-        ),
+        fields: [
+          ...(individualData.additionalFields?.fields || [])?.filter((field) => field?.key !== "identifierIdDetails"),
+          { key: "identifierIdDetails", value: JSON.stringify(identifierIdDetails) },
+        ],
       },
     },
   };
   const response = await window?.Digit.DRISTIService.updateIndividualUser(Individual, { tenantId });
-  const refreshToken = window.localStorage.getItem(`temp-refresh-token-${data?.complainantVerification?.userDetails?.mobileNumber}`);
-  window.localStorage.removeItem(`temp-refresh-token-${data?.complainantVerification?.userDetails?.mobileNumber}`);
+  const refreshToken = window.localStorage.getItem(`temp-refresh-token-${complainantVerification?.userDetails?.mobileNumber}`);
+  window.localStorage.removeItem(`temp-refresh-token-${complainantVerification?.userDetails?.mobileNumber}`);
   if (refreshToken) {
-    await getUserDetails(refreshToken, data?.complainantVerification?.userDetails?.mobileNumber);
+    await getUserDetails(refreshToken, complainantVerification?.userDetails?.mobileNumber);
   }
   return response;
 };
@@ -1736,6 +1749,9 @@ export const updateCaseDetails = async ({
   caseComplaintDocument,
   filingType,
   isDelayCondonation,
+  isContinueClicked = false,
+  isCaseReAssigned = false,
+  isDraftInProgress = false,
 }) => {
   const data = {};
   setIsDisabled(true);
@@ -1833,15 +1849,14 @@ export const updateCaseDetails = async ({
     const poaFilestoreIds = {};
     // check -in new flow, mltiple complainant forms are possible, so iscompleted logic has to be updated
     // and logic to update litigants also has to be changed.
-    if (isCompleted === true) {
+    if (isContinueClicked === true || isCaseReAssigned) {
+      // Only in case of Efiling, continue click is needed for user registration because fields validation is needed.
+      // That's why isContinueClicked shoule be true in case of efiling stage.
       litigants = await Promise.all(
         updatedFormData
           .filter((item) => item.isenabled)
           .map(async (data, index) => {
-            if (
-              data?.data?.complainantVerification?.individualDetails?.document &&
-              data?.data?.complainantVerification?.individualDetails?.individualId
-            ) {
+            if (data?.data?.complainantVerification?.individualDetails?.individualId) {
               const Individual = await DRISTIService.searchIndividualUser(
                 {
                   Individual: {
@@ -1852,9 +1867,12 @@ export const updateCaseDetails = async ({
               );
               const userUuid = Individual?.Individual?.[0]?.userUuid || "";
               if (
-                scrutinyObj?.litigentDetails?.complainantDetails?.form?.some((item) =>
+                (scrutinyObj?.litigentDetails?.complainantDetails?.form?.some((item) =>
                   item.hasOwnProperty("complainantVerification.individualDetails.document")
-                )
+                ) &&
+                  data?.data?.complainantVerification?.individualDetails?.document) ||
+                data?.data?.complainantVerification?.individualDetails?.document === null ||
+                data?.data?.complainantVerification?.individualDetails?.document?.length === 0
               ) {
                 // get filestore and update individual user. (but only for newly updated id proofs. if not updated, keep as it is)
                 if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
@@ -2191,7 +2209,7 @@ export const updateCaseDetails = async ({
         updatedFormData
           .filter((item) => item.isenabled)
           .map(async (data, index) => {
-            if (data?.data?.poaVerification?.individualDetails?.document) {
+            if (data?.data?.poaVerification?.individualDetails?.individualId) {
               const Individual = await DRISTIService.searchIndividualUser(
                 {
                   Individual: {
@@ -2203,9 +2221,12 @@ export const updateCaseDetails = async ({
               const userUuid = Individual?.Individual?.[0]?.userUuid || "";
 
               if (
-                scrutinyObj?.litigentDetails?.complainantDetails?.form?.some((item) =>
+                (scrutinyObj?.litigentDetails?.complainantDetails?.form?.some((item) =>
                   item.hasOwnProperty("poaVerification.individualDetails.document")
-                )
+                ) &&
+                  data?.data?.poaVerification?.individualDetails?.document) ||
+                data?.data?.poaVerification?.individualDetails?.document === null ||
+                data?.data?.poaVerification?.individualDetails?.document?.length === 0
               ) {
                 // get filestore and update individual user. (but only for newly updated id proofs. if not updated, keep as it is)
                 if (data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file) {
@@ -2245,7 +2266,13 @@ export const updateCaseDetails = async ({
                       ],
                     },
                   };
-                  await updateIndividualUser({ data: data?.data, documentData, tenantId, individualData: Individual?.Individual?.[0] });
+                  await updateIndividualUser({
+                    data: data?.data,
+                    documentData,
+                    tenantId,
+                    individualData: Individual?.Individual?.[0],
+                    isComplainant: false,
+                  });
                 }
               }
               return {
@@ -2540,7 +2567,7 @@ export const updateCaseDetails = async ({
 
           return {
             ...data,
-            isFormCompleted: true,
+            isFormCompleted: isDraftInProgress ? isContinueClicked : true,
             data: {
               ...data.data,
               ...documentData,
@@ -2595,7 +2622,38 @@ export const updateCaseDetails = async ({
         });
       }
     });
-    data.litigants = [...updatedLitigants];
+    const hasRepresentativeAdvocate = caseDetails?.representatives?.some((rep) => rep?.advocateId);
+
+    const activeLitigants = updatedLitigants?.filter((lit) => !(Object.prototype.hasOwnProperty.call(lit, "isActive") && lit?.isActive === false));
+    let documentToDelete = null;
+    const finalLitigants =
+      hasRepresentativeAdvocate && activeLitigants?.length === 1
+        ? updatedLitigants.map((lit) => {
+            if (Object.prototype.hasOwnProperty.call(lit, "isActive") && lit?.isActive === false) {
+              return lit;
+            } else {
+              documentToDelete = lit?.documents?.[0]?.fileStore;
+              return {
+                ...lit,
+                documents: null,
+              };
+            }
+          })
+        : updatedLitigants;
+
+    if (isDraftInProgress) {
+      finalLitigants.forEach((lit) => {
+        lit.additionalDetails = {
+          ...(lit?.additionalDetails || {}),
+          isLitigantDetailsChanged: isContinueClicked, // This field is set true when ever user clicks on continue button on complainant details screen,
+          // So that we can redirect user to advocate details page(if user comes on review screen) once to update advocate related details correctly in case complaiant details were changed.
+        };
+      });
+    }
+
+    data.litigants = [...finalLitigants];
+
+    tempDocList = tempDocList?.filter((doc) => doc?.fileStore !== documentToDelete);
 
     const mergedPoaHoldersMap = new Map();
 
@@ -3523,18 +3581,43 @@ export const updateCaseDetails = async ({
 
     const updatedCaseLitigants = caseDetails?.litigants?.map((litigant) => {
       const lit = complainantDetails?.find((comp) => comp?.individualId === litigant?.individualId);
-      if (lit) {
-        const updatedDoc = lit?.pipAffidavitFileUpload ? structuredClone(lit?.pipAffidavitFileUpload) : null;
-        if (updatedDoc) {
-          const additionalDetails = {
-            documentName: "UPLOAD_PIP_AFFIDAVIT",
-          };
-          updatedDoc.additionalDetails = additionalDetails;
-        }
-        const updatedLitigant = { ...litigant, documents: lit?.pipAffidavitFileUpload ? [updatedDoc] : [] };
-        return updatedLitigant;
-      } else return litigant;
+
+      // if litigant not found in complainantDetails
+      if (!lit) {
+        return {
+          ...litigant,
+          documents: [],
+        };
+      }
+
+      let updatedDocuments = litigant?.documents || [];
+
+      if (lit?.pipAffidavitFileUpload) {
+        const updatedDoc = structuredClone(lit.pipAffidavitFileUpload);
+
+        updatedDoc.additionalDetails = {
+          documentName: "UPLOAD_PIP_AFFIDAVIT",
+        };
+
+        updatedDocuments = [updatedDoc];
+      } else {
+        // remove previously added affidavit document
+        updatedDocuments = [];
+      }
+
+      return {
+        ...litigant,
+        documents: updatedDocuments,
+      };
     });
+    if (isDraftInProgress) {
+      updatedCaseLitigants.forEach((lit) => {
+        lit.additionalDetails = {
+          ...(lit?.additionalDetails || {}),
+          isLitigantDetailsChanged: false, // This field is used only for UI formcomposer purpose. so unsetting it once user saves data on advocate details screen.
+        };
+      });
+    }
 
     data.litigants = [...updatedCaseLitigants];
     data.representatives = [...updatedRepresentatives];
