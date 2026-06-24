@@ -43,6 +43,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.egov.eTreasury.config.ServiceConstants.*;
+import static org.egov.eTreasury.model.ReconcileV3Outcome.*;
 
 @Service
 @Slf4j
@@ -839,30 +840,30 @@ public class PaymentService {
         List<AuthSek> agedPending = repository.getAgedPendingAuthSeks(thresholdTime);
         log.info("V3 reconciliation: found {} aged PENDING auth_sek rows", agedPending.size());
 
-        int successCount = 0, noActionCount = 0, errorCount = 0;
+        int reconciledCount = 0, failedTerminalCount = 0, inconclusiveCount = 0, errorCount = 0;
         for (AuthSek authSek : agedPending) {
             try {
-                boolean processed = reconcileV3(authSek, requestInfo);
-                if (processed) successCount++; else noActionCount++;
+                ReconcileV3Outcome outcome = reconcileV3(authSek, requestInfo);
+                switch (outcome) {
+                    case RECONCILED:      reconciledCount++;    break;
+                    case FAILED_TERMINAL: failedTerminalCount++; break;
+                    case INCONCLUSIVE:    inconclusiveCount++;  break;
+                }
             } catch (Exception e) {
                 errorCount++;
                 log.error("V3 reconciliation failed | billId={} | departmentId={} | error={}",
                         authSek.getBillId(), authSek.getDepartmentId(), e.getMessage(), e);
             }
         }
-        log.info("V3 reconciliation batch finished | processed={} | noAction={} | errors={}",
-                successCount, noActionCount, errorCount);
+        log.info("V3 reconciliation batch finished | reconciled={} | failedTerminal={} | inconclusive={} | errors={}",
+                reconciledCount, failedTerminalCount, inconclusiveCount, errorCount);
     }
 
-    /**
-     * @return true when the row was reconciled into a SUCCESS (status=Y); false when the V3 endpoint
-     *         reported no/failed transaction and we deliberately took no further action.
-     */
-    boolean reconcileV3(AuthSek authSek, RequestInfo requestInfo) throws Exception {
+    ReconcileV3Outcome reconcileV3(AuthSek authSek, RequestInfo requestInfo) throws Exception {
         String departmentId = authSek.getDepartmentId();
         if (departmentId == null || departmentId.isEmpty()) {
-            log.warn("Skipping V3 reconciliation | billId={} has no departmentId", authSek.getBillId());
-            return false;
+            log.warn("V3 reconciliation: row has no departmentId, cannot query treasury | billId={}", authSek.getBillId());
+            return INCONCLUSIVE;
         }
 
         log.info("V3 reconciliation: querying TransactionDetailsV3 | billId={} | departmentId={}",
@@ -871,9 +872,9 @@ public class PaymentService {
                 departmentId, config.getTransactionDetailsV3Url());
 
         if (responseEntity == null || responseEntity.getBody() == null) {
-            log.warn("V3 reconciliation: empty response | billId={} | departmentId={}",
+            log.warn("V3 reconciliation: empty response from treasury, leaving PENDING | billId={} | departmentId={}",
                     authSek.getBillId(), departmentId);
-            return false;
+            return INCONCLUSIVE;
         }
 
         String body = responseEntity.getBody();
@@ -881,9 +882,9 @@ public class PaymentService {
 
         TransactionDetailsV3Envelope envelope = objectMapper.readValue(body, TransactionDetailsV3Envelope.class);
         if (envelope.getKey() == null || envelope.getData() == null) {
-            log.warn("V3 reconciliation: response missing key/data | billId={} | body={}",
+            log.warn("V3 reconciliation: response missing key/data, leaving PENDING | billId={} | body={}",
                     authSek.getBillId(), body);
-            return false;
+            return INCONCLUSIVE;
         }
 
         String decryptedJson = encryptionUtil.decryptV3Response(
@@ -894,16 +895,19 @@ public class PaymentService {
         // Some V3 responses (e.g. "Wrong GRN") prefix a few non-JSON bytes before the array.
         String jsonArray = sliceJsonArray(decryptedJson);
         if (jsonArray == null) {
-            log.warn("V3 reconciliation: decrypted payload does not contain a JSON array | billId={} | decrypted={}",
+            log.warn("V3 reconciliation: decrypted payload does not contain a JSON array, leaving PENDING | billId={} | decrypted={}",
                     authSek.getBillId(), decryptedJson);
-            return false;
+            return INCONCLUSIVE;
         }
 
         JsonNode root = objectMapper.readTree(jsonArray);
         if (!root.isArray() || root.isEmpty()) {
-            log.info("V3 reconciliation: no transaction yet at treasury | billId={} | departmentId={}",
+            // Unexpected: treasury normally returns a populated array even when there is no payment
+            // (status=N, error="No Transaction found"). An empty array is an unknown response, so we
+            // make no terminal decision and leave the row PENDING for the next cron cycle.
+            log.warn("V3 reconciliation: empty/non-array payload, leaving PENDING | billId={} | departmentId={}",
                     authSek.getBillId(), departmentId);
-            return false;
+            return INCONCLUSIVE;
         }
 
         TransactionDetailsV3 v3 = objectMapper.treeToValue(root.get(0), TransactionDetailsV3.class);
@@ -913,9 +917,14 @@ public class PaymentService {
                 status, errorMsg, authSek.getBillId(), v3.getGrn());
 
         if (!TREASURY_STATUS_SUCCESS.equalsIgnoreCase(status)) {
-            log.info("V3 reconciliation: status is not Y, taking no action | billId={} | departmentId={}",
-                    authSek.getBillId(), departmentId);
-            return false;
+            // Treasury has a definitive record and it is not a success. This covers the abandoned-payment
+            // case the user described: opening the payment and closing the tab without paying comes back
+            // as status=N, error="No Transaction found". There is no path for this to later become Y,
+            // so move the row to a terminal FAILED state.
+            log.info("V3 reconciliation: treasury reported non-success status={} (error={}), marking terminal FAILED | billId={} | departmentId={}",
+                    status, errorMsg, authSek.getBillId(), departmentId);
+            markTerminalFailure(authSek, "TREASURY_STATUS_" + (status.isEmpty() ? "EMPTY" : status));
+            return FAILED_TERMINAL;
         }
 
         TransactionDetails transactionDetails = v3.toTransactionDetails();
@@ -941,7 +950,20 @@ public class PaymentService {
         );
         log.info("V3 reconciliation: row reconciled to SUCCESS | billId={} | departmentId={}",
                 authSek.getBillId(), departmentId);
-        return true;
+        return RECONCILED;
+    }
+
+    /** Moves an auth_sek row to a terminal FAILED state so V3 reconciliation stops re-processing it. */
+    private void markTerminalFailure(AuthSek authSek, String reason) {
+        repository.updateAuthSekStatus(
+                authSek.getAuthToken(),
+                PaymentStatus.FAILED.name(),
+                COMPLETION_SOURCE_RECONCILIATION_V3,
+                System.currentTimeMillis(),
+                PROCESSED_STATUS_FAILED
+        );
+        log.info("V3 reconciliation: row marked terminal FAILED | billId={} | departmentId={} | reason={}",
+                authSek.getBillId(), authSek.getDepartmentId(), reason);
     }
 
     private String sliceJsonArray(String decrypted) {
@@ -982,14 +1004,18 @@ public class PaymentService {
             }
 
             AuthSek authSek = rows.get(0);
-            boolean processed = reconcileV3(authSek, requestInfo);
+            ReconcileV3Outcome outcome = reconcileV3(authSek, requestInfo);
+            String message = switch (outcome) {
+                case RECONCILED -> "Row reconciled to SUCCESS via V3.";
+                case FAILED_TERMINAL ->
+                        "Row moved to terminal FAILED (treasury reported non-success or no transaction / abandoned payment).";
+                default -> "Treasury could not be reached/parsed; row left PENDING for the next cron cycle.";
+            };
             return result
                     .authSekFound(true)
-                    .processed(processed)
+                    .processed(outcome == RECONCILED)
                     .envelopeReceived(true)
-                    .message(processed
-                            ? "Row reconciled to SUCCESS via V3."
-                            : "Row inspected; Treasury reported non-Y status or empty result, no action taken.")
+                    .message(message)
                     .build();
         } catch (Exception e) {
             log.error("V3 reconciliation TEST failed | departmentId={} | error={}", departmentId, e.getMessage(), e);

@@ -114,5 +114,8 @@ public class ServiceConstants {
     public static final String TREASURY_STATUS_SUCCESS = "Y";
     public static final String COMPLETION_SOURCE_RECONCILIATION_V3 = "RECONCILIATION_V3";
     public static final String PROCESSED_STATUS_RECONCILED = "RECONCILED";
+    // Terminal state for a PENDING row V3 reconciliation has given up on: treasury reported a
+    // definitive non-success, or the session aged past the max-age cutoff without reaching treasury.
+    public static final String PROCESSED_STATUS_FAILED = "FAILED";
 
 }
