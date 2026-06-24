@@ -100,7 +100,8 @@ public class WarrantReissueService {
                 // Non-iCoPS OR iCoPS still in PENDING_PAYMENT: WARRANT_REISSUE -> PENDING_PAYMENT
                 workflow.setAction(WARRANT_REISSUE);
             }
-            
+            workflow.setDocuments(Collections.singletonList(new org.egov.common.contract.models.Document()));
+
             warrant.setWorkflow(workflow);
             
             TaskRequest taskRequest = TaskRequest.builder()
