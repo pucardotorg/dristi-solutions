@@ -1,7 +1,7 @@
 import { TextInput, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory, Link } from "react-router-dom/cjs/react-router-dom.min";
 import CommentComponent from "../../../components/CommentComponent";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import ConfirmSubmissionAction from "../../../components/ConfirmSubmissionAction";
@@ -76,6 +76,7 @@ const EvidenceModal = ({
   const isLitigent = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role?.code)), [
     userInfo?.roles,
   ]);
+  console.log("caseData", caseData);
   const isJudge = useMemo(() => userInfo?.roles?.some((role) => ["JUDGE_ROLE"].includes(role?.code)), [userInfo?.roles]);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
@@ -1381,6 +1382,25 @@ const EvidenceModal = ({
                   </div>
                 )}
                 <div className="application-info-new" style={{ display: "flex", flexDirection: "column" }}>
+                  <div className="info-row">
+                    <div className="info-key">
+                      <h3>{t("CASE_NUMBER")}</h3>
+                    </div>
+                    <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <h3>{caseData?.case?.courtCaseNumber || caseData?.case?.cmpNumber || caseData?.case?.filingNumber}</h3>
+                      <Link
+                        to={`/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview&fromHome=true`}
+                        style={{
+                          color: "rgb(0, 126, 126)",
+                          fontWeight: "700",
+                          fontSize: "14px",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        ({t("VIEW_CASE")})
+                      </Link>
+                    </div>
+                  </div>
                   <div className="info-row">
                     <div className="info-key">
                       <h3>{t("APPLICATION_TYPE")}</h3>
