@@ -21,6 +21,7 @@ public class CacheService {
     }
 
     public void updateCache(String key, Object value) {
+        if (redisTemplate == null) return;
         try {
             redisTemplate.opsForValue().set(key, value, inboxConfiguration.getRedisTimeout(), TimeUnit.MINUTES);
         } catch (Exception e) {
@@ -29,6 +30,7 @@ public class CacheService {
     }
 
     public Object getCache(String key) {
+        if (redisTemplate == null) return null;
         try {
             return redisTemplate.opsForValue().get(key);
         } catch (Exception e) {
@@ -38,6 +40,7 @@ public class CacheService {
     }
 
     public void deleteCache(String key) {
+        if (redisTemplate == null) return;
         try {
             redisTemplate.delete(key);
         } catch (Exception e) {

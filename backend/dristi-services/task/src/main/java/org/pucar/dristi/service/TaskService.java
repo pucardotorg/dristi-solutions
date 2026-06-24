@@ -1073,12 +1073,53 @@ public class TaskService {
             }
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
-                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
+                double cx = coordinate.getX();
+                double cy = coordinate.getY();
+                double pageWidth = coordinate.getPageWidth();
+                double pageHeight = coordinate.getPageHeight();
+                int sigWidth = config.getEsignSignatureWidth();
+                int sigHeight = config.getEsignSignatureHeight();
+                if (pageWidth > 0) {
+                    double overflow = cx + sigWidth - pageWidth;
+                    if (overflow > 0) {
+                        int phase1MaxReduction = sigWidth - config.getEsignSignaturePreferredWidthThreshold();
+                        int phase1Reduction = (int) Math.min(overflow, phase1MaxReduction);
+                        sigWidth -= phase1Reduction;
+                        overflow -= phase1Reduction;
+                        if (overflow > 0) {
+                            int widthBudget = sigWidth - config.getEsignSignatureMinWidth();
+                            int maxOffset = config.getEsignSignatureMaxLeftOffset();
+                            int half = (int) (overflow / 2);
+                            int wReduce, offset;
+                            if (half <= widthBudget && half <= maxOffset) {
+                                wReduce = (int) overflow / 2;
+                                offset = (int) overflow - wReduce;
+                            } else if (half > widthBudget) {
+                                wReduce = widthBudget;
+                                offset = (int) Math.min(overflow - wReduce, maxOffset);
+                            } else {
+                                offset = maxOffset;
+                                wReduce = (int) Math.min(overflow - offset, widthBudget);
+                            }
+                            sigWidth -= wReduce;
+                            cx = Math.max(cx - offset, 0);
+                        }
+                    }
+                    double remainingOverflow = cx + sigWidth - pageWidth;
+                    if (remainingOverflow > 0) {
+                        cx = Math.max(cx - remainingOverflow, 0);
+                    }
+                }
+                if (pageHeight > 0) {
+                    cy = Math.min(cy, pageHeight - sigHeight);
+                    cy = Math.max(cy, 0);
+                }
+                String coord = (int) Math.floor(cx) + "," + (int) Math.floor(cy);
                 String txnId = UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
                 ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of(config.getZoneId()));
 
-                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
+                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo, sigWidth);
                 TasksCriteria mapped = tasksCriteriaMap.get(coordinate.getFileStoreId());
                 if (mapped == null) {
                     throw new CustomException(COORDINATES_ERROR, "No matching criteria for fileStoreId: " + coordinate.getFileStoreId());
@@ -1097,7 +1138,7 @@ public class TaskService {
         return tasksToSigns;
     }
 
-    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
+    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber, int effectiveWidth) {
         log.info("generating request, result= IN_PROGRESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
         Map<String, Object> requestData = new LinkedHashMap<>();
 
@@ -1124,7 +1165,7 @@ public class TaskService {
         Map<String, Object> pdf = new LinkedHashMap<>();
         pdf.put(PAGE, pageNumber);
         pdf.put(CO_ORDINATES, coordination);
-        pdf.put(SIZE, config.getEsignSignatureWidth() + "," + config.getEsignSignatureHeight());
+        pdf.put(SIZE, effectiveWidth + "," + config.getEsignSignatureHeight());
         pdf.put(DATE_FORMAT, ESIGN_DATE_FORMAT);
         requestData.put(PDF, pdf);
 
@@ -1282,52 +1323,52 @@ public class TaskService {
             TaskDetailsDTO taskDetailsDTO = request.getTaskDetailsDTO();
             String taskNumber = taskDetailsDTO.getTaskNumber();
             String uniqueId = taskDetailsDTO.getUniqueId();
-
+            
             log.info("Processing task details for taskNumber: {} and uniqueId: {}", taskNumber, uniqueId);
-
+            
             // Search for the task using taskNumber
             TaskSearchRequest searchRequest = new TaskSearchRequest();
             searchRequest.setCriteria(TaskCriteria.builder()
                     .taskNumber(taskNumber)
                     .build());
             searchRequest.setRequestInfo(request.getRequestInfo());
-
+            
             List<Task> tasks = searchTask(searchRequest);
-
+            
             if (tasks == null || tasks.isEmpty()) {
                 log.error("No task found with taskNumber: {}", taskNumber);
-                throw new CustomException(TASK_NOT_FOUND,
+                throw new CustomException(TASK_NOT_FOUND, 
                         "No task found with taskNumber: " + taskNumber);
             }
-
+            
             Task task = tasks.get(0);
             Object taskDetails = task.getTaskDetails();
             taskDetailsDTO.setAuditDetails(task.getAuditDetails());
 
             taskDetailsDTO.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
             taskDetailsDTO.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
-
+            
             // Log the taskDetails
             log.info("Task details before update for task number : {} , {}", taskNumber, objectMapper.writeValueAsString(taskDetails));
-
+            
             // Create a request to push to Kafka topic
             TaskDetailsRequest kafkaRequest = TaskDetailsRequest.builder()
                     .requestInfo(request.getRequestInfo())
                     .taskDetailsDTO(taskDetailsDTO)
                     .build();
-
+            
             producer.push(config.getTaskUpdateUniqueIdTopic(), kafkaRequest);
 
             log.info("Task details after update for task number : {} , {}", taskNumber, objectMapper.writeValueAsString(taskDetailsDTO.getTaskDetails()));
-
+            
             return taskDetailsDTO;
-
+            
         } catch (CustomException e) {
             log.error("Custom exception while processing task details", e);
             throw e;
         } catch (Exception e) {
             log.error("Error processing task details", e);
-            throw new CustomException("TASK_DETAILS_PROCESSING_ERROR",
+            throw new CustomException("TASK_DETAILS_PROCESSING_ERROR", 
                     "Error processing task details: " + e.getMessage());
         }
     }

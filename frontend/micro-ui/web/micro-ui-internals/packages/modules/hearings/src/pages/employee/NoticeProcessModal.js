@@ -30,6 +30,7 @@ const formDataKeyMap = {
   WARRANT: "warrantFor",
   PROCLAMATION: "proclamationFor",
   ATTACHMENT: "attachmentFor",
+  SCHEDULE_OF_HEARING_DATE: "scheduleParty",
 };
 
 const ModalHeading = ({ label }) => {
@@ -88,6 +89,7 @@ function groupOrdersByParty(filteredOrders) {
     } else {
       const party = order?.additionalDetails?.formdata?.[formDataKeyMap[order?.orderType]]?.party;
       parties = Array.isArray(party) ? party : party ? [party] : [];
+      console.log("parties", order?.orderType, party, order);
     }
 
     if (!Array?.isArray(parties) || parties?.length === 0) return;
@@ -168,8 +170,11 @@ const NoticeProcessModal = ({
   const [hasPendingTasks, setHasPendingTasks] = useState(true);
   const [partyUniqueId, setPartyUniqueId] = useState("");
   const [partyType, setPartyType] = useState(null);
+  const [hearingDateInfo, setHearingDateInfo] = useState({ originalHearingDate: null, hearingDate: null });
 
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
+
+  console.log("hasPendingTasks", hasPendingTasks);
 
   const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -209,43 +214,154 @@ const NoticeProcessModal = ({
     { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber,
-    Boolean(filingNumber && caseCourtId && !ordersDataFromParent)
+    Boolean(filingNumber && caseCourtId)
   );
 
-  const ordersData = useMemo(() => ordersDataFromParent || ordersFetchedData, [ordersDataFromParent, ordersFetchedData]);
+  const ordersData = useMemo(() => ordersFetchedData, [ordersFetchedData]);
 
   const orderListFiltered = useMemo(() => {
     if (!ordersData?.list) return [];
 
-    const filteredOrders = ordersData?.list?.flatMap((order) => {
+    const processOrderTypes = ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "MISCELLANEOUS_PROCESS"];
+
+    // Extract process-type orders (composite items and standalone)
+    const filteredOrders = ordersData.list.flatMap((order) => {
       if (order?.orderCategory === "COMPOSITE") {
-        return order?.compositeItems
-          ?.filter((item) => ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "MISCELLANEOUS_PROCESS"].includes(item?.orderType))
-          ?.map((item) => ({
-            ...order,
-            orderType: item?.orderType,
-            additionalDetails: item?.orderSchema?.additionalDetails,
-            orderDetails: item?.orderSchema?.orderDetails,
-            itemId: item?.id,
-          }));
-      } else {
-        return ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "MISCELLANEOUS_PROCESS"].includes(order?.orderType) ? [order] : [];
+        return (
+          order?.compositeItems
+            ?.filter((item) => processOrderTypes.includes(item?.orderType))
+            ?.map((item) => ({
+              ...order,
+              orderType: item?.orderType,
+              additionalDetails: item?.orderSchema?.additionalDetails,
+              orderDetails: item?.orderSchema?.orderDetails,
+              itemId: item?.id,
+            })) || []
+        );
       }
+      return processOrderTypes.includes(order?.orderType) ? [order] : [];
     });
 
-    const sortedOrders = [...filteredOrders]?.sort((a, b) => new Date(b?.createdDate) - new Date(a?.createdDate));
+    // Build uniqueId → party data map from already-extracted process orders so we
+    // can fill in name fields on synthetic SCHEDULE_OF_HEARING_DATE entries below.
+    const partyNameMap = {};
+    filteredOrders.forEach((order) => {
+      const keyInFormdata = formDataKeyMap[order?.orderType];
+      if (!keyInFormdata) return;
+      const partyField = order?.additionalDetails?.formdata?.[keyInFormdata]?.party;
+      const parties = Array.isArray(partyField) ? partyField : partyField ? [partyField] : [];
+      parties.forEach((party) => {
+        const uid = party?.data?.uniqueId || party?.data?.uuid;
+        if (uid && !partyNameMap[uid]) {
+          partyNameMap[uid] = party?.data;
+        }
+      });
+    });
 
+    const buildPartyData = (uniqueId) => {
+      const nameData = partyNameMap[uniqueId] || {};
+      return {
+        data: {
+          uniqueId,
+          partyType: nameData?.partyType,
+          firstName: nameData.firstName || nameData.respondentFirstName || "",
+          middleName: nameData.middleName || nameData.respondentMiddleName || "",
+          lastName: nameData.lastName || nameData.respondentLastName || "",
+          respondentFirstName: nameData.firstName || nameData.respondentFirstName || "",
+          respondentMiddleName: nameData.middleName || nameData.respondentMiddleName || "",
+          respondentLastName: nameData.lastName || nameData.respondentLastName || "",
+        },
+        uniqueId,
+      };
+    };
+
+    // Extract SCHEDULE_OF_HEARING_DATE orders that carry partyUniqueIds,
+    // expanding each into one entry per party uniqueId so they can be
+    // assigned to the correct party group after groupOrdersByParty runs.
+    const scheduleOrdersExpanded = ordersData.list.flatMap((order) => {
+      if (order?.orderCategory === "COMPOSITE") {
+        return (
+          order?.compositeItems
+            ?.filter((item) => item?.orderType === "SCHEDULE_OF_HEARING_DATE" && order?.partyUniqueIds?.length > 0)
+            ?.flatMap((item) =>
+              (order?.partyUniqueIds || []).map((uniqueId) => ({
+                ...order,
+                orderType: "WARRANT",
+                additionalDetails: {
+                  ...item?.orderSchema?.additionalDetails,
+                  formdata: {
+                    ...item?.orderSchema?.additionalDetails?.formdata,
+                    warrantFor: {
+                      party: buildPartyData(uniqueId),
+                    },
+                  },
+                },
+                orderDetails: item?.orderSchema?.orderDetails,
+                itemId: item?.id,
+                _schedulePartyUniqueId: uniqueId,
+              }))
+            ) || []
+        );
+      }
+      if (order?.partyUniqueIds?.length > 0) {
+        return (order?.partyUniqueIds || []).map((uniqueId) => ({
+          ...order,
+          orderType: "WARRANT",
+          additionalDetails: {
+            ...order?.additionalDetails,
+            formdata: {
+              ...order?.additionalDetails?.formdata,
+              warrantFor: {
+                party: buildPartyData(uniqueId),
+              },
+            },
+          },
+          _schedulePartyUniqueId: uniqueId,
+        }));
+      }
+      return [];
+    });
+
+    const mergedOrders = [...filteredOrders, ...scheduleOrdersExpanded].sort((a, b) => new Date(b?.createdDate) - new Date(a?.createdDate));
+    // Deduplicate: when two entries share the same id, are both WARRANT type, and cover
+    // the same party uniqueId, drop the schedule-derived one (_schedulePartyUniqueId present)
+    // and keep the original. For different parties or non-WARRANT types, keep all entries.
+    const idGroups = mergedOrders.reduce((acc, order) => {
+      if (!acc[order.id]) acc[order.id] = [];
+      acc[order.id].push(order);
+      return acc;
+    }, {});
+
+    const sortedOrders = Object.values(idGroups).flatMap((group) => {
+      if (group.length === 1) return group;
+
+      const allWarrant = group.every((o) => o?.orderType === "WARRANT");
+      if (!allWarrant) return group;
+
+      const scheduleEntries = group.filter((o) => "_schedulePartyUniqueId" in o);
+      if (scheduleEntries.length === 0) return group;
+
+      const scheduledPartyUids = new Set(scheduleEntries.map((o) => o._schedulePartyUniqueId));
+
+      return group.filter((o) => {
+        if (!("_schedulePartyUniqueId" in o)) return true;
+        const partyUid =
+          o?.additionalDetails?.formdata?.warrantFor?.party?.data?.uniqueId || o?.additionalDetails?.formdata?.warrantFor?.party?.uniqueId;
+        return !scheduledPartyUids.has(partyUid);
+      });
+    });
     const groupedByParty = groupOrdersByParty(sortedOrders);
-    const updatedGrouped = groupedByParty?.map((partyGroup) => {
+
+    const updatedGrouped = groupedByParty.map((partyGroup) => {
       const typeCounters = {};
 
-      partyGroup?.ordersList?.forEach((order) => {
+      partyGroup.ordersList.forEach((order) => {
         const type = order?.orderType === "MISCELLANEOUS_PROCESS" ? order?.orderDetails?.processTemplate?.processTitle : order?.orderType;
         if (!typeCounters[type]) typeCounters[type] = 0;
         typeCounters[type]++;
       });
 
-      const updatedOrdersList = partyGroup?.ordersList?.map((order) => {
+      const updatedOrdersList = partyGroup.ordersList.map((order) => {
         const type = order?.orderType === "MISCELLANEOUS_PROCESS" ? order?.orderDetails?.processTemplate?.processTitle : order?.orderType;
         const round = typeCounters[type]--;
         const titleCaseType = type
@@ -395,7 +511,9 @@ const NoticeProcessModal = ({
                 setOrderLoading((prev) => !prev);
               }, 0);
               setCurrentHearingNumber(item?.ordersList?.[0]?.scheduledHearingNumber);
+              console.log("item?.ordersList?.[0]", item?.ordersList?.[0]);
               setHasPendingTasks(true);
+              setHearingDateInfo({ originalHearingDate: null, hearingDate: null });
             }}
             className={`round-item ${index === activeIndex?.partyIndex ? "active" : ""}`}
             style={{
@@ -445,6 +563,7 @@ const NoticeProcessModal = ({
                   }, 0);
                   setCurrentHearingNumber(item?.scheduledHearingNumber);
                   setHasPendingTasks(true);
+                  setHearingDateInfo({ originalHearingDate: null, hearingDate: null });
                 }}
                 className={`round-item ${index === activeIndex?.orderIndex ? "active" : ""}`}
                 style={{
@@ -480,8 +599,21 @@ const NoticeProcessModal = ({
                 <hr className="vertical-line" />
                 <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
                   <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("HEARING_DATE")}:</span>
-                  <span>{DateUtils.getFormattedDate(new Date(hearingByNumber?.HearingList?.[0]?.startTime), "DD-MM-YYYY")}</span>
+                  {console.log("hearingDateInfo", hearingDateInfo)}
+                  <span>
+                    {hearingDateInfo?.originalHearingDate
+                      ? DateUtils.getFormattedDate(new Date(hearingDateInfo.originalHearingDate), "DD-MM-YYYY")
+                      : DateUtils.getFormattedDate(new Date(hearingByNumber?.HearingList?.[0]?.startTime), "DD-MM-YYYY")}
+                  </span>
                 </div>
+                {hearingDateInfo?.hearingDate &&
+                  hearingDateInfo?.originalHearingDate &&
+                  hearingDateInfo.hearingDate !== hearingDateInfo.originalHearingDate && (
+                    <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
+                      <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("RESCHEDULED_HEARING_DATE")}:</span>
+                      <span>{DateUtils.getFormattedDate(new Date(hearingDateInfo.hearingDate), "DD-MM-YYYY")}</span>
+                    </div>
+                  )}
               </div>
               <div style={{ marginLeft: "10px" }}>
                 <a
@@ -518,6 +650,7 @@ const NoticeProcessModal = ({
                   additionalDetails: {
                     ...config?.additionalDetails,
                     setHasTasks: setHasPendingTasks,
+                    setHearingDateInfo: setHearingDateInfo,
                   },
                 }}
                 defaultValues={filingNumber}
