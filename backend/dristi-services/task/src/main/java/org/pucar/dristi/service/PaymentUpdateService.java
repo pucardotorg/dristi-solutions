@@ -482,9 +482,13 @@ public class PaymentUpdateService {
     }
 
     public void createPendingTaskForRPAD(Task task, RequestInfo requestInfo) {
-        if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
-                || task.getTaskType().equalsIgnoreCase(NOTICE) || task.getTaskType().equalsIgnoreCase(PROCLAMATION) || task.getTaskType().equalsIgnoreCase(ATTACHMENT)) && (isRPADdeliveryChannel(task))) {
-            createPendingTaskForEnvelope(task, requestInfo);
+        try {
+            if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
+                    || task.getTaskType().equalsIgnoreCase(NOTICE) || task.getTaskType().equalsIgnoreCase(PROCLAMATION) || task.getTaskType().equalsIgnoreCase(ATTACHMENT)) && (isRPADdeliveryChannel(task))) {
+                createPendingTaskForEnvelope(task, requestInfo);
+            }
+        } catch (Exception e) {
+            log.error("Error creating pending task for RPAD", e);
         }
     }
 
