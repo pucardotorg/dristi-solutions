@@ -902,8 +902,11 @@ export const UICustomizations = {
         case "SUBMISSION_ID":
           return value ? value : "-";
         case "CS_ACTIONS":
-          if (column?.jsonPath === "applicationDraftDelete" && row.status !== "DRAFT_IN_PROGRESS") {
-            return null;
+          if (column?.jsonPath === "applicationDraftDelete") {
+            const hasDoc = row?.documents?.find((d) => d?.fileStore);
+            if (row.status !== "DRAFT_IN_PROGRESS" && !hasDoc) {
+              return null;
+            }
           }
           return (
             <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
@@ -914,11 +917,21 @@ export const UICustomizations = {
     },
     dropDownItems: (row, configs) => {
       if (configs?.jsonPath === "applicationDraftDelete") {
+        const hasDoc = row?.documents?.find((d) => d?.fileStore);
         return [
+          {
+            label: "DOWNLOAD_SUBMISSION",
+            id: "download_submission",
+            hide: !hasDoc,
+            disabled: false,
+            action: (history, column, row) => {
+              column.downloadFunc && column.downloadFunc(row);
+            },
+          },
           {
             label: "CS_COMMON_DELETE",
             id: "draft_order_delete",
-            hide: false,
+            hide: row.status !== "DRAFT_IN_PROGRESS",
             disabled: false,
             action: (history, column, row) => {
               column.clickFunc(row);
