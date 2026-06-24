@@ -38,6 +38,21 @@ function CaseLockModal({
   const [showToast, setShowToast] = useState(null);
   const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
   const { uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
+  const userInfo = Digit?.UserService?.getUser()?.info;
+
+  // True when the logged-in user is themselves a representative (advocate) in this case.
+  // Covers direct advocate filing, including when the advocate filed as their own complainant.
+  const isAdvocateInCase = useMemo(() => {
+    return Boolean(caseDetails?.representatives?.some((rep) => rep?.additionalDetails?.uuid === userInfo?.uuid));
+  }, [caseDetails?.representatives, userInfo?.uuid]);
+
+  // Clerk/junior advocate is filing on behalf of a senior advocate when the stored advocate UUID
+  // differs from the logged-in user's own UUID.
+  const isFilingViaClerk = selectedAdvocateUuid && selectedAdvocateUuid !== userInfo?.uuid;
+
+  // Advocate flow: either a clerk is filing on behalf of an advocate (isFilingViaClerk),
+  // or the logged-in advocate is directly present as a representative in this case (isAdvocateInCase).
+  const isAdvocateFlow = isFilingViaClerk || isAdvocateInCase;
 
   const filingNumber = useMemo(() => {
     return caseDetails?.filingNumber;
@@ -98,7 +113,7 @@ function CaseLockModal({
   const handleCancelOnSubmit = async () => {
     setShowCaseLockingModal(false);
 
-    if (selectedAdvocateUuid) {
+    if (isAdvocateFlow) {
       const assignees = Array.isArray(caseDetails?.representatives)
         ? caseDetails?.representatives?.map((advocate) => ({
             uuid: advocate?.additionalDetails?.uuid,
@@ -140,26 +155,24 @@ function CaseLockModal({
             }}
           />
         }
-        actionSaveLabel={selectedAdvocateUuid ? t("CS_ESIGN") : t("CONFIRM_AND_SIGN")}
+        actionSaveLabel={isAdvocateFlow ? t("CS_ESIGN") : t("CONFIRM_AND_SIGN")}
         actionSaveOnSubmit={handleSaveOnSubmit}
-        actionCancelLabel={selectedAdvocateUuid ? t("UPLOAD_SIGNED_COPY") : t("DOWNLOAD_CS_BACK")}
+        actionCancelLabel={isAdvocateFlow ? t("UPLOAD_SIGNED_COPY") : t("DOWNLOAD_CS_BACK")}
         actionCancelOnSubmit={handleCancelOnSubmit}
         formId="modal-action"
-        headerBarMain={
-          <Heading style={{ marginLeft: "47px" }} label={selectedAdvocateUuid ? t("SUBMIT_CASE_CONFIRMATION") : t("CONFIRM_CASE_DETAILS")} />
-        }
+        headerBarMain={<Heading style={{ marginLeft: "47px" }} label={isAdvocateFlow ? t("SUBMIT_CASE_CONFIRMATION") : t("CONFIRM_CASE_DETAILS")} />}
         popmoduleClassName={"case-lock-confirm-modal"}
         style={{ width: "50%", height: "40px" }}
         // textStyle={{ margin: "0px", color: "" }}
         // popupStyles={{ maxWidth: "60%" }}
         popUpStyleMain={{ zIndex: "1000" }}
         isDisabled={!submitConfirmed}
-        isBackButtonDisabled={!submitConfirmed && selectedAdvocateUuid}
+        isBackButtonDisabled={!submitConfirmed && isAdvocateFlow}
         actionCancelStyle={{ width: "50%", height: "40px" }}
       >
         <div className="case-locking-main-div" style={caseLockingMainDiv}>
           <div>
-            {selectedAdvocateUuid ? (
+            {isAdvocateFlow ? (
               <React.Fragment>
                 <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
                   {t("CONFIRM_HOW_COMPLAINT_WILL_BE_SIGNED")}

@@ -1,5 +1,5 @@
 import { Loader, UploadIcon } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CustomAddIcon, FileUploadIcon } from "../icons/svgIndex";
 
 import Button from "./Button";
@@ -324,7 +324,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     return false;
   }, [caseDetails, advocateAndPipData]);
 
-  const { data, isLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data: loggedInIndividual, isLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
         userUuid: selectedAdvocateUuid ? [selectedAdvocateUuid] : [userUuid], //If clerk/junior adv is filing case, details of respective office advocate should be fetched.
@@ -336,8 +336,10 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     userUuid && isUserLoggedIn
   );
 
-  const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
-  const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
+  const individualId = useMemo(() => loggedInIndividual?.Individual?.[0]?.individualId, [loggedInIndividual?.Individual]);
+  const userType = useMemo(() => loggedInIndividual?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [
+    loggedInIndividual?.Individual,
+  ]);
 
   const { data: searchData, isLoading: isSearchLoading } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
     {
@@ -386,16 +388,16 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     return individualData;
   };
 
-  const { data: selectedIndividual, isLoading: isIndividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data: selectedComplainantIndividual, isLoading: isIndividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
-        individualId: individualId,
+        individualId: advocateAndPipData?.boxComplainant?.individualId,
       },
     },
     { tenantId, limit: 1000, offset: 0 },
     moduleCode,
-    `getindividual-${individualId}`,
-    individualId
+    `getindividual-${advocateAndPipData?.boxComplainant?.individualId}`,
+    advocateAndPipData?.boxComplainant?.individualId
   );
 
   const isPrimaryAdvocate = useMemo(() => {
@@ -415,18 +417,27 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     return isAdvocateOfficeCreator?.advocateId;
   }, [caseDetails]);
 
+  // True when the advocate who is filing the case has entered their own mobile number as the complainant.
+  const isAdvocateActingAsComplainant = useMemo(() => {
+    const complainantUserType = selectedComplainantIndividual?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")
+      ?.value;
+    return complainantUserType === "ADVOCATE";
+  }, [selectedComplainantIndividual]);
+
   useEffect(() => {
     if (
       (userType === "ADVOCATE" &&
+        selectedComplainantIndividual &&
+        !isAdvocateActingAsComplainant &&
         advocateAndPipData?.multipleAdvocateNameDetails?.[0]?.advocateBarRegNumberWithName?.individualId !== individualId &&
         advocateAndPipData?.boxComplainant?.index === 0 &&
         advocateAndPipData?.boxComplainant?.individualId) ||
       (advocateAndPipData?.multipleAdvocateNameDetails?.[0]?.advocateBarRegNumberWithName?.individualId === individualId &&
         advocateAndPipData?.boxComplainant?.index === 0 &&
         advocateAndPipData?.boxComplainant?.individualId &&
-        selectedIndividual &&
+        loggedInIndividual &&
         advocateAndPipData?.multipleAdvocateNameDetails?.[0]?.advocateNameDetails?.advocateMobileNumber !==
-          selectedIndividual?.Individual?.[0]?.mobileNumber)
+          loggedInIndividual?.Individual?.[0]?.mobileNumber)
     ) {
       const advData = advocateAndPipData?.multipleAdvocateNameDetails;
       if (isApproved && searchResult) {
@@ -445,16 +456,16 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           individualId,
         };
 
-        const idType = selectedIndividual?.Individual?.[0]?.identifiers[0]?.identifierType || "";
+        const idType = loggedInIndividual?.Individual?.[0]?.identifiers[0]?.identifierType || "";
         const identifierIdDetails = JSON.parse(
-          selectedIndividual?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}"
+          loggedInIndividual?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}"
         );
 
         const advocateNameDetails = {
           firstName: splitNamesPartiallyFromFullName(userName)?.firstName,
           middleName: splitNamesPartiallyFromFullName(userName)?.middleName,
           lastName: splitNamesPartiallyFromFullName(userName)?.lastName,
-          advocateMobileNumber: selectedIndividual?.Individual?.[0]?.mobileNumber || "",
+          advocateMobileNumber: loggedInIndividual?.Individual?.[0]?.mobileNumber || "",
           advocateIdProof: identifierIdDetails?.fileStoreId
             ? [
                 {
@@ -474,7 +485,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           advData?.length === 1 &&
           advData?.[0]?.advocateBarRegNumberWithName?.individualId &&
           advData?.[0]?.advocateBarRegNumberWithName?.individualId === individualId &&
-          advData?.[0]?.advocateNameDetails?.advocateMobileNumber !== selectedIndividual?.Individual?.[0]?.mobileNumber
+          advData?.[0]?.advocateNameDetails?.advocateMobileNumber !== loggedInIndividual?.Individual?.[0]?.mobileNumber
         ) {
           const updatedData = [{ advocateBarRegNumberWithName, advocateNameDetails }];
           newData = { ...advocateAndPipData, multipleAdvocateNameDetails: updatedData, showVakalatNamaUpload: true, showAffidavit: false };
@@ -509,7 +520,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     isApproved,
     onSelect,
     searchResult,
-    selectedIndividual,
+    loggedInIndividual,
     userType,
     config?.key,
     individualId,
@@ -519,6 +530,8 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     authorizedUuid,
     userUuid,
     isPrimaryAdvocate,
+    selectedComplainantIndividual,
+    isAdvocateActingAsComplainant,
   ]);
 
   const handleInputChange = async (index, field, value) => {
@@ -688,10 +701,13 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
 
   const disableRadio = useMemo(() => {
     return Boolean(
-      (userType === "ADVOCATE" && advocateAndPipData?.boxComplainant?.index === 0 && advocateAndPipData?.boxComplainant?.individualId) ||
+      (userType === "ADVOCATE" &&
+        !isAdvocateActingAsComplainant &&
+        advocateAndPipData?.boxComplainant?.index === 0 &&
+        advocateAndPipData?.boxComplainant?.individualId) ||
         litigants?.find((litigant) => litigant?.individualId === advocateAndPipData?.boxComplainant?.individualId)?.poaHolder
     );
-  }, [userType, advocateAndPipData, litigants]);
+  }, [userType, advocateAndPipData, litigants, isAdvocateActingAsComplainant]);
 
   const isDeleteAllowed = useCallback(
     (i) => {
@@ -905,6 +921,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                         value={data?.advocateBarRegNumberWithName}
                         onChange={(value) => handleInputChange(index, "advocateBarRegNumberWithName", value)}
                         disabled={data?.advocateBarRegNumberWithName?.individualId === individualId}
+                        excludeIndividualId={isAdvocateActingAsComplainant ? selectedComplainantIndividual?.Individual?.[0]?.individualId : null}
                       />
 
                       {data?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal &&

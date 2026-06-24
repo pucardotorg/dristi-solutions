@@ -380,6 +380,12 @@ const ComplainantSignature = ({ path }) => {
     return caseDetails?.poaHolders?.some((poa) => poa?.hasSigned && poa?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
   }, [caseDetails, loggedInUserOnBehalfOfUuid]);
 
+  const isCurrentUserSigned = useMemo(() => isCurrentLitigantSigned || isCurrentAdvocateSigned || isCurrentPoaSigned, [
+    isCurrentLitigantSigned,
+    isCurrentAdvocateSigned,
+    isCurrentPoaSigned,
+  ]);
+
   const isCurrentLitigantContainPoa = useMemo(
     () => litigants?.some((lit) => lit?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid && lit?.poaHolder),
     [litigants, loggedInUserOnBehalfOfUuid]
@@ -531,35 +537,13 @@ const ComplainantSignature = ({ path }) => {
             });
           }
           if (isSelectedEsign) {
-            const promises = [
-              ...(Array.isArray(caseDetails?.litigants)
-                ? litigants?.map(async (litigant) => {
-                    if (!litigant?.poaHolder) {
-                      return closePendingTask({
-                        status: state,
-                        assignee: litigant?.additionalDetails?.uuid,
-                      });
-                    }
-                  })
-                : []),
-              ...(Array.isArray(caseDetails?.representatives)
-                ? caseDetails?.representatives?.map(async (advocate) => {
-                    return closePendingTask({
-                      status: state,
-                      assignee: advocate?.additionalDetails?.uuid,
-                    });
-                  })
-                : []),
-              ...(Array.isArray(caseDetails?.poaHolders)
-                ? caseDetails?.poaHolders?.map(async (poaHolder) => {
-                    return closePendingTask({
-                      status: state,
-                      assignee: poaHolder?.additionalDetails?.uuid,
-                    });
-                  })
-                : []),
-            ];
-            await Promise.all(promises);
+            const assignees = new Set();
+            (litigants || []).forEach((l) => {
+              if (!l?.poaHolder && l?.additionalDetails?.uuid) assignees.add(l.additionalDetails.uuid);
+            });
+            (caseDetails?.representatives || []).forEach((a) => a?.additionalDetails?.uuid && assignees.add(a.additionalDetails.uuid));
+            (caseDetails?.poaHolders || []).forEach((p) => p?.additionalDetails?.uuid && assignees.add(p.additionalDetails.uuid));
+            await Promise.all([...assignees].map((assignee) => closePendingTask({ status: state, assignee })));
           }
           history.replace(
             `/${window?.contextPath}/${userInfoType}/dristi/home/file-case/case?caseId=${res?.cases?.[0]?.id}&selected=complainantDetails`
@@ -1101,9 +1085,7 @@ const ComplainantSignature = ({ path }) => {
         CaseWorkflowState.PENDING_SIGN,
       ]?.includes(caseDetails?.status) &&
       (isEsignSuccess ||
-        isCurrentAdvocateSigned ||
-        isCurrentLitigantSigned ||
-        isCurrentPoaSigned ||
+        isCurrentUserSigned ||
         (![CaseWorkflowState?.PENDING_RE_SIGN, CaseWorkflowState.PENDING_SIGN]?.includes(caseDetails?.status) && isCurrentLitigantContainPoa) ||
         uploadDoc ||
         (isSelectedEsign && isMemberOnBehalfOfOwnerAdvocate)) && // If junior adv/clerk is on this screen.
@@ -1243,7 +1225,9 @@ const ComplainantSignature = ({ path }) => {
                 {litigant?.additionalDetails?.fullName}
                 {litigant?.hasSigned ||
                 litigant?.poaHolder?.hasSigned ||
-                (litigant?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid && (isEsignSuccess || uploadDoc)) ? (
+                (litigant?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid &&
+                  !isCurrentLitigantContainPoa &&
+                  (isEsignSuccess || uploadDoc)) ? (
                   <span style={{ ...styles.signedLabel, alignItems: "right" }}>{t("SIGNED")}</span>
                 ) : (
                   <span style={{ ...styles.unSignedLabel, alignItems: "right" }}>{t("PENDING")}</span>

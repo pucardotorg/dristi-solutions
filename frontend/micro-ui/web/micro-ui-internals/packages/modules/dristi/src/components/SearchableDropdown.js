@@ -2,14 +2,11 @@ import { ArrowDown } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { getAuthorizedUuid, removeInvalidNameParts } from "../Utils";
 
-const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value, onChange, disabled }) => {
+const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value, onChange, disabled, excludeIndividualId }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [loader, setLoader] = useState(false);
   const [isDropdownVisible, setDropdownVisible] = useState(false);
-  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-  const userUuid = userInfo?.uuid;
-  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const { data: filteredAdvocatesData, refetch: fetchSearchedData } = Digit?.Hooks?.dristi?.useGetAllAdvocates(
     { tenantId: window?.Digit.ULBService.getStateId(), criteria: { barRegistrationNumber: debouncedSearchTerm } },
@@ -42,7 +39,7 @@ const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value,
     (advocate) =>
       !selectedAdvocatesList.some(
         (selected) => selected.advocateBarRegNumberWithName.barRegistrationNumberOriginal === advocate.barRegistrationNumberOriginal
-      )
+      ) && !(excludeIndividualId && advocate.individualId === excludeIndividualId)
   );
 
   useEffect(() => {
