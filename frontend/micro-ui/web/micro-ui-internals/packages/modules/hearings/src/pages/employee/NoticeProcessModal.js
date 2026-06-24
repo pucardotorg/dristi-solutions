@@ -486,6 +486,14 @@ const NoticeProcessModal = ({
     );
   }, [t, caseDetails?.caseTitle, filingNumber, currentHearingId, hearingDetails?.startTime, userType, caseId]);
 
+  const orignalHearingDate = hearingDateInfo?.originalHearingDate
+    ? DateUtils.getFormattedDate(new Date(hearingDateInfo.originalHearingDate), "DD-MM-YYYY")
+    : DateUtils.getFormattedDate(new Date(hearingByNumber?.HearingList?.[0]?.startTime), "DD-MM-YYYY");
+
+  const latestHearingDate = hearingDateInfo?.hearingDate
+    ? DateUtils.getFormattedDate(new Date(hearingDateInfo.hearingDate), "DD-MM-YYYY")
+    : DateUtils.getFormattedDate(new Date(hearingByNumber?.HearingList?.[0]?.startTime), "DD-MM-YYYY");
+
   const modalContent = (
     <div className="summon-modal" style={{ width: "100%" }}>
       {!showModal && (
@@ -510,7 +518,7 @@ const NoticeProcessModal = ({
               setTimeout(() => {
                 setOrderLoading((prev) => !prev);
               }, 0);
-              setCurrentHearingNumber(item?.ordersList?.[0]?.scheduledHearingNumber);
+              setCurrentHearingNumber(item?.ordersList?.[0]?.scheduledHearingNumber || item?.ordersList?.[0]?.hearingNumber);
               console.log("item?.ordersList?.[0]", item?.ordersList?.[0]);
               setHasPendingTasks(true);
               setHearingDateInfo({ originalHearingDate: null, hearingDate: null });
@@ -561,7 +569,7 @@ const NoticeProcessModal = ({
                   setTimeout(() => {
                     setOrderLoading((prev) => !prev);
                   }, 0);
-                  setCurrentHearingNumber(item?.scheduledHearingNumber);
+                  setCurrentHearingNumber(item?.scheduledHearingNumber || item?.hearingNumber);
                   setHasPendingTasks(true);
                   setHearingDateInfo({ originalHearingDate: null, hearingDate: null });
                 }}
@@ -598,22 +606,17 @@ const NoticeProcessModal = ({
                 </div>
                 <hr className="vertical-line" />
                 <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
-                  <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("HEARING_DATE")}:</span>
-                  {console.log("hearingDateInfo", hearingDateInfo)}
-                  <span>
-                    {hearingDateInfo?.originalHearingDate
-                      ? DateUtils.getFormattedDate(new Date(hearingDateInfo.originalHearingDate), "DD-MM-YYYY")
-                      : DateUtils.getFormattedDate(new Date(hearingByNumber?.HearingList?.[0]?.startTime), "DD-MM-YYYY")}
+                  <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>
+                    {orignalHearingDate !== latestHearingDate ? t("ORIGINAL_HEARING_DATE") : t("HEARING_DATE")}:
                   </span>
+                  <span>{orignalHearingDate}</span>
                 </div>
-                {hearingDateInfo?.hearingDate &&
-                  hearingDateInfo?.originalHearingDate &&
-                  hearingDateInfo.hearingDate !== hearingDateInfo.originalHearingDate && (
-                    <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
-                      <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("RESCHEDULED_HEARING_DATE")}:</span>
-                      <span>{DateUtils.getFormattedDate(new Date(hearingDateInfo.hearingDate), "DD-MM-YYYY")}</span>
-                    </div>
-                  )}
+                {orignalHearingDate !== latestHearingDate && (
+                  <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
+                    <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("RESCHEDULED_HEARING_DATE")}:</span>
+                    <span>{latestHearingDate}</span>
+                  </div>
+                )}
               </div>
               <div style={{ marginLeft: "10px" }}>
                 <a
