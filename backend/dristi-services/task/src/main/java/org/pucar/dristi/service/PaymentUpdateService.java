@@ -482,15 +482,12 @@ public class PaymentUpdateService {
     }
 
     public void createPendingTaskForRPAD(Task task, RequestInfo requestInfo) {
-        try {
-            if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
-                    || task.getTaskType().equalsIgnoreCase(NOTICE) || task.getTaskType().equalsIgnoreCase(PROCLAMATION) || task.getTaskType().equalsIgnoreCase(ATTACHMENT)) && (isRPADdeliveryChannel(task))) {
-                createPendingTaskForEnvelope(task, requestInfo);
-            }
-        } catch (Exception e) {
-            log.error("Error creating pending task for RPAD", e);
+        if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
+                || task.getTaskType().equalsIgnoreCase(NOTICE) || task.getTaskType().equalsIgnoreCase(PROCLAMATION) || task.getTaskType().equalsIgnoreCase(ATTACHMENT)) && (isRPADdeliveryChannel(task))) {
+            createPendingTaskForEnvelope(task, requestInfo);
         }
     }
+
 
     public boolean isRPADdeliveryChannel(Task task) {
         JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
@@ -565,7 +562,6 @@ public class PaymentUpdateService {
             );
         } catch (Exception e) {
             log.error("Error while creating pending task for envelope submission", e);
-            throw new CustomException("CREATE_PENDING_TASK_ERROR", "Error while creating pending task for envelope submission");
         }
     }
 
