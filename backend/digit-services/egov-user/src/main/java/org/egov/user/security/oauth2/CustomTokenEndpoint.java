@@ -238,6 +238,12 @@ public class CustomTokenEndpoint {
             // generate a new refresh token to pair with the reused access token.
             String refreshTokenToReturn = UUID.randomUUID().toString();
             long accessExpirySeconds = (long) accessTokenValidityMinutes * 60;
+            long refreshExpirySeconds = (long) refreshTokenValidityMinutes * 60;
+
+            // Persist the new refresh token and its mapping to the reused access token so a
+            // subsequent refresh_token grant can resolve it (mirrors the normal-issue path below).
+            tokenStore.storeRefreshToken(refreshTokenToReturn, authentication, refreshExpirySeconds);
+            tokenStore.storeAccessTokenToRefreshTokenMapping(activeToken, refreshTokenToReturn);
 
             Map<String, Object> responseInfo = new LinkedHashMap<>();
             responseInfo.put("api_id", "");

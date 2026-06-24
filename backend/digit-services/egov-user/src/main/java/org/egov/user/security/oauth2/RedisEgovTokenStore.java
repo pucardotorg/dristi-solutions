@@ -3,6 +3,8 @@ package org.egov.user.security.oauth2;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.user.domain.model.SecureUser;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -146,9 +148,15 @@ public class RedisEgovTokenStore implements EgovTokenStore {
                 }
             }
             redisTemplate.delete(userKey);
-            // Remove all active-token pointers for this user (pattern scan across tenants)
-            java.util.Set<String> activeKeys = redisTemplate.keys(USER_ACTIVE_TOKEN_PREFIX + username + ":*");
-            if (activeKeys != null && !activeKeys.isEmpty()) {
+            // Remove all active-token pointers for this user (non-blocking SCAN across tenants;
+            // KEYS would block the whole Redis instance in production)
+            String activeTokenPattern = USER_ACTIVE_TOKEN_PREFIX + username + ":*";
+            ScanOptions scanOptions = ScanOptions.scanOptions().match(activeTokenPattern).count(100).build();
+            java.util.Set<String> activeKeys = new java.util.HashSet<>();
+            try (Cursor<String> cursor = redisTemplate.scan(scanOptions)) {
+                cursor.forEachRemaining(activeKeys::add);
+            }
+            if (!activeKeys.isEmpty()) {
                 redisTemplate.delete(activeKeys);
             }
         } catch (Exception e) {
