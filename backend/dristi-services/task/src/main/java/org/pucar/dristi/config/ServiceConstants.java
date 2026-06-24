@@ -152,6 +152,9 @@ public class ServiceConstants {
     public static final String POLICE = "POLICE";
     public static final String PENDING_ENVELOPE_SUBMISSION = "PENDING_ENVELOPE_SUBMISSION";
     public static final String MANUAL = "MANUAL_";
+    public static final String PAYMENT_PENDING_FOR_WARRANT = "PAYMENT_PENDING_FOR_WARRANT";
+    public static final String PAYMENT_PENDING_POLICE = "PAYMENT_PENDING_POLICE";
+    public static final String ORDER_DEFAULT_ENTITY_TYPE = "order-default";
 
     public static final String WARRANT_ISSUED="WARRANT_ISSUED";
     public static final String ISSUE_WARRANT = "ISSUE_WARRANT";

@@ -5,9 +5,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
+import org.pucar.dristi.util.AdvocateUtil;
+import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.JsonUtil;
 import org.pucar.dristi.util.OrderUtil;
+import org.pucar.dristi.util.PendingTaskUtil;
+import org.pucar.dristi.web.models.CourtCase;
+import org.pucar.dristi.web.models.POAHolder;
+import org.pucar.dristi.web.models.Party;
 import org.pucar.dristi.web.models.Task;
 import org.pucar.dristi.web.models.TaskCriteria;
 import org.pucar.dristi.web.models.TaskRequest;
@@ -15,17 +23,24 @@ import org.pucar.dristi.web.models.TaskSearchRequest;
 import org.pucar.dristi.web.models.WorkflowObject;
 import org.pucar.dristi.web.models.order.Order;
 import org.pucar.dristi.web.models.order.OrderRequest;
+import org.pucar.dristi.web.models.pendingtask.PendingTask;
+import org.pucar.dristi.web.models.pendingtask.PendingTaskRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -42,16 +57,26 @@ public class WarrantReissueService {
     private final ObjectMapper objectMapper;
     private final UserService userService;
     private final OrderUtil orderUtil;
+    private final PendingTaskUtil pendingTaskUtil;
+    private final CaseUtil caseUtil;
+    private final AdvocateUtil advocateUtil;
+    private final JsonUtil jsonUtil;
 
     @Autowired
     public WarrantReissueService(TaskService taskService, Configuration config, Producer producer,
-                                  ObjectMapper objectMapper, UserService userService, OrderUtil orderUtil) {
+                                  ObjectMapper objectMapper, UserService userService, OrderUtil orderUtil,
+                                  PendingTaskUtil pendingTaskUtil, CaseUtil caseUtil, AdvocateUtil advocateUtil,
+                                  JsonUtil jsonUtil) {
         this.taskService = taskService;
         this.config = config;
         this.producer = producer;
         this.objectMapper = objectMapper;
         this.userService = userService;
         this.orderUtil = orderUtil;
+        this.pendingTaskUtil = pendingTaskUtil;
+        this.caseUtil = caseUtil;
+        this.advocateUtil = advocateUtil;
+        this.jsonUtil = jsonUtil;
     }
 
     /**
@@ -216,6 +241,13 @@ public class WarrantReissueService {
                 String partyUniqueId = extractPartyUniqueId(createdWarrant);
                 if (partyUniqueId != null && !collectedPartyUniqueIds.contains(partyUniqueId)) {
                     collectedPartyUniqueIds.add(partyUniqueId);
+                }
+
+                // The reissued warrant only requires a payment-pending task when it lands in
+                // PENDING_PAYMENT (action == CREATE). When payment is skipped (CREATE_WITH_OUT_PAYMENT,
+                // i.e. an already-issued iCoPS warrant or a court witness) there is nothing to pay for.
+                if (!shouldSkipPayment) {
+                    createPaymentPendingTaskForWarrant(requestInfo, createdWarrant);
                 }
             } catch (Exception e) {
                 log.error("Error creating new warrant for reissue", e);
@@ -703,5 +735,111 @@ public class WarrantReissueService {
         } catch (Exception e) {
             log.error("Error updating partyUniqueIds for order: {}", orderId, e);
         }
+    }
+
+    /**
+     * Re-creates the "payment pending for warrant" pending task for a freshly reissued warrant,
+     * mirroring the pending task originally raised at order publish time
+     * (see order-management PublishOrderWarrant). It is only raised for warrants that land in
+     * PENDING_PAYMENT; the caller gates on that. The assignees are the complainant (or, for
+     * accused/witness warrants, the respondent) litigants together with their advocates and POA
+     * holders, resolved from the case. Any failure is logged and swallowed so it never blocks the
+     * reissue flow.
+     */
+    private void createPaymentPendingTaskForWarrant(RequestInfo requestInfo, Task warrant) {
+        try {
+            TaskRequest taskRequest = TaskRequest.builder()
+                    .requestInfo(requestInfo)
+                    .task(warrant)
+                    .build();
+
+            List<CourtCase> courtCases = caseUtil.getCaseDetails(taskRequest);
+            if (CollectionUtils.isEmpty(courtCases)) {
+                log.error("Could not create payment pending task for reissued warrant {}: courtCase not found", warrant.getTaskNumber());
+                return;
+            }
+            CourtCase courtCase = courtCases.get(0);
+
+            Map<String, List<String>> advocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
+            Map<String, List<POAHolder>> poaMapping = caseUtil.getLitigantPoaMapping(courtCase);
+
+            String type = isWarrantForAccusedWitness(warrant) ? "respondent" : "complainant";
+            List<Party> parties = caseUtil.getRespondentOrComplainant(courtCase, type);
+
+            List<String> assigneeUUIDs = new ArrayList<>();
+            List<String> litigantIndividualIds = new ArrayList<>();
+            for (Party party : parties) {
+                String litigantUUID = jsonUtil.getNestedValue(party.getAdditionalDetails(), List.of("uuid"), String.class);
+                if (advocateMapping.containsKey(litigantUUID)) {
+                    assigneeUUIDs.addAll(advocateMapping.get(litigantUUID));
+                }
+                assigneeUUIDs.add(litigantUUID);
+                litigantIndividualIds.add(party.getIndividualId());
+
+                List<POAHolder> poaHolders = poaMapping.get(party.getIndividualId());
+                if (poaHolders != null) {
+                    for (POAHolder holder : poaHolders) {
+                        String poaUUID = jsonUtil.getNestedValue(holder.getAdditionalDetails(), List.of("uuid"), String.class);
+                        if (poaUUID != null) {
+                            assigneeUUIDs.add(poaUUID);
+                        }
+                    }
+                }
+            }
+
+            List<User> uniqueAssignees = assigneeUUIDs.stream()
+                    .distinct()
+                    .map(uuid -> User.builder().uuid(uuid).build())
+                    .collect(Collectors.toList());
+
+            Map<String, Object> additionalDetails = new HashMap<>();
+            additionalDetails.put("litigants", litigantIndividualIds);
+
+            ZoneId zoneId = ZoneId.of(config.getZoneId());
+            long currentISTMillis = ZonedDateTime.now(zoneId).toInstant().toEpochMilli();
+            long sla = config.getWarrantPaymentSlaValue() + currentISTMillis;
+
+            PendingTask pendingTask = PendingTask.builder()
+                    .name(PAYMENT_PENDING_FOR_WARRANT)
+                    .referenceId(MANUAL + warrant.getTaskNumber())
+                    .entityType(ORDER_DEFAULT_ENTITY_TYPE)
+                    .status(PAYMENT_PENDING_POLICE)
+                    .assignedTo(uniqueAssignees)
+                    .cnrNumber(courtCase.getCnrNumber())
+                    .filingNumber(courtCase.getFilingNumber())
+                    .caseId(courtCase.getId().toString())
+                    .caseTitle(courtCase.getCaseTitle())
+                    .isCompleted(false)
+                    .stateSla(sla)
+                    .additionalDetails(additionalDetails)
+                    .screenType("home")
+                    .build();
+
+            pendingTaskUtil.createPendingTask(PendingTaskRequest.builder()
+                    .requestInfo(requestInfo)
+                    .pendingTask(pendingTask)
+                    .build());
+            log.info("Created payment pending task for reissued warrant: {}", warrant.getTaskNumber());
+        } catch (Exception e) {
+            log.error("Error creating payment pending task for reissued warrant: {}", warrant.getTaskNumber(), e);
+        }
+    }
+
+    /**
+     * A warrant is "for an accused/witness" when its respondentDetails.ownerType is ACCUSED, in
+     * which case the pending task is assigned to the respondent side rather than the complainant.
+     */
+    private boolean isWarrantForAccusedWitness(Task warrant) {
+        try {
+            if (warrant.getTaskDetails() != null) {
+                JsonNode taskDetails = objectMapper.convertValue(warrant.getTaskDetails(), JsonNode.class);
+                JsonNode ownerType = taskDetails.path("respondentDetails").path("ownerType");
+                return !ownerType.isMissingNode() && !ownerType.isNull()
+                        && ACCUSED.equalsIgnoreCase(ownerType.textValue());
+            }
+        } catch (Exception e) {
+            log.warn("Could not determine warrantForAccusedWitness from task: {}", warrant.getTaskNumber());
+        }
+        return false;
     }
 }

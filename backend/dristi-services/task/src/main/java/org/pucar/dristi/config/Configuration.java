@@ -360,6 +360,9 @@ public class Configuration {
     @Value("${sla.envelope.sla.value}")
     private Long envelopeSlaValue;
 
+    @Value("${sla.warrant.payment.sla.value:259200000}")
+    private Long warrantPaymentSlaValue;
+
     @Value("${state.level.tenant.id}")
     private String tenantId;
 
