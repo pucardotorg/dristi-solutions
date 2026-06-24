@@ -374,14 +374,16 @@ export const UICustomizations = {
             }
 
             if (typeof additionalDetails?.setHearingDateInfo === "function") {
-              if (!data?.list?.find((task) => task?.taskType === "WARRANT")) return;
-              const icopsTask = data?.list?.find((task) => task?.taskDetails?.deliveryChannels?.channelCode === "POLICE");
-              // Fetch new HearingDate from icops task temporarily till back end sends new hearing date in RPAD also.
-              const caseDetails = icopsTask?.taskDetails?.caseDetails || data?.list?.[0]?.taskDetails?.caseDetails;
-              additionalDetails.setHearingDateInfo({
-                originalHearingDate: caseDetails?.originalHearingDate || null,
-                hearingDate: caseDetails?.hearingDate || null,
-              });
+              const hasWarratTask = data?.list?.find((task) => task?.taskType === "WARRANT");
+              if (hasWarratTask) {
+                const icopsTask = data?.list?.find((task) => task?.taskDetails?.deliveryChannels?.channelCode === "POLICE");
+                // Fetch new HearingDate from icops task temporarily till back end sends new hearing date in RPAD also.
+                const caseDetails = icopsTask?.taskDetails?.caseDetails || data?.list?.[0]?.taskDetails?.caseDetails;
+                additionalDetails.setHearingDateInfo({
+                  originalHearingDate: caseDetails?.originalHearingDate || null,
+                  hearingDate: caseDetails?.hearingDate || null,
+                });
+              }
             }
 
             return { list: taskData || [] };
