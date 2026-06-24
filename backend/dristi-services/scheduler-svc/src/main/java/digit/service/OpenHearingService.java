@@ -152,7 +152,7 @@ public class OpenHearingService  {
 
     private Comparator<OpenHearing> hearingComparator() {
         return (h1, h2) -> {
-            // 1. statusOrder ASC (IN_PROGRESS=1, SCHEDULED=2, COMPLETED=3)
+            // 1. statusOrder ASC (IN_PROGRESS=1, SCHEDULED=2, PASSED_OVER=3, COMPLETED=4)
             int s1 = h1.getStatusOrder() != null ? h1.getStatusOrder() : 99;
             int s2 = h2.getStatusOrder() != null ? h2.getStatusOrder() : 99;
             if (s1 != s2) return Integer.compare(s1, s2);
