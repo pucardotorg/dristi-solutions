@@ -531,14 +531,14 @@ public class PaymentUpdateService {
             if(task.getOrderId() != null){
                 Order order = orderUtil.getOrderByOrderId(requestInfo, String.valueOf(task.getOrderId()));
                 if(INTERMEDIATE.equals(order.getOrderCategory())){
-                    if(isWarrantForAccusedWitness(order))
+                    if(isWarrantForAccusedWitness(order, task))
                         type = "respondent";
                 }
                 else {
                     List<Order> orders = getItemListFormCompositeItem(order);
                     for(Order orderItem: orders){
                         if(WARRANT.equals(orderItem.getOrderType())){
-                            if(isWarrantForAccusedWitness(orderItem))
+                            if(isWarrantForAccusedWitness(orderItem, task))
                                 type = "respondent";
                             break;
                         }
@@ -613,21 +613,41 @@ public class PaymentUpdateService {
         return compositeItemsList;
     }
 
-    private boolean isWarrantForAccusedWitness(Order order) {
+    private boolean isWarrantForAccusedWitness(Order order, Task task) {
+        JsonNode taskDetail = getTaskDetailNode(order, task);
+        return taskDetail != null
+                && taskDetail.get("respondentDetails") != null
+                && taskDetail.get("respondentDetails").get("ownerType") != null
+                && taskDetail.get("respondentDetails").get("ownerType").textValue() != null
+                && taskDetail.get("respondentDetails").get("ownerType").textValue().equalsIgnoreCase(ACCUSED);
+    }
+
+    /**
+     * Resolves the taskDetail node that carries respondentDetails.
+     * Prefers the order's additionalDetails.taskDetails (a JSON string holding an array of task details);
+     * falls back to the task's own taskDetails (a JSON object) when the order does not carry it.
+     */
+    private JsonNode getTaskDetailNode(Order order, Task task) {
         String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
-        try {
-            JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
-            JsonNode taskDetail = taskDetailsArray.get(0);
-            if(taskDetail.get("respondentDetails") != null
-                    && taskDetail.get("respondentDetails").get("ownerType") != null
-                    && taskDetail.get("respondentDetails").get("ownerType").textValue().equalsIgnoreCase(ACCUSED)){
-                return true;
+        if (taskDetails != null && !taskDetails.isBlank()) {
+            try {
+                JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
+                if (taskDetailsArray != null && taskDetailsArray.isArray() && !taskDetailsArray.isEmpty()) {
+                    return taskDetailsArray.get(0);
+                }
+            } catch (JsonProcessingException e) {
+                log.error("Error while processing taskDetails from order {}", order.getOrderNumber(), e);
             }
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
         }
 
-        return false;
+        // Fallback: order did not carry taskDetails, use the task's own taskDetails object
+        if (task != null && task.getTaskDetails() != null) {
+            log.info("taskDetails not found on order {}, falling back to taskDetails from task {}",
+                    order.getOrderNumber(), task.getTaskNumber());
+            return objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
+        }
+
+        return null;
     }
 
 
