@@ -862,7 +862,7 @@ public class PaymentService {
     ReconcileV3Outcome reconcileV3(AuthSek authSek, RequestInfo requestInfo) throws Exception {
         String departmentId = authSek.getDepartmentId();
         if (departmentId == null || departmentId.isEmpty()) {
-            log.warn("V3 reconciliation: row has no departmentId, cannot query treasury | billId={}", authSek.getBillId());
+            log.error("V3 reconciliation: row has no departmentId, cannot query treasury | billId={}", authSek.getBillId());
             return INCONCLUSIVE;
         }
 
@@ -872,7 +872,7 @@ public class PaymentService {
                 departmentId, config.getTransactionDetailsV3Url());
 
         if (responseEntity == null || responseEntity.getBody() == null) {
-            log.warn("V3 reconciliation: empty response from treasury, leaving PENDING | billId={} | departmentId={}",
+            log.error("V3 reconciliation: empty response from treasury, leaving PENDING | billId={} | departmentId={}",
                     authSek.getBillId(), departmentId);
             return INCONCLUSIVE;
         }
@@ -882,7 +882,7 @@ public class PaymentService {
 
         TransactionDetailsV3Envelope envelope = objectMapper.readValue(body, TransactionDetailsV3Envelope.class);
         if (envelope.getKey() == null || envelope.getData() == null) {
-            log.warn("V3 reconciliation: response missing key/data, leaving PENDING | billId={} | body={}",
+            log.error("V3 reconciliation: response missing key/data, leaving PENDING | billId={} | body={}",
                     authSek.getBillId(), body);
             return INCONCLUSIVE;
         }
@@ -895,7 +895,7 @@ public class PaymentService {
         // Some V3 responses (e.g. "Wrong GRN") prefix a few non-JSON bytes before the array.
         String jsonArray = sliceJsonArray(decryptedJson);
         if (jsonArray == null) {
-            log.warn("V3 reconciliation: decrypted payload does not contain a JSON array, leaving PENDING | billId={} | decrypted={}",
+            log.error("V3 reconciliation: decrypted payload does not contain a JSON array, leaving PENDING | billId={} | decrypted={}",
                     authSek.getBillId(), decryptedJson);
             return INCONCLUSIVE;
         }
@@ -905,7 +905,7 @@ public class PaymentService {
             // Unexpected: treasury normally returns a populated array even when there is no payment
             // (status=N, error="No Transaction found"). An empty array is an unknown response, so we
             // make no terminal decision and leave the row PENDING for the next cron cycle.
-            log.warn("V3 reconciliation: empty/non-array payload, leaving PENDING | billId={} | departmentId={}",
+            log.error("V3 reconciliation: empty/non-array payload, leaving PENDING | billId={} | departmentId={}",
                     authSek.getBillId(), departmentId);
             return INCONCLUSIVE;
         }
@@ -995,7 +995,7 @@ public class PaymentService {
 
             List<AuthSek> rows = repository.getAuthSekByDepartmentId(departmentId);
             if (rows.isEmpty()) {
-                log.warn("V3 reconciliation TEST: no auth_sek row found | departmentId={}", departmentId);
+                log.error("V3 reconciliation TEST: no auth_sek row found | departmentId={}", departmentId);
                 return result
                         .authSekFound(false)
                         .processed(false)
