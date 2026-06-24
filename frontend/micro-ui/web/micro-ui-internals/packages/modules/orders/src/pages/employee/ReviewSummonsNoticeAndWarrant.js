@@ -218,6 +218,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [tasksData, setTasksData] = useState(null);
   const [remarks, setRemarks] = useState("");
   const [selectedDelievery, setSelectedDelievery] = useState({});
+  const [selectedReason, setSelectedReason] = useState({});
+  const [reasonText, setReasonText] = useState("");
   const [showToast, setShowToast] = useState(null);
   const [bulkSignList, setBulkSignList] = useState([]);
   const [bulkSendList, setBulkSendList] = useState([]);
@@ -553,6 +555,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 statusChangeDate: updateStatusDate
                   ? updateStatusDate
                   : convertToDateInputFormat(rowData?.taskDetails?.deliveryChannels?.statusChangeDate),
+                ...(selectedDelievery?.key === "NOT_DELIVERED" &&
+                  rowData?.taskDetails?.deliveryChannels?.channelCode !== "POLICE" &&
+                  selectedReason?.key && {
+                    notDeliveredReason: selectedReason.key,
+                    notDeliveredReasonText: reasonText,
+                  }),
               },
               remarks: {
                 remark: remarks,
@@ -605,7 +613,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         setShowToast({ label: t("HOME_SCREEN_UPDATE_FAILED"), error: true, errorId });
       }
     }
-  }, [dayInMillisecond, orderData, orderType, refetch, reload, selectedDelievery, tasksData, tenantId, todayDate]);
+  }, [dayInMillisecond, orderData, orderType, refetch, reload, selectedDelievery, selectedReason, reasonText, tasksData, tenantId, todayDate]);
 
   useEffect(() => {
     // Set default values when component mounts
@@ -1829,6 +1837,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
           remarks={remarks}
           setRemarks={setRemarks}
           setUpdateStatusDate={setUpdateStatusDate}
+          selectedReason={selectedReason}
+          setSelectedReason={setSelectedReason}
+          reasonText={reasonText}
+          setReasonText={setReasonText}
         />
       ),
       actionSaveOnSubmit: handleUpdateStatus,
@@ -1836,7 +1848,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
       isDisabled: isDisabled,
       hideSubmit: isTypist,
     };
-  }, [handleCloseActionModal, handleDownload, handleUpdateStatus, sentInfos, isDisabled, links, orderType, rowData, selectedDelievery, t]);
+  }, [
+    handleCloseActionModal,
+    handleDownload,
+    handleUpdateStatus,
+    sentInfos,
+    isDisabled,
+    links,
+    orderType,
+    rowData,
+    selectedDelievery,
+    selectedReason,
+    reasonText,
+    t,
+  ]);
 
   useEffect(() => {
     // if (rowData?.id) getTaskDocuments();
