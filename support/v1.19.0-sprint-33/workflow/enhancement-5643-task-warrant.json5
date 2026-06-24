@@ -1,0 +1,195 @@
+{
+  "tenantId": "kl",
+  "businessService": "task-warrant",
+  "business": "task",
+  "businessServiceSla": 4320000000,
+  "states": [
+    {
+      "sla": null,
+      "state": null,
+      "applicationStatus": null,
+      "docUploadRequired": true,
+      "isStartState": true,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "action": "CREATE",
+          "nextState": "PENDING_PAYMENT",
+          "roles": [
+            "TASK_CREATOR"
+          ]
+        }
+      ]
+    },
+    {
+      "sla": 172800000,
+      "state": "PENDING_PAYMENT",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": true,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "action": "MAKE_PAYMENT",
+          "nextState": "ISSUE_WARRANT",
+          "roles": [
+            "TASK_CREATOR",
+            "SYSTEM",
+            "CITIZEN",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "ABANDON",
+          "nextState": "ABATED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "EXPIRE",
+          "nextState": "EXPIRED",
+          "roles": [
+            "TASK_CREATOR",
+            "CITIZEN",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        }
+      ]
+    },
+    {
+      "sla": 388000000,
+      "state": "ISSUE_WARRANT",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        // TODO : need to add this new action
+        {
+          "tenantId": "kl",
+          "currentState": "ISSUE_WARRANT",
+          "action": "EXPIRE",
+          "nextState": "EXPIRED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ],
+          "active": true
+        },
+        {
+          "action": "SEND",
+          "nextState": "WARRANT_SENT",
+          "roles": [
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "ABANDON",
+          "nextState": "ABATED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        }
+      ]
+    },
+    {
+      "sla": 3888000000,
+      "state": "WARRANT_SENT",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        // TODO : need to add this new action
+        {
+          "tenantId": "kl",
+          "currentState": "WARRANT_SENT",
+          "action": "EXPIRE",
+          "nextState": "EXPIRED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ],
+          "active": true
+        },
+        {
+          "action": "DELIVERED",
+          "nextState": "EXECUTED",
+          "roles": [
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "NOT_DELIVERED",
+          "nextState": "NOT_EXECUTED",
+          "roles": [
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN",
+            "AUTO_ESCALATE"
+          ]
+        },
+        {
+          "action": "ABANDON",
+          "nextState": "ABATED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        }
+      ]
+    },
+    {
+      "sla": null,
+      "state": "EXECUTED",
+      "applicationStatus": "ACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    },
+    {
+      "sla": null,
+      "state": "NOT_EXECUTED",
+      "applicationStatus": "ACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    },
+    {
+      "sla": null,
+      "state": "ABATED",
+      "applicationStatus": "INACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    },
+    {
+      "sla": null,
+      "state": "EXPIRED",
+      "applicationStatus": "INACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    }
+  ]
+}
