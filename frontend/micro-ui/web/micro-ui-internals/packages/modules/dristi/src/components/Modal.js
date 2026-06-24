@@ -47,6 +47,7 @@ const Modal = ({
   customActionClassName,
   submitClassName,
   cancelTheme,
+  footerChildren,
 }) => {
   /**
    * TODO: It needs to be done from the desgin changes
@@ -75,57 +76,63 @@ const Modal = ({
                   ? !mobileView
                     ? { marginRight: "18px" }
                     : { position: "absolute", bottom: "5%", right: "10%", left: window.location.href.includes("employee") ? "0%" : "7%" }
+                  : footerChildren
+                  ? { justifyContent: "space-between", alignItems: "center", ...popupModuleActionBarStyles }
                   : popupModuleActionBarStyles
               }
             >
-              {actionCancelLabel && !hideCancel ? (
-                <ButtonSelector
-                  textStyles={{
-                    margin: "0px",
-                    color: cancelTheme === "primary" ? "#FFFFFF" : "#007E7E",
-                    ...(actionCancelTextStyle ? actionCancelTextStyle : {}),
-                  }}
-                  theme={cancelTheme || "border"}
-                  label={actionCancelLabel}
-                  onSubmit={actionCancelOnSubmit}
-                  style={
-                    cancelTheme === "primary"
-                      ? { backgroundColor: "#007e7e", border: "none", ...(actionCancelStyle ? actionCancelStyle : {}) }
-                      : { border: "1px solid #007E7E", backgroundColor: "white", ...(actionCancelStyle ? actionCancelStyle : {}) }
-                  }
-                  ButtonBody={cancelButtonBody}
-                  isDisabled={isBackButtonDisabled}
-                  textClassName={cancelTextClassName}
-                  className={cancelClassName}
-                />
-              ) : null}
-              {actionCustomLabel ? (
-                <ButtonSelector
-                  textStyles={{ margin: "0px", ...(customActionTextStyle ? customActionTextStyle : {}) }}
-                  label={actionCustomLabel}
-                  onSubmit={actionCustomLabelSubmit}
-                  formId={formId}
-                  isDisabled={isCustomButtonDisabled}
-                  style={customActionStyle}
-                  textClassName={customActionTextClassName}
-                  className={customActionClassName}
-                />
-              ) : null}
-              {actionSaveLabel && !hideSubmit ? (
-                <ButtonSelector
-                  textStyles={{ margin: "0px", ...(textStyle ? textStyle : {}) }}
-                  label={actionSaveLabel}
-                  onSubmit={actionSaveOnSubmit}
-                  formId={formId}
-                  isDisabled={isDisabled}
-                  style={style}
-                  className={submitClassName}
-                  textClassName={submitTextClassName}
-                  title={titleSaveButton ? titleSaveButton : ""}
-                />
-              ) : null}
+              {footerChildren && <div>{footerChildren}</div>}
+              <div style={{ display: "flex", gap: "16px" }}>
+                {actionCancelLabel && !hideCancel ? (
+                  <ButtonSelector
+                    textStyles={{
+                      margin: "0px",
+                      color: cancelTheme === "primary" ? "#FFFFFF" : "#007E7E",
+                      ...(actionCancelTextStyle ? actionCancelTextStyle : {}),
+                    }}
+                    theme={cancelTheme || "border"}
+                    label={actionCancelLabel}
+                    onSubmit={actionCancelOnSubmit}
+                    style={
+                      cancelTheme === "primary"
+                        ? { backgroundColor: "#007e7e", border: "none", ...(actionCancelStyle ? actionCancelStyle : {}) }
+                        : { border: "1px solid #007E7E", backgroundColor: "white", ...(actionCancelStyle ? actionCancelStyle : {}) }
+                    }
+                    ButtonBody={cancelButtonBody}
+                    isDisabled={isBackButtonDisabled}
+                    textClassName={cancelTextClassName}
+                    className={cancelClassName}
+                  />
+                ) : null}
+                {actionCustomLabel ? (
+                  <ButtonSelector
+                    textStyles={{ margin: "0px", ...(customActionTextStyle ? customActionTextStyle : {}) }}
+                    label={actionCustomLabel}
+                    onSubmit={actionCustomLabelSubmit}
+                    formId={formId}
+                    isDisabled={isCustomButtonDisabled}
+                    style={customActionStyle}
+                    textClassName={customActionTextClassName}
+                    className={customActionClassName}
+                  />
+                ) : null}
+                {actionSaveLabel && !hideSubmit ? (
+                  <ButtonSelector
+                    textStyles={{ margin: "0px", ...(textStyle ? textStyle : {}) }}
+                    label={actionSaveLabel}
+                    onSubmit={actionSaveOnSubmit}
+                    formId={formId}
+                    isDisabled={isDisabled}
+                    style={style}
+                    className={submitClassName}
+                    textClassName={submitTextClassName}
+                    title={titleSaveButton ? titleSaveButton : ""}
+                  />
+                ) : null}
+              </div>
             </div>
           )}
+          {hideModalActionbar && footerChildren}
         </div>
       </div>
       {error && <CustomToast error={true} label={error} errorId={null} onClose={() => setError(null)} duration={5000} />}

@@ -373,6 +373,16 @@ export const UICustomizations = {
               additionalDetails.setHasTasks(taskData.length > 0);
             }
 
+            if (typeof additionalDetails?.setHearingDateInfo === "function") {
+              // const firstTask = data?.list?.[0];
+              const icopsTask = data?.list?.find((task) => task?.taskDetails?.deliveryChannels?.channelCode === "POLICE");
+              const caseDetails = icopsTask?.taskDetails?.caseDetails;
+              additionalDetails.setHearingDateInfo({
+                originalHearingDate: caseDetails?.originalHearingDate || null,
+                hearingDate: caseDetails?.hearingDate || null,
+              });
+            }
+
             return { list: taskData || [] };
           },
         },
