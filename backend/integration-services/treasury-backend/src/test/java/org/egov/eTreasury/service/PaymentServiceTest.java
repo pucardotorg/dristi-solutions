@@ -234,4 +234,84 @@ class PaymentServiceTest {
         verify(producer).push(anyString(), any(TreasuryPaymentRequest.class));
         verify(authSekRepository).updateAuthTokenAndStatusByDepartmentId(anyString(), anyString(), anyString(), eq("SUCCESS"), eq("RECONCILIATION"), anyLong(), eq("PROCESSED"));
     }
+
+    @Test
+    void getPaymentStatus_noAttempt_whenNoSession() {
+        String billId = "bill-none";
+        when(authSekRepository.getAuthSekByBillId(billId)).thenReturn(Collections.emptyList());
+
+        PaymentStatusData result = paymentService.getPaymentStatus(billId);
+
+        assertNotNull(result);
+        assertEquals(PaymentStatusType.NO_ATTEMPT, result.getStatus());
+        assertEquals(billId, result.getBillId());
+        verify(treasuryPaymentRepository, never()).getTreasuryPaymentData(anyString());
+    }
+
+    @Test
+    void getPaymentStatus_paid_whenLatestSessionSuccess() {
+        String billId = "bill-paid";
+        AuthSek session = AuthSek.builder()
+                .billId(billId)
+                .businessService("pg-service")
+                .totalDue(150.0)
+                .sessionTime(1000L)
+                .paymentStatus(PaymentStatus.SUCCESS)
+                .completionSource("CALLBACK")
+                .processedStatus("PROCESSED")
+                .build();
+        when(authSekRepository.getAuthSekByBillId(billId)).thenReturn(Collections.singletonList(session));
+
+        TreasuryPaymentData receipt = new TreasuryPaymentData();
+        receipt.setStatus('Y');
+        receipt.setGrn("grn-999");
+        receipt.setAmount(BigDecimal.valueOf(150.0));
+        receipt.setPartyName("John Doe");
+        receipt.setFileStoreId("file-store-1");
+        when(treasuryPaymentRepository.getTreasuryPaymentData(billId))
+                .thenReturn(Collections.singletonList(receipt));
+
+        PaymentStatusData result = paymentService.getPaymentStatus(billId);
+
+        assertEquals(PaymentStatusType.PAID, result.getStatus());
+        assertEquals("CALLBACK", result.getCompletionSource());
+        assertEquals("grn-999", result.getGrn());
+        assertEquals(BigDecimal.valueOf(150.0), result.getAmount());
+        assertEquals("John Doe", result.getPartyName());
+        assertEquals("file-store-1", result.getFileStoreId());
+    }
+
+    @Test
+    void getPaymentStatus_verificationPending_whenLatestSessionPending() {
+        String billId = "bill-pending";
+        AuthSek session = AuthSek.builder()
+                .billId(billId)
+                .sessionTime(2000L)
+                .processedStatus("PENDING")
+                .build();
+        when(authSekRepository.getAuthSekByBillId(billId)).thenReturn(Collections.singletonList(session));
+
+        PaymentStatusData result = paymentService.getPaymentStatus(billId);
+
+        assertEquals(PaymentStatusType.VERIFICATION_PENDING, result.getStatus());
+        assertEquals(Long.valueOf(2000L), result.getLastAttemptTime());
+        verify(treasuryPaymentRepository, never()).getTreasuryPaymentData(anyString());
+    }
+
+    @Test
+    void getPaymentStatus_failed_whenLatestSessionTerminalNonSuccess() {
+        String billId = "bill-failed";
+        AuthSek session = AuthSek.builder()
+                .billId(billId)
+                .sessionTime(3000L)
+                .paymentStatus(PaymentStatus.FAILED)
+                .processedStatus("FAILED")
+                .build();
+        when(authSekRepository.getAuthSekByBillId(billId)).thenReturn(Collections.singletonList(session));
+
+        PaymentStatusData result = paymentService.getPaymentStatus(billId);
+
+        assertEquals(PaymentStatusType.FAILED, result.getStatus());
+        verify(treasuryPaymentRepository, never()).getTreasuryPaymentData(anyString());
+    }
 }

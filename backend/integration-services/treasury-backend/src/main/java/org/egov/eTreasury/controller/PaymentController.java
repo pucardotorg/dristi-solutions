@@ -73,6 +73,17 @@ public class PaymentController {
                 .document(document).build();
     }
 
+    @PostMapping("/v1/_paymentStatus")
+    public ResponseEntity<PaymentStatusResponse> getPaymentStatus(@RequestParam String billId, @RequestBody RequestInfo requestInfo) {
+        log.info("Fetching payment status for billId: {}", billId);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);
+        PaymentStatusData paymentStatus = paymentService.getPaymentStatus(billId);
+        PaymentStatusResponse response = PaymentStatusResponse.builder()
+                .responseInfo(responseInfo).paymentStatus(paymentStatus).build();
+        log.info("Payment status for billId: {} is {}", billId, paymentStatus.getStatus());
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/v1/_getHeadBreakDown")
     public ResponseEntity<TreasuryMappingResponse> getHeadBreakDown(@RequestParam String consumerCode, @RequestBody RequestInfo requestInfo) {
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);

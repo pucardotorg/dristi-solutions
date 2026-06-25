@@ -53,6 +53,13 @@ public class AuthSekRepository {
         return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
     }
 
+    public List<AuthSek> getAuthSekByBillId(String billId) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getAuthSekByBillIdQuery(billId, preparedStmtList);
+        log.debug("Final by-billId query: {}", query);
+        return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
+    }
+
     public void updateAuthSekStatus(String authToken, String paymentStatus, String completionSource, Long verificationTimestamp, String processedStatus) {
         String updateQuery = "UPDATE auth_sek_session_data SET payment_status = ?, completion_source = ?, verification_timestamp = ?, processed_status = ? WHERE auth_token = ?";
         int updated = jdbcTemplate.update(updateQuery, paymentStatus, completionSource, verificationTimestamp, processedStatus, authToken);

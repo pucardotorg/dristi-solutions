@@ -389,6 +389,59 @@ public class PaymentService {
         }
     }
 
+    /**
+     * Passive (read-only) payment status for a bill, for the UI to call before letting a user pay,
+     * to avoid duplicate payments. The UI gates each payment on this status, so at most one session
+     * is in-flight per bill; we look only at the most recent attempt. Status is derived purely from
+     * stored state (auth_sek_session_data + treasury_payment_data for the receipt); no live treasury
+     * call is made here. PENDING sessions are resolved by the reconciliation crons.
+     */
+    public PaymentStatusData getPaymentStatus(String billId) {
+        log.info("Fetching payment status for billId: {}", billId);
+        Optional<AuthSek> latestSession = repository.getAuthSekByBillId(billId).stream().findFirst();
+
+        PaymentStatusData.PaymentStatusDataBuilder data = PaymentStatusData.builder().billId(billId);
+
+        if (latestSession.isEmpty()) {
+            log.info("No payment session found for billId: {} -> NO_ATTEMPT", billId);
+            return data.status(PaymentStatusType.NO_ATTEMPT).build();
+        }
+
+        AuthSek latest = latestSession.get();
+        data.businessService(latest.getBusinessService())
+                .totalDue(latest.getTotalDue())
+                .lastAttemptTime(latest.getSessionTime())
+                .completionSource(latest.getCompletionSource())
+                .verificationTimestamp(latest.getVerificationTimestamp());
+
+        if (latest.getPaymentStatus() == PaymentStatus.SUCCESS) {
+            enrichReceipt(billId, data);
+            log.info("billId: {} already PAID (source: {})", billId, latest.getCompletionSource());
+            return data.status(PaymentStatusType.PAID).build();
+        }
+
+        if ("PENDING".equalsIgnoreCase(latest.getProcessedStatus())) {
+            log.info("billId: {} latest session still PENDING -> VERIFICATION_PENDING", billId);
+            return data.status(PaymentStatusType.VERIFICATION_PENDING).build();
+        }
+
+        log.info("billId: {} latest session terminal non-success -> FAILED", billId);
+        return data.status(PaymentStatusType.FAILED).build();
+    }
+
+    /** Attaches receipt details (GRN, amount, fileStore) of the successful treasury payment, if available. */
+    private void enrichReceipt(String billId, PaymentStatusData.PaymentStatusDataBuilder data) {
+        List<TreasuryPaymentData> payments = treasuryPaymentRepository.getTreasuryPaymentData(billId);
+        payments.stream()
+                .filter(p -> p.getStatus() == 'Y')
+                .findFirst()
+                .or(() -> payments.stream().findFirst())
+                .ifPresent(p -> data.grn(p.getGrn())
+                        .amount(p.getAmount())
+                        .partyName(p.getPartyName())
+                        .fileStoreId(p.getFileStoreId()));
+    }
+
     public void callCollectionServiceAndUpdatePayment(TreasuryPaymentRequest request) {
 
         String paymentStatus = String.valueOf(request.getTreasuryPaymentData().getStatus());

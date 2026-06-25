@@ -61,4 +61,15 @@ public class AuthSekQueryBuilder {
         query.append(ORDER_BY_SESSION_TIME).append(" DESC ");
         return query.toString();
     }
+
+    public String getAuthSekByBillIdQuery(String billId, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(BASE_QUERY);
+        query.append(FROM_TABLES);
+        query.append(" WHERE bill_id = ? ");
+        preparedStmtList.add(billId);
+        // Only the most recent attempt is needed: the UI gates each payment on this status,
+        // so there is at most one in-flight session per bill at a time.
+        query.append(ORDER_BY_SESSION_TIME).append(" DESC LIMIT 1 ");
+        return query.toString();
+    }
 }
