@@ -1,5 +1,6 @@
 package digit.kafka;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.service.DemandService;
 import digit.service.SummonsService;
@@ -113,6 +114,26 @@ public class SummonsConsumer {
                     && (WARRANT_REISSUE.equalsIgnoreCase(action) || WARRANT_REISSUE_ICOPS.equalsIgnoreCase(action));
 
             if (isWarrantReissue) {
+                // A WARRANT_REISSUE that lands the warrant back in PENDING_PAYMENT from an already
+                // issued/paid state needs a fresh demand + bill, mirroring what the save-task consumer
+                // raises for a brand-new warrant. (WARRANT_REISSUE_ICOPS goes to WARRANT_REISSUED, no
+                // payment.) A warrant that was already in PENDING_PAYMENT keeps the demand raised at
+                // order-publish time, so re-generating would duplicate the litigant's payable bill -
+                // skip it by gating on the previousState the task service stamps before the reissue.
+                boolean reissueIntoPendingPayment = WARRANT_REISSUE.equalsIgnoreCase(action)
+                        && PENDING_PAYMENT.equalsIgnoreCase(taskRequest.getTask().getStatus())
+                        && !PENDING_PAYMENT.equalsIgnoreCase(getPreviousState(taskRequest));
+                if (reissueIntoPendingPayment) {
+                    try {
+                        log.info("Generating demand and bill for reissued warrant: taskNumber={}",
+                                taskRequest.getTask().getTaskNumber());
+                        demandService.fetchPaymentDetailsAndGenerateDemandAndBill(taskRequest);
+                    } catch (Exception e) {
+                        log.error("Error generating demand for reissued warrant: taskNumber={}",
+                                taskRequest.getTask().getTaskNumber(), e);
+                    }
+                }
+
                 try {
                     log.info("Regenerating warrant PDF for reissue: taskNumber={}, action={}",
                             taskRequest.getTask().getTaskNumber(), action);
@@ -136,6 +157,27 @@ public class SummonsConsumer {
             summonsService.sendSummonsViaChannels(taskRequest);
         } catch (final Exception e) {
             log.error("Error while listening to value: {}: ", record, e);
+        }
+    }
+
+    /**
+     * Reads the state the warrant was in before the reissue, which the task service stamps into
+     * additionalDetails.previousState ahead of the WARRANT_REISSUE workflow transition. Used to tell
+     * a fresh move into PENDING_PAYMENT (issued/paid -> PENDING_PAYMENT, demand needed) apart from a
+     * PENDING_PAYMENT self-loop (demand already exists). Returns null when it cannot be read.
+     */
+    private String getPreviousState(TaskRequest taskRequest) {
+        try {
+            Object additionalDetails = taskRequest.getTask().getAdditionalDetails();
+            if (additionalDetails == null) {
+                return null;
+            }
+            JsonNode node = objectMapper.convertValue(additionalDetails, JsonNode.class);
+            JsonNode previousState = node.path("previousState");
+            return previousState.isMissingNode() || previousState.isNull() ? null : previousState.asText();
+        } catch (Exception e) {
+            log.warn("Could not read previousState for task: {}", taskRequest.getTask().getTaskNumber());
+            return null;
         }
     }
 }

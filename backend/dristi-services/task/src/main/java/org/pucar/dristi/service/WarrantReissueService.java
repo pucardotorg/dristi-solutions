@@ -130,12 +130,19 @@ public class WarrantReissueService {
             }
 
             WorkflowObject workflow = new WorkflowObject();
+            // A warrant moving back into PENDING_PAYMENT from an already-issued/paid state needs a
+            // fresh payment-pending task (and a fresh demand, which summons-svc raises off this same
+            // WARRANT_REISSUE -> PENDING_PAYMENT transition). A warrant already in PENDING_PAYMENT
+            // keeps the demand and pending task raised at order-publish time, so re-raising them
+            // would leave the litigant with a duplicate payable bill.
+            boolean reissueNeedsPayment = false;
             if (isIcops && !PENDING_PAYMENT.equalsIgnoreCase(currentState)) {
                 // iCoPS channel: WARRANT_REISSUE_ICOPS -> WARRANT_REISSUED
                 workflow.setAction(WARRANT_REISSUE_ICOPS);
             } else {
                 // Non-iCoPS OR iCoPS still in PENDING_PAYMENT: WARRANT_REISSUE -> PENDING_PAYMENT
                 workflow.setAction(WARRANT_REISSUE);
+                reissueNeedsPayment = !PENDING_PAYMENT.equalsIgnoreCase(currentState);
             }
             workflow.setDocuments(Collections.singletonList(new org.egov.common.contract.models.Document()));
 
@@ -149,6 +156,11 @@ public class WarrantReissueService {
             try {
                 taskService.updateTask(taskRequest);
                 log.info("Triggered reissue for warrant: {} with action: {}", warrant.getTaskNumber(), workflow.getAction());
+                // The reissued warrant now sits in PENDING_PAYMENT for the rescheduled hearing, so it
+                // requires the same "payment pending for warrant" task that order publish raises.
+                if (reissueNeedsPayment) {
+                    createPaymentPendingTaskForWarrant(requestInfo, warrant);
+                }
             } catch (Exception e) {
                 log.error("Error updating warrant during reschedule: {}", warrant.getTaskNumber(), e);
             }
