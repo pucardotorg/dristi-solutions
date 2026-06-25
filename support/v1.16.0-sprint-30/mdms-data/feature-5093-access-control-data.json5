@@ -1,0 +1,48 @@
+// TODO : add these line items , can be added through workbench
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2780",
+    "data": {
+      "id": 2780,
+      "url": "/advocate-office-management/v1/_searchMember", // TODO : need to add role action mapping to (ADVOCATE_ROLE, ADVOCATE_CLERK_ROLE)
+      "code": "2780",
+      "name": "search member's api",
+      "displayName": "search member's api",
+      "serviceCode": "advocate-office-management",
+      "parentModule": "advocate-office-management"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2779",
+    "data": {
+      "id": 2779,
+      "url": "/advocate-office-management/v1/_leaveOffice", // TODO : need to add role action mapping to (ADVOCATE_ROLE, ADVOCATE_CLERK_ROLE)
+      "code": "2779",
+      "name": "leave office api",
+      "displayName": "leave office api",
+      "serviceCode": "advocate-office-management",
+      "parentModule": "advocate-office-management"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2778",
+    "data": {
+      "id": 2778,
+      "url": "/advocate-office-management/v1/_addMember", // TODO : need to add role action mapping to (ADVOCATE_ROLE)
+      "code": "2778",
+      "name": "add member api",
+      "displayName": "add member api",
+      "serviceCode": "advocate-office-management",
+      "parentModule": "advocate-office-management"
+    },
+    "isActive": true
+  }
+]

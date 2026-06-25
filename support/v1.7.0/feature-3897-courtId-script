@@ -1,0 +1,29 @@
+GET pending-tasks-index/_search
+{
+  "query": {
+    "bool": {
+      "must_not": {
+        "exists": {
+          "field": "Data.courtId"
+        }
+      }
+    }
+  }
+}
+
+POST pending-tasks-index/_update_by_query
+{
+  "script": {
+    "source": "ctx._source.Data.courtId = 'KLKM52';",
+    "lang": "painless"
+  },
+  "query": {
+    "bool": {
+      "must_not": {
+        "exists": {
+          "field": "Data.courtId"
+        }
+      }
+    }
+  }
+}

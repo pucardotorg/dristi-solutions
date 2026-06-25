@@ -1,7 +1,16 @@
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
-import { combineMultipleFiles, documentsTypeMapping, extractValue, generateUUID, isEmptyValue } from "../../../Utils";
+import {
+  combineMultipleFiles,
+  documentsTypeMapping,
+  extractValue,
+  generateUUID,
+  getAuthorizedUuid,
+  isEmptyValue,
+  isRichTextEmpty,
+  TaskManagementWorkflowAction,
+} from "../../../Utils";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 
 import { userTypeOptions } from "../registration/config";
@@ -50,10 +59,22 @@ const checkChequeDepositDateValidity = (caseDetails, dateOfDispatch) => {
   };
 };
 
-export const showDemandNoticeModal = ({ selected, setValue, formData, setError, clearErrors, index, setServiceOfDemandNoticeModal, caseDetails }) => {
+export const showDemandNoticeModal = ({
+  selected,
+  setValue,
+  formData,
+  setError,
+  clearErrors,
+  index,
+  setServiceOfDemandNoticeModal,
+  caseDetails,
+  isCaseReAssigned,
+  errorCaseDetails,
+}) => {
   if (selected === "demandNoticeDetails") {
     const totalCheques = caseDetails?.caseDetails?.["chequeDetails"]?.formdata && caseDetails?.caseDetails?.["chequeDetails"]?.formdata.length;
-    const chequeDetails = caseDetails?.caseDetails?.["chequeDetails"]?.formdata?.[0]?.data;
+    const newCaseDetails = isCaseReAssigned ? errorCaseDetails : caseDetails;
+    const chequeDetails = newCaseDetails?.caseDetails?.["chequeDetails"]?.formdata?.[0]?.data;
     for (const key in formData) {
       switch (key) {
         case "dateOfService":
@@ -119,7 +140,7 @@ export const validateDateForDelayApplication = ({
   selected,
   setValue,
   caseDetails,
-  toast,
+  setShowToast,
   t,
   history,
   caseId,
@@ -138,7 +159,7 @@ export const validateDateForDelayApplication = ({
       (caseDetails?.caseDetails && !caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.[0]?.data?.dateOfAccrual)
     ) {
       setValue("delayCondonationType", null);
-      toast.error(t("SELECT_ACCRUAL_DATE_BEFORE_DELAY_APP"));
+      setShowToast({ label: t("SELECT_ACCRUAL_DATE_BEFORE_DELAY_APP"), error: true });
       setTimeout(() => {
         history.push(`?caseId=${caseId}&selected=demandNoticeDetails`);
       }, 3000);
@@ -161,15 +182,14 @@ export const validateDateForDelayApplication = ({
   }
 };
 
-export const showToastForComplainant = ({ formData, setValue, selected, setSuccessToast, formState, clearErrors }) => {
+export const showToastForComplainant = ({ t, formData, setValue, selected, setShowToast, formState, clearErrors }) => {
   if (selected === "complainantDetails") {
     if (formData?.complainantId?.complainantId && formData?.complainantId?.verificationType && formData?.complainantId?.isFirstRender) {
       setValue("complainantId", { ...formData?.complainantId, isFirstRender: false });
-      setSuccessToast((prev) => ({
-        ...prev,
-        showSuccessToast: true,
-        successMsg: "CS_AADHAR_VERIFIED_SUCCESS_MSG",
-      }));
+      setShowToast({
+        label: t("CS_AADHAR_VERIFIED_SUCCESS_MSG"),
+        error: false,
+      });
     }
     const formDataCopy = structuredClone(formData);
     const addressDet = formDataCopy?.complainantVerification?.individualDetails?.addressDetails;
@@ -196,14 +216,65 @@ export const showToastForComplainant = ({ formData, setValue, selected, setSucce
   }
 };
 
+export const sanitizeInput = (input) => {
+  if (!input) return "";
+
+  let sanitized = String(input);
+
+  // Remove script blocks completely
+  sanitized = sanitized.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+
+  // Remove iframes
+  sanitized = sanitized.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "");
+
+  // Remove dangerous elements
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>/gi, "");
+
+  // Remove event handlers
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*(["'])(?:[\s\S]*?)\1/gi, "");
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*[^\s>]+/gi, "");
+
+  // Remove javascript: protocol
+  sanitized = sanitized.replace(/\bjavascript:/gi, "");
+
+  // Remove ALL HTML tags
+  sanitized = sanitized.replace(/<\/?[a-z][\w:-]*\b[^>]*>/gi, "");
+
+  return sanitized;
+};
+
+export const runGenericTextSanitizer = ({ formData, setValue }) => {
+  if (!formData || typeof formData !== "object") return;
+
+  Object.keys(formData).forEach((key) => {
+    const value = formData[key];
+
+    if (typeof value === "string") {
+      const sanitized = sanitizeInput(value);
+      if (sanitized !== value) {
+        const element = document?.querySelector(`[name="${key}"]`);
+        const start = element?.selectionStart;
+        const end = element?.selectionEnd;
+        setValue(key, sanitized);
+        setTimeout(() => {
+          element?.setSelectionRange(start, end);
+        }, 0);
+      }
+    }
+  });
+};
+
 export const checkIfscValidation = ({ formData, setValue, selected }) => {
   if (selected === "chequeDetails") {
-    const formDataCopy = structuredClone(formData);
-    for (const key in formDataCopy) {
+    const chequeData = structuredClone(formData?.chequeDetails || {});
+
+    for (const key in chequeData) {
       switch (key) {
-        case "ifsc":
-          if (Object.hasOwnProperty.call(formDataCopy, key)) {
-            const oldValue = formDataCopy[key];
+        case "payeeIfsc":
+        case "payerIfsc":
+          if (Object.hasOwnProperty.call(chequeData, key)) {
+            const oldValue = chequeData[key];
             let value = oldValue;
 
             if (typeof value === "string") {
@@ -228,7 +299,7 @@ export const checkIfscValidation = ({ formData, setValue, selected }) => {
                 const element = document.querySelector(`[name="${key}"]`);
                 const start = element?.selectionStart;
                 const end = element?.selectionEnd;
-                setValue(key, updatedValue);
+                setValue(`chequeDetails.${key}`, updatedValue);
                 setTimeout(() => {
                   element?.setSelectionRange(start, end);
                 }, 0);
@@ -236,6 +307,15 @@ export const checkIfscValidation = ({ formData, setValue, selected }) => {
             }
           }
           break;
+        default:
+          break;
+      }
+    }
+
+    const formDataCopy = structuredClone(formData);
+
+    for (const key in formDataCopy) {
+      switch (key) {
         case "chequeAmount":
           if (Object.hasOwnProperty.call(formDataCopy, key)) {
             const oldValue = formDataCopy[key];
@@ -282,6 +362,55 @@ export const checkIfscValidation = ({ formData, setValue, selected }) => {
       }
     }
   }
+};
+
+export const fetchBankDetails = async (ifsc) => {
+  try {
+    const criteria = [{ ifsc }];
+    const resp = await DRISTIService.fetchBankDetails({ criteria }, {});
+    return resp?.bankDetails?.[0] || null;
+  } catch (e) {
+    console.warn("IFSC lookup failed");
+    return null;
+  }
+};
+
+export const handleIfscAutofill = async ({ ifsc, bankField, branchField, setValue, getValues, setError, clearErrors, cache }) => {
+  if (!cache?.current) {
+    console.error("Cache not initialized properly");
+    return false;
+  }
+  if (!ifsc || ifsc.length !== 11) {
+    return false;
+  }
+
+  let bankDetails = cache.current[ifsc];
+
+  // fetching details only if not cached
+  if (!bankDetails) {
+    bankDetails = await fetchBankDetails(ifsc);
+
+    if (!bankDetails) {
+      return false;
+    }
+
+    cache.current[ifsc] = bankDetails;
+  }
+
+  const currentBank = getValues(bankField);
+  const currentBranch = getValues(branchField);
+
+  if (currentBank !== bankDetails.name) {
+    setValue(bankField, bankDetails.name || "");
+    clearErrors(bankField);
+  }
+
+  if (currentBranch !== bankDetails.branch) {
+    setValue(branchField, bankDetails.branch || "");
+    clearErrors(branchField);
+  }
+
+  return true;
 };
 
 export const checkNameValidation = ({ formData, setValue, selected, reset, index, formdata, clearErrors, formState }) => {
@@ -338,7 +467,9 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
       formData?.lastName ||
       formData?.witnessDesignation ||
       formData?.witnessAge ||
-      formData?.complainantAge
+      formData?.complainantAge ||
+      formData?.respondentAge ||
+      formData?.poaAge
     ) {
       const formDataCopy = structuredClone(formData);
       for (const key in formDataCopy) {
@@ -391,14 +522,14 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
             }, 0);
           }
         }
-        if (["complainantAge", "witnessAge"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
+        if (key === "poaAge" && Object.hasOwnProperty.call(formDataCopy, key)) {
           const oldValue = formDataCopy[key];
           let value = oldValue;
-
+          // keep only digits
           let updatedValue = value?.replace(/\D/g, "");
-          // Convert to number and restrict value to 150
-          if (updatedValue && parseInt(updatedValue, 10) > 150) {
-            updatedValue = updatedValue.substring(0, updatedValue.length - 1); // Disallow the extra digit
+          // Max 3 digits
+          if (updatedValue?.length > 3) {
+            updatedValue = updatedValue.substring(0, 3);
           }
           if (updatedValue !== oldValue) {
             const element = document?.querySelector(`[name="${key}"]`);
@@ -468,7 +599,7 @@ export const checkDuplicateMobileEmailValidation = ({
   const respondentMobileNumbersArray =
     caseDetails?.additionalDetails?.respondentDetails?.formdata
       .filter((data) => {
-        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber.length !== 0) {
+        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber?.length > 0) {
           return true;
         } else return false;
       })
@@ -478,21 +609,21 @@ export const checkDuplicateMobileEmailValidation = ({
       .reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const witnessMobileNumbersArray =
-    caseDetails?.additionalDetails?.witnessDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber.length !== 0) {
+    caseDetails?.witnessDetails
+      ?.filter((data) => {
+        if (data?.phonenumbers?.mobileNumber && data?.phonenumbers?.mobileNumber?.length > 0) {
           return true;
         } else return false;
       })
-      .map((data) => {
-        return data?.data?.phonenumbers?.mobileNumber;
+      ?.map((data) => {
+        return data?.phonenumbers?.mobileNumber;
       })
-      .reduce((acc, curr) => acc.concat(curr), []) || [];
+      ?.reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const respondentEmailsArray =
     caseDetails?.additionalDetails?.respondentDetails?.formdata
       .filter((data) => {
-        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId.length !== 0) {
+        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId?.length > 0) {
           return true;
         } else return false;
       })
@@ -502,14 +633,14 @@ export const checkDuplicateMobileEmailValidation = ({
       .reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const witnessEmailsArray =
-    caseDetails?.additionalDetails?.witnessDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId.length !== 0) {
+    caseDetails?.witnessDetails
+      ?.filter((data) => {
+        if (data?.emails?.emailId && data?.emails?.emailId?.length > 0) {
           return true;
         } else return false;
       })
-      .map((data) => {
-        return data?.data?.emails?.emailId;
+      ?.map((data) => {
+        return data?.emails?.emailId;
       })
       .reduce((acc, curr) => acc.concat(curr), []) || [];
 
@@ -694,17 +825,7 @@ export const checkOnlyCharInCheque = ({ formData, setValue, selected }) => {
   }
 };
 
-export const respondentValidation = ({
-  setErrorMsg,
-  t,
-  formData,
-  selected,
-  caseDetails,
-  setShowErrorToast,
-  toast,
-  setFormErrors,
-  clearFormDataErrors,
-}) => {
+export const respondentValidation = ({ t, formData, selected, caseDetails, setShowToast, setFormErrors, clearFormDataErrors }) => {
   if (selected === "respondentDetails") {
     const formDataCopy = structuredClone(formData);
     if ("inquiryAffidavitFileUpload" in formDataCopy) {
@@ -724,7 +845,7 @@ export const respondentValidation = ({
       }
     }
     if (!formDataCopy?.respondentType?.code) {
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       return true;
     }
   }
@@ -739,7 +860,7 @@ export const respondentValidation = ({
     respondentMobileNUmbers &&
     respondentMobileNUmbers === complainantMobileNumber
   ) {
-    toast.error(t("RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM"));
+    setShowToast({ label: t("RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM"), error: true });
     setFormErrors("phonenumbers", { mobileNumber: "RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM" });
     return true;
   } else {
@@ -748,19 +869,19 @@ export const respondentValidation = ({
   }
 };
 
-export const demandNoticeFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors }) => {
+export const demandNoticeFileValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
   if (selected === "demandNoticeDetails") {
     for (const key of ["legalDemandNoticeFileUpload", "proofOfDispatchFileUpload"]) {
       if (!(key in formData) || formData[key]?.document?.length === 0) {
         setFormErrors(key, { type: "required" });
-        setShowErrorToast(true);
+        setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
         return true;
       }
     }
 
     if (formData?.proofOfService?.code === "YES" && formData?.["proofOfAcknowledgmentFileUpload"]?.document.length === 0) {
       setFormErrors("proofOfAcknowledgmentFileUpload", { type: "required" });
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       return true;
     }
   } else {
@@ -768,19 +889,46 @@ export const demandNoticeFileValidation = ({ formData, selected, setShowErrorToa
   }
 };
 
-export const chequeDetailFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors }) => {
+export const chequeDetailFileValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
   if (selected === "chequeDetails") {
     for (const key of ["bouncedChequeFileUpload", "returnMemoFileUpload"]) {
       if (!(key in formData) || formData[key]?.document?.length === 0 || !formData[key] || Object.keys(formData[key] || {}).length === 0) {
         setFormErrors(key, { type: "required" });
-        setShowErrorToast(true);
+        setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
         return true;
       }
     }
     if (formData?.chequeAmount === "0") {
       setFormErrors("chequeAmount", { message: "Amount cannot be zero" });
-      setShowErrorToast(true);
+      setShowToast({ label: "Amount cannot be zero", error: true });
       return true;
+    }
+    for (const field of ["payeeIfscField", "payerIfscField"]) {
+      const ifscKey = field.replace("Field", "");
+      const ifscValue = formData?.[field]?.[ifscKey];
+
+      const prefix = ifscKey.replace("Ifsc", "");
+
+      const bank = formData?.[`${prefix}BankName`];
+      const branch = formData?.[`${prefix}BranchName`];
+
+      if (!ifscValue) {
+        setFormErrors(field, { msg: "CORE_REQUIRED_FIELD_ERROR" });
+        setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
+        return true;
+      }
+
+      if (ifscValue.length !== 11) {
+        setFormErrors(field, { msg: "CS_INVALID_IFSC" });
+        setShowToast({ label: t("CS_INVALID_IFSC"), error: true });
+        return true;
+      }
+
+      if (!bank || !branch) {
+        setFormErrors(field, { msg: "PLEASE_SEARCH_IFSC" });
+        setShowToast({ label: t("PLEASE_SEARCH_IFSC"), error: true });
+        return true;
+      }
     }
   } else {
     return false;
@@ -824,10 +972,10 @@ export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
         if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
           isVakalatnamaFileMissing = true;
         }
-        if(!numberOfAdvocates) {
+        if (!numberOfAdvocates) {
           isNumberOfAdvocatesMissing = true;
         }
-        if(numberOfAdvocates && multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
+        if (numberOfAdvocates && multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
           isAdvocateCountDiffer = true;
         }
       }
@@ -864,47 +1012,24 @@ export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
   return allErrorData;
 };
 
-export const advocateDetailsFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors, t, isSubmitDisabled }) => {
-  if (selected === "advocateDetails") {
-    const { boxComplainant, isComplainantPip, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload } =
-      formData?.multipleAdvocatesAndPip || {};
+export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation) => {
+  const allErrorData = [];
+  for (let i = 0; i < formdata?.length; i++) {
+    const formData = formdata?.[i]?.data || {};
+
     let errorObject = {
-      advocateDetailsAbsent: false,
-      vakalatnamaFileUploadAbsent: false,
-      pipAffidavitFileUploadAbsent: false,
+      NOTICE_PROCESS_COURIER_INFORMATION_MISSING: false,
+      SUMMON_PROCESS_COURIER_INFORMATION_MISSING: false,
     };
-    if (boxComplainant?.individualId) {
-      let isAnAdvocateMissing = false;
-      let isVakalatnamaFileMissing = false;
-      let isPipAffidavitFileMissing = false;
-      if (isComplainantPip?.code === "NO") {
-        // IF complainant is not party in person, an advocate must be present
-        if (!multipleAdvocateNameDetails || (Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length === 0)) {
-          isAnAdvocateMissing = true;
-        } else if (
-          multipleAdvocateNameDetails &&
-          Array.isArray(multipleAdvocateNameDetails) &&
-          multipleAdvocateNameDetails?.length > 0 &&
-          multipleAdvocateNameDetails?.some((adv) => !adv?.advocateBarRegNumberWithName?.advocateId)
-        ) {
-          isAnAdvocateMissing = true;
-        }
-        // IF complainant is not party in person, there must be a vakalathnama document uploaded.
-        if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
-          isVakalatnamaFileMissing = true;
-        }
+
+    if (isDelayCondonation) {
+      if (formData?.multipleAccusedProcessCourier?.noticeCourierService?.length === 0) {
+        errorObject.NOTICE_PROCESS_COURIER_INFORMATION_MISSING = true;
       }
-      if (isComplainantPip?.code === "YES") {
-        // IF complainant is party in person, there must be a PIP affidavit document uploaded.
-        if (!pipAffidavitFileUpload || pipAffidavitFileUpload?.document?.length === 0) {
-          isPipAffidavitFileMissing = true;
-        }
+    } else {
+      if (formData?.multipleAccusedProcessCourier?.summonsCourierService?.length === 0) {
+        errorObject.SUMMON_PROCESS_COURIER_INFORMATION_MISSING = true;
       }
-      errorObject = {
-        advocateDetailsAbsent: isAnAdvocateMissing,
-        vakalatnamaFileUploadAbsent: isVakalatnamaFileMissing,
-        pipAffidavitFileUploadAbsent: isPipAffidavitFileMissing,
-      };
     }
     let mandatoryLeft = false;
     for (let key in errorObject) {
@@ -912,8 +1037,20 @@ export const advocateDetailsFileValidation = ({ formData, selected, setShowError
         mandatoryLeft = true;
       }
     }
-    // setError("multipleAdvocatesAndPip", errorObject);
+
+    if (mandatoryLeft) {
+      const errorData = {
+        index: formData?.multipleAccusedProcessCourier?.index,
+        type: "Accused",
+        complainant: formData?.multipleAccusedProcessCourier?.firstName,
+        errorKeys: Object.keys(errorObject)
+          .filter((key) => errorObject[key])
+          .map((key) => t(key)),
+      };
+      allErrorData.push(errorData);
+    }
   }
+  return allErrorData;
 };
 
 export const complainantValidation = ({
@@ -921,13 +1058,11 @@ export const complainantValidation = ({
   t,
   caseDetails,
   selected,
-  setShowErrorToast,
-  toast,
+  setShowToast,
   setFormErrors,
   formState,
   clearFormDataErrors,
   displayindex,
-  setErrorMsg,
 }) => {
   if (selected === "complainantDetails") {
     const complainantFields = sideMenuConfig
@@ -940,8 +1075,7 @@ export const complainantValidation = ({
       const value = extractValue(formData, key);
       const isValueEmpty = isEmptyValue(value);
       if (isValueEmpty) {
-        setShowErrorToast(true);
-        setErrorMsg(`Mandatory field missing- Complainant ${displayindex + 1} (${key})`);
+        setShowToast({ label: `Mandatory field missing- Complainant ${displayindex + 1} (${key})`, error: true });
         return true;
       }
     }
@@ -951,8 +1085,7 @@ export const complainantValidation = ({
         const value = extractValue(formData, obj?.field);
         const isValueEmpty = isEmptyValue(value);
         if (isValueEmpty) {
-          setShowErrorToast(true);
-          setErrorMsg(`Mandatory field missing- Complainant ${displayindex + 1} (${obj?.field})`);
+          setShowToast({ label: `Mandatory field missing- Complainant ${displayindex + 1} (${obj?.field})`, error: true });
           return true;
         }
       }
@@ -962,12 +1095,12 @@ export const complainantValidation = ({
       !formData?.complainantTypeOfEntity?.code &&
       !Object.keys(formState?.errors).includes("complainantTypeOfEntity")
     ) {
-      setShowErrorToast(true);
+      setShowToast({ label: t("CORE_REQUIRED_FIELD_ERROR"), error: true });
       setFormErrors("complainantTypeOfEntity", { message: "CORE_REQUIRED_FIELD_ERROR" });
       return true;
     }
     if (!formData?.complainantVerification?.mobileNumber || !formData?.complainantVerification?.otpNumber) {
-      setShowErrorToast(true);
+      setShowToast({ label: t("PLEASE_VERIFY_YOUR_PHONE_NUMBER"), error: true });
       setFormErrors("complainantVerification", { mobileNumber: "PLEASE_VERIFY_YOUR_PHONE_NUMBER" });
       return true;
     } else {
@@ -980,7 +1113,7 @@ export const complainantValidation = ({
       if (respondentMobileNumbers && complainantMobileNumber) {
         for (let i = 0; i < respondentMobileNumbers.length; i++) {
           if (respondentMobileNumbers[i] === complainantMobileNumber) {
-            toast.error(t("CHANGE_RESPONDENT_MOBILE_NUMBER_REGISTERED"));
+            setShowToast({ label: t("CHANGE_RESPONDENT_MOBILE_NUMBER_REGISTERED"), error: true });
             return true;
           }
         }
@@ -991,42 +1124,7 @@ export const complainantValidation = ({
   }
 };
 
-export const signatureValidation = ({ formData, selected, setShowErrorToast, setErrorMsg, caseDetails }) => {
-  if (selected === "addSignature") {
-    let index = 0;
-    if (
-      !(
-        Object.keys(formData || {}).length > 0 &&
-        Object.keys(formData).reduce((res, curr) => {
-          if (!res) return res;
-          else {
-            res = Boolean(
-              caseDetails?.[curr]?.reduce((result, current) => {
-                if (!result) return result;
-                result = Boolean(formData?.[curr]?.[`${current?.name} ${index}`]);
-                ++index;
-                return result;
-              }, true) &&
-                formData[curr] &&
-                Object.keys(formData[curr])?.length > 0
-            );
-            index = 0;
-            return res;
-          }
-        }, true)
-      )
-    ) {
-      setShowErrorToast(true);
-      setErrorMsg("CS_PLEASE_ADD_SIGNATURE_BEFORE_SUBMIT");
-      return true;
-    }
-  } else {
-    setErrorMsg("");
-    return false;
-  }
-};
-
-export const accusedAddressValidation = ({ formData, selected, setAddressError, config }) => {
+export const accusedAddressValidation = ({ t, formData, selected, setShowToast, config }) => {
   const addressKey = "addressDetails";
   if (
     config
@@ -1037,17 +1135,42 @@ export const accusedAddressValidation = ({ formData, selected, setAddressError, 
           const isEmpty = /^\s*$/.test(address?.[addressKey]?.[data?.name]);
           return (
             isEmpty ||
-            !address?.[addressKey]?.[data?.name].match(window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern)
+            !address?.[addressKey]?.[data?.name]?.match(window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern)
           );
         })
       )
   ) {
-    setAddressError({ show: true, message: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT" });
+    setShowToast({ label: t("CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT"), error: true });
     return true;
   }
 };
 
-export const addressValidation = ({ formData, selected, setAddressError, config }) => {
+export const ageValidation = ({ formData, selected, setFormErrors, clearFormDataErrors }) => {
+  if (selected === "poaAge") {
+    const poaAge = parseInt(formData?.poaAge, 10);
+    if (poaAge < 18 || poaAge > 999) {
+      setFormErrors("poaAge", { message: "ONLY_AGE_ALLOWED" });
+      return true;
+    }
+    clearFormDataErrors("poaAge");
+  } else if (selected === "complainantAge") {
+    const complainantAge = parseInt(formData?.complainantAge, 10);
+    if (complainantAge < 18 || complainantAge > 999) {
+      setFormErrors("complainantAge", { message: "ONLY_AGE_ALLOWED" });
+      return true;
+    }
+    clearFormDataErrors("complainantAge");
+  } else if (selected === "respondentAge") {
+    const respondentAge = parseInt(formData?.respondentAge, 10);
+    if (respondentAge < 18 || respondentAge > 999) {
+      setFormErrors("respondentAge", { message: "ONLY_AGE_ALLOWED" });
+      return true;
+    }
+    clearFormDataErrors("respondentAge");
+  }
+};
+
+export const addressValidation = ({ t, formData, selected, setShowToast, config }) => {
   if (
     config
       ?.find((item) =>
@@ -1060,7 +1183,7 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
         );
         return (
           isEmpty ||
-          !formData?.[formData?.[selected]?.code === "INDIVIDUAL" ? "addressDetails" : "addressCompanyDetails"]?.[data?.name].match(
+          !formData?.[formData?.[selected]?.code === "INDIVIDUAL" ? "addressDetails" : "addressCompanyDetails"]?.[data?.name]?.match(
             window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
           )
         );
@@ -1073,15 +1196,15 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
         ?.body?.[0]?.populators?.inputs?.filter((data) => !data?.showOptional)
         ?.some((data) => {
           const isEmpty = /^\s*$/.test(formData?.poaAddressDetails?.[data?.name]);
-          return (
-            isEmpty ||
-            !formData?.poaAddressDetails?.[data?.name].match(
-              window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
-            )
-          );
+          return data?.name !== "typeOfAddress"
+            ? false
+            : isEmpty ||
+                !formData?.poaAddressDetails?.[data?.name]?.match(
+                  window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
+                );
         }))
   ) {
-    setAddressError({ show: true, message: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT" });
+    setShowToast({ label: t("CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT"), error: true });
     return true;
   }
 };
@@ -1117,7 +1240,7 @@ export const chequeDateValidation = ({ selected, formData, setError, clearErrors
   }
 };
 
-export const delayApplicationValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
+export const delayApplicationValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
   if (selected === "delayApplications") {
     if (
       formData?.delayCondonationType?.code === "NO" &&
@@ -1125,7 +1248,7 @@ export const delayApplicationValidation = ({ t, formData, selected, setShowError
       (!formData?.condonationFileUpload?.document || formData?.condonationFileUpload?.document.length === 0)
     ) {
       setFormErrors("condonationFileUpload", { type: "required" });
-      toast.error(t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"));
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       return true;
     }
   } else {
@@ -1133,12 +1256,10 @@ export const delayApplicationValidation = ({ t, formData, selected, setShowError
   }
 };
 
-export const witnessDetailsValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
+export const witnessDetailsValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
   if (selected === "witnessDetails") {
     if (!(formData?.firstName || formData?.witnessDesignation)) {
-      // setFormErrors("firstName", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
-      // setFormErrors("witnessDesignation",{ message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" })
-      toast.error(t("AT_LEAST_ONE_OUT_OF_FIRST_NAME_AND_WITNESS_DESIGNATION_IS_MANDATORY"));
+      setShowToast({ label: t("AT_LEAST_ONE_OUT_OF_FIRST_NAME_AND_WITNESS_DESIGNATION_IS_MANDATORY"), error: true });
       return true;
     }
   } else {
@@ -1146,11 +1267,11 @@ export const witnessDetailsValidation = ({ t, formData, selected, setShowErrorTo
   }
 };
 
-export const debtLiabilityValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
+export const debtLiabilityValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
   if (selected === "debtLiabilityDetails") {
     if (formData?.totalAmount === "0") {
       setFormErrors("totalAmount", { message: "Amount cannot be zero" });
-      setShowErrorToast(true);
+      setShowToast({ label: "Amount cannot be zero", error: true });
       return true;
     }
   } else {
@@ -1158,7 +1279,7 @@ export const debtLiabilityValidation = ({ t, formData, selected, setShowErrorToa
   }
 };
 
-export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors, clearFormDataErrors }) => {
+export const prayerAndSwornValidation = ({ t, formData, selected, setShowToast, setFormErrors, clearFormDataErrors }) => {
   if (selected === "prayerSwornStatement") {
     let hasError = false;
 
@@ -1167,13 +1288,37 @@ export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorTo
       for (const key of formData?.SelectUploadDocWithName) {
         if (!key?.document || key.document?.length === 0) {
           setFormErrors("SelectUploadDocWithName", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS", documentIndex: index });
-          setShowErrorToast(true);
+          setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
           hasError = true;
         } else {
           clearFormDataErrors("SelectUploadDocWithName");
         }
         index = index++;
       }
+    }
+
+    if (formData?.prayer?.text === "<p></p>\n" || formData?.memorandumOfComplaint?.text === "<p></p>\n") {
+      setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
+      hasError = true;
+    }
+
+    if (isRichTextEmpty(formData?.prayer?.text)) {
+      setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
+      hasError = true;
+    }
+
+    if (isRichTextEmpty(formData?.memorandumOfComplaint?.text)) {
+      setFormErrors("memorandumOfComplaint", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
+      hasError = true;
+    }
+
+    if (isRichTextEmpty(formData?.synopsis?.text)) {
+      setFormErrors("synopsis", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
+      hasError = true;
     }
 
     return hasError;
@@ -1200,7 +1345,7 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
     : {};
   const identifierType = documentData
     ? isComplainant
-      ? data?.complainantId?.complainantId?.selectIdTypeType?.type
+      ? data?.complainantId?.complainantId?.selectIdTypeType?.type || data?.complainantId?.complainantId?.complainantId?.selectIdTypeType?.type
       : data?.poaComplainantId?.poaComplainantId?.selectIdTypeType?.type
     : "AADHAR";
   let Individual = {
@@ -1239,6 +1384,18 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
             "CASE_RESPONDER",
             "HEARING_ACCEPTOR",
             "PENDING_TASK_CREATOR",
+            "BAIL_BOND_CREATOR",
+            "BAIL_BOND_VIEWER",
+            "BAIL_BOND_EDITOR",
+            "PLEA_SIGNER",
+            "PLEA_EDITOR",
+            "MEDIATION_SIGNER",
+            "MEDIATION_EDITOR",
+            "EXAMINATION_SIGNER",
+            "EXAMINATION_EDITOR",
+            "PLEA_VIEWER",
+            "MEDIATION_VIEWER",
+            "EXAMINATION_VIEWER",
           ]?.map((role) => ({
             code: role,
             name: role,
@@ -1350,7 +1507,7 @@ export const onDocumentUpload = async (documentType = "Document", fileData, file
     const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
     return { file: fileUploadRes?.data, fileType: fileData.type, filename };
   } catch (error) {
-    throw new DocumentUploadError(`Document upload failed: ${error.message}`, documentType);
+    throw new DocumentUploadError(`Document upload failed: ${error.message}`, documentType, error?.response?.data?.Errors?.[0]?.code);
   }
 };
 
@@ -1477,15 +1634,17 @@ const documentUploadHandler = async (document, index, prevCaseDetails, data, pag
 
 const fetchBasicUserInfo = async (caseDetails, tenantId) => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
     {
       Individual: {
-        userUuid: [userInfo?.uuid],
+        userUuid: [authorizedUuid],
       },
     },
     { tenantId, limit: 1000, offset: 0 },
     "",
-    userInfo?.uuid
+    authorizedUuid
   );
 
   return individualData?.Individual?.[0]?.individualId;
@@ -1558,6 +1717,10 @@ export const updateCaseDetails = async ({
   scrutinyObj,
   caseComplaintDocument,
   filingType,
+  isDelayCondonation,
+  isContinueClicked = false,
+  isCaseReAssigned = false,
+  isDraftInProgress = false,
 }) => {
   const data = {};
   setIsDisabled(true);
@@ -1627,6 +1790,25 @@ export const updateCaseDetails = async ({
     }
   };
 
+  function transformFileData(inputArray, tenantId, fileType = "application/pdf") {
+    if (!Array.isArray(inputArray) || inputArray.length === 0) return null;
+
+    const { fileStore, documentName } = inputArray[0];
+
+    return {
+      file: {
+        files: [
+          {
+            fileStoreId: fileStore,
+            tenantId,
+          },
+        ],
+      },
+      fileType,
+      filename: documentName,
+    };
+  }
+
   if (selected === "complainantDetails") {
     let litigants = [];
     let poaHolders = [];
@@ -1636,12 +1818,17 @@ export const updateCaseDetails = async ({
     const poaFilestoreIds = {};
     // check -in new flow, mltiple complainant forms are possible, so iscompleted logic has to be updated
     // and logic to update litigants also has to be changed.
-    if (isCompleted === true) {
+    if (isContinueClicked === true || isCaseReAssigned) {
+      // Only in case of Efiling, continue click is needed for user registration because fields validation is needed.
+      // That's why isContinueClicked shoule be true in case of efiling stage.
       litigants = await Promise.all(
         updatedFormData
           .filter((item) => item.isenabled)
           .map(async (data, index) => {
-            if (data?.data?.complainantVerification?.individualDetails?.document) {
+            if (
+              data?.data?.complainantVerification?.individualDetails?.document &&
+              data?.data?.complainantVerification?.individualDetails?.individualId
+            ) {
               const Individual = await DRISTIService.searchIndividualUser(
                 {
                   Individual: {
@@ -1707,17 +1894,28 @@ export const updateCaseDetails = async ({
                   fullName: getFullName(" ", data?.data?.firstName, data?.data?.middleName, data?.data?.lastName),
                   uuid: userUuid ? userUuid : null,
                   currentPosition: index + 1,
+                  firstName: data?.data?.firstName,
+                  middleName: data?.data?.middleName,
+                  lastName: data?.data?.lastName,
+                  mobileNumber: data?.data?.complainantVerification?.mobileNumber,
                 },
               };
             } else {
               if (data?.data?.complainantId?.complainantId && data?.data?.complainantVerification?.isUserVerified) {
                 if (data?.data?.complainantId?.verificationType !== "AADHAR") {
-                  const documentData = await onDocumentUpload(
-                    documentsTypeMapping["complainantId"],
-                    data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
-                    data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
-                    tenantId
-                  );
+                  let documentData = {};
+
+                  if (data?.data?.complainantVerification?.individualDetails?.document) {
+                    documentData = transformFileData(data?.data?.complainantVerification?.individualDetails?.document, tenantId);
+                  } else {
+                    documentData = await onDocumentUpload(
+                      documentsTypeMapping["complainantId"],
+                      data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
+                      data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
+                      tenantId
+                    );
+                  }
+
                   litigantFilestoreIds[index] = documentData;
                   !!setFormDataValue &&
                     setFormDataValue("complainantVerification", {
@@ -1773,9 +1971,9 @@ export const updateCaseDetails = async ({
                       individualId: Individual?.Individual?.individualId,
                       "addressDetails-select": {
                         pincode: permanentAddress?.pincode || "",
-                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        district: permanentAddress?.addressLine2 || "",
                         city: permanentAddress?.city || "",
-                        state: permanentAddress?.addressLine1 || "Telangana",
+                        state: permanentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: permanentAddress?.longitude || "",
                           latitude: permanentAddress?.latitude || "",
@@ -1784,9 +1982,9 @@ export const updateCaseDetails = async ({
                       },
                       "currentAddressDetails-select": {
                         pincode: currentAddress?.pincode || "",
-                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        district: currentAddress?.addressLine2 || "",
                         city: currentAddress?.city || "",
-                        state: currentAddress?.addressLine1 || "Telangana",
+                        state: currentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: currentAddress?.longitude || "",
                           latitude: currentAddress?.latitude || "",
@@ -1805,9 +2003,9 @@ export const updateCaseDetails = async ({
                       },
                       addressDetails: {
                         pincode: permanentAddress?.pincode || "",
-                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        district: permanentAddress?.addressLine2 || "",
                         city: permanentAddress?.city || "",
-                        state: permanentAddress?.addressLine1 || "Telangana",
+                        state: permanentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: permanentAddress?.longitude || "",
                           latitude: permanentAddress?.latitude || "",
@@ -1816,9 +2014,9 @@ export const updateCaseDetails = async ({
                       },
                       currentAddressDetails: {
                         pincode: currentAddress?.pincode || "",
-                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        district: currentAddress?.addressLine2 || "",
                         city: currentAddress?.city || "",
-                        state: currentAddress?.addressLine1 || "Telangana",
+                        state: currentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: currentAddress?.longitude || "",
                           latitude: currentAddress?.latitude || "",
@@ -1848,6 +2046,10 @@ export const updateCaseDetails = async ({
                       fullName: getFullName(" ", firstName, middleName, lastName),
                       uuid: userUuid ? userUuid : null,
                       currentPosition: index + 1,
+                      firstName: firstName,
+                      middleName: middleName,
+                      lastName: lastName,
+                      mobileNumber: data?.data?.complainantVerification?.mobileNumber,
                     },
                   };
                 } else {
@@ -1884,9 +2086,9 @@ export const updateCaseDetails = async ({
                       individualId: Individual?.Individual?.individualId,
                       "addressDetails-select": {
                         pincode: permanentAddress?.pincode || "",
-                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        district: permanentAddress?.addressLine2 || "",
                         city: permanentAddress?.city || "",
-                        state: permanentAddress?.addressLine1 || "Telangana",
+                        state: permanentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: permanentAddress?.longitude || "",
                           latitude: permanentAddress?.latitude || "",
@@ -1895,9 +2097,9 @@ export const updateCaseDetails = async ({
                       },
                       "currentAddressDetails-select": {
                         pincode: currentAddress?.pincode || "",
-                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        district: currentAddress?.addressLine2 || "",
                         city: currentAddress?.city || "",
-                        state: currentAddress?.addressLine1 || "Telangana",
+                        state: currentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: currentAddress?.longitude || "",
                           latitude: currentAddress?.latitude || "",
@@ -1916,9 +2118,9 @@ export const updateCaseDetails = async ({
                       },
                       addressDetails: {
                         pincode: permanentAddress?.pincode || "",
-                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        district: permanentAddress?.addressLine2 || "",
                         city: permanentAddress?.city || "",
-                        state: permanentAddress?.addressLine1 || "Telangana",
+                        state: permanentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: permanentAddress?.longitude || "",
                           latitude: permanentAddress?.latitude || "",
@@ -1927,9 +2129,9 @@ export const updateCaseDetails = async ({
                       },
                       currentAddressDetails: {
                         pincode: currentAddress?.pincode || "",
-                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        district: currentAddress?.addressLine2 || "",
                         city: currentAddress?.city || "",
-                        state: currentAddress?.addressLine1 || "Telangana",
+                        state: currentAddress?.addressLine1 || "",
                         coordinates: {
                           longitude: currentAddress?.longitude || "",
                           latitude: currentAddress?.latitude || "",
@@ -1959,6 +2161,10 @@ export const updateCaseDetails = async ({
                       fullName: getFullName(" ", firstName, middleName, lastName),
                       uuid: userUuid ? userUuid : null,
                       currentPosition: index + 1,
+                      firstName: firstName,
+                      middleName: middleName,
+                      lastName: lastName,
+                      mobileNumber: data?.data?.complainantVerification?.mobileNumber,
                     },
                   };
                 }
@@ -2043,6 +2249,10 @@ export const updateCaseDetails = async ({
                 ],
                 additionalDetails: {
                   uuid: userUuid ? userUuid : null,
+                  firstName: data?.data?.poaFirstName,
+                  middleName: data?.data?.poaMiddleName,
+                  lastName: data?.data?.poaLastName,
+                  mobileNumber: data?.data?.poaVerification?.mobileNumber,
                 },
               };
             } else {
@@ -2069,8 +2279,8 @@ export const updateCaseDetails = async ({
                       },
                     });
                   const Individual = await createIndividualUser({ data: data?.data, documentData, tenantId, isComplainant: false });
-                  const addressLine1 = Individual?.Individual?.address[0]?.addressLine1 || "Telangana";
-                  const addressLine2 = Individual?.Individual?.address[0]?.addressLine2 || "Rangareddy";
+                  const addressLine1 = Individual?.Individual?.address[0]?.addressLine1 || "";
+                  const addressLine2 = Individual?.Individual?.address[0]?.addressLine2 || "";
                   const buildingName = Individual?.Individual?.address[0]?.buildingName || "";
                   const street = Individual?.Individual?.address[0]?.street || "";
                   const city = Individual?.Individual?.address[0]?.city || "";
@@ -2131,6 +2341,10 @@ export const updateCaseDetails = async ({
                     ],
                     additionalDetails: {
                       uuid: userUuid ? userUuid : null,
+                      firstName: firstName,
+                      middleName: middleName,
+                      lastName: lastName,
+                      mobileNumber: data?.data?.poaVerification?.mobileNumber,
                     },
                   };
                 }
@@ -2159,6 +2373,8 @@ export const updateCaseDetails = async ({
           const poaIdProof = {
             poaComplainantId: { poaComplainantId: { poaComplainantId: {} } },
           };
+
+          const userSelectedIdType = isCompleted ? null : data?.data?.complainantId?.complainantId?.selectIdTypeType;
           const individualDetails = {};
           const poaIndividualDetails = {};
           if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
@@ -2189,6 +2405,7 @@ export const updateCaseDetails = async ({
                   },
                 ],
               ],
+              ...(userSelectedIdType && { selectIdTypeType: userSelectedIdType }),
             };
             docList.push(doc);
             individualDetails.document = [uploadedData];
@@ -2310,10 +2527,13 @@ export const updateCaseDetails = async ({
 
           return {
             ...data,
-            isFormCompleted: true,
+            isFormCompleted: isDraftInProgress ? isContinueClicked : true,
             data: {
               ...data.data,
               ...documentData,
+              firstName: data?.data?.firstName?.trim(),
+              middleName: data?.data?.middleName?.trim(),
+              lastName: data?.data?.lastName?.trim(),
               complainantVerification: {
                 ...data?.data?.complainantVerification,
                 ...updatedComplainantVerification,
@@ -2341,6 +2561,10 @@ export const updateCaseDetails = async ({
         lit.id = existingLit?.id;
         lit.auditDetails = existingLit?.auditDetails;
         lit.hasSigned = existingLit?.hasSigned || false;
+        // In case of PIP, if affidavit doc already exists then keep it as it is.
+        if (existingLit?.documents?.[0]?.fileStore) {
+          lit.documents = structuredClone(existingLit?.documents);
+        }
         return lit;
       }
       return lit;
@@ -2358,7 +2582,38 @@ export const updateCaseDetails = async ({
         });
       }
     });
-    data.litigants = [...updatedLitigants];
+    const hasRepresentativeAdvocate = caseDetails?.representatives?.some((rep) => rep?.advocateId);
+
+    const activeLitigants = updatedLitigants?.filter((lit) => !(Object.prototype.hasOwnProperty.call(lit, "isActive") && lit?.isActive === false));
+    let documentToDelete = null;
+    const finalLitigants =
+      hasRepresentativeAdvocate && activeLitigants?.length === 1
+        ? updatedLitigants.map((lit) => {
+            if (Object.prototype.hasOwnProperty.call(lit, "isActive") && lit?.isActive === false) {
+              return lit;
+            } else {
+              documentToDelete = lit?.documents?.[0]?.fileStore;
+              return {
+                ...lit,
+                documents: null,
+              };
+            }
+          })
+        : updatedLitigants;
+
+    if (isDraftInProgress) {
+      finalLitigants.forEach((lit) => {
+        lit.additionalDetails = {
+          ...(lit?.additionalDetails || {}),
+          isLitigantDetailsChanged: isContinueClicked, // This field is set true when ever user clicks on continue button on complainant details screen,
+          // So that we can redirect user to advocate details page(if user comes on review screen) once to update advocate related details correctly in case complaiant details were changed.
+        };
+      });
+    }
+
+    data.litigants = [...finalLitigants];
+
+    tempDocList = tempDocList?.filter((doc) => doc?.fileStore !== documentToDelete);
 
     const mergedPoaHoldersMap = new Map();
 
@@ -2494,6 +2749,9 @@ export const updateCaseDetails = async ({
             ...data,
             data: {
               ...data.data,
+              respondentFirstName: data?.data?.respondentFirstName?.trim(),
+              respondentMiddleName: data?.data?.respondentMiddleName?.trim(),
+              respondentLastName: data?.data?.respondentLastName?.trim(),
               ...documentData,
             },
             uniqueId: data?.uniqueId || generateUUID(),
@@ -2709,6 +2967,13 @@ export const updateCaseDetails = async ({
       if (obj?.data?.emails) {
         obj.data.emails.textfieldValue = "";
       }
+      if (!obj?.uniqueId) {
+        obj.uniqueId = generateUUID();
+      }
+      obj.data.firstName = obj?.data?.firstName?.trim();
+      obj.data.middleName = obj?.data?.middleName?.trim();
+      obj.data.lastName = obj?.data?.lastName?.trim();
+      obj.data.ownerType = "COMPLAINANT";
     }
 
     data.additionalDetails = {
@@ -2837,6 +3102,9 @@ export const updateCaseDetails = async ({
       },
     };
   }
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   if (selected === "prayerSwornStatement") {
     let additionalDocs = [];
     const newFormData = await Promise.all(
@@ -2860,6 +3128,7 @@ export const updateCaseDetails = async ({
                         artifactType: "OTHER",
                         sourceType: "COMPLAINANT",
                         caseId: caseDetails?.id,
+                        asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
                         sourceID: individualId,
                         filingNumber: caseDetails?.filingNumber,
                         tenantId,
@@ -2994,6 +3263,10 @@ export const updateCaseDetails = async ({
                     fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                     documentName: uploadedData.filename || document?.documentName,
                     fileName: pageConfig?.selectDocumentName?.["vakalatnamaFileUpload"],
+                    additionalDetails: {
+                      documentName: uploadedData.filename || document?.documentName,
+                      fileName: pageConfig?.selectDocumentName?.["vakalatnamaFileUpload"],
+                    },
                   };
                   docList.push(doc);
                   complainantDetails.push({
@@ -3004,7 +3277,10 @@ export const updateCaseDetails = async ({
                 }
               })
             );
-            setFormDataValue("vakalatnamaFileUpload", vakalatnamaDocumentData?.vakalatnamaFileUpload);
+            let updatedAdvocateDetails = data?.data?.multipleAdvocatesAndPip;
+            updatedAdvocateDetails.vakalatnamaFileUpload = vakalatnamaDocumentData?.vakalatnamaFileUpload;
+
+            setFormDataValue("MultipleAdvocatesAndPip", updatedAdvocateDetails);
           }
           const pipAffidavitDocumentData = { pipAffidavitFileUpload: null };
           if (data?.data?.multipleAdvocatesAndPip?.pipAffidavitFileUpload?.document) {
@@ -3019,6 +3295,10 @@ export const updateCaseDetails = async ({
                     fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                     documentName: uploadedData.filename || document?.documentName,
                     fileName: pageConfig?.selectDocumentName?.["pipAffidavitFileUpload"],
+                    additionalDetails: {
+                      documentName: uploadedData.filename || document?.documentName,
+                      fileName: pageConfig?.selectDocumentName?.["pipAffidavitFileUpload"],
+                    },
                   };
                   docList.push(doc);
                   complainantDetails.push({
@@ -3029,7 +3309,11 @@ export const updateCaseDetails = async ({
                 }
               })
             );
-            setFormDataValue("pipAffidavitFileUpload", pipAffidavitDocumentData?.pipAffidavitFileUpload);
+            let updatedPipDetails = data?.data?.multipleAdvocatesAndPip;
+            updatedPipDetails.pipAffidavitFileUpload = pipAffidavitDocumentData?.pipAffidavitFileUpload;
+
+            setFormDataValue("MultipleAdvocatesAndPip", updatedPipDetails);
+            // setFormDataValue("pipAffidavitFileUpload", pipAffidavitDocumentData?.pipAffidavitFileUpload);
           }
           const advocateDetailsDocTypes = [documentsTypeMapping["vakalatnamaFileUpload"], documentsTypeMapping["pipAffidavitFileUpload"]];
           updateTempDocListMultiForm(docList, advocateDetailsDocTypes);
@@ -3038,24 +3322,32 @@ export const updateCaseDetails = async ({
             data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.length > 0 &&
             data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.length
           ) {
-            const advSearchPromises = data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails
+            const barRegistrationNumbersCriteria = data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails
               ?.filter((detail) => detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal)
-              .map((detail) => {
-                return DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
-                  criteria: [
-                    {
-                      barRegistrationNumber: detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal,
-                    },
-                  ],
-                  tenantId,
-                });
-              });
+              .map((detail) => detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal);
 
-            const allAdvocateSearchData = await Promise.all(advSearchPromises);
-            for (let i = 0; i < allAdvocateSearchData?.length; i++) {
+            const allAdvocateSearchData = await DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
+              criteria: barRegistrationNumbersCriteria?.map((barNumber) => ({
+                barRegistrationNumber: barNumber,
+              })),
+              tenantId,
+            });
+            for (let i = 0; i < allAdvocateSearchData?.advocates?.length; i++) {
               const document = vakalatnamaDocumentData?.vakalatnamaFileUpload?.document?.[0];
+              const advInFormData = data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.find(
+                (detail) =>
+                  detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal === allAdvocateSearchData?.advocates?.[i]?.barRegistrationNumber
+              );
+
               advocateDetails.push({
-                advocate: allAdvocateSearchData?.[i].advocates?.[0]?.responseList?.[0],
+                advocate: {
+                  ...allAdvocateSearchData?.advocates?.[i]?.responseList?.[0],
+                  firstName: advInFormData?.advocateNameDetails?.firstName,
+                  middleName: advInFormData?.advocateNameDetails?.middleName,
+                  lastName: advInFormData?.advocateNameDetails?.lastName,
+                  mobileNumber: advInFormData?.advocateNameDetails?.advocateMobileNumber,
+                  advocateIdProof: advInFormData?.advocateNameDetails?.advocateIdProof,
+                },
                 complainant: {
                   individualId: data?.data?.multipleAdvocatesAndPip?.boxComplainant?.individualId,
                   vakalathnamaDoc: document ? [document] : [],
@@ -3134,12 +3426,31 @@ export const updateCaseDetails = async ({
         tenantId,
         caseId: caseDetails?.id,
         advocateId: data?.advocate?.id,
-        documents: [],
+        ...(data?.advocate?.advocateIdProof?.length > 0 && {
+          documents: [
+            {
+              ...data?.advocate?.advocateIdProof?.[0],
+              documentType: documentsTypeMapping["advocateIdProof"],
+              additionalDetails: {
+                name: data?.advocate?.advocateIdProof?.[0]?.name,
+                documentName: data?.advocate?.advocateIdProof?.[0]?.documentName,
+                fileName: data?.advocate?.advocateIdProof?.[0]?.fileName,
+              },
+            },
+          ],
+        }),
         additionalDetails: {
           advocateName: data?.advocate?.additionalDetails?.username,
           uuid: data?.advocate?.auditDetails?.createdBy,
+          firstName: data?.advocate?.firstName,
+          middleName: data?.advocate?.middleName,
+          lastName: data?.advocate?.lastName,
+          mobileNumber: data?.advocate?.mobileNumber,
         },
         representing: representing,
+        advocateFilingStatus: "other", // For new advocates except case creator advocate
+        // (if senior adv or his jr adv/clerk member created case on his behalf then its already present in existing case reprentatives as advocateFilingStatus: "caseOwner")
+        //and it will be overridden automatically in updatedRepresentatives logic written below.
       };
     });
 
@@ -3159,10 +3470,14 @@ export const updateCaseDetails = async ({
           //then we just take that object (because it contains id for that representing) and put it in place of newer one.
           newRepresenting.forEach((obj) => {
             const objFound = existingRepresenting.find((o) => o.individualId === obj.individualId);
+
             if (objFound) {
-              updateRepresenting.push(objFound);
-            }
-            if (!objFound) {
+              updateRepresenting.push({
+                ...objFound,
+                ...obj,
+                documents: obj.documents || objFound.documents,
+              });
+            } else {
               updateRepresenting.push(obj);
             }
           });
@@ -3180,6 +3495,32 @@ export const updateCaseDetails = async ({
         }
         if (!isEqual(existingRep.additionalDetails, rep.additionalDetails)) {
           existingRep.additionalDetails = rep.additionalDetails;
+        }
+        if (!isEqual(existingRep.documents, rep.documents)) {
+          const existingDocs = structuredClone(existingRep.documents || []);
+          const newDocs = structuredClone(rep.documents || []);
+
+          const updatedDocs = [];
+
+          newDocs.forEach((doc) => {
+            const found = existingDocs.find((d) => d.documentUid === doc.documentUid);
+
+            if (found) {
+              updatedDocs.push({ ...found, ...doc });
+            } else {
+              updatedDocs.push(doc);
+            }
+          });
+
+          // mark removed docs inactive
+          existingDocs.forEach((doc) => {
+            const exists = updatedDocs.find((d) => d.documentUid === doc.documentUid);
+            if (!exists) {
+              updatedDocs.push({ ...doc, isActive: false });
+            }
+          });
+
+          existingRep.documents = updatedDocs;
         }
         return existingRep;
       }
@@ -3200,25 +3541,61 @@ export const updateCaseDetails = async ({
 
     const updatedCaseLitigants = caseDetails?.litigants?.map((litigant) => {
       const lit = complainantDetails?.find((comp) => comp?.individualId === litigant?.individualId);
-      if (lit) {
-        const updatedDoc = lit?.pipAffidavitFileUpload ? structuredClone(lit?.pipAffidavitFileUpload) : null;
-        if (updatedDoc) {
-          const additionalDetails = {
-            documentName: "UPLOAD_PIP_AFFIDAVIT",
-          };
-          updatedDoc.additionalDetails = additionalDetails;
-        }
-        const updatedLitigant = { ...litigant, documents: lit?.pipAffidavitFileUpload ? [updatedDoc] : [] };
-        return updatedLitigant;
-      } else return litigant;
+
+      // if litigant not found in complainantDetails
+      if (!lit) {
+        return {
+          ...litigant,
+          documents: [],
+        };
+      }
+
+      let updatedDocuments = litigant?.documents || [];
+
+      if (lit?.pipAffidavitFileUpload) {
+        const updatedDoc = structuredClone(lit.pipAffidavitFileUpload);
+
+        updatedDoc.additionalDetails = {
+          documentName: "UPLOAD_PIP_AFFIDAVIT",
+        };
+
+        updatedDocuments = [updatedDoc];
+      } else {
+        // remove previously added affidavit document
+        updatedDocuments = [];
+      }
+
+      return {
+        ...litigant,
+        documents: updatedDocuments,
+      };
     });
+    if (isDraftInProgress) {
+      updatedCaseLitigants.forEach((lit) => {
+        lit.additionalDetails = {
+          ...(lit?.additionalDetails || {}),
+          isLitigantDetailsChanged: false, // This field is used only for UI formcomposer purpose. so unsetting it once user saves data on advocate details screen.
+        };
+      });
+    }
 
     data.litigants = [...updatedCaseLitigants];
     data.representatives = [...updatedRepresentatives];
+    if (isSaveDraftEnabled) {
+      data.additionalDetails = {
+        ...caseDetails.additionalDetails,
+        advocateDetails: {
+          formdata: newFormData,
+          isCompleted: isCompleted === "PAGE_CHANGE" ? caseDetails.additionalDetails?.[selected]?.isCompleted : isCompleted,
+        },
+      };
+    }
+  }
+  if (selected === "processCourierService") {
     data.additionalDetails = {
       ...caseDetails.additionalDetails,
-      advocateDetails: {
-        formdata: newFormData,
+      processCourierService: {
+        formdata: updatedFormData,
         isCompleted: isCompleted === "PAGE_CHANGE" ? caseDetails.additionalDetails?.[selected]?.isCompleted : isCompleted,
       },
     };
@@ -3262,6 +3639,25 @@ export const updateCaseDetails = async ({
     },
   });
 
+  if (data?.additionalDetails?.processCourierService) {
+    data.additionalDetails.processCourierService = {
+      ...data?.additionalDetails?.processCourierService,
+      formdata: data?.additionalDetails?.processCourierService?.formdata?.map((item) => {
+        const courier = item?.data?.multipleAccusedProcessCourier;
+        return {
+          ...item,
+          data: {
+            ...item.data,
+            multipleAccusedProcessCourier: {
+              ...courier,
+              noticeCourierService: isDelayCondonation ? courier?.noticeCourierService : [],
+            },
+          },
+        };
+      }),
+    };
+  }
+
   if (isSaveDraftEnabled && action === "SAVE_DRAFT") {
     return null;
   }
@@ -3278,6 +3674,7 @@ export const updateCaseDetails = async ({
     }
     return doc;
   });
+  const updatedData = transformCaseDataForUpdate(data, ["witnessDetails", "advocateDetails"]);
 
   return await DRISTIService.caseUpdateService(
     {
@@ -3285,10 +3682,9 @@ export const updateCaseDetails = async ({
         ...caseDetails,
         caseTitle,
         litigants: !caseDetails?.litigants ? [] : caseDetails?.litigants,
-        ...data,
+        ...updatedData,
         documents: updatedTempDocList,
-        advocateCount:
-          formdata?.[0]?.data?.numberOfAdvocate || caseDetails?.additionalDetails?.advocateDetails?.formdata[0]?.data?.numberOfAdvocate || 0,
+        advocateCount: formdata?.[0]?.data?.numberOfAdvocate || caseDetails?.advocateDetailBlock?.[0]?.advocates?.length || 0,
         linkedCases: caseDetails?.linkedCases ? caseDetails?.linkedCases : [],
         workflow: {
           ...caseDetails?.workflow,
@@ -3300,4 +3696,244 @@ export const updateCaseDetails = async ({
     },
     tenantId
   );
+};
+
+export const transformCaseDataForFetching = (caseDetails, keys) => {
+  const keyList = Array.isArray(keys) ? keys : [keys];
+  let updatedCaseData = structuredClone(caseDetails || {});
+
+  for (const key of keyList) {
+    if (key === "witnessDetails" && updatedCaseData?.witnessDetails?.length > 0) {
+      updatedCaseData.additionalDetails = { ...(updatedCaseData?.additionalDetails || {}) };
+      let isCompleted = true;
+
+      const formdata = updatedCaseData.witnessDetails.map(({ uniqueId = "", uiData = {}, ...witnessFormData }) => {
+        if (!uiData?.isCompleted) {
+          isCompleted = false;
+        }
+        return {
+          data: witnessFormData,
+          isenabled: uiData?.isenabled,
+          displayindex: uiData?.displayIndex || 0,
+          uniqueId,
+        };
+      });
+
+      updatedCaseData.additionalDetails[key] = {
+        formdata,
+        ...(isCompleted && { isCompleted }),
+      };
+    }
+
+    if (key === "advocateDetails" && updatedCaseData?.advocateDetailBlock?.length > 0) {
+      updatedCaseData.additionalDetails = { ...(updatedCaseData?.additionalDetails || {}) };
+      let isCompleted = true;
+
+      const formdata = updatedCaseData?.advocateDetailBlock?.map((block) => {
+        const {
+          complainant = {},
+          isComplainantPip = {},
+          uiFlags = {},
+          documents = {},
+          advocates = [],
+          displayIndex = 0,
+          isEnabled = true,
+          isFormCompleted = false,
+        } = block;
+
+        if (!isFormCompleted) {
+          isCompleted = false;
+        }
+
+        // Map each advocate to the multipleAdvocateNameDetails shape
+        const multipleAdvocateNameDetails = advocates?.map((advocate) => ({
+          advocateNameDetails: {
+            firstName: advocate?.firstName,
+            middleName: advocate?.middleName,
+            lastName: advocate?.lastName,
+            advocateMobileNumber: advocate?.mobileNumber,
+            advocateIdProof: advocate?.documents || [],
+          },
+          advocateBarRegNumberWithName: {
+            advocateName: getFullName(" ", advocate?.firstName, advocate?.middleName, advocate?.lastName) || "",
+            isDisable: true,
+            advocateId: advocate?.id || "",
+            advocateUuid: advocate?.advocateUuid || "",
+            individualId: advocate?.individualId || "",
+            barRegistrationNumber: advocate?.barRegistrationNumber
+              ? `${advocate.barRegistrationNumber} (${getFullName("", advocate?.firstName, advocate?.middleName, advocate?.lastName)})`
+              : "",
+            barRegistrationNumberOriginal: advocate?.barRegistrationNumber || "",
+          },
+        }));
+
+        // Map vakalatnama documents
+        const vakalatnamaDocuments = (documents?.vakalatnama || [])?.map((doc) => ({
+          fileStore: doc?.fileStore || "",
+          documentType: doc?.documentType || "",
+          fileName: doc?.fileName || "VAKALATNAMA",
+          documentName: doc?.documentName || "",
+        }));
+
+        // Map pip affidavit documents
+        const pipAffidavitDocuments = (documents?.pipAffidavit || [])?.map((doc) => ({
+          fileStore: doc?.fileStore || "",
+          documentType: doc?.documentType || "",
+          fileName: doc?.additionalDetails?.fileName || "PIP_AFFIDAVIT",
+          documentName: doc?.additionalDetails?.documentName || "",
+        }));
+
+        return {
+          data: {
+            multipleAdvocatesAndPip: {
+              multipleAdvocateNameDetails,
+              boxComplainant: {
+                firstName: complainant?.firstName,
+                middleName: complainant?.middleName,
+                lastName: complainant?.lastName,
+                mobileNumber: complainant?.mobileNumber,
+                index: complainant?.index,
+                individualId: complainant?.individualId,
+              },
+              showAffidavit: uiFlags?.showAffidavit,
+              isComplainantPip: isComplainantPip,
+              numberOfAdvocates: advocates?.length || 0,
+              showVakalatNamaUpload: uiFlags?.showVakalatNamaUpload,
+              vakalatnamaFileUpload: vakalatnamaDocuments?.length > 0 ? { document: vakalatnamaDocuments } : null,
+              pipAffidavitFileUpload: pipAffidavitDocuments?.length > 0 ? { document: pipAffidavitDocuments } : null,
+            },
+          },
+          isenabled: isEnabled,
+          displayindex: displayIndex,
+          isFormCompleted,
+        };
+      });
+
+      updatedCaseData.additionalDetails["advocateDetails"] = {
+        formdata,
+        ...(isCompleted && { isCompleted }),
+      };
+    }
+  }
+
+  return updatedCaseData;
+};
+
+export const transformCaseDataForUpdate = (caseDetails, keys) => {
+  const keyList = Array.isArray(keys) ? keys : [keys];
+  const updatedCaseData = structuredClone(caseDetails || {});
+
+  for (const key of keyList) {
+    if (key === "witnessDetails") {
+      const { formdata = [], isCompleted = false } = caseDetails?.additionalDetails?.[key] || {};
+      if (formdata?.length > 0) {
+        const witnessDetails = formdata?.map(({ data, isenabled, displayindex, uniqueId }) => {
+          return {
+            ...data,
+            uniqueId,
+            uiData: {
+              isenabled,
+              displayIndex: displayindex,
+              isCompleted: isCompleted ? true : false, // force true for all if group isCompleted is true
+            },
+          };
+        });
+        delete updatedCaseData.additionalDetails[key];
+        updatedCaseData.witnessDetails = witnessDetails;
+      } else updatedCaseData.witnessDetails = [];
+    }
+
+    if (key === "advocateDetails") {
+      if (updatedCaseData?.additionalDetails?.advocateDetails) {
+        delete updatedCaseData.additionalDetails.advocateDetails;
+      }
+    }
+  }
+
+  return updatedCaseData;
+};
+
+export const mergeBreakdowns = (...breakdownArrays) => {
+  const map = {};
+  breakdownArrays?.flat()?.forEach((item) => {
+    const codeKey = item?.code;
+    if (!map[codeKey]) {
+      map[codeKey] = { ...item };
+    } else {
+      map[codeKey].amount += item?.amount;
+    }
+  });
+  return Object?.values(map);
+};
+
+export const createOrUpdateTask = async ({
+  type,
+  existingTask,
+  accusedDetails,
+  respondentFormData,
+  filingNumber,
+  tenantId,
+  isUpfrontPayment,
+  status,
+}) => {
+  if (existingTask && (!accusedDetails || accusedDetails?.length === 0)) {
+    const expirePayload = {
+      ...existingTask,
+      workflow: { action: TaskManagementWorkflowAction.EXPIRE },
+    };
+
+    await DRISTIService.updateTaskManagementService({
+      taskManagement: expirePayload,
+    });
+
+    return;
+  }
+  if (!accusedDetails || accusedDetails?.length === 0) return;
+
+  const _getdelieveryChannels = (deliveryChannels) => {
+    if (!deliveryChannels || deliveryChannels?.length === 0) return [];
+    return deliveryChannels?.map((channel) => {
+      let updatedChannelCode = channel?.channelCode;
+      if (channel?.taskType === "WARRANT") {
+        if (channel?.channelCode === "REGISTERED_POST") {
+          updatedChannelCode = "RPAD";
+        } else if (channel?.channelCode === "ICOPS") {
+          updatedChannelCode = "POLICE";
+        }
+      }
+      return {
+        ...channel,
+        channelCode: updatedChannelCode,
+      };
+    });
+  };
+
+  const partyDetails = accusedDetails?.map((accused) => ({
+    ...(status && { status }),
+    addresses: accused?.addressDetails?.filter((addr) => addr?.checked) || [],
+    deliveryChannels: _getdelieveryChannels(accused?.[`${type?.toLowerCase()}CourierService`] || []),
+    respondentDetails: {
+      ...respondentFormData?.find((acc) => acc?.uniqueId === (accused?.data?.uniqueId || accused?.uniqueId))?.data,
+      uniqueId: accused?.uniqueId,
+    },
+  }));
+
+  const taskManagementPayload = existingTask
+    ? {
+        ...existingTask,
+        partyDetails,
+        workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.UPDATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.UPDATE },
+      }
+    : {
+        filingNumber,
+        tenantId,
+        taskType: type,
+        partyDetails,
+        partyType: "RESPONDENT",
+        workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.CREATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.CREATE },
+      };
+
+  const serviceMethod = existingTask ? DRISTIService.updateTaskManagementService : DRISTIService.createTaskManagementService;
+
+  await serviceMethod({ taskManagement: taskManagementPayload });
 };

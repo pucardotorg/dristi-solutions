@@ -1,0 +1,30 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "common-masters",
+    "masterName": "pendingTaskExpiry",
+    "mdmsPayload": {
+      "tenantId": "kl",
+      "code": "common-masters.pendingTaskExpiry",
+      "description": null,
+      "definition": {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "required": ["id"],
+        "x-unique": ["id"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "enitiyName": {
+            "type": "string"
+          },
+          "noofdaysforexpiry": {
+            "type": "number"
+          }
+        }
+      },
+      "isActive": true
+    }
+  }
+]

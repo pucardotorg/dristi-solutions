@@ -1,0 +1,66 @@
+name: Manual Deployment Pipeline
+
+run-name: >
+  ${{
+    github.event_name == 'workflow_dispatch' &&
+      format(
+        'Deploy to {1} : {0}:{2}',
+        github.event.inputs.service,
+        github.event.inputs.deployment_env,
+        github.event.inputs.tag
+      )
+  }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        required: true
+        description: "Service name in kubernetes cluster (eg: egov-user)"
+        type: string
+      tag:
+        required: true
+        description: "Image tag (eg: develop-2xxxxxxxxxxxxxxxxxxxx5)"
+        type: string
+      deployment_env:
+        required: true
+        description: "Deployment environment (eg: dev, qa, demo)"
+        type: choice
+        default: dev
+        options:
+          - dev
+          - qa
+          - demo
+      service_group:
+        required: true
+        description: "Service group in kubernetes cluster (eg: egov)"
+        type: choice
+        default: core-services
+        options:
+          - core-services
+
+jobs:
+  deploy-to-k8s:
+    name: Deploy to Kubernetes
+    environment: 
+      name: ${{ inputs.deployment_env }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment Summary
+        run: |
+          IST_TIME=$(TZ="Asia/Kolkata" date '+%Y-%m-%d %H:%M:%S IST')
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Deployed \`docker.io/venkatramireddyb/${{ inputs.service }}:${{ inputs.tag }}\` to **${{ inputs.deployment_env }}** environment at **$IST_TIME**." >> $GITHUB_STEP_SUMMARY
+
+      - name: Deploy to Kubernetes
+        uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
+        with:
+          environment: ${{ inputs.deployment_env }}
+          service_group: ${{ inputs.service_group }}
+          service_name: ${{ inputs.service }}
+          image_tag: ${{ inputs.tag }}
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+          env_file: ${{ vars.HELMFILE_ENV }}
+          checkout_ref: ${{ vars.DEVOPS_BRANCH }}
+          sops_keys_txt: ${{ secrets.SOPS_KEYS_TXT }}

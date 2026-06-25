@@ -1,0 +1,46 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "PROCESS_MANAGEMENT_VIEWER", // TODO : need to add to all users (CMO, judge, Typist)
+    "data": {
+      "code": "PROCESS_MANAGEMENT_VIEWER",
+      "name": "PROCESS_MANAGEMENT_VIEWER",
+      "description": "PROCESS_MANAGEMENT_VIEWER"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "PROCESS_MANAGEMENT_EDITOR", // TODO : need to add to all users (CMO)
+    "data": {
+      "code": "PROCESS_MANAGEMENT_EDITOR",
+      "name": "PROCESS_MANAGEMENT_EDITOR",
+      "description": "PROCESS_MANAGEMENT_EDITOR"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "PROCESS_MANAGEMENT_CREATOR", // TODO : need to add to all users (CMO)
+    "data": {
+      "code": "PROCESS_MANAGEMENT_CREATOR",
+      "name": "PROCESS_MANAGEMENT_CREATOR",
+      "description": "PROCESS_MANAGEMENT_CREATOR"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "VIEW_PROCESS_MANAGEMENT", // TODO : need to add to all users (CMO)
+    "data": {
+      "code": "VIEW_PROCESS_MANAGEMENT",
+      "name": "VIEW_PROCESS_MANAGEMENT",
+      "description": "VIEW_PROCESS_MANAGEMENT"
+    },
+    "isActive": true
+  }
+]

@@ -4,9 +4,27 @@
 //   applicationNumber:""
 // };
 
-export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId }) => {
+import { ORDER_TYPES, PARTY_TYPES } from "../utils/constants";
+
+const _getPartyType = (orderType, partyType) => {
+  if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
+    if (partyType === PARTY_TYPES.OTHER || partyType === PARTY_TYPES.OTHERS) {
+      return "others";
+    }
+
+    return partyType === PARTY_TYPES.ACCUSED || partyType === PARTY_TYPES.RESPONDENT ? "respondent" : partyType?.toLowerCase();
+  }
+
+  if (![ORDER_TYPES.NOTICE, ORDER_TYPES.SUMMONS]?.includes(orderType)) {
+    return "respondent";
+  }
+
+  return partyType === PARTY_TYPES.ACCUSED || partyType === PARTY_TYPES.RESPONDENT ? "respondent" : partyType?.toLowerCase();
+};
+
+export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId, partyUniqueId, partyType }) => {
   return {
-    label: `1(${orderType === "NOTICE" ? "Notice" : "Summon"}s)`,
+    label: `1(${orderType === ORDER_TYPES.NOTICE ? "Notice" : "Summon"}s)`,
     type: "search",
     apiDetails: {
       serviceName: "/task/v1/search",
@@ -21,6 +39,10 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
           tenantId: Digit.ULBService.getCurrentTenantId(),
           // cnrNumber: taskCnrNumber,
           orderId: orderId,
+          partyType: _getPartyType(orderType, partyType),
+          ...(![PARTY_TYPES.POLICE, PARTY_TYPES.OTHER, PARTY_TYPES.OTHERS]?.includes((partyType || "")?.toLowerCase()) && {
+            partyUniqueId: partyUniqueId,
+          }),
         },
       },
       masterName: "commonUiConfig",
@@ -44,6 +66,7 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
             {
               label: "Delivery Channels",
               jsonPath: "deliveryChannel",
+              additionalCustomization: true,
             },
 
             {
@@ -64,6 +87,11 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
               label: "Remarks",
               jsonPath: "remarks",
             },
+            {
+              label: "PROCESS_FEE_PAID_ON",
+              jsonPath: "feePaidDate",
+              additionalCustomization: true,
+            },
           ],
 
           enableColumnSort: true,
@@ -72,6 +100,6 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
         show: true,
       },
     },
-    additionalDetails: { filingNumber, orderNumber, orderId, taskCnrNumber, itemId },
+    additionalDetails: { filingNumber, orderNumber, orderId, taskCnrNumber, itemId, orderType },
   };
 };

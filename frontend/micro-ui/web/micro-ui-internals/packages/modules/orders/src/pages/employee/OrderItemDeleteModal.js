@@ -1,22 +1,6 @@
-import { CloseSvg, Modal } from "@egovernments/digit-ui-react-components";
+import { Modal } from "@egovernments/digit-ui-react-components";
 import React from "react";
-
-const Heading = (props) => {
-  return (
-    <h1 className="heading-m" style={{ marginLeft: "24px" }}>
-      {props.label}
-    </h1>
-  );
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 function OrderItemDeleteModal({ t, deleteOrderItemIndex, setDeleteOrderItemIndex, handleDeleteOrderItem }) {
   const handleOnClose = () => {
     setDeleteOrderItemIndex(null);
@@ -24,7 +8,7 @@ function OrderItemDeleteModal({ t, deleteOrderItemIndex, setDeleteOrderItemIndex
 
   return (
     <Modal
-      headerBarMain={<Heading label={t("CONFIRM_DELETE_ITEM")} />}
+      headerBarMain={<Heading style={{ marginLeft: "24px" }} label={t("CONFIRM_DELETE_ITEM")} />}
       headerBarEnd={<CloseBtn onClick={handleOnClose} />}
       actionSaveLabel={t("DELETE_ORDER_ITEM")}
       actionSaveOnSubmit={() => handleDeleteOrderItem(deleteOrderItemIndex)}

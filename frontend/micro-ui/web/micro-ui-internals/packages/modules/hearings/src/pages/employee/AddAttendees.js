@@ -1,4 +1,6 @@
-import { Button, FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { Button } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -120,6 +122,7 @@ const AddAttendees = ({
 
   const onFormChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     applyMultiSelectDropdownFix(setValue, formData, multiSelectDropdownKeys);
+    runComprehensiveSanitizer({ formData, setValue });
 
     if (formData.offlineAttendees.length === 0 && formData.onlineAttendees.length === 0) {
       setIsDisabled(true);

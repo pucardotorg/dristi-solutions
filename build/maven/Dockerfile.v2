@@ -1,0 +1,14 @@
+# Create image from sonar analysis build to reduce build time
+FROM openjdk:24-ea-15-oraclelinux8
+
+ARG WORK_DIR
+
+WORKDIR /opt/egov
+
+COPY ${WORK_DIR}/target/*.jar /opt/egov/
+
+COPY build/maven/start.sh /opt/egov/start.sh
+
+RUN chmod +x /opt/egov/start.sh
+
+CMD ["/opt/egov/start.sh"]

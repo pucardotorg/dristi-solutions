@@ -1,0 +1,17 @@
+[
+  {
+    "id": "81b9af95-3694-495f-b9e0-f472a89c0cd8",
+    "tenantId": "kl",
+    "schemaCode": "case.OutcomeType",
+    "uniqueIdentifier": "6",
+    "data": {
+      "id": "6",
+      "outcome": "DISMISSED",
+      "orderType": "DISMISS_CASE",
+      "isJudgement": false
+    },
+    "isActive": true
+  }
+]
+
+

@@ -1,0 +1,258 @@
+openapi: 3.0.0
+info:
+  title: Task Management
+  description: |
+    API specifications for Task Management in Dristi system.
+    This API allows creation, updating, and searching of tasks with support for
+    task assignment, status tracking, and workflow management.
+  version: "1.0.0"
+  contact:
+    name: Dristi Solutions Team
+    email: support@dristisolutions.org
+
+servers:
+  - url: ""
+    description: Task Management API Server
+
+tags:
+  - name: Task
+    description: APIs to create, update and search for tasks.
+
+paths:
+  /task-management/v1/_create:
+    post:
+      tags:
+        - Task
+      summary: Create a new task management record
+      description: |
+        API to create a new task management record in the system. A task management record can contain
+        one or more tasks related to a case or order, along with workflow and assignment information.
+      requestBody:
+        description: Details for the new task management record + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/TaskManagementRequest'
+        required: true
+      responses:
+        '201':
+          description: Task management record created successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TaskManagementResponse'
+        '400':
+          description: Task creation failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: taskRequest
+
+  /task-management/v1/_update:
+    post:
+      tags:
+        - Task
+      summary: Update an existing task management record
+      description: |
+        API to update an existing task management record. Can be used to update task details, status, workflow state,
+        or any other task management related information for one or more tasks within the record.
+      requestBody:
+        description: Details for updating the task management record + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/TaskManagementRequest'
+        required: true
+      responses:
+        '200':
+          description: Task management record updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TaskManagementResponse'
+        '400':
+          description: Task update failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: taskRequest
+
+  /task-management/v1/_search:
+    post:
+      tags:
+        - Task
+      summary: Search task management records
+      description: |
+        API to search for task management records based on various criteria including case/order references,
+        workflow status, task types, and other task management specific filters.
+      requestBody:
+        description: Search criteria for task management records + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/TaskSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: ResponseInfo with list of task management records matching search criteria
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TaskManagementSearchResponse'
+        '400':
+          description: Task search failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: taskSearchRequest
+
+
+components:
+  schemas:
+    TaskManagementRequest:
+      type: object
+      required:
+        - RequestInfo
+        - taskManagement
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        taskManagement:
+          $ref: '#/components/schemas/TaskManagement'
+      x-codegen-request-body-name: taskManagementRequest
+
+
+    TaskSearchRequest:
+      type: object
+      required:
+        - RequestInfo
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/TaskSearchCriteria'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+
+    TaskSearchCriteria:
+      type: object
+      required:
+        - tenantId
+      properties:
+        id:
+          type: string
+          description: Filter by task management record ID
+        courtId:
+          type: string
+          description: Filter by court ID
+        tenantId:
+          type: string
+          description: Tenant ID for which task management records are being searched
+          example: "kl"
+        taskManagementNumber:
+          type: string
+          description: Unique number assigned to the task management record
+          example: "KL-xxxxxx-yyyy-TM1"
+        orderNumber:
+          type: string
+          description: Filter by order number
+          example: "KL-xxxxxx-yyyy-OR*"
+        orderItemId:
+          type: string
+          description: Filter by order item ID
+        filingNumber:
+          type: string
+          description: Filter by filing number
+          example: "KL-xxxxxx-yyyy"
+        status:
+          type: string
+          description: Filter by task status
+          example: "IN_PROGRESS"
+        taskType:
+          type: array
+          items:
+            type: string
+          description: Filter by task type
+          example: ["NOTICE","SUMMONS"]
+
+    TaskManagementResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        taskManagement:
+          $ref: '#/components/schemas/TaskManagement'
+
+    TaskManagementSearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        taskManagementRecords:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskManagement'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+        totalCount:
+          type: integer
+          description: Total number of records matching the search criteria
+    TaskManagement:
+      type: object
+      required:
+        - filingNumber
+        - taskType
+        - tenantId
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the task management record
+        filingNumber:
+          type: string
+          description: Reference to the case filing number
+          example: "CASE-2023-001"
+        courtId:
+          type: string
+          description: ID of the court associated with the tasks
+        orderNumber:
+          type: string
+          description: Reference to the order number
+          example: "KL-xxxxxx-yyyy-OR*"
+        orderItemId:
+          type: string
+          description: Reference to the order Item Id
+        taskType:
+          type: string
+          description: there will be various types of tasks, that will define their own schema for information required. This type will help identify what schema to pick from MDMS
+          example: summons, warrant, notice
+        taskManagementNumber:
+          type: string
+          description: Unique number assigned to the task management record
+          example: "KL-xxxxxx-yyyy-TM1"
+        tenantId:
+          type: string
+          description: Tenant ID for which task management records are being searched
+        status:
+          type: string
+        partyType:
+          type: string
+          enum:
+            - COMPLAINANT
+            - RESPONDENT
+            - COURT
+        partyDetails:
+          type: array
+          items:
+            type: object
+        additionalDetails:
+          type: object
+          additionalProperties: true
+          description: Additional details related to the task management record
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
+        workflow:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Workflow'

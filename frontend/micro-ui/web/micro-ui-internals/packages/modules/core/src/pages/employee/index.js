@@ -8,7 +8,6 @@ import ChangePassword from "./ChangePassword";
 import ForgotPassword from "./ForgotPassword";
 import LanguageSelection from "./LanguageSelection";
 import EmployeeLogin from "./Login";
-import UserProfile from "../citizen/Home/UserProfile";
 import ErrorComponent from "../../components/ErrorComponent";
 import { PrivateRoute } from "@egovernments/digit-ui-react-components";
 
@@ -37,6 +36,7 @@ const EmployeeApp = ({
   const showLanguageChange = location?.pathname?.includes("language-selection");
   const [tenantsData, setTenantsData] = useState([]);
   const isUserProfile = userScreensExempted.some((url) => location?.pathname?.includes(url));
+  const isLoginPage = location?.pathname?.includes("user/login");
   useEffect(() => {
     Digit.UserService.setType("employee");
   }, []);
@@ -66,12 +66,12 @@ const EmployeeApp = ({
     <div className="employee">
       <Switch>
         <Route path={`${path}/user`}>
-          {isUserProfile && (
+          {(isUserProfile || isLoginPage) && (
             <TopBarSideBar
               t={t}
               stateInfo={stateInfo}
               userDetails={userDetails}
-              CITIZEN={CITIZEN}
+              CITIZEN={isLoginPage ? true : CITIZEN}
               cityDetails={cityDetails}
               mobileView={mobileView}
               handleUserDropdownSelection={handleUserDropdownSelection}
@@ -98,9 +98,6 @@ const EmployeeApp = ({
               <Route path={`${path}/user/change-password`}>
                 <ChangePassword />
               </Route>
-              <PrivateRoute path={`${path}/user/profile`}>
-                <UserProfile stateCode={stateCode} userType={"employee"} cityDetails={cityDetails} />
-              </PrivateRoute>
               <Route path={`${path}/user/error`}>
                 <ErrorComponent
                   initData={initData}

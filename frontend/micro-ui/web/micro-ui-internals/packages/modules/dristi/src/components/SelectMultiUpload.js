@@ -1,27 +1,12 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
 import { UploadIcon } from "../icons/svgIndex";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
-import { CardLabelError, TextInput, CloseSvg, Toast } from "@egovernments/digit-ui-react-components";
+import { CardLabelError, TextInput } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Button from "./Button";
 import ImageModal from "./ImageModal";
-
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        cursor: "pointer",
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn } from "./ModalComponents";
 const DragDropComponent = ({ config, label }) => {
   return (
     <div
@@ -55,15 +40,11 @@ const DragDropComponent = ({ config, label }) => {
 };
 
 const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) => {
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [imageInfo, setImageInfo] = useState(null);
   const [selectedDocs, setSelectedDocs] = useState([]);
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
 
   const inputs = useMemo(
     () =>
@@ -71,12 +52,12 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
         {
           name: "uploadedDocs",
           isMandatory: true,
-          textAreaHeader: "CS_DOCUMENT",
+          label: "CS_DOCUMENT",
           fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-          uploadGuidelines: "UPLOAD_DOC_50",
-          maxFileSize: 50,
-          maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-          textAreaStyle: {
+          uploadGuidelines: "UPLOAD_DOC_10",
+          maxFileSize: 10,
+          maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
+          labelStyle: {
             fontSize: "16px",
             fontWeight: 400,
             marginBottom: "8px",
@@ -85,15 +66,6 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
       ],
     [config?.populators?.inputs]
   );
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   function setValue(value, input) {
     if (Array.isArray(input)) {
@@ -110,7 +82,7 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
   function handleAddFiles(data, input, currentValue) {
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
     if (data.size > maxFileSize) {
-      setShowErrorToast({ label: t("FILE_SIZE_EXCEEDS"), error: true });
+      setShowToast({ label: t("FILE_SIZE_EXCEEDS"), error: true, errorId: null });
       return;
     }
 
@@ -166,9 +138,20 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
         `}
         </style>
         <div className={`file-uploader-div-main show-file-uploader select-UploadFiles`}>
-          {input.textAreaHeader && (
-            <h1 className={`custom-text-area-header ${input?.headerClassName}`} style={{ margin: "0px 0px 8px", ...input.textAreaStyle }}>
-              {t(input?.textAreaHeader)}
+          {input.label && (
+            <h1
+              className={`custom-text-area-header ${input?.headerClassName}`}
+              style={{ margin: "0px 0px 8px", display: "flex", gap: "2px", ...input.labelStyle }}
+            >
+              {t(input?.label)}{" "}
+              {input?.isOptional && (
+                <span>
+                  <p className={`custom-sub-header ${input?.subHeaderClassName}`} style={{ margin: "0px 0px 8px" }}>
+                    {`${t(input?.textAreaSubHeader)}`}
+                    {input?.isOptional && <span style={{ color: "#77787B" }}>&nbsp;{t("CS_IS_OPTIONAL")}</span>}
+                  </p>
+                </span>
+              )}
             </h1>
           )}
           <div className="file-uploader" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -190,6 +173,12 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                 types={input?.fileTypes}
                 children={<DragDropComponent config={config} label={currentValue?.length > 0 ? t("UPLOAD_MORE") : t("UPLOAD")} />}
                 key={input?.name}
+                onTypeError={() =>
+                  setShowToast({
+                    label: t("NOT_SUPPORTED_FILE_TYPE"),
+                    error: true,
+                  })
+                }
               />
             )}
           </div>
@@ -275,6 +264,7 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                   zIndex: 1000,
                   backgroundColor: "grey",
                 }}
+                popupModuleMianStyles={input?.popupModuleMianStyles}
               />
             )}
           </div>
@@ -283,7 +273,15 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
               {errors[input.name]?.message ? errors[input.name]?.message : t(errors[input.name]) || t(input.error)}
             </CardLabelError>
           )}
-          {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+          {showToast && (
+            <CustomToast
+              error={showToast?.error}
+              label={showToast?.label}
+              errorId={showToast?.errorId}
+              onClose={() => setShowToast(null)}
+              duration={showToast?.errorId ? 7000 : 5000}
+            />
+          )}
         </div>
       </React.Fragment>
     );

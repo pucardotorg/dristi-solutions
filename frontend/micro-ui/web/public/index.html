@@ -3,11 +3,12 @@
 
 <head>
   <meta charset="utf-8" />
+  <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" href="https://raw.githubusercontent.com/pucardotorg/kerala-configs/refs/heads/master/pucar-assets/Crafting_ON_24x7_final.png" />
   <link
     href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap"
     rel="stylesheet" type="text/css" />
-  <link rel="stylesheet" href="https://unpkg.com/dristi-ui-css@0.0.3-dristi-kerala.6/dist/index.css" />
+  <!-- <link rel="stylesheet" href="https://unpkg.com/dristi-ui-css@0.1.0-dristi-kerala.2/dist/index.css" /> -->
 
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -18,6 +19,32 @@
 
   <title>24x7 ON Courts</title>
   <!-- <script src="https://s3.ap-south-1.amazonaws.com/egov-dev-assets/globalConfigs.js"></script> -->
+  <script>
+    // Detect Full Document Reload
+    console.log("APP_BOOT", {
+      timeOrigin: performance.timeOrigin,
+      timestamp: Date.now(),
+    });
+  
+    // Detect Browser Unload (Not App Navigation)
+    window.addEventListener("beforeunload", () => {
+      console.log("BEFORE_UNLOAD_TRIGGERED", Date.now());
+    });
+  
+    // Correlate Network State Changes
+    window.addEventListener("offline", () => {
+      console.log("NETWORK_OFFLINE", Date.now());
+    });
+  
+    window.addEventListener("online", () => {
+      console.log("NETWORK_ONLINE", Date.now());
+    });
+  
+    // Detect Visibility / System Context Changes
+    document.addEventListener("visibilitychange", () => {
+      console.log("VISIBILITY_CHANGE", document.visibilityState, Date.now());
+    });
+  </script>
 </head>
 
 <body>

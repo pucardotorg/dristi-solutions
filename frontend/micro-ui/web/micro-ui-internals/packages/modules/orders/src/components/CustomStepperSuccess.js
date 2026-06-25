@@ -4,6 +4,7 @@ import { FileIcon, PrintIcon } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
 import { Urls } from "../hooks/services/Urls";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
+import { ORDER_TYPES } from "../utils/constants";
 
 const submitButtonStyle = {
   fontFamily: "Roboto",
@@ -26,16 +27,24 @@ const CustomStepperSuccess = ({
   submitButtonText,
   closeButtonText,
   orderType,
+  isSubmitting = false,
+  rowData = {},
 }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const fileStore = sessionStorage.getItem("SignedFileStoreID");
 
   const documentType = useMemo(() => {
     let txt = "";
-    if (orderType === "SUMMONS") {
+    if (orderType === ORDER_TYPES.SUMMONS) {
       txt = "Summons";
-    } else if (orderType === "WARRANT") {
+    } else if (orderType === ORDER_TYPES.WARRANT) {
       txt = "Warrant";
+    } else if (orderType === ORDER_TYPES.PROCLAMATION) {
+      txt = "Proclamation";
+    } else if (orderType === ORDER_TYPES.ATTACHMENT) {
+      txt = "Attachment";
+    } else if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
+      txt = "Miscellaneous Process";
     } else {
       txt = "Notice";
     }
@@ -76,6 +85,7 @@ const CustomStepperSuccess = ({
                 t={t}
                 style={{ marginLeft: "0.5rem", color: "#007E7E" }}
                 displayFilename={"PRINT"}
+                name={`${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber}_${rowData?.taskNumber}_${rowData?.taskType}`}
               />
             ) : (
               <span style={{ marginLeft: "0.5rem", color: "grey" }}>Print</span>
@@ -111,6 +121,7 @@ const CustomStepperSuccess = ({
                 submitButtonAction();
               }}
               textStyles={submitButtonStyle}
+              isDisabled={submitButtonText !== "CS_CLOSE" && isSubmitting}
             >
               {/* <RightArrow /> */}
             </Button>

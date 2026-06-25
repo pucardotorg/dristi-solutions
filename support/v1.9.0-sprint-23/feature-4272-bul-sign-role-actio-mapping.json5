@@ -1,0 +1,88 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "masterName": "roleactions",
+    "mdmsPayload": [
+      {
+        "id": "d4d1002e-e07e-4dc9-aa1a-5b4db826f85c",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": "492",
+        "data": {
+          "id": 492,
+          "actionid": 2749,
+          "rolecode": "JUDGE_ROLE",
+          "tenantid": "kl",
+          "actioncode": "2749"
+        },
+        "isActive": true
+      },
+      {
+        "id": "556d3ece-03f1-42ba-819a-07c8a73f4da8",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": "491",
+        "data": {
+          "id": 491,
+          "actionid": 2748,
+          "rolecode": "JUDGE_ROLE",
+          "tenantid": "kl",
+          "actioncode": "2748"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "masterName": "actions-test",
+    "mdmsPayload": [
+      {
+        "id": "d03dfd4b-cca1-4b39-a077-d89ba09cdca2",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": "2749",
+        "data": {
+          "id": 2749,
+          "url": "/bail-bond/v1/_updateSignedBails",
+          "code": "2749",
+          "name": "Update Signed Bail Orders",
+          "enabled": false,
+          "displayName": "Update Signed Bail Orders",
+          "serviceCode": "bail-bond"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1752669265287,
+          "lastModifiedTime": 1752670420357
+        }
+      },
+      {
+        "id": "69a5f2c6-1034-43f9-a3b2-6805d4a61fc5",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": "2748",
+        "data": {
+          "id": 2748,
+          "url": "/bail-bond/v1/_getBailsToSign",
+          "code": "2748",
+          "name": "Get Bail Orders To Sign",
+          "enabled": false,
+          "displayName": "Get Bail Orders To Sign",
+          "serviceCode": "bail-bond"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1752669031941,
+          "lastModifiedTime": 1752670403794
+        }
+      }
+    ]
+  }
+]

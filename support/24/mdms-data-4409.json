@@ -1,0 +1,28 @@
+[
+  {
+    "moduleName": "Application",
+    "masterName": "ApplicationType",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "id": "b4d46c7b-26ce-4ea1-aaf7-2afa3708fc8c",
+        "tenantId": "kl",
+        "schemaCode": "Application.ApplicationType",
+        "uniqueIdentifier": "16",
+        "data": {
+          "id": 16,
+          "type": "ADDING_WITNESSES",
+          "isactive": true,
+          "totalAmount": "20"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1753956103476,
+          "lastModifiedTime": 1753956103476
+        }
+      }
+    ]
+  }
+]

@@ -1,23 +1,7 @@
-import { CloseSvg, Modal } from "@egovernments/digit-ui-react-components";
+import { Modal } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
 import { useHistory } from "react-router-dom";
-
-const Heading = (props) => {
-  return (
-    <h1 className="heading-m" style={{ marginLeft: "47px" }}>
-      {props.label}
-    </h1>
-  );
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 function ConfirmCaseDetailsModal({ t, setShowConfirmCaseDetailsModal }) {
   const history = useHistory();
   const userInfo = Digit?.UserService?.getUser()?.info;
@@ -36,7 +20,7 @@ function ConfirmCaseDetailsModal({ t, setShowConfirmCaseDetailsModal }) {
 
   return (
     <Modal
-      headerBarMain={<Heading label={t("PLEASE_CONFIRM_CASE_DETAILS")} />}
+      headerBarMain={<Heading style={{ marginLeft: "47px" }} label={t("PLEASE_CONFIRM_CASE_DETAILS")} />}
       headerBarEnd={<CloseBtn onClick={handleOnCancel} />}
       actionSaveLabel={t("CS_CLOSE")}
       actionSaveOnSubmit={handleOnCancel}

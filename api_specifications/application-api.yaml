@@ -1,0 +1,276 @@
+openapi: 3.0.0
+
+info:
+  title: Application Service API
+  description: DRISTI Application Service responsible for creation,
+    update, search and workflow operations for court applications.
+  version: 1.0.0
+
+servers:
+  - url: /application-services/v1
+    description: Application Service Base Path
+
+tags:
+  - name: Application
+    description: Application lifecycle APIs
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /_create:
+    post:
+      tags: [Application]
+      summary: Create application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationRequest'
+      responses:
+        '200':
+          description: Application created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+
+  /_update:
+    post:
+      tags: [Application]
+      summary: Update application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationRequest'
+      responses:
+        '200':
+          description: Application updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+
+  /_search:
+    post:
+      tags: [Application]
+      summary: Search applications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationSearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationSearchResponse'
+
+  /_exists:
+    post:
+      tags: [Application]
+      summary: Check if application exists
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationExistsRequest'
+      responses:
+        '200':
+          description: Exists response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationExistsResponse'
+
+  /_addcomment:
+    post:
+      tags: [Application]
+      summary: Add comment to application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationCommentRequest'
+      responses:
+        '200':
+          description: Comment added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    # -------------------------------------------------
+    # WRAPPER REQUESTS
+    # -------------------------------------------------
+
+    ApplicationRequest:
+      type: object
+      required: [requestInfo, application]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        application:
+          $ref: '#/components/schemas/Application'
+
+    ApplicationSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          $ref: '#/components/schemas/ApplicationSearchCriteria'
+        pagination:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination"
+
+    ApplicationExistsRequest:
+      type: object
+      required: [requestInfo, applicationNumber]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        applicationNumber:
+          type: string
+
+    ApplicationCommentRequest:
+      type: object
+      required: [requestInfo, applicationId, comment]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        applicationId:
+          type: string
+          format: uuid
+        comment:
+          $ref: '#/components/schemas/ApplicationComment'
+
+    # -------------------------------------------------
+    # RESPONSES
+    # -------------------------------------------------
+
+    ApplicationResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        application:
+          $ref: '#/components/schemas/Application'
+
+    ApplicationSearchResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Application'
+        totalCount:
+          type: integer
+
+    ApplicationExistsResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        exists:
+          type: boolean
+
+    # -------------------------------------------------
+    # DOMAIN MODEL
+    # -------------------------------------------------
+
+    Application:
+      type: object
+      required:
+        - tenantId
+        - caseId
+        - applicationType
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        applicationNumber:
+          type: string
+          description: System generated application number
+        tenantId:
+          type: string
+        caseId:
+          type: string
+          format: uuid
+        applicationType:
+          type: string
+          description: Type of application (e.g., BAIL, REVISION, APPEAL)
+        status:
+          type: string
+        isActive:
+          type: boolean
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationComment'
+        additionalDetails:
+          type: object
+        auditDetails:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
+
+    ApplicationSearchCriteria:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        caseId:
+          type: string
+        applicationType:
+          type: string
+        status:
+          type: string
+        applicationNumber:
+          type: string
+
+    ApplicationComment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        commentText:
+          type: string
+        commentedBy:
+          type: string
+        commentedTime:
+          type: integer
+          format: int64
+
+    Workflow:
+      type: object
+      properties:
+        action:
+          type: string
+        assignee:
+          type: string
+        comments:
+          type: string

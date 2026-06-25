@@ -2,18 +2,19 @@ import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
 import DocumentModal from "../../components/DocumentModal";
-import { formatDate } from "../../../../hearings/src/utils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { ordersService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
 import { paymentType } from "../../utils/paymentType";
-import { extractFeeMedium, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { getSuffixByDeliveryChannel } from "../../utils";
+import { DateUtils, extractFeeMedium, getAuthorizedUuid, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { getFormattedName, getSuffixByDeliveryChannel } from "../../utils";
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
+import { ORDER_TYPES } from "../../utils/constants";
 
 const submitModalInfo = {
   header: "CS_HEADER_FOR_SUMMON_POST",
@@ -32,6 +33,8 @@ const orderTypeEnum = {
   SUMMONS: "Summons",
   NOTICE: "Notice",
   WARRANT: "Warrant",
+  PROCLAMATION: "Proclamation",
+  ATTACHMENT: "Attachment",
 };
 
 const PaymentForSummonComponent = ({
@@ -43,30 +46,10 @@ const PaymentForSummonComponent = ({
   channelId,
   formattedChannelId,
   orderType,
-  isUserAdv,
   isCaseLocked = false,
   payOnlineButtonTitle = null,
 }) => {
   const { t } = useTranslation();
-  const CustomErrorTooltip = window?.Digit?.ComponentRegistryService?.getComponent("CustomErrorTooltip");
-  const [selectedOption, setSelectedOption] = useState({});
-
-  const getDateWithMonthName = (orderDate) => {
-    let today = new Date();
-
-    today.setDate(today.getDate() - 15);
-
-    // Array of month names
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-    let dd = String(today.getDate()).padStart(2, "0");
-    let mm = monthNames[today.getMonth()];
-    let yyyy = today.getFullYear();
-
-    let formattedDate = `${dd} ${mm} ${yyyy}`;
-
-    return formattedDate; // Output: formatted date 15 days ago with month name
-  };
 
   return (
     <div className="payment-for-summon">
@@ -80,28 +63,26 @@ const PaymentForSummonComponent = ({
             <div className={`${index === 0 ? "header-row" : "action-row"}`} key={index}>
               <div className="payment-label">{t(action?.label)}</div>
               <div className="payment-amount">{action?.action !== "offline-process" && action?.amount ? `Rs. ${action?.amount}/-` : "-"}</div>
-              {isUserAdv && (
-                <div className="payment-action">
-                  {!action?.isCompleted &&
-                    (index === 0 ? (
-                      t(action?.action)
-                    ) : action?.action !== "offline-process" ? (
-                      <ButtonSelector
-                        style={{ border: "1px solid" }}
-                        label={t(action.action)}
-                        onSubmit={action.onClick}
-                        isDisabled={paymentLoader || isCaseLocked}
-                        title={isCaseLocked ? t(payOnlineButtonTitle) : ""}
-                        textStyles={{ margin: "0px" }}
-                      />
-                    ) : (
-                      <p className="offline-process-text">
-                        This is an offline process. <span className="learn-more-text">Learn More</span>
-                      </p>
-                    ))}
-                  {action?.isCompleted && <p style={{ color: "green" }}>{t("PAYMENT_COMPLETED")}</p>}
-                </div>
-              )}
+              <div className="payment-action">
+                {!action?.isCompleted &&
+                  (index === 0 ? (
+                    t(action?.action)
+                  ) : action?.action !== "offline-process" ? (
+                    <ButtonSelector
+                      style={{ border: "1px solid" }}
+                      label={t(action.action)}
+                      onSubmit={action.onClick}
+                      isDisabled={paymentLoader || isCaseLocked}
+                      title={isCaseLocked ? t(payOnlineButtonTitle) : ""}
+                      textStyles={{ margin: "0px" }}
+                    />
+                  ) : (
+                    <p className="offline-process-text">
+                      This is an offline process. <span className="learn-more-text">Learn More</span>
+                    </p>
+                  ))}
+                {action?.isCompleted && <p style={{ color: "green" }}>{t("PAYMENT_COMPLETED")}</p>}
+              </div>
             </div>
           ))}
         </div>
@@ -112,12 +93,16 @@ const PaymentForSummonComponent = ({
 
 const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const history = useHistory();
+  const { t } = useTranslation();
   const userInfo = Digit.UserService.getUser()?.info;
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const { filingNumber, taskNumber } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [caseId, setCaseId] = useState();
   const [isCaseLocked, setIsCaseLocked] = useState(false);
   const [payOnlineButtonTitle, setPayOnlineButtonTitle] = useState("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
+  const [showToast, setShowToast] = useState(null);
 
   useEffect(() => {
     // If we don't have query params, redirect to home
@@ -145,7 +130,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     if (caseData) {
       const id = caseData?.criteria?.[0]?.responseList?.[0]?.id;
       if (id) {
-        console.log(id, "id");
         setCaseId(id); // Set the caseId in state
       } else {
         console.error("caseId is undefined or not available");
@@ -156,6 +140,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
+
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const fetchCaseLockStatus = useCallback(async () => {
     try {
       const status = await DRISTIService.getCaseLockStatus(
@@ -168,6 +154,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       setIsCaseLocked(status?.Lock?.isLocked);
     } catch (error) {
       console.error("Error fetching case lock status", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_FETCHING_CASE_LOCK_STATUS"), error: true, errorId });
     }
   });
   useEffect(() => {
@@ -183,7 +171,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     }
     return [];
   }, [allAdvocates]);
-  const isUserAdv = useMemo(() => advocatesUuids.includes(userInfo.uuid), [advocatesUuids, userInfo.uuid]);
+  const isUserAdv = useMemo(() => advocatesUuids.includes(authorizedUuid), [advocatesUuids, authorizedUuid]);
 
   const isCaseAdmitted = useMemo(() => caseDetails?.status === "CASE_ADMITTED", [caseDetails]);
 
@@ -204,20 +192,21 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       criteria: {
         tenantId: tenantId,
         taskNumber: taskNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
 
-  const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId } },
+  const { data: orderData, isLoading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
+    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filteredTasks?.[0]?.orderId,
-    Boolean(filteredTasks?.[0]?.orderId)
+    Boolean(filteredTasks?.[0]?.orderId && caseCourtId)
   );
   const orderDetails = useMemo(() => orderData?.list?.[0] || {}, [orderData]);
   const summonsPincode = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.address?.pincode, [filteredTasks]);
@@ -239,18 +228,21 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
-        hearingId: orderDetails?.hearingNumber,
+        hearingId: orderDetails?.scheduledHearingNumber || orderDetails?.hearingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
-    orderDetails?.hearingNumber,
-    Boolean(orderDetails?.hearingNumber)
+    orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber,
+    Boolean((orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber) && caseCourtId)
   );
 
   const getBusinessService = (orderType) => {
     const businessServiceMap = {
       SUMMONS: paymentType.TASK_SUMMON,
       WARRANT: paymentType.TASK_WARRANT,
+      PROCLAMATION: paymentType.TASK_PROCLAMATION,
+      ATTACHMENT: paymentType.TASK_ATTACHMENT,
       NOTICE: paymentType.TASK_NOTICE,
     };
     return businessServiceMap?.[orderType];
@@ -331,7 +323,17 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     breakupResponse,
   ]);
 
-  const service = useMemo(() => (orderType === "WARRANT" ? paymentType.TASK_WARRANT : paymentType.TASK_NOTICE), [orderType]);
+  const service = useMemo(() => {
+    if (orderType === ORDER_TYPES.WARRANT) {
+      return paymentType.TASK_WARRANT;
+    } else if (orderType === ORDER_TYPES.PROCLAMATION) {
+      return paymentType.TASK_PROCLAMATION;
+    } else if (orderType === ORDER_TYPES.ATTACHMENT) {
+      return paymentType.TASK_ATTACHMENT;
+    } else {
+      return paymentType.TASK_NOTICE;
+    }
+  }, [orderType]);
 
   const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchCourtBill } = Digit.Hooks.dristi.useBillSearch(
     {},
@@ -368,7 +370,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       try {
         const { data: freshBillResponse } = await refetchBill();
         if (!billResponse?.Bill?.length) {
-          console.log("Bill not found");
           return null;
         }
         if (freshBillResponse?.Bill?.[0]?.status === "PAID") {
@@ -393,7 +394,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
 
         if (!billPaymentStatus) {
-          console.log("Payment canceled or failed", taskNumber);
           return;
         }
         const resfileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: billResponse?.Bill?.[0]?.id, tenantId });
@@ -432,7 +432,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         if (type !== "EPOST") {
           await ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
-              name: orderType === "WARRANT" ? "PAYMENT_PENDING_FOR_WARRANT" : `MAKE_PAYMENT_FOR_${orderType}_POST`,
+              name:
+                orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
+                  ? `PAYMENT_PENDING_FOR_${orderType}`
+                  : `MAKE_PAYMENT_FOR_${orderType}_POST`,
               entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
               referenceId: `MANUAL_${taskNumber}`,
               status: status,
@@ -451,7 +454,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         } else if (fileStoreId && ePostBillResponse?.Bill?.[0]?.status === "PAID") {
           await ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
-              name: orderType === "WARRANT" ? "PAYMENT_PENDING_FOR_WARRANT" : `MAKE_PAYMENT_FOR_${orderType}_POST`,
+              name:
+                orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
+                  ? `PAYMENT_PENDING_FOR_${orderType}`
+                  : `MAKE_PAYMENT_FOR_${orderType}_POST`,
               entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
               referenceId: `MANUAL_${taskNumber}`,
               status: status,
@@ -471,6 +477,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, postPaymenScreenObj);
       } catch (error) {
         console.error(error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ERROR_PROCESSING_PAYMENT"), error: true, errorId });
       }
     };
 
@@ -494,6 +502,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         });
       } catch (error) {
         console.error(error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ERROR_PROCESSING_PAYMENT"), error: true, errorId });
       }
     };
 
@@ -524,6 +534,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           onClick: () => onPayOnline("SMS"),
         },
       ],
+      // not sure it is using here
       EPOST: [
         {
           label: "Fee Type",
@@ -590,22 +601,40 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     status,
     filteredTasks,
     filingNumber,
+    t,
     service,
     orderData,
     partyIndex,
   ]);
 
   const infos = useMemo(() => {
+    const formDataKeyMap = {
+      NOTICE: "noticeOrder",
+      SUMMONS: "SummonsOrder",
+      WARRANT: "warrantFor",
+      PROCLAMATION: "proclamationFor",
+      ATTACHMENT: "attachmentFor", // Assuming ATTACHMENT uses the same formdata key as WARRANT
+      // Add more types here easily in future
+    };
     const formdata =
       orderDetails?.orderCategory === "COMPOSITE"
         ? compositeItem?.orderSchema?.additionalDetails?.formdata
         : orderDetails?.additionalDetails?.formdata;
-    const orderKey = orderType === "SUMMONS" ? "SummonsOrder" : orderType === "WARRANT" ? "warrantFor" : "noticeOrder";
-    const partyData = formdata?.[orderKey]?.party?.data;
+    const partyData = formdata?.[formDataKeyMap[orderType]]?.party?.data;
     const name =
-      [partyData?.firstName, partyData?.lastName]?.filter(Boolean)?.join(" ") ||
-      (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
+      getFormattedName(
+        partyData?.firstName?.trim(),
+        partyData?.middleName?.trim(),
+        partyData?.lastName?.trim(),
+        partyData?.witnessDesignation?.trim(),
+        null
+      ) ||
+      (orderType === ORDER_TYPES.WARRANT && formdata?.warrantFor?.name) ||
+      (orderType === ORDER_TYPES.PROCLAMATION && formdata?.proclamationFor?.name) ||
+      (orderType === ORDER_TYPES.ATTACHMENT && formdata?.attachmentFor?.name) ||
       formdata?.warrantFor ||
+      formdata?.proclamationFor ||
+      formdata?.attachmentFor ||
       "";
 
     const task = filteredTasks?.[0];
@@ -627,7 +656,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
 
     return [
       { key: "Issued to", value: name },
-      { key: "Next Hearing Date", value: formatDate(new Date(hearingsData?.HearingList?.[0]?.startTime), "DD-MM-YYYY") },
+      { key: "Next Hearing Date", value: DateUtils.getFormattedDate(new Date(hearingsData?.HearingList?.[0]?.startTime), "DD-MM-YYYY") },
       {
         key: "Delivery Channel",
         value: deliveryChannel ? `${deliveryChannel} (${contactDetail})` : "Not available",
@@ -641,7 +670,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
 
   const links = useMemo(() => {
     const onViewOrderClick = () => {
-      console.log(caseId, "caseID");
       history.push(
         `/${window.contextPath}/citizen/dristi/home/view-case?caseId=${caseData?.criteria?.[0]?.responseList?.[0]?.id}&filingNumber=${filingNumber}&tab=Orders`
       );
@@ -666,6 +694,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       isStepperModal: false,
       isCaseLocked: isCaseLocked,
       payOnlineButtonTitle: payOnlineButtonTitle,
+      className: "payment-modal",
       modalBody: (
         <PaymentForSummonComponent
           infos={infos}
@@ -677,7 +706,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           formattedChannelId={formattedChannelId}
           isCaseAdmitted={isCaseAdmitted}
           orderType={orderType}
-          isUserAdv={isUserAdv}
           isCaseLocked={isCaseLocked}
           payOnlineButtonTitle={payOnlineButtonTitle}
         />
@@ -698,10 +726,23 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     history,
   ]);
 
-  if (isOrdersLoading || isPaymentTypeLoading || isSummonsBreakUpLoading || isBillLoading) {
+  if (isOrdersLoading || !orderData || isPaymentTypeLoading || isSummonsBreakUpLoading || isBillLoading) {
     return <Loader />;
   }
-  return <DocumentModal config={paymentForSummonModalConfig} />;
+  return (
+    <React.Fragment>
+      <DocumentModal config={paymentForSummonModalConfig} />
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
+    </React.Fragment>
+  );
 };
 
 export default PaymentForSummonModalSMSAndEmail;

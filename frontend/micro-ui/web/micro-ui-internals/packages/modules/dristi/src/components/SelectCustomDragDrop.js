@@ -1,11 +1,11 @@
 import { UploadIcon } from "@egovernments/digit-ui-react-components";
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { FileUploader } from "react-drag-drop-files";
 import { FileUploadIcon } from "../icons/svgIndex";
-import { isEmptyObject } from "../Utils";
+import { isEmptyObject, combineMultipleFiles } from "../Utils";
+import { EXTENSION_TO_MIME } from "../Utils/constants";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import RenderFileCard from "./RenderFileCard";
-import { useToast } from "./Toast/useToast";
 
 const DragDropJSX = ({ t, currentValue, error }) => {
   return (
@@ -27,35 +27,60 @@ const DragDropJSX = ({ t, currentValue, error }) => {
           <h3>{t("CS_COMMON_CHOOSE_FILE")}</h3>
         </div>
       </div>
-      {error && <span className="alert-error">{t(error.msg || "CORE_REQUIRED_FIELD_ERROR")}</span>}
+      {/* {error && <span className="alert-error">{t(error.msg || error.message || "CORE_REQUIRED_FIELD_ERROR")}</span>} */}
     </React.Fragment>
   );
 };
 
-function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setError, clearErrors }) {
-  const toast = useToast();
+function SelectCustomDragDrop({
+  t,
+  config,
+  formData = {},
+  onSelect,
+  errors,
+  setError,
+  clearErrors,
+  formDisbalityCount = false,
+  combineAndSelectRef,
+}) {
   const inputs = useMemo(
-    () =>
-      config?.populators?.inputs || [
-        {
-          documentHeader: "AADHAR",
-          documentSubText: "subtext",
-          isOptional: "CS_IS_OPTIONAL",
-          infoTooltipMessage: "AADHAR",
-          type: "DragDropComponent",
-          uploadGuidelines: t("UPLOAD_DOC_50"),
-          maxFileSize: 50,
-          maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-          fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-          isMultipleUpload: true,
-        },
-      ],
-    [config?.populators?.inputs, t]
+    () => [
+      {
+        name: config?.populators?.inputs?.[0]?.name || "document",
+        documentHeader: config?.populators?.inputs?.[0]?.documentHeader || "",
+        documentHeaderStyle: config?.populators?.inputs?.[0]?.documentHeaderStyle,
+        documentSubText: config?.populators?.inputs?.[0]?.documentSubText,
+        isOptional: config?.populators?.inputs?.[0]?.isOptional,
+        infoTooltipMessage: config?.populators?.inputs?.[0]?.infoTooltipMessage || "",
+        type: config?.populators?.inputs?.[0]?.type || "DragDropComponent",
+        uploadGuidelines: config?.populators?.inputs?.[0]?.note || config?.note || t("UPLOAD_DOC_10"),
+        maxFileSize: config?.populators?.inputs?.[0]?.maxFileSize || config?.maxFileSize || 10,
+        fileTypes: config?.populators?.inputs?.[0]?.fileTypes || config?.fileTypes || ["JPG", "PDF", "PNG", "JPEG"],
+        isMultipleUpload: config?.populators?.inputs?.[0]?.isMultipleUpload || config?.isMultipleUpload,
+      },
+    ],
+    [config, t]
   );
+  useEffect(() => {
+    if (!combineAndSelectRef) return;
+    combineAndSelectRef.current = async () => {
+      let result = null;
+      for (const input of inputs) {
+        const currentValue = (formData && formData?.[config?.key] && formData[config?.key]?.[input?.name]) || [];
+        if (currentValue?.length > 1) {
+          const combined = await combineMultipleFiles(currentValue);
+          const updatedValue = { ...formData[config?.key], [input?.name]: combined };
+          onSelect(config?.key, isEmptyObject(updatedValue) ? null : updatedValue, { shouldValidate: true });
+          result = { configKey: config?.key, inputName: input?.name, combinedFiles: combined };
+        }
+      }
+      return result;
+    };
+  }, [combineAndSelectRef, inputs, formData, config?.key, onSelect]);
 
   function setValue(value, input, isFileSizeLimitExceeded) {
     let updatedValue = {
-      ...formData[config.key],
+      ...formData[config?.key],
     };
 
     if (Array.isArray(input)) {
@@ -74,19 +99,50 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
   }
 
   const fileValidator = (file, input) => {
-    // const fileType = file?.type.split("/")[1].toUpperCase();
-    // if (fileType && !input.fileTypes.includes(fileType)) {
-    //   return { [input?.name]: "Invalid File Type", ...uploadErrorInfo };
-    // }
     if (file?.fileStore) return null;
+
+    if (file?.type && input?.fileTypes?.length) {
+      const allowedMimes = input?.fileTypes.flatMap((ext) => EXTENSION_TO_MIME[ext.toLowerCase()] || []);
+      if (allowedMimes.length && !allowedMimes.includes(file.type)) {
+        return t("NOT_SUPPORTED_FILE_TYPE");
+      }
+    }
+
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
-    return file.size > maxFileSize ? `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` : null;
+    return file?.size > maxFileSize ? `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` : null;
   };
 
   const handleChange = (file, input, index = Infinity) => {
-    let currentValue = (formData && formData[config.key] && formData[config.key][input.name]) || [];
-    currentValue.splice(index, 1, file);
-    currentValue = currentValue.map((item) => {
+    let currentValue = (formData && formData[config.key] && formData[config.key][input?.name]) || [];
+    // MIME type validation
+    if (file?.type && input?.fileTypes?.length) {
+      const allowedMimes = input?.fileTypes.flatMap((ext) => EXTENSION_TO_MIME[ext.toLowerCase()] || []);
+      if (allowedMimes.length && !allowedMimes.includes(file.type)) {
+        setError(`${config?.key}_${index}`, { message: t("NOT_SUPPORTED_FILE_TYPE") });
+        return;
+      }
+    } else if (clearErrors) {
+      clearErrors(config.key);
+    }
+    // Check file size before adding to currentValue
+    const maxFileSize = input?.maxFileSize * 1024 * 1024;
+    if (file?.size > maxFileSize) {
+      setError(config.key, { message: `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` });
+      return;
+    } else if (clearErrors) {
+      clearErrors(config.key);
+    }
+
+    // Only add the file to currentValue if it passes size validation
+    // Use immutable update to avoid mutating the original array reference in formData
+    let newCurrentValue;
+    if (index === Infinity) {
+      newCurrentValue = [...currentValue, file];
+    } else {
+      newCurrentValue = [...currentValue];
+      newCurrentValue[index] = file;
+    }
+    currentValue = newCurrentValue.map((item) => {
       if (item?.name) {
         const fileNameParts = item?.name.split(".");
         const extension = fileNameParts.pop().toLowerCase();
@@ -99,17 +155,11 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
         return item;
       }
     });
-    const maxFileSize = input?.maxFileSize * 1024 * 1024;
-    if (file.size > maxFileSize) {
-      setError(config.key, { message: `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` });
-    } else if (clearErrors) {
-      clearErrors(config.key);
-    }
     setValue(currentValue, input?.name, file.size > maxFileSize);
   };
 
   const handleDeleteFile = (input, index) => {
-    let currentValue = (formData && formData[config.key] && formData[config.key][input.name]) || [];
+    let currentValue = (formData && formData[config.key] && formData[config.key][input?.name]) || [];
     currentValue.splice(index, 1);
     if (clearErrors) {
       clearErrors(config.key);
@@ -117,7 +167,7 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
     setValue(currentValue, input?.name);
   };
   return inputs.map((input) => {
-    let currentValue = (formData && formData[config.key] && formData[config.key][input.name]) || [];
+    let currentValue = (formData && formData[config.key] && formData[config.key][input?.name]) || [];
     let fileErrors = currentValue.map((file) => fileValidator(file, input));
     const showFileUploader = currentValue.length ? input?.isMultipleUpload : true;
     const showDocument =
@@ -134,11 +184,17 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                   <h1 className="card-label custom-document-header" style={{ ...input?.documentHeaderStyle, margin: 0 }}>
                     {t(input?.documentHeader)}
                   </h1>
-                  {input?.isOptional && <span style={{ color: "#77787B", verticalAlign: "middle" }}>&nbsp;{`${t(input?.isOptional)}`}</span>}
-                  <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage)} icon />
+                  {input?.isOptional && (
+                    <span style={{ ...input?.documentOptionalStyle, color: "#77787B", verticalAlign: "middle" }}>
+                      &nbsp;{`${t(input?.isOptional)}`}
+                    </span>
+                  )}
+                  {input?.infoTooltipMessage && (
+                    <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage)} icon />
+                  )}
                 </div>
               )}
-              {input.documentSubText && <p className="custom-document-sub-header">{t(input.documentSubText)}</p>}
+              {input?.documentSubText && <p className="custom-document-sub-header">{t(input?.documentSubText)}</p>}
             </div>
 
             {currentValue.map((file, index) => (
@@ -151,13 +207,15 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                 t={t}
                 uploadErrorInfo={fileErrors[index]}
                 input={input}
-                disableUploadDelete={config?.disable}
+                disableUploadDelete={config?.disable || formDisbalityCount}
+                configKey={config?.key}
+                setError={setError}
               />
             ))}
 
             <div className={`file-uploader-div-main ${showFileUploader ? "show-file-uploader" : ""}`}>
               <FileUploader
-                disabled={config?.disable}
+                disabled={config?.disable || formDisbalityCount}
                 handleChange={(data) => {
                   handleChange(data, input);
                 }}
@@ -172,27 +230,28 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                 children={<DragDropJSX t={t} currentValue={currentValue} error={errors?.[config.key]} />}
                 key={input?.name}
                 onTypeError={() => {
-                  toast.error(t("CS_INVALID_FILE_TYPE"));
+                  setError(config.key, { message: t("CS_INVALID_FILE_TYPE") });
                 }}
               />
               <div className="upload-guidelines-div">
-                {input?.fileTypes && input?.maxFileSize ? (
-                  <p>
-                    {`${t("CS_COMMON_CHOOSE_FILE")} ${
-                      input?.fileTypes.length > 1
-                        ? `${input?.fileTypes
-                            .slice(0, -1)
-                            .map((type) => `.${type.toLowerCase()}`)
-                            .join(", ")} ${t("CS_COMMON_OR")} .${input?.fileTypes[input?.fileTypes.length - 1].toLowerCase()}`
-                        : `.${input?.fileTypes[0].toLowerCase()}`
-                    }. ${t("CS_MAX_UPLOAD")} ${input.maxFileSize}MB`}
-                  </p>
-                ) : (
-                  <p>{input.uploadGuidelines}</p>
-                )}
+                <p>
+                  {input?.fileTypes?.length > 0 && input?.maxFileSize
+                    ? `${t("CS_COMMON_CHOOSE_FILE")} ${
+                        input?.fileTypes.length > 1
+                          ? `${input?.fileTypes
+                              .slice(0, -1)
+                              .map((type) => `.${type.toLowerCase()}`)
+                              .join(", ")} ${t("CS_COMMON_OR")} .${input?.fileTypes[input?.fileTypes.length - 1].toLowerCase()}`
+                          : `.${input?.fileTypes[0].toLowerCase()}`
+                      }. ${t("CS_MAX_UPLOAD")} ${input?.maxFileSize}MB. ${t("UPLOAD_NOTE")}`
+                    : input?.uploadGuidelines}
+                </p>
               </div>
             </div>
-            {input.downloadTemplateText && input.downloadTemplateLink && (
+            {errors?.[config.key] && (
+              <span className="alert-error">{t(errors?.[config.key]?.msg || errors?.[config.key].message || "CORE_REQUIRED_FIELD_ERROR")}</span>
+            )}
+            {input?.downloadTemplateText && input?.downloadTemplateLink && (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "20px" }}>
                 {input?.downloadTemplateText && t(input?.downloadTemplateText)}
                 {input?.downloadTemplateLink && (
@@ -215,7 +274,6 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                 )}
               </div>
             )}
-            {/* {errors?.[config.key] && <CardLabelError>{t(errors[config.key]?.message || "CORE_COMMON_INVALID")}</CardLabelError>} */}
           </div>
         )}
       </React.Fragment>

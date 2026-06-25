@@ -1,20 +1,15 @@
-import { Header, Card, Loader, ActionBar, SubmitBar, Modal, CardText, Toast, TextArea, BackButton } from "@egovernments/digit-ui-react-components";
+import { Header, Card, Loader, SubmitBar, Modal, CardText, TextArea } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams, useHistory } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import DocumentDetailCard from "../../components/DocumentDetailCard";
 import DocViewerWrapper from "./docViewerWrapper";
 import { ReactComponent as LocationOnMapIcon } from "../../images/location_onmap.svg";
 import { userTypeOptions } from "../citizen/registration/config";
-import Menu from "../../components/Menu";
-import { useToast } from "../../components/Toast/useToast";
 import { ErrorInfoIcon, SuccessIcon } from "../../icons/svgIndex";
 import ImageModal from "../../components/ImageModal";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { Heading } from "../../components/ModalComponents";
+import CustomToast from "../../components/CustomToast";
 const Close = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFFFFF">
     <path d="M0 0h24v24H0V0z" fill="none" />
@@ -55,9 +50,9 @@ const extractFormattedAddresses = (individualData, t) => {
 
   const formatAddress = (addr) => {
     if (!addr) return "";
-    const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "" } = addr;
+    const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "", doorNo = "" } = addr;
 
-    return `${addressLine1}, ${addressLine2}, ${buildingName}, ${street}, ${city}, ${pincode}`.trim();
+    return `${doorNo}, ${buildingName}, ${street}, ${city}, ${addressLine2}, ${addressLine1}, ${pincode}`.trim();
   };
 
   const permanentAddress = addresses?.find((addr) => addr?.type === "PERMANENT");
@@ -81,27 +76,23 @@ const extractFormattedAddresses = (individualData, t) => {
 
 const ApplicationDetails = ({ location, match }) => {
   const urlParams = new URLSearchParams(window.location.search);
-
-  const toast = useToast();
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const individualId = urlParams.get("individualId");
   const applicationNo = urlParams.get("applicationNo");
-  const type = urlParams.get("type") || "advocate";
   const moduleCode = "DRISTI";
   const { t } = useTranslation();
   const history = useHistory();
   const [showModal, setShowModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState({ isOpen: false, status: "" });
-  const [displayMenu, setDisplayMenu] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const [message, setMessage] = useState(null);
   const [reasons, setReasons] = useState(null);
-  const [isAction, setIsAction] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
+  const [isSubmittingAction, setIsSubmittingAction] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [imageInfo, setImageInfo] = useState(null);
+  const [showToast, setShowToast] = useState(null);
 
-  const { data: individualData, isLoading: isGetUserLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data: individualData, isLoading: isGetUserLoading, error: individualError } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
         individualId,
@@ -117,7 +108,11 @@ const ApplicationDetails = ({ location, match }) => {
     individualData?.Individual,
   ]);
 
-  const isAdvocateApplicationViewer = useMemo(() => userRoles?.includes("ADVOCATE_APPLICATION_VIEWER"), [userRoles]);
+  // if user is employee then ADVOCATE_APPROVER  role is needed and for citizrn ADVOCATE_APPLICATION_VIEWER role is needed.
+  const hasAdvocateApplicationViewAccess = useMemo(
+    () => userRoles?.some((role) => role === "ADVOCATE_APPLICATION_VIEWER" || role === "ADVOCATE_APPROVER"),
+    [userRoles]
+  );
 
   const isAdvocateViewer = useMemo(() => userRoles?.includes("ADVOCATE_VIEWER"), [userRoles]);
 
@@ -126,19 +121,22 @@ const ApplicationDetails = ({ location, match }) => {
     [individualData?.Individual]
   );
 
-  const { data: searchData, isLoading: isSearchLoading } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
-    {},
-    { tenantId: tenantId, applicationNumber: applicationNo },
+  const { data: searchData, isLoading: isSearchLoading, error: advocateSearchError } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
+    {
+      criteria: [{ applicationNumber: applicationNo }],
+      tenantId: tenantId,
+    },
+    { tenantId: tenantId },
     applicationNo + individualId,
     userType,
-    userType === "ADVOCATE" ? `/advocate/v1/applicationnumber/_search` : `/advocate/clerk/v1/applicationnumber/_search`
+    userType === "ADVOCATE" ? `/advocate/v1/_search` : `/advocate/clerk/v1/_search`
   );
 
   const userTypeDetail = useMemo(() => {
     return userTypeOptions.find((item) => item.code === userType) || {};
   }, [userType]);
 
-  const { isLoading: isWorkFlowLoading, data: workFlowDetails } = window?.Digit.Hooks.useWorkflowDetails({
+  const { isLoading: isWorkFlowLoading, data: workFlowDetails, error: workflowError } = window?.Digit.Hooks.useWorkflowDetails({
     tenantId,
     id: applicationNo,
     moduleCode,
@@ -155,17 +153,55 @@ const ApplicationDetails = ({ location, match }) => {
     [workFlowDetails?.processInstances, userRoles]
   );
 
+  useEffect(() => {
+    if (individualError) {
+      const errorId = individualError?.response?.headers?.["x-correlation-id"] || individualError?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        error: true,
+        label: t("FAILED_TO_FETCH_INDIVIDUAL_DETAILS"),
+        errorId,
+      });
+      return;
+    }
+
+    if (advocateSearchError) {
+      const errorId = advocateSearchError?.response?.headers?.["x-correlation-id"] || advocateSearchError?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        error: true,
+        label: t("FAILED_TO_FETCH_APPLICATION_DETAILS"),
+        errorId,
+      });
+      return;
+    }
+
+    if (workflowError) {
+      const errorId = workflowError?.response?.headers?.["x-correlation-id"] || workflowError?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        error: true,
+        label: t("FAILED_TO_FETCH_WORKFLOW_DETAILS"),
+        errorId,
+      });
+    }
+  }, [individualError, advocateSearchError, workflowError, t]);
+
   const searchResult = useMemo(() => {
-    return searchData?.[`${userTypeDetail?.apiDetails?.requestKey}s`];
+    const requestKey = userTypeDetail?.apiDetails?.requestKey;
+    const resultKey = requestKey ? `${requestKey}s` : null;
+    let result = resultKey ? searchData?.[resultKey] : null;
+
+    // Handle nested responseList structure for clerk search results
+    // The API returns { clerks: [{ responseList: [...actualData...] }] }
+    if (result && result[0]?.responseList) {
+      result = result[0].responseList;
+    }
+
+    return result;
   }, [searchData, userTypeDetail?.apiDetails?.requestKey]);
   const fileStoreId = useMemo(() => {
     return searchResult?.[0]?.documents?.[0]?.fileStore;
   }, [searchResult]);
   const fileName = useMemo(() => {
     return searchResult?.[0]?.documents?.[0]?.additionalDetails?.fileName;
-  }, [searchResult]);
-  useEffect(() => {
-    setIsAction(searchResult?.[0]?.status === "INWORKFLOW");
   }, [searchResult]);
 
   const applicationNumber = useMemo(() => {
@@ -176,15 +212,43 @@ const ApplicationDetails = ({ location, match }) => {
 
   function takeAction(action) {
     const applications = searchResult;
+
+    // Defensive checks - ensure data exists
+    if (!applications || !applications[0]) {
+      setShowModal(false);
+      setShowApproveModal(false);
+      setShowInfoModal({ isOpen: true, status: "ES_API_ERROR" });
+      return;
+    }
+
+    // Ensure workflow object exists - create it if it doesn't
+    if (!applications[0].workflow) {
+      applications[0].workflow = {};
+    }
+
     applications[0].workflow.action = action;
-    const data = { [userTypeDetail?.apiDetails?.requestKey]: applications?.[0] };
+
+    const requestKey = userTypeDetail?.apiDetails?.requestKey;
+    if (!requestKey) {
+      setShowModal(false);
+      setShowApproveModal(false);
+      setShowInfoModal({ isOpen: true, status: "ES_API_ERROR" });
+      return;
+    }
+
+    const data = { [requestKey]: applications[0] };
     const url = userType === "ADVOCATE_CLERK" ? "/advocate/clerk/v1/_update" : "/advocate/v1/_update";
+
     if (showModal) {
       applications[0].workflow.comments = reasons;
     }
+
+    setIsSubmittingAction(true);
     window?.Digit.DRISTIService.advocateClerkService(url, data, tenantId, true, {})
       .then(() => {
         setShowModal(false);
+        setShowApproveModal(false);
+        setIsSubmittingAction(false);
         if (action === "APPROVE") {
           setShowInfoModal({ isOpen: true, status: "ES_USER_APPROVED" });
         } else if (action === "REJECT") {
@@ -194,7 +258,9 @@ const ApplicationDetails = ({ location, match }) => {
       .catch(() => {
         setShowModal(false);
         setShowApproveModal(false);
+        setIsSubmittingAction(false);
         setShowInfoModal({ isOpen: true, status: "ES_API_ERROR" });
+        setShowToast({ error: true, label: t("FAILED_TO_UPDATE_APPLICATION_STATUS") });
       });
   }
 
@@ -205,7 +271,6 @@ const ApplicationDetails = ({ location, match }) => {
     if (action === "REJECT") {
       setShowModal(true);
     }
-    setDisplayMenu(false);
   }
 
   const handleDelete = (action) => {
@@ -224,19 +289,33 @@ const ApplicationDetails = ({ location, match }) => {
   }, [individualData, fullName, t]);
 
   const barDetails = useMemo(() => {
+    // For clerk, use stateRegnNumber; for advocate, use barRegistrationNumber from AdditionalFields
+    const registrationNumber =
+      userType === "ADVOCATE_CLERK" ? searchResult?.[0]?.stateRegnNumber : searchResult?.[0]?.[userTypeDetail?.apiDetails?.AdditionalFields?.[0]];
+
+    const registrationNumberLabel = userType === "ADVOCATE_CLERK" ? t("CLERK_REGISTRATION_NUMBER") : t("CS_BAR_REGISTRATION_NUMBER");
+    const documentLabel = userType === "ADVOCATE_CLERK" ? t("CLERK_ID") : t("CS_BAR_COUNCIL_ID");
+
     return [
-      { title: t("CS_BAR_REGISTRATION_NUMBER"), content: searchResult?.[0]?.[userTypeDetail?.apiDetails?.AdditionalFields?.[0]] || "N/A" },
+      { title: registrationNumberLabel, content: registrationNumber || "N/A" },
       {
-        title: t("CS_BAR_COUNCIL_ID"),
+        title: documentLabel,
         image: true,
         content: fileName,
       },
       {
-        doc: <DocViewerWrapper fileStoreId={fileStoreId} tenantId={tenantId} docViewerCardClassName={"doc-card"}></DocViewerWrapper>,
+        doc: (
+          <DocViewerWrapper
+            fileStoreId={fileStoreId}
+            tenantId={tenantId}
+            docViewerCardClassName={"doc-card"}
+            errorStyleSmallType={true}
+          ></DocViewerWrapper>
+        ),
         image: true,
       },
     ];
-  }, [fileStoreId, searchResult, tenantId, userTypeDetail?.apiDetails?.AdditionalFields]);
+  }, [fileStoreId, searchResult, fileName, tenantId, userTypeDetail?.apiDetails?.AdditionalFields, userType, t]);
 
   const aadharData = useMemo(() => {
     return [
@@ -245,19 +324,25 @@ const ApplicationDetails = ({ location, match }) => {
       {
         title: identifierIdDetails?.fileStoreId ? t("CS_ID_PROOF") : t("AADHAR_NUMBER"),
         doc: identifierIdDetails?.fileStoreId ? (
-          <DocViewerWrapper fileStoreId={identifierIdDetails?.fileStoreId} tenantId={tenantId} displayFilename={identifierIdDetails?.filename} docViewerCardClassName={"doc-card"}/>
+          <DocViewerWrapper
+            fileStoreId={identifierIdDetails?.fileStoreId}
+            tenantId={tenantId}
+            displayFilename={identifierIdDetails?.filename}
+            docViewerCardClassName={"doc-card"}
+            errorStyleSmallType={true}
+          />
         ) : (
           individualData?.Individual?.[0]?.identifiers[0]?.identifierId
         ),
       },
     ];
-  }, [identifierIdDetails?.fileStoreId, identifierIdDetails?.filename, individualData?.Individual, tenantId]);
+  }, [identifierIdDetails?.fileStoreId, identifierIdDetails?.filename, individualData?.Individual, tenantId, t]);
 
   const header = useMemo(() => {
     return applicationNo || applicationNumber ? ` ${t("APPLICATION_NUMBER")} ${applicationNo || applicationNumber}` : "My Application";
   }, [applicationNo, applicationNumber, t]);
 
-  if (!isAdvocateApplicationViewer) {
+  if (!hasAdvocateApplicationViewAccess) {
     history.push(`/${window?.contextPath}/citizen/dristi/home`);
   }
 
@@ -285,7 +370,7 @@ const ApplicationDetails = ({ location, match }) => {
             />
 
             <DocumentDetailCard cardData={personalData} />
-            {type === "advocate" && userType !== "ADVOCATE_CLERK" && (
+            {(userType === "ADVOCATE" || userType === "ADVOCATE_CLERK") && (
               <DocumentDetailCard onClick={() => handleImageModalOpen(fileStoreId, fileName)} cardData={barDetails} />
             )}
           </div>
@@ -295,7 +380,7 @@ const ApplicationDetails = ({ location, match }) => {
               <SubmitBar
                 label={t("Go_Back_Home")}
                 onSubmit={() => {
-                  history.push(`/${window?.contextPath}/citizen/dristi/home`);
+                  history.push(`/${window?.contextPath}/citizen/dristi/home?refetchIndividual=${true}`);
                 }}
                 className="action-button-width"
               />
@@ -319,24 +404,39 @@ const ApplicationDetails = ({ location, match }) => {
           {showModal && (
             <Modal
               headerBarMain={<Heading label={t("Confirm Reject Application")} />}
-              headerBarEnd={<CloseBtn onClick={() => setShowModal(false)} />}
+              headerBarEnd={<CloseBtn onClick={() => !isSubmittingAction && setShowModal(false)} />}
               actionSaveLabel={t("Reject")}
               actionSaveOnSubmit={() => {
                 handleDelete("REJECT");
               }}
-              isDisabled={!reasons || !reasons.trim()}
+              isDisabled={!reasons || !reasons.trim() || isSubmittingAction}
+              isBackButtonDisabled={isSubmittingAction}
               style={{ backgroundColor: "#BB2C2F" }}
             >
-              <Card style={{ boxShadow: "none", padding: "2px 16px 2px 16px", marginBottom: "2px" }}>
-                <CardText style={{ margin: "2px 0px" }}>{t(`REASON_FOR_REJECTION`)}</CardText>
-                <TextArea rows={"3"} onChange={(e) => setReasons(e.target.value)} style={{ maxWidth: "100%", height: "auto" }}></TextArea>
-              </Card>
+              {isSubmittingAction ? (
+                <div style={{ display: "flex", justifyContent: "center", padding: "24px 0" }}>
+                  <Loader />
+                </div>
+              ) : (
+                <Card style={{ boxShadow: "none", padding: "2px 16px 2px 16px", marginBottom: "2px" }}>
+                  <CardText style={{ margin: "2px 0px" }}>{t(`REASON_FOR_REJECTION`)}</CardText>
+                  <TextArea rows={"3"} onChange={(e) => setReasons(e.target.value)} style={{ maxWidth: "100%", height: "auto" }}></TextArea>
+                </Card>
+              )}
             </Modal>
           )}
           {showApproveModal && (
             <Modal
-              headerBarMain={<Heading label={t("CONFIRM_APPROVE_ADVOCATE_APPLICATION_HEADER")} />}
-              headerBarEnd={<CloseBtn onClick={() => setShowApproveModal(false)} />}
+              headerBarMain={
+                <Heading
+                  label={
+                    userType === "ADVOCATE_CLERK"
+                      ? t("CONFIRM_APPROVE_ADVOCATE_CLERK_APPLICATION_HEADER")
+                      : t("CONFIRM_APPROVE_ADVOCATE_APPLICATION_HEADER")
+                  }
+                />
+              }
+              headerBarEnd={<CloseBtn onClick={() => !isSubmittingAction && setShowApproveModal(false)} />}
               actionCancelLabel={t("CS_BACK")}
               actionCancelOnSubmit={() => {
                 setShowApproveModal(false);
@@ -345,8 +445,20 @@ const ApplicationDetails = ({ location, match }) => {
               actionSaveOnSubmit={() => {
                 takeAction("APPROVE");
               }}
+              isDisabled={isSubmittingAction}
+              isBackButtonDisabled={isSubmittingAction}
             >
-              <div style={{ padding: "20px 0px" }}>{t(`CONFIRM_APPROVE_ADVOCATE_APPLICATION_TEXT`)}</div>
+              {isSubmittingAction ? (
+                <div style={{ display: "flex", justifyContent: "center", padding: "24px 0" }}>
+                  <Loader />
+                </div>
+              ) : (
+                <div style={{ padding: "20px 0px" }}>
+                  {userType === "ADVOCATE_CLERK"
+                    ? t("CONFIRM_APPROVE_ADVOCATE_CLERK_APPLICATION_TEXT")
+                    : t("CONFIRM_APPROVE_ADVOCATE_APPLICATION_TEXT")}
+                </div>
+              )}
             </Modal>
           )}
           {showInfoModal?.isOpen && (
@@ -356,10 +468,8 @@ const ApplicationDetails = ({ location, match }) => {
                   onClick={() => {
                     setShowInfoModal({ isOpen: false, status: "" });
                     history.push(
-                      userType === "ADVOCATE_CLERK"
-                        ? `/${window?.contextPath}/employee/dristi/registration-requests?type=clerk`
-                        : `/${window?.contextPath}/employee/dristi/registration-requests?type=advocate`,
-                      { isSentBack: true }
+                      `/${window?.contextPath}/employee/home/home-screen`,
+                      { state: { registerUsersTab: true } } // Open the 'Register Users' tab when returning to the home screen.
                     );
                   }}
                 />
@@ -368,10 +478,8 @@ const ApplicationDetails = ({ location, match }) => {
               actionSaveOnSubmit={() => {
                 setShowInfoModal({ isOpen: false, status: "" });
                 history.push(
-                  userType === "ADVOCATE_CLERK"
-                    ? `/${window?.contextPath}/employee/dristi/registration-requests?type=clerk`
-                    : `/${window?.contextPath}/employee/dristi/registration-requests?type=advocate`,
-                  { isSentBack: true }
+                  `/${window?.contextPath}/employee/home/home-screen`,
+                  { state: { registerUsersTab: true } } // Open the 'Register Users' tab when returning to the home screen.
                 );
               }}
               style={{ backgroundColor: "#BB2C2F" }}
@@ -384,6 +492,15 @@ const ApplicationDetails = ({ location, match }) => {
                 </div>
               </div>
             </Modal>
+          )}
+          {showToast && (
+            <CustomToast
+              error={showToast?.error}
+              label={showToast?.label}
+              errorId={showToast?.errorId}
+              onClose={() => setShowToast(null)}
+              duration={showToast?.errorId ? 7000 : 5000}
+            />
           )}
         </div>
       </div>
