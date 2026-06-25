@@ -502,7 +502,7 @@ public class HearingService {
             if (!partialMiss) {
                 allHearings.sort(Comparator
                         .comparingInt((Map<String, Object> h) -> {
-                            Object so = h.get("status");
+                            Object so = h.get("statusOrder");
                             return so instanceof Number ? ((Number) so).intValue() : 99;
                         })
                         .thenComparingInt(h -> {
