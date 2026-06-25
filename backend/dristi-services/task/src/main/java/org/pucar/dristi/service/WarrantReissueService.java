@@ -114,7 +114,7 @@ public class WarrantReissueService {
             setAdditionalDetail(warrant, "previousState", currentState);
             incrementRevisionNumber(warrant);
             if (newHearingDate != null) {
-                updateHearingDateInTaskDetails(warrant, newHearingDate);
+                updateHearingDateInTaskDetails(warrant, newHearingDate, false);
             }
 
             WorkflowObject workflow = new WorkflowObject();
@@ -304,7 +304,7 @@ public class WarrantReissueService {
         }
 
         if (newHearingDate != null) {
-            updateHearingDateInTaskDetails(newWarrant, newHearingDate);
+            updateHearingDateInTaskDetails(newWarrant, newHearingDate, true);
         }
 
         ObjectNode additionalDetails = objectMapper.createObjectNode();
@@ -663,7 +663,7 @@ public class WarrantReissueService {
         task.setAdditionalDetails(additionalDetails);
     }
 
-    private void updateHearingDateInTaskDetails(Task task, Long newHearingDate) {
+    private void updateHearingDateInTaskDetails(Task task, Long newHearingDate, boolean updateOriginalHearingDate) {
         try {
             ObjectNode taskDetails;
             if (task.getTaskDetails() instanceof ObjectNode) {
@@ -686,6 +686,11 @@ public class WarrantReissueService {
             }
 
             caseDetails.put("hearingDate", newHearingDate);
+            // Only a reissued (cloned) warrant resets originalHearingDate to the new date - a reissue
+            // is a fresh process. The in-place reschedule keeps the date the warrant was first issued for.
+            if (updateOriginalHearingDate) {
+                caseDetails.put("originalHearingDate", newHearingDate);
+            }
             task.setTaskDetails(taskDetails);
         } catch (Exception e) {
             log.error("Error updating hearing date in taskDetails: ", e);
