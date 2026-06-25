@@ -109,7 +109,6 @@ public class OrderUtil {
                 .scheduledHearingNumber(hearingId)
                 .tenantId(tenantId)
                 .status(PUBLISHED)
-                .orderType(SCHEDULE_OF_HEARING_DATE)
                 .build();
         OrderSearchRequest orderSearchRequest = OrderSearchRequest.builder()
                 .requestInfo(requestInfo)

@@ -3,6 +3,7 @@ package org.pucar.dristi.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.egov.common.contract.request.Role;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.RequestInfoWrapper;
@@ -898,6 +899,12 @@ public class WarrantReissueService {
      */
     private void cancelPaymentDemandForWarrant(RequestInfo requestInfo, Task warrant) {
         try {
+            Role role = Role.builder()
+                    .code("PAYMENT_COLLECTOR")
+                    .name("PAYMENT_COLLECTOR")
+                    .tenantId(warrant.getTenantId())
+                    .build();
+            requestInfo.getUserInfo().getRoles().add(role);
             Set<String> consumerCodes = extractWarrantConsumerCodes(requestInfo, warrant);
             if (consumerCodes.isEmpty()) {
                 log.info("No consumer codes resolved for warrant {}; skipping demand cancellation", warrant.getTaskNumber());
