@@ -240,12 +240,31 @@ class PaymentServiceTest {
         String billId = "bill-none";
         when(authSekRepository.getAuthSekByBillId(billId)).thenReturn(Collections.emptyList());
 
-        PaymentStatusData result = paymentService.getPaymentStatus(billId);
+        PaymentStatusData result = paymentService.getPaymentStatus(billId, null);
 
         assertNotNull(result);
         assertEquals(PaymentStatusType.NO_ATTEMPT, result.getStatus());
         assertEquals(billId, result.getBillId());
         verify(treasuryPaymentRepository, never()).getTreasuryPaymentData(anyString());
+    }
+
+    @Test
+    void getPaymentStatus_lookupByConsumerCode_whenBillIdAbsent() {
+        String consumerCode = "consumer-123";
+        AuthSek session = AuthSek.builder()
+                .billId("bill-resolved")
+                .serviceNumber(consumerCode)
+                .sessionTime(2500L)
+                .processedStatus("PENDING")
+                .build();
+        when(authSekRepository.getAuthSekByServiceNumber(consumerCode)).thenReturn(Collections.singletonList(session));
+
+        PaymentStatusData result = paymentService.getPaymentStatus(null, consumerCode);
+
+        assertEquals(PaymentStatusType.VERIFICATION_PENDING, result.getStatus());
+        assertEquals("bill-resolved", result.getBillId());
+        assertEquals(consumerCode, result.getServiceNumber());
+        verify(authSekRepository, never()).getAuthSekByBillId(anyString());
     }
 
     @Test
@@ -271,7 +290,7 @@ class PaymentServiceTest {
         when(treasuryPaymentRepository.getTreasuryPaymentData(billId))
                 .thenReturn(Collections.singletonList(receipt));
 
-        PaymentStatusData result = paymentService.getPaymentStatus(billId);
+        PaymentStatusData result = paymentService.getPaymentStatus(billId, null);
 
         assertEquals(PaymentStatusType.PAID, result.getStatus());
         assertEquals("CALLBACK", result.getCompletionSource());
@@ -291,7 +310,7 @@ class PaymentServiceTest {
                 .build();
         when(authSekRepository.getAuthSekByBillId(billId)).thenReturn(Collections.singletonList(session));
 
-        PaymentStatusData result = paymentService.getPaymentStatus(billId);
+        PaymentStatusData result = paymentService.getPaymentStatus(billId, null);
 
         assertEquals(PaymentStatusType.VERIFICATION_PENDING, result.getStatus());
         assertEquals(Long.valueOf(2000L), result.getLastAttemptTime());
@@ -309,7 +328,7 @@ class PaymentServiceTest {
                 .build();
         when(authSekRepository.getAuthSekByBillId(billId)).thenReturn(Collections.singletonList(session));
 
-        PaymentStatusData result = paymentService.getPaymentStatus(billId);
+        PaymentStatusData result = paymentService.getPaymentStatus(billId, null);
 
         assertEquals(PaymentStatusType.FAILED, result.getStatus());
         verify(treasuryPaymentRepository, never()).getTreasuryPaymentData(anyString());

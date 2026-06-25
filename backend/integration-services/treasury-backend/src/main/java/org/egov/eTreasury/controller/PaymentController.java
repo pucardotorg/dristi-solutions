@@ -11,7 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
+import org.egov.tracer.model.CustomException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -74,13 +76,18 @@ public class PaymentController {
     }
 
     @PostMapping("/v1/_paymentStatus")
-    public ResponseEntity<PaymentStatusResponse> getPaymentStatus(@RequestParam String billId, @RequestBody RequestInfo requestInfo) {
-        log.info("Fetching payment status for billId: {}", billId);
+    public ResponseEntity<PaymentStatusResponse> getPaymentStatus(@RequestParam(required = false) String billId,
+                                                                  @RequestParam(required = false) String consumerCode,
+                                                                  @RequestBody RequestInfo requestInfo) {
+        if (!StringUtils.hasText(billId) && !StringUtils.hasText(consumerCode)) {
+            throw new CustomException("INVALID_PAYMENT_STATUS_REQUEST", "Either billId or consumerCode is mandatory");
+        }
+        log.info("Fetching payment status for billId: {}, consumerCode: {}", billId, consumerCode);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);
-        PaymentStatusData paymentStatus = paymentService.getPaymentStatus(billId);
+        PaymentStatusData paymentStatus = paymentService.getPaymentStatus(billId, consumerCode);
         PaymentStatusResponse response = PaymentStatusResponse.builder()
                 .responseInfo(responseInfo).paymentStatus(paymentStatus).build();
-        log.info("Payment status for billId: {} is {}", billId, paymentStatus.getStatus());
+        log.info("Payment status for billId: {}, consumerCode: {} is {}", billId, consumerCode, paymentStatus.getStatus());
         return ResponseEntity.ok(response);
     }
 
