@@ -565,12 +565,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
               remarks: {
                 remark: remarks,
               },
-              ...(selectedDelievery?.key === "NOT_DELIVERED" &&
-                rowData?.taskDetails?.deliveryChannels?.channelCode !== "POLICE" &&
-                selectedReason?.key && {
-                  notDeliveredReason: selectedReason.key,
-                  notDeliveredReasonText: reasonText,
-                }),
             },
             workflow: {
               ...tasksData?.list?.[0]?.workflow,
