@@ -1,7 +1,7 @@
 import { AppContainer, PrivateRoute } from "@egovernments/digit-ui-react-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import BreadCrumb from "../../components/BreadCrumbsNew";
-import React, { useMemo, useContext, useRef, useEffect } from "react";
+import React, { useMemo, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
 import GenerateOrdersV2 from "./GenerateOrdersV2";
@@ -76,16 +76,6 @@ const App = ({ path, stateCode, userType, tenants }) => {
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
-
-  const _ordersAppRenderCount = useRef(0);
-  useEffect(() => {
-    _ordersAppRenderCount.current++;
-    console.log("ORDERS_ROUTES_APP_RENDERED", { count: _ordersAppRenderCount.current, time: new Date().toLocaleString("en-GB") });
-  });
-  useEffect(() => {
-    console.log("ORDERS_ROUTES_APP_MOUNTED", new Date().toLocaleString("en-GB"));
-    return () => console.log("ORDERS_ROUTES_APP_UNMOUNTED", new Date().toLocaleString("en-GB"));
-  }, []);
 
   if (isCitizen && !hasCitizenRoute && Boolean(userInfo)) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
