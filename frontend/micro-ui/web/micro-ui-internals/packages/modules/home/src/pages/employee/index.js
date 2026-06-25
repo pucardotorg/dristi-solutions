@@ -1,5 +1,5 @@
 import { AppContainer, PrivateRoute } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useRef, useEffect } from "react";
+import React, { useMemo } from "react";
 import { Switch } from "react-router-dom";
 import HearingsResponse from "./HearingsResponse";
 import HomeView from "./HomeView";
@@ -39,16 +39,6 @@ const App = ({ path, stateCode, userType, tenants }) => {
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
-
-  const _homeAppRenderCount = useRef(0);
-  useEffect(() => {
-    _homeAppRenderCount.current++;
-    console.log("HOME_ROUTES_APP_RENDERED", { count: _homeAppRenderCount.current, time: new Date().toLocaleString("en-GB") });
-  });
-  useEffect(() => {
-    console.log("HOME_ROUTES_APP_MOUNTED", new Date().toLocaleString("en-GB"));
-    return () => console.log("HOME_ROUTES_APP_UNMOUNTED", new Date().toLocaleString("en-GB"));
-  }, []);
 
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;

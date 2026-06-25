@@ -608,11 +608,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [dayInMillisecond, orderData, orderType, refetch, reload, selectedDelievery, tasksData, tenantId, todayDate]);
 
   useEffect(() => {
-    console.log("REVIEW_SUMMONS_MOUNTED", new Date().toLocaleString("en-GB"));
-    return () => console.log("REVIEW_SUMMONS_UNMOUNTED", new Date().toLocaleString("en-GB"));
-  }, []);
-
-  useEffect(() => {
     // Set default values when component mounts
     setDefaultValues(defaultSearchValues);
     const isSignSuccess = sessionStorage.getItem("esignProcess");
@@ -2146,22 +2141,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     hasViewMiscellaneousAccess,
     reload, // Added to ensure config re-reads from sessionStorage after "Send for Sign"
   ]);
-
-  useEffect(() => {
-    console.log("REVIEW_SUMMONS_RELOAD_TRIGGERED", {
-      reload,
-      caller: new Error().stack.split("\n").slice(1, 5).join(" | "),
-      time: new Date().toLocaleString("en-GB"),
-    });
-  }, [reload]);
-
-  useEffect(() => {
-    console.log("REVIEW_SUMMONS_CONFIG_CHANGED", {
-      configLabel: config?.label,
-      hasStoredDefaults: Boolean(config?._defaultValuesHash && config._defaultValuesHash !== "no-hash"),
-      time: new Date().toLocaleString("en-GB"),
-    });
-  }, [config]);
 
   // Ref to track if clear search was clicked - used to trigger reload
   const clearSearchClickedRef = useRef(false);

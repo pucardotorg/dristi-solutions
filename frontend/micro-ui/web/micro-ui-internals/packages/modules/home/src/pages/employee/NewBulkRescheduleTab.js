@@ -121,22 +121,6 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${notificationFileStoreId}`;
 
   useEffect(() => {
-    console.log("NEW_BULK_RESCHEDULE_TAB_MOUNTED", new Date().toLocaleString("en-GB"));
-    return () => console.log("NEW_BULK_RESCHEDULE_TAB_UNMOUNTED", new Date().toLocaleString("en-GB"));
-  }, []);
-
-  useEffect(() => {
-    console.log("NEW_BULK_RESCHEDULE_STEPPER_CHANGED", { stepper, time: new Date().toLocaleString("en-GB") });
-  }, [stepper]);
-
-  useEffect(() => {
-    console.log("NEW_BULK_RESCHEDULE_HEARING_DATA_CHANGED", {
-      hearingCount: hearingDetails?.HearingList?.length || 0,
-      time: new Date().toLocaleString("en-GB"),
-    });
-  }, [hearingDetails]);
-
-  useEffect(() => {
     const esignProcess = sessionStorage.getItem("esignProcess");
     if (esignProcess) {
       setTimeout(() => {
@@ -320,7 +304,6 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   }, [signFormData, uploadDocuments]);
 
   useEffect(() => {
-    console.log("NEW_BULK_RESCHEDULE_CHECK_SIGN_STATUS_FIRED", { time: new Date().toLocaleString("en-GB") });
     checkSignStatus(name, signFormData, uploadModalConfig, onSelect, setIsSigned);
   }, [checkSignStatus, signFormData, uploadModalConfig]);
 
