@@ -200,6 +200,14 @@
         "language": "java",
         "version": "17"
     },
+    "gateway-kubernetes-discovery": {
+        "service_group": "core-services",
+        "db_source_path": "",
+        "dockerfile_path": "backend/digit-services/gateway-kubernetes-discovery/Dockerfile",
+        "service_source_path": "backend/digit-services/gateway-kubernetes-discovery",
+        "language": "go",
+        "version": "1.13"
+    },
     "hearing": {
         "service_group": "core-services",
         "db_source_path": "backend/dristi-services/hearing/src/main/resources/db",
@@ -485,10 +493,10 @@
     "egov-user": {
         "service_group": "core-services",
         "db_source_path": "backend/digit-services/egov-user/src/main/resources/db",
-        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "dockerfile_path": "build/maven/Dockerfile.v2",
         "service_source_path": "backend/digit-services/egov-user",
         "language": "java",
-        "version": "8"
+        "version": "17"
     },
     "egov-workflow-v2": {
         "service_group": "core-services",
@@ -509,10 +517,10 @@
     "individual": {
         "service_group": "core-services",
         "db_source_path": "backend/digit-services/individual/src/main/resources/db",
-        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/digit-services/individual",
         "language": "java",
-        "version": "8"
+        "version": "17"
     },
     "lock-svc": {
         "service_group": "core-services",

@@ -46,7 +46,7 @@ export const bailBondAddressValidation = ({ formData, inputs }) => {
   }
 };
 
-export const validateAdvocateSuretyContactNumber = (t, sureties, userInfo, setShowErrorToast) => {
+export const validateAdvocateSuretyContactNumber = (t, sureties, userInfo, setShowToast) => {
   const advocateMobileNumber = userInfo?.mobileNumber;
   const mobileNumbers = new Set();
 
@@ -55,12 +55,12 @@ export const validateAdvocateSuretyContactNumber = (t, sureties, userInfo, setSh
     if (!currentMobile) continue;
 
     if (advocateMobileNumber && currentMobile === advocateMobileNumber) {
-      setShowErrorToast({ label: t("SURETY_ADVOCATE_MOBILE_NUMBER_SAME"), error: true });
+      setShowToast({ label: t("SURETY_ADVOCATE_MOBILE_NUMBER_SAME"), error: true });
       return true;
     }
 
     if (mobileNumbers.has(currentMobile)) {
-      setShowErrorToast({ label: t("SAME_MOBILE_NUMBER_SURETY"), error: true });
+      setShowToast({ label: t("SAME_MOBILE_NUMBER_SURETY"), error: true });
       return true;
     }
 
@@ -70,12 +70,12 @@ export const validateAdvocateSuretyContactNumber = (t, sureties, userInfo, setSh
   return false;
 };
 
-export const validateSuretyContactNumber = (individualData, formData, setShowErrorToast, t) => {
+export const validateSuretyContactNumber = (individualData, formData, setShowToast, t) => {
   const indivualMobileNumber = individualData?.Individual?.[0]?.mobileNumber;
   const hasDuplicate = formData?.sureties?.some((surety) => surety?.mobileNumber && surety?.mobileNumber === indivualMobileNumber);
 
   if (hasDuplicate) {
-    setShowErrorToast({ label: t("SURETY_CONTACT_NUMBER_CANNOT_BE_SAME_AS_COMPLAINANT"), error: true });
+    setShowToast({ label: t("SURETY_CONTACT_NUMBER_CANNOT_BE_SAME_AS_COMPLAINANT"), error: true });
     return false;
   }
   return true;

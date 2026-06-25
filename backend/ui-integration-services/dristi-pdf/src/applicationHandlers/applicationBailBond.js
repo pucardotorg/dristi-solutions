@@ -11,6 +11,7 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
+const { getCaseNumber } = require("../utils/commonUtils");
 const {
   getNameByUuid,
   getComplaintAndAccusedList,
@@ -211,9 +212,7 @@ const applicationBailBond = async (
     const year = currentDate.getFullYear();
 
     const ordinalSuffix = getOrdinalSuffix(day);
-    const caseNumber = courtCase?.isLPRCase
-      ? courtCase?.lprNumber
-      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = getCaseNumber(courtCase);
     const { complainantList, accusedList } = getComplaintAndAccusedList(
       courtCase || {},
     );

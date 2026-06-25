@@ -1,10 +1,7 @@
 package digit.task;
 
 import digit.config.Configuration;
-import digit.service.CauseListService;
-import digit.service.HearingService;
-import digit.service.LandingPageService;
-import digit.service.PendingTaskService;
+import digit.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -24,15 +21,16 @@ public class ScheduledTask {
     private final LandingPageService landingPageService;
 
     private final PendingTaskService pendingTaskService;
-
+    private final OpenHearingService openHearingService;
     private final Configuration config;
 
     @Autowired
-    public ScheduledTask(CauseListService causeListService, HearingService hearingService, LandingPageService landingPageService, PendingTaskService pendingTaskService, Configuration config) {
+    public ScheduledTask(CauseListService causeListService, HearingService hearingService, LandingPageService landingPageService, PendingTaskService pendingTaskService, OpenHearingService openHearingService, Configuration config) {
         this.causeListService = causeListService;
         this.hearingService = hearingService;
         this.landingPageService = landingPageService;
         this.pendingTaskService = pendingTaskService;
+        this.openHearingService = openHearingService;
         this.config = config;
     }
 
@@ -72,4 +70,19 @@ public class ScheduledTask {
         log.info("Completed Cron Job For expiring pending tasks");
     }
 
+    @Async
+    @Scheduled(cron = "${drishti.open.hearing.cache.load.cron}", zone = "Asia/Kolkata")
+    public void loadOpenHearingCache() {
+        log.info("Starting Cron Job for loading open hearing cache");
+        openHearingService.loadOpenHearingsToCache();
+        log.info("Completed Cron Job For loading open hearing cache");
+    }
+
+    @Async
+    @Scheduled(cron = "${drishti.open.hearing.cache.clear.cron}", zone = "Asia/Kolkata")
+    public void clearOpenHearingCache() {
+        log.info("Starting Cron Job for clearing open hearing cache");
+        openHearingService.clearOpenHearingsCache();
+        log.info("Completed Cron Job For clearing open hearing cache");
+    }
 }

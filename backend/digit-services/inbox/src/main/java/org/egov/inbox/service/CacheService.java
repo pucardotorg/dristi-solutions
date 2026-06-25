@@ -2,6 +2,7 @@ package org.egov.inbox.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.inbox.config.InboxConfiguration;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +15,7 @@ public class CacheService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final InboxConfiguration inboxConfiguration;
 
-    public CacheService(RedisTemplate<String, Object> redisTemplate, InboxConfiguration inboxConfiguration) {
+    public CacheService(@Autowired(required = false) RedisTemplate<String, Object> redisTemplate, InboxConfiguration inboxConfiguration) {
         this.redisTemplate = redisTemplate;
         this.inboxConfiguration = inboxConfiguration;
     }

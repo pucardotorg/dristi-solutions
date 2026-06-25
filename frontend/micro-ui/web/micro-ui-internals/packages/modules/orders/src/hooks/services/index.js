@@ -1,4 +1,4 @@
-import { Request } from "@egovernments/digit-ui-libraries";
+import { Request } from "@egovernments/digit-ui-module-common/src/utils/Request";
 import { Urls } from "./Urls";
 
 export const ordersService = {

@@ -1,7 +1,7 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import React, { useMemo } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import ApplicationInfoComponent from "./ApplicationInfoComponent";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 // import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 // import downloadPdfFromFile from "@egovernments/digit-ui-module-dristi/src/Utils/downloadPdfFromFile";
 
@@ -14,41 +14,35 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
   const useDownloadCasePdf = Digit?.Hooks?.dristi?.useDownloadCasePdf;
   const { downloadPdf } = useDownloadCasePdf();
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
   const handleDownload = async (tenantId, filestoreId, filestoreIdPolice) => {
     // await downloadPdfFromFile(file?.[0]);
     if (filestoreId) {
-      downloadPdf(tenantId, filestoreId);
+      const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber || "Case"}_${rowData?.taskNumber}_${t(
+        rowData?.taskType
+      )}`;
+      downloadPdf(tenantId, filestoreId, fileName);
     }
     if (filestoreIdPolice) {
-      downloadPdf(tenantId, filestoreIdPolice, "Police Report");
+      const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber || "Case"}_${rowData?.taskNumber}_${t(
+        "Police_Report"
+      )}`;
+      downloadPdf(tenantId, filestoreIdPolice, fileName);
     }
   };
 
   const combinedDoc = useMemo(() => {
-    return [policeDoc, doc];
+    return [policeDoc, doc].filter((d) => d?.fileStore);
   }, [doc, policeDoc]);
 
   const showDocument = useMemo(() => {
     return (
       <div
-        className="show-document-doc-container"
         style={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           width: "100%",
-          maxHeight: "60vh",
+          maxHeight: infos ? "50vh" : "60vh",
           maxWidth: "100%",
           overflowY: "auto",
           overflowX: "hidden",
@@ -60,6 +54,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
               key={docs?.fileStore}
               docWidth={"calc(95vw * 62 / 100)"}
               docHeight={"unset"}
+              disableInnerViewerScroll={true}
               fileStoreId={docs?.fileStore}
               tenantId={tenantId}
               displayFilename={docs?.additionalDetails?.name}
@@ -96,7 +91,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
       actionSaveLabel={null}
       hideSubmit={true}
       actionSaveOnSubmit={() => {}}
-      popupStyles={{ minWidth: "880px", width: "80%" }}
+      popupStyles={{ minWidth: "880px", width: "80%", maxHeight: "95vh" }}
     >
       {infos && <ApplicationInfoComponent infos={infos} />}
       {showDocument}

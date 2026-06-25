@@ -1,13 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { formatNoticeDeliveryDate } from "../utils";
+import { ORDER_TYPES } from "../utils/constants";
 import { OrderName } from "@egovernments/digit-ui-module-dristi/src/components/OrderName";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/components/BulkCheckbox";
 import { AdvocateName } from "@egovernments/digit-ui-module-dristi/src/components/AdvocateName";
-import { DateUtils, modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, modifiedEvidenceNumber, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
 import PencilIconEdit from "@egovernments/digit-ui-module-dristi/src/components/PencilIconEdit";
 import EditDeleteModal from "@egovernments/digit-ui-module-dristi/src/components/EditDeleteModal";
@@ -201,6 +202,9 @@ export const UICustomizations = {
           });
         },
       });
+      const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
+      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.name || stageForm?.code || "";
+      const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
       const criteria = {
         ...requestCriteria?.body?.criteria,
         ...requestCriteria?.state?.searchForm,
@@ -217,9 +221,9 @@ export const UICustomizations = {
         ...(requestCriteria?.state?.searchForm?.outcome && {
           outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
         }),
-        ...(requestCriteria?.state?.searchForm?.substage && {
-          substage: requestCriteria?.state?.searchForm?.substage?.code,
-        }),
+        ...(selectedStage && { stage: [selectedStage] }),
+        substage: undefined,
+        ...(selectedSecondaryStage ? { secondaryStage: [selectedSecondaryStage] } : { secondaryStage: undefined }),
         pagination: {
           limit: requestCriteria?.state?.tableForm?.limit,
           offSet: requestCriteria?.state?.tableForm?.offset,
@@ -232,9 +236,9 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.code,
-          }),
+          stage: undefined,
+          substage: undefined,
+          secondaryStage: undefined,
           criteria,
           tenantId,
         },
@@ -252,7 +256,7 @@ export const UICustomizations = {
       const activeTab = searchResult?.additionalDetails?.activeTab || "";
       const isDisposedTab = activeTab === "DISPOSED";
       const caseId =
-        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+        (isLPRCase(row) && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "Draft Name":
         case "CS_CASE_NAME":
@@ -266,7 +270,13 @@ export const UICustomizations = {
         case "CS_OUTCOME":
           return t(value);
         case "CS_STAGE":
-          return t(value);
+          return isLPRCase(row) ? t("Long Pending Register") : t(value);
+        case "CS_SECONDARY_STAGE": {
+          const stages = Array.isArray(value) ? value : [value];
+          const normalized = stages.filter(Boolean);
+          return normalized.length ? normalized.map((item) => t(item)).join(", ") : t("ES_COMMON_NA");
+        }
+
         case "CS_FILING_DATE":
           return <span>{DateUtils.getFormattedDate(new Date(value))}</span>;
         case "CS_CASE_NUMBER_HOME":
@@ -306,12 +316,15 @@ export const UICustomizations = {
     preProcess: (requestCriteria, additionalDetails) => {
       // We need to change tenantId "processSearchCriteria" here
       const tenantId = window?.Digit.ULBService.getStateId();
+      const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
+      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.name || stageForm?.code || "";
+      const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
       const criteria = {
         ...requestCriteria?.body?.criteria,
         ...requestCriteria?.state?.searchForm,
-        ...(requestCriteria?.state?.searchForm?.substage && {
-          substage: requestCriteria?.state?.searchForm?.substage?.code,
-        }),
+        ...(selectedStage && { stage: [selectedStage] }),
+        substage: undefined,
+        ...(selectedSecondaryStage ? { secondaryStage: [selectedSecondaryStage] } : { secondaryStage: undefined }),
         tenantId,
         ...additionalDetails,
         ...("sortBy" in additionalDetails && {
@@ -331,9 +344,9 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.code,
-          }),
+          stage: undefined,
+          substage: undefined,
+          secondaryStage: undefined,
           criteria,
           tenantId,
         },
@@ -351,12 +364,18 @@ export const UICustomizations = {
       const activeTab = searchResult?.additionalDetails?.activeTab || "";
       const isDisposedTab = activeTab === "DISPOSED";
       const caseId =
-        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+        (isLPRCase(row) && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
         case "CS_STAGE":
-          return t(value);
+          return isLPRCase(row) ? t("Long Pending Register") : t(value);
+        case "CS_SECONDARY_STAGE": {
+          const stages = Array.isArray(value) ? value : [value];
+          const normalized = stages.filter(Boolean);
+          return normalized.length ? normalized.map((item) => t(item)).join(", ") : t("ES_COMMON_NA");
+        }
+
         case "CS_SCRUTINY_STATUS":
           return t(row?.status === "UNDER_SCRUTINY" ? "IN_PROGRESS" : "NOT_STARTED");
         case "CS_CASE_NUMBER_HOME":
@@ -402,6 +421,9 @@ export const UICustomizations = {
           });
         },
       });
+      const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
+      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.name || stageForm?.code || "";
+      const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
       const criteria = {
         ...requestCriteria?.body?.criteria,
         ...requestCriteria?.state?.searchForm,
@@ -418,9 +440,13 @@ export const UICustomizations = {
         ...(requestCriteria?.state?.searchForm?.outcome?.outcome && {
           outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
         }),
-        ...(requestCriteria?.state?.searchForm?.substage && {
-          substage: requestCriteria?.state?.searchForm?.substage?.code,
-        }),
+        ...(selectedStage
+          ? { stage: [selectedStage] }
+          : requestCriteria?.body?.criteria?.stage
+          ? { stage: requestCriteria.body.criteria.stage }
+          : {}),
+        substage: undefined,
+        ...(selectedSecondaryStage ? { secondaryStage: [selectedSecondaryStage] } : { secondaryStage: undefined }),
         pagination: {
           limit: requestCriteria?.state?.tableForm?.limit,
           offSet: requestCriteria?.state?.tableForm?.offset,
@@ -433,9 +459,9 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.code,
-          }),
+          stage: undefined,
+          substage: undefined,
+          secondaryStage: undefined,
           criteria,
           tenantId,
         },
@@ -453,7 +479,7 @@ export const UICustomizations = {
       const activeTab = searchResult?.additionalDetails?.activeTab || "";
       const isDisposedTab = activeTab === "DISPOSED";
       const caseId =
-        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+        (isLPRCase(row) && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
@@ -462,7 +488,13 @@ export const UICustomizations = {
         case "CD_OUTCOME":
           return t(value);
         case "CS_STAGE":
-          return t(value);
+          return isLPRCase(row) ? t("Long Pending Register") : t(value);
+        case "CS_SECONDARY_STAGE": {
+          const stages = Array.isArray(value) ? value : [value];
+          const normalized = stages.filter(Boolean);
+          return normalized.length ? normalized.map((item) => t(item)).join(", ") : t("ES_COMMON_NA");
+        }
+
         case "CS_SCRUTINY_STATUS":
           return t(row?.status === "UNDER_SCRUTINY" ? "IN_PROGRESS" : "NOT_STARTED");
         case "CS_CASE_NUMBER_HOME":
@@ -526,7 +558,7 @@ export const UICustomizations = {
       const searchForm = requestCriteria?.state?.searchForm || {};
       const noticeType = searchForm?.noticeType?.code || searchForm?.noticeType?.name || null;
       const deliveryChanel = searchForm?.channel?.name === "EPOST" ? "POST" : searchForm?.channel?.name || null;
-      const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T05:30:00`).getTime() : null;
+      const hearingDate = searchForm?.hearingDate ? new Date(`${searchForm.hearingDate}T00:00:00+05:30`).getTime() : null;
       const activeTabIndex = additionalDetails?.activeTabIndex || 0;
       const compStatus = searchForm?.compStatus?.code || "";
       if (Array.isArray(completeStatusData)) {
@@ -579,7 +611,7 @@ export const UICustomizations = {
       const activeTab = searchResult?.additionalDetails?.activeTab || "";
       const isDisposedTab = activeTab === "DISPOSED";
       const caseId =
-        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+        (isLPRCase(row) && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
 
       switch (key) {
         // case "CASE_NAME_ID":
@@ -590,10 +622,10 @@ export const UICustomizations = {
           return `${DateUtils.getFormattedDate(new Date(value))}`;
         case "PROCESS_TYPE":
           const processType = value?.toUpperCase?.();
-          if (processType === "NOTICE") {
+          if (processType === ORDER_TYPES.NOTICE) {
             const noticeType = row?.taskDetails?.noticeDetails?.noticeType || "NOTICE";
             return t(noticeType);
-          } else if (processType === "MISCELLANEOUS_PROCESS") {
+          } else if (processType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
             const miscType = row?.taskDetails?.miscellaneuosDetails?.processTitle || "MISCELLANEOUS_PROCESS";
             return t(miscType);
           }
@@ -782,11 +814,7 @@ export const UICustomizations = {
         case "PETITIONER":
           return <span>{value || ""}</span>;
         case "DATE_RAISED":
-          const date = value ? new Date(value) : new Date();
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0");
-          const year = date.getFullYear();
-          return <span>{`${day}-${month}-${year}`}</span>;
+          return <span>{DateUtils.getFormattedDate(value)}</span>;
         case "STATUS":
           return (
             <span
@@ -843,12 +871,7 @@ export const UICustomizations = {
         case "STATUS":
           return <CustomChip text={t(value)} shade={value === OrderWorkflowState.PENDING_BULK_E_SIGN && "orange"} />;
         case "DATE_ADDED":
-          const date = new Date(value);
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
-          const year = date.getFullYear();
-          const formattedDate = `${day}-${month}-${year}`;
-          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+          return <span>{value && value !== "0" ? DateUtils.getFormattedDate(value) : ""}</span>;
         case "SELECT":
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
         case "CS_ACTIONS":
@@ -946,12 +969,7 @@ export const UICustomizations = {
         case "PROCESS_TYPE":
           return t(value);
         case "DATE_CREATED":
-          const date = new Date(value);
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
-          const year = date.getFullYear();
-          const formattedDate = `${day}-${month}-${year}`;
-          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+          return <span>{value && value !== "0" ? DateUtils.getFormattedDate(value) : ""}</span>;
         default:
           break;
       }
@@ -979,14 +997,25 @@ export const UICustomizations = {
       const courtId = localStorage.getItem("courtId");
       if (date) sessionStorage.setItem("diaryDateFilter", date);
 
+      const limit = requestCriteria?.state?.tableForm?.limit || 10;
+      const offSet = requestCriteria?.state?.tableForm?.offset || 0;
+
       return {
         ...requestCriteria,
+        // useCustomAPIHook keys the query on [url, changeQueryName] (body is NOT in the key),
+        // so pagination/date changes must be reflected here to re-trigger the API call.
+        changeQueryName: `adiary_${date}_${limit}_${offSet}`,
         body: {
           ...requestCriteria?.body,
           criteria: {
             ...requestCriteria?.body?.criteria,
             date,
             courtId,
+          },
+          pagination: {
+            ...requestCriteria?.body?.pagination,
+            limit,
+            offSet,
           },
         },
         config: {
@@ -1068,6 +1097,8 @@ export const UICustomizations = {
               moduleName: moduleName,
               tenantId: window?.Digit.ULBService.getStateId(),
             },
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offset: requestCriteria?.state?.tableForm?.offset,
             tenantId: window?.Digit.ULBService.getStateId(),
           },
         },
@@ -1099,8 +1130,9 @@ export const UICustomizations = {
           return (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${applicationNumber || ""
-                  }&individualId=${individualId}&type=${usertype}`}
+                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${
+                  applicationNumber || ""
+                }&individualId=${individualId}&type=${usertype}`}
               >
                 {applicationNumber
                   ? String(column?.translate ? t(column?.prefix ? `${column?.prefix}${applicationNumber}` : applicationNumber) : applicationNumber)

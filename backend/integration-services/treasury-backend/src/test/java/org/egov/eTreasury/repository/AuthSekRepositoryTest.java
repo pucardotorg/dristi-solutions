@@ -39,7 +39,7 @@ class AuthSekRepositoryTest {
     void testGetAuthSek() {
         // Given
         String authToken = "testAuthToken";
-        List<String> preparedStmtList = new ArrayList<>();
+        List<Object> preparedStmtList = new ArrayList<>();
         String query = "SELECT * FROM auth_sek_session_data WHERE auth_token = ?";
         List<AuthSek> expectedResults = new ArrayList<>();
         expectedResults.add(new AuthSek()); // Add a sample AuthSek object
@@ -60,7 +60,7 @@ class AuthSekRepositoryTest {
     @Test
     void testGetAuthSekWithNullAuthToken() {
         // Given
-        List<String> preparedStmtList = new ArrayList<>();
+        List<Object> preparedStmtList = new ArrayList<>();
         String query = "SELECT * FROM auth_sek_session_data";
         List<AuthSek> expectedResults = new ArrayList<>();
         expectedResults.add(new AuthSek()); // Add a sample AuthSek object

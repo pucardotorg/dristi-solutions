@@ -1,7 +1,7 @@
-import { InboxSearchComposer, SubmitBar, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom";
 import { bulkIssueCTCConfig } from "../../configs/BulkIssueCTCConfig";
 import IssueCTCModal from "./IssueCTCModal";
 import AddSignatureCTCModal from "../../components/AddSignatureCTCModal";
@@ -9,6 +9,7 @@ import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosIns
 import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { HomeService } from "../../hooks/services";
 import qs from "qs";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
@@ -27,17 +28,15 @@ const sectionsParentStyle = {
 
 const BulkIssueCTC = () => {
   const { t } = useTranslation();
-  const history = useHistory();
   const tenantId = window?.Digit.ULBService.getStateId();
 
   const [isLoading, setIsLoading] = useState(false);
   const [bulkIssueList, setBulkIssueList] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedRowData, setSelectedRowData] = useState(null);
-  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [signedDocumentUploadId, setSignedDocumentUploadID] = useState("");
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const courtId = localStorage.getItem("courtId");
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -78,7 +77,7 @@ const BulkIssueCTC = () => {
 
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       const accessToken = window.localStorage.getItem("token");
-      const courtId = window.localStorage.getItem("courtId") || "KLKM52";
+      const courtId = window.localStorage.getItem("courtId");
 
       // Call the PDF generation API
       const response = await axiosInstance.post(
@@ -141,7 +140,8 @@ const BulkIssueCTC = () => {
       setShowModal(true);
     } catch (error) {
       console.error("Failed to generate CTC PDF:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BULK_CTC_PDF_ISSUE_FAILED"), error: true, errorId });
     } finally {
       setIsLoading(false);
     }
@@ -311,7 +311,7 @@ const BulkIssueCTC = () => {
     const responses = [];
     const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
 
-    const requests = docRequestList?.map(async (docRequest) => {
+    for (const docRequest of docRequestList || []) {
       try {
         const formData = qs.stringify({ response: docRequest?.request });
         const response = await axiosInstance.post(bulkSignUrl, formData, {
@@ -349,16 +349,15 @@ const BulkIssueCTC = () => {
       } catch (error) {
         console.error(`Error fetching document ${docRequest?.docId}:`, error?.message);
       }
-    });
+    }
 
-    await Promise.allSettled(requests);
     return responses;
   };
 
   const handleBulkIssue = async () => {
     const selectedDocuments = bulkIssueList?.filter((data) => data?.isSelected);
     if (!selectedDocuments || selectedDocuments.length === 0) {
-      setShowErrorToast({ label: t("PLEASE_SELECT_AT_LEAST_ONE_RECORD"), error: true });
+      setShowToast({ label: t("PLEASE_SELECT_AT_LEAST_ONE_RECORD"), error: true });
       return;
     }
 
@@ -391,7 +390,7 @@ const BulkIssueCTC = () => {
       const signedResponses = await fetchResponseFromXmlRequest(requestList);
 
       if (signedResponses.length === 0 || signedResponses.every((res) => !res.signed)) {
-        setShowErrorToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true });
+        setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true });
         setIsLoading(false);
         return;
       }
@@ -404,12 +403,13 @@ const BulkIssueCTC = () => {
       );
 
       if (updateResponse?.ResponseInfo?.status === "SUCCESSFUL" || updateResponse?.ResponseInfo?.status === "successful") {
-        showToast({ isError: false, message: "CTC_DOCUMENT_ISSUED_SUCCESSFULLY" });
+        setShowToast({ error: false, label: t("CTC_DOCUMENT_ISSUED_SUCCESSFULLY") });
       }
       setRefreshKey((prev) => prev + 1);
     } catch (e) {
       console.error("Failed to perform bulk sign", e?.message || e);
-      setShowErrorToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true });
+      const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true, errorId });
     } finally {
       setIsLoading(false);
     }
@@ -427,7 +427,7 @@ const BulkIssueCTC = () => {
       };
 
       const payload = {
-        courtId: selectedRowData?.businessObject?.courtId || window.localStorage.getItem("courtId") || "KLKM52",
+        courtId: selectedRowData?.businessObject?.courtId || window.localStorage.getItem("courtId"),
         action,
         docs: [docsDetails],
         status: "PENDING",
@@ -443,12 +443,13 @@ const BulkIssueCTC = () => {
         setShowModal(false);
       }
 
-      showToast({ isError: false, message: successMessage });
+      setShowToast({ error: false, label: t(successMessage) });
 
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error("error while updating", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BULK_CTC_ISSUE_FAILED"), error: true, errorId });
     } finally {
       setIsLoading(false);
     }
@@ -456,13 +457,20 @@ const BulkIssueCTC = () => {
 
   const handleIssueDocuments = async () => {
     const localStorageID = sessionStorage.getItem("fileStoreId");
+    const signedId = localStorageID || signedDocumentUploadId;
+    const originalId =
+      selectedRowData?.businessObject?.fileStoreId || selectedRowData?.affidavitDocument?.fileStore || selectedRowData?.documents?.[0]?.fileStore;
+    if (!signedId || signedId === originalId) {
+      setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+      return;
+    }
 
     await handleCTCDocumentAction({
       action: "ISSUE",
       documents: [
         {
           documentType: "SIGNED_CTC_APPLICATION",
-          fileStore: localStorageID || signedDocumentUploadId,
+          fileStore: signedId,
         },
       ],
       successMessage: "CTC_DOCUMENT_ISSUED_SUCCESSFULLY",
@@ -476,23 +484,6 @@ const BulkIssueCTC = () => {
       successMessage: "CTC_DOCUMENT_REJECT_SUCCESSFULLY",
       closeRejectModal: true,
     });
-  };
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
-
-  const showToast = ({ isError, message }) => {
-    setShowErrorToast({ label: t(message), error: isError });
   };
 
   useEffect(() => {
@@ -593,7 +584,15 @@ const BulkIssueCTC = () => {
           selectedRowData={selectedRowData}
         />
       )}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}{" "}
     </React.Fragment>
   );
 };

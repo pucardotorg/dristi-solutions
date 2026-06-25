@@ -1,12 +1,9 @@
 const { search_evidence_v2 } = require("../../api");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
-const {
-  duplicateExistingFileStore,
-} = require("../utils/duplicateExistingFileStore");
+const { duplicateExistingFileStore } = require("../utils/duplicateExistingFileStore");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 async function processAdditionalFilings(
   courtCase,
@@ -17,6 +14,7 @@ async function processAdditionalFilings(
   indexCopy,
   messagesMap
 ) {
+  logger.info(`[processAdditionalFilings] Started | filingNumber: ${courtCase?.filingNumber}`);
   const additionalFilingsSection = filterCaseBundleBySection(
     caseBundleMaster,
     "additionalfilings"

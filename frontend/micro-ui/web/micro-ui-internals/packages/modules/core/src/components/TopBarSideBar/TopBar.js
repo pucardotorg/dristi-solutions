@@ -29,17 +29,20 @@ const TopBar = ({
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
-  React.useEffect(async () => {
-    const tenant = Digit.ULBService.getCurrentTenantId();
-    const uuid = userDetails?.info?.uuid;
-    if (uuid) {
-      const usersResponse = await Digit.UserService.userSearch(tenant, { uuid: [uuid] }, {});
-      if (usersResponse && usersResponse.user && usersResponse.user.length) {
-        const userDetails = usersResponse.user[0];
-        const thumbs = userDetails?.photo?.split(",");
-        setProfilePic(thumbs?.at(0) || null);
+  React.useEffect(() => {
+    async function fetchProfilePic() {
+      const tenant = Digit.ULBService.getCurrentTenantId();
+      const uuid = userDetails?.info?.uuid;
+      if (uuid) {
+        const usersResponse = await Digit.UserService.userSearch(tenant, { uuid: [uuid] }, {});
+        if (usersResponse && usersResponse.user && usersResponse.user.length) {
+          const userDetails = usersResponse.user[0];
+          const thumbs = userDetails?.photo?.split(",");
+          setProfilePic(thumbs?.at(0) || null);
+        }
       }
     }
+    fetchProfilePic();
   }, [profilePic !== null, userDetails?.info?.uuid]);
 
   const CitizenHomePageTenantId = Digit.ULBService.getCitizenCurrentTenant(true);
@@ -74,7 +77,6 @@ const TopBar = ({
   function onNotificationIconClick() {
     history.push(`/${window?.contextPath}/citizen/engagement/notifications`);
   }
-
 
   if (CITIZEN) {
     return (
@@ -145,8 +147,13 @@ const TopBar = ({
     <div className="topbar">
       <div
         className="hambuger-back-wrapper"
+        style={{ cursor: "pointer" }}
         onClick={() => {
           sessionStorage.removeItem("homeActiveTab");
+          if (!loggedin) {
+            window.location.replace(window.location.origin);
+            return;
+          }
           if (isEpostUser) {
             history.push(pathname);
           } else {

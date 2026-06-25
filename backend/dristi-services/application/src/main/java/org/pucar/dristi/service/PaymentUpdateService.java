@@ -95,6 +95,7 @@ public class PaymentUpdateService {
             String applicationNumber = consumerCodeSplitArray[0];
             ApplicationCriteria criteria = ApplicationCriteria.builder()
                     .applicationNumber(applicationNumber)
+                    .includePendingPayment(true)
                     .build();
             ApplicationSearchRequest applicationSearchRequest = new ApplicationSearchRequest();
             applicationSearchRequest.setRequestInfo(requestInfo);

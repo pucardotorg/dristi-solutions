@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
-import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import isEqual from "lodash/isEqual";
 import { _getPartiesOptions, CloseBtn, Heading } from "../utils/orderUtils";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
@@ -9,6 +9,7 @@ import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/servic
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import { generateUUID } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { ORDER_TYPES } from "../utils/constants";
 
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
   keys.forEach((key) => {
@@ -387,7 +388,7 @@ const AddOrderTypeModal = ({
   }, [newCurrentOrder]);
 
   const addresseeOptions = useMemo(() => {
-    if (orderType?.code === "MISCELLANEOUS_PROCESS") {
+    if (orderType?.code === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
       const option = formdata?.processTemplate?.addressee;
       const data = {
         uniqueId: generateUUID(),
@@ -424,7 +425,7 @@ const AddOrderTypeModal = ({
               {(() => {
                 const isAcceptBail = orderType?.code === "ACCEPT_BAIL";
                 const isReferralToADR = orderType?.code === "REFERRAL_CASE_TO_ADR";
-                const isMiscellaneousTemplate = orderType?.code === "MISCELLANEOUS_PROCESS";
+                const isMiscellaneousTemplate = orderType?.code === ORDER_TYPES.MISCELLANEOUS_PROCESS;
                 const bt = formdata?.bailType;
                 const bailTypeCode = (typeof bt === "string" ? bt : bt?.code || bt?.type || "").toUpperCase();
                 const showSuretyFields = !isAcceptBail || bailTypeCode === "SURETY";

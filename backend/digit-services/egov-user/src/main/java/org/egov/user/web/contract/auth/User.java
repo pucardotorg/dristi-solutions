@@ -1,8 +1,6 @@
 package org.egov.user.web.contract.auth;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.Set;
@@ -10,6 +8,8 @@ import java.util.Set;
 @Setter
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 //This class is serialized to Redis
 public class User implements Serializable {
     private static final long serialVersionUID = -1053170163821651014L;

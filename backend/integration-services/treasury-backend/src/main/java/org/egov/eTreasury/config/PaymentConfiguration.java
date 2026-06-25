@@ -126,6 +126,12 @@ public class PaymentConfiguration {
     @Value(("${isTest.enabled}"))
     private boolean isTest;
 
+    @Value("${treasury.basic.auth.username:}")
+    private String basicAuthUsername;
+
+    @Value("${treasury.basic.auth.password:}")
+    private String basicAuthPassword;
+
     @Value("${challan.test.amount}")
     private String challanTestAmount;
 
@@ -184,6 +190,9 @@ public class PaymentConfiguration {
     @Value("${isMock.enabled}")
     private boolean isMockEnabled;
 
+    @Value("${treasury.kafka.push-enabled:true}")
+    private boolean kafkaPushEnabled;
+
     @PostConstruct
     public void init() {
         headsList = Arrays.asList(heads.split(","));
@@ -226,5 +235,12 @@ public class PaymentConfiguration {
 
     @Value("${egov.localization.search.endpoint}")
     private String localizationSearchEndpoint;
+
+    // Payment Reconciliation
+    @Value("${payment.reconciliation.cron}")
+    private String reconciliationCron;
+
+    @Value("${payment.reconciliation.threshold.hours}")
+    private Long reconciliationThresholdHours;
 
 }

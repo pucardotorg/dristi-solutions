@@ -74,6 +74,7 @@ public class ServiceConstants {
     public static final String msgId = "1730882648558|en_IN";
 
     public static final String DATE_FORMAT = "dd-MM-yyyy";
+    public static final String DATE_FORMAT_REDIS= "ddMMyyyy";
 
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
     public static final String INDIVIDUAL_SERVICE_EXCEPTION = "INDIVIDUAL_SERVICE_EXCEPTION";

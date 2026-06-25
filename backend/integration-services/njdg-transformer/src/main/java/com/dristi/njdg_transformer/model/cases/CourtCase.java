@@ -1,5 +1,6 @@
 package com.dristi.njdg_transformer.model.cases;
 
+import com.dristi.njdg_transformer.model.LifecycleStatus;
 import com.dristi.njdg_transformer.model.enums.NatureOfDisposal;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -124,6 +125,9 @@ public class CourtCase {
     @JsonProperty("substage")
     private String substage = null;
 
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = new ArrayList<>();
+
     @JsonProperty("natureOfPleading")
     private String natureOfPleading = null;
 
@@ -181,8 +185,9 @@ public class CourtCase {
     @JsonProperty("lprNumber")
     private String lprNumber = null;
 
-    @JsonProperty("isLPRCase")
-    private Boolean isLPRCase = false;
+    @JsonProperty("lifecycleStatus")
+    @Builder.Default
+    private LifecycleStatus lifecycleStatus = LifecycleStatus.ACTIVE;
 
     @JsonProperty("courtCaseNumberBackup")
     private String courtCaseNumberBackup = null;

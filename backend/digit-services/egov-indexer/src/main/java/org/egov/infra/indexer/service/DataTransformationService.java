@@ -50,30 +50,6 @@ public class DataTransformationService {
     @Value("${egov.statelevel.tenantId}")
     private  String stateLevelTenantId ;
 
-    @Value("${egov.core.reindex.topic.name}")
-    private String reindexTopic;
-
-    @Value("${egov.core.legacyindex.topic.name}")
-    private String legacyIndexTopic;
-
-    @Value("${egov.indexer.persister.create.topic}")
-    private String persisterCreate;
-
-    @Value("${egov.indexer.persister.update.topic}")
-    private String persisterUpdate;
-
-    @Value("${reindex.pagination.size.default}")
-    private Integer defaultPageSizeForReindex;
-
-    @Value("${legacyindex.pagination.size.default}")
-    private Integer defaultPageSizeForLegacyindex;
-
-    @Value("${egov.service.host}")
-    private String serviceHost;
-
-    @Value("${egov.infra.indexer.host}")
-    private String esHostUrl;
-
     @Value("${egov.mdms.host}")
     private String mdmsHost;
 

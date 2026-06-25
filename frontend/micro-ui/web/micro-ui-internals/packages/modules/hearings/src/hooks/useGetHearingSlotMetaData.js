@@ -1,9 +1,9 @@
 import { useQuery } from "react-query";
 
-function useGetHearingSlotMetaData(enabled) {
+function useGetHearingSlotMetaData(enabled, tenantId) {
   const fetchAdvocateSlots = () => {
     const events = {
-      tenantId: "kl",
+      tenantId,
       moduleName: "court",
       slots: [
         {

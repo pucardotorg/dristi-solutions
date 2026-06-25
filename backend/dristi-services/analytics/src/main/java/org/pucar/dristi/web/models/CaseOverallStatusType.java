@@ -27,6 +27,10 @@ public class CaseOverallStatusType {
     @Valid
     private String action = null;
 
+    @JsonProperty("endStage")
+    @Valid
+    private String endStage = null;
+
     @JsonProperty("state")
     @Valid
     private String state = null;

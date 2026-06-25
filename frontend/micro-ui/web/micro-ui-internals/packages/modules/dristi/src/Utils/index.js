@@ -1,4 +1,4 @@
-import { Request } from "@egovernments/digit-ui-libraries";
+import { Request } from "@egovernments/digit-ui-module-common/src/utils/Request";
 import isEmpty from "lodash/isEmpty";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { DocumentUploadError } from "./errorUtil";
@@ -116,6 +116,29 @@ export const modifiedEvidenceNumber = (value, filingNumber = null) => {
   }
   return value;
 };
+
+// Returns true when a case is in the Long Pending Register lifecycle.
+// Prefers the new `lifecycleStatus` field and falls back to the legacy
+// `isLPRCase` boolean while older payloads are still in flight.
+export const isLPRCase = (caseObj) => {
+  if (!caseObj) return false;
+  if (caseObj.lifecycleStatus !== undefined && caseObj.lifecycleStatus !== null) {
+    return caseObj.lifecycleStatus === "LPR";
+  }
+  return Boolean(caseObj?.isLPRCase);
+};
+
+// Returns the case-number to display, taking LPR cases into account.
+export const getDisplayCaseNumber = (caseObj) => {
+  if (!caseObj) return "";
+  return (
+    (isLPRCase(caseObj) ? caseObj?.lprNumber : caseObj?.courtCaseNumber) ||
+    caseObj?.courtCaseNumber ||
+    caseObj?.cmpNumber ||
+    caseObj?.filingNumber ||
+    ""
+  );
+};
 export const getFilteredPaymentData = (paymentType, paymentData, bill) => {
   const processedPaymentType = paymentType?.toLowerCase()?.includes("application");
   const isCTC = paymentType?.toLowerCase()?.includes("ctc");
@@ -175,6 +198,7 @@ export const documentsTypeMapping = {
   nocJudgeOrder: "NOC_JUDGE_ORDER",
   supportingDocument: "SUPPORTING_DOCUMENT",
   lprDocument: "LPR_DOCUMENT",
+  advocateIdProof: "ADVOCATE_ID_PROOF",
 };
 
 export const documentLabels = {
@@ -196,6 +220,7 @@ export const documentLabels = {
   VAKALATNAMA_DOC: "VAKALATNAMA_DOCUMENT",
   SUBMISSION_DOCUMENTS: "SUBMISSION_DOCUMENTS",
   COMPLAINANT_PIP_AFFIDAVIT: "COMPLAINANT_PIP_AFFIDAVIT",
+  POA_AUTHORIZATION_DOCUMENT: "POA_AUTHORIZATION_DOCUMENT",
 };
 
 export const caseFileLabels = {
@@ -1118,4 +1143,8 @@ export const isRichTextEmpty = (html) => {
   if (!html) return true;
   const plainText = html?.replace(/<[^>]*>/g, "").trim();
   return plainText?.length === 0;
+};
+
+export const formatTitle = (translatedTitle) => {
+  return (translatedTitle || "").trim().replace(/\s+/g, "_");
 };

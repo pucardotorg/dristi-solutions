@@ -17,6 +17,7 @@ export const ImageModal = ({
   selectedDocs,
   headerBarMainStyle,
   popupModuleMianStyles,
+  caseDetails,
 }) => {
   let showFlagNew = (!imageInfo?.disableScrutiny || imageInfo?.enableScrutinyField) && showFlag;
   const [zoom, setZoom] = useState(1);
@@ -100,7 +101,10 @@ export const ImageModal = ({
           onClick={(e) => {
             e.stopPropagation();
             if (imageInfo?.data?.fileStore) {
-              downloadPdf(tenantId, imageInfo?.data?.fileStore);
+              const fileName = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${t(
+                imageInfo?.data?.documentType || "downloadedFile"
+              )}`;
+              downloadPdf(tenantId, imageInfo?.data?.fileStore, fileName);
             } else if (selectedDocs?.length > 0) {
               handleLocalDownload(selectedDocs[0]);
             }
@@ -153,6 +157,7 @@ export const ImageModal = ({
         showDownloadOption={false}
         style={{ transform: `rotate(${rotation}deg)`, transition: "transform 0.2s ease" }}
         pdfZoom={zoom}
+        docViewerCardClassName="doc-viewer-card"
       />
     </Modal>
   );
