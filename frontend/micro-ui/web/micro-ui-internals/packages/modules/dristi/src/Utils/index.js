@@ -296,6 +296,22 @@ export const combineMultipleFiles = async (pdfFilesArray, finalFileName = "combi
   }
 };
 
+export const downloadCombinedDocuments = async (documents, fileName = "combined-document.pdf") => {
+  const validDocs = documents?.filter((d) => d?.fileStore);
+  if (!validDocs?.length) return;
+  const combinedFiles = await combineMultipleFiles(validDocs, fileName);
+  if (combinedFiles?.[0]) {
+    const url = URL.createObjectURL(combinedFiles[0]);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+};
+
 export const cleanString = (input) => {
   return input.trim().replace(/\s+/g, " ");
 };

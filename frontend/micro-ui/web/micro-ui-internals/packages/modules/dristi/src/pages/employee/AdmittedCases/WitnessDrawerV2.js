@@ -1163,7 +1163,8 @@ const WitnessDrawerV2 = ({
     }
   };
 
-  if (isFilingTypeLoading || isEvidenceLoading || caseApiLoading) {
+  const isDataLoading = isFilingTypeLoading || isEvidenceLoading || caseApiLoading;
+  if (isDataLoading) {
     return <Loader />;
   }
 
@@ -1354,7 +1355,7 @@ const WitnessDrawerV2 = ({
               <div className="drawer-footer" style={{ display: "flex", justifyContent: "end", flexDirection: "row", gap: "16px" }}>
                 <Button
                   label={t("SAVE_DRAFT")}
-                  isDisabled={!IsSelectedWitness}
+                  isDisabled={!IsSelectedWitness || isDataLoading}
                   onButtonClick={() => handleSaveDraft()}
                   style={{
                     width: "130px",
@@ -1366,7 +1367,7 @@ const WitnessDrawerV2 = ({
                 />
                 <Button
                   label={t("SUBMIT_BUTTON")}
-                  isDisabled={!IsSelectedWitness || witnessDepositionText?.length === 0}
+                  isDisabled={!IsSelectedWitness || witnessDepositionText?.length === 0 || isDataLoading}
                   className={"order-drawer-save-btn"}
                   onButtonClick={() => handleSaveDraft(true)}
                   style={{
