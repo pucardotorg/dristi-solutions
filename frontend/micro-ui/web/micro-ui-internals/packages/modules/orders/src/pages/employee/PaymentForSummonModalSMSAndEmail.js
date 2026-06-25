@@ -433,51 +433,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           },
         };
 
-        if (type !== "EPOST") {
-          await ordersService.customApiService(Urls.orders.pendingTask, {
-            pendingTask: {
-              name:
-                orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
-                  ? `PAYMENT_PENDING_FOR_${orderType}`
-                  : `MAKE_PAYMENT_FOR_${orderType}_POST`,
-              entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
-              referenceId: `MANUAL_${taskNumber}`,
-              status: status,
-              assignedTo: [],
-              assignedRole: [],
-              cnrNumber: filteredTasks?.[0]?.cnrNumber,
-              filingNumber: filingNumber,
-              caseId: caseDetails?.id,
-              caseTitle: caseDetails?.caseTitle,
-              isCompleted: true,
-              stateSla: "",
-              additionalDetails: {},
-              tenantId,
-            },
-          });
-        } else if (fileStoreId && ePostBillResponse?.Bill?.[0]?.status === "PAID") {
-          await ordersService.customApiService(Urls.orders.pendingTask, {
-            pendingTask: {
-              name:
-                orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
-                  ? `PAYMENT_PENDING_FOR_${orderType}`
-                  : `MAKE_PAYMENT_FOR_${orderType}_POST`,
-              entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
-              referenceId: `MANUAL_${taskNumber}`,
-              status: status,
-              assignedTo: [],
-              assignedRole: [],
-              cnrNumber: filteredTasks?.[0]?.cnrNumber,
-              filingNumber: filingNumber,
-              caseId: caseDetails?.id,
-              caseTitle: caseDetails?.caseTitle,
-              isCompleted: true,
-              stateSla: "",
-              additionalDetails: {},
-              tenantId,
-            },
-          });
-        }
         history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, postPaymenScreenObj);
       } catch (error) {
         console.error(error);
