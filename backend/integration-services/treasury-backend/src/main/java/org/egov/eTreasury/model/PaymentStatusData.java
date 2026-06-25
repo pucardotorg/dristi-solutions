@@ -19,6 +19,9 @@ public class PaymentStatusData {
 
     private String billId;
 
+    /** consumerCode of the bill; stored as service_number on the payment session. */
+    private String serviceNumber;
+
     private PaymentStatusType status;
 
     private String businessService;

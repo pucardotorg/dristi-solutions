@@ -26,6 +26,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -396,36 +397,47 @@ public class PaymentService {
      * stored state (auth_sek_session_data + treasury_payment_data for the receipt); no live treasury
      * call is made here. PENDING sessions are resolved by the reconciliation crons.
      */
-    public PaymentStatusData getPaymentStatus(String billId) {
-        log.info("Fetching payment status for billId: {}", billId);
-        Optional<AuthSek> latestSession = repository.getAuthSekByBillId(billId).stream().findFirst();
+    public PaymentStatusData getPaymentStatus(String billId, String consumerCode) {
+        // Either identifier may be supplied; consumerCode is stored as service_number on the session.
+        boolean lookupByConsumerCode = !StringUtils.hasText(billId) && StringUtils.hasText(consumerCode);
+        log.info("Fetching payment status for billId: {}, consumerCode: {}", billId, consumerCode);
 
-        PaymentStatusData.PaymentStatusDataBuilder data = PaymentStatusData.builder().billId(billId);
+        Optional<AuthSek> latestSession = lookupByConsumerCode
+                ? repository.getAuthSekByServiceNumber(consumerCode).stream().findFirst()
+                : repository.getAuthSekByBillId(billId).stream().findFirst();
+
+        PaymentStatusData.PaymentStatusDataBuilder data = PaymentStatusData.builder()
+                .billId(billId)
+                .serviceNumber(consumerCode);
 
         if (latestSession.isEmpty()) {
-            log.info("No payment session found for billId: {} -> NO_ATTEMPT", billId);
+            log.info("No payment session found for billId: {}, consumerCode: {} -> NO_ATTEMPT", billId, consumerCode);
             return data.status(PaymentStatusType.NO_ATTEMPT).build();
         }
 
         AuthSek latest = latestSession.get();
-        data.businessService(latest.getBusinessService())
+        // Echo back whichever identifier was resolved from the stored session.
+        String resolvedBillId = latest.getBillId();
+        data.billId(resolvedBillId)
+                .serviceNumber(latest.getServiceNumber())
+                .businessService(latest.getBusinessService())
                 .totalDue(latest.getTotalDue())
                 .lastAttemptTime(latest.getSessionTime())
                 .completionSource(latest.getCompletionSource())
                 .verificationTimestamp(latest.getVerificationTimestamp());
 
         if (latest.getPaymentStatus() == PaymentStatus.SUCCESS) {
-            enrichReceipt(billId, data);
-            log.info("billId: {} already PAID (source: {})", billId, latest.getCompletionSource());
+            enrichReceipt(resolvedBillId, data);
+            log.info("billId: {} already PAID (source: {})", resolvedBillId, latest.getCompletionSource());
             return data.status(PaymentStatusType.PAID).build();
         }
 
         if ("PENDING".equalsIgnoreCase(latest.getProcessedStatus())) {
-            log.info("billId: {} latest session still PENDING -> VERIFICATION_PENDING", billId);
+            log.info("billId: {} latest session still PENDING -> VERIFICATION_PENDING", resolvedBillId);
             return data.status(PaymentStatusType.VERIFICATION_PENDING).build();
         }
 
-        log.info("billId: {} latest session terminal non-success -> FAILED", billId);
+        log.info("billId: {} latest session terminal non-success -> FAILED", resolvedBillId);
         return data.status(PaymentStatusType.FAILED).build();
     }
 

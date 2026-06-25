@@ -72,4 +72,14 @@ public class AuthSekQueryBuilder {
         query.append(ORDER_BY_SESSION_TIME).append(" DESC LIMIT 1 ");
         return query.toString();
     }
+
+    public String getAuthSekByServiceNumberQuery(String serviceNumber, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(BASE_QUERY);
+        query.append(FROM_TABLES);
+        query.append(" WHERE service_number = ? ");
+        preparedStmtList.add(serviceNumber);
+        // service_number carries the consumerCode; same "latest attempt only" rule as the billId lookup.
+        query.append(ORDER_BY_SESSION_TIME).append(" DESC LIMIT 1 ");
+        return query.toString();
+    }
 }
