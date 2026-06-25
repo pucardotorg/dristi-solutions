@@ -82,7 +82,7 @@ const Modal = ({
               }
             >
               {footerChildren && <div>{footerChildren}</div>}
-              <div style={{ display: "flex", gap: "16px" }}>
+              <div style={{ display: "flex", flexDirection: "row", gap: "16px" }} className="popup-module-action-bar-buttons">
                 {actionCancelLabel && !hideCancel ? (
                   <ButtonSelector
                     textStyles={{
