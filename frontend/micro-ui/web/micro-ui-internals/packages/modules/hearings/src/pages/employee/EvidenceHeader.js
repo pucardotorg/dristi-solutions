@@ -79,9 +79,19 @@ const EvidenceHearingHeader = ({
     userInfo?.uuid,
   ]);
 
+  const isCurrentAdvOnlyLitigant = useMemo(
+    () =>
+      caseData?.litigants?.some((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid) &&
+      !caseData?.representatives?.some((rep) => rep?.additionalDetails?.uuid === userInfo?.uuid),
+    [caseData, userInfo?.uuid]
+  );
+
   const isAdvocatePresent = useMemo(
-    () => (userRoles?.includes("ADVOCATE_ROLE") || userRoles?.includes("ADVOCATE_CLERK_ROLE") ? true : allAdvocates.includes(userInfo?.uuid)),
-    [allAdvocates, userInfo?.uuid, userRoles]
+    () =>
+      (userRoles?.includes("ADVOCATE_ROLE") && !isCurrentAdvOnlyLitigant) || userRoles?.includes("ADVOCATE_CLERK_ROLE")
+        ? true
+        : allAdvocates.includes(userInfo?.uuid),
+    [allAdvocates, userInfo?.uuid, userRoles, isCurrentAdvOnlyLitigant]
   );
 
   const showMakeSubmission = useMemo(() => {

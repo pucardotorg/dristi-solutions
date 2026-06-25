@@ -85,6 +85,7 @@ import { getEmployeeCrumbs, getAdvocateName, getAdvocateNameFromHearingData } fr
 
 // Import party filter utilities
 import { getPipComplainants, getPipAccuseds, getComplainantsList } from "./utils/partyFilterUtils";
+import { mergePartiesByUuid } from "./utils/partyUtils";
 
 // Import modal config utilities
 import { getDcaConfirmModalConfig, getVoidModalConfig } from "./utils/modalConfigUtils";
@@ -542,7 +543,7 @@ const AdmittedCaseV2 = () => {
       cnrNumber,
       title: caseDetails?.caseTitle || "",
       stage: caseDetails?.stage,
-      parties: [...finalLitigantsData, ...finalRepresentativesData, ...unJoinedLitigant, ...witnesses],
+      parties: mergePartiesByUuid([...finalLitigantsData, ...finalRepresentativesData, ...unJoinedLitigant, ...witnesses]),
       case: caseDetails,
       statue: statue,
     }),

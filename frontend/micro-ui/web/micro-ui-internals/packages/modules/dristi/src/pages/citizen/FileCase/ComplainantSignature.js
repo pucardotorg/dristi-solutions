@@ -391,6 +391,16 @@ const ComplainantSignature = ({ path }) => {
     [litigants, loggedInUserOnBehalfOfUuid]
   );
 
+  const isCurrentPersonLitigant = useMemo(() => litigants?.some((lit) => lit?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid), [
+    litigants,
+    loggedInUserOnBehalfOfUuid,
+  ]);
+
+  const isCurrentPersonAdvocate = useMemo(
+    () => caseDetails?.representatives?.some((advocate) => advocate?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid),
+    [caseDetails, loggedInUserOnBehalfOfUuid]
+  );
+
   const isCurrentPersonPoa = useMemo(
     () => caseDetails?.poaHolders?.some((poaHolder) => poaHolder?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid),
     [caseDetails, loggedInUserOnBehalfOfUuid]
@@ -529,7 +539,7 @@ const ComplainantSignature = ({ path }) => {
         tenantId
       ).then(async (res) => {
         if ([complainantWorkflowState.CASE_REASSIGNED, complainantWorkflowState.DRAFT_IN_PROGRESS].includes(res?.cases?.[0]?.status)) {
-          if ((isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) && isSelectedUploadDoc) {
+          if (((isOwnerAdvocateSelf && !isCurrentLitigantContainPoa) || isMemberOnBehalfOfOwnerAdvocate) && isSelectedUploadDoc) {
             await closePendingTask({
               status: state,
               assignee: loggedInUserOnBehalfOfUuid,
@@ -1157,8 +1167,11 @@ const ComplainantSignature = ({ path }) => {
   }, [caseDetails, tenantId, isLoading, isLitigant]);
 
   const isRightPannelEnable = useMemo(() => {
-    if (isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) {
-      return !(isCurrentAdvocateSigned || isOtherAdvocateSigned || isCurrentPoaSigned || isEsignSuccess || uploadDoc);
+    if (
+      (isOwnerAdvocateSelf && (!isCurrentLitigantContainPoa || isCurrentPersonAdvocate || isCurrentPersonLitigant)) ||
+      isMemberOnBehalfOfOwnerAdvocate
+    ) {
+      return !(isCurrentAdvocateSigned || isCurrentLitigantSigned || isOtherAdvocateSigned || isCurrentPoaSigned || isEsignSuccess || uploadDoc);
     }
     return !(isCurrentLitigantSigned || isCurrentPoaSigned || (isCurrentLitigantContainPoa && !isCurrentPersonPoa) || isEsignSuccess);
   }, [
@@ -1172,6 +1185,8 @@ const ComplainantSignature = ({ path }) => {
     isCurrentPoaSigned,
     isCurrentLitigantContainPoa,
     isCurrentPersonPoa,
+    isCurrentPersonAdvocate,
+    isCurrentPersonLitigant,
   ]);
 
   if (isLoading || isCaseDataFetching) {

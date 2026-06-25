@@ -12,6 +12,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min.js";
 import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils/index.js";
 import { formatName } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils.js";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils/index.js";
+import { getComplainantsList } from "@egovernments/digit-ui-module-dristi/src/pages/employee/AdmittedCases/utils/partyUtils";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmployee, onAddSuccess, style }) => {
@@ -102,40 +103,10 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
       );
   }, [caseDetails]);
 
-  const complainantsList = useMemo(() => {
-    const loggedinUserUuid = authorizedUuid;
-    // If logged in person is an advocate
-    const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
-    const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
-    const accusedLoggedIn = pipAccuseds?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
-
-    if (isAdvocateLoggedIn) {
-      return isAdvocateLoggedIn?.representing?.map((r) => {
-        return {
-          code: r?.additionalDetails?.fullName,
-          name: r?.additionalDetails?.fullName,
-          uuid: r?.additionalDetails?.uuid,
-        };
-      });
-    } else if (isPipLoggedIn) {
-      return [
-        {
-          code: isPipLoggedIn?.additionalDetails?.fullName,
-          name: isPipLoggedIn?.additionalDetails?.fullName,
-          uuid: isPipLoggedIn?.additionalDetails?.uuid,
-        },
-      ];
-    } else if (accusedLoggedIn) {
-      return [
-        {
-          code: accusedLoggedIn?.additionalDetails?.fullName,
-          name: accusedLoggedIn?.additionalDetails?.fullName,
-          uuid: accusedLoggedIn?.additionalDetails?.uuid,
-        },
-      ];
-    }
-    return [];
-  }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
+  const complainantsList = useMemo(
+    () => getComplainantsList(caseDetails, pipComplainants, pipAccuseds, authorizedUuid),
+    [caseDetails, pipComplainants, pipAccuseds, authorizedUuid]
+  );
 
   const handleAddParty = () => {
     const newConfig = addWitnessConfig(formConfigs.length + 1);
