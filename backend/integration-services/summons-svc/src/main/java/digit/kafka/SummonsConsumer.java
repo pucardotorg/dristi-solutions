@@ -127,7 +127,7 @@ public class SummonsConsumer {
                     try {
                         log.info("Generating demand and bill for reissued warrant: taskNumber={}",
                                 taskRequest.getTask().getTaskNumber());
-                        demandService.fetchPaymentDetailsAndGenerateDemandAndBill(taskRequest);
+                        demandService.fetchPaymentDetailsAndGenerateDemandAndBill(taskRequest, true);
                     } catch (Exception e) {
                         log.error("Error generating demand for reissued warrant: taskNumber={}",
                                 taskRequest.getTask().getTaskNumber(), e);

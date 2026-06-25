@@ -159,6 +159,12 @@ public class Configuration {
     @Value("${egov.billingservice.fetch.bill}")
     private String fetchBillEndpoint;
 
+    @Value("${egov.billingservice.demand.search.endpoint}")
+    private String demandSearchEndpoint;
+
+    @Value("${egov.billingservice.demand.update.endpoint}")
+    private String demandUpdateEndpoint;
+
     @Value("${task.taxhead.master.police.code}")
     private String taskSummonPoliceTaxHeadMasterCode;
 
