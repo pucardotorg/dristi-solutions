@@ -379,6 +379,29 @@ const PaymentForRPADModal = ({ path }) => {
           },
         };
 
+        if (fileStoreId) {
+          await Promise.all([
+            ordersService.customApiService(Urls.orders.pendingTask, {
+              pendingTask: {
+                name: orderType === ORDER_TYPES.SUMMONS ? `MAKE_PAYMENT_FOR_SUMMONS_RPAD` : `MAKE_PAYMENT_FOR_NOTICE_RPAD`,
+                entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
+                referenceId: `MANUAL_${taskNumber}`,
+                status: paymentType.PAYMENT_PENDING_RPAD,
+                assignedTo: [],
+                assignedRole: [],
+                cnrNumber: filteredTasks?.[0]?.cnrNumber,
+                filingNumber: filingNumber,
+                caseId: caseDetails?.id,
+                caseTitle: caseDetails?.caseTitle,
+                isCompleted: true,
+                stateSla: "",
+                additionalDetails: {},
+                tenantId,
+              },
+            }),
+          ]);
+        }
+
         history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, postPaymenScreenObj);
       } catch (error) {
         console.error("Error in onPayOnline function:", error);

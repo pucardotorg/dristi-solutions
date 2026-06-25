@@ -1961,6 +1961,7 @@ const SubmissionsCreate = ({ path }) => {
           setMakePaymentLabel(false);
           setShowPaymentModal(false);
           setShowSuccessModal(true);
+          await createPendingTask({ name: t("MAKE_PAYMENT_SUBMISSION"), status: "MAKE_PAYMENT_SUBMISSION", isCompleted: true });
         } else {
           setMakePaymentLabel(true);
           setShowPaymentModal(false);
