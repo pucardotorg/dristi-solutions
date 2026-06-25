@@ -4,16 +4,24 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
+import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.DemandUtil;
 import org.pucar.dristi.util.JsonUtil;
+import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.util.OrderUtil;
 import org.pucar.dristi.util.PendingTaskUtil;
 import org.pucar.dristi.web.models.CourtCase;
+import org.pucar.dristi.web.models.Demand;
+import org.pucar.dristi.web.models.DemandCriteria;
+import org.pucar.dristi.web.models.DemandRequest;
+import org.pucar.dristi.web.models.DemandResponse;
 import org.pucar.dristi.web.models.POAHolder;
 import org.pucar.dristi.web.models.Party;
 import org.pucar.dristi.web.models.Task;
@@ -61,12 +69,14 @@ public class WarrantReissueService {
     private final CaseUtil caseUtil;
     private final AdvocateUtil advocateUtil;
     private final JsonUtil jsonUtil;
+    private final DemandUtil demandUtil;
+    private final MdmsUtil mdmsUtil;
 
     @Autowired
     public WarrantReissueService(TaskService taskService, Configuration config, Producer producer,
                                   ObjectMapper objectMapper, UserService userService, OrderUtil orderUtil,
                                   PendingTaskUtil pendingTaskUtil, CaseUtil caseUtil, AdvocateUtil advocateUtil,
-                                  JsonUtil jsonUtil) {
+                                  JsonUtil jsonUtil, DemandUtil demandUtil, MdmsUtil mdmsUtil) {
         this.taskService = taskService;
         this.config = config;
         this.producer = producer;
@@ -77,6 +87,8 @@ public class WarrantReissueService {
         this.caseUtil = caseUtil;
         this.advocateUtil = advocateUtil;
         this.jsonUtil = jsonUtil;
+        this.demandUtil = demandUtil;
+        this.mdmsUtil = mdmsUtil;
     }
 
     /**
@@ -207,6 +219,16 @@ public class WarrantReissueService {
                 try {
                     taskService.updateTask(terminateRequest);
                     log.info("Terminated old warrant: {}", warrant.getTaskNumber());
+                    // The terminated warrant is replaced by a freshly created clone, so the old
+                    // warrant's outstanding payment artefacts are now stale. A "payment pending for
+                    // warrant" task and a payable demand (bill) are only ever raised while the
+                    // warrant sits in PENDING_PAYMENT, so both are cleaned up only for warrants
+                    // leaving that state - otherwise the litigant is left with a stale payable bill
+                    // on top of the new warrant's fresh demand.
+                    if (PENDING_PAYMENT.equalsIgnoreCase(currentState)) {
+                        closePaymentPendingTaskForWarrant(requestInfo, warrant);
+                        cancelPaymentDemandForWarrant(requestInfo, warrant);
+                    }
                 } catch (Exception e) {
                     log.error("Error terminating warrant: {}", warrant.getTaskNumber(), e);
                     continue; // Skip creating new warrant if termination failed
@@ -828,6 +850,125 @@ public class WarrantReissueService {
         } catch (Exception e) {
             log.error("Error creating payment pending task for reissued warrant: {}", warrant.getTaskNumber(), e);
         }
+    }
+
+    /**
+     * Closes the stale "payment pending for warrant" task left behind when a warrant in
+     * PENDING_PAYMENT is terminated for reissue. Mirrors the referenceId used when the task is
+     * raised ({@code MANUAL + taskNumber}, see {@link #createPaymentPendingTaskForWarrant}) so the
+     * analytics layer matches and marks it COMPLETED. Failures are logged and swallowed so they
+     * never block the reissue flow.
+     */
+    private void closePaymentPendingTaskForWarrant(RequestInfo requestInfo, Task warrant) {
+        try {
+            pendingTaskUtil.closeManualPendingTask(
+                    MANUAL + warrant.getTaskNumber(),
+                    requestInfo,
+                    warrant.getFilingNumber(),
+                    warrant.getCnrNumber(),
+                    warrant.getCaseId(),
+                    warrant.getCaseTitle(),
+                    warrant.getTaskType());
+            log.info("Closed payment pending task for terminated warrant: {}", warrant.getTaskNumber());
+        } catch (Exception e) {
+            log.error("Error closing payment pending task for terminated warrant: {}", warrant.getTaskNumber(), e);
+        }
+    }
+
+    /**
+     * Cancels the outstanding demand(s) raised against a warrant that is being terminated for
+     * reissue while still in PENDING_PAYMENT, mirroring the hearing service's
+     * {@code cancelRelatedDemands} so the litigant is not left with a stale payable bill alongside
+     * the replacement warrant's fresh demand. The warrant demand's consumer code is
+     * {@code taskNumber + "_" + suffix}, where the suffix(es) come from the MDMS payment.paymentType
+     * master keyed by the warrant's delivery channel (NOT the generic taskDetails.consumerCode).
+     * Any failure - including "no demand found" - is logged and swallowed so it never blocks reissue.
+     */
+    private void cancelPaymentDemandForWarrant(RequestInfo requestInfo, Task warrant) {
+        try {
+            Set<String> consumerCodes = extractWarrantConsumerCodes(requestInfo, warrant);
+            if (consumerCodes.isEmpty()) {
+                log.info("No consumer codes resolved for warrant {}; skipping demand cancellation", warrant.getTaskNumber());
+                return;
+            }
+
+            DemandCriteria demandCriteria = new DemandCriteria();
+            demandCriteria.setTenantId(warrant.getTenantId());
+            demandCriteria.setConsumerCode(consumerCodes);
+
+            RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
+            requestInfoWrapper.setRequestInfo(requestInfo);
+
+            DemandResponse demandResponse = demandUtil.searchDemand(demandCriteria, requestInfoWrapper);
+            if (demandResponse == null || CollectionUtils.isEmpty(demandResponse.getDemands())) {
+                log.info("No demands found to cancel for warrant {} (consumer codes: {})", warrant.getTaskNumber(), consumerCodes);
+                return;
+            }
+
+            for (Demand demand : demandResponse.getDemands()) {
+                demand.setStatus(Demand.StatusEnum.CANCELLED);
+            }
+
+            DemandRequest demandRequest = new DemandRequest();
+            demandRequest.setRequestInfo(requestInfo);
+            demandRequest.setDemands(demandResponse.getDemands());
+            demandUtil.updateDemand(demandRequest);
+            log.info("Cancelled {} demand(s) for terminated warrant {} (consumer codes: {})",
+                    demandResponse.getDemands().size(), warrant.getTaskNumber(), consumerCodes);
+        } catch (Exception e) {
+            log.error("Error cancelling demand for terminated warrant: {}", warrant.getTaskNumber(), e);
+        }
+    }
+
+    /**
+     * Resolves the demand consumer codes for a warrant from the MDMS payment.paymentType master.
+     * Every payment type whose deliveryChannel matches the warrant's own delivery channel
+     * contributes a consumer code of {@code taskNumber + "_" + suffix}. Mirrors the hearing
+     * service's OrderUtil.extractConsumerCode so the two services derive identical codes.
+     */
+    private Set<String> extractWarrantConsumerCodes(RequestInfo requestInfo, Task warrant) {
+        Set<String> consumerCodes = new HashSet<>();
+        String deliveryChannel = getDeliveryChannelName(warrant);
+        if (deliveryChannel == null) {
+            log.info("Delivery channel not found for warrant: {}", warrant.getTaskNumber());
+            return consumerCodes;
+        }
+
+        JSONArray paymentTypes = mdmsUtil.fetchMdmsData(requestInfo, warrant.getTenantId(),
+                        PAYMENT_MODULE_NAME, Collections.singletonList(PAYMENT_TYPE_MASTER_NAME))
+                .get(PAYMENT_MODULE_NAME).get(PAYMENT_TYPE_MASTER_NAME);
+
+        for (Object obj : paymentTypes) {
+            if (obj instanceof Map<?, ?> mapObj) {
+                Object channelObj = mapObj.get("deliveryChannel");
+                Object suffixObj = mapObj.get("suffix");
+                if (channelObj != null && suffixObj != null
+                        && channelObj.toString().toUpperCase().contains(deliveryChannel.toUpperCase())) {
+                    consumerCodes.add(warrant.getTaskNumber() + "_" + suffixObj);
+                }
+            }
+        }
+        return consumerCodes;
+    }
+
+    /**
+     * Reads the warrant's delivery channel name (taskDetails.deliveryChannels.channelName) used to
+     * match MDMS payment types. This is the human channel name (e.g. "Police", "RPAD"), distinct
+     * from channelCode (e.g. POLICE) used elsewhere for the iCoPS check.
+     */
+    private String getDeliveryChannelName(Task warrant) {
+        try {
+            JsonNode taskDetails = objectMapper.convertValue(warrant.getTaskDetails(), JsonNode.class);
+            if (taskDetails != null && taskDetails.has("deliveryChannels") && !taskDetails.get("deliveryChannels").isNull()) {
+                JsonNode deliveryChannels = taskDetails.get("deliveryChannels");
+                if (deliveryChannels.has("channelName") && !deliveryChannels.get("channelName").isNull()) {
+                    return deliveryChannels.get("channelName").textValue();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not read delivery channel name from warrant: {}", warrant.getTaskNumber());
+        }
+        return null;
     }
 
     /**
