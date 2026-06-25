@@ -370,14 +370,15 @@ const AddOrderTypeModal = ({
   }, [currentOrder, index]);
 
   // Effective checked-state for the "Request Bail Bond" checkbox (issue #5847: default to checked).
-  // - A saved order item carries a concrete boolean -> respect it (and stays locked once saved checked).
-  // - Once the judge has toggled it this session -> respect that choice.
+  // - Once the judge has toggled it this session -> respect that choice (takes priority over any persisted
+  //   value so that switching from Personal→Surety and confirming the popup actually checks the box).
+  // - A saved order item carries a concrete boolean -> respect it as a starting default.
   // - Otherwise default to checked as soon as the checkbox is enabled (SURETY + valid amount + sureties),
   //   so it is unchecked while required fields are empty and auto-checks the moment they become valid.
   const effectiveRequestBailBond = useMemo(() => {
+    if (bailBondUserTouched) return Boolean(bailBondRequired);
     const persisted = newCurrentOrder?.additionalDetails?.formdata?.requestBailBond;
     if (persisted !== undefined) return Boolean(persisted);
-    if (bailBondUserTouched) return Boolean(bailBondRequired);
     return isBailBondCheckboxEnabled;
   }, [newCurrentOrder, bailBondUserTouched, bailBondRequired, isBailBondCheckboxEnabled]);
 
@@ -532,7 +533,7 @@ const AddOrderTypeModal = ({
                           }
                         }}
                         style={{ cursor: "pointer", width: 20, height: 20 }}
-                        disabled={newCurrentOrder?.additionalDetails?.formdata?.requestBailBond ? true : !isBailBondCheckboxEnabled}
+                        disabled={!isBailBondCheckboxEnabled}
                       />
                       <label htmlFor="bail-bond-required">{t("REQUEST_BAIL_BOND")}</label>
                     </div>
