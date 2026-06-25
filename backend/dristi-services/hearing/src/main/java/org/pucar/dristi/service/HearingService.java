@@ -225,10 +225,10 @@ public class HearingService {
     }
 
     private int resolveStatusOrder(String status) {
-        if (IN_PROGRESS.equals(status)) return 1;
-        if (SCHEDULED.equals(status)) return 2;
-        if (PASSED_OVER.equals(status)) return 3;
-        if (COMPLETED.equals(status)) return 4;
+        if (IN_PROGRESS.equals(status)) return 10;
+        if (SCHEDULED.equals(status)) return 20;
+        if (PASSED_OVER.equals(status)) return 30;
+        if (COMPLETED.equals(status)) return 40;
         return 99;
     }
 
