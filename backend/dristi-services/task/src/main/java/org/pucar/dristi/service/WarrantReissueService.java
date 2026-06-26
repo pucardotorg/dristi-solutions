@@ -144,6 +144,11 @@ public class WarrantReissueService {
                 // Non-iCoPS OR iCoPS still in PENDING_PAYMENT: WARRANT_REISSUE -> PENDING_PAYMENT
                 workflow.setAction(WARRANT_REISSUE);
                 reissueNeedsPayment = !PENDING_PAYMENT.equalsIgnoreCase(currentState);
+                // The warrant is (re)entering PENDING_PAYMENT and a fresh demand is raised against it,
+                // so any feePaidDate carried over from the warrant's earlier payment is now stale and
+                // must be cleared - otherwise the reissued warrant is shown as already paid until the
+                // new payment completes (at which point PaymentUpdateService sets feePaidDate again).
+                clearFeePaidDate(warrant);
             }
             workflow.setDocuments(Collections.singletonList(new org.egov.common.contract.models.Document()));
 
@@ -261,6 +266,10 @@ public class WarrantReissueService {
                 createWorkflow.setAction(CREATE_WITH_OUT_PAYMENT);
             } else {
                 createWorkflow.setAction(CREATE);
+                // The clone lands in PENDING_PAYMENT and a fresh demand is raised against it, so the
+                // feePaidDate copied from the (already paid) source warrant is stale and must be cleared
+                // so the reissued warrant is not shown as already paid until the new payment completes.
+                clearFeePaidDate(newWarrant);
             }
             createWorkflow.setDocuments(Collections.singletonList(new org.egov.common.contract.models.Document()));
             newWarrant.setWorkflow(createWorkflow);
@@ -729,6 +738,30 @@ public class WarrantReissueService {
             task.setTaskDetails(taskDetails);
         } catch (Exception e) {
             log.error("Error updating hearing date in taskDetails: ", e);
+        }
+    }
+
+    /**
+     * Removes a stale feePaidDate from a warrant's taskDetails.deliveryChannels. Called whenever a
+     * warrant is (re)entering PENDING_PAYMENT during reissue: the value either lingers from the
+     * warrant's own earlier payment (in-place reschedule) or is copied from the source warrant by
+     * cloneWarrantForReissue, and in both cases the reissued warrant still has to be paid for, so it
+     * must not advertise a feePaidDate. PaymentUpdateService re-sets it once the new payment lands.
+     */
+    private void clearFeePaidDate(Task task) {
+        try {
+            if (task.getTaskDetails() == null) {
+                return;
+            }
+            ObjectNode taskDetails = task.getTaskDetails() instanceof ObjectNode
+                    ? (ObjectNode) task.getTaskDetails()
+                    : objectMapper.convertValue(task.getTaskDetails(), ObjectNode.class);
+            if (taskDetails.has("deliveryChannels") && taskDetails.get("deliveryChannels") instanceof ObjectNode) {
+                ((ObjectNode) taskDetails.get("deliveryChannels")).remove("feePaidDate");
+            }
+            task.setTaskDetails(taskDetails);
+        } catch (Exception e) {
+            log.error("Error clearing feePaidDate from taskDetails: ", e);
         }
     }
 
