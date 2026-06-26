@@ -74,6 +74,16 @@ public class SummonsService {
     }
 
     public TaskResponse generateSummonsDocument(TaskRequest taskRequest) {
+        return generateSummonsDocument(taskRequest, false);
+    }
+
+    /**
+     * @param replaceExistingGeneratedDocument when true (warrant reissue flow), the stale generated/signed
+     *                                         task documents carried over from the previous issuance are
+     *                                         dropped before the regenerated PDF is attached, so the reissue
+     *                                         does not leave duplicate GENERATE_TASK_DOCUMENT entries.
+     */
+    public TaskResponse generateSummonsDocument(TaskRequest taskRequest, boolean replaceExistingGeneratedDocument) {
         String taskType = taskRequest.getTask().getTaskType();
 
         boolean isWarrantToWitness = false;
@@ -99,7 +109,7 @@ public class SummonsService {
             pdfTemplateKey = pdfTemplateKey + "-e-post";
         }
 
-        return generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, false);
+        return generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, false, replaceExistingGeneratedDocument);
     }
 
     private String getTemplateType(String taskType, TaskDetails taskDetails) {
@@ -118,14 +128,36 @@ public class SummonsService {
     }
 
     private TaskResponse generateDocumentAndUpdateTask(TaskRequest taskRequest, String pdfTemplateKey, boolean qrCode) {
+        return generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, qrCode, false);
+    }
+
+    private TaskResponse generateDocumentAndUpdateTask(TaskRequest taskRequest, String pdfTemplateKey, boolean qrCode,
+                                                       boolean replaceExistingGeneratedDocument) {
         ByteArrayResource byteArrayResource = pdfServiceUtil.generatePdfFromPdfService(taskRequest,
                 taskRequest.getTask().getTenantId(), pdfTemplateKey, qrCode);
         String fileStoreId = fileStorageUtil.saveDocumentToFileStore(byteArrayResource);
+
+        // The task service replaces the whole document list with what we send on upload, so on a warrant
+        // reissue we must strip the stale generated/signed documents carried over from the previous issuance;
+        // otherwise the regenerated PDF is appended alongside the old one and persisted as a duplicate.
+        if (replaceExistingGeneratedDocument) {
+            removeStaleTaskDocuments(taskRequest.getTask());
+        }
 
         Document document = createDocument(fileStoreId, qrCode);
         taskRequest.getTask().addDocumentsItem(document);
 
         return taskUtil.callUploadDocumentTask(taskRequest);
+    }
+
+    private void removeStaleTaskDocuments(Task task) {
+        List<Document> documents = task.getDocuments();
+        if (documents == null || documents.isEmpty()) {
+            return;
+        }
+        documents.removeIf(doc -> doc != null
+                && (GENERATE_TASK_DOCUMENT.equalsIgnoreCase(doc.getDocumentType())
+                || SIGNED_TASK_DOCUMENT.equalsIgnoreCase(doc.getDocumentType())));
     }
 
     public TaskResponse generateMiscellaneousDocumentAndUpdateTask(TaskRequest taskRequest, boolean qrCode) {
