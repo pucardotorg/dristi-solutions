@@ -301,7 +301,10 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       {}
     );
 
-    if (advocateResponse?.advocates[0]?.responseList?.length > 0) {
+    if (
+      advocateResponse?.advocates[0]?.responseList?.length > 0 &&
+      !caseDetails?.litigants?.some((litigant) => litigant?.individualId === individualData?.Individual?.[0]?.individualId)
+    ) {
       setBarRegNumber(advocateResponse?.advocates[0]?.responseList?.[0]?.barRegistrationNumber);
       setAdvocateId(advocateResponse?.advocates[0]?.responseList?.[0]?.id);
       setAdvocateData(advocateResponse?.advocates[0]?.responseList?.[0]);
@@ -316,7 +319,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         userType: { label: t(JoinHomeLocalisation.LITIGANT_OPT), value: "Litigant" },
       }));
     }
-  }, [t, tenantId, userInfo?.uuid]);
+  }, [t, tenantId, userInfo?.uuid, caseDetails?.litigants]);
 
   useEffect(() => {
     if (show === true) {
