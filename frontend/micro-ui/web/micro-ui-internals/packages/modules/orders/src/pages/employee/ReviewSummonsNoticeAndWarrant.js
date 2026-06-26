@@ -21,7 +21,7 @@ import isEqual from "lodash/isEqual";
 import ReviewNoticeModal from "../../components/ReviewNoticeModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
 import { DateUtils, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS } from "../../utils/constants";
+import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS, TASK_TYPES } from "../../utils/constants";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { UploadModal } from "@egovernments/digit-ui-module-common";
@@ -833,40 +833,44 @@ const ReviewSummonsNoticeAndWarrant = () => {
     ];
   }, [rowData, isIcops]);
 
+  const taskType = useMemo(() => {
+    return rowData?.taskType;
+  }, [rowData]);
+
   const successMessage = useMemo(() => {
     let msg = "";
     const isViaPolice = rowData?.taskDetails?.deliveryChannels?.channelCode === CHANNEL_IDS.POLICE;
     if (documents && !isViaPolice) {
-      if (orderType === ORDER_TYPES.NOTICE) {
+      if (taskType === TASK_TYPES.NOTICE) {
         msg = t("SUCCESSFULLY_SIGNED_NOTICE");
-      } else if (orderType === ORDER_TYPES.WARRANT) {
+      } else if (taskType === TASK_TYPES.WARRANT) {
         msg = t("SUCCESSFULLY_SIGNED_WARRANT");
-      } else if (orderType === ORDER_TYPES.PROCLAMATION) {
+      } else if (taskType === TASK_TYPES.PROCLAMATION) {
         msg = t("SUCCESSFULLY_SIGNED_PROCLAMATION");
-      } else if (orderType === ORDER_TYPES.ATTACHMENT) {
+      } else if (taskType === TASK_TYPES.ATTACHMENT) {
         msg = t("SUCCESSFULLY_SIGNED_ATTACHMENT");
-      } else if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
+      } else if (taskType === TASK_TYPES.MISCELLANEOUS_PROCESS) {
         msg = t("SUCCESSFULLY_SIGNED_MISCELLANEOUS_PROCESS");
       } else {
         msg = t("SUCCESSFULLY_SIGNED_SUMMON");
       }
     } else {
-      if (orderType === ORDER_TYPES.NOTICE) {
+      if (taskType === TASK_TYPES.NOTICE) {
         msg = t("SENT_NOTICE_VIA");
-      } else if (orderType === ORDER_TYPES.WARRANT) {
+      } else if (taskType === TASK_TYPES.WARRANT) {
         msg = t("SENT_WARRANT_VIA");
-      } else if (orderType === ORDER_TYPES.PROCLAMATION) {
+      } else if (taskType === TASK_TYPES.PROCLAMATION) {
         msg = t("SENT_PROCLAMATION_VIA");
-      } else if (orderType === ORDER_TYPES.ATTACHMENT) {
+      } else if (taskType === TASK_TYPES.ATTACHMENT) {
         msg = t("SENT_ATTACHMENT_VIA");
-      } else if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
+      } else if (taskType === TASK_TYPES.MISCELLANEOUS_PROCESS) {
         msg = t("SENT_MISCELLANEOUS_PROCESS_VIA");
       } else {
         msg = t("SENT_SUMMONS_VIA");
       }
     }
     return `${msg}${!documents || isViaPolice ? " " + deliveryChannel : ""}`;
-  }, [documents, orderType, deliveryChannel]);
+  }, [documents, deliveryChannel, taskType, rowData]);
 
   const handleSubmitEsign = useCallback(async () => {
     // Set flag to prevent onFormValueChange from clearing sessionStorage during this operation
