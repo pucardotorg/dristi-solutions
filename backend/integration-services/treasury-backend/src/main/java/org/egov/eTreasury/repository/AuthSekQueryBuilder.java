@@ -43,4 +43,43 @@ public class AuthSekQueryBuilder {
         query.append(ORDER_BY_SESSION_TIME);
         return query.toString();
     }
+
+    public String getAgedPendingAuthSeksQuery(Long thresholdTime, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(BASE_QUERY);
+        query.append(FROM_TABLES);
+        query.append(" WHERE processed_status = 'PENDING' AND session_time <= ? AND department_id IS NOT NULL ");
+        preparedStmtList.add(thresholdTime);
+        query.append(ORDER_BY_SESSION_TIME);
+        return query.toString();
+    }
+
+    public String getAuthSekByDepartmentIdQuery(String departmentId, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(BASE_QUERY);
+        query.append(FROM_TABLES);
+        query.append(" WHERE department_id = ? ");
+        preparedStmtList.add(departmentId);
+        query.append(ORDER_BY_SESSION_TIME).append(" DESC ");
+        return query.toString();
+    }
+
+    public String getAuthSekByBillIdQuery(String billId, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(BASE_QUERY);
+        query.append(FROM_TABLES);
+        query.append(" WHERE bill_id = ? ");
+        preparedStmtList.add(billId);
+        // Only the most recent attempt is needed: the UI gates each payment on this status,
+        // so there is at most one in-flight session per bill at a time.
+        query.append(ORDER_BY_SESSION_TIME).append(" DESC LIMIT 1 ");
+        return query.toString();
+    }
+
+    public String getAuthSekByServiceNumberQuery(String serviceNumber, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(BASE_QUERY);
+        query.append(FROM_TABLES);
+        query.append(" WHERE service_number = ? ");
+        preparedStmtList.add(serviceNumber);
+        // service_number carries the consumerCode; same "latest attempt only" rule as the billId lookup.
+        query.append(ORDER_BY_SESSION_TIME).append(" DESC LIMIT 1 ");
+        return query.toString();
+    }
 }

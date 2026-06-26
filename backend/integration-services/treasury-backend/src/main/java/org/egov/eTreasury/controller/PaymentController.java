@@ -11,7 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
+import org.egov.tracer.model.CustomException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -73,6 +75,22 @@ public class PaymentController {
                 .document(document).build();
     }
 
+    @PostMapping("/v1/_paymentStatus")
+    public ResponseEntity<PaymentStatusResponse> getPaymentStatus(@RequestParam(required = false) String billId,
+                                                                  @RequestParam(required = false) String consumerCode,
+                                                                  @RequestBody RequestInfo requestInfo) {
+        if (!StringUtils.hasText(billId) && !StringUtils.hasText(consumerCode)) {
+            throw new CustomException("INVALID_PAYMENT_STATUS_REQUEST", "Either billId or consumerCode is mandatory");
+        }
+        log.info("Fetching payment status for billId: {}, consumerCode: {}", billId, consumerCode);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);
+        PaymentStatusData paymentStatus = paymentService.getPaymentStatus(billId, consumerCode);
+        PaymentStatusResponse response = PaymentStatusResponse.builder()
+                .responseInfo(responseInfo).paymentStatus(paymentStatus).build();
+        log.info("Payment status for billId: {}, consumerCode: {} is {}", billId, consumerCode, paymentStatus.getStatus());
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/v1/_getHeadBreakDown")
     public ResponseEntity<TreasuryMappingResponse> getHeadBreakDown(@RequestParam String consumerCode, @RequestBody RequestInfo requestInfo) {
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);
@@ -86,6 +104,24 @@ public class PaymentController {
         log.info("Batch triggering double verification via endpoint");
         paymentService.processDoubleVerificationBatch(requestInfo);
         return ResponseEntity.ok("Batch processing initiated.");
+    }
+
+    @PostMapping("/v1/_processReconciliationV3")
+    public ResponseEntity<String> processReconciliationV3Batch(@RequestBody RequestInfo requestInfo) {
+        log.info("V3 reconciliation batch triggered via endpoint");
+        paymentService.processReconciliationV3Batch(requestInfo);
+        return ResponseEntity.ok("V3 reconciliation batch initiated.");
+    }
+
+    @PostMapping("/v1/_testReconciliationV3")
+    public ResponseEntity<ReconciliationV3TestResponse> testReconciliationV3(
+            @RequestParam("departmentId") String departmentId,
+            @RequestParam(value = "dryRun", required = false, defaultValue = "true") boolean dryRun,
+            @RequestBody RequestInfo requestInfo) {
+        log.info("V3 reconciliation TEST endpoint hit | departmentId={} | dryRun={}", departmentId, dryRun);
+        ReconciliationV3TestResponse response = paymentService.testReconciliationV3(departmentId, dryRun, requestInfo);
+        response.setResponseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true));
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/v1/_doubleVerification")
