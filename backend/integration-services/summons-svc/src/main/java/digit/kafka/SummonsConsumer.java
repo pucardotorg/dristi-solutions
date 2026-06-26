@@ -137,7 +137,7 @@ public class SummonsConsumer {
                 try {
                     log.info("Regenerating warrant PDF for reissue: taskNumber={}, action={}",
                             taskRequest.getTask().getTaskNumber(), action);
-                    summonsService.generateSummonsDocument(taskRequest, true);
+                    summonsService.generateSummonsDocument(taskRequest);
                 } catch (Exception e) {
                     log.error("Error regenerating warrant PDF for reissue: taskNumber={}",
                             taskRequest.getTask().getTaskNumber(), e);
