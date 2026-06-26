@@ -25,6 +25,7 @@ const SelectParty = ({
 }) => {
   const { t } = useTranslation();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const isAdvocate = userInfo?.roles?.some((role) => role.code === "ADVOCATE_ROLE");
   const setFormError = useRef(null);
   const clearFormError = useRef(null);
 
@@ -212,13 +213,28 @@ const SelectParty = ({
         <CardLabel className="case-input-label">{`${t("JOINING_THIS_CASE_AS")}`}</CardLabel>
         <RadioButtons
           selectedOption={selectPartyData?.userType}
-          disabled={true}
+          onSelect={(value) => {
+            setSelectPartyData((selectPartyData) => ({
+              ...selectPartyData,
+              userType: value,
+              partyInvolve: {},
+              isReplaceAdvocate: {},
+              affidavit: {},
+              advocateToReplaceList: [],
+              approver: { label: "", value: "" },
+              reasonForReplacement: "",
+              isPoaRightsClaiming: { label: "", value: "" },
+            }));
+            setPartyInPerson({});
+            setParty(value?.value === "Litigant" ? {} : []);
+          }}
+          disabled={isAdvocateJoined || isLitigantJoined || !isAdvocate}
           optionsKey={"label"}
           options={[
             { label: t("ADVOCATE_OPT"), value: "Advocate" },
             { label: t("LITIGANT_OPT"), value: "Litigant" },
           ]}
-          additionalWrapperClass={"radio-disabled"}
+          additionalWrapperClass={(isAdvocateJoined || isLitigantJoined || !isAdvocate) && "radio-disabled"}
         />
       </LabelFieldPair>
       <LabelFieldPair className="case-label-field-pair">

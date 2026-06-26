@@ -424,6 +424,16 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     return complainantUserType === "ADVOCATE";
   }, [selectedComplainantIndividual]);
 
+  // All complainant litigant individualIds to exclude from the advocate dropdown.
+  const advocateLitigantIndividualIds = useMemo(() => {
+    return (
+      caseDetails?.litigants
+        ?.filter((l) => l.partyType?.includes("complainant"))
+        .map((l) => l.individualId)
+        .filter(Boolean) || []
+    );
+  }, [caseDetails?.litigants]);
+
   useEffect(() => {
     if (
       (userType === "ADVOCATE" &&
@@ -921,7 +931,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                         value={data?.advocateBarRegNumberWithName}
                         onChange={(value) => handleInputChange(index, "advocateBarRegNumberWithName", value)}
                         disabled={data?.advocateBarRegNumberWithName?.individualId === individualId}
-                        excludeIndividualId={isAdvocateActingAsComplainant ? selectedComplainantIndividual?.Individual?.[0]?.individualId : null}
+                        excludeIndividualIds={advocateLitigantIndividualIds}
                       />
 
                       {data?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal &&

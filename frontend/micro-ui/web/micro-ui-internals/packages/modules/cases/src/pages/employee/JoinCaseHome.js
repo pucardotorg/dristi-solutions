@@ -19,7 +19,13 @@ import JoinCaseSuccess from "./joinCaseComponent/JoinCaseSuccess";
 import LitigantVerification from "./joinCaseComponent/LitigantVerification";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import POAInfo from "./joinCaseComponent/POAInfo";
-import { cleanString, combineMultipleFiles, getAuthorizedUuid, isLPRCase, removeInvalidNameParts } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import {
+  cleanString,
+  combineMultipleFiles,
+  getAuthorizedUuid,
+  isLPRCase,
+  removeInvalidNameParts,
+} from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-orders/src/utils/submissionWorkflow";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";

@@ -1,8 +1,8 @@
 import { ArrowDown } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
-import { getAuthorizedUuid, removeInvalidNameParts } from "../Utils";
+import { removeInvalidNameParts } from "../Utils";
 
-const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value, onChange, disabled, excludeIndividualId }) => {
+const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value, onChange, disabled, excludeIndividualIds }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [loader, setLoader] = useState(false);
@@ -14,7 +14,7 @@ const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value,
       status: "ACTIVE",
       tenantId: window?.Digit.ULBService.getStateId(),
       offset: 0,
-      limit: 100,
+      limit: 10,
     }
   );
 
@@ -39,7 +39,7 @@ const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value,
     (advocate) =>
       !selectedAdvocatesList.some(
         (selected) => selected.advocateBarRegNumberWithName.barRegistrationNumberOriginal === advocate.barRegistrationNumberOriginal
-      ) && !(excludeIndividualId && advocate.individualId === excludeIndividualId)
+      ) && !(excludeIndividualIds?.length && excludeIndividualIds.includes(advocate.individualId))
   );
 
   useEffect(() => {
