@@ -137,7 +137,9 @@ public class SummonsConsumer {
                 try {
                     log.info("Regenerating warrant PDF for reissue: taskNumber={}, action={}",
                             taskRequest.getTask().getTaskNumber(), action);
-                    summonsService.generateSummonsDocument(taskRequest);
+                    // override=true: the regenerated PDF must replace the previous cycle's
+                    // generated/signed documents so the reissued warrant carries only the fresh one.
+                    summonsService.generateSummonsDocument(taskRequest, true);
                 } catch (Exception e) {
                     log.error("Error regenerating warrant PDF for reissue: taskNumber={}",
                             taskRequest.getTask().getTaskNumber(), e);

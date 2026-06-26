@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.*;
 
@@ -80,8 +81,9 @@ public class TaskApiController {
     }
 
     @RequestMapping(value = "/v1/uploadDocument", method = RequestMethod.POST)
-    public ResponseEntity<TaskResponse> taskV1UploadDocument(@Parameter(in = ParameterIn.DEFAULT, description = "details for the update of task", schema = @Schema()) @Valid @RequestBody TaskRequest body) {
-        Task task = taskService.uploadDocument(body);
+    public ResponseEntity<TaskResponse> taskV1UploadDocument(@Parameter(in = ParameterIn.DEFAULT, description = "details for the update of task", schema = @Schema()) @Valid @RequestBody TaskRequest body,
+                                                             @RequestParam(value = "override", required = false, defaultValue = "false") boolean override) {
+        Task task = taskService.uploadDocument(body, override);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         TaskResponse taskResponse = TaskResponse.builder().task(task).responseInfo(responseInfo).build();
         return new ResponseEntity<>(taskResponse, HttpStatus.OK);
