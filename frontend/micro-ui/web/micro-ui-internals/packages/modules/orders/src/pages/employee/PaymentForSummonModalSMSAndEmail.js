@@ -35,6 +35,7 @@ const orderTypeEnum = {
   WARRANT: "Warrant",
   PROCLAMATION: "Proclamation",
   ATTACHMENT: "Attachment",
+  SCHEDULE_OF_HEARING_DATE: "Warrant",
 };
 
 const PaymentForSummonComponent = ({
@@ -201,6 +202,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   );
 
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
+  const partyUniqueId = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.uniqueId, [filteredTasks]);
+  const partyName = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.name, [filteredTasks]);
 
   const { data: orderData, isLoading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
     { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
@@ -244,6 +247,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       PROCLAMATION: paymentType.TASK_PROCLAMATION,
       ATTACHMENT: paymentType.TASK_ATTACHMENT,
       NOTICE: paymentType.TASK_NOTICE,
+      SCHEDULE_OF_HEARING_DATE: paymentType.TASK_WARRANT,
     };
     return businessServiceMap?.[orderType];
   };
@@ -635,6 +639,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       formdata?.warrantFor ||
       formdata?.proclamationFor ||
       formdata?.attachmentFor ||
+      partyName ||
       "";
 
     const task = filteredTasks?.[0];
