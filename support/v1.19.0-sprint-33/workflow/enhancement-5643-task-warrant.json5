@@ -1,0 +1,412 @@
+{
+  "tenantId": "kl",
+  "businessService": "task-warrant",
+  "business": "task",
+  "businessServiceSla": 4320000000,
+  "states": [
+    {
+      "sla": null,
+      "state": null,
+      "applicationStatus": null,
+      "docUploadRequired": true,
+      "isStartState": true,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        // NEW : create warrant task skipping payment, lands directly in ISSUE_WARRANT
+        {
+          "action": "CREATE_WITH_OUT_PAYMENT",
+          "nextState": "ISSUE_WARRANT",
+          "roles": [
+            "TASK_CREATOR",
+            "SYSTEM"
+          ]
+        },
+        {
+          "action": "CREATE",
+          "nextState": "PENDING_PAYMENT",
+          "roles": [
+            "TASK_CREATOR",
+            "SYSTEM"
+          ]
+        }
+      ]
+    },
+    {
+      "sla": 172800000,
+      "state": "PENDING_PAYMENT",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": true,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        // NEW : reissue keeping same warrant, stays in PENDING_PAYMENT (self loop)
+        {
+          "action": "WARRANT_REISSUE",
+          "nextState": "PENDING_PAYMENT",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "MAKE_PAYMENT",
+          "nextState": "ISSUE_WARRANT",
+          "roles": [
+            "TASK_CREATOR",
+            "SYSTEM",
+            "CITIZEN",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "ABANDON",
+          "nextState": "ABATED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "EXPIRE",
+          "nextState": "EXPIRED",
+          "roles": [
+            "TASK_CREATOR",
+            "SYSTEM",
+            "CITIZEN",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        // NEW : reissue with a brand new warrant, terminates this task
+        {
+          "action": "REISSUE_WITH_NEW_WARRANT",
+          "nextState": "WARRANT_REISSUED_WITH_NEW_WARRANT",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        }
+      ]
+    },
+    {
+      "sla": 388000000,
+      "state": "ISSUE_WARRANT",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        // NEW : ICOPS reissue flow
+        {
+          "action": "WARRANT_REISSUE_ICOPS",
+          "nextState": "WARRANT_REISSUED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        // NEW : reissue with a brand new warrant, terminates this task
+        {
+          "action": "REISSUE_WITH_NEW_WARRANT",
+          "nextState": "WARRANT_REISSUED_WITH_NEW_WARRANT",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "EXPIRE",
+          "nextState": "EXPIRED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "ABANDON",
+          "nextState": "ABATED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        // NEW : reissue keeping same warrant, back to PENDING_PAYMENT
+        {
+          "action": "WARRANT_REISSUE",
+          "nextState": "PENDING_PAYMENT",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "SEND",
+          "nextState": "WARRANT_SENT",
+          "roles": [
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        }
+      ]
+    },
+    {
+      "sla": 3888000000,
+      "state": "WARRANT_SENT",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "action": "ABANDON",
+          "nextState": "ABATED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        // NEW : warrant is in transit
+        {
+          "action": "TRANSIT",
+          "nextState": "IN_TRANSIT",
+          "roles": [
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        // NEW : other outcome
+        {
+          "action": "OTHER",
+          "nextState": "OTHER",
+          "roles": [
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        // NEW : reissue with a brand new warrant, terminates this task
+        {
+          "action": "REISSUE_WITH_NEW_WARRANT",
+          "nextState": "WARRANT_REISSUED_WITH_NEW_WARRANT",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        // NEW : reissue keeping same warrant, back to PENDING_PAYMENT
+        {
+          "action": "WARRANT_REISSUE",
+          "nextState": "PENDING_PAYMENT",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        // NEW : ICOPS reissue flow
+        {
+          "action": "WARRANT_REISSUE_ICOPS",
+          "nextState": "WARRANT_REISSUED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "NOT_DELIVERED",
+          "nextState": "NOT_EXECUTED",
+          "roles": [
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN",
+            "AUTO_ESCALATE"
+          ]
+        },
+        {
+          "action": "DELIVERED",
+          "nextState": "EXECUTED",
+          "roles": [
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "EXPIRE",
+          "nextState": "EXPIRED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        }
+      ]
+    },
+    // NEW STATE : warrant in transit
+    {
+      "sla": 3888000000,
+      "state": "IN_TRANSIT",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "action": "DELIVERED",
+          "nextState": "EXECUTED",
+          "roles": [
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "NOT_DELIVERED",
+          "nextState": "NOT_EXECUTED",
+          "roles": [
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN",
+            "AUTO_ESCALATE"
+          ]
+        },
+        {
+          "action": "OTHER",
+          "nextState": "OTHER",
+          "roles": [
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        }
+      ]
+    },
+    // NEW STATE : ICOPS warrant reissued
+    {
+      "sla": null,
+      "state": "WARRANT_REISSUED",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "action": "ABANDON",
+          "nextState": "ABATED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "WARRANT_REISSUE",
+          "nextState": "PENDING_PAYMENT",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "REISSUE_WITH_NEW_WARRANT",
+          "nextState": "WARRANT_REISSUED_WITH_NEW_WARRANT",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "EXPIRE",
+          "nextState": "EXPIRED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "SEND",
+          "nextState": "WARRANT_SENT",
+          "roles": [
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "WARRANT_REISSUE_ICOPS",
+          "nextState": "WARRANT_REISSUED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        }
+      ]
+    },
+    {
+      "sla": null,
+      "state": "EXECUTED",
+      "applicationStatus": "ACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    },
+    {
+      "sla": null,
+      "state": "NOT_EXECUTED",
+      "applicationStatus": "ACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    },
+    {
+      "sla": null,
+      "state": "ABATED",
+      "applicationStatus": "INACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    },
+    {
+      "sla": null,
+      "state": "EXPIRED",
+      "applicationStatus": "INACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    },
+    // NEW STATE : reissued with a brand new warrant (terminal, task closed)
+    {
+      "sla": null,
+      "state": "WARRANT_REISSUED_WITH_NEW_WARRANT",
+      "applicationStatus": "INACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    },
+    // NEW STATE : other outcome (terminal)
+    {
+      "sla": null,
+      "state": "OTHER",
+      "applicationStatus": "INACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    }
+  ]
+}
