@@ -199,6 +199,18 @@ public class WarrantReissueService {
         // the previous hearing) and skip any warrant that already has a clone.
         Set<String> alreadyReissuedSourceIds = collectReissueSourceIds(activeWarrants);
 
+        // A composite scheduling order can itself author warrant(s): a WARRANT item published
+        // alongside the SCHEDULE_OF_HEARING_DATE item. Those warrants are created directly by
+        // order-management's PublishOrderWarrant for the new hearing, so auto-reissuing a
+        // previous-cycle warrant that covers the same party + address + delivery channel would
+        // duplicate them. Give the composite order priority: collect the (party|address|channel)
+        // combinations its warrant item(s) cover and skip any matching warrant below. We key off the
+        // ORDER's composition rather than searching for the warrant task, because the composite's
+        // warrant tasks are created in the order's postProcess - after the hearing.create event we
+        // are handling - so a task lookup would race; the order itself is already published with its
+        // warrant item by the time we get here.
+        Set<String> compositeWarrantCoverageKeys = collectCompositeWarrantCoverageKeys(requestInfo, newOrderId);
+
         // Scope to the single previous cycle by the order that CREATED each warrant, not by hearing
         // date: a calendar-day comparison drops the previous cycle whenever its warrants happen to be
         // tagged to the same IST day as the new hearing (e.g. two hearings scheduled for the same day),
@@ -215,6 +227,12 @@ public class WarrantReissueService {
         for (Task warrant : activeWarrants) {
             if (warrant.getId() != null && alreadyReissuedSourceIds.contains(warrant.getId().toString())) {
                 log.info("Skipping warrant {} - it already has a reissued clone (duplicate hearing event)", warrant.getTaskNumber());
+                continue;
+            }
+            String coverageKey = buildWarrantCoverageKey(warrant);
+            if (coverageKey != null && compositeWarrantCoverageKeys.contains(coverageKey)) {
+                log.info("Skipping warrant {} - composite scheduling order {} already authors a warrant for the same party/address/channel ({}); composite order takes priority",
+                        warrant.getTaskNumber(), newOrderId, coverageKey);
                 continue;
             }
             String currentState = warrant.getStatus();
@@ -782,6 +800,115 @@ public class WarrantReissueService {
             log.warn("Could not extract partyUniqueId from task: {}", task.getTaskNumber());
         }
         return null;
+    }
+
+    /**
+     * When the order that scheduled the new hearing is a COMPOSITE order that also authors warrant(s),
+     * returns the set of {@code party|address|channel} combinations those warrant item(s) cover. The
+     * reissue flow skips any previous-cycle warrant matching one of these so the composite order's own
+     * freshly authored warrant is not duplicated by an auto-reissued clone. Returns an empty set when
+     * newOrderId is null, the order is not composite, carries no warrant item, or cannot be fetched -
+     * in every such case the reissue proceeds normally. Any failure is logged and swallowed so it
+     * never blocks the reissue flow.
+     */
+    Set<String> collectCompositeWarrantCoverageKeys(RequestInfo requestInfo, String newOrderId) {
+        Set<String> keys = new HashSet<>();
+        if (newOrderId == null || newOrderId.isEmpty()) {
+            return keys;
+        }
+        try {
+            Order order = orderUtil.getOrderByOrderId(requestInfo, newOrderId);
+            if (order == null || !COMPOSITE.equalsIgnoreCase(order.getOrderCategory()) || order.getCompositeItems() == null) {
+                return keys;
+            }
+            JsonNode items = objectMapper.readTree(objectMapper.writeValueAsString(order.getCompositeItems()));
+            for (JsonNode item : items) {
+                if (!WARRANT.equalsIgnoreCase(item.path("orderType").asText(""))) {
+                    continue;
+                }
+                JsonNode taskDetailsNode = item.path("orderSchema").path("additionalDetails").path("taskDetails");
+                if (taskDetailsNode.isMissingNode() || taskDetailsNode.isNull()) {
+                    continue;
+                }
+                // taskDetails is carried as a JSON string holding an array of task-detail objects
+                String taskDetailsStr = taskDetailsNode.isTextual() ? taskDetailsNode.asText() : taskDetailsNode.toString();
+                if (taskDetailsStr == null || taskDetailsStr.isBlank()) {
+                    continue;
+                }
+                JsonNode taskDetailsArray = objectMapper.readTree(taskDetailsStr);
+                if (!taskDetailsArray.isArray()) {
+                    continue;
+                }
+                for (JsonNode taskDetail : taskDetailsArray) {
+                    String key = buildCoverageKey(taskDetail);
+                    if (key != null) {
+                        keys.add(key);
+                    }
+                }
+            }
+            if (!keys.isEmpty()) {
+                log.info("Composite scheduling order {} authors warrant(s) covering {} party/address/channel combination(s); matching warrants will not be reissued",
+                        newOrderId, keys.size());
+            }
+        } catch (Exception e) {
+            log.error("Could not determine composite warrant coverage for order {}; proceeding without composite priority", newOrderId, e);
+        }
+        return keys;
+    }
+
+    /** Coverage key for an existing warrant task, derived from its own taskDetails. */
+    String buildWarrantCoverageKey(Task warrant) {
+        try {
+            if (warrant.getTaskDetails() == null) {
+                return null;
+            }
+            JsonNode taskDetails = objectMapper.convertValue(warrant.getTaskDetails(), JsonNode.class);
+            return buildCoverageKey(taskDetails);
+        } catch (Exception e) {
+            log.warn("Could not build coverage key for warrant: {}", warrant.getTaskNumber());
+            return null;
+        }
+    }
+
+    /**
+     * Builds a {@code party|address|channel} key from a single warrant taskDetail node, used to match
+     * a previous-cycle warrant against a composite order's authored warrant. Party and address are
+     * read from respondentDetails (falling back to witnessDetails); the channel is the delivery
+     * channel code. Returns null when the party uniqueId is absent, so a warrant without an
+     * identifiable party never matches.
+     */
+    private String buildCoverageKey(JsonNode taskDetail) {
+        if (taskDetail == null || taskDetail.isMissingNode() || taskDetail.isNull()) {
+            return null;
+        }
+        JsonNode party = taskDetail.path("respondentDetails");
+        if (party.isMissingNode() || party.isNull()) {
+            party = taskDetail.path("witnessDetails");
+        }
+        String uniqueId = textOrNull(party.path("uniqueId"));
+        if (uniqueId == null) {
+            return null;
+        }
+        String addressId = extractAddressId(party);
+        String channelCode = textOrNull(taskDetail.path("deliveryChannels").path(CHANNEL_CODE));
+        return normalizeKeyPart(uniqueId) + "|" + normalizeKeyPart(addressId) + "|" + normalizeKeyPart(channelCode);
+    }
+
+    /** Reads the party's address id, tolerating address being either an object or an array. */
+    private String extractAddressId(JsonNode party) {
+        JsonNode address = party.path("address");
+        if (address.isArray()) {
+            address = address.path(0);
+        }
+        return textOrNull(address.path("id"));
+    }
+
+    private String textOrNull(JsonNode node) {
+        return (node == null || node.isMissingNode() || node.isNull()) ? null : node.asText(null);
+    }
+
+    private String normalizeKeyPart(String value) {
+        return value == null ? "" : value.trim().toLowerCase();
     }
 
     private void updateOrderPartyUniqueIds(RequestInfo requestInfo, String orderId, List<String> newPartyUniqueIds) {
