@@ -2078,14 +2078,14 @@ const SubmissionsCreate = ({ path }) => {
             caseDetails={caseDetails}
           />
         )}
-        {showPaymentModal && (
+        {true && (
           <PaymentModal
             t={t}
             handleClosePaymentModal={handleBack}
             handleSkipPayment={handleSkipPayment}
             handleMakePayment={handleMakePayment}
             tenantId={tenantId}
-            consumerCode={applicationDetails?.applicationNumber}
+            consumerCode={applicationDetails?.applicationNumber ? applicationDetails.applicationNumber + "_" + suffix : ""}
             paymentLoader={paymentLoader}
             entityType={entityType}
             totalAmount={_getApplicationAmount(applicationTypeAmount, applicationType)}
