@@ -144,14 +144,14 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
                   setPaymentLoader(false);
                   popup?.close();
                   clearInterval(intervalId);
-                  resolve(true);
+                  resolve(PAID);
                 } else {
                   retryCount++;
                   if (retryCount >= maxRetries) {
                     setPaymentLoader(false);
                     popup?.close();
                     clearInterval(intervalId);
-                    resolve(false);
+                    resolve("FAILED");
                   }
                 }
               } catch (error) {
@@ -161,7 +161,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
                   setPaymentLoader(false);
                   popup?.close();
                   clearInterval(intervalId);
-                  resolve(false);
+                  resolve("FAILED");
                 }
               }
             }, 10000);
@@ -170,7 +170,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
           console.error(error);
           setPaymentLoader(false);
           popup?.close();
-          return false;
+          return "FAILED";
         }
       };
 
@@ -226,12 +226,13 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
         const checkBillStatus = setInterval(async () => {
           pollCount++;
           try {
-            const billAfterPayment = await DRISTIService.callSearchBill(
-              {},
-              { tenantId, consumerCode: consumerCode || billConsumerCode, service: service || billBusinessService }
-            );
-            if (billAfterPayment?.Bill?.[0]?.status === "PAID") {
-              finish(checkBillStatus, true);
+            const paymentStatusResponse = await DRISTIService.getPaymentStatus({}, { tenantId, consumerCode: consumerCode || billConsumerCode });
+            const paymentStatusValue = paymentStatusResponse && paymentStatusResponse.PaymentStatus && paymentStatusResponse.PaymentStatus.status;
+            if (paymentStatusValue === "PAID") {
+              finish(checkBillStatus, "PAID");
+              return;
+            } else if (paymentStatusValue === "VERIFICATION_PENDING") {
+              finish(checkBillStatus, "VERIFICATION_PENDING");
               return;
             }
           } catch (error) {
@@ -243,13 +244,13 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
           if (popup?.closed) {
             graceCount++;
             if (graceCount >= graceAfterClose) {
-              finish(checkBillStatus, false);
+              finish(checkBillStatus, "FAILED");
               return;
             }
           }
 
           if (pollCount >= maxPolls) {
-            finish(checkBillStatus, false);
+            finish(checkBillStatus, "FAILED");
           }
         }, 1000);
         if (!["applicationSubmission", "EfillingCase"?.includes(scenario)]) {

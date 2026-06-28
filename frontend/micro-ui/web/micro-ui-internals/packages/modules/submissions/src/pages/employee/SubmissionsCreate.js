@@ -1957,7 +1957,7 @@ const SubmissionsCreate = ({ path }) => {
         const billPaymentStatus = await openPaymentPortal(bill, bill?.Bill?.totalAmount);
         setPaymentStatus(billPaymentStatus);
         await applicationRefetch();
-        if (billPaymentStatus === true) {
+        if (billPaymentStatus === "PAID") {
           setMakePaymentLabel(false);
           setShowPaymentModal(false);
           setShowSuccessModal(true);
@@ -2078,7 +2078,7 @@ const SubmissionsCreate = ({ path }) => {
             caseDetails={caseDetails}
           />
         )}
-        {true && (
+        {showPaymentModal && (
           <PaymentModal
             t={t}
             handleClosePaymentModal={handleBack}
