@@ -78,12 +78,12 @@ public class PaymentController {
     @PostMapping("/v1/_paymentStatus")
     public ResponseEntity<PaymentStatusResponse> getPaymentStatus(@RequestParam(required = false) String billId,
                                                                   @RequestParam(required = false) String consumerCode,
-                                                                  @RequestBody RequestInfo requestInfo) {
+                                                                  @RequestBody PaymentStatusRequest paymentStatusRequest) {
         if (!StringUtils.hasText(billId) && !StringUtils.hasText(consumerCode)) {
             throw new CustomException("INVALID_PAYMENT_STATUS_REQUEST", "Either billId or consumerCode is mandatory");
         }
         log.info("Fetching payment status for billId: {}, consumerCode: {}", billId, consumerCode);
-        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(paymentStatusRequest.getRequestInfo(), true);
         PaymentStatusData paymentStatus = paymentService.getPaymentStatus(billId, consumerCode);
         PaymentStatusResponse response = PaymentStatusResponse.builder()
                 .responseInfo(responseInfo).paymentStatus(paymentStatus).build();
