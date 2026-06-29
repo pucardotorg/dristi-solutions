@@ -744,6 +744,22 @@ export const checkDuplicateMobileEmailValidation = ({
   }
 };
 
+export const validateComplainantDuplicateMobile = ({ formdata, setShowToast, t }) => {
+  const seen = new Set();
+  const enabledForms = formdata?.filter((item) => item.isenabled) || [];
+  for (const item of enabledForms) {
+    const mobileNumber = item?.data?.complainantVerification?.mobileNumber;
+    if (mobileNumber) {
+      if (seen.has(mobileNumber)) {
+        setShowToast({ label: t("REMOVE_DUPLICATE_MOBILE_NUMBER_FOR_COMPLAINANT"), error: true });
+        return true;
+      }
+      seen.add(mobileNumber);
+    }
+  }
+  return false;
+};
+
 export const checkOnlyCharInCheque = ({ formData, setValue, selected }) => {
   if (selected === "chequeDetails") {
     if (
@@ -1460,12 +1476,14 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
   return response;
 };
 
-export const updateIndividualUser = async ({ data, documentData, tenantId, individualData }) => {
+export const updateIndividualUser = async ({ data, documentData, tenantId, individualData, isComplainant = true }) => {
+  const complainantVerification = isComplainant ? data?.complainantVerification : data?.poaVerification;
+  const complainantId = isComplainant ? data?.complainantId?.complainantId : data?.poaComplainantId?.poaComplainantId;
   const identifierId = documentData
     ? documentData?.fileStore
       ? documentData?.fileStore
       : documentData?.file?.files?.[0]?.fileStoreId
-    : data?.complainantId?.complainantId;
+    : complainantId;
   const identifierIdDetails = documentData
     ? {
         fileStoreId: identifierId,
@@ -1473,10 +1491,38 @@ export const updateIndividualUser = async ({ data, documentData, tenantId, indiv
         documentType: documentData?.fileType,
       }
     : {};
-  const identifierType = documentData ? data?.complainantId?.complainantId?.selectIdTypeType?.type : "AADHAR";
+  const identifierType = documentData ? complainantId?.selectIdTypeType?.type : "AADHAR";
+  const address =
+    individualData?.address?.length > 0
+      ? individualData?.address
+      : [
+          {
+            tenantId: tenantId,
+            type: "PERMANENT",
+            latitude: data?.addressDetails?.coordinates?.latitude,
+            longitude: data?.addressDetails?.coordinates?.longitude,
+            city: data?.addressDetails?.city,
+            pincode: data?.addressDetails?.pincode || data?.["addressDetails-select"]?.pincode,
+            addressLine1: data?.addressDetails?.state,
+            addressLine2: data?.addressDetails?.district,
+            street: data?.addressDetails?.locality,
+          },
+          {
+            tenantId: tenantId,
+            type: "CORRESPONDENCE",
+            latitude: data?.currentAddressDetails?.coordinates?.latitude,
+            longitude: data?.currentAddressDetails?.coordinates?.longitude,
+            city: data?.currentAddressDetails?.city,
+            pincode: data?.currentAddressDetails?.pincode || data?.["currentAddressDetails-select"]?.pincode,
+            addressLine1: data?.currentAddressDetails?.state,
+            addressLine2: data?.currentAddressDetails?.district,
+            street: data?.currentAddressDetails?.locality,
+          },
+        ];
   let Individual = {
     Individual: {
       ...individualData,
+      address,
       identifiers: [
         {
           ...individualData?.identifiers?.[0],
@@ -1486,17 +1532,18 @@ export const updateIndividualUser = async ({ data, documentData, tenantId, indiv
       ],
       additionalFields: {
         ...individualData.additionalFields,
-        fields: individualData.additionalFields.fields.map((field) =>
-          field.key === "identifierIdDetails" ? { ...field, value: JSON.stringify(identifierIdDetails) } : field
-        ),
+        fields: [
+          ...(individualData.additionalFields?.fields || [])?.filter((field) => field?.key !== "identifierIdDetails"),
+          { key: "identifierIdDetails", value: JSON.stringify(identifierIdDetails) },
+        ],
       },
     },
   };
   const response = await window?.Digit.DRISTIService.updateIndividualUser(Individual, { tenantId });
-  const refreshToken = window.localStorage.getItem(`temp-refresh-token-${data?.complainantVerification?.userDetails?.mobileNumber}`);
-  window.localStorage.removeItem(`temp-refresh-token-${data?.complainantVerification?.userDetails?.mobileNumber}`);
+  const refreshToken = window.localStorage.getItem(`temp-refresh-token-${complainantVerification?.userDetails?.mobileNumber}`);
+  window.localStorage.removeItem(`temp-refresh-token-${complainantVerification?.userDetails?.mobileNumber}`);
   if (refreshToken) {
-    await getUserDetails(refreshToken, data?.complainantVerification?.userDetails?.mobileNumber);
+    await getUserDetails(refreshToken, complainantVerification?.userDetails?.mobileNumber);
   }
   return response;
 };
@@ -1656,7 +1703,7 @@ export const getComplainantName = (complainantDetails, t) => {
   if (complainantDetails?.[0]?.data?.complainantType?.code === "INDIVIDUAL") {
     concatenatedComplainantName =
       complainantDetails?.[0]?.data?.firstName &&
-      `${complainantDetails?.[0]?.data?.firstName || ""} ${complainantDetails?.[0]?.data?.lastName || ""}`.trim();
+      getFullName(" ", complainantDetails?.[0]?.data?.firstName, complainantDetails?.[0]?.data?.middleName, complainantDetails?.[0]?.data?.lastName);
   } else concatenatedComplainantName = complainantDetails?.[0]?.data?.complainantCompanyName || "";
   if (count > 1) {
     concatenatedComplainantName = concatenatedComplainantName + ` and ${count - 1} ${t(count === 2 ? "TITLE_OTHER" : "TITLE_OTHERS")}`;
@@ -1670,7 +1717,7 @@ export const getRespondentName = (respondentDetails, t) => {
   if (respondentDetails?.[0]?.data?.respondentType?.code === "INDIVIDUAL") {
     concatenatedRespondentName =
       respondentDetails?.[0]?.data?.respondentFirstName &&
-      `${respondentDetails?.[0]?.data?.respondentFirstName || ""} ${respondentDetails?.[0]?.data?.respondentLastName || ""}`.trim();
+      getFullName(" ", respondentDetails?.[0]?.data?.respondentFirstName, respondentDetails?.[0]?.data?.respondentMiddleName, respondentDetails?.[0]?.data?.respondentLastName);
   } else concatenatedRespondentName = respondentDetails?.[0]?.data?.respondentCompanyName || "";
   if (count > 1) {
     concatenatedRespondentName = concatenatedRespondentName + ` and ${count - 1} ${t(count === 2 ? "TITLE_OTHER" : "TITLE_OTHERS")}`;
@@ -1825,10 +1872,7 @@ export const updateCaseDetails = async ({
         updatedFormData
           .filter((item) => item.isenabled)
           .map(async (data, index) => {
-            if (
-              data?.data?.complainantVerification?.individualDetails?.document &&
-              data?.data?.complainantVerification?.individualDetails?.individualId
-            ) {
+            if (data?.data?.complainantVerification?.individualDetails?.individualId) {
               const Individual = await DRISTIService.searchIndividualUser(
                 {
                   Individual: {
@@ -1839,9 +1883,12 @@ export const updateCaseDetails = async ({
               );
               const userUuid = Individual?.Individual?.[0]?.userUuid || "";
               if (
-                scrutinyObj?.litigentDetails?.complainantDetails?.form?.some((item) =>
+                (scrutinyObj?.litigentDetails?.complainantDetails?.form?.some((item) =>
                   item.hasOwnProperty("complainantVerification.individualDetails.document")
-                )
+                ) &&
+                  data?.data?.complainantVerification?.individualDetails?.document) ||
+                data?.data?.complainantVerification?.individualDetails?.document === null ||
+                data?.data?.complainantVerification?.individualDetails?.document?.length === 0
               ) {
                 // get filestore and update individual user. (but only for newly updated id proofs. if not updated, keep as it is)
                 if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
@@ -2178,7 +2225,7 @@ export const updateCaseDetails = async ({
         updatedFormData
           .filter((item) => item.isenabled)
           .map(async (data, index) => {
-            if (data?.data?.poaVerification?.individualDetails?.document) {
+            if (data?.data?.poaVerification?.individualDetails?.individualId) {
               const Individual = await DRISTIService.searchIndividualUser(
                 {
                   Individual: {
@@ -2190,9 +2237,12 @@ export const updateCaseDetails = async ({
               const userUuid = Individual?.Individual?.[0]?.userUuid || "";
 
               if (
-                scrutinyObj?.litigentDetails?.complainantDetails?.form?.some((item) =>
+                (scrutinyObj?.litigentDetails?.complainantDetails?.form?.some((item) =>
                   item.hasOwnProperty("poaVerification.individualDetails.document")
-                )
+                ) &&
+                  data?.data?.poaVerification?.individualDetails?.document) ||
+                data?.data?.poaVerification?.individualDetails?.document === null ||
+                data?.data?.poaVerification?.individualDetails?.document?.length === 0
               ) {
                 // get filestore and update individual user. (but only for newly updated id proofs. if not updated, keep as it is)
                 if (data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file) {
@@ -2232,7 +2282,13 @@ export const updateCaseDetails = async ({
                       ],
                     },
                   };
-                  await updateIndividualUser({ data: data?.data, documentData, tenantId, individualData: Individual?.Individual?.[0] });
+                  await updateIndividualUser({
+                    data: data?.data,
+                    documentData,
+                    tenantId,
+                    individualData: Individual?.Individual?.[0],
+                    isComplainant: false,
+                  });
                 }
               }
               return {
@@ -3579,7 +3635,16 @@ export const updateCaseDetails = async ({
       });
     }
 
-    data.litigants = [...updatedCaseLitigants];
+    const seenIndividualIds = new Set();
+    const deduplicatedCaseLitigants = updatedCaseLitigants.filter((lit) => {
+      const id = lit?.individualId;
+      if (!id) return true;
+      if (seenIndividualIds.has(id)) return false;
+      seenIndividualIds.add(id);
+      return true;
+    });
+
+    data.litigants = [...deduplicatedCaseLitigants];
     data.representatives = [...updatedRepresentatives];
     if (isSaveDraftEnabled) {
       data.additionalDetails = {

@@ -126,6 +126,12 @@ public class PaymentConfiguration {
     @Value(("${isTest.enabled}"))
     private boolean isTest;
 
+    @Value("${treasury.basic.auth.username:}")
+    private String basicAuthUsername;
+
+    @Value("${treasury.basic.auth.password:}")
+    private String basicAuthPassword;
+
     @Value("${challan.test.amount}")
     private String challanTestAmount;
 
@@ -236,5 +242,24 @@ public class PaymentConfiguration {
 
     @Value("${payment.reconciliation.threshold.hours}")
     private Long reconciliationThresholdHours;
+
+    // V3 Reconciliation (TransactionDetailsV3.php) — triggered by external K8s CronJob via REST.
+    // Distinct client secret because the V3 endpoint is provisioned separately from the main treasury auth.
+    @Value("${treasury-transaction-details-v3-url}")
+    private String transactionDetailsV3Url;
+
+    @Value("${treasury-reconciliation-v3-client-secret:}")
+    private String reconciliationV3ClientSecret;
+
+    // CLIENTID header for the updated TransactionDetailsV3.php API (provisioned separately from treasury-client-id).
+    @Value("${treasury-reconciliation-v3-client-id:}")
+    private String reconciliationV3ClientId;
+
+    // SOURCE form parameter required by the updated TransactionDetailsV3.php API (treasury-assigned identifier).
+    @Value("${treasury-reconciliation-v3-source:}")
+    private String reconciliationV3Source;
+
+    @Value("${payment.reconciliation.v3.threshold.minutes:30}")
+    private Long reconciliationV3ThresholdMinutes;
 
 }

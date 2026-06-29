@@ -83,13 +83,13 @@ public class RepresentativeRowMapper implements ResultSetExtractor<Map<UUID, Lis
                     try {
                         if (advocate.getAdditionalDetails() != null) {
                             com.fasterxml.jackson.databind.JsonNode advNode = (com.fasterxml.jackson.databind.JsonNode) advocate.getAdditionalDetails();
-                            if (advNode.has("advocateUuid") && !advNode.get("advocateUuid").isNull()) {
+                            if (advNode.hasNonNull("advocateUuid")) {
                                 try { advocate.setAdvocateUuid(UUID.fromString(advNode.get("advocateUuid").asText())); } catch (Exception ignored) {}
                             }
-                            if (advNode.has("firstName")) advocate.setFirstName(advNode.get("firstName").asText());
-                            if (advNode.has("middleName")) advocate.setMiddleName(advNode.get("middleName").asText());
-                            if (advNode.has("lastName")) advocate.setLastName(advNode.get("lastName").asText());
-                            if (advNode.has("mobileNumber")) advocate.setMobileNumber(advNode.get("mobileNumber").asText());
+                            if (advNode.hasNonNull("firstName")) advocate.setFirstName(advNode.get("firstName").asText());
+                            if (advNode.hasNonNull("middleName")) advocate.setMiddleName(advNode.get("middleName").asText());
+                            if (advNode.hasNonNull("lastName")) advocate.setLastName(advNode.get("lastName").asText());
+                            if (advNode.hasNonNull("mobileNumber")) advocate.setMobileNumber(advNode.get("mobileNumber").asText());
                         }
                     } catch (Exception ignored) {}
 
@@ -100,10 +100,10 @@ public class RepresentativeRowMapper implements ResultSetExtractor<Map<UUID, Lis
                             if (advocate.getAdvocateUuid() == null && repNode.has("uuid") && !repNode.get("uuid").isNull()) {
                                 try { advocate.setAdvocateUuid(UUID.fromString(repNode.get("uuid").asText())); } catch (Exception ignored) {}
                             }
-                            if ((advocate.getFirstName() == null || advocate.getFirstName().isBlank()) && repNode.has("firstName")) advocate.setFirstName(repNode.get("firstName").asText());
-                            if ((advocate.getMiddleName() == null || advocate.getMiddleName().isBlank()) && repNode.has("middleName")) advocate.setMiddleName(repNode.get("middleName").asText());
-                            if ((advocate.getLastName() == null || advocate.getLastName().isBlank()) && repNode.has("lastName")) advocate.setLastName(repNode.get("lastName").asText());
-                            if ((advocate.getMobileNumber() == null || advocate.getMobileNumber().isBlank()) && repNode.has("mobileNumber")) advocate.setMobileNumber(repNode.get("mobileNumber").asText());
+                            if ((advocate.getFirstName() == null || advocate.getFirstName().isBlank()) && repNode.hasNonNull("firstName")) advocate.setFirstName(repNode.get("firstName").asText());
+                            if ((advocate.getMiddleName() == null || advocate.getMiddleName().isBlank()) && repNode.hasNonNull("middleName")) advocate.setMiddleName(repNode.get("middleName").asText());
+                            if ((advocate.getLastName() == null || advocate.getLastName().isBlank()) && repNode.hasNonNull("lastName")) advocate.setLastName(repNode.get("lastName").asText());
+                            if ((advocate.getMobileNumber() == null || advocate.getMobileNumber().isBlank()) && repNode.hasNonNull("mobileNumber")) advocate.setMobileNumber(repNode.get("mobileNumber").asText());
                         }
                     } catch (Exception ignored) {}
 

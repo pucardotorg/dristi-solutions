@@ -13,6 +13,8 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.egov.eTreasury.config.ServiceConstants.AES_ALGORITHM;
+import static org.egov.eTreasury.config.ServiceConstants.MD5_ALGORITHM;
 import static org.egov.eTreasury.config.ServiceConstants.TRANSFORMATION;
 
 @Component
@@ -92,6 +94,43 @@ public class EncryptionUtil {
         cipher.init(Cipher.DECRYPT_MODE, secretKey);
         byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedData));
         return new String(decryptedBytes, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Decrypts a TransactionDetailsV3 response.
+     * PHP reference:
+     *   $key_md5       = md5($client_secret);                                  // 32-char lowercase hex
+     *   $decrypted_key = openssl_decrypt($response['key'],  'AES-256-ECB', $key_md5);
+     *   $decrypted_data= openssl_decrypt($response['data'], 'AES-256-ECB', $decrypted_key);
+     * In PHP, md5() (no raw flag) returns the 32-char hex string whose 32 ASCII bytes are
+     * fed directly to AES-256-ECB. openssl_decrypt with no OPENSSL_RAW_DATA flag base64-decodes
+     * the ciphertext and strips PKCS#7 padding (== PKCS5Padding for AES in Java).
+     */
+    public String decryptV3Response(String encryptedKey, String encryptedData, String clientSecret)
+            throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException,
+                   IllegalBlockSizeException, BadPaddingException {
+
+        MessageDigest md = MessageDigest.getInstance(MD5_ALGORITHM);
+        byte[] md5Bytes = md.digest(clientSecret.getBytes(StandardCharsets.UTF_8));
+        byte[] outerKeyBytes = toHexString(md5Bytes).getBytes(StandardCharsets.UTF_8); // 32 bytes
+
+        Cipher cipher = Cipher.getInstance(TRANSFORMATION);
+
+        cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(outerKeyBytes, AES_ALGORITHM));
+        byte[] decryptedKeyBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedKey));
+
+        cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(decryptedKeyBytes, AES_ALGORITHM));
+        byte[] decryptedDataBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedData));
+
+        return new String(decryptedDataBytes, StandardCharsets.UTF_8);
+    }
+
+    private String toHexString(byte[] bytes) {
+        StringBuilder sb = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 }
 

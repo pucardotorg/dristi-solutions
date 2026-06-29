@@ -16,7 +16,7 @@ const PaymentStatus = ({ path }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const caseId = location.state.state.caseId;
   const receiptData = location.state.state.receiptData;
-  const orderType = receiptData?.orderType;
+  const taskType = receiptData?.taskType;
   const history = useHistory();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
@@ -38,7 +38,7 @@ const PaymentStatus = ({ path }) => {
         message: t("CS_PAYMENT_FAILED"),
       };
 
-  const orderTypeMap = {
+  const taskTypeMap = {
     SUMMONS: "THE_SUMMON",
     NOTICE: "THE_NOTICE",
     WARRANT: "THE_WARRANT",
@@ -46,7 +46,7 @@ const PaymentStatus = ({ path }) => {
     ATTACHMENT: "THE_ATTACHMENT",
   };
 
-  const statusMessage = `${t(orderTypeMap[orderType])} ${t("WOULD_BE_SENT_TO_PARTY")}`;
+  const statusMessage = `${t(taskTypeMap[taskType])} ${t("WOULD_BE_SENT_TO_PARTY")}`;
   return (
     <div className=" user-registration">
       <div className="e-filing-payment" style={{ minHeight: "100%", height: "100%" }}>

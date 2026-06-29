@@ -48,6 +48,10 @@ const AddOrderTypeModal = ({
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const containerRef = useRef(null);
   const [showBailBondModal, setShowBailBondModal] = useState(false);
+  // Tracks whether the judge has explicitly toggled the "Request Bail Bond" checkbox this session.
+  // Lets us distinguish "not yet decided" (apply the default-checked behavior) from "explicitly
+  // unchecked" (respect it, do not auto-recheck).
+  const [bailBondUserTouched, setBailBondUserTouched] = useState(false);
 
   const multiSelectDropdownKeys = useMemo(() => {
     const foundKeys = [];
@@ -365,6 +369,19 @@ const AddOrderTypeModal = ({
     return currentOrder;
   }, [currentOrder, index]);
 
+  // Effective checked-state for the "Request Bail Bond" checkbox (issue #5847: default to checked).
+  // - Once the judge has toggled it this session -> respect that choice (takes priority over any persisted
+  //   value so that switching from Personal→Surety and confirming the popup actually checks the box).
+  // - A saved order item carries a concrete boolean -> respect it as a starting default.
+  // - Otherwise default to checked as soon as the checkbox is enabled (SURETY + valid amount + sureties),
+  //   so it is unchecked while required fields are empty and auto-checks the moment they become valid.
+  const effectiveRequestBailBond = useMemo(() => {
+    if (bailBondUserTouched) return Boolean(bailBondRequired);
+    const persisted = newCurrentOrder?.additionalDetails?.formdata?.requestBailBond;
+    if (persisted !== undefined) return Boolean(persisted);
+    return isBailBondCheckboxEnabled;
+  }, [newCurrentOrder, bailBondUserTouched, bailBondRequired, isBailBondCheckboxEnabled]);
+
   const initialBailType = useMemo(() => {
     const bt = newCurrentOrder?.additionalDetails?.formdata?.bailType;
     if (bt == null) return { type: "SURETY", code: "SURETY", name: "SURETY" };
@@ -505,8 +522,9 @@ const AddOrderTypeModal = ({
                         id="bail-bond-required"
                         type="checkbox"
                         className="custom-checkbox"
-                        checked={newCurrentOrder?.additionalDetails?.formdata?.requestBailBond || bailBondRequired}
+                        checked={effectiveRequestBailBond}
                         onChange={(e) => {
+                          setBailBondUserTouched(true);
                           const checked = e?.target?.checked;
                           if (checked === true) {
                             setShowBailBondModal(true);
@@ -515,7 +533,7 @@ const AddOrderTypeModal = ({
                           }
                         }}
                         style={{ cursor: "pointer", width: 20, height: 20 }}
-                        disabled={newCurrentOrder?.additionalDetails?.formdata?.requestBailBond ? true : !isBailBondCheckboxEnabled}
+                        disabled={!isBailBondCheckboxEnabled}
                       />
                       <label htmlFor="bail-bond-required">{t("REQUEST_BAIL_BOND")}</label>
                     </div>
@@ -561,7 +579,7 @@ const AddOrderTypeModal = ({
                       const updatedFormData = {
                         ...formdata,
                         ...(orderType?.code === "ACCEPT_BAIL" && {
-                          requestBailBond: Boolean(newCurrentOrder?.additionalDetails?.formdata?.requestBailBond || bailBondRequired),
+                          requestBailBond: Boolean(effectiveRequestBailBond),
                         }),
                       };
                       handleSubmit(updatedFormData, index);

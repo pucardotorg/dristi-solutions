@@ -22,6 +22,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -48,6 +49,12 @@ class BSSServiceTest {
     @Mock
     private ADiaryUtil aDiaryUtil;
 
+    @Mock
+    private HearingUtil hearingUtil;
+
+    @Mock
+    private OrderSignValidationService orderSignValidationService;
+
     @InjectMocks
     private BSSService bssService;
 
@@ -68,7 +75,7 @@ class BSSServiceTest {
 
     @Test
     void createOrderToSignRequest_Success() throws IOException {
-        Coordinate coordinate = new Coordinate(0.0F, 0.0F, true, 1, "123", "kl");
+        Coordinate coordinate = new Coordinate(0.0F, 0.0F, true, 1, "123", "kl", 0D,0D);
         when(eSignUtil.getCoordinateForSign(any())).thenReturn(Collections.singletonList(coordinate));
         when(fileStoreUtil.fetchFileStoreObjectById(anyString(), anyString())).thenReturn(mock(Resource.class));
         when(cipherUtil.encodePdfToBase64(any())).thenReturn("base64EncodedString");
@@ -86,6 +93,15 @@ class BSSServiceTest {
     void createOrderToSignRequest_CoordinatesMismatch() {
         when(eSignUtil.getCoordinateForSign(any())).thenReturn(Collections.emptyList());
         assertThrows(CustomException.class, () -> bssService.createOrderToSignRequest(request));
+    }
+
+    @Test
+    void createOrderToSignRequest_PropagatesPreSignValidationFailure() {
+        doThrow(new CustomException("HEARING_ALREADY_SCHEDULED_ERROR", "A hearing is already scheduled"))
+                .when(orderSignValidationService).validate(any());
+
+        CustomException exception = assertThrows(CustomException.class, () -> bssService.createOrderToSignRequest(request));
+        assertEquals("HEARING_ALREADY_SCHEDULED_ERROR", exception.getCode());
     }
 
     @Test
