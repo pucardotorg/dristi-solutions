@@ -1703,7 +1703,9 @@ export const getComplainantName = (complainantDetails, t) => {
   if (complainantDetails?.[0]?.data?.complainantType?.code === "INDIVIDUAL") {
     concatenatedComplainantName =
       complainantDetails?.[0]?.data?.firstName &&
-      `${complainantDetails?.[0]?.data?.firstName || ""} ${complainantDetails?.[0]?.data?.lastName || ""}`.trim();
+      `${complainantDetails?.[0]?.data?.firstName || ""} ${complainantDetails?.[0]?.data?.middleName || ""} ${
+        complainantDetails?.[0]?.data?.lastName || ""
+      }`.trim();
   } else concatenatedComplainantName = complainantDetails?.[0]?.data?.complainantCompanyName || "";
   if (count > 1) {
     concatenatedComplainantName = concatenatedComplainantName + ` and ${count - 1} ${t(count === 2 ? "TITLE_OTHER" : "TITLE_OTHERS")}`;
@@ -1717,7 +1719,9 @@ export const getRespondentName = (respondentDetails, t) => {
   if (respondentDetails?.[0]?.data?.respondentType?.code === "INDIVIDUAL") {
     concatenatedRespondentName =
       respondentDetails?.[0]?.data?.respondentFirstName &&
-      `${respondentDetails?.[0]?.data?.respondentFirstName || ""} ${respondentDetails?.[0]?.data?.respondentLastName || ""}`.trim();
+      `${respondentDetails?.[0]?.data?.respondentFirstName || ""} ${respondentDetails?.[0]?.data?.respondentMiddleName || ""} ${
+        respondentDetails?.[0]?.data?.respondentLastName || ""
+      }`.trim();
   } else concatenatedRespondentName = respondentDetails?.[0]?.data?.respondentCompanyName || "";
   if (count > 1) {
     concatenatedRespondentName = concatenatedRespondentName + ` and ${count - 1} ${t(count === 2 ? "TITLE_OTHER" : "TITLE_OTHERS")}`;
