@@ -45,7 +45,7 @@ const UpdateDeliveryStatusComponent = ({
   const isIcops = rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE";
   const isSummons = (orderType || rowData?.taskType) === "SUMMONS";
   const reasonOptions = isSummons ? SUMMONS_REASON_OPTIONS : WARRANT_REASON_OPTIONS;
-  const showReasonDropdown = selectedDelievery?.key === "NOT_DELIVERED" && !isIcops;
+  const showReasonDropdown = ["SUMMONS", "WARRANT"].includes(rowData?.taskType) && selectedDelievery?.key === "NOT_DELIVERED" && !isIcops;
   const showReasonText = showReasonDropdown && selectedReason?.key === "OTHER";
 
   const deliveryOptions = [
