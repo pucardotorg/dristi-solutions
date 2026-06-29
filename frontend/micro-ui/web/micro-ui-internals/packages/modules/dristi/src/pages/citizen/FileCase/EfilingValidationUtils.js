@@ -744,6 +744,22 @@ export const checkDuplicateMobileEmailValidation = ({
   }
 };
 
+export const validateComplainantDuplicateMobile = ({ formdata, setShowToast, t }) => {
+  const seen = new Set();
+  const enabledForms = formdata?.filter((item) => item.isenabled) || [];
+  for (const item of enabledForms) {
+    const mobileNumber = item?.data?.complainantVerification?.mobileNumber;
+    if (mobileNumber) {
+      if (seen.has(mobileNumber)) {
+        setShowToast({ label: t("REMOVE_DUPLICATE_MOBILE_NUMBER_FOR_COMPLAINANT"), error: true });
+        return true;
+      }
+      seen.add(mobileNumber);
+    }
+  }
+  return false;
+};
+
 export const checkOnlyCharInCheque = ({ formData, setValue, selected }) => {
   if (selected === "chequeDetails") {
     if (
@@ -3619,7 +3635,16 @@ export const updateCaseDetails = async ({
       });
     }
 
-    data.litigants = [...updatedCaseLitigants];
+    const seenIndividualIds = new Set();
+    const deduplicatedCaseLitigants = updatedCaseLitigants.filter((lit) => {
+      const id = lit?.individualId;
+      if (!id) return true;
+      if (seenIndividualIds.has(id)) return false;
+      seenIndividualIds.add(id);
+      return true;
+    });
+
+    data.litigants = [...deduplicatedCaseLitigants];
     data.representatives = [...updatedRepresentatives];
     if (isSaveDraftEnabled) {
       data.additionalDetails = {
