@@ -29,6 +29,18 @@ const paymentFailedNoteConfig = {
     ],
   },
 };
+
+const verificationPendingNoteConfig = {
+  populators: {
+    inputs: [
+      {
+        infoHeader: "PLEASE_NOTE",
+        infoText: "PAYMENT_VERIFICATION_PENDING_INFO",
+        showTooltip: true,
+      },
+    ],
+  },
+};
 function SuccessModal({
   t,
   actionCancelLabel,
@@ -43,6 +55,7 @@ function SuccessModal({
   bannerlabel,
 }) {
   const submissionData = [
+    //
     { key: "SUBMISSION_DATE", value: createdDate, copyData: false },
     { key: "SUBMISSION_ID", value: applicationNumber, copyData: true },
   ];
@@ -66,7 +79,8 @@ function SuccessModal({
           style={{ minWidth: "100%", ...(!headerBarEndClose && { marginTop: "10px" }) }}
         ></Banner>
         {isPaymentDone && <SelectCustomNote t={t} config={customNoteConfig} />}
-        {paymentStatus === false && <SelectCustomNote t={t} config={paymentFailedNoteConfig} />}
+        {paymentStatus === "VERIFICATION_PENDING" && <SelectCustomNote t={t} config={verificationPendingNoteConfig} />}
+        {paymentStatus === "FAILED" && <SelectCustomNote t={t} config={paymentFailedNoteConfig} />}
 
         <CustomCopyTextDiv
           t={t}

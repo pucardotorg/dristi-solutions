@@ -132,26 +132,33 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
           return new Promise((resolve) => {
             let retryCount = 0;
             const maxRetries = 6;
+            let lastKnownStatus = null;
 
             const intervalId = setInterval(async () => {
               try {
-                const billAfterPayment = await DRISTIService.callSearchBill(
+                const paymentStatusResponse = await DRISTIService.getPaymentStatus(
                   {},
-                  { tenantId, consumerCode: consumerCode || billConsumerCode, service: service || billBusinessService }
+                  { tenantId, consumerCode: consumerCode || billConsumerCode }
                 );
+                const paymentStatusValue =
+                  paymentStatusResponse && paymentStatusResponse.PaymentStatus && paymentStatusResponse.PaymentStatus.status;
 
-                if (billAfterPayment?.Bill?.[0]?.status === "PAID") {
+                if (paymentStatusValue) {
+                  lastKnownStatus = paymentStatusValue;
+                }
+
+                if (paymentStatusValue === "PAID") {
                   setPaymentLoader(false);
                   popup?.close();
                   clearInterval(intervalId);
-                  resolve(true);
+                  resolve("PAID");
                 } else {
                   retryCount++;
                   if (retryCount >= maxRetries) {
                     setPaymentLoader(false);
                     popup?.close();
                     clearInterval(intervalId);
-                    resolve(false);
+                    resolve(lastKnownStatus === "VERIFICATION_PENDING" ? "VERIFICATION_PENDING" : "FAILED");
                   }
                 }
               } catch (error) {
@@ -161,7 +168,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
                   setPaymentLoader(false);
                   popup?.close();
                   clearInterval(intervalId);
-                  resolve(false);
+                  resolve(lastKnownStatus === "VERIFICATION_PENDING" ? "VERIFICATION_PENDING" : "FAILED");
                 }
               }
             }, 10000);
@@ -170,7 +177,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
           console.error(error);
           setPaymentLoader(false);
           popup?.close();
-          return false;
+          return "FAILED";
         }
       };
 
@@ -211,6 +218,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
         let isResolved = false;
         let pollCount = 0;
         let graceCount = 0;
+        let lastKnownStatus = null;
         const maxPolls = 600; // safety cap (~10 min) so the interval can never run forever
         const graceAfterClose = 5; // keep polling ~5s after the user closes the popup, to let the async reconciliation catch up
 
@@ -226,14 +234,19 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
         const checkBillStatus = setInterval(async () => {
           pollCount++;
           try {
-            const billAfterPayment = await DRISTIService.callSearchBill(
-              {},
-              { tenantId, consumerCode: consumerCode || billConsumerCode, service: service || billBusinessService }
-            );
-            if (billAfterPayment?.Bill?.[0]?.status === "PAID") {
-              finish(checkBillStatus, true);
+            const paymentStatusResponse = await DRISTIService.getPaymentStatus({}, { tenantId, consumerCode: consumerCode || billConsumerCode });
+            const paymentStatusValue =
+              paymentStatusResponse && paymentStatusResponse.PaymentStatus && paymentStatusResponse.PaymentStatus.status;
+
+            if (paymentStatusValue) {
+              lastKnownStatus = paymentStatusValue;
+            }
+
+            if (paymentStatusValue === "PAID") {
+              finish(checkBillStatus, "PAID");
               return;
             }
+            // VERIFICATION_PENDING is transitional — keep polling until popup closes or max polls
           } catch (error) {
             console.error("Error checking bill status:", error);
           }
@@ -243,13 +256,13 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
           if (popup?.closed) {
             graceCount++;
             if (graceCount >= graceAfterClose) {
-              finish(checkBillStatus, false);
+              finish(checkBillStatus, lastKnownStatus === "VERIFICATION_PENDING" ? "VERIFICATION_PENDING" : "FAILED");
               return;
             }
           }
 
           if (pollCount >= maxPolls) {
-            finish(checkBillStatus, false);
+            finish(checkBillStatus, lastKnownStatus === "VERIFICATION_PENDING" ? "VERIFICATION_PENDING" : "FAILED");
           }
         }, 1000);
         if (!["applicationSubmission", "EfillingCase"?.includes(scenario)]) {
