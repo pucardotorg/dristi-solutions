@@ -187,6 +187,7 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    closeSummonNoticePaymentPendingTask(task, requestInfo);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -200,6 +201,7 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    closeSummonNoticePaymentPendingTask(task, requestInfo);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -213,6 +215,7 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    closeSummonNoticePaymentPendingTask(task, requestInfo);
                     task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
                     task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 
@@ -228,6 +231,7 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    closeSummonNoticePaymentPendingTask(task, requestInfo);
                     task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
                     task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 
@@ -243,6 +247,7 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    closeSummonNoticePaymentPendingTask(task, requestInfo);
                     task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
                     task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 
@@ -479,6 +484,23 @@ public class PaymentUpdateService {
         }
         deliveryChannels.put("feePaidDate", todayDate);
         task.setTaskDetails(taskDetails);
+    }
+
+    /**
+     * Closes the "Make Payment for <orderType>" pending task (referenceId MANUAL_<taskNumber>) once
+     * the summons/notice/warrant/proclamation/attachment payment is received. In the normal online
+     * flow the browser closes this after the bill turns PAID; payment reconciliation (cron) has no
+     * browser, so without this the task lifecycle advances but the pending task stays open.
+     */
+    private void closeSummonNoticePaymentPendingTask(Task task, RequestInfo requestInfo) {
+        try {
+            pendingTaskUtil.closeManualPendingTask(MANUAL + task.getTaskNumber(), requestInfo, task.getFilingNumber(),
+                    task.getCnrNumber(), task.getCaseId(), task.getCaseTitle(), task.getTaskType());
+            log.info("Closed payment pending task for taskNumber: {}", task.getTaskNumber());
+        } catch (Exception e) {
+            // Never fail payment processing because of pending-task closure.
+            log.error("Error closing payment pending task for taskNumber: {}", task.getTaskNumber(), e);
+        }
     }
 
     public void createPendingTaskForRPAD(Task task, RequestInfo requestInfo) {

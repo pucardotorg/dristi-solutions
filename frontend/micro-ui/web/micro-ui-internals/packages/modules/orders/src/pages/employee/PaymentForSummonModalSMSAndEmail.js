@@ -35,6 +35,7 @@ const orderTypeEnum = {
   WARRANT: "Warrant",
   PROCLAMATION: "Proclamation",
   ATTACHMENT: "Attachment",
+  SCHEDULE_OF_HEARING_DATE: "Warrant",
 };
 
 const PaymentForSummonComponent = ({
@@ -201,6 +202,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   );
 
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
+  const partyUniqueId = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.uniqueId, [filteredTasks]);
+  const partyName = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.name, [filteredTasks]);
 
   const { data: orderData, isLoading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
     { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
@@ -237,18 +240,22 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     Boolean((orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber) && caseCourtId)
   );
 
-  const getBusinessService = (orderType) => {
+  const getBusinessService = (orderType, taskType) => {
     const businessServiceMap = {
       SUMMONS: paymentType.TASK_SUMMON,
       WARRANT: paymentType.TASK_WARRANT,
       PROCLAMATION: paymentType.TASK_PROCLAMATION,
       ATTACHMENT: paymentType.TASK_ATTACHMENT,
       NOTICE: paymentType.TASK_NOTICE,
+      SCHEDULE_OF_HEARING_DATE: paymentType.TASK_WARRANT,
     };
-    return businessServiceMap?.[orderType];
+    if (orderType) {
+      return businessServiceMap?.[orderType];
+    }
+    return businessServiceMap?.[taskType];
   };
 
-  const businessService = useMemo(() => getBusinessService(orderType), [orderType]);
+  const businessService = useMemo(() => getBusinessService(orderType, filteredTasks?.[0]?.taskType), [orderType, filteredTasks]);
   const taskType = useMemo(() => getTaskType(businessService), [businessService]);
   const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -281,7 +288,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     },
     {},
     `breakup-response-${summonsPincode}${channelId}${taskNumber}${businessService}`,
-    Boolean(filteredTasks && channelId && orderType && taskNumber && businessService)
+    Boolean(filteredTasks && channelId && taskNumber && businessService)
   );
 
   const courtFeeAmount = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown.find((data) => data?.type === "Court Fee")?.amount, [
@@ -635,6 +642,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       formdata?.warrantFor ||
       formdata?.proclamationFor ||
       formdata?.attachmentFor ||
+      partyName ||
       "";
 
     const task = filteredTasks?.[0];
@@ -689,7 +697,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     return {
       handleClose: handleClose,
       heading: {
-        label: `Payment for ${orderTypeEnum?.[orderType]} via ${formattedChannelId}`,
+        label: `Payment for ${orderTypeEnum?.[orderType] || (taskType === "WARRANT" ? "Warrant" : "")} via ${formattedChannelId}`,
       },
       isStepperModal: false,
       isCaseLocked: isCaseLocked,
