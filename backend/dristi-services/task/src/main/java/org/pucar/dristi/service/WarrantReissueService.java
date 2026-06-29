@@ -149,6 +149,10 @@ public class WarrantReissueService {
                 // must be cleared - otherwise the reissued warrant is shown as already paid until the
                 // new payment completes (at which point PaymentUpdateService sets feePaidDate again).
                 clearFeePaidDate(warrant);
+                // An RPAD warrant re-entering PENDING_PAYMENT must be flagged for pending collection so
+                if (isRpadDeliveryChannel(warrant)) {
+                    setIsPendingCollection(warrant);
+                }
             }
             workflow.setDocuments(Collections.singletonList(new org.egov.common.contract.models.Document()));
 
@@ -288,6 +292,10 @@ public class WarrantReissueService {
                 // feePaidDate copied from the (already paid) source warrant is stale and must be cleared
                 // so the reissued warrant is not shown as already paid until the new payment completes.
                 clearFeePaidDate(newWarrant);
+                // An RPAD warrant entering PENDING_PAYMENT must be flagged for pending collection so it
+                if (isRpadDeliveryChannel(newWarrant)) {
+                    setIsPendingCollection(newWarrant);
+                }
             }
             createWorkflow.setDocuments(Collections.singletonList(new org.egov.common.contract.models.Document()));
             newWarrant.setWorkflow(createWorkflow);
@@ -650,6 +658,22 @@ public class WarrantReissueService {
         return false;
     }
 
+    private boolean isRpadDeliveryChannel(Task task) {
+        try {
+            JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
+            if (taskDetails != null && taskDetails.has("deliveryChannels") && !taskDetails.get("deliveryChannels").isNull()) {
+                JsonNode deliveryChannels = taskDetails.get("deliveryChannels");
+                if (deliveryChannels.has(CHANNEL_CODE) && !deliveryChannels.get(CHANNEL_CODE).isNull()) {
+                    String channelCode = deliveryChannels.get(CHANNEL_CODE).textValue();
+                    return RPAD.equalsIgnoreCase(channelCode);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error checking RPAD delivery channel: ", e);
+        }
+        return false;
+    }
+
     private boolean isExpiredByBail(Task task) {
         try {
             if (task.getAdditionalDetails() != null) {
@@ -780,6 +804,32 @@ public class WarrantReissueService {
             task.setTaskDetails(taskDetails);
         } catch (Exception e) {
             log.error("Error clearing feePaidDate from taskDetails: ", e);
+        }
+    }
+
+    /**
+     * Sets isPendingCollection on a warrant's taskDetails.deliveryChannels. Used when an RPAD warrant
+     * enters PENDING_PAYMENT during reissue so it is flagged for the pending-collection workflow,
+     */
+    private void setIsPendingCollection(Task task) {
+        try {
+            if (task.getTaskDetails() == null) {
+                return;
+            }
+            ObjectNode taskDetails = task.getTaskDetails() instanceof ObjectNode
+                    ? (ObjectNode) task.getTaskDetails()
+                    : objectMapper.convertValue(task.getTaskDetails(), ObjectNode.class);
+            ObjectNode deliveryChannels;
+            if (taskDetails.has("deliveryChannels") && taskDetails.get("deliveryChannels") instanceof ObjectNode) {
+                deliveryChannels = (ObjectNode) taskDetails.get("deliveryChannels");
+            } else {
+                deliveryChannels = objectMapper.createObjectNode();
+                taskDetails.set("deliveryChannels", deliveryChannels);
+            }
+            deliveryChannels.put("isPendingCollection", true);
+            task.setTaskDetails(taskDetails);
+        } catch (Exception e) {
+            log.error("Error setting isPendingCollection on taskDetails: ", e);
         }
     }
 
