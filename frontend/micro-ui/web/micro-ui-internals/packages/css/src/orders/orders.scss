@@ -332,11 +332,6 @@
       padding: 40px !important;
       .popup-module-action-bar {
         margin: 0px !important;
-        .popup-module-action-bar-buttons {
-          display: flex !important;
-          flex-direction: row !important;
-          gap: 16px !important;
-          width: 100% !important;
         .selector-button-border {
           border: 1px solid #007e7e !important;
           display: flex;
@@ -378,7 +373,6 @@
             text-align: center;
           }
         }
-      }
       }
     }
   }

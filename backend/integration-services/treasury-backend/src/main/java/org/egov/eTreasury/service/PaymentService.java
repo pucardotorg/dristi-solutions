@@ -26,6 +26,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -43,6 +44,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.egov.eTreasury.config.ServiceConstants.*;
+import static org.egov.eTreasury.model.ReconcileV3Outcome.*;
 
 @Service
 @Slf4j
@@ -386,6 +388,70 @@ public class PaymentService {
             log.error("No Payment data for given bill Id");
             return null;
         }
+    }
+
+    /**
+     * Passive (read-only) payment status for a bill, for the UI to call before letting a user pay,
+     * to avoid duplicate payments. The UI gates each payment on this status, so at most one session
+     * is in-flight per bill; we look only at the most recent attempt. Status is derived purely from
+     * stored state (auth_sek_session_data + treasury_payment_data for the receipt); no live treasury
+     * call is made here. PENDING sessions are resolved by the reconciliation crons.
+     */
+    public PaymentStatusData getPaymentStatus(String billId, String consumerCode) {
+        // Either identifier may be supplied; consumerCode is stored as service_number on the session.
+        boolean lookupByConsumerCode = !StringUtils.hasText(billId) && StringUtils.hasText(consumerCode);
+        log.info("Fetching payment status for billId: {}, consumerCode: {}", billId, consumerCode);
+
+        Optional<AuthSek> latestSession = lookupByConsumerCode
+                ? repository.getAuthSekByServiceNumber(consumerCode).stream().findFirst()
+                : repository.getAuthSekByBillId(billId).stream().findFirst();
+
+        PaymentStatusData.PaymentStatusDataBuilder data = PaymentStatusData.builder()
+                .billId(billId)
+                .serviceNumber(consumerCode);
+
+        if (latestSession.isEmpty()) {
+            log.info("No payment session found for billId: {}, consumerCode: {} -> NO_ATTEMPT", billId, consumerCode);
+            return data.status(PaymentStatusType.NO_ATTEMPT).build();
+        }
+
+        AuthSek latest = latestSession.get();
+        // Echo back whichever identifier was resolved from the stored session.
+        String resolvedBillId = latest.getBillId();
+        data.billId(resolvedBillId)
+                .serviceNumber(latest.getServiceNumber())
+                .businessService(latest.getBusinessService())
+                .totalDue(latest.getTotalDue())
+                .lastAttemptTime(latest.getSessionTime())
+                .completionSource(latest.getCompletionSource())
+                .verificationTimestamp(latest.getVerificationTimestamp());
+
+        if (latest.getPaymentStatus() == PaymentStatus.SUCCESS) {
+            enrichReceipt(resolvedBillId, data);
+            log.info("billId: {} already PAID (source: {})", resolvedBillId, latest.getCompletionSource());
+            return data.status(PaymentStatusType.PAID).build();
+        }
+
+        if ("PENDING".equalsIgnoreCase(latest.getProcessedStatus())) {
+            log.info("billId: {} latest session still PENDING -> VERIFICATION_PENDING", resolvedBillId);
+            return data.status(PaymentStatusType.VERIFICATION_PENDING).build();
+        }
+
+        log.info("billId: {} latest session terminal non-success -> FAILED", resolvedBillId);
+        return data.status(PaymentStatusType.FAILED).build();
+    }
+
+    /** Attaches receipt details (GRN, amount, fileStore) of the successful treasury payment, if available. */
+    private void enrichReceipt(String billId, PaymentStatusData.PaymentStatusDataBuilder data) {
+        List<TreasuryPaymentData> payments = treasuryPaymentRepository.getTreasuryPaymentData(billId);
+        payments.stream()
+                .filter(p -> p.getStatus() == 'Y')
+                .findFirst()
+                .or(() -> payments.stream().findFirst())
+                .ifPresent(p -> data.grn(p.getGrn())
+                        .amount(p.getAmount())
+                        .partyName(p.getPartyName())
+                        .fileStoreId(p.getFileStoreId()));
     }
 
     public void callCollectionServiceAndUpdatePayment(TreasuryPaymentRequest request) {
@@ -830,6 +896,251 @@ public class PaymentService {
         }
     }
 
+    public void processReconciliationV3Batch(RequestInfo requestInfo) {
+        long now = System.currentTimeMillis();
+        long thresholdTime = now - (config.getReconciliationV3ThresholdMinutes() * 60 * 1000L);
+        log.info("Starting V3 reconciliation batch | now={} | thresholdTime={} (rows with session_time <= threshold and PENDING)",
+                now, thresholdTime);
+
+        List<AuthSek> agedPending = repository.getAgedPendingAuthSeks(thresholdTime);
+        log.info("V3 reconciliation: found {} aged PENDING auth_sek rows", agedPending.size());
+
+        int reconciledCount = 0, failedTerminalCount = 0, inconclusiveCount = 0, errorCount = 0;
+        for (AuthSek authSek : agedPending) {
+            try {
+                ReconcileV3Outcome outcome = reconcileV3(authSek, requestInfo);
+                switch (outcome) {
+                    case RECONCILED:      reconciledCount++;    break;
+                    case FAILED_TERMINAL: failedTerminalCount++; break;
+                    case INCONCLUSIVE:    inconclusiveCount++;  break;
+                }
+            } catch (Exception e) {
+                errorCount++;
+                log.error("V3 reconciliation failed | billId={} | departmentId={} | error={}",
+                        authSek.getBillId(), authSek.getDepartmentId(), e.getMessage(), e);
+            }
+        }
+        log.info("V3 reconciliation batch finished | reconciled={} | failedTerminal={} | inconclusive={} | errors={}",
+                reconciledCount, failedTerminalCount, inconclusiveCount, errorCount);
+    }
+
+    ReconcileV3Outcome reconcileV3(AuthSek authSek, RequestInfo requestInfo) throws Exception {
+        String departmentId = authSek.getDepartmentId();
+        if (departmentId == null || departmentId.isEmpty()) {
+            log.error("V3 reconciliation: row has no departmentId, cannot query treasury | billId={}", authSek.getBillId());
+            return INCONCLUSIVE;
+        }
+
+        log.info("V3 reconciliation: querying TransactionDetailsV3 | billId={} | departmentId={}",
+                authSek.getBillId(), departmentId);
+        ResponseEntity<String> responseEntity = treasuryUtil.callTransactionDetailsV3(
+                departmentId, config.getTransactionDetailsV3Url());
+
+        if (responseEntity == null || responseEntity.getBody() == null) {
+            log.error("V3 reconciliation: empty response from treasury, leaving PENDING | billId={} | departmentId={}",
+                    authSek.getBillId(), departmentId);
+            return INCONCLUSIVE;
+        }
+
+        String body = responseEntity.getBody();
+        log.info("V3 reconciliation raw envelope | billId={} | body={}", authSek.getBillId(), body);
+
+        TransactionDetailsV3Envelope envelope = objectMapper.readValue(body, TransactionDetailsV3Envelope.class);
+        if (envelope.getKey() == null || envelope.getData() == null) {
+            log.error("V3 reconciliation: response missing key/data, leaving PENDING | billId={} | body={}",
+                    authSek.getBillId(), body);
+            return INCONCLUSIVE;
+        }
+
+        String decryptedJson = encryptionUtil.decryptV3Response(
+                envelope.getKey(), envelope.getData(), config.getReconciliationV3ClientSecret());
+        log.info("V3 reconciliation decrypted payload | billId={} | decrypted={}",
+                authSek.getBillId(), decryptedJson);
+
+        // Some V3 responses (e.g. "Wrong GRN") prefix a few non-JSON bytes before the array.
+        String jsonArray = sliceJsonArray(decryptedJson);
+        if (jsonArray == null) {
+            log.error("V3 reconciliation: decrypted payload does not contain a JSON array, leaving PENDING | billId={} | decrypted={}",
+                    authSek.getBillId(), decryptedJson);
+            return INCONCLUSIVE;
+        }
+
+        JsonNode root = objectMapper.readTree(jsonArray);
+        if (!root.isArray() || root.isEmpty()) {
+            // Unexpected: treasury normally returns a populated array even when there is no payment
+            // (status=N, error="No Transaction found"). An empty array is an unknown response, so we
+            // make no terminal decision and leave the row PENDING for the next cron cycle.
+            log.error("V3 reconciliation: empty/non-array payload, leaving PENDING | billId={} | departmentId={}",
+                    authSek.getBillId(), departmentId);
+            return INCONCLUSIVE;
+        }
+
+        TransactionDetailsV3 v3 = objectMapper.treeToValue(root.get(0), TransactionDetailsV3.class);
+        String status = v3.getStatus() == null ? "" : v3.getStatus().trim();
+        String errorMsg = v3.getError() == null ? "" : v3.getError().trim();
+        log.info("V3 reconciliation: treasury reported status={} | error={} | billId={} | GRN={}",
+                status, errorMsg, authSek.getBillId(), v3.getGrn());
+
+        if (!TREASURY_STATUS_SUCCESS.equalsIgnoreCase(status)) {
+            // Treasury has a definitive record and it is not a success. This covers the abandoned-payment
+            // case the user described: opening the payment and closing the tab without paying comes back
+            // as status=N, error="No Transaction found". There is no path for this to later become Y,
+            // so move the row to a terminal FAILED state.
+            log.info("V3 reconciliation: treasury reported non-success status={} (error={}), marking terminal FAILED | billId={} | departmentId={}",
+                    status, errorMsg, authSek.getBillId(), departmentId);
+            markTerminalFailure(authSek, "TREASURY_STATUS_" + (status.isEmpty() ? "EMPTY" : status));
+            return FAILED_TERMINAL;
+        }
+
+        TransactionDetails transactionDetails = v3.toTransactionDetails();
+        TreasuryPaymentData paymentData = createTreasuryPaymentData(transactionDetails, authSek);
+        treasuryEnrichment.enrichTreasuryPaymentData(paymentData, requestInfo);
+        requestInfo.getUserInfo().setTenantId(config.getEgovStateTenantId());
+
+        TreasuryPaymentRequest paymentRequest = TreasuryPaymentRequest.builder()
+                .requestInfo(requestInfo)
+                .treasuryPaymentData(paymentData)
+                .build();
+        paymentData.setFileStoreId(printPayInSlipPdf(paymentRequest));
+        log.info("V3 reconciliation: payment receipt generated | billId={} | fileStoreId={}",
+                authSek.getBillId(), paymentData.getFileStoreId());
+
+        producer.push(config.getSaveTreasuryPaymentData(), paymentRequest);
+        repository.updateAuthSekStatus(
+                authSek.getAuthToken(),
+                PaymentStatus.SUCCESS.name(),
+                COMPLETION_SOURCE_RECONCILIATION_V3,
+                System.currentTimeMillis(),
+                PROCESSED_STATUS_RECONCILED
+        );
+        log.info("V3 reconciliation: row reconciled to SUCCESS | billId={} | departmentId={}",
+                authSek.getBillId(), departmentId);
+        return RECONCILED;
+    }
+
+    /** Moves an auth_sek row to a terminal FAILED state so V3 reconciliation stops re-processing it. */
+    private void markTerminalFailure(AuthSek authSek, String reason) {
+        repository.updateAuthSekStatus(
+                authSek.getAuthToken(),
+                PaymentStatus.FAILED.name(),
+                COMPLETION_SOURCE_RECONCILIATION_V3,
+                System.currentTimeMillis(),
+                PROCESSED_STATUS_FAILED
+        );
+        log.info("V3 reconciliation: row marked terminal FAILED | billId={} | departmentId={} | reason={}",
+                authSek.getBillId(), authSek.getDepartmentId(), reason);
+    }
+
+    private String sliceJsonArray(String decrypted) {
+        if (decrypted == null) return null;
+        int start = decrypted.indexOf('[');
+        int end = decrypted.lastIndexOf(']');
+        if (start < 0 || end < 0 || end < start) return null;
+        return decrypted.substring(start, end + 1);
+    }
+
+    /**
+     * Test helper: runs the V3 reconciliation for a single departmentId.
+     * <p>
+     * dryRun=true  → call Treasury V3, decrypt, and return the parsed payload only. No auth_sek lookup,
+     *                no Kafka push, no DB writes. Safe to call repeatedly during testing.
+     * <p>
+     * dryRun=false → look up the auth_sek_session_data row by department_id and run the full
+     *                reconcileV3 path (Kafka push + DB update) just for that row.
+     */
+    public ReconciliationV3TestResponse testReconciliationV3(String departmentId, boolean dryRun, RequestInfo requestInfo) {
+        log.info("V3 reconciliation TEST | departmentId={} | dryRun={}", departmentId, dryRun);
+        ReconciliationV3TestResponse.ReconciliationV3TestResponseBuilder result =
+                ReconciliationV3TestResponse.builder().dryRun(dryRun);
+
+        try {
+            if (dryRun) {
+                return buildDryRunResult(departmentId, result);
+            }
+
+            List<AuthSek> rows = repository.getAuthSekByDepartmentId(departmentId);
+            if (rows.isEmpty()) {
+                log.error("V3 reconciliation TEST: no auth_sek row found | departmentId={}", departmentId);
+                return result
+                        .authSekFound(false)
+                        .processed(false)
+                        .message("No auth_sek_session_data row found for departmentId=" + departmentId)
+                        .build();
+            }
+
+            AuthSek authSek = rows.get(0);
+            ReconcileV3Outcome outcome = reconcileV3(authSek, requestInfo);
+            String message = switch (outcome) {
+                case RECONCILED -> "Row reconciled to SUCCESS via V3.";
+                case FAILED_TERMINAL ->
+                        "Row moved to terminal FAILED (treasury reported non-success or no transaction / abandoned payment).";
+                default -> "Treasury could not be reached/parsed; row left PENDING for the next cron cycle.";
+            };
+            return result
+                    .authSekFound(true)
+                    .processed(outcome == RECONCILED)
+                    .envelopeReceived(true)
+                    .message(message)
+                    .build();
+        } catch (Exception e) {
+            log.error("V3 reconciliation TEST failed | departmentId={} | error={}", departmentId, e.getMessage(), e);
+            return result
+                    .processed(false)
+                    .message("V3 reconciliation test failed: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    private ReconciliationV3TestResponse buildDryRunResult(String departmentId,
+                                                           ReconciliationV3TestResponse.ReconciliationV3TestResponseBuilder result) throws Exception {
+        ResponseEntity<String> responseEntity = treasuryUtil.callTransactionDetailsV3(
+                departmentId, config.getTransactionDetailsV3Url());
+
+        if (responseEntity == null || responseEntity.getBody() == null) {
+            return result.envelopeReceived(false)
+                    .processed(false)
+                    .message("Treasury returned an empty response for departmentId=" + departmentId)
+                    .build();
+        }
+
+        String body = responseEntity.getBody();
+        log.info("V3 reconciliation TEST raw envelope | departmentId={} | body={}", departmentId, body);
+        TransactionDetailsV3Envelope envelope = objectMapper.readValue(body, TransactionDetailsV3Envelope.class);
+
+        if (envelope.getKey() == null || envelope.getData() == null) {
+            return result.envelopeReceived(true)
+                    .processed(false)
+                    .message("Envelope received but missing key/data fields. Body=" + body)
+                    .build();
+        }
+
+        String decryptedJson = encryptionUtil.decryptV3Response(
+                envelope.getKey(), envelope.getData(), config.getReconciliationV3ClientSecret());
+        String jsonArray = sliceJsonArray(decryptedJson);
+        result.envelopeReceived(true).decryptedPayload(jsonArray != null ? jsonArray : decryptedJson);
+
+        if (jsonArray == null) {
+            return result.processed(false)
+                    .message("Decrypted payload does not contain a JSON array.")
+                    .build();
+        }
+
+        JsonNode root = objectMapper.readTree(jsonArray);
+        if (!root.isArray() || root.isEmpty()) {
+            return result.processed(false)
+                    .message("Decrypted JSON array is empty.")
+                    .build();
+        }
+
+        TransactionDetailsV3 v3 = objectMapper.treeToValue(root.get(0), TransactionDetailsV3.class);
+        return result.processed(false)
+                .treasuryStatus(v3.getStatus() == null ? null : v3.getStatus().trim())
+                .treasuryError(v3.getError() == null ? null : v3.getError().trim())
+                .grn(v3.getGrn() == null ? null : v3.getGrn().trim())
+                .message("Dry-run successful. No DB writes or Kafka push performed.")
+                .build();
+    }
+
     private VerificationData getVerificationData(AuthSek authSek) {
         VerificationDetails details = new VerificationDetails();
         details.setDepartmentId(authSek.getDepartmentId());
@@ -921,27 +1232,61 @@ public class PaymentService {
                         "No response received from treasury double verification service");
             }
             
-            JsonNode rootNode = objectMapper.readTree(responseEntity.getBody());
-            JsonNode returnParamsNode = rootNode.get("RETURN_PARAMS");
-            if (returnParamsNode == null) {
-                log.error("Invalid response format: missing RETURN_PARAMS for billId: {}", verificationData.getBillId());
-                throw new CustomException("INVALID_VERIFICATION_RESPONSE", 
-                        "Invalid response format from treasury double verification service");
-            }
+            String responseBody = responseEntity.getBody();
+            log.info("Raw response from treasury for billId: {}: {}", verificationData.getBillId(), responseBody);
             
-            JsonNode returnParams;
-            if (returnParamsNode.isTextual()) {
-                returnParams = objectMapper.readTree(returnParamsNode.asText());
+            TreasuryResponse response;
+            
+            // Check if response is HTML (contains form with input_data)
+            if (responseBody.trim().startsWith("<") || responseBody.contains("<form")) {
+                log.info("Detected HTML response from treasury, extracting input_data for billId: {}", verificationData.getBillId());
+                
+                // Extract input_data value from HTML form
+                String inputData = extractInputDataFromHtml(responseBody);
+                if (inputData == null || inputData.isEmpty()) {
+                    log.error("Failed to extract input_data from HTML response for billId: {}", verificationData.getBillId());
+                    throw new CustomException("INVALID_VERIFICATION_RESPONSE", 
+                            "Failed to extract input_data from HTML response");
+                }
+                
+                log.info("Extracted input_data for billId: {}: {}", verificationData.getBillId(), inputData);
+                
+                // Parse the input_data JSON (contains HMAC and DATA in uppercase)
+                JsonNode inputDataNode = objectMapper.readTree(inputData);
+                
+                response = TreasuryResponse.builder()
+                        .status(true)  // If we got a response with data, consider it successful
+                        .rek(inputDataNode.has("REK") ? inputDataNode.get("REK").asText() : 
+                             (inputDataNode.has("rek") ? inputDataNode.get("rek").asText() : null))
+                        .data(inputDataNode.has("DATA") ? inputDataNode.get("DATA").asText() : 
+                             (inputDataNode.has("data") ? inputDataNode.get("data").asText() : null))
+                        .hmac(inputDataNode.has("HMAC") ? inputDataNode.get("HMAC").asText() : 
+                             (inputDataNode.has("hmac") ? inputDataNode.get("hmac").asText() : null))
+                        .build();
             } else {
-                returnParams = returnParamsNode;
-            }
+                // Handle JSON response format
+                JsonNode rootNode = objectMapper.readTree(responseBody);
+                JsonNode returnParamsNode = rootNode.get("RETURN_PARAMS");
+                if (returnParamsNode == null) {
+                    log.error("Invalid response format: missing RETURN_PARAMS for billId: {}", verificationData.getBillId());
+                    throw new CustomException("INVALID_VERIFICATION_RESPONSE", 
+                            "Invalid response format from treasury double verification service");
+                }
+                
+                JsonNode returnParams;
+                if (returnParamsNode.isTextual()) {
+                    returnParams = objectMapper.readTree(returnParamsNode.asText());
+                } else {
+                    returnParams = returnParamsNode;
+                }
 
-            TreasuryResponse response = TreasuryResponse.builder()
-                    .status(returnParams.has("status") && returnParams.get("status").asBoolean())
-                    .rek(returnParams.has("rek") ? returnParams.get("rek").asText() : null)
-                    .data(returnParams.has("data") ? returnParams.get("data").asText() : null)
-                    .hmac(returnParams.has("hmac") ? returnParams.get("hmac").asText() : null)
-                    .build();
+                response = TreasuryResponse.builder()
+                        .status(returnParams.has("status") && returnParams.get("status").asBoolean())
+                        .rek(returnParams.has("rek") ? returnParams.get("rek").asText() : null)
+                        .data(returnParams.has("data") ? returnParams.get("data").asText() : null)
+                        .hmac(returnParams.has("hmac") ? returnParams.get("hmac").asText() : null)
+                        .build();
+            }
                     
             log.info("Received response from treasury for billId: {} | HTTP status: {}", 
                     verificationData.getBillId(), responseEntity.getStatusCode());
@@ -952,8 +1297,16 @@ public class PaymentService {
                 log.info("Treasury is in mock mode, using mock data.");
                 decryptedData = response.getData();
             } else {
-                String decryptedRek = encryptionUtil.decryptResponse(response.getRek(), decryptedSek);
-                decryptedData = encryptionUtil.decryptResponse(response.getData(), decryptedRek);
+                // If REK is present, use it to decrypt. Otherwise, decrypt DATA directly with SEK
+                if (response.getRek() != null && !response.getRek().isEmpty()) {
+                    String decryptedRek = encryptionUtil.decryptResponse(response.getRek(), decryptedSek);
+                    decryptedData = encryptionUtil.decryptResponse(response.getData(), decryptedRek);
+                    log.info("Decrypted data using REK for billId: {}", verificationData.getBillId());
+                } else {
+                    // No REK present (HTML response format), decrypt DATA directly with SEK
+                    decryptedData = encryptionUtil.decryptResponse(response.getData(), decryptedSek);
+                    log.info("Decrypted data directly with SEK (no REK) for billId: {}", verificationData.getBillId());
+                }
             }
             log.info("Decrypted verification response data for billId: {}, decryptedData: {}", verificationData.getBillId(), decryptedData);
 
@@ -1187,5 +1540,70 @@ public class PaymentService {
 //        collectionsUtil.callService(paymentRequest, config.getCollectionServiceHost(), config.getCollectionsPaymentCreatePath());
 //        log.info("Payment request sent to collections service: {}", paymentRequest);
 //    }
+
+    /**
+     * Extracts the input_data value from an HTML form response.
+     * The HTML contains: <input type="hidden" name="input_data" value='{"HMAC":"...", "DATA":"..."}' />
+     */
+    private String extractInputDataFromHtml(String html) {
+        try {
+            // Pattern 1: value wrapped in single quotes (JSON inside has double quotes)
+            // Matches: name="input_data" value='{...}'
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(
+                    "name=[\"']input_data[\"'][^>]*value='(\\{[^']+\\})'",
+                    java.util.regex.Pattern.CASE_INSENSITIVE
+            );
+            java.util.regex.Matcher matcher = pattern.matcher(html);
+            
+            if (matcher.find()) {
+                String value = matcher.group(1);
+                log.debug("Extracted input_data using pattern 1: {}", value);
+                return unescapeHtmlEntities(value);
+            }
+            
+            // Pattern 2: value wrapped in double quotes (JSON might have escaped quotes)
+            // Matches: name="input_data" value="{...}"
+            pattern = java.util.regex.Pattern.compile(
+                    "name=[\"']input_data[\"'][^>]*value=\"(\\{[^\"]*\\})\"",
+                    java.util.regex.Pattern.CASE_INSENSITIVE
+            );
+            matcher = pattern.matcher(html);
+            
+            if (matcher.find()) {
+                String value = matcher.group(1);
+                log.debug("Extracted input_data using pattern 2: {}", value);
+                return unescapeHtmlEntities(value);
+            }
+            
+            // Pattern 3: Try to find JSON directly after input_data
+            pattern = java.util.regex.Pattern.compile(
+                    "name=[\"']input_data[\"'].*?value=[\"'](\\{.*?\\})[\"']",
+                    java.util.regex.Pattern.CASE_INSENSITIVE | java.util.regex.Pattern.DOTALL
+            );
+            matcher = pattern.matcher(html);
+            
+            if (matcher.find()) {
+                String value = matcher.group(1);
+                log.debug("Extracted input_data using pattern 3: {}", value);
+                return unescapeHtmlEntities(value);
+            }
+            
+            log.warn("Could not find input_data in HTML response. HTML snippet: {}", 
+                    html.length() > 500 ? html.substring(0, 500) + "..." : html);
+            return null;
+        } catch (Exception e) {
+            log.error("Error extracting input_data from HTML: ", e);
+            return null;
+        }
+    }
+    
+    private String unescapeHtmlEntities(String value) {
+        if (value == null) return null;
+        return value.replace("&quot;", "\"")
+                    .replace("&amp;", "&")
+                    .replace("&lt;", "<")
+                    .replace("&gt;", ">")
+                    .replace("&#39;", "'");
+    }
 
 }

@@ -611,6 +611,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
         console.error("Error updating task data:", error);
         const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("HOME_SCREEN_UPDATE_FAILED"), error: true, errorId });
+      } finally {
+        setSelectedReason({});
+        setReasonText("");
       }
     }
   }, [dayInMillisecond, orderData, orderType, refetch, reload, selectedDelievery, selectedReason, reasonText, tasksData, tenantId, todayDate]);
@@ -1784,6 +1787,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const handleCloseActionModal = useCallback(() => {
     setShowActionModal(false);
+    setSelectedReason({});
+    setReasonText("");
     if (taskNumber) history.replace(`/${window?.contextPath}/employee/orders/Summons&Notice`);
   }, [history, taskNumber]);
 
