@@ -444,6 +444,7 @@ public class UserService {
         validatePassword(updatePasswordRequest.getNewPassword());
         user.updatePassword(encryptPwd(updatePasswordRequest.getNewPassword()));
         userRepository.update(user, user, user.getId() , user.getUuid());
+        removeTokensByUser(user);
     }
 
     /**
@@ -474,6 +475,7 @@ public class UserService {
         /* encrypted value is stored in DB*/
         user = encryptionDecryptionUtil.encryptObject(user, "User", User.class);
         userRepository.update(user, user,user.getId() , user.getUuid());
+        removeTokensByUser(user);
     }
 
 
