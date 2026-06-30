@@ -397,20 +397,21 @@ public class PaymentService {
      * stored state (auth_sek_session_data + treasury_payment_data for the receipt); no live treasury
      * call is made here. PENDING sessions are resolved by the reconciliation crons.
      */
-    public PaymentStatusData getPaymentStatus(String billId, String consumerCode, RequestInfo requestInfo) {
+    public PaymentStatusData getPaymentStatus(String billId, String consumerCode, String businessService, RequestInfo requestInfo) {
         // Either identifier may be supplied; consumerCode is stored as service_number on the session.
         boolean lookupByConsumerCode = !StringUtils.hasText(billId) && StringUtils.hasText(consumerCode);
-        log.info("Fetching payment status for billId: {}, consumerCode: {}", billId, consumerCode);
+        log.info("Fetching payment status for billId: {}, consumerCode: {}, businessService: {}", billId, consumerCode, businessService);
 
         Optional<AuthSek> latestSession;
         if (lookupByConsumerCode) {
             latestSession = repository.getAuthSekByServiceNumber(consumerCode).stream().findFirst();
-            if (latestSession.isEmpty()) {
+            if (latestSession.isEmpty() && StringUtils.hasText(businessService)) {
                 // service_number (which carries the consumerCode) may be null on the session, so the
                 // by-serviceNumber lookup can miss a real attempt. Fall back to resolving the billId
                 // from the consumerCode via the billing service and look it up by billId, which is
-                // always populated on the session.
-                String resolvedBillId = demandUtil.searchBillIdByConsumerCode(consumerCode, requestInfo);
+                // always populated on the session. The bill search requires the businessService too,
+                // so the fallback only runs when it is supplied.
+                String resolvedBillId = demandUtil.searchBillIdByConsumerCode(consumerCode, businessService, requestInfo);
                 if (StringUtils.hasText(resolvedBillId)) {
                     log.info("service_number lookup empty for consumerCode: {}; resolved billId: {} via bill search", consumerCode, resolvedBillId);
                     latestSession = repository.getAuthSekByBillId(resolvedBillId).stream().findFirst();

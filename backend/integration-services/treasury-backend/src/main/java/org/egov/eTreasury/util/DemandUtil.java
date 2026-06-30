@@ -76,16 +76,18 @@ public class DemandUtil {
     /**
      * Resolves the billId for a given consumerCode using the authoritative consumerCode -> bill
      * mapping in the billing service. Used as a fallback for the payment-status lookup, where the
-     * session's service_number (which stores the consumerCode) may be null. Returns {@code null}
-     * when no bill is found or the search fails, so the caller can treat it as "no attempt" rather
-     * than failing the status check.
+     * session's service_number (which stores the consumerCode) may be null. The billing bill search
+     * requires consumerCode and service (businessService) to be supplied together, so businessService
+     * is mandatory here. Returns {@code null} when no bill is found or the search fails, so the caller
+     * can treat it as "no attempt" rather than failing the status check.
      */
-    public String searchBillIdByConsumerCode(String consumerCode, RequestInfo requestInfo) {
+    public String searchBillIdByConsumerCode(String consumerCode, String businessService, RequestInfo requestInfo) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(configuration.getDemandHost() + configuration.getBillingSearchEndPoint())
                 .queryParam("consumerCode", consumerCode)
+                .queryParam("service", businessService)
                 .queryParam("tenantId", configuration.getEgovStateTenantId());
 
-        log.info("Searching bill by consumerCode: {}", consumerCode);
+        log.info("Searching bill by consumerCode: {}, service: {}", consumerCode, businessService);
 
         RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
         requestInfoWrapper.setRequestInfo(requestInfo);
