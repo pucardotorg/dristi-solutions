@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
-function SelectCustomNote({ t, config, onClick = () => {} }) {
+function SelectCustomNote({ t, config, onClick = () => {}, isWarning = false }) {
   const history = useHistory();
   const inputs = useMemo(
     () =>
@@ -19,7 +19,7 @@ function SelectCustomNote({ t, config, onClick = () => {} }) {
 
   return inputs.map((input) => {
     return (
-      <div className="custom-note-main-div" style={config?.styles}>
+      <div className="custom-note-main-div" style={{ ...config?.styles, ...(isWarning ? { backgroundColor: "#FEF9C3" } : {}) }}>
         <div className="custom-note-heading-div">
           <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage) || input?.showTooltip} />
           <h2>{t(input?.infoHeader)}</h2>

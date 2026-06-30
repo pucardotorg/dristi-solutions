@@ -77,8 +77,12 @@ function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMak
           </div>
         )}
         <div className="note-div">
-          <SelectCustomNote t={t} config={customNoteConfig}></SelectCustomNote>
-          {isVerificationPending && <SelectCustomNote t={t} config={verificationPendingNoteConfig}></SelectCustomNote>}
+          <SelectCustomNote t={t} config={customNoteConfig} />
+          {isVerificationPending && (
+            <div style={{ marginTop: "10px" }}>
+              <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
+            </div>
+          )}
         </div>
         <div className="submission-payment-modal-amount-div">
           <div className="amount-div">

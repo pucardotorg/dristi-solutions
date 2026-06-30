@@ -271,7 +271,9 @@ function NoticeSummonPaymentModal({
         inline
         className={"adhaar-verification-info-card"}
       />
-      {(isVerificationPending || isPostPaymentVerificationPending) && <SelectCustomNote t={t} config={verificationPendingNoteConfig} />}
+      {(isVerificationPending || isPostPaymentVerificationPending) && (
+        <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
+      )}
       <div className="total-payment">
         {paymentCalculation
           ?.filter((item) => item?.isTotalFee)

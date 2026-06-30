@@ -72,7 +72,7 @@ const PaymentForSummonComponent = ({
         {t("MAKE_PAYMENT_IN_ORDER_TO_SEND_FOLLOWING")} {taskTypeEnum?.[taskType]} via {formattedChannelId}.
       </p>
       <ApplicationInfoComponent infos={infos} links={links} />
-      {isVerificationPending && <SelectCustomNote t={t} config={verificationPendingNoteConfig} />}
+      {isVerificationPending && <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />}
       {channelId && feeOptions[channelId]?.length > 0 && (
         <div className="summon-payment-action-table">
           {feeOptions[channelId]?.map((action, index) => (

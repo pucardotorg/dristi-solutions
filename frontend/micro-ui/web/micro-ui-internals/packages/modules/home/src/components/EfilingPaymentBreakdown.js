@@ -15,6 +15,15 @@ import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/Cust
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
 import { PrintIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote";
+import useGetPaymentVerificationStatus from "../../../submissions/src/hooks/submissions/useGetPaymentVerificationStatus";
+
+const verificationPendingNoteConfig = {
+  populators: {
+    inputs: [{ infoHeader: "INFO", infoText: "PAYMENT_VERIFICATION_PENDING_INFO", showTooltip: true }],
+  },
+};
+
 function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
   const { t } = useTranslation();
   const location = useLocation();
@@ -29,6 +38,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
   const { downloadPdf } = useDownloadCasePdf();
   const [receiptFilstoreId, setReceiptFilstoreId] = useState(null);
   const [retryPayment, setRetryPayment] = useState(false);
+  const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
   const [loader, setLoader] = useState(false);
   const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
   const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
@@ -132,6 +142,16 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     scenario,
   });
 
+  const statusConsumerCode = caseDetails?.additionalDetails?.lastSubmissionConsumerCode
+    ? caseDetails?.additionalDetails?.lastSubmissionConsumerCode
+    : caseDetails?.filingNumber && suffix
+    ? `${caseDetails.filingNumber}_${suffix}`
+    : "";
+
+  const { data: paymentStatusData } = useGetPaymentVerificationStatus(statusConsumerCode, tenantId, Boolean(statusConsumerCode));
+
+  const isVerificationPending = useMemo(() => Boolean(paymentStatusData?.PaymentStatus?.status === "VERIFICATION_PENDING"), [paymentStatusData]);
+
   const fetchCaseLockStatus = useCallback(async () => {
     try {
       const status = await DRISTIService.getCaseLockStatus(
@@ -203,7 +223,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
 
       const paymentStatus = await openPaymentPortal(bill);
       await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
-      const success = Boolean(paymentStatus);
+      const success = paymentStatus === "PAID";
 
       if (success) {
         await DRISTIService.customApiService(Urls.dristi.pendingTask, {
@@ -227,6 +247,8 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
         if (fileStoreId) {
           setReceiptFilstoreId(fileStoreId);
         }
+      } else if (paymentStatus === "VERIFICATION_PENDING") {
+        setIsPostPaymentVerificationPending(true);
       } else {
         setRetryPayment(true);
       }
@@ -267,6 +289,9 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
             inline
             className={"adhaar-verification-info-card"}
           />
+          {(isVerificationPending || isPostPaymentVerificationPending) && (
+            <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
+          )}
           <div className="total-payment">
             {paymentCalculation
               ?.filter((item) => item?.isTotalFee)
@@ -275,7 +300,13 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
                   <span className="total-payment-label">
                     {item?.key}{" "}
                     <CustomChip
-                      text={receiptFilstoreId ? t("CS_TASK_PAYMENT_DONE") : t("CS_TASK_PENDING")}
+                      text={
+                        receiptFilstoreId
+                          ? t("CS_TASK_PAYMENT_DONE")
+                          : isVerificationPending || isPostPaymentVerificationPending
+                          ? t("PAYMENT_VERIFICATION_IS_PENDING")
+                          : t("CS_TASK_PENDING")
+                      }
                       shade={receiptFilstoreId ? "green" : "orange"}
                       style={{ marginLeft: "6px", fontWeight: "500", padding: "5px 15px" }}
                     />
@@ -299,14 +330,33 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
               ))}
           </div>
 
-          <Button
-            label={receiptFilstoreId ? t("CS_TASK_DOWNLOAD_RECEIPT") : retryPayment ? t("CS_TASK_RETRY_PAYMENT") : t("CS_TASK_PAY_ONLINE")}
-            variation="secondary"
-            className={"pay-online-button"}
-            icon={receiptFilstoreId && <PrintIcon />}
-            onButtonClick={receiptFilstoreId ? () => downloadPdf(tenantId, receiptFilstoreId) : onTaskPayOnline}
-            isDisabled={paymentLoader || isCaseLocked}
-          />
+          {isVerificationPending || isPostPaymentVerificationPending ? (
+            <div className="verification-pending-actions" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+              <Button
+                label={t("CS_WAIT_AND_CHECK_LATER")}
+                variation="secondary"
+                className={"pay-online-button"}
+                onButtonClick={onCancel}
+                isDisabled={paymentLoader}
+              />
+              <Button
+                label={t("CS_TRY_PAYMENT_AGAIN")}
+                variation="secondary"
+                className={"pay-online-button"}
+                onButtonClick={onTaskPayOnline}
+                isDisabled={paymentLoader || isCaseLocked}
+              />
+            </div>
+          ) : (
+            <Button
+              label={receiptFilstoreId ? t("CS_TASK_DOWNLOAD_RECEIPT") : retryPayment ? t("CS_TASK_RETRY_PAYMENT") : t("CS_TASK_PAY_ONLINE")}
+              variation="secondary"
+              className={"pay-online-button"}
+              icon={receiptFilstoreId && <PrintIcon />}
+              onButtonClick={receiptFilstoreId ? () => downloadPdf(tenantId, receiptFilstoreId) : onTaskPayOnline}
+              isDisabled={paymentLoader || isCaseLocked}
+            />
+          )}
         </div>
         {showToast && (
           <CustomToast
