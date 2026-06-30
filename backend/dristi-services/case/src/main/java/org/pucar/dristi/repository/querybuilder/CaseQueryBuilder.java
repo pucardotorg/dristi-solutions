@@ -304,14 +304,13 @@ public class CaseQueryBuilder {
         if (officeAdvocateId != null && !officeAdvocateId.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
 
-            if (Boolean.TRUE.equals(isMemberActiveInCase)) {
-                // Member wants to view only cases where they are active members
+            if (!Boolean.FALSE.equals(isMemberActiveInCase)) {
+                // Default (null) and explicit true: only cases where clerk is an active member in aocm for that case
                 query.append("(cases.id IN (" +
                         " SELECT aocm.case_id" +
                         " FROM dristi_advocate_office_case_member aocm" +
                         " WHERE aocm.office_advocate_id = ?" +
                         " AND aocm.member_user_uuid = ?" +
-                        " AND aocm.case_id = cases.id" +
                         " AND aocm.is_active = true))" +
                         " AND (cases.status NOT IN ('DELETED_DRAFT'))"
                 );
@@ -320,7 +319,7 @@ public class CaseQueryBuilder {
                 preparedStmtList.add(userUuid);
                 preparedStmtArgList.add(Types.VARCHAR);
             } else {
-                // Member wants to view all advocate's cases — clerk is a member of the office (not case-specific)
+                // Explicit false: all advocate's cases — clerk is a member of the office (not case-specific)
                 // aocm check confirms clerk belongs to this advocate's office; dcr confirms advocate represents the case
                 query.append("(EXISTS (SELECT 1 FROM dristi_advocate_office_case_member aocm " +
                         "WHERE aocm.office_advocate_id = ? " +
