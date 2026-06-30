@@ -223,10 +223,49 @@ public class CustomTokenEndpoint {
         return domainRoles.stream().map(Role::new).collect(Collectors.toSet());
     }
 
-    private Map<String, Object> issueTokenResponse(Authentication authentication, String scope, 
+    private Map<String, Object> issueTokenResponse(Authentication authentication, String scope,
                                                      String existingRefreshToken) {
+        SecureUser secureUser = (SecureUser) authentication.getPrincipal();
+
+        // Reuse the active token for this user+tenantId if one still exists in Redis,
+        // restoring the pre-Java17-migration behaviour (same token until expiry).
+        String activeToken = (existingRefreshToken == null)
+                ? tokenStore.getActiveAccessToken(secureUser.getUsername(), secureUser.getTenantId())
+                : null;
+
+        if (activeToken != null) {
+            // existingRefreshToken is always null here (refresh_token flow skips this path);
+            // generate a new refresh token to pair with the reused access token.
+            String refreshTokenToReturn = UUID.randomUUID().toString();
+            long accessExpirySeconds = (long) accessTokenValidityMinutes * 60;
+            long refreshExpirySeconds = (long) refreshTokenValidityMinutes * 60;
+
+            // Persist the new refresh token and its mapping to the reused access token so a
+            // subsequent refresh_token grant can resolve it (mirrors the normal-issue path below).
+            tokenStore.storeRefreshToken(refreshTokenToReturn, authentication, refreshExpirySeconds);
+            tokenStore.storeAccessTokenToRefreshTokenMapping(activeToken, refreshTokenToReturn);
+
+            Map<String, Object> responseInfo = new LinkedHashMap<>();
+            responseInfo.put("api_id", "");
+            responseInfo.put("ver", "");
+            responseInfo.put("ts", "");
+            responseInfo.put("res_msg_id", "");
+            responseInfo.put("msg_id", "");
+            responseInfo.put("status", "Access Token generated successfully");
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("access_token", activeToken);
+            response.put("token_type", "bearer");
+            response.put("refresh_token", refreshTokenToReturn);
+            response.put("expires_in", accessExpirySeconds);
+            response.put("scope", scope);
+            response.put("ResponseInfo", responseInfo);
+            response.put("UserRequest", secureUser.getUser());
+            return response;
+        }
+
         String accessToken = UUID.randomUUID().toString();
-        
+
         // Reuse existing refresh token if configured (matches old setReuseRefreshToken(true))
         String refreshTokenToReturn;
         if (reuseRefreshToken && existingRefreshToken != null) {
@@ -252,8 +291,6 @@ public class CustomTokenEndpoint {
         
         // Store mapping between access token and refresh token (for invalidation on next refresh)
         tokenStore.storeAccessTokenToRefreshTokenMapping(accessToken, refreshTokenToReturn);
-
-        SecureUser secureUser = (SecureUser) authentication.getPrincipal();
 
         Map<String, Object> responseInfo = new LinkedHashMap<>();
         responseInfo.put("api_id", "");

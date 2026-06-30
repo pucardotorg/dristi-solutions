@@ -10,13 +10,15 @@ const PaymentStatus = ({ path }) => {
   const location = useLocation();
   const { t } = useTranslation();
 
-  const isResponseSuccess = location.state.state.success;
+  const paymentStatus = location.state.state.paymentStatus;
+  const isResponseSuccess = paymentStatus ? paymentStatus === "PAID" : location.state.state.success;
+  const isVerificationPending = paymentStatus === "VERIFICATION_PENDING";
   const { state } = useLocation();
   const fileStoreId = location.state.state.fileStoreId;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const caseId = location.state.state.caseId;
   const receiptData = location.state.state.receiptData;
-  const orderType = receiptData?.orderType;
+  const taskType = receiptData?.taskType;
   const history = useHistory();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
@@ -32,13 +34,19 @@ const PaymentStatus = ({ path }) => {
         ...commonProps,
         successful: true,
       }
+    : isVerificationPending
+    ? {
+        ...commonProps,
+        successful: false,
+        message: t("CS_PAYMENT_VERIFICATION_PENDING"),
+      }
     : {
         ...commonProps,
         successful: false,
         message: t("CS_PAYMENT_FAILED"),
       };
 
-  const orderTypeMap = {
+  const taskTypeMap = {
     SUMMONS: "THE_SUMMON",
     NOTICE: "THE_NOTICE",
     WARRANT: "THE_WARRANT",
@@ -46,13 +54,13 @@ const PaymentStatus = ({ path }) => {
     ATTACHMENT: "THE_ATTACHMENT",
   };
 
-  const statusMessage = `${t(orderTypeMap[orderType])} ${t("WOULD_BE_SENT_TO_PARTY")}`;
+  const statusMessage = `${t(taskTypeMap[taskType])} ${t("WOULD_BE_SENT_TO_PARTY")}`;
   return (
     <div className=" user-registration">
       <div className="e-filing-payment" style={{ minHeight: "100%", height: "100%" }}>
         <Banner
           successful={isResponseSuccess}
-          message={isResponseSuccess ? "Payment Successful" : "Payment Failed"}
+          message={isResponseSuccess ? "Payment Successful" : isVerificationPending ? t("CS_PAYMENT_VERIFICATION_PENDING") : "Payment Failed"}
           info={`${state?.showID ? t("SUBMISSION_ID") : ""}`}
           whichSvg={`${isResponseSuccess ? "tick" : null}`}
           {...bannerProps}
@@ -69,6 +77,22 @@ const PaymentStatus = ({ path }) => {
               tableValueClassName={"e-filing-table-value-style"}
             />
           </div>
+        ) : isVerificationPending ? (
+          <InfoCard
+            className="payment-status-info-card"
+            headerWrapperClassName="payment-status-info-header"
+            populators={{
+              name: "infocard",
+            }}
+            variant="default"
+            text={t("PAYMENT_VERIFICATION_PENDING_INFO")}
+            label={"Note"}
+            style={{ marginTop: "1.5rem" }}
+            textStyle={{
+              color: "#3D3C3C",
+              margin: "0.5rem 0",
+            }}
+          />
         ) : (
           <InfoCard
             className="payment-status-info-card"
