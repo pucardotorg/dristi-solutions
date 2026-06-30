@@ -320,11 +320,11 @@ public class CaseQueryBuilder {
                 preparedStmtList.add(userUuid);
                 preparedStmtArgList.add(Types.VARCHAR);
             } else {
-                // Member wants to view all advocate's cases from dcr table
+                // Member wants to view all advocate's cases — clerk is a member of the office (not case-specific)
+                // aocm check confirms clerk belongs to this advocate's office; dcr confirms advocate represents the case
                 query.append("(EXISTS (SELECT 1 FROM dristi_advocate_office_case_member aocm " +
                         "WHERE aocm.office_advocate_id = ? " +
                         "AND aocm.member_user_uuid = ? " +
-                        "AND aocm.case_id = cases.id " +
                         "AND aocm.is_active = true) " +
                         "AND cases.id IN (" +
                         " SELECT dcr.case_id" +
