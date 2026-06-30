@@ -197,6 +197,11 @@ const MainHomeScreen = () => {
   );
 
   useEffect(() => {
+    console.log("MAIN_HOME_SCREEN_MOUNTED", new Date().toLocaleString("en-GB"));
+    return () => console.log("MAIN_HOME_SCREEN_UNMOUNTED", new Date().toLocaleString("en-GB"));
+  }, []);
+
+  useEffect(() => {
     if (activeTab !== "RESCHEDULE_REQUEST") {
       resetRescheduleEvidenceSession();
     }
@@ -382,6 +387,7 @@ const MainHomeScreen = () => {
   }, [activeTab]);
 
   useEffect(() => {
+    console.log("INBOX_COMPOSER_REMOUNT_TRIGGERED", { reason: "config changed", activeTab, time: new Date().toLocaleString("en-GB") });
     setUpdateCounter((prev) => prev + 1);
   }, [config]);
 
@@ -531,6 +537,10 @@ const MainHomeScreen = () => {
   };
 
   const fetchPendingTaskCounts = async () => {
+    console.log("FETCH_PENDING_TASK_COUNTS_CALLED", {
+      caller: new Error().stack.split("\n").slice(1, 5).join(" | "),
+      time: new Date().toLocaleString("en-GB"),
+    });
     const { toDate } = getTodayRange();
     try {
       setLoader(true);
@@ -1378,11 +1388,16 @@ const MainHomeScreen = () => {
         setSelectedBailBond: setSelectedBailBond,
       },
     };
+    console.log("PENDING_TASK_CONFIG_UPDATED", { activeTab, time: new Date().toLocaleString("en-GB") });
     setConfig(updatedConfig);
   }, [activeTab, applicationTypeOptions]);
 
   const getTotalCountForTab = useCallback(
     async function (tabConfig) {
+      console.log("GET_TOTAL_COUNT_FOR_TAB_CALLED", {
+        caller: new Error().stack.split("\n").slice(1, 5).join(" | "),
+        time: new Date().toLocaleString("en-GB"),
+      });
       const updatedTabData = await Promise.all(
         tabConfig?.map(async (configItem, index) => {
           const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {

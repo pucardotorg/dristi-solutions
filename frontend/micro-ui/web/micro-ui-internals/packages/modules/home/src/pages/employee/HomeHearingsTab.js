@@ -29,6 +29,11 @@ const HomeHearingsTab = ({
   const history = useHistory();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(30);
+
+  useEffect(() => {
+    console.log("HOME_HEARINGS_TAB_MOUNTED", new Date().toLocaleString("en-GB"));
+    return () => console.log("HOME_HEARINGS_TAB_UNMOUNTED", new Date().toLocaleString("en-GB"));
+  }, []);
   const { data: tableData, loading, error, fetchInbox } = useInboxSearch({ limit: rowsPerPage, offset: page * rowsPerPage });
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
@@ -67,6 +72,7 @@ const HomeHearingsTab = ({
   }, [fetchInbox, filters, setHearingCount]);
 
   useEffect(() => {
+    console.log("HOME_HEARINGS_FETCH_TRIGGERED", { page, rowsPerPage, time: new Date().toLocaleString("en-GB") });
     fetchInbox(filters, setHearingCount);
   }, [page, rowsPerPage]);
 

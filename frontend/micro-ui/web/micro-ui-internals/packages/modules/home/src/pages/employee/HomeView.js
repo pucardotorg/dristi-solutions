@@ -178,6 +178,10 @@ const HomeView = () => {
   };
 
   const refreshInboxAfterSelectedAdvocateChange = () => {
+    console.log("HOME_VIEW_REFRESH_AFTER_ADVOCATE_CHANGE", {
+      selectedAdvocateId: selectedSeniorAdvocate?.id,
+      time: new Date().toLocaleString("en-GB"),
+    });
     setCallRefetch((prev) => !prev);
     getTotalCountForTab(tabConfigs);
   };
@@ -288,6 +292,11 @@ const HomeView = () => {
   }, [advocateId, advClerkId, individualId, courtId, isScrutiny, selectedSeniorAdvocate, userType, userInfoType]);
 
   useEffect(() => {
+    console.log("HOME_VIEW_MOUNTED", new Date().toLocaleString("en-GB"));
+    return () => console.log("HOME_VIEW_UNMOUNTED", new Date().toLocaleString("en-GB"));
+  }, []);
+
+  useEffect(() => {
     setDefaultValues(defaultSearchValues);
   }, []);
 
@@ -333,6 +342,10 @@ const HomeView = () => {
 
   const getTotalCountForTab = useCallback(
     async function (tabConfig) {
+      console.log("HOME_VIEW_GET_TOTAL_COUNT_CALLED", {
+        caller: new Error().stack.split("\n").slice(1, 5).join(" | "),
+        time: new Date().toLocaleString("en-GB"),
+      });
       const updatedTabData = await Promise.all(
         tabConfig?.TabSearchConfig?.map(async (configItem, index) => {
           const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
@@ -428,6 +441,12 @@ const HomeView = () => {
 
   useEffect(() => {
     const isAnyLoading = isLoading || isFetching || isSearchLoading || isOutcomeLoading || isCitizenCaseDataLoading || !additionalDetails;
+    const willCallGetTotalCount = !isAnyLoading && Boolean(tabConfigs && rowClickData && rolesToConfigMappingData && userInfoType) && !isEqual(tabConfigs, tabConfig);
+    console.log("HOME_VIEW_MAIN_EFFECT_RAN", {
+      isAnyLoading,
+      willCallGetTotalCount,
+      time: new Date().toLocaleString("en-GB"),
+    });
     if (!isAnyLoading && tabConfigs && rowClickData && rolesToConfigMappingData && userInfoType) {
       setOnRowClickData(rowClickData);
       if (tabConfigs && !isEqual(tabConfigs, tabConfig)) {
