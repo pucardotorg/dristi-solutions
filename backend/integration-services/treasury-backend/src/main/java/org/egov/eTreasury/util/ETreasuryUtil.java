@@ -16,6 +16,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.egov.eTreasury.config.ServiceConstants.CLIENT_ID_HEADER;
+import static org.egov.eTreasury.config.ServiceConstants.CLIENT_SECRET_HEADER;
+import static org.egov.eTreasury.config.ServiceConstants.DEPARTMENT_ID_PARAM;
+import static org.egov.eTreasury.config.ServiceConstants.SOURCE_PARAM;
+
 @Component
 @Slf4j
 public class ETreasuryUtil {
@@ -86,5 +91,28 @@ public class ETreasuryUtil {
         HttpEntity<String> requestEntity = new HttpEntity<>(payload, headers);
 
         return restTemplate.postForEntity(url, requestEntity, responseType);
+    }
+
+    public ResponseEntity<String> callTransactionDetailsV3(String departmentId, String url) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        // V3 endpoint authenticates via basic auth; force it on regardless of isTest()
+        if (paymentConfiguration.getBasicAuthUsername() != null
+                && !paymentConfiguration.getBasicAuthUsername().isEmpty()) {
+            headers.setBasicAuth(paymentConfiguration.getBasicAuthUsername(), paymentConfiguration.getBasicAuthPassword());
+        }
+
+        // Updated TransactionDetailsV3.php API requires CLIENTID/CLIENTSECRET headers (in addition to basic auth).
+        headers.add(CLIENT_ID_HEADER, paymentConfiguration.getReconciliationV3ClientId());
+        headers.add(CLIENT_SECRET_HEADER, paymentConfiguration.getReconciliationV3ClientSecret());
+
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        // Updated API requires the SOURCE form param alongside DEPARTMENT_ID.
+        body.add(SOURCE_PARAM, paymentConfiguration.getReconciliationV3Source());
+        body.add(DEPARTMENT_ID_PARAM, departmentId);
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
+        return restTemplate.postForEntity(url, requestEntity, String.class);
     }
 }

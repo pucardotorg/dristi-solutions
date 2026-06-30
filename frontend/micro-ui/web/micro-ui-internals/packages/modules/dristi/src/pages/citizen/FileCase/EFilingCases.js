@@ -43,6 +43,7 @@ import {
   showToastForComplainant,
   transformCaseDataForFetching,
   updateCaseDetails,
+  validateComplainantDuplicateMobile,
   validateDateForDelayApplication,
   witnessDetailsValidation,
 } from "./EfilingValidationUtils";
@@ -2248,6 +2249,12 @@ function EFilingCases({ path }) {
           )
       ) {
         setShowToast({ label: t("LOGGED_IN_USER_MUST_BE_EITHER_COMPLAINANT_OR_POA"), error: true });
+        return;
+      }
+    }
+
+    if (selected === "complainantDetails") {
+      if (validateComplainantDuplicateMobile({ formdata, setShowToast, t })) {
         return;
       }
     }
