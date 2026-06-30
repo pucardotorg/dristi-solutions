@@ -15,6 +15,8 @@ import { getFormattedName, getSuffixByDeliveryChannel } from "../../utils";
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 import { ORDER_TYPES, TASK_TYPES } from "../../utils/constants";
+import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote";
+import useGetPaymentVerificationStatus from "../../../../submissions/src/hooks/submissions/useGetPaymentVerificationStatus";
 
 const submitModalInfo = {
   header: "CS_HEADER_FOR_SUMMON_POST",
@@ -36,6 +38,19 @@ const taskTypeEnum = {
   PROCLAMATION: "Proclamation",
   ATTACHMENT: "Attachment",
 };
+
+const verificationPendingNoteConfig = {
+  populators: {
+    inputs: [
+      {
+        infoHeader: "INFO",
+        infoText: "PAYMENT_VERIFICATION_PENDING_INFO",
+        showTooltip: true,
+      },
+    ],
+  },
+};
+
 const PaymentForSummonComponent = ({
   infos,
   links,
@@ -47,6 +62,7 @@ const PaymentForSummonComponent = ({
   taskType,
   isCaseLocked = false,
   payOnlineButtonTitle = null,
+  isVerificationPending = false,
 }) => {
   const { t } = useTranslation();
 
@@ -56,6 +72,7 @@ const PaymentForSummonComponent = ({
         {t("MAKE_PAYMENT_IN_ORDER_TO_SEND_FOLLOWING")} {taskTypeEnum?.[taskType]} via {formattedChannelId}.
       </p>
       <ApplicationInfoComponent infos={infos} links={links} />
+      {isVerificationPending && <SelectCustomNote t={t} config={verificationPendingNoteConfig} />}
       {channelId && feeOptions[channelId]?.length > 0 && (
         <div className="summon-payment-action-table">
           {feeOptions[channelId]?.map((action, index) => (
@@ -298,6 +315,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     totalAmount: courtFeeAmount,
   });
 
+  const { data: paymentStatusData } = useGetPaymentVerificationStatus(`${taskNumber}_${suffix}`, tenantId, Boolean(taskNumber && suffix));
+
+  const isVerificationPending = useMemo(() => Boolean(paymentStatusData?.PaymentStatus?.status === "VERIFICATION_PENDING"), [paymentStatusData]);
+
   const status = useMemo(() => {
     if (channelId === "SMS") {
       return paymentType.PAYMENT_PENDING_SMS;
@@ -405,7 +426,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         const fileStoreId = resfileStoreId?.Document?.fileStore;
         const postPaymenScreenObj = {
           state: {
-            success: Boolean(fileStoreId),
+            success: billPaymentStatus === "PAID",
+            paymentStatus: billPaymentStatus,
             receiptData: {
               ...mockSubmitModalInfo,
               caseInfo: [
@@ -715,6 +737,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           taskType={taskType}
           isCaseLocked={isCaseLocked}
           payOnlineButtonTitle={payOnlineButtonTitle}
+          isVerificationPending={isVerificationPending}
         />
       ),
     };
@@ -730,6 +753,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     paymentLoader,
     isCaseAdmitted,
     isUserAdv,
+    isVerificationPending,
     history,
   ]);
 
