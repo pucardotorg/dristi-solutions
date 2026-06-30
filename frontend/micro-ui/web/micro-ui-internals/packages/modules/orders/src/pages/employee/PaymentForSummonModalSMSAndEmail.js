@@ -119,6 +119,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const [isCaseLocked, setIsCaseLocked] = useState(false);
   const [payOnlineButtonTitle, setPayOnlineButtonTitle] = useState("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
   const [showToast, setShowToast] = useState(null);
+  const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
 
   useEffect(() => {
     // If we don't have query params, redirect to home
@@ -421,6 +422,9 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
 
         if (!billPaymentStatus) {
           return;
+        }
+        if (billPaymentStatus === "VERIFICATION_PENDING") {
+          setIsPostPaymentVerificationPending(true);
         }
         const resfileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: billResponse?.Bill?.[0]?.id, tenantId });
         const fileStoreId = resfileStoreId?.Document?.fileStore;
@@ -737,7 +741,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           taskType={taskType}
           isCaseLocked={isCaseLocked}
           payOnlineButtonTitle={payOnlineButtonTitle}
-          isVerificationPending={isVerificationPending}
+          isVerificationPending={isVerificationPending || isPostPaymentVerificationPending}
         />
       ),
     };
@@ -754,6 +758,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     isCaseAdmitted,
     isUserAdv,
     isVerificationPending,
+    isPostPaymentVerificationPending,
     history,
   ]);
 
