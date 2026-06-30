@@ -84,7 +84,7 @@ public class PaymentController {
         }
         log.info("Fetching payment status for billId: {}, consumerCode: {}", billId, consumerCode);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(paymentStatusRequest.getRequestInfo(), true);
-        PaymentStatusData paymentStatus = paymentService.getPaymentStatus(billId, consumerCode);
+        PaymentStatusData paymentStatus = paymentService.getPaymentStatus(billId, consumerCode, paymentStatusRequest.getRequestInfo());
         PaymentStatusResponse response = PaymentStatusResponse.builder()
                 .responseInfo(responseInfo).paymentStatus(paymentStatus).build();
         log.info("Payment status for billId: {}, consumerCode: {} is {}", billId, consumerCode, paymentStatus.getStatus());

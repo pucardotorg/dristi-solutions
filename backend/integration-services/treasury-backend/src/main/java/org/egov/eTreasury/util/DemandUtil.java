@@ -72,4 +72,40 @@ public class DemandUtil {
             throw new CustomException("BILL_SEARCH_API_ERROR", "Error calling bill search API");
         }
     }
+
+    /**
+     * Resolves the billId for a given consumerCode using the authoritative consumerCode -> bill
+     * mapping in the billing service. Used as a fallback for the payment-status lookup, where the
+     * session's service_number (which stores the consumerCode) may be null. Returns {@code null}
+     * when no bill is found or the search fails, so the caller can treat it as "no attempt" rather
+     * than failing the status check.
+     */
+    public String searchBillIdByConsumerCode(String consumerCode, RequestInfo requestInfo) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(configuration.getDemandHost() + configuration.getBillingSearchEndPoint())
+                .queryParam("consumerCode", consumerCode)
+                .queryParam("tenantId", configuration.getEgovStateTenantId());
+
+        log.info("Searching bill by consumerCode: {}", consumerCode);
+
+        RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
+        requestInfoWrapper.setRequestInfo(requestInfo);
+        try {
+            Object response = restTemplate.postForEntity(
+                    builder.toUriString(),
+                    requestInfoWrapper,
+                    Object.class
+            ).getBody();
+            JsonNode billResponse = objectMapper.convertValue(response, JsonNode.class);
+            JsonNode bills = billResponse != null ? billResponse.get("Bill") : null;
+            if (bills == null || !bills.isArray() || bills.isEmpty()) {
+                log.info("No bill found for consumerCode: {}", consumerCode);
+                return null;
+            }
+            JsonNode idNode = bills.get(0).get("id");
+            return idNode != null ? idNode.textValue() : null;
+        } catch (Exception e) {
+            log.error("Error calling bill search API by consumerCode: {}", consumerCode, e);
+            return null;
+        }
+    }
 }
