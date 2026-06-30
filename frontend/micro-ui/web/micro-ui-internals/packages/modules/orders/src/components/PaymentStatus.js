@@ -38,7 +38,7 @@ const PaymentStatus = ({ path }) => {
     ? {
         ...commonProps,
         successful: false,
-        message: t("CS_PAYMENT_VERIFICATION_PENDING"),
+        message: t("PAYMENT_VERIFICATION_PENDING_SUCCESS_MESSAGE"),
       }
     : {
         ...commonProps,
@@ -60,7 +60,9 @@ const PaymentStatus = ({ path }) => {
       <div className="e-filing-payment" style={{ minHeight: "100%", height: "100%" }}>
         <Banner
           successful={isResponseSuccess}
-          message={isResponseSuccess ? "Payment Successful" : isVerificationPending ? t("CS_PAYMENT_VERIFICATION_PENDING") : "Payment Failed"}
+          message={
+            isResponseSuccess ? "Payment Successful" : isVerificationPending ? t("PAYMENT_VERIFICATION_PENDING_SUCCESS_MESSAGE") : "Payment Failed"
+          }
           info={`${state?.showID ? t("SUBMISSION_ID") : ""}`}
           whichSvg={`${isResponseSuccess ? "tick" : null}`}
           {...bannerProps}

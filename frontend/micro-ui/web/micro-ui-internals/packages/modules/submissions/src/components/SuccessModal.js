@@ -79,7 +79,7 @@ function SuccessModal({
           style={{ minWidth: "100%", ...(!headerBarEndClose && { marginTop: "10px" }) }}
         ></Banner>
         {isPaymentDone && <SelectCustomNote t={t} config={customNoteConfig} />}
-        {paymentStatus === "VERIFICATION_PENDING" && <SelectCustomNote t={t} config={verificationPendingNoteConfig} />}
+        {paymentStatus === "VERIFICATION_PENDING" && <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />}
         {paymentStatus === "FAILED" && <SelectCustomNote t={t} config={paymentFailedNoteConfig} />}
 
         <CustomCopyTextDiv
