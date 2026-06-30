@@ -15,5 +15,11 @@ public enum ReconcileV3Outcome {
     /** Treasury gave a definitive non-success (status=N/other); row marked terminal FAILED. */
     FAILED_TERMINAL,
     /** Treasury could not be reached/parsed; row left PENDING for the next cron cycle. */
-    INCONCLUSIVE
+    INCONCLUSIVE,
+    /**
+     * Treasury reported a pending status (G = no bank update yet, or P = bank-reported pending below
+     * the retry limit); the row is deliberately left PENDING for the next cron cycle. Distinct from
+     * INCONCLUSIVE, which means treasury could not be reached/parsed at all.
+     */
+    PENDING_RETRY
 }

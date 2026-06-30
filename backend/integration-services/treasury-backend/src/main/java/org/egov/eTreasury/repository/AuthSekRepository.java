@@ -75,6 +75,18 @@ public class AuthSekRepository {
         }
     }
 
+    /**
+     * Records that V3 reconciliation saw treasury status=P (bank-reported "Pending") for this row.
+     * The row stays PENDING so the next cron cycle re-checks it; only the retry counter advances.
+     */
+    public void updatePendingRetryCount(String authToken, int retryCount) {
+        String updateQuery = "UPDATE auth_sek_session_data SET retry_count = ? WHERE auth_token = ?";
+        int updated = jdbcTemplate.update(updateQuery, retryCount, authToken);
+        if(updated != 1) {
+            throw new RuntimeException("Failed to update retry_count on auth_sek_session_data for auth_token: " + authToken);
+        }
+    }
+
     public void updateAuthTokenAndStatusByDepartmentId(String departmentId, String authToken, String decryptedSek, String paymentStatus, String completionSource, Long verificationTimestamp, String processedStatus) {
         String updateQuery = "UPDATE auth_sek_session_data SET auth_token = ?, decrypted_sek = ?, payment_status = ?, completion_source = ?, verification_timestamp = ?, processed_status = ? WHERE department_id = ?";
         int updated = jdbcTemplate.update(updateQuery, authToken, decryptedSek, paymentStatus, completionSource, verificationTimestamp, processedStatus, departmentId);
