@@ -225,9 +225,10 @@ public class HearingService {
     }
 
     private int resolveStatusOrder(String status) {
-        if (IN_PROGRESS.equals(status)) return 1;
-        if (PASSED_OVER.equals(status) || SCHEDULED.equals(status)) return 2;
-        if (COMPLETED.equals(status)) return 3;
+        if (IN_PROGRESS.equals(status)) return 10;
+        if (SCHEDULED.equals(status)) return 20;
+        if (PASSED_OVER.equals(status)) return 30;
+        if (COMPLETED.equals(status)) return 40;
         return 99;
     }
 
@@ -499,6 +500,15 @@ public class HearingService {
         if (!allHearings.isEmpty()) {
             boolean partialMiss = allHearings.stream().anyMatch(Map::isEmpty);
             if (!partialMiss) {
+                allHearings.sort(Comparator
+                        .comparingInt((Map<String, Object> h) -> {
+                            Object so = h.get("statusOrder");
+                            return so instanceof Number ? ((Number) so).intValue() : 99;
+                        })
+                        .thenComparingInt(h -> {
+                            Object sn = h.get("serialNumber");
+                            return sn instanceof Number ? ((Number) sn).intValue() : Integer.MAX_VALUE;
+                        }));
                 List<Map<String, Object>> filtered = applyFilters(allHearings, status, hearingType, searchableFields);
                 int totalCount = filtered.size();
                 int fromIdx = Math.min(offset, filtered.size());
