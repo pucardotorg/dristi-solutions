@@ -296,7 +296,7 @@ public class PaymentService {
             if ("Y".equalsIgnoreCase(String.valueOf(transactionDetails.getStatus()))) {
                 status = PaymentStatus.SUCCESS;
             }
-            repository.updateAuthSekStatus(authSek.getAuthToken(), status.name(), "CALLBACK", System.currentTimeMillis(), "PROCESSED");
+            repository.updateAuthSekStatus(authSek.getAuthToken(), status.name(), COMPLETION_SOURCE_CALLBACK, System.currentTimeMillis(), PROCESSED_STATUS);
 
             return data;
 

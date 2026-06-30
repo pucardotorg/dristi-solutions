@@ -123,5 +123,7 @@ public class ServiceConstants {
     // Terminal state for a PENDING row V3 reconciliation has given up on: treasury reported a
     // definitive non-success, or the session aged past the max-age cutoff without reaching treasury.
     public static final String PROCESSED_STATUS_FAILED = "FAILED";
+    public static final String COMPLETION_SOURCE_CALLBACK = "CALLBACK";
+    public static final String PROCESSED_STATUS = "PROCESSED";
 
 }
