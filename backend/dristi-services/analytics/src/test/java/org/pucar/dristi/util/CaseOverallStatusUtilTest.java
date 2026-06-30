@@ -92,6 +92,7 @@ class CaseOverallStatusUtilTest {
         String referenceId = "lpr-to-123";
         String status = "published";
         String tenantId = "tenant1";
+        String action = "E-SIGN";
 
         User user = new User();
         user.setUuid("uuid-123");
@@ -134,7 +135,7 @@ class CaseOverallStatusUtilTest {
         when(mdmsDataConfig.getCaseOverallStatusTypeMap()).thenReturn(caseOverallStatusTypeMap);
         when(mdmsDataConfig.getCaseOutcomeTypeMap()).thenReturn(caseOutcomeTypeMap);
 
-        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, null, tenantId, requestInfoJson);
+        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, action, tenantId, requestInfoJson);
 
         assertNotNull(result);
     }
@@ -145,6 +146,7 @@ class CaseOverallStatusUtilTest {
         String referenceId = "lpr-out-123";
         String status = "published";
         String tenantId = "tenant1";
+        String action = "E-SIGN";
 
         User user = new User();
         user.setUuid("uuid-123");
@@ -187,7 +189,7 @@ class CaseOverallStatusUtilTest {
         when(mdmsDataConfig.getCaseOverallStatusTypeMap()).thenReturn(caseOverallStatusTypeMap);
         when(mdmsDataConfig.getCaseOutcomeTypeMap()).thenReturn(caseOutcomeTypeMap);
 
-        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, null, tenantId, requestInfoJson);
+        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, action, tenantId, requestInfoJson);
 
         assertNotNull(result);
         // Verify move-out-of-LPR transition uses the priority map stage ("Cognizance") as restored stage
@@ -200,6 +202,7 @@ class CaseOverallStatusUtilTest {
         String referenceId = "composite-lpr-123";
         String status = "published";
         String tenantId = "tenant1";
+        String action = "E-SIGN";
 
         User user = new User();
         user.setUuid("uuid-123");
@@ -259,7 +262,7 @@ class CaseOverallStatusUtilTest {
         when(mdmsDataConfig.getCaseOutcomeTypeMap()).thenReturn(caseOutcomeTypeMap);
         when(util.constructArray(orderObject.toString(), "$.compositeItems.*")).thenReturn(compositeItems);
 
-        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, null, tenantId, requestInfoJson);
+        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, action, tenantId, requestInfoJson);
 
         assertNotNull(result);
         // Verify LPR move-to transition was called for the first composite item
@@ -272,6 +275,7 @@ class CaseOverallStatusUtilTest {
         String referenceId = "null-case-123";
         String status = "published";
         String tenantId = "tenant1";
+        String action = "E-SIGN";
 
         JSONObject requestInfoJson = new JSONObject();
         requestInfoJson.put("RequestInfo", new JSONObject());
@@ -288,7 +292,7 @@ class CaseOverallStatusUtilTest {
         when(caseUtil.getCase(any(), any(), any(), any(), any())).thenReturn(null);
         when(mdmsDataConfig.getCaseOverallStatusTypeMap()).thenReturn(new HashMap<>());
 
-        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, null, tenantId, requestInfoJson);
+        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, action, tenantId, requestInfoJson);
 
         // When caseObject is null, processOrderOverallStatus returns null
         assertNull(result);
@@ -301,6 +305,7 @@ class CaseOverallStatusUtilTest {
         String referenceId = "summons-123";
         String status = "published";
         String tenantId = "tenant1";
+        String action = "E-SIGN";
 
         User user = new User();
         user.setUuid("uuid-123");
@@ -345,7 +350,7 @@ class CaseOverallStatusUtilTest {
         when(mdmsDataConfig.getCaseOverallStatusTypeMap()).thenReturn(caseOverallStatusTypeMap);
         when(mdmsDataConfig.getCaseOutcomeTypeMap()).thenReturn(caseOutcomeTypeMap);
 
-        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, null, tenantId, requestInfoJson);
+        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, action, tenantId, requestInfoJson);
 
         assertNotNull(result);
         // For Summons with no accused joined, should publish with Appearance stage and transition from Cognizance
@@ -358,6 +363,7 @@ class CaseOverallStatusUtilTest {
         String referenceId = "summons-joined-123";
         String status = "published";
         String tenantId = "tenant1";
+        String action = "E-SIGN";
 
         User user = new User();
         user.setUuid("uuid-123");
@@ -406,7 +412,7 @@ class CaseOverallStatusUtilTest {
         when(mdmsDataConfig.getCaseOverallStatusTypeMap()).thenReturn(caseOverallStatusTypeMap);
         when(mdmsDataConfig.getCaseOutcomeTypeMap()).thenReturn(caseOutcomeTypeMap);
 
-        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, null, tenantId, requestInfoJson);
+        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, action, tenantId, requestInfoJson);
 
         assertNotNull(result);
     }
@@ -521,6 +527,7 @@ class CaseOverallStatusUtilTest {
         String referenceId = "lpr-out-nomap";
         String status = "published";
         String tenantId = "tenant1";
+        String action = "E-SIGN";
 
         User user = new User();
         user.setUuid("uuid-123");
@@ -556,7 +563,7 @@ class CaseOverallStatusUtilTest {
         when(mdmsDataConfig.getCaseOverallStatusTypeMap()).thenReturn(caseOverallStatusTypeMap);
         when(mdmsDataConfig.getCaseOutcomeTypeMap()).thenReturn(caseOutcomeTypeMap);
 
-        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, null, tenantId, requestInfoJson);
+        Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, action, tenantId, requestInfoJson);
 
         assertNotNull(result);
         // When no priority map entry and caseOverallStatus is null, falls back to case stage

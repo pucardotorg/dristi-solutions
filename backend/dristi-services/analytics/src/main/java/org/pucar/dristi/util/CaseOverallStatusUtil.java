@@ -95,7 +95,7 @@ public class CaseOverallStatusUtil {
             } else if (config.getHearingBusinessServiceList().contains(entityType)) {
                 return processHearingCaseOverallStatus(request, referenceId, action, tenantId);
             } else if (config.getOrderBusinessServiceList().contains(entityType)) {
-                return processOrderOverallStatus(request, referenceId, status, tenantId);
+                return processOrderOverallStatus(request, referenceId, status, action, tenantId);
             } else if (config.getApplicationBusinessServiceList().contains(entityType)) {
                 return processApplicationSecondaryStageUpdate(request, referenceId, status, action, tenantId);
             } else if (config.getTaskBusinessServiceList().contains(entityType) || "task-notice".equalsIgnoreCase(entityType)) {
@@ -110,9 +110,16 @@ public class CaseOverallStatusUtil {
         }
     }
 
-    private Object processOrderOverallStatus(JSONObject request, String referenceId, String status, String tenantId) throws InterruptedException {
+    private Object processOrderOverallStatus(JSONObject request, String referenceId, String status, String action, String tenantId) throws InterruptedException {
         Thread.sleep(config.getApiCallDelayInSeconds() * 1000);
         Object orderObject = orderUtil.getOrder(request, referenceId, config.getStateLevelTenantId());
+        // Stage-update side effects must only run when the order is actually published (E-SIGN action).
+        // For other workflow actions (SAVE_DRAFT, DELETE, ABANDON, SUBMIT_BULK_E-SIGN, ...) we still return
+        // the fetched orderObject so downstream IndexerUtils.processOrderEntity can read filingNumber.
+        if (!"E-SIGN".equalsIgnoreCase(action)) {
+            log.info("Skipping order overall-status side effects for non-publish action '{}', referenceId: {}", action, referenceId);
+            return orderObject;
+        }
         String filingNumber = JsonPath.read(orderObject.toString(), FILING_NUMBER_PATH);
         String orderCategory = JsonPath.read(orderObject.toString(), ORDER_CATEGORY_PATH);
         boolean isHearingFound = false;

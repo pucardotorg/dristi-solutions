@@ -29,42 +29,42 @@ public class RequestsApiControllerTest {
     @Test
     public void requestsCreatePostSuccess() throws Exception {
         mockMvc.perform(post("/requests/_create").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
+        .APPLICATION_JSON))
         .andExpect(status().isOk());
     }
 
     @Test
     public void requestsCreatePostFailure() throws Exception {
         mockMvc.perform(post("/requests/_create").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
+        .APPLICATION_JSON))
         .andExpect(status().isBadRequest());
     }
 
     @Test
     public void requestsSearchPostSuccess() throws Exception {
         mockMvc.perform(post("/requests/_search").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
+        .APPLICATION_JSON))
         .andExpect(status().isOk());
     }
 
     @Test
     public void requestsSearchPostFailure() throws Exception {
         mockMvc.perform(post("/requests/_search").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
+        .APPLICATION_JSON))
         .andExpect(status().isBadRequest());
     }
 
     @Test
     public void requestsUpdatePostSuccess() throws Exception {
         mockMvc.perform(post("/requests/_update").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
+        .APPLICATION_JSON))
         .andExpect(status().isOk());
     }
 
     @Test
     public void requestsUpdatePostFailure() throws Exception {
         mockMvc.perform(post("/requests/_update").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
+        .APPLICATION_JSON))
         .andExpect(status().isBadRequest());
     }
 
