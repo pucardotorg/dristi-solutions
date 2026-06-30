@@ -88,7 +88,7 @@ const EvidenceHearingHeader = ({
 
   const isAdvocatePresent = useMemo(
     () =>
-      (userRoles?.includes("ADVOCATE_ROLE") && !isCurrentAdvOnlyLitigant) || userRoles?.includes("ADVOCATE_CLERK_ROLE")
+      ((userRoles?.includes("ADVOCATE_ROLE") || userRoles?.includes("ADVOCATE_CLERK_ROLE")) && !isCurrentAdvOnlyLitigant)
         ? true
         : allAdvocates.includes(userInfo?.uuid),
     [allAdvocates, userInfo?.uuid, userRoles, isCurrentAdvOnlyLitigant]

@@ -283,6 +283,12 @@ const ComplainantSignature = ({ path }) => {
     [roles, loggedInUserOnBehalfOfUuid, userInfo]
   );
 
+  // True when a clerk has filed this case as their own complainant (Self mode, not on behalf of a senior advocate).
+  const isClerkActingAsComplainant = useMemo(() => {
+    if (!isAdvocateClerk) return false;
+    return Boolean(caseDetails?.litigants?.some((lit) => lit?.additionalDetails?.uuid === userInfo?.uuid));
+  }, [isAdvocateClerk, caseDetails?.litigants, userInfo?.uuid]);
+
   const DocumentFileStoreId = useMemo(() => {
     return caseDetails?.additionalDetails?.signedCaseDocument;
   }, [caseDetails]);
@@ -1157,14 +1163,14 @@ const ComplainantSignature = ({ path }) => {
       }
     }
 
-    if (!isLitigant) {
+    if (!isLitigant && !isClerkActingAsComplainant) {
       setTimeout(() => {
         clearStorage();
       }, 3000);
     } else {
       clearStorage();
     }
-  }, [caseDetails, tenantId, isLoading, isLitigant]);
+  }, [caseDetails, tenantId, isLoading, isLitigant, isClerkActingAsComplainant]);
 
   const isRightPannelEnable = useMemo(() => {
     if (
@@ -1316,14 +1322,16 @@ const ComplainantSignature = ({ path }) => {
             {isSelectedUploadDoc && !(isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) && (
               <p style={styles.signatureDescription}>{t("ONLY_ADVOCATES_AND_ASSOCIATED_MEMBERS_CAN_UPLOAD_SIGNED_COPY")}</p>
             )}
-            {isSelectedEsign && (isMemberOnBehalfOfOwnerAdvocate || isAdvocateClerk) && (
+            {isSelectedEsign && (isMemberOnBehalfOfOwnerAdvocate || (isAdvocateClerk && !isClerkActingAsComplainant)) && (
               <p style={styles.signatureDescription}>{t("YOU_ARE_NOT_AUTHORIZED_TO_DO_ESIGN")}</p>
             )}
-            {isSelectedEsign && !isMemberOnBehalfOfOwnerAdvocate && !isAdvocateClerk && (
-              <button style={styles.esignButton} onClick={handleEsignAction}>
-                {t("CS_ESIGN")}
-              </button>
-            )}
+            {isSelectedEsign &&
+              ((isMemberOnBehalfOfOwnerAdvocate && isClerkActingAsComplainant) ||
+                (!isMemberOnBehalfOfOwnerAdvocate && (!isAdvocateClerk || isClerkActingAsComplainant))) && (
+                <button style={styles.esignButton} onClick={handleEsignAction}>
+                  {t("CS_ESIGN")}
+                </button>
+              )}
 
             {isSelectedUploadDoc && (
               <button

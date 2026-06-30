@@ -40,19 +40,15 @@ function CaseLockModal({
   const { uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
   const userInfo = Digit?.UserService?.getUser()?.info;
 
-  // True when the logged-in user is themselves a representative (advocate) in this case.
-  // Covers direct advocate filing, including when the advocate filed as their own complainant.
   const isAdvocateInCase = useMemo(() => {
     return Boolean(caseDetails?.representatives?.some((rep) => rep?.additionalDetails?.uuid === userInfo?.uuid));
   }, [caseDetails?.representatives, userInfo?.uuid]);
 
-  // Clerk/junior advocate is filing on behalf of a senior advocate when the stored advocate UUID
-  // differs from the logged-in user's own UUID.
-  const isFilingViaClerk = selectedAdvocateUuid && selectedAdvocateUuid !== userInfo?.uuid;
+  const isLitigantInCase = useMemo(() => {
+    return Boolean(caseDetails?.litigants?.some((litigant) => litigant?.userUuid === userInfo?.uuid));
+  }, [caseDetails?.litigants, userInfo?.uuid]);
 
-  // Advocate flow: either a clerk is filing on behalf of an advocate (isFilingViaClerk),
-  // or the logged-in advocate is directly present as a representative in this case (isAdvocateInCase).
-  const isAdvocateFlow = isFilingViaClerk || isAdvocateInCase;
+  const isAdvocateFlow = selectedAdvocateUuid && (isAdvocateInCase || !isLitigantInCase);
 
   const filingNumber = useMemo(() => {
     return caseDetails?.filingNumber;

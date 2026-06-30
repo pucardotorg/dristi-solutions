@@ -417,22 +417,15 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     return isAdvocateOfficeCreator?.advocateId;
   }, [caseDetails]);
 
-  // True when the advocate who is filing the case has entered their own mobile number as the complainant.
+  // True when the advocate/clerk who is filing the case has entered their own mobile number as the complainant.
   const isAdvocateActingAsComplainant = useMemo(() => {
     const complainantUserType = selectedComplainantIndividual?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")
       ?.value;
-    return complainantUserType === "ADVOCATE";
-  }, [selectedComplainantIndividual]);
-
-  // All complainant litigant individualIds to exclude from the advocate dropdown.
-  const advocateLitigantIndividualIds = useMemo(() => {
     return (
-      caseDetails?.litigants
-        ?.filter((l) => l.partyType?.includes("complainant"))
-        .map((l) => l.individualId)
-        .filter(Boolean) || []
+      selectedComplainantIndividual?.Individual?.[0]?.userUuid === userUuid &&
+      (complainantUserType === "ADVOCATE" || complainantUserType === "ADVOCATE_CLERK")
     );
-  }, [caseDetails?.litigants]);
+  }, [selectedComplainantIndividual, userUuid]);
 
   useEffect(() => {
     if (
@@ -931,7 +924,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                         value={data?.advocateBarRegNumberWithName}
                         onChange={(value) => handleInputChange(index, "advocateBarRegNumberWithName", value)}
                         disabled={data?.advocateBarRegNumberWithName?.individualId === individualId}
-                        excludeIndividualIds={advocateLitigantIndividualIds}
+                        excludeIndividualId={isAdvocateActingAsComplainant ? selectedComplainantIndividual?.Individual?.[0]?.individualId : null}
                       />
 
                       {data?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal &&

@@ -66,7 +66,7 @@ const AdvocateProfileDropdown = React.memo(({ t, options = [], selected, onSelec
 
   const handleSelect = useCallback(
     (option) => {
-      if (!option || option.id === selected?.id) {
+      if (!option || (option.id === selected?.id && option.advocateRole === selected?.advocateRole)) {
         setOpen(false);
         return;
       }
@@ -74,7 +74,7 @@ const AdvocateProfileDropdown = React.memo(({ t, options = [], selected, onSelec
       onSelect(option);
       setOpen(false);
     },
-    [onSelect, selected?.id]
+    [onSelect, selected?.id, selected?.advocateRole]
   );
 
   const fullName = selected?.advocateName ? t(selected.advocateName) : "";
@@ -90,7 +90,12 @@ const AdvocateProfileDropdown = React.memo(({ t, options = [], selected, onSelec
       {open && options.length > 0 && (
         <div className="advocate-profile-dropdown__menu">
           {options.map((option) => (
-            <button key={option.id} type="button" className="advocate-profile-dropdown__item" onClick={() => handleSelect(option)}>
+            <button
+              key={`${option.id}-${option.advocateRole || ""}`}
+              type="button"
+              className="advocate-profile-dropdown__item"
+              onClick={() => handleSelect(option)}
+            >
               <AdvocateProfileUserIcon />
               <span>{t(option.advocateName)}</span>
             </button>
@@ -289,17 +294,42 @@ const TopBarComponent = ({
   const seniorAdvocates = useMemo(() => {
     if (isLoadingMembers) return [];
     if (userType === "ADVOCATE" && advocateId && userInfo?.uuid) {
-      const selfDetails = [{ id: advocateId, value: advocateId, advocateName: userInfo?.name, uuid: userInfo?.uuid, allowCaseCreate: true }];
+      const selfDetails = [
+        {
+          id: advocateId,
+          value: advocateId,
+          advocateName: `${userInfo?.name} (Advocate)`,
+          uuid: userInfo?.uuid,
+          allowCaseCreate: true,
+          advocateRole: "ADVOCATE",
+        },
+        {
+          id: advocateId,
+          value: advocateId,
+          advocateName: `${userInfo?.name} (Litigant/POA)`,
+          uuid: userInfo?.uuid,
+          allowCaseCreate: true,
+          advocateRole: "POA_LITIGANT",
+        },
+      ];
       if (officeMembersData?.members?.length > 0) {
         const seniorAdvocatesList = Array.isArray(officeMembersData?.members) ? extractedSeniorAdvocates(officeMembersData) || [] : [];
         const totalList = [...selfDetails, ...seniorAdvocatesList];
         return [...(totalList || [])].sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName));
       } else return selfDetails;
     } else if (userType === "ADVOCATE_CLERK" && advClerkId) {
+      const selfEntry = {
+        id: advClerkId,
+        value: advClerkId,
+        advocateName: `${userInfo?.name} (Self)`,
+        uuid: userInfo?.uuid,
+        isSelf: true,
+        allowCaseCreate: false,
+      };
       if (officeMembersData?.members?.length > 0) {
         const seniorAdvocatesList = Array.isArray(officeMembersData?.members) ? extractedSeniorAdvocates(officeMembersData) || [] : [];
-        return [...(seniorAdvocatesList || [])].sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName));
-      } else return [];
+        return [selfEntry, ...[...seniorAdvocatesList].sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName))];
+      } else return [selfEntry];
     }
     return [];
   }, [advocateId, advClerkId, officeMembersData, isLoadingMembers, userType, userInfo?.name, userInfo?.uuid]);
@@ -341,7 +371,7 @@ const TopBarComponent = ({
   ]);
 
   const changeAdvocateSelection = (advocate) => {
-    if (advocate && advocate?.id !== AdvocateData?.id) {
+    if (advocate && (advocate?.id !== AdvocateData?.id || advocate?.advocateRole !== AdvocateData?.advocateRole)) {
       const individualId = seniorAdvocatesIndividualIdMapping?.find((o) => o?.userUuid === advocate?.uuid)?.individualId;
       setAdvocateDataContext({
         ...advocate,
@@ -361,12 +391,17 @@ const TopBarComponent = ({
         setAdvocateDataContext(null);
         return null;
       }
-      if (seniorAdvocates?.filter((o) => o?.id === storedAdvocate?.id)?.length) return storedAdvocate;
+      const storedMatch = seniorAdvocates.find((o) => o?.id === storedAdvocate?.id && o?.advocateRole === storedAdvocate?.advocateRole);
+      if (storedMatch) return storedAdvocate;
     }
 
-    // if an Advocate logs in -> select himself initially.
+    // if an Advocate logs in -> select himself initially (prefer the ADVOCATE role entry).
     if (advocateId) {
-      return seniorAdvocates.find((o) => o?.id === advocateId) || null;
+      return (
+        seniorAdvocates.find((o) => o?.id === advocateId && o?.advocateRole === "ADVOCATE") ||
+        seniorAdvocates.find((o) => o?.id === advocateId) ||
+        null
+      );
     }
 
     //if clerk is logged in -> select first senior Advocate initially.
@@ -389,7 +424,7 @@ const TopBarComponent = ({
     if (!resolvedAdvocate?.id) return;
     if (seniorAdvocatesIndividualIdMapping?.length === 0 || isIndividuaIdMappingsLoading) return;
     const eSignPath = `/${window?.contextPath}/citizen/dristi/home/file-case/sign-complaint`;
-    if (resolvedAdvocate?.id !== storedAdvocate?.id || !AdvocateData?.id) {
+    if (resolvedAdvocate?.id !== storedAdvocate?.id || resolvedAdvocate?.advocateRole !== storedAdvocate?.advocateRole || !AdvocateData?.id) {
       const individualId = seniorAdvocatesIndividualIdMapping?.find((o) => o?.userUuid === resolvedAdvocate?.uuid)?.individualId;
       setAdvocateDataContext({ ...resolvedAdvocate, individualId });
       sessionStorage.setItem("selectedAdvocate", JSON.stringify(resolvedAdvocate));
