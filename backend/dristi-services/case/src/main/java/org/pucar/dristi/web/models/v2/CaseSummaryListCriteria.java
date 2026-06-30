@@ -65,6 +65,9 @@ public class CaseSummaryListCriteria {
     @JsonProperty("judgeId")
     private String judgeId = null;
 
+    @JsonProperty("casesFor")
+    private CasesFor casesFor = null;
+
     @JsonProperty("stage")
     private List<String> stage = null;
 
