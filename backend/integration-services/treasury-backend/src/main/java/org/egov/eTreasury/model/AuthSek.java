@@ -28,4 +28,6 @@ public class AuthSek {
     private String completionSource;
     private Long verificationTimestamp;
     private String processedStatus;
+    /** Number of times V3 reconciliation has seen treasury status=P (bank-reported "Pending") for this row. */
+    private Integer retryCount;
 }
