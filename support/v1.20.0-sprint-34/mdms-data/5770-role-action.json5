@@ -12,19 +12,19 @@
   "isActive": true
 },
 
-{
-  "tenantId": "kl",
-  "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
-  "uniqueIdentifier": "2085",
-  "data": {
-    "id": 2085,
-    "url": "/hearing/v1/current-hearing",
-    "code": "2085",
-    "name": "/hearing/v1/current-hearing",
-    "path": "/hearing/v1/current-hearing"
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2085",
+    "data": {
+      "id": 2085,
+      "url": "/hearing/v1/current-hearing",
+      "code": "2085",
+      "name": "/hearing/v1/current-hearing",
+      "path": "/hearing/v1/current-hearing"
+    },
+    "isActive": true
   },
-  "isActive": true
-},
   {
     "tenantId": "kl",
     "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
@@ -77,4 +77,4 @@
     }
   }
 
-  ]
+]
