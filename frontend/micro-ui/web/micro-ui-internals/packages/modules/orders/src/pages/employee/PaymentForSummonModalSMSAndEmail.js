@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState, useEffect } from "react";
-import { Loader } from "@egovernments/digit-ui-react-components";
+import { Loader, Button } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
@@ -15,6 +15,8 @@ import { getFormattedName, getSuffixByDeliveryChannel } from "../../utils";
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 import { ORDER_TYPES, TASK_TYPES } from "../../utils/constants";
+import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote";
+import useGetPaymentVerificationStatus from "../../../../submissions/src/hooks/submissions/useGetPaymentVerificationStatus";
 
 const submitModalInfo = {
   header: "CS_HEADER_FOR_SUMMON_POST",
@@ -36,6 +38,19 @@ const taskTypeEnum = {
   PROCLAMATION: "Proclamation",
   ATTACHMENT: "Attachment",
 };
+
+const verificationPendingNoteConfig = {
+  populators: {
+    inputs: [
+      {
+        infoHeader: "WARNING",
+        infoText: "PAYMENT_VERIFICATION_PENDING_INFO",
+        showTooltip: true,
+      },
+    ],
+  },
+};
+
 const PaymentForSummonComponent = ({
   infos,
   links,
@@ -47,6 +62,9 @@ const PaymentForSummonComponent = ({
   taskType,
   isCaseLocked = false,
   payOnlineButtonTitle = null,
+  isVerificationPending = false,
+  onTryPaymentAgain = () => {},
+  onWaitAndCheckLater = () => {},
 }) => {
   const { t } = useTranslation();
 
@@ -56,6 +74,7 @@ const PaymentForSummonComponent = ({
         {t("MAKE_PAYMENT_IN_ORDER_TO_SEND_FOLLOWING")} {taskTypeEnum?.[taskType]} via {formattedChannelId}.
       </p>
       <ApplicationInfoComponent infos={infos} links={links} />
+      {isVerificationPending && <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />}
       {channelId && feeOptions[channelId]?.length > 0 && (
         <div className="summon-payment-action-table">
           {feeOptions[channelId]?.map((action, index) => (
@@ -64,6 +83,7 @@ const PaymentForSummonComponent = ({
               <div className="payment-amount">{action?.action !== "offline-process" && action?.amount ? `Rs. ${action?.amount}/-` : "-"}</div>
               <div className="payment-action">
                 {!action?.isCompleted &&
+                  !isVerificationPending &&
                   (index === 0 ? (
                     t(action?.action)
                   ) : action?.action !== "offline-process" ? (
@@ -86,6 +106,23 @@ const PaymentForSummonComponent = ({
           ))}
         </div>
       )}
+      {true ||
+        (isVerificationPending && (
+          <div style={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: "12px", marginTop: "8px" }}>
+            <Button
+              label={t("CS_TRY_PAYMENT_AGAIN")}
+              variation="secondary"
+              className={"pay-online-button"}
+              onButtonClick={onTryPaymentAgain}
+              isDisabled={paymentLoader || isCaseLocked}
+            />
+            <Button
+              label={t("CS_WAIT_AND_CHECK_LATER")}
+              onButtonClick={onWaitAndCheckLater}
+              style={{ border: "none", paddingRight: "20px", paddingLeft: "20px" }}
+            />
+          </div>
+        ))}
     </div>
   );
 };
@@ -102,6 +139,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const [isCaseLocked, setIsCaseLocked] = useState(false);
   const [payOnlineButtonTitle, setPayOnlineButtonTitle] = useState("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
   const [showToast, setShowToast] = useState(null);
+  const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
 
   useEffect(() => {
     // If we don't have query params, redirect to home
@@ -298,6 +336,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     totalAmount: courtFeeAmount,
   });
 
+  const { data: paymentStatusData } = useGetPaymentVerificationStatus(`${taskNumber}_${suffix}`, tenantId, Boolean(taskNumber && suffix));
+
+  const isVerificationPending = useMemo(() => Boolean(paymentStatusData?.PaymentStatus?.status === "VERIFICATION_PENDING"), [paymentStatusData]);
+
   const status = useMemo(() => {
     if (channelId === "SMS") {
       return paymentType.PAYMENT_PENDING_SMS;
@@ -401,11 +443,15 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         if (!billPaymentStatus) {
           return;
         }
+        if (billPaymentStatus === "VERIFICATION_PENDING") {
+          setIsPostPaymentVerificationPending(true);
+        }
         const resfileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: billResponse?.Bill?.[0]?.id, tenantId });
         const fileStoreId = resfileStoreId?.Document?.fileStore;
         const postPaymenScreenObj = {
           state: {
-            success: Boolean(fileStoreId),
+            success: billPaymentStatus === "PAID",
+            paymentStatus: billPaymentStatus,
             receiptData: {
               ...mockSubmitModalInfo,
               caseInfo: [
@@ -684,12 +730,19 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     return [{ text: "View order", link: "", onClick: onViewOrderClick }];
   }, [caseData?.criteria, filingNumber, history]);
 
+  const handleClose = useCallback(() => {
+    if (paymentLoader === false) {
+      history.goBack();
+    }
+  }, [history, paymentLoader]);
+
+  const handleTryPaymentAgain = useCallback(() => {
+    if (channelId && feeOptions[channelId]?.[1]?.onClick) {
+      feeOptions[channelId][1].onClick();
+    }
+  }, [channelId, feeOptions]);
+
   const paymentForSummonModalConfig = useMemo(() => {
-    const handleClose = () => {
-      if (paymentLoader === false) {
-        history.goBack();
-      }
-    };
     const formattedChannelId =
       channelId === "SMS" ? "SMS" : channelId ? channelId?.charAt(0)?.toUpperCase() + channelId?.slice(1)?.toLowerCase() : "";
 
@@ -715,6 +768,9 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           taskType={taskType}
           isCaseLocked={isCaseLocked}
           payOnlineButtonTitle={payOnlineButtonTitle}
+          isVerificationPending={isVerificationPending || isPostPaymentVerificationPending}
+          onTryPaymentAgain={handleTryPaymentAgain}
+          onWaitAndCheckLater={handleClose}
         />
       ),
     };
@@ -730,7 +786,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     paymentLoader,
     isCaseAdmitted,
     isUserAdv,
-    history,
+    isVerificationPending,
+    isPostPaymentVerificationPending,
+    handleClose,
+    handleTryPaymentAgain,
   ]);
 
   if (isOrdersLoading || !orderData || isPaymentTypeLoading || isSummonsBreakUpLoading || isBillLoading || isTasksLoading) {

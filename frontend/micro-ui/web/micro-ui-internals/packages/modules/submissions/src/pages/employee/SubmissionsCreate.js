@@ -1957,7 +1957,7 @@ const SubmissionsCreate = ({ path }) => {
         const billPaymentStatus = await openPaymentPortal(bill, bill?.Bill?.totalAmount);
         setPaymentStatus(billPaymentStatus);
         await applicationRefetch();
-        if (billPaymentStatus === true) {
+        if (billPaymentStatus === "PAID") {
           setMakePaymentLabel(false);
           setShowPaymentModal(false);
           setShowSuccessModal(true);
@@ -2085,7 +2085,7 @@ const SubmissionsCreate = ({ path }) => {
             handleSkipPayment={handleSkipPayment}
             handleMakePayment={handleMakePayment}
             tenantId={tenantId}
-            consumerCode={applicationDetails?.applicationNumber}
+            consumerCode={applicationDetails?.applicationNumber ? applicationDetails.applicationNumber + "_" + suffix : ""}
             paymentLoader={paymentLoader}
             entityType={entityType}
             totalAmount={_getApplicationAmount(applicationTypeAmount, applicationType)}
