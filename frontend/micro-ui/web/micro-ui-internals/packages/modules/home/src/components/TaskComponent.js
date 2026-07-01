@@ -1280,6 +1280,9 @@ const TasksComponent = ({
                     authorizedUuid={authorizedUuid}
                     refetchPendingTasks={refetch}
                     setIsPaymentCompleted={setIsPaymentCompleted}
+                    onClose={() => {
+                      setShowCourierServiceModal(false);
+                    }}
                   />
                 ),
               },

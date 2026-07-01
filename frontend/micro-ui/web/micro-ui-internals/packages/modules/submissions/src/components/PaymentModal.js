@@ -42,22 +42,19 @@ function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMak
 
   return (
     <Modal
-      popupStyles={{
-        height: "300px",
-      }}
       headerBarMain={<Heading label={t("SUBMISSION_APPLICATION_PAYMENT")} />}
       headerBarEnd={<CloseBtn onClick={handleClosePaymentModal} />}
-      actionCancelLabel={isVerificationPending ? t("CS_WAIT_AND_CHECK_LATER") : t("SKIP")}
-      actionCancelOnSubmit={isVerificationPending ? handleClosePaymentModal : () => handleSkipPayment()}
-      actionSaveLabel={isVerificationPending ? t("CS_TRY_PAYMENT_AGAIN") : t("CS_MAKE_PAYMENT")}
+      actionCancelLabel={isVerificationPending ? t("CS_TRY_PAYMENT_AGAIN") : t("SKIP")}
+      actionCancelOnSubmit={isVerificationPending ? () => handleMakePayment(totalAmount) : () => handleSkipPayment()}
+      actionSaveLabel={isVerificationPending ? t("CS_WAIT_AND_CHECK_LATER") : t("CS_MAKE_PAYMENT")}
       actionSaveOnSubmit={() => {
-        handleMakePayment(totalAmount);
+        isVerificationPending ? handleClosePaymentModal() : handleMakePayment(totalAmount);
       }}
       isDisabled={paymentLoader}
       className={"submission-payment-modal"}
     >
-      <div className="submission-payment-modal-body-main" style={{ maxHeight: "180px" }}>
-        {isPaymentStatusLoading && (
+      <div className="submission-payment-modal-body-main" style={{ height: "auto" }}>
+        {(isPaymentStatusLoading || paymentLoader) && (
           <div
             style={{
               width: "100vw",
