@@ -22,7 +22,7 @@ function SelectCustomNote({ t, config, onClick = () => {}, isWarning = false }) 
       <div className="custom-note-main-div" style={{ ...config?.styles, ...(isWarning ? { backgroundColor: "#FEF9C3" } : {}) }}>
         <div className="custom-note-heading-div">
           <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage) || input?.showTooltip} />
-          <h2>{t(input?.infoHeader)}</h2>
+          <h2 style={{ fontSize: "16px" }}>{t(input?.infoHeader)}</h2>
         </div>
         {(input?.infoText || input?.linkText) && (
           <div className="custom-note-info-div">

@@ -1,4 +1,5 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
+import { Button } from "@egovernments/digit-ui-react-components";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote";
 import React, { useMemo, useState } from "react";
@@ -68,6 +69,41 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
   );
 
   const isVerificationPending = useMemo(() => Boolean(paymentStatusData?.PaymentStatus?.status === "VERIFICATION_PENDING"), [paymentStatusData]);
+
+  const handlePayOnline = async () => {
+    setIsApiCalled(true);
+    try {
+      const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
+      const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount, "task-payment");
+      if (paymentStatus === "PAID") {
+        triggerSurvey("JOIN_CASE_PAYMENT", () => {
+          setPendingTaskActionModals((pendingTaskActionModals) => {
+            const data = pendingTaskActionModals?.data;
+            delete data.filingNumber;
+            delete data.taskNumber;
+            return {
+              ...pendingTaskActionModals,
+              joinCasePaymentModal: false,
+              data: data,
+            };
+          });
+        });
+      } else if (paymentStatus === "VERIFICATION_PENDING") {
+        setIsPostPaymentVerificationPending(true);
+      }
+      refetch();
+    } catch (error) {
+      console.error("error", error);
+    }
+    setIsApiCalled(false);
+  };
+
+  const handleCloseModal = () => {
+    if (setPendingTaskActionModals) {
+      setPendingTaskActionModals((prev) => ({ ...prev, joinCasePaymentModal: false }));
+    }
+    if (refetch) refetch();
+  };
 
   return (
     <div
@@ -156,38 +192,41 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
       )}
       {type !== "join-case-flow" && (
         <div className="advocate-replacement-request-footer" style={{ justifyContent: "flex-end", marginBottom: "0px" }}>
-          <ButtonSelector
-            label={t("CS_PAY_ONLINE")}
-            onSubmit={async () => {
-              setIsApiCalled(true);
-              try {
-                const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
-                const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount, "task-payment");
-                if (paymentStatus === "PAID") {
-                  triggerSurvey("JOIN_CASE_PAYMENT", () => {
-                    setPendingTaskActionModals((pendingTaskActionModals) => {
-                      const data = pendingTaskActionModals?.data;
-                      delete data.filingNumber;
-                      delete data.taskNumber;
-                      return {
-                        ...pendingTaskActionModals,
-                        joinCasePaymentModal: false,
-                        data: data,
-                      };
-                    });
-                  });
-                } else if (paymentStatus === "VERIFICATION_PENDING") {
-                  setIsPostPaymentVerificationPending(true);
-                }
-                refetch();
-              } catch (error) {
-                console.error("error", error);
-              }
-              setIsApiCalled(false);
-            }}
-            className="advocate-replacement-request-submit-button"
-            isDisabled={isApiCalled}
-          />
+          {isVerificationPending || isPostPaymentVerificationPending || externalPostPaymentVerificationPending ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                alignItems: "center",
+                gap: "12px",
+                fontSize: "16px",
+              }}
+              className={"verification-pending-buttons-div"}
+            >
+              <Button
+                label={t("CS_TRY_PAYMENT_AGAIN")}
+                variation="secondary"
+                className={"pay-online-button"}
+                onButtonClick={handlePayOnline}
+                isDisabled={isApiCalled}
+                style={{ fontSize: "16px" }}
+              />
+              <Button
+                label={t("CS_WAIT_AND_CHECK_LATER")}
+                onButtonClick={handleCloseModal}
+                isDisabled={isApiCalled}
+                style={{ fontSize: "16px", border: "none", paddingRight: "20px", paddingLeft: "20px" }}
+              />
+            </div>
+          ) : (
+            <ButtonSelector
+              label={t("CS_PAY_ONLINE")}
+              onSubmit={handlePayOnline}
+              className="advocate-replacement-request-submit-button"
+              isDisabled={isApiCalled}
+            />
+          )}
         </div>
       )}
       {SurveyUI}
