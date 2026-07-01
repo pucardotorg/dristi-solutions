@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Modal from "../../../dristi/src/components/Modal";
 import SelectCustomNote from "../../../dristi/src/components/SelectCustomNote";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import useGetPaymentVerificationStatus from "../hooks/submissions/useGetPaymentVerificationStatus";
+import { Loader } from "@egovernments/digit-ui-react-components";
 
 const customNoteConfig = {
   populators: {
@@ -9,7 +11,18 @@ const customNoteConfig = {
       {
         infoHeader: "INFO",
         infoText: "VISIT_NYAYMITRA_FOR_OFFLINE_PAYMENT",
-        // infoTooltipMessage: "CS_NOTE_TOOLTIP",
+        showTooltip: true,
+      },
+    ],
+  },
+};
+
+const verificationPendingNoteConfig = {
+  populators: {
+    inputs: [
+      {
+        infoHeader: "WARNING",
+        infoText: "PAYMENT_VERIFICATION_PENDING_INFO",
         showTooltip: true,
       },
     ],
@@ -17,7 +30,16 @@ const customNoteConfig = {
 };
 
 function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMakePayment, tenantId, consumerCode, paymentLoader, totalAmount }) {
-  
+  const { data: paymentStatusData, isLoading: isPaymentStatusLoading } = useGetPaymentVerificationStatus(
+    consumerCode,
+    tenantId,
+    Boolean(consumerCode)
+  );
+  console.log("paymentStatusData", paymentStatusData, isPaymentStatusLoading);
+  const isVerificationPending = useMemo(() => paymentStatusData && paymentStatusData.PaymentStatus?.status === "VERIFICATION_PENDING", [
+    paymentStatusData,
+  ]);
+
   return (
     <Modal
       popupStyles={{
@@ -25,9 +47,9 @@ function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMak
       }}
       headerBarMain={<Heading label={t("SUBMISSION_APPLICATION_PAYMENT")} />}
       headerBarEnd={<CloseBtn onClick={handleClosePaymentModal} />}
-      actionCancelLabel={t("SKIP")}
-      actionCancelOnSubmit={() => handleSkipPayment()}
-      actionSaveLabel={t("CS_MAKE_PAYMENT")}
+      actionCancelLabel={isVerificationPending ? t("CS_WAIT_AND_CHECK_LATER") : t("SKIP")}
+      actionCancelOnSubmit={isVerificationPending ? handleClosePaymentModal : () => handleSkipPayment()}
+      actionSaveLabel={isVerificationPending ? t("CS_TRY_PAYMENT_AGAIN") : t("CS_MAKE_PAYMENT")}
       actionSaveOnSubmit={() => {
         handleMakePayment(totalAmount);
       }}
@@ -35,8 +57,32 @@ function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMak
       className={"submission-payment-modal"}
     >
       <div className="submission-payment-modal-body-main" style={{ maxHeight: "180px" }}>
+        {isPaymentStatusLoading && (
+          <div
+            style={{
+              width: "100vw",
+              height: "100vh",
+              zIndex: "999999999999999999",
+              position: "fixed",
+              right: "0",
+              display: "flex",
+              top: "0",
+              background: "rgb(234 234 245 / 50%)",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            className="submit-loader"
+          >
+            <Loader />
+          </div>
+        )}
         <div className="note-div">
-          <SelectCustomNote t={t} config={customNoteConfig}></SelectCustomNote>
+          <SelectCustomNote t={t} config={customNoteConfig} />
+          {isVerificationPending && (
+            <div style={{ marginTop: "10px" }}>
+              <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
+            </div>
+          )}
         </div>
         <div className="submission-payment-modal-amount-div">
           <div className="amount-div">

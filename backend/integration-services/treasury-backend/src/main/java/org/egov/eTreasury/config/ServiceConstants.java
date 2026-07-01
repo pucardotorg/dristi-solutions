@@ -112,10 +112,18 @@ public class ServiceConstants {
     public static final String CLIENT_ID_HEADER = "CLIENTID";
     public static final String CLIENT_SECRET_HEADER = "CLIENTSECRET";
     public static final String TREASURY_STATUS_SUCCESS = "Y";
+    // Bank has NOT yet sent any status update to eTreasury. Leave the row PENDING indefinitely
+    // (no retry consumed) until the bank reports a definitive status.
+    public static final String TREASURY_STATUS_PENDING_NO_UPDATE = "G";
+    // Bank explicitly reported the transaction as "Pending" to eTreasury. Retry a bounded number of
+    // cron cycles; if it is still P after the retry limit, mark the row terminal FAILED.
+    public static final String TREASURY_STATUS_PENDING = "P";
     public static final String COMPLETION_SOURCE_RECONCILIATION_V3 = "RECONCILIATION_V3";
     public static final String PROCESSED_STATUS_RECONCILED = "RECONCILED";
     // Terminal state for a PENDING row V3 reconciliation has given up on: treasury reported a
     // definitive non-success, or the session aged past the max-age cutoff without reaching treasury.
     public static final String PROCESSED_STATUS_FAILED = "FAILED";
+    public static final String COMPLETION_SOURCE_CALLBACK = "CALLBACK";
+    public static final String PROCESSED_STATUS = "PROCESSED";
 
 }
