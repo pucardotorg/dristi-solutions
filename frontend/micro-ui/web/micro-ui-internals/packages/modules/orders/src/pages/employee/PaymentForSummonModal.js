@@ -356,30 +356,6 @@ const PaymentForSummonModal = ({ path }) => {
         }
         const resfileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: courtBillResponse?.Bill?.[0]?.id, tenantId });
         const fileStoreId = resfileStoreId?.Document?.fileStore;
-        // Removed condition 'ePostBillResponse?.Bill?.[0]?.status === "PAID"' since there is only one payment record
-        if (fileStoreId) {
-          await Promise.all([
-            ordersService.customApiService(Urls.orders.pendingTask, {
-              pendingTask: {
-                name: orderType === ORDER_TYPES.SUMMONS ? `MAKE_PAYMENT_FOR_SUMMONS_POST` : `MAKE_PAYMENT_FOR_NOTICE_POST`,
-                entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
-                referenceId: `MANUAL_${taskNumber}`,
-                status: paymentType.PAYMENT_PENDING_POST,
-                assignedTo: [],
-                assignedRole: [],
-                cnrNumber: filteredTasks?.[0]?.cnrNumber,
-                filingNumber: filingNumber,
-                caseId: caseDetails?.id,
-                caseTitle: caseDetails?.caseTitle,
-                isCompleted: true,
-                stateSla: "",
-                additionalDetails: {},
-                tenantId,
-              },
-            }),
-          ]);
-        }
-
         const postPaymenScreenObj = {
           state: {
             success: Boolean(fileStoreId),

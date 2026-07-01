@@ -398,6 +398,14 @@ export const DRISTIService = {
       data,
       params,
     }),
+  getPaymentStatus: (data, params) =>
+    Request({
+      url: Urls.dristi.paymentStatus,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
   fetchBillFileStoreId: (data, params) =>
     Request({
       url: Urls.dristi.billFileStoreId,

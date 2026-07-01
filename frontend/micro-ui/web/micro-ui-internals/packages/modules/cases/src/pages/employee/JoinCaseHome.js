@@ -108,6 +108,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data,
   const history = useHistory();
 
   const [isVerified, setIsVerified] = useState(false);
+  const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
@@ -122,7 +123,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data,
     }
   }, [data?.caseDetails, showJoinCase, type]);
 
-  const { fetchBill, openPaymentPortal } = usePaymentProcess({ tenantId });
+  const { fetchBill, openPaymentPortal, paymentLoader } = usePaymentProcess({ tenantId, businessService: "task-payment" });
 
   const searchCase = useCallback(
     async (caseNumber) => {
@@ -1212,10 +1213,12 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data,
         setIsApiCalled(true);
         try {
           const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
-          const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount);
-          if (paymentStatus) {
+          const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount, "task-payment");
+          if (paymentStatus === "PAID") {
             setStep(step + 1);
             setSuccess(true);
+          } else if (paymentStatus === "VERIFICATION_PENDING") {
+            setIsPostPaymentVerificationPending(true);
           }
         } catch (error) {
           console.error("error", error);
@@ -1518,7 +1521,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data,
     },
     // 4
     {
-      modalMain: <JoinCasePayment type="join-case-flow" taskNumber={taskNumber} />,
+      modalMain: <JoinCasePayment type="join-case-flow" taskNumber={taskNumber} externalPostPaymentVerificationPending={isPostPaymentVerificationPending} />,
     },
     // 5
     {

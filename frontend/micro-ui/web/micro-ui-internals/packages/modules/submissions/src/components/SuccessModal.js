@@ -29,6 +29,18 @@ const paymentFailedNoteConfig = {
     ],
   },
 };
+
+const verificationPendingNoteConfig = {
+  populators: {
+    inputs: [
+      {
+        infoHeader: "WARNING",
+        infoText: "PAYMENT_VERIFICATION_PENDING_INFO",
+        showTooltip: true,
+      },
+    ],
+  },
+};
 function SuccessModal({
   t,
   actionCancelLabel,
@@ -43,6 +55,7 @@ function SuccessModal({
   bannerlabel,
 }) {
   const submissionData = [
+    //
     { key: "SUBMISSION_DATE", value: createdDate, copyData: false },
     { key: "SUBMISSION_ID", value: applicationNumber, copyData: true },
   ];
@@ -51,9 +64,9 @@ function SuccessModal({
       headerBarMain={<Heading label={t("")} />}
       headerBarEnd={<CloseBtn onClick={headerBarEndClose} />}
       headerBarMainStyle={{ padding: "10px 0px" }}
-      actionCancelLabel={t(actionCancelLabel)}
+      actionCancelLabel={paymentStatus === "VERIFICATION_PENDING" ? t("CS_WAIT_AND_CHECK_LATER") : t(actionCancelLabel)}
       actionCancelOnSubmit={actionCancelOnSubmit}
-      actionSaveLabel={makePayment ? t("CS_MAKE_PAYMENT") : t("CS_CLOSE")}
+      actionSaveLabel={paymentStatus === "VERIFICATION_PENDING" ? t("CS_TRY_PAYMENT_AGAIN") : makePayment ? t("CS_MAKE_PAYMENT") : t("CS_CLOSE")}
       actionSaveOnSubmit={handleCloseSuccessModal}
       className={"submission-success-modal"}
     >
@@ -66,7 +79,8 @@ function SuccessModal({
           style={{ minWidth: "100%", ...(!headerBarEndClose && { marginTop: "10px" }) }}
         ></Banner>
         {isPaymentDone && <SelectCustomNote t={t} config={customNoteConfig} />}
-        {paymentStatus === false && <SelectCustomNote t={t} config={paymentFailedNoteConfig} />}
+        {paymentStatus === "VERIFICATION_PENDING" && <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />}
+        {paymentStatus === "FAILED" && <SelectCustomNote t={t} config={paymentFailedNoteConfig} />}
 
         <CustomCopyTextDiv
           t={t}
