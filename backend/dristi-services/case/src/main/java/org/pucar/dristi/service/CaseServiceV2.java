@@ -125,16 +125,26 @@ public class CaseServiceV2 {
         }
 
         if (criteria.getAdvocateId() != null && !criteria.getAdvocateId().isEmpty()) {
+
             boolean isAdvocatePresent = courtCase.getRepresentatives() != null &&
                     courtCase.getRepresentatives().stream()
                             .anyMatch(rep -> criteria.getAdvocateId().equals(rep.getAdvocateId()));
 
-            boolean isAdvocateOfficeMember = courtCase.getAdvocateOffices()
-                    .stream()
-                    .flatMap(advocateOffice -> advocateOffice.getAdvocates().stream())
-                    .anyMatch(member -> criteria.getAdvocateId().equals(member.getMemberId()));
+            boolean isAdvocateOfficeMember = courtCase.getAdvocateOffices() != null &&
+                    courtCase.getAdvocateOffices().stream()
+                            .flatMap(advocateOffice -> advocateOffice.getAdvocates().stream())
+                            .anyMatch(member -> criteria.getAdvocateId().equals(member.getMemberId()));
 
-            if(!isPoaPresent && !isAdvocatePresent && !isAdvocateOfficeMember){
+            boolean isLitigantPresent = courtCase.getLitigants() != null &&
+                    courtCase.getLitigants().stream()
+                            .anyMatch(l ->
+                                    criteria.getPoaHolderIndividualId().equals(l.getIndividualId()));
+
+            if (!isPoaPresent
+                    && !isAdvocatePresent
+                    && !isAdvocateOfficeMember
+                    && !isLitigantPresent) {
+
                 log.debug("Advocate is not part of the case for caseId {}", criteria.getCaseId());
                 throw new CustomException(SEARCH_CASE_ERR, "Advocate is not part of the case");
             }
