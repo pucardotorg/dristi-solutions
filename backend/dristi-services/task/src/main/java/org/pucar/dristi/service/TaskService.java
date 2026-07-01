@@ -401,13 +401,38 @@ public class TaskService {
     }
 
     public Task uploadDocument(TaskRequest body) {
+        return uploadDocument(body, false);
+    }
+
+    /**
+     * Uploads a document onto an existing task.
+     *
+     * <p>In the default (append) mode the incoming document(s) are simply added to the task; this is
+     * the normal generate -> sign -> send flow where each stage accumulates a new document.
+     *
+     * <p>When {@code override} is true the incoming document REPLACES the task's existing
+     * generated/signed/sent documents: every currently-active document is soft-deleted
+     * (isActive=false, id retained so the persister's ON CONFLICT(id) updates the existing row) and
+     * only the newly uploaded document stays active. This is used by the warrant-reissue regeneration
+     * so a reissued warrant carries only its freshly generated GENERATE_TASK_DOCUMENT and not the
+     * stale generated/signed copies from the previous cycle. The standard
+     * {@link TaskRegistrationEnrichment#enrichCaseApplicationUponUpdate} strips id-bearing documents
+     * from the payload and so cannot deactivate already-persisted documents, which is why the override
+     * path does its own enrichment instead.
+     */
+    public Task uploadDocument(TaskRequest body, boolean override) {
         try {
+            List<Document> incomingDocuments = body.getTask().getDocuments();
             Task task = validator.validateApplicationUploadDocumentExistence(body.getTask(), body.getRequestInfo());
             log.info("Task validateApplicationUploadDocumentExistence response :: {}", task);
 
             // Enrich application upon update
            TaskRequest taskRequest = TaskRequest.builder().requestInfo(body.getRequestInfo()).task(task).build();
-            enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
+            if (override) {
+                overrideTaskDocuments(taskRequest, incomingDocuments);
+            } else {
+                enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
+            }
             enrichmentUtil.enrichIsPendingCollectionUponUpdate(taskRequest, body);
 
             producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -421,6 +446,54 @@ public class TaskService {
             log.error("Error occurred while uploading document into task :: {}", e.toString());
             throw new CustomException(DOCUMENT_UPLOAD_QUERY_EXCEPTION, "Error occurred while uploading document into task: " + e.getMessage());
         }
+    }
+
+    /**
+     * Replaces a task's documents during warrant-reissue regeneration: deactivates every currently
+     * persisted active document (retaining its id so the persister updates the existing row to
+     * isActive=false, dropping it out of the isActive=true search) and keeps only the freshly uploaded
+     * document(s) active. Mirrors the audit/UUID enrichment normally done in
+     * {@link TaskRegistrationEnrichment#enrichCaseApplicationUponUpdate} but without its
+     * remove-already-persisted-documents step, which would otherwise discard the soft-deleted docs.
+     */
+    private void overrideTaskDocuments(TaskRequest taskRequest, List<Document> incomingDocuments) {
+        Task task = taskRequest.getTask();
+        task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+        task.getAuditDetails().setLastModifiedBy(taskRequest.getRequestInfo().getUserInfo().getUuid());
+
+        List<Document> mergedDocuments = new ArrayList<>();
+        for (Document existing : fetchExistingDocuments(task)) {
+            existing.setIsActive(false);
+            mergedDocuments.add(existing);
+        }
+        if (incomingDocuments != null) {
+            for (Document incoming : incomingDocuments) {
+                if (incoming.getId() == null) {
+                    incoming.setId(UUID.randomUUID().toString());
+                    incoming.setDocumentUid(incoming.getId());
+                }
+                if (incoming.getIsActive() == null) {
+                    incoming.setIsActive(true);
+                }
+                mergedDocuments.add(incoming);
+            }
+        }
+        task.setDocuments(mergedDocuments);
+    }
+
+    /** Reads the task's currently persisted active documents (the validator overwrites the task's own list with the incoming docs, so they are re-read here). */
+    private List<Document> fetchExistingDocuments(Task task) {
+        TaskCriteria criteria = TaskCriteria.builder()
+                .id(task.getId() != null ? String.valueOf(task.getId()) : null)
+                .taskNumber(task.getTaskNumber())
+                .cnrNumber(task.getCnrNumber())
+                .tenantId(task.getTenantId())
+                .build();
+        List<Task> tasks = taskRepository.getTasks(criteria, null);
+        if (tasks == null || tasks.isEmpty() || tasks.get(0).getDocuments() == null) {
+            return Collections.emptyList();
+        }
+        return tasks.get(0).getDocuments();
     }
 
     public void closeEnvelopePendingTaskOfRpad(TaskRequest taskRequest) {
