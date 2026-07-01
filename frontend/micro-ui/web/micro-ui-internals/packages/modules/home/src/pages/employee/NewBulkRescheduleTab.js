@@ -32,9 +32,9 @@ const CloseBtn = ({ onClick }) => {
     </div>
   );
 };
-const Heading = ({ label }) => {
+const Heading = ({ label, style }) => {
   return (
-    <div className="evidence-title">
+    <div className="evidence-title" style={style}>
       <h1 className="heading-m">{label}</h1>
     </div>
   );
@@ -50,6 +50,11 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
 
   const [showToast, setShowToast] = useState(null);
+  const [showBatchNonWorkingWarning, setShowBatchNonWorkingWarning] = useState(false);
+
+  const { data: nonWorkingDay } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "schedule-hearing", [{ name: "COURT000334" }], {
+    select: (data) => data || [],
+  });
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState(""); //signed notification filestore id
@@ -307,6 +312,21 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     checkSignStatus(name, signFormData, uploadModalConfig, onSelect, setIsSigned);
   }, [checkSignStatus, signFormData, uploadModalConfig]);
 
+  const handleRescheduleSubmit = () => {
+    const nonWorkingDayList = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"] || [];
+    const hasNonWorkingDate = newHearingData?.some((hearing) => {
+      if (!hearing?.hearingDate) return false;
+      const date = new Date(hearing.hearingDate);
+      const formattedForCheck = date.toLocaleDateString("en-GB").replace(/\//g, "-");
+      return nonWorkingDayList.some((item) => item.date === formattedForCheck) || date.getDay() === 0 || date.getDay() === 6;
+    });
+    if (hasNonWorkingDate) {
+      setShowBatchNonWorkingWarning(true);
+      return;
+    }
+    setStepper((prev) => prev + 1);
+  };
+
   const onCancel = () => {
     if (stepper === 1) {
       clearLocalStorage();
@@ -481,6 +501,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         t={t}
         loader={isRescheduleReasonLoading}
         setStepper={setStepper}
+        onSubmitReschedule={handleRescheduleSubmit}
         setNewHearingData={setNewHearingData}
         newHearingData={newHearingData}
         defaultBulkFormData={defaultBulkFormData}
@@ -754,6 +775,26 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
           onClose={() => setShowToast(null)}
           duration={showToast?.errorId ? 7000 : 5000}
         />
+      )}
+      {showBatchNonWorkingWarning && (
+        <Modal
+          headerBarMain={<Heading style={{ marginLeft: "24px" }} label={t("CS_COURT_NON_WORKING_WARNING_TITLE")} />}
+          headerBarEnd={<CloseBtn onClick={() => setShowBatchNonWorkingWarning(false)} />}
+          actionSaveLabel={t("CS_COMMON_CONFIRM")}
+          actionSaveOnSubmit={() => {
+            setShowBatchNonWorkingWarning(false);
+            setStepper((prev) => prev + 1);
+          }}
+          actionCancelLabel={t("CS_COMMON_CANCEL")}
+          actionCancelOnSubmit={() => setShowBatchNonWorkingWarning(false)}
+          formId="modal-action"
+          style={{ backgroundColor: "#BB2C2F", border: "none" }}
+          popupModuleActionBarStyles={{ margin: "10px" }}
+        >
+          <p style={{ fontFamily: "Roboto Condensed", fontWeight: 400, fontSize: "16px", color: "#3D3C3C", marginLeft: "24px" }}>
+            {t("CS_COURT_NON_WORKING_CONFIRM_MESSAGE")}
+          </p>
+        </Modal>
       )}
     </React.Fragment>
   );

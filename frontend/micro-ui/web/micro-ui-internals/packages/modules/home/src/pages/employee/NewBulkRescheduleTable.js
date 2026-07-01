@@ -7,6 +7,7 @@ const NewBulkRescheduleTable = ({
   t,
   loader,
   setStepper,
+  onSubmitReschedule,
   newHearingData,
   setNewHearingData,
   defaultBulkFormData,
@@ -219,7 +220,7 @@ const NewBulkRescheduleTable = ({
           <SubmitBar
             label={t(`RESCHEDULE_ALL_HEARINGS`)}
             submit="submit"
-            onSubmit={() => setStepper((prev) => prev + 1)}
+            onSubmit={() => (onSubmitReschedule ? onSubmitReschedule() : setStepper((prev) => prev + 1))}
             disabled={newHearingData?.length === 0}
           />
         )}

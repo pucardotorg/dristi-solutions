@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { LabelFieldPair, TextInput, CardLabelError } from "@egovernments/digit-ui-react-components";
-import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const CustomDatePickerV2 = ({
   t,
@@ -28,7 +27,8 @@ const CustomDatePickerV2 = ({
     },
   });
 
-  const [showToast, setShowToast] = useState(null);
+  const [pendingDate, setPendingDate] = useState(null);
+  const [showNonWorkingWarning, setShowNonWorkingWarning] = useState(false);
 
   // Add event listener to handle clicks outside the modal
   useEffect(() => {
@@ -66,23 +66,40 @@ const CustomDatePickerV2 = ({
     };
   }, [showModal]);
 
-  const handleSelect = (date) => {
-    const formattedDate = date.toLocaleDateString("en-GB");
-    const formattedForCheck = formattedDate.replace(/\//g, "-");
-    const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
-    if (isNonWorkingDay) {
-      setShowToast({
-        error: true,
-        label: t("CS_COMMON_COURT_NON_WORKING"),
-        errorId: null,
-      });
-    }
+  const applyDate = (date) => {
     if (onDateChange) {
       onDateChange(date);
     } else {
       onSelect(config.key, new Date(date).setHours(0, 0, 0, 0));
     }
+  };
+
+  const handleSelect = (date) => {
+    const formattedDate = date.toLocaleDateString("en-GB");
+    const formattedForCheck = formattedDate.replace(/\//g, "-");
+    const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+
     setShowModal(false);
+
+    if (isNonWorkingDay || isWeekend) {
+      setPendingDate(date);
+      setShowNonWorkingWarning(true);
+      return;
+    }
+
+    applyDate(date);
+  };
+
+  const handleConfirmNonWorking = () => {
+    if (pendingDate) applyDate(pendingDate);
+    setPendingDate(null);
+    setShowNonWorkingWarning(false);
+  };
+
+  const handleCancelNonWorking = () => {
+    setPendingDate(null);
+    setShowNonWorkingWarning(false);
   };
   const customDateConfig = {
     showBottomBar: false,
@@ -145,14 +162,22 @@ const CustomDatePickerV2 = ({
           />
         </Modal>
       )}
-      {showToast && (
-        <CustomToast
-          error={showToast?.error}
-          label={showToast?.label}
-          errorId={showToast?.errorId}
-          onClose={() => setShowToast(null)}
-          duration={showToast?.errorId ? 7000 : 5000}
-        />
+      {showNonWorkingWarning && (
+        <Modal
+          headerBarMain={<Heading style={{ marginLeft: "24px" }} label={t("CS_COURT_NON_WORKING_WARNING_TITLE")} />}
+          headerBarEnd={<CloseBtn onClick={handleCancelNonWorking} />}
+          actionSaveLabel={t("CS_COMMON_CONFIRM")}
+          actionSaveOnSubmit={handleConfirmNonWorking}
+          actionCancelLabel={t("CS_COMMON_CANCEL")}
+          actionCancelOnSubmit={handleCancelNonWorking}
+          formId="modal-action"
+          style={{ backgroundColor: "#BB2C2F", border: "none" }}
+          popupModuleActionBarStyles={{ margin: "10px" }}
+        >
+          <p style={{ fontFamily: "Roboto Condensed", fontWeight: 400, fontSize: "16px", color: "#3D3C3C", marginLeft: "24px" }}>
+            {t("CS_COURT_NON_WORKING_CONFIRM_MESSAGE")}
+          </p>
+        </Modal>
       )}
     </div>
   );

@@ -9,6 +9,7 @@ import { InfoCard } from "@egovernments/digit-ui-components";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import DristiModal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 
 const hearingTypeOptions = [{}];
 
@@ -73,6 +74,11 @@ function ScheduleHearing({
   showPurposeOfHearing = false,
 }) {
   const [showToast, setShowToast] = useState(null);
+  const [showNonWorkingWarning, setShowNonWorkingWarning] = useState(false);
+
+  const { data: nonWorkingDay } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "schedule-hearing", [{ name: "COURT000334" }], {
+    select: (data) => data || [],
+  });
   const { data: availableDateResponse } = window?.Digit.Hooks.dristi.useJudgeAvailabilityDates(
     {
       SearchCriteria: {
@@ -263,8 +269,17 @@ function ScheduleHearing({
   };
 
   const onCalendarConfirm = () => {
+    const formattedDate = selectedCustomDate.toLocaleDateString("en-GB");
+    const formattedForCheck = formattedDate.replace(/\//g, "-");
+    const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
+    const isWeekend = selectedCustomDate.getDay() === 0 || selectedCustomDate.getDay() === 6;
+
     setModalInfo({ ...modalInfo, page: 0, showDate: false, showCustomDate: true });
     setSelectedChip(null);
+
+    if (isNonWorkingDay || isWeekend) {
+      setShowNonWorkingWarning(true);
+    }
   };
 
   const handleSelect = (date) => {
@@ -563,6 +578,28 @@ function ScheduleHearing({
             onClose={() => setShowToast(null)}
             duration={showToast?.errorId ? 7000 : 5000}
           />
+        )}
+        {showNonWorkingWarning && (
+          <DristiModal
+            headerBarMain={<Heading style={{ marginLeft: "24px" }} label={t("CS_COURT_NON_WORKING_WARNING_TITLE")} />}
+            headerBarEnd={<CloseBtn onClick={() => setShowNonWorkingWarning(false)} />}
+            actionSaveLabel={t("CS_COMMON_CONFIRM")}
+            actionSaveOnSubmit={() => setShowNonWorkingWarning(false)}
+            actionCancelLabel={t("CS_COMMON_CANCEL")}
+            actionCancelOnSubmit={() => {
+              setScheduleHearingParam({ ...scheduleHearingParams, date: null });
+              setSelectedCustomDate(new Date());
+              setModalInfo({ ...modalInfo, showCustomDate: false });
+              setShowNonWorkingWarning(false);
+            }}
+            formId="modal-action"
+            style={{ backgroundColor: "#BB2C2F", border: "none" }}
+            popupModuleActionBarStyles={{ margin: "10px" }}
+          >
+            <p style={{ fontFamily: "Roboto Condensed", fontWeight: 400, fontSize: "16px", color: "#3D3C3C", marginLeft: "24px" }}>
+              {t("CS_COURT_NON_WORKING_CONFIRM_MESSAGE")}
+            </p>
+          </DristiModal>
         )}
       </div>
     </Modal>

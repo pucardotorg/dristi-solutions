@@ -1,8 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
-import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import { EditPencilIcon } from "../icons/svgIndex";
-import { CloseBtn } from "./ModalComponents";
 
 const toInternal = (dateStr) => {
   if (!dateStr || typeof dateStr !== "string") return dateStr;
@@ -49,7 +48,8 @@ const Chip = ({ label, isSelected, handleClick, icon, disabled }) => {
 };
 function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors }) {
   const [showPicker, setShowPicker] = useState(false);
-  const [showToast, setShowToast] = useState(null);
+  const [pendingDate, setPendingDate] = useState(null);
+  const [showNonWorkingWarning, setShowNonWorkingWarning] = useState(false);
 
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const CustomCalendar = Digit.ComponentRegistryService.getComponent("CustomCalendarV2");
@@ -75,6 +75,13 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
     return new Date(y, m - 1, d).getTime();
   };
 
+  const applyDate = (date) => {
+    const d = String(date.getDate()).padStart(2, "0");
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const y = date.getFullYear();
+    onSelect(config.key, `${y}-${m}-${d}`);
+  };
+
   const handleDateChange = (date) => {
     const d = String(date.getDate()).padStart(2, "0");
     const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -82,15 +89,28 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
 
     const formattedForCheck = `${d}-${m}-${y}`;
     const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
-    if (isNonWorkingDay) {
-      setShowToast({ error: true, label: t("CS_COMMON_COURT_NON_WORKING"), errorId: null });
+    setShowPicker(false);
+
+    if (isNonWorkingDay || isWeekend) {
+      setPendingDate(date);
+      setShowNonWorkingWarning(true);
       return;
     }
 
-    const finalInternalDate = `${y}-${m}-${d}`;
-    onSelect(config.key, finalInternalDate);
-    setShowPicker(false);
+    applyDate(date);
+  };
+
+  const handleConfirmNonWorking = () => {
+    if (pendingDate) applyDate(pendingDate);
+    setPendingDate(null);
+    setShowNonWorkingWarning(false);
+  };
+
+  const handleCancelNonWorking = () => {
+    setPendingDate(null);
+    setShowNonWorkingWarning(false);
   };
 
   const handleChipClick = (dateStr) => {
@@ -162,14 +182,22 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
         </Modal>
       )}
 
-      {showToast && (
-        <CustomToast
-          error={showToast?.error}
-          label={showToast?.label}
-          errorId={showToast?.errorId}
-          onClose={() => setShowToast(null)}
-          duration={showToast?.errorId ? 7000 : 5000}
-        />
+      {showNonWorkingWarning && (
+        <Modal
+          headerBarMain={<Heading style={{ marginLeft: "24px" }} label={t("CS_COURT_NON_WORKING_WARNING_TITLE")} />}
+          headerBarEnd={<CloseBtn onClick={handleCancelNonWorking} />}
+          actionSaveLabel={t("CS_COMMON_CONFIRM")}
+          actionSaveOnSubmit={handleConfirmNonWorking}
+          actionCancelLabel={t("CS_COMMON_CANCEL")}
+          actionCancelOnSubmit={handleCancelNonWorking}
+          formId="modal-action"
+          style={{ backgroundColor: "#BB2C2F", border: "none" }}
+          popupModuleActionBarStyles={{ margin: "10px" }}
+        >
+          <p style={{ fontFamily: "Roboto Condensed", fontWeight: 400, fontSize: "16px", color: "#3D3C3C", marginLeft: "24px" }}>
+            {t("CS_COURT_NON_WORKING_CONFIRM_MESSAGE")}
+          </p>
+        </Modal>
       )}
 
       {errors?.[config.key] && <p style={{ color: "#BB2C2F", fontSize: "12px", marginTop: "4px" }}>{t("REQUIRED_FIELD")}</p>}

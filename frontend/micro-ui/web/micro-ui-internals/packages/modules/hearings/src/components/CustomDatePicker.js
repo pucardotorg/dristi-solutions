@@ -1,19 +1,53 @@
 import React, { useState } from "react";
 import { LabelFieldPair, TextInput, CardLabelError, CardLabel } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const CustomDatePicker = ({ t, config, formData, onSelect, errors, onDateChange }) => {
   const [showModal, setShowModal] = useState(false);
+  const [pendingDate, setPendingDate] = useState(null);
+  const [showNonWorkingWarning, setShowNonWorkingWarning] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const CustomCalendar = Digit.ComponentRegistryService.getComponent("CustomCalendar");
-  const handleSelect = (date) => {
+
+  const { data: nonWorkingDay } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "schedule-hearing", [{ name: "COURT000334" }], {
+    select: (data) => data || [],
+  });
+
+  const applyDate = (date) => {
     if (onDateChange) {
       onDateChange(date);
     } else {
       onSelect(config.key, new Date(date).setHours(0, 0, 0, 0));
     }
+  };
+
+  const handleSelect = (date) => {
+    const formattedDate = date.toLocaleDateString("en-GB");
+    const formattedForCheck = formattedDate.replace(/\//g, "-");
+    const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+
     setShowModal(false);
+
+    if (isNonWorkingDay || isWeekend) {
+      setPendingDate(date);
+      setShowNonWorkingWarning(true);
+      return;
+    }
+
+    applyDate(date);
+  };
+
+  const handleConfirmNonWorking = () => {
+    if (pendingDate) applyDate(pendingDate);
+    setPendingDate(null);
+    setShowNonWorkingWarning(false);
+  };
+
+  const handleCancelNonWorking = () => {
+    setPendingDate(null);
+    setShowNonWorkingWarning(false);
   };
   const customDateConfig = {
     showBottomBar: false,
@@ -70,6 +104,23 @@ const CustomDatePicker = ({ t, config, formData, onSelect, errors, onDateChange 
             selectedCustomDate={formData?.[config?.key]}
             tenantId={tenantId}
           />
+        </Modal>
+      )}
+      {showNonWorkingWarning && (
+        <Modal
+          headerBarMain={<Heading style={{ marginLeft: "24px" }} label={t("CS_COURT_NON_WORKING_WARNING_TITLE")} />}
+          headerBarEnd={<CloseBtn onClick={handleCancelNonWorking} />}
+          actionSaveLabel={t("CS_COMMON_CONFIRM")}
+          actionSaveOnSubmit={handleConfirmNonWorking}
+          actionCancelLabel={t("CS_COMMON_CANCEL")}
+          actionCancelOnSubmit={handleCancelNonWorking}
+          formId="modal-action"
+          style={{ backgroundColor: "#BB2C2F", border: "none" }}
+          popupModuleActionBarStyles={{ margin: "10px" }}
+        >
+          <p style={{ fontFamily: "Roboto Condensed", fontWeight: 400, fontSize: "16px", color: "#3D3C3C", marginLeft: "24px" }}>
+            {t("CS_COURT_NON_WORKING_CONFIRM_MESSAGE")}
+          </p>
         </Modal>
       )}
     </div>
