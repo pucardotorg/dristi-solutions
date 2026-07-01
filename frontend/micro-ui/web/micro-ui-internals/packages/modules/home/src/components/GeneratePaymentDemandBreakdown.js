@@ -1,4 +1,4 @@
-import { Loader } from "@egovernments/digit-ui-react-components";
+import { Button, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -11,6 +11,15 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote";
+import useGetPaymentVerificationStatus from "../../../submissions/src/hooks/submissions/useGetPaymentVerificationStatus";
+
+const verificationPendingNoteConfig = {
+  populators: {
+    inputs: [{ infoHeader: "WARNING", infoText: "PAYMENT_VERIFICATION_PENDING_INFO", showTooltip: true }],
+  },
+};
+
 function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
   const { t } = useTranslation();
   const location = useLocation();
@@ -40,6 +49,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
   const [comments, setComments] = useState("");
   const [caseLockLoader, setLockLoader] = useState(false);
   const [taskLoader, setTaskloader] = useState(null);
+  const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
   const { data: caseData, isLoading } = useSearchCaseService(
     {
       criteria: [
@@ -71,6 +81,9 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
     totalAmount: totalAmount,
     scenario,
   });
+
+  const { data: paymentStatusData } = useGetPaymentVerificationStatus(consumerCode, tenantId, Boolean(consumerCode));
+  const isVerificationPending = useMemo(() => Boolean(paymentStatusData?.PaymentStatus?.status === "VERIFICATION_PENDING"), [paymentStatusData]);
 
   const fetchCaseLockStatus = useCallback(async () => {
     try {
@@ -172,7 +185,13 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
 
       const paymentStatus = await openPaymentPortal(bill, totalAmount);
       await DRISTIService.setCaseUnlock({}, { uniqueId: filingNumber, tenantId: tenantId });
-      const success = Boolean(paymentStatus);
+
+      if (paymentStatus === "VERIFICATION_PENDING") {
+        setIsPostPaymentVerificationPending(true);
+        return;
+      }
+
+      const success = paymentStatus === "PAID";
 
       const receiptData = {
         header: "CS_HEADER_FOR_E_FILING_PAYMENT",
@@ -237,9 +256,11 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
 }`}</style>
       <Modal
         headerBarEnd={<CloseBtn onClick={onCancel} />}
-        actionSaveLabel={t("CS_PAY_ONLINE")}
+        actionSaveLabel={isVerificationPending || isPostPaymentVerificationPending ? t("CS_WAIT_AND_CHECK_LATER") : t("CS_PAY_ONLINE")}
         formId="modal-action"
-        actionSaveOnSubmit={() => onSubmitCase()}
+        actionSaveOnSubmit={isVerificationPending || isPostPaymentVerificationPending ? () => onCancel() : () => onSubmitCase()}
+        actionCancelLabel={isVerificationPending || isPostPaymentVerificationPending ? t("CS_TRY_PAYMENT_AGAIN") : undefined}
+        actionCancelOnSubmit={isVerificationPending || isPostPaymentVerificationPending ? () => onSubmitCase() : () => {}}
         titleSaveButton={isCaseLocked ? t(payOnlineButtonTitle) : ""}
         isDisabled={paymentLoader || isCaseLocked || taskLoader || caseLockLoader || isLoading}
         headerBarMain={<Heading label={t("CS_PAY_TO_FILE_CASE")} />}
@@ -328,6 +349,31 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
                   />
                 </div>
               </div>
+              {(isVerificationPending || isPostPaymentVerificationPending) && (
+                <div style={{ marginBottom: "16px" }}>
+                  <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
+                </div>
+              )}
+              {/* {isVerificationPending || isPostPaymentVerificationPending ? (
+                <div
+                  className="verification-pending-actions"
+                  style={{ display: "flex", flexDirection: "row", justifyContent: "end", alignItems: "center", gap: "12px" }}
+                >
+                  <Button
+                    label={t("CS_TRY_PAYMENT_AGAIN")}
+                    variation="secondary"
+                    className={"pay-online-button"}
+                    onButtonClick={onSubmitCase}
+                    isDisabled={paymentLoader || isCaseLocked}
+                  />
+                  <Button
+                    label={t("CS_WAIT_AND_CHECK_LATER")}
+                    onButtonClick={onCancel}
+                    isDisabled={paymentLoader}
+                    style={{ border: "none", paddingRight: "20px", paddingLeft: "20px" }}
+                  />
+                </div>
+              ) : null} */}
               {showToast && (
                 <CustomToast
                   error={showToast?.error}
