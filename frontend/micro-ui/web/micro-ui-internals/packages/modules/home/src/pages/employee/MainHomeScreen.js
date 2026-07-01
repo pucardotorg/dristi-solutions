@@ -77,6 +77,7 @@ const MainHomeScreen = () => {
   const [scrutinyConfig, setScrutinyConfig] = useState(structuredClone(scrutinyPendingTaskConfig[0]));
   const [tabData, setTabData] = useState(null);
   const [scrutinyDueCount, setScrutinyDueCount] = useState(0);
+  const [reschedulingRequestDueCount, setReschedulingRequestDueCount] = useState(0);
   const [ctcApplicationCount, setCtcApplicationCount] = useState(0);
 
   const [activeTabTitle, setActiveTabTitle] = useState(homeActiveTab);
@@ -566,11 +567,6 @@ const MainHomeScreen = () => {
             isOnlyCountRequired: true,
             actionCategory: "Register cases",
           },
-          searchReschedulingRequestApplications: {
-            date: null,
-            isOnlyCountRequired: true,
-            actionCategory: "Rescheduling Request",
-          },
           searchNoticeAndSummons: {
             date: null,
             isOnlyCountRequired: true,
@@ -625,14 +621,12 @@ const MainHomeScreen = () => {
       const registerUsersCount = res?.registerUsersData?.count || 0;
       const offlinePaymentsCount = res?.offlinePaymentsData?.count || 0;
       const noticeAndSummonsCount = res?.noticeAndSummonsData?.count || 0;
-      const rescheduleHearingRequestCount = res?.reschedulingRequestData?.totalCount || 0;
 
       setPendingTaskCount({
         REGISTER_USERS: registerUsersCount,
         OFFLINE_PAYMENTS: offlinePaymentsCount,
         SCRUTINISE_CASES: scrutinyCasesCount,
         REGISTRATION: registerCount,
-        RESCHEDULE_REQUEST: rescheduleHearingRequestCount,
         REVIEW_PROCESS: reviwCount,
         BAIL_BOND_STATUS: bailBondStatusCount,
         NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
@@ -1165,6 +1159,7 @@ const MainHomeScreen = () => {
     if (userType === "employee") {
       fetchPendingTaskCounts();
       fetchHearingCount(filters, activeTab);
+      fetchReschedulingRequestCount();
     }
   }, [userType]);
 
@@ -1425,6 +1420,32 @@ const MainHomeScreen = () => {
     userType === "employee" && getTotalCountForTab(scrutinyPendingTaskConfig);
   }, [scrutinyPendingTaskConfig, userType]);
 
+  const fetchReschedulingRequestCount = useCallback(async () => {
+    try {
+      const res = await HomeService.customApiService(Urls.pendingTaskSearch, {
+        SearchCriteria: {
+          moduleName: "Pending Tasks Service",
+          tenantId: tenantId,
+          moduleSearchCriteria: {
+            screenType: ["home", "applicationCompositeOrder"],
+            isCompleted: false,
+            courtId: localStorage.getItem("courtId"),
+          },
+          limit: 10,
+          offset: 0,
+          searchReschedulingRequestApplications: {
+            date: null,
+            isOnlyCountRequired: true,
+            actionCategory: "Rescheduling Request",
+          },
+        },
+      });
+      setReschedulingRequestDueCount(res?.reschedulingRequestData?.totalCount || 0);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [tenantId]);
+
   const handleTabChange = (title, label) => {
     if (title !== activeTabTitle) {
       if (activeTabTitle === "TOTAL_HEARINGS_TAB") {
@@ -1526,7 +1547,7 @@ const MainHomeScreen = () => {
           isOptionsLoading={false}
           applicationOptions={applicationOptions}
           hearingCount={hearingCount}
-          pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount, CTC_APPLICATIONS: ctcApplicationCount }}
+          pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount, CTC_APPLICATIONS: ctcApplicationCount, RESCHEDULE_REQUEST: reschedulingRequestDueCount }}
           setShowToast={setShowToast}
         />
         {activeTab === "TEMPLATE_OR_CONFIGURATION" ? (
