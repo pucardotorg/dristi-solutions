@@ -315,6 +315,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data,
     const isLitigantInCase = caseDetails?.litigants?.some((litigant) => litigant?.individualId === individualData?.Individual?.[0]?.individualId);
     const isRepresentativeInCase =
       isAdvocate && caseDetails?.representatives?.some((rep) => rep?.advocateId === advocateResponse?.advocates[0]?.responseList?.[0]?.id);
+    const isPoaHolderInCase = caseDetails?.poaHolders?.some((poa) => poa?.additionalDetails?.uuid === userInfo?.uuid);
 
     if (isAdvocate) {
       // Always store the advocate data when the user is an advocate so switching userType works
@@ -323,14 +324,14 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data,
       setAdvocateData(advocateResponse?.advocates[0]?.responseList?.[0]);
       setAdvocateDetailForm(advocateResponse?.advocates[0]?.responseList[0]);
 
-      if (isLitigantInCase && !isRepresentativeInCase) {
-        // Advocate is only a litigant in this case — default to Litigant, but can still switch to Advocate
+      if ((isLitigantInCase || isPoaHolderInCase) && !isRepresentativeInCase) {
+        // Advocate is only a litigant/POA holder in this case — default to Litigant, but can still switch to Advocate
         setSelectPartyData((selectPartyData) => ({
           ...selectPartyData,
           userType: { label: t(JoinHomeLocalisation.LITIGANT_OPT), value: "Litigant" },
         }));
       } else {
-        // Advocate is a representative (or neither a litigant nor a rep) — default to Advocate
+        // Advocate is a representative (or neither a litigant/POA holder nor a rep) — default to Advocate
         setSelectPartyData((selectPartyData) => ({
           ...selectPartyData,
           userType: { label: t(JoinHomeLocalisation.ADVOCATE_OPT), value: "Advocate" },
@@ -342,7 +343,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data,
         userType: { label: t(JoinHomeLocalisation.LITIGANT_OPT), value: "Litigant" },
       }));
     }
-  }, [t, tenantId, userInfo?.uuid, caseDetails?.litigants, caseDetails?.representatives, isClerkSelf]);
+  }, [t, tenantId, userInfo?.uuid, caseDetails?.litigants, caseDetails?.representatives, caseDetails?.poaHolders, isClerkSelf]);
 
   useEffect(() => {
     if (show === true) {
@@ -1521,7 +1522,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data,
     },
     // 4
     {
-      modalMain: <JoinCasePayment type="join-case-flow" taskNumber={taskNumber} externalPostPaymentVerificationPending={isPostPaymentVerificationPending} />,
+      modalMain: (
+        <JoinCasePayment type="join-case-flow" taskNumber={taskNumber} externalPostPaymentVerificationPending={isPostPaymentVerificationPending} />
+      ),
     },
     // 5
     {

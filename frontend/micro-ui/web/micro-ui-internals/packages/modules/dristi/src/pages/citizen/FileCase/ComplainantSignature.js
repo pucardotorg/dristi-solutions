@@ -283,11 +283,13 @@ const ComplainantSignature = ({ path }) => {
     [roles, loggedInUserOnBehalfOfUuid, userInfo]
   );
 
-  // True when a clerk has filed this case as their own complainant (Self mode, not on behalf of a senior advocate).
+  // True when a clerk is in this case as their own complainant or as a POA holder (not acting on behalf of a senior advocate).
   const isClerkActingAsComplainant = useMemo(() => {
     if (!isAdvocateClerk) return false;
-    return Boolean(caseDetails?.litigants?.some((lit) => lit?.additionalDetails?.uuid === userInfo?.uuid));
-  }, [isAdvocateClerk, caseDetails?.litigants, userInfo?.uuid]);
+    const isLitigantInCase = Boolean(caseDetails?.litigants?.some((lit) => lit?.additionalDetails?.uuid === userInfo?.uuid));
+    const isPoaHolderInCase = Boolean(caseDetails?.poaHolders?.some((poa) => poa?.additionalDetails?.uuid === userInfo?.uuid));
+    return isLitigantInCase || isPoaHolderInCase;
+  }, [isAdvocateClerk, caseDetails?.litigants, caseDetails?.poaHolders, userInfo?.uuid]);
 
   const DocumentFileStoreId = useMemo(() => {
     return caseDetails?.additionalDetails?.signedCaseDocument;

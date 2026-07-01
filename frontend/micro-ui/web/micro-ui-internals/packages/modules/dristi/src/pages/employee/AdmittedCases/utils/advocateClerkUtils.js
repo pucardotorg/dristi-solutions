@@ -36,5 +36,9 @@ export const getIsMemberPartOfCase = (caseDetails, isAdvocateOrClerk, userUuid, 
   // An advocate may have filed as their own complainant (party-in-person).
   // In that case they won't appear in representatives/clerks but will be a litigant.
   const isLitigantInCase = caseDetails?.litigants?.some((litigant) => litigant?.additionalDetails?.uuid === userUuid);
-  return !!isLitigantInCase;
+  if (isLitigantInCase) return true;
+
+  // An advocate-role user may be a POA holder — present in poaHolders but not representatives.
+  const isPoaHolderInCase = caseDetails?.poaHolders?.some((poa) => poa?.additionalDetails?.uuid === userUuid);
+  return !!isPoaHolderInCase;
 };

@@ -48,7 +48,11 @@ function CaseLockModal({
     return Boolean(caseDetails?.litigants?.some((litigant) => litigant?.userUuid === userInfo?.uuid));
   }, [caseDetails?.litigants, userInfo?.uuid]);
 
-  const isAdvocateFlow = selectedAdvocateUuid && (isAdvocateInCase || !isLitigantInCase);
+  const isPoaHolderInCase = useMemo(() => {
+    return Boolean(caseDetails?.poaHolders?.some((poa) => poa?.additionalDetails?.uuid === userInfo?.uuid));
+  }, [caseDetails?.poaHolders, userInfo?.uuid]);
+
+  const isAdvocateFlow = selectedAdvocateUuid && (isAdvocateInCase || !isLitigantInCase) && !isPoaHolderInCase;
 
   const filingNumber = useMemo(() => {
     return caseDetails?.filingNumber;

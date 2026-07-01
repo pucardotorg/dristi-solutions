@@ -190,17 +190,19 @@ const SelectParty = ({
   }, [uploadErrorMessage]);
 
   const getDisableParty = (party) => {
+    const isPoaAvailable = party?.isPoaAvailable?.code === "YES";
+    const isCurrentUserParty = party?.uuid === userInfo?.uuid;
+    const isCurrentUserPoa = party?.poaVerification?.individualDetails?.userUuid === userInfo?.uuid;
+
     if (party?.advocateRepresentingLength > 0) {
-      if (party?.isPoaAvailable?.code === "NO" && party?.uuid === userInfo?.uuid) {
-        return true;
-      } else if (party?.isPoaAvailable?.code === "YES" && party?.poaVerification?.individualDetails?.userUuid === userInfo?.uuid) {
-        return true;
-      } else {
-        return false;
-      }
-    } else {
-      return true;
+      return (!isPoaAvailable && isCurrentUserParty) || (isPoaAvailable && isCurrentUserPoa);
     }
+
+    if (isAdvocate && isPoaAvailable && !isCurrentUserPoa) {
+      return false;
+    }
+
+    return true;
   };
 
   return (
