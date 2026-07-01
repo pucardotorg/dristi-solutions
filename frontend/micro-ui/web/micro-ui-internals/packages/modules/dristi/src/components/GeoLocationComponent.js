@@ -2,15 +2,25 @@ import React, { useMemo, useState } from "react";
 import { LabelFieldPair, CardLabel, TextInput, Dropdown, CardLabelError, RadioButtons, Button } from "@egovernments/digit-ui-react-components";
 import SelectCustomNote from "./SelectCustomNote";
 import CustomErrorTooltip from "./CustomErrorTooltip";
-import { useToast } from "./Toast/useToast";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect, disable }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const toast = useToast();
+  const [showToast, setShowToast] = useState(null);
 
   const [isLoading, setIsLoading] = useState(false);
 
   const { data: policeStationData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "case", [{ name: "PoliceStation" }]);
+  const sortedPoliceStations = useMemo(() => {
+    const stations = policeStationData?.case?.PoliceStation || [];
+    return [...stations].sort((a, b) => {
+      const nameA = (a?.name || "").toUpperCase();
+      const nameB = (b?.name || "").toUpperCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
+  }, [policeStationData]);
   const resetFieldsConfig = {
     jurisdictionKnown: {
       YES: ["latitude", "longitude"],
@@ -62,14 +72,16 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
         individualData?.locationBasedJurisdiction?.nearest_police_station === null ||
         individualData?.locationBasedJurisdiction?.nearest_police_station === undefined
       ) {
-        toast.error(t("GEOLOCATION_ERROR"), 5000);
+        setShowToast({ label: t("GEOLOCATION_ERROR"), error: true, errorId: null });
       } else {
-        toast.success(t("GEOLOCATION_SUCCESS"), 5000);
+        setShowToast({ label: t("GEOLOCATION_SUCCESS"), error: false, errorId: null });
       }
 
       return individualData;
     } catch (error) {
-      toast.error(t("GEOLOCATION_ERROR"));
+      console.error("Error fetching police station by location:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("GEOLOCATION_ERROR"), error: true, errorId });
     } finally {
       setIsLoading(false);
     }
@@ -234,12 +246,21 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
             setValue("policeStation", selectedOption);
           }}
           selected={locationFormData?.[config.key]?.["policeStation"]}
-          option={policeStationData?.case?.PoliceStation}
+          option={sortedPoliceStations}
           optionKey={"name"}
           type="dropdown"
           disable={disable || locationFormData?.[config.key]?.["jurisdictionKnown"]?.code === "NO"}
         />
       </LabelFieldPair>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 };

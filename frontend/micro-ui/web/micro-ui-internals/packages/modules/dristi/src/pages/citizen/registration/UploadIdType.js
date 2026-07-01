@@ -1,9 +1,11 @@
-import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useEffect, useState } from "react";
-import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { getFileByFileStore } from "../../../Utils";
+import CustomToast from "../../../components/CustomToast";
 
-function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pathOnRefresh, isAdvocateUploading, onFormValueChange }) {
-  const [showErrorToast, setShowErrorToast] = useState(false);
+function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pathOnRefresh, isAdvocateUploading, onFormValueChange, isDisabled }) {
+  const [showToast, setShowToast] = useState(false);
   const history = useHistory();
   const validateFormData = (data) => {
     let isValid = true;
@@ -46,32 +48,96 @@ function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pat
     return isValid;
   };
 
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
-
   useEffect(() => {
-    const timer = setTimeout(() => {
-      closeToast();
-    }, 2000);
+    const handleRedirect = async () => {
+      if (!isAdvocateUploading && !params?.indentity) {
+        const storedParams = sessionStorage.getItem("userRegistrationParams");
+        let newParams = storedParams ? JSON.parse(storedParams) : params;
 
-    return () => clearTimeout(timer);
-  }, [closeToast]);
+        const fileStoreId = newParams?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId;
+        const filename = newParams?.uploadedDocument?.filename;
 
-  if (!isAdvocateUploading && !params?.indentity) {
-    history.push(pathOnRefresh);
-  }
+        const barCouncilFileStoreId = newParams?.formData?.clientDetails?.barCouncilId?.[1]?.fileStoreId;
+        const barCouncilFilename = newParams?.formData?.clientDetails?.barCouncilId?.[0];
+
+        if (barCouncilFileStoreId && barCouncilFilename) {
+          const barCouncilUri = `${
+            window.location.origin
+          }/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${barCouncilFileStoreId}`;
+          const barCouncilFile = await getFileByFileStore(barCouncilUri, barCouncilFilename);
+
+          newParams = {
+            ...newParams,
+            formData: {
+              ...newParams.formData,
+              clientDetails: {
+                ...newParams.formData?.clientDetails,
+                barCouncilId: [
+                  [
+                    barCouncilFilename,
+                    {
+                      file: barCouncilFile,
+                      fileStoreId: barCouncilFileStoreId,
+                    },
+                  ],
+                ],
+              },
+            },
+          };
+        }
+
+        if (fileStoreId && filename) {
+          const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${fileStoreId}`;
+          const file = await getFileByFileStore(uri, filename);
+
+          newParams = {
+            ...newParams,
+            uploadedDocument: {
+              ...newParams.uploadedDocument,
+              file,
+            },
+          };
+        }
+
+        sessionStorage.removeItem("userRegistrationParams");
+        history.push(pathOnRefresh, { newParams });
+      }
+    };
+
+    handleRedirect();
+  }, [params?.address, params, history, pathOnRefresh, isAdvocateUploading]);
+
   return (
     <div className="advocate-additional-details upload-id">
       <FormComposerV2
         config={config}
         t={t}
+        defaultValues={
+          params?.uploadedDocument
+            ? {
+                SelectUserTypeComponent: {
+                  selectIdType: params?.uploadedDocument?.IdType || "",
+                  ID_Proof: [
+                    [
+                      params?.uploadedDocument?.filename,
+                      {
+                        file: params?.uploadedDocument?.file,
+                        fileStoreId: {
+                          fileStoreId: params?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId || "",
+                        },
+                      },
+                    ],
+                  ],
+                },
+              }
+            : {}
+        }
         onSubmit={(data) => {
-          if (isAdvocateUploading) {
+          if (isAdvocateUploading || isDisabled) {
             return;
           }
           if (!validateFormData(data)) {
-            setShowErrorToast(!validateFormData(data));
+            setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
           } else if (data?.SelectUserTypeComponent?.aadharNumber) {
             onAadharChange(data?.SelectUserTypeComponent?.aadharNumber);
           } else {
@@ -83,6 +149,7 @@ function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pat
           }
           return;
         }}
+        isDisabled={isAdvocateUploading || isDisabled}
         onFormValueChange={onFormValueChange}
         noBoxShadow
         inline
@@ -91,7 +158,15 @@ function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pat
         onSecondayActionClick={() => {}}
         submitInForm={!isAdvocateUploading}
       ></FormComposerV2>
-      {showErrorToast && <Toast error={true} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 }

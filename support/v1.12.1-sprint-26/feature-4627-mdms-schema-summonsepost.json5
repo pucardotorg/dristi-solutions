@@ -1,0 +1,58 @@
+{
+  "tenantId": "kl",
+  "code": "summons.e-post",
+  "description": null,
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "required": [
+      "id",
+      "pageWeight",
+      "weightUnit",
+      "printingFeePerPage",
+      "businessFee",
+      "envelopeChargeIncludingGST",
+      "GSTPercentage",
+      "courtFee",
+      "applicationFee",
+      "speedPost"
+    ],
+    "x-unique": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "type": "integer"
+      },
+      "courtFee": {
+        "type": "integer"
+      },
+      "speedPost": {
+        "type": "object"
+      },
+      "pageWeight": {
+        "type": "integer"
+      },
+      "weightUnit": {
+        "type": "string"
+      },
+      "businessFee": {
+        "type": "number"
+      },
+      "GSTPercentage": {
+        "type": "number"
+      },
+      "applicationFee": {
+        "type": "integer"
+      },
+      "printingFeePerPage": {
+        "type": "integer"
+      },
+      "envelopeChargeIncludingGST": {
+        "type": "integer"
+      }
+    },
+    "additionalProperties": false
+  },
+  "isActive": true
+}

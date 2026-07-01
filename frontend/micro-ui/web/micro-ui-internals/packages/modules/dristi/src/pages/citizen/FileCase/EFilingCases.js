@@ -1,40 +1,28 @@
-import {
-  ActionBar,
-  Button,
-  CloseSvg,
-  EditIcon,
-  FormComposerV2,
-  Header,
-  Loader,
-  SubmitBar,
-  TextInput,
-  Toast,
-} from "@egovernments/digit-ui-react-components";
+import { ActionBar, Button, EditIcon, Header, Loader, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import Accordion from "../../../components/Accordion";
-import ConfirmCourtModal from "../../../components/ConfirmCourtModal";
 import ErrorsAccordion from "../../../components/ErrorsAccordion";
 import FlagBox from "../../../components/FlagBox";
 import Modal from "../../../components/Modal";
 import ScrutinyInfo from "../../../components/ScrutinyInfo";
 import SelectCustomNote from "../../../components/SelectCustomNote";
-import { useToast } from "../../../components/Toast/useToast";
-import useGetAllCasesConfig from "../../../hooks/dristi/useGetAllCasesConfig";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { ReactComponent as InfoIcon } from "../../../icons/info.svg";
 import { CustomAddIcon, CustomArrowDownIcon, CustomDeleteIcon, RightArrow, WarningInfoRedIcon } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
-import { formatDate } from "./CaseType";
 import { sideMenuConfig } from "./Config";
 import EditFieldsModal from "./EditFieldsModal";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { TASK_TYPES } from "../../../Utils/constants";
 import {
   accusedAddressValidation,
   addressValidation,
+  ageValidation,
   checkDuplicateMobileEmailValidation,
   checkIfscValidation,
   checkNameValidation,
@@ -42,30 +30,27 @@ import {
   chequeDateValidation,
   chequeDetailFileValidation,
   complainantValidation,
+  createOrUpdateTask,
   debtLiabilityValidation,
   delayApplicationValidation,
   demandNoticeFileValidation,
   getAdvocatesAndPipRemainingFields,
-  getAllAssignees,
-  getComplainantName,
-  getRespondentName,
+  getProcessCourierRemainingFields,
   prayerAndSwornValidation,
   respondentValidation,
+  runGenericTextSanitizer,
   showDemandNoticeModal,
   showToastForComplainant,
-  signatureValidation,
+  transformCaseDataForFetching,
   updateCaseDetails,
+  validateComplainantDuplicateMobile,
   validateDateForDelayApplication,
   witnessDetailsValidation,
 } from "./EfilingValidationUtils";
 import isEqual from "lodash/isEqual";
 import isMatch from "lodash/isMatch";
-import cloneDeep from "lodash/cloneDeep";
-import CorrectionsSubmitModal from "../../../components/CorrectionsSubmitModal";
 import { Urls } from "../../../hooks";
-import useGetStatuteSection from "../../../hooks/dristi/useGetStatuteSection";
-import { getFilingType, getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../../Utils";
-import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+import { findCaseDraftEditAllowedParties, getAllComplainantSideUuids, getFilingType, TaskManagementWorkflowState } from "../../../Utils";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import CaseLockModal from "./CaseLockModal";
 import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
@@ -73,6 +58,9 @@ import { DocumentUploadError } from "../../../Utils/errorUtil";
 import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
 import ErrorDataModal from "./ErrorDataModal";
 import { documentLabels } from "../../../Utils";
+import useSearchTaskMangementService from "../../../hooks/dristi/useSearchTaskMangementService";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import CustomToast from "../../../components/CustomToast";
 
 export const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -117,11 +105,6 @@ export const extractValue = (data, key) => {
   });
   return value;
 };
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 const selectedArray = [
   "complainantDetails",
   "respondentDetails",
@@ -132,6 +115,7 @@ const selectedArray = [
   "witnessDetails",
   "prayerSwornStatement",
   "advocateDetails",
+  "processCourierService",
 ];
 
 const getTotalCountFromSideMenuConfig = (sideMenuConfig, selected) => {
@@ -154,28 +138,19 @@ export const extractCodeFromErrorMsg = (error) => {
   return statusCode;
 };
 
-const stateSla = {
-  PENDING_PAYMENT: 2,
-};
-
 const AccordionTabs = {
   REVIEW_CASE_FILE: "reviewCaseFile",
 };
 
-const dayInMillisecond = 24 * 3600 * 1000;
-
 function EFilingCases({ path }) {
   const [params, setParmas] = useState({});
   const { t } = useTranslation();
-  const toast = useToast();
   const history = useHistory();
-  const [showErrorToast, setShowErrorToast] = useState(false);
+  const shouldRefetchCaseDetails = history?.location?.state?.shouldRefetchCaseDetails;
+  const [showToast, setShowToast] = useState(null);
   const [isDisabled, setIsDisabled] = useState(false);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
-  const todayDate = new Date().getTime();
   const userInfo = Digit?.UserService?.getUser()?.info;
-  const roles = Digit.UserService.getUser()?.info?.roles;
-  const isAdvocateFilingCase = roles?.some((role) => role.code === "ADVOCATE_ROLE");
   const moduleCode = "DRISTI";
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
@@ -186,17 +161,20 @@ function EFilingCases({ path }) {
   const setFormDataValue = useRef(null);
   const clearFormDataErrors = useRef(null);
 
+  // Refs map for all FormComposerV2 instances — enables multi-form validation
+  const formRefsMap = useRef({});
+
   const urlParams = new URLSearchParams(window.location.search);
   const selected = urlParams.get("selected") || sideMenuConfig?.[0]?.children?.[0]?.key;
   const caseId = urlParams.get("caseId");
   const [formdata, setFormdata] = useState(selected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
   const [advPageData, setAdvPageData] = useState([]);
+  const [processCourierPageData, setProcessCourierPageData] = useState([]);
   const [errorCaseDetails, setErrorCaseDetails] = useState(null);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [parentOpen, setParentOpen] = useState(sideMenuConfig.findIndex((parent) => parent.children.some((child) => child.key === selected)));
 
   const [openConfigurationModal, setOpenConfigurationModal] = useState(false);
-  const [openConfirmCourtModal, setOpenConfirmCourtModal] = useState(false);
   const [serviceOfDemandNoticeModal, setServiceOfDemandNoticeModal] = useState({ show: false, index: 0 });
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [showConfirmMandatoryModal, setShowConfirmMandatoryModal] = useState(false);
@@ -209,28 +187,19 @@ function EFilingCases({ path }) {
   const [prevIsDcaSkipped, setPrevIsDcaSkipped] = useState("");
   const [showErrorDataModal, setShowErrorDataModal] = useState({ page: "", showModal: false, errorData: [] });
   const [isDcaPageRefreshed, setIsDcaPageRefreshed] = useState(true);
-
   const [showConfirmCaseDetailsModal, setShowConfirmCaseDetailsModal] = useState(false);
-
-  const [caseResubmitSuccess, setCaseResubmitSuccess] = useState(false);
   const [prevSelected, setPrevSelected] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [addressError, setAddressError] = useState({ show: false, message: "" });
   const homepagePath = `/${window?.contextPath}/citizen/dristi/home`;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoader, setIsLoader] = useState(false);
   const [pdfDetails, setPdfDetails] = useState(null);
-  const { downloadPdf } = useDownloadCasePdf();
   const [newCaseName, setNewCaseName] = useState("");
   const [showEditCaseNameModal, setShowEditCaseNameModal] = useState(false);
   const [modalCaseName, setModalCaseName] = useState("");
-  const [isFilingParty, setIsFilingParty] = useState(false);
-
-  const [{ showSuccessToast, successMsg }, setSuccessToast] = useState({
-    showSuccessToast: false,
-    successMsg: "",
-  });
+  const [isEditingAllowed, setIsEditingAllowed] = useState(false);
+  const [showFillComplainantDetailsAdvisoryModal, setShowFillComplainantDetailsAdvisoryModal] = useState({ show: false, redirectTo: "" });
   const [deleteFormIndex, setDeleteFormIndex] = useState(null);
+  const [formRenderKey, setFormRenderKey] = useState(0);
   const setFieldsRemainingInitially = () => {
     const array = [];
     for (let i = 0; i < selectedArray.length; i++) {
@@ -271,26 +240,6 @@ function EFilingCases({ path }) {
     return count;
   }, [fieldsRemaining]);
 
-  const showMandatoryFieldsRemainingModal = useMemo(() => {
-    if (selected === "reviewCaseFile") {
-      if (mandatoryFieldsLeftTotalCount > 0) {
-        setShowConfirmMandatoryModal(true);
-        return true;
-      } else return false;
-    }
-    return false;
-  }, [selected, mandatoryFieldsLeftTotalCount]);
-
-  const showOptionalFieldsRemainingModal = useMemo(() => {
-    if (selected === "reviewCaseFile") {
-      if (checkAndGetOptionalFieldLeftPages.length !== 0) {
-        setShowConfirmOptionalModal(true);
-        return true;
-      } else return false;
-    }
-    return false;
-  }, [selected, checkAndGetOptionalFieldLeftPages]);
-
   const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
     {
       criteria: [
@@ -307,7 +256,7 @@ function EFilingCases({ path }) {
     Boolean(caseId)
   );
 
-  const { data: individualData, isIndividualLoading, refetch } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data: individualData, isIndividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
         userUuid: [userInfo?.uuid],
@@ -384,12 +333,98 @@ function EFilingCases({ path }) {
     }
   }, [getAllKeys, selected]);
 
-  const caseDetails = useMemo(
-    () => ({
-      ...caseData?.criteria?.[0]?.responseList?.[0],
-    }),
-    [caseData]
+  const caseDetails = useMemo(() => {
+    const caseDetails = structuredClone(caseData?.criteria?.[0]?.responseList?.[0] || {});
+    const updatedCaseData = transformCaseDataForFetching(caseDetails, ["witnessDetails", "advocateDetails"]);
+    return updatedCaseData;
+  }, [caseData]);
+
+  const state = useMemo(() => caseDetails?.status, [caseDetails]);
+
+  const isCaseReAssigned = useMemo(() => state === CaseWorkflowState.CASE_REASSIGNED, [state]);
+  const isPendingReESign = useMemo(() => state === CaseWorkflowState.PENDING_RE_E_SIGN, [state]);
+  const isPendingESign = useMemo(() => state === CaseWorkflowState.PENDING_E_SIGN, [state]);
+  const isDisableAllFieldsMode = !(
+    state === CaseWorkflowState.CASE_REASSIGNED ||
+    state === CaseWorkflowState.DRAFT_IN_PROGRESS ||
+    state === CaseWorkflowState.PENDING_E_SIGN ||
+    state === CaseWorkflowState.PENDING_RE_E_SIGN
   );
+
+  const isDraftInProgress = state === CaseWorkflowState.DRAFT_IN_PROGRESS;
+
+  const isComplainantDetailsCompleted = useMemo(() => {
+    const complainantForms = (caseDetails || errorCaseDetails || {})?.additionalDetails?.["complainantDetails"]?.formdata || [];
+
+    // if any form is incomplete
+    if (complainantForms.find((form) => form.isFormCompleted === false)) {
+      return false;
+    }
+
+    return true;
+  }, [caseDetails, errorCaseDetails]);
+
+  const isComplainantDetailsChanged = useMemo(() => {
+    const caseLitigants = (caseDetails || errorCaseDetails || {})?.litigants || [];
+
+    // if any form is changed
+    if (caseLitigants.find((litigant) => litigant?.additionalDetails?.isLitigantDetailsChanged)) {
+      return true;
+    }
+
+    return false;
+  }, [caseDetails, errorCaseDetails]);
+
+  const showMandatoryFieldsRemainingModal = useMemo(() => {
+    if (selected === "reviewCaseFile") {
+      if (mandatoryFieldsLeftTotalCount > 0) {
+        setShowConfirmMandatoryModal(true);
+        return true;
+      } else return false;
+    }
+    return false;
+  }, [selected, mandatoryFieldsLeftTotalCount]);
+
+  const showOptionalFieldsRemainingModal = useMemo(() => {
+    if (selected === "reviewCaseFile") {
+      if (!isComplainantDetailsCompleted && isDraftInProgress) {
+        setShowFillComplainantDetailsAdvisoryModal({ show: true, redirectTo: "complainantDetails" });
+        return false;
+      } else if (isComplainantDetailsChanged && mandatoryFieldsLeftTotalCount === 0 && isDraftInProgress) {
+        setShowFillComplainantDetailsAdvisoryModal({ show: true, redirectTo: "advocateDetails" });
+        return false;
+      } else if (checkAndGetOptionalFieldLeftPages.length !== 0) {
+        setShowConfirmOptionalModal(true);
+        return true;
+      } else return false;
+    }
+    return false;
+  }, [
+    selected,
+    checkAndGetOptionalFieldLeftPages,
+    isComplainantDetailsCompleted,
+    isComplainantDetailsChanged,
+    mandatoryFieldsLeftTotalCount,
+    isDraftInProgress,
+  ]);
+
+  const { data: taskManagementData, isLoading: isTaskManagementLoading, refetch: refetchTaskManagement } = useSearchTaskMangementService(
+    {
+      criteria: {
+        filingNumber: caseDetails?.filingNumber,
+        status: TaskManagementWorkflowState.TASK_CREATION,
+        tenantId: tenantId,
+        taskType: ["NOTICE", "SUMMONS", "WARRANT"],
+      },
+    },
+    {},
+    `taskManagement-${caseDetails?.filingNumber}-${selected}`,
+    Boolean(caseDetails?.filingNumber && selected === "reviewCaseFile")
+  );
+
+  const taskManagementList = useMemo(() => {
+    return taskManagementData?.taskManagementRecords;
+  }, [taskManagementData]);
 
   const litigants = useMemo(() => {
     return caseDetails?.litigants
@@ -521,20 +556,61 @@ function EFilingCases({ path }) {
     };
   }, [scrutinyErrors]);
 
-  const state = useMemo(() => caseDetails?.status, [caseDetails]);
+  useEffect(() => {
+    const hydrateFreshCaseData = async () => {
+      try {
+        if (!shouldRefetchCaseDetails || !selected) return;
 
-  const isCaseReAssigned = useMemo(() => state === CaseWorkflowState.CASE_REASSIGNED, [state]);
-  const isPendingReESign = useMemo(() => state === CaseWorkflowState.PENDING_RE_E_SIGN, [state]);
-  const isPendingESign = useMemo(() => state === CaseWorkflowState.PENDING_E_SIGN, [state]);
-  const isDisableAllFieldsMode = !(
-    state === CaseWorkflowState.CASE_REASSIGNED ||
-    state === CaseWorkflowState.DRAFT_IN_PROGRESS ||
-    state === CaseWorkflowState.PENDING_E_SIGN ||
-    state === CaseWorkflowState.PENDING_RE_E_SIGN
-  );
-  const isDraftInProgress = state === CaseWorkflowState.DRAFT_IN_PROGRESS;
-  const { data: courtRoomDetails, isLoading: isCourtIdsLoading } = useGetStatuteSection("common-masters", [{ name: "Court_Rooms" }]);
-  const courtRooms = useMemo(() => courtRoomDetails?.Court_Rooms || [], [courtRoomDetails]);
+        setIsLoader(true);
+
+        // clear stale form state first
+        setFormdata([]);
+
+        // fetch latest backend state
+        const updatedCaseResponse = await refetchCaseData();
+
+        const updatedCaseDetails = updatedCaseResponse?.data?.criteria?.[0]?.responseList?.[0];
+
+        const freshFormData =
+          updatedCaseDetails?.additionalDetails?.[selected]?.formdata ||
+          updatedCaseDetails?.caseDetails?.[selected]?.formdata ||
+          (selected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
+
+        // hydrate fresh state
+        setFormdata(freshFormData);
+
+        // force FormComposerV2 remount
+        setFormRenderKey(Date.now());
+
+        // VERY IMPORTANT:
+        // clear navigation state after consumption
+        history.replace({
+          search: history.location.search,
+          state: {},
+        });
+      } catch (error) {
+        console.error("Failed to hydrate fresh case data", error);
+      } finally {
+        setIsLoader(false);
+      }
+    };
+
+    hydrateFreshCaseData();
+  }, [shouldRefetchCaseDetails, selected]);
+
+  useEffect(() => {
+    if (selected !== "complainantDetails") return;
+
+    const hasTransferredPOA = (caseDetails || errorCaseDetails || {})?.additionalDetails?.complainantDetails?.formdata?.some(
+      (item) => item?.data?.transferredPOA?.code === "YES"
+    );
+
+    if (hasTransferredPOA) {
+      setTimeout(() => {
+        setFormRenderKey(Date.now());
+      }, 0);
+    }
+  }, [selected, caseDetails, errorCaseDetails]);
 
   useEffect(() => {
     const isDcaSkipped = caseDetails?.caseDetails?.["delayApplications"]?.formdata?.[0]?.data?.isDcaSkippedInEFiling?.code;
@@ -554,7 +630,14 @@ function EFilingCases({ path }) {
 
     if (currentCaseDetails && Object.keys(currentCaseDetails).length !== 0) {
       const fieldsRemainingCopy = structuredClone(fieldsRemaining);
-      const additionalDetailsArray = ["complainantDetails", "respondentDetails", "witnessDetails", "prayerSwornStatement", "advocateDetails"];
+      const additionalDetailsArray = [
+        "complainantDetails",
+        "respondentDetails",
+        "witnessDetails",
+        "prayerSwornStatement",
+        "advocateDetails",
+        "processCourierService",
+      ];
       const caseDetailsArray = ["chequeDetails", "debtLiabilityDetails", "demandNoticeDetails", "delayApplications"];
 
       for (const key of additionalDetailsArray) {
@@ -571,27 +654,90 @@ function EFilingCases({ path }) {
         }
       }
 
-      if (isDraftInProgress || isCaseReAssigned) {
+      if (isDraftInProgress) {
         setFieldsRemaining(fieldsRemainingCopy);
+      } else if (isCaseReAssigned) {
+        let updatedFields = [...fieldsRemainingCopy];
+        if ((judgeObj && Object?.keys(judgeObj)?.length > 0) || (scrutinyObj && Object?.keys(scrutinyObj)?.length > 0)) {
+          updatedFields = updatedFields?.filter((field) => field?.selectedPage !== "processCourierService");
+        }
+        setFieldsRemaining(updatedFields);
       } else {
         setFieldsRemaining([{ mandatoryTotalCount: 0, optionalTotalCount: 0 }]);
       }
     }
-  }, [caseDetails, errorCaseDetails, isCaseReAssigned, isDraftInProgress]);
+  }, [caseDetails, errorCaseDetails, isCaseReAssigned, isDraftInProgress, judgeObj, scrutinyObj, selected]);
+
+  // Case correction/edition is allowed to all complainant side parties including poa holders, advocates, advocate's associated office members.
+  const allComplainantSideUuids = useMemo(() => {
+    return getAllComplainantSideUuids(caseDetails);
+  }, [caseDetails]);
+
+  const caseDraftEditAllowedParties = useMemo(() => {
+    if (!caseDetails?.filingNumber) return null;
+    const createdByUuid = caseDetails?.auditDetails?.createdBy;
+    return findCaseDraftEditAllowedParties(caseDetails, createdByUuid);
+  }, [caseDetails]);
 
   useEffect(() => {
-    const filingParty = caseDetails?.auditDetails?.createdBy === userInfo?.uuid;
-    setIsFilingParty(filingParty);
-
-    if (caseDetails && !filingParty && !isLoading) {
-      history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`);
+    if (!caseDetails?.filingNumber || !caseDraftEditAllowedParties) return;
+    if (caseDetails?.status === "DRAFT_IN_PROGRESS") {
+      const loggedInUserUuid = userInfo?.uuid;
+      const isEditingAllowedToUser = caseDraftEditAllowedParties?.includes(loggedInUserUuid);
+      setIsEditingAllowed(isEditingAllowedToUser);
+      if (caseDetails && !isEditingAllowedToUser && !isLoading) {
+        history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`);
+      }
     }
-  }, [caseDetails, caseId, history, isFilingParty, isLoading, userInfo?.uuid]);
+    if (caseDetails?.status === "CASE_REASSIGNED") {
+      // Case correction/edition is allowed only to complainants, and also poa holders, advocates who are associated to complainants.
+      const isCaseCorrectionAllowed = allComplainantSideUuids?.includes(userInfo?.uuid);
+      setIsEditingAllowed(isCaseCorrectionAllowed);
+      if (caseDetails && !isCaseCorrectionAllowed && !isLoading) {
+        history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`);
+      }
+    }
+    //If already other party changed the case stage -> redirect accordingly after refetching case data.
+    if (
+      [
+        CaseWorkflowState?.PENDING_RE_SIGN,
+        CaseWorkflowState.PENDING_RE_E_SIGN,
+        CaseWorkflowState.PENDING_E_SIGN,
+        CaseWorkflowState.PENDING_SIGN,
+      ]?.includes(caseDetails?.status)
+    ) {
+      history.replace(
+        `/${window?.contextPath}/citizen/dristi/home/file-case/sign-complaint?filingNumber=${caseDetails?.filingNumber}&caseId=${caseId}`
+      );
+    }
+  }, [caseDetails, caseId, history, isEditingAllowed, isLoading, userInfo?.uuid, allComplainantSideUuids, caseDraftEditAllowedParties]);
 
   const completedComplainants = useMemo(() => {
     // check TODO: apply filter for formdata which is enabled and completed
     return caseDetails?.additionalDetails?.["complainantDetails"]?.formdata;
   }, [caseDetails]);
+
+  const completedAccuseds = useMemo(() => {
+    return caseDetails?.additionalDetails?.respondentDetails?.formdata;
+  }, [caseDetails]);
+
+  const isDelayCondonation = useMemo(() => {
+    const sourceCaseDetails = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
+    return sourceCaseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some((data) => {
+      const dateObj = new Date(data?.data?.dateOfAccrual);
+      const currentDate = new Date();
+      const monthDifference = currentDate.getMonth() - dateObj.getMonth() + (currentDate.getFullYear() - dateObj.getFullYear()) * 12;
+      if (monthDifference > 1) {
+        return true;
+      } else if (monthDifference === 0) {
+        return false;
+      } else if (currentDate.getDate() > dateObj.getDate()) {
+        return true;
+      } else {
+        return false;
+      }
+    });
+  }, [caseDetails, errorCaseDetails, isCaseReAssigned]);
 
   useEffect(() => {
     const data =
@@ -599,6 +745,9 @@ function EFilingCases({ path }) {
       caseDetails?.caseDetails?.[selected]?.formdata ||
       (selected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
     if (selected === "advocateDetails") {
+      if (!isComplainantDetailsCompleted && isDraftInProgress) {
+        setShowFillComplainantDetailsAdvisoryModal({ show: true, redirectTo: "complainantDetails" });
+      }
       const newAdvData = []; //  we will update the advocate data in the same order as order of complainant forms
       const advData = caseDetails?.additionalDetails?.[selected]?.formdata || [];
       for (let i = 0; i < completedComplainants?.length; i++) {
@@ -651,37 +800,93 @@ function EFilingCases({ path }) {
       setFormdata(newAdvData);
       setAdvPageData(newAdvData);
     }
-    if (selected !== "advocateDetails") {
-      setFormdata(data);
-    }
-    if (selected === "addSignature" && !caseDetails?.additionalDetails?.signedCaseDocument && !isLoading) {
-      setShowReviewCorrectionModal(true);
-    }
-    if (selected === "addSignature" && !caseDetails?.additionalDetails?.["reviewCaseFile"]?.isCompleted && !isLoading) {
-      setShowReviewCorrectionModal(true);
-    }
-  }, [selected, caseDetails, isLoading, completedComplainants]);
+    if (selected === "processCourierService") {
+      if (data?.some((item) => item?.data?.multipleAccusedProcessCourier && Object?.keys(item?.data?.multipleAccusedProcessCourier)?.length > 0)) {
+        const mergedData = completedAccuseds?.map((accused, i) => {
+          const existingItem = data?.find((d) => d?.data?.multipleAccusedProcessCourier?.uniqueId === accused?.uniqueId);
 
-  const closeToast = () => {
-    setShowErrorToast(false);
-    setAddressError({ show: false, message: "" });
-    setErrorMsg("");
-    setSuccessToast((prev) => ({
-      ...prev,
-      showSuccessToast: false,
-      successMsg: "",
-    }));
-  };
+          const accusedDetails = accused?.data || {};
 
-  useEffect(() => {
-    let timer;
-    if (showErrorToast || showSuccessToast || addressError?.show) {
-      timer = setTimeout(() => {
-        closeToast();
-      }, 2000);
+          if (existingItem) {
+            const existingAddresses = existingItem?.data?.multipleAccusedProcessCourier?.addressDetails || [];
+            const newAddresses = accusedDetails?.addressDetails || [];
+
+            // Merge addresses — preserve `checked` if same `id`
+            const mergedAddresses = newAddresses.map((newAddr) => {
+              const match = existingAddresses.find((oldAddr) => oldAddr.id === newAddr.id);
+              return {
+                ...newAddr,
+                checked: match?.checked !== undefined ? match.checked : true,
+              };
+            });
+
+            return {
+              ...existingItem,
+              data: {
+                ...existingItem.data,
+                multipleAccusedProcessCourier: {
+                  ...existingItem.data.multipleAccusedProcessCourier,
+                  index: i,
+                  firstName: accusedDetails.respondentFirstName || "",
+                  middleName: accusedDetails.respondentMiddleName || "",
+                  lastName: accusedDetails.respondentLastName || "",
+                  addressDetails: mergedAddresses,
+                  noticeCourierService: isDelayCondonation ? existingItem?.data?.multipleAccusedProcessCourier?.noticeCourierService : [],
+                },
+              },
+            };
+          } else {
+            // Add new accused not present in previous data
+            return {
+              isenabled: true,
+              data: {
+                multipleAccusedProcessCourier: {
+                  index: i,
+                  firstName: accusedDetails.respondentFirstName || "",
+                  middleName: accusedDetails.respondentMiddleName || "",
+                  lastName: accusedDetails.respondentLastName || "",
+                  noticeCourierService: [],
+                  summonsCourierService: [],
+                  addressDetails: accusedDetails.addressDetails?.map((addr) => ({ ...addr, checked: true })) || [],
+                  uniqueId: accused?.uniqueId || "",
+                  filingNumber: caseDetails?.filingNumber,
+                },
+              },
+              displayindex: 0,
+            };
+          }
+        });
+        setFormdata(mergedData);
+        setProcessCourierPageData(mergedData);
+      } else {
+        const newProcessCourierData = [];
+        for (let i = 0; i < completedAccuseds?.length; i++) {
+          newProcessCourierData.push({
+            isenabled: true,
+            data: {
+              multipleAccusedProcessCourier: {
+                index: i,
+                firstName: completedAccuseds?.[i]?.data?.respondentFirstName || "",
+                middleName: completedAccuseds?.[i]?.data?.respondentMiddleName || "",
+                lastName: completedAccuseds?.[i]?.data?.respondentLastName || "",
+                noticeCourierService: [],
+                summonsCourierService: [],
+                addressDetails: completedAccuseds?.[i]?.data?.addressDetails?.map((addr) => ({ ...addr, checked: true })) || [],
+                uniqueId: completedAccuseds?.[i]?.uniqueId || "",
+                filingNumber: caseDetails?.filingNumber,
+              },
+            },
+            displayindex: 0,
+          });
+        }
+        setFormdata(newProcessCourierData);
+        setProcessCourierPageData(newProcessCourierData);
+      }
     }
-    return () => clearTimeout(timer);
-  }, [showErrorToast, showSuccessToast, addressError?.show]);
+    if (!["advocateDetails", "processCourierService"]?.includes(selected)) {
+      setFormdata(structuredClone(data));
+    }
+  }, [selected, caseDetails, isLoading, completedComplainants, completedAccuseds, litigants, isDelayCondonation]);
 
   useEffect(() => {
     if (isCaseReAssigned) {
@@ -698,35 +903,46 @@ function EFilingCases({ path }) {
     }
   }, [caseDetails, errorCaseDetails]);
 
-  const isDelayCondonation = useMemo(() => {
-    return caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some((data) => {
-      const dateObj = new Date(data?.data?.dateOfAccrual);
-      const currentDate = new Date();
-      const monthDifference = currentDate.getMonth() - dateObj.getMonth() + (currentDate.getFullYear() - dateObj.getFullYear()) * 12;
-      if (monthDifference > 1) {
-        return true;
-      } else if (monthDifference === 0) {
-        return false;
-      } else if (currentDate.getDate() > dateObj.getDate()) {
-        return true;
-      } else {
-        return false;
-      }
-    });
-  }, [caseDetails]);
-
   const getDefaultValues = useCallback(
     (index) => {
       if (isCaseReAssigned && errorCaseDetails) {
         if (selected === "reviewCaseFile") {
           return scrutinyObj;
         }
-        if (selected === "delayApplications") {
-          if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload && prevIsDcaSkipped === "NO") {
-            setFormDataValue.current?.(
-              "condonationFileUpload",
-              caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload
-            );
+        if (
+          selected === "delayApplications" &&
+          (errorCaseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.delayCondonationType?.code === "NO") !== isDelayCondonation
+        ) {
+          if (isDelayCondonation) {
+            const data = {
+              ...caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data,
+              delayCondonationType: {
+                code: "NO",
+                name: "NO",
+                showForm: true,
+                isEnabled: true,
+              },
+
+              isDcaSkippedInEFiling: caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
+                ? caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
+                : {
+                    code: "NO",
+                    name: "NO",
+                    showDcaFileUpload: true,
+                  },
+              condonationFileUpload: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload,
+            };
+            return data;
+          } else {
+            return {
+              ...caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data,
+              delayCondonationType: {
+                code: "YES",
+                name: "YES",
+                showForm: false,
+                isEnabled: true,
+              },
+            };
           }
         }
         return (
@@ -734,6 +950,16 @@ function EFilingCases({ path }) {
           errorCaseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data ||
           formdata[index]?.data
         );
+      }
+
+      if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "complainantDetails") {
+        if ("transferredPOA" in formdata?.[index].data && !formdata?.[index]?.data?.transferredPOA) {
+          setFormDataValue.current?.("transferredPOA", {
+            code: "NO",
+            name: "NO",
+            showPoaDetails: false,
+          });
+        }
       }
 
       if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "delayApplications") {
@@ -756,11 +982,10 @@ function EFilingCases({ path }) {
                 },
             condonationFileUpload: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload,
           };
-          if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload) {
-            setFormDataValue.current?.(
-              "condonationFileUpload",
-              caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload
-            );
+          let condonationDoc =
+            formdata?.[index]?.data?.condonationFileUpload || caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload;
+          if (condonationDoc) {
+            setFormDataValue.current?.("condonationFileUpload", condonationDoc);
           }
 
           return data;
@@ -781,6 +1006,10 @@ function EFilingCases({ path }) {
         return advPageData[index]?.data?.multipleAdvocatesAndPip;
       }
 
+      if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "processCourierService") {
+        return processCourierPageData[index]?.data?.multipleAccusedProcessCourier;
+      }
+
       return (
         caseDetails?.additionalDetails?.[selected]?.formdata?.[index]?.data ||
         caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data ||
@@ -788,18 +1017,16 @@ function EFilingCases({ path }) {
       );
     },
     [
-      caseDetails?.status,
-      caseDetails?.additionalDetails,
-      caseDetails?.caseDetails,
+      caseDetails,
       errorCaseDetails,
       formdata,
       isCaseReAssigned,
       selected,
       scrutinyObj,
-      userType,
-      completedComplainants,
+      prevIsDcaSkipped,
       isDelayCondonation,
       advPageData,
+      processCourierPageData,
     ]
   );
 
@@ -815,18 +1042,10 @@ function EFilingCases({ path }) {
     }));
   }, [caseDetails, parentOpen, selected]);
 
-  const { data: caseDetailsConfig, isLoading: isGetAllCasesLoading } = useGetAllCasesConfig();
-
   const pageConfig = useMemo(() => {
-    if (!caseDetailsConfig) {
-      return {
-        formconfig: [],
-      };
-    }
-    return caseDetailsConfig
-      .find((parent) => parent.children.some((child) => child.key === selected))
-      ?.children?.find((child) => child.key === selected)?.pageConfig;
-  }, [caseDetailsConfig, selected]);
+    return sideMenuConfig.find((parent) => parent.children.some((child) => child.key === selected))?.children?.find((child) => child.key === selected)
+      ?.pageConfig;
+  }, [selected]);
 
   const formConfig = useMemo(() => {
     return pageConfig?.formconfig;
@@ -853,14 +1072,6 @@ function EFilingCases({ path }) {
     return pageConfig?.confirmmodalconfig;
   }, [pageConfig?.confirmmodalconfig]);
 
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
   const isDependentEnabled = useMemo(() => {
     let result = false;
     formConfig.forEach((config) => {
@@ -878,71 +1089,130 @@ function EFilingCases({ path }) {
   const modifiedFormConfig = useMemo(() => {
     let modifiedFormData = formdata;
     if (!isDependentEnabled) {
-      modifiedFormData = modifiedFormData.map(() => {
+      modifiedFormData = modifiedFormData.map((data, index) => {
         if (selected === "reviewCaseFile") {
           return formConfig.map((config) => {
             return {
               ...config,
-              body: config?.body?.map((body) => {
-                return {
-                  ...body,
-                  populators: {
-                    inputs: body?.populators?.inputs?.map((input) => {
-                      let dataobj = caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {};
-                      if (isCaseReAssigned) {
-                        dataobj =
-                          errorCaseDetails?.additionalDetails?.[input?.key]?.formdata || errorCaseDetails?.caseDetails?.[input?.key]?.formdata || {};
-                      }
-                      return {
-                        ...input,
-                        data: dataobj,
-                        isFilingParty: isFilingParty,
-                      };
-                    }),
-                  },
-                };
-              }),
-            };
-          });
-        }
-        if (selected === "addSignature") {
-          return formConfig.map((config) => {
-            return {
-              ...config,
               body: config?.body
-                ?.filter((data) => {
-                  if (
-                    data.dependentOn &&
-                    !extractValue(caseDetails?.additionalDetails?.[data.dependentOn]?.formdata?.[0]?.data, data?.dependentKey)
-                  ) {
-                    return false;
-                  }
-                  return true;
-                })
-                .map((body) => {
+                ?.filter((body) => body?.key !== "submissionFromAccused")
+                ?.map((body) => {
                   return {
                     ...body,
                     populators: {
                       inputs: body?.populators?.inputs?.map((input) => {
+                        let dataobj =
+                          caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {};
+
+                        if (isCaseReAssigned) {
+                          dataobj =
+                            errorCaseDetails?.additionalDetails?.[input?.key]?.formdata ||
+                            errorCaseDetails?.caseDetails?.[input?.key]?.formdata ||
+                            {};
+                        }
+
                         return {
                           ...input,
-                          data:
-                            input.key === "advocateDetails"
-                              ? [
-                                  {
-                                    name:
-                                      caseDetails?.additionalDetails?.[input.key]?.formdata?.[0]?.data?.advocateBarRegNumberWithName?.[0]
-                                        ?.advocateName,
-                                  },
-                                ] || []
-                              : caseDetails?.additionalDetails?.[input.key]?.formdata?.map((data) => ({
-                                  name: `${data?.data?.firstName || ""} ${data?.data?.middleName || ""} ${data?.data?.lastName || ""}`,
-                                })),
+                          data: dataobj,
+                          isEditingAllowed: isEditingAllowed,
                         };
                       }),
                     },
                   };
                 }),
+            };
+          });
+        }
+        if (selected === "processCourierService") {
+          return formConfig.map((config) => {
+            const updatedBody = config?.body?.map((item) => ({
+              ...item,
+              isDelayCondonation: isDelayCondonation,
+              isDisableAllFields: false,
+            }));
+
+            if (index === 0) {
+              return {
+                ...config,
+                body: [
+                  {
+                    type: "component",
+                    component: "SelectCustomNote",
+                    key: "processCourierServiceNote",
+                    styles: { padding: "15px" },
+                    populators: {
+                      inputs: [
+                        {
+                          infoHeader: "CS_COMMON_NOTE",
+                          showTooltip: true,
+                          children: isDelayCondonation ? (
+                            <div className="info-card-content">
+                              <ul style={{ width: "100%" }}>
+                                <li>
+                                  <span>
+                                    <strong>{t("COURIER_DELAY_NOTICE")}</strong> {t("COURIER_DELAY_NOTICE_NOTE")}
+                                  </span>
+                                </li>
+                                <li>
+                                  <span>
+                                    <strong>{t("COURIER_SUMMONS")}</strong> {t("COURIER_SUMMONS_NOTE")}
+                                  </span>
+                                </li>
+                                <li>
+                                  <span>
+                                    <strong>{t("COURIER_WARRANT")}</strong> {t("CS_NOT_DELAY_WARRANT_PROCESS_COURIER_SERVICE_NOTE")}
+                                  </span>
+                                </li>
+                                <li>
+                                  <span>
+                                    <strong>{t("REFUND_REQUEST")}</strong> {t("CS_REFUND_REQUEST_NOTE")}
+                                  </span>
+                                </li>
+                                <li>
+                                  <span>
+                                    <strong>{t("COURIER_RPAD_SUBMISSION")}</strong> {t("COURIER_RPAD_SUBMISSION_NOTE")}
+                                  </span>
+                                </li>
+                              </ul>
+                            </div>
+                          ) : (
+                            <div className="info-card-content">
+                              <ul style={{ width: "100%" }}>
+                                <li>
+                                  <span>
+                                    <strong>{t("COURIER_SUMMONS")}</strong> {t("CS_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}
+                                  </span>
+                                </li>
+                                <li>
+                                  <span>
+                                    <strong>{t("COURIER_WARRANT")}</strong> {t("CS_NOT_DELAY_WARRANT_PROCESS_COURIER_SERVICE_NOTE")}
+                                  </span>
+                                </li>
+                                <li>
+                                  <span>
+                                    <strong>{t("REFUND_REQUEST")}</strong> {t("CS_REFUND_REQUEST_NOTE")}
+                                  </span>
+                                </li>
+                                <li>
+                                  <span>
+                                    <strong>{t("COURIER_RPAD_SUBMISSION")}</strong> {t("COURIER_RPAD_SUBMISSION_NOTE")}
+                                  </span>
+                                </li>
+                              </ul>
+                            </div>
+                          ),
+                        },
+                      ],
+                    },
+                  },
+                  ...updatedBody,
+                ],
+              };
+            }
+
+            return {
+              ...config,
+              body: updatedBody,
             };
           });
         }
@@ -1041,7 +1311,7 @@ function EFilingCases({ path }) {
           };
         });
       });
-      if ((!isCaseReAssigned && !isPendingESign && !isPendingReESign) || selected === "addSignature" || selected === "reviewCaseFile") {
+      if ((!isCaseReAssigned && !isPendingESign && !isPendingReESign) || selected === "reviewCaseFile") {
         return modifiedFormData;
       }
     }
@@ -1092,6 +1362,7 @@ function EFilingCases({ path }) {
             ...config,
             body: config?.body.map((body) => {
               body.state = state;
+              body.filingNumber = caseDetails?.filingNumber;
               if (body?.addUUID && body?.uuid !== index) {
                 body.uuid = index;
                 body.isUserVerified = disableConfigFields.some((field) => {
@@ -1127,6 +1398,13 @@ function EFilingCases({ path }) {
               if (selected === "respondentDetails") {
                 if (judgeObj && Object.keys(judgeObj).length > 0 && body?.key === "addressDetails") {
                   body.isJudgeSendBack = true;
+                }
+              }
+
+              if (selected === "processCourierService") {
+                if (judgeObj && Object.keys(judgeObj).length > 0 && body?.key === "multipleAccusedProcessCourier") {
+                  body.isDisableAllFields = true;
+                  body.isDelayCondonation = isDelayCondonation;
                 }
               }
 
@@ -1291,11 +1569,19 @@ function EFilingCases({ path }) {
                     return {};
                   }
                 }
+                const isFieldDisabled =
+                  disableConfigFields.some((field) => field === body?.populators?.name) ||
+                  disableDelayCondonationType ||
+                  (typeof body?.populators?.disable === "string" && body?.populators?.disable.includes("{{")
+                    ? Boolean(extractValue(data, body?.populators?.disable.replace(/{{|}}/g, "")))
+                    : false);
+
                 return {
                   ...body,
-                  disable: disableConfigFields.some((field) => field === body?.populators?.name) || disableDelayCondonationType,
+                  disable: isFieldDisabled,
                   populators: {
                     ...body?.populators,
+                    disable: isFieldDisabled,
                     validation: {
                       ...body?.populators?.validation,
                       ...validationUpdate,
@@ -1303,9 +1589,16 @@ function EFilingCases({ path }) {
                   },
                 };
               }
+
+              const isFieldDisabled =
+                disableConfigFields.some((field) => field === body?.name) ||
+                (typeof body?.disable === "string" && body?.disable.includes("{{")
+                  ? Boolean(extractValue(data, body?.disable.replace(/{{|}}/g, "")))
+                  : false);
+
               return {
                 ...body,
-                disable: disableConfigFields.some((field) => field === body?.name),
+                disable: isFieldDisabled,
               };
             }),
           };
@@ -1327,9 +1620,13 @@ function EFilingCases({ path }) {
                 let key = formComponent.key || formComponent.populators?.name;
                 if (formComponent.type === "component") {
                   if (
-                    ["SelectCustomDragDrop", "SelectBulkInputs", "SelectCustomTextArea", "SelectUploadFiles", "SelectUserTypeComponent"].includes(
-                      formComponent.component
-                    )
+                    [
+                      "SelectCustomDragDrop",
+                      "SelectBulkInputs",
+                      "SelectCustomTextArea",
+                      "SelectCustomFormatterTextArea",
+                      "SelectUserTypeComponent",
+                    ].includes(formComponent.component)
                   ) {
                     key = formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name;
                   }
@@ -1359,7 +1656,13 @@ function EFilingCases({ path }) {
                 if (selected === "complainantDetails" && formComponent.component === "VerificationComponent" && key === "poaComplainantId") {
                   key = "poaVerification.individualDetails.document";
                 }
-                const modifiedFormComponent = cloneDeep(formComponent);
+                const { labelChildren, state, tooltipValue, ...safePart } = formComponent;
+
+                let modifiedFormComponent = structuredClone
+                  ? { ...structuredClone(safePart), labelChildren, state, tooltipValue }
+                  : { ...JSON.parse(JSON.stringify(safePart)), labelChildren, state, tooltipValue };
+                // const modifiedFormComponent = cloneDeep(formComponent);
+
                 if (modifiedFormComponent?.labelChildren === "optional") {
                   modifiedFormComponent.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
                 }
@@ -1381,6 +1684,7 @@ function EFilingCases({ path }) {
                 if (
                   !isDraftInProgress &&
                   selected === "prayerSwornStatement" &&
+                  modifiedFormComponent?.component === "SelectUploadDocWithName" &&
                   SelectUploadDocLength < formdata?.[0]?.data?.SelectUploadDocWithName?.length
                 ) {
                   modifiedFormComponent.doclength = SelectUploadDocLength;
@@ -1393,7 +1697,9 @@ function EFilingCases({ path }) {
                     modifiedFormComponent.addressLength = resAddressDetailsLength;
                     modifiedFormComponent.disable = false;
                   } else {
-                    modifiedFormComponent.disable = true;
+                    if (modifiedFormComponent?.component === "SelectComponentsMulti" && resAddressDetailsLength > 0) {
+                      modifiedFormComponent.disable = true;
+                    }
                   }
                 } else {
                   // remove disability for new form
@@ -1407,6 +1713,7 @@ function EFilingCases({ path }) {
 
                 if (
                   modifiedFormComponent?.type === "radio" &&
+                  modifiedFormComponent?.disable &&
                   !(index + 1 > scrutinyFormLength || scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign))
                 ) {
                   modifiedFormComponent.populators.styles = { opacity: 0.5 };
@@ -1429,13 +1736,8 @@ function EFilingCases({ path }) {
                   }
                 }
                 if (scrutiny?.[selected] && scrutiny?.[selected]?.form?.[index]) {
-                  if (formComponent.component == "SelectUploadFiles") {
-                    if (formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name in scrutiny?.[selected]?.form?.[index]) {
-                      key = formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name;
-                    }
-                    if (formComponent.key + "." + formComponent.populators?.inputs?.[1]?.name in scrutiny?.[selected]?.form?.[index]) {
-                      key = formComponent.key + "." + formComponent.populators?.inputs?.[1]?.name;
-                    }
+                  if (selected === "chequeDetails" && formComponent.component === "InputWithSearch") {
+                    key = formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name;
                   }
                   if (
                     selected === "debtLiabilityDetails" &&
@@ -1447,18 +1749,66 @@ function EFilingCases({ path }) {
                   if (selected === "delayApplications" && key === "delayCondonationType.name") {
                     modifiedFormComponent.disable = true;
                   }
+                  if (
+                    ["complainantDetails", "respondentDetails"]?.includes(selected) &&
+                    (formComponent.component === "CustomRadioInfoComponent" ||
+                      formComponent.key === "transferredPOA" ||
+                      formComponent.key === "respondentType")
+                  ) {
+                    key = formComponent.key + ".name";
+                  }
+
+                  // Check if transferredPOA.name is present in scrutiny and enable all subsequent fields
+                  if (["complainantDetails"]?.includes(selected) && scrutiny?.[selected]?.form?.[index]?.["transferredPOA.name"]?.FSOError) {
+                    if (
+                      [
+                        "poaVerification",
+                        "poaComplainantId",
+                        "poaFirstName",
+                        "poaMiddleName",
+                        "poaLastName",
+                        "poaAge",
+                        "poaAddressDetails",
+                        "poaAuthorizationDocument",
+                      ]?.includes(formComponent.key || formComponent.populators?.name)
+                    ) {
+                      modifiedFormComponent.disable = false;
+                    }
+                  }
+
+                  if (
+                    ["complainantDetails"]?.includes(selected) &&
+                    scrutiny?.[selected]?.form?.[index]?.["complainantType.name"]?.FSOError &&
+                    caseDetails?.additionalDetails?.complainantDetails?.formdata[index]?.data?.complainantType?.code === "INDIVIDUAL"
+                  ) {
+                    if (
+                      [
+                        "complainantTypeOfEntity",
+                        "complainantDesignation",
+                        "complainantCompanyName",
+                        "companyDetailsUpload",
+                        "addressCompanyDetails",
+                      ]?.includes(formComponent.key || formComponent.populators?.name)
+                    ) {
+                      modifiedFormComponent.disable = false;
+                    }
+                  }
+
                   if (key in scrutiny?.[selected]?.form?.[index] && scrutiny?.[selected]?.form?.[index]?.[key]?.FSOError) {
                     if (key === "complainantVerification.individualDetails.document") {
                       modifiedFormComponent.isScrutiny = true;
                     }
                     modifiedFormComponent.disable = false;
+                    if (modifiedFormComponent?.type === "radio") {
+                      modifiedFormComponent.populators.styles = { opacity: 1 };
+                    }
                     modifiedFormComponent.withoutLabel = true;
                     modifiedFormComponent.disableScrutinyHeader = true;
                     return [
                       {
                         type: "component",
                         component: "ScrutinyInfo",
-                        key: `${key}Scrutiny`,
+                        key: `${key.replace(/\./g, "_")}Scrutiny`,
                         label: modifiedFormComponent.label,
                         populators: {
                           scrutinyMessage: scrutiny?.[selected].form[index][key].FSOError,
@@ -1495,6 +1845,7 @@ function EFilingCases({ path }) {
     scrutinyObj,
     isPendingESign,
     isPendingReESign,
+    isDelayCondonation,
   ]);
 
   const activeForms = useMemo(() => {
@@ -1504,16 +1855,6 @@ function EFilingCases({ path }) {
   const handleAddForm = () => {
     setFormdata([...formdata, { isenabled: true, data: {}, displayindex: activeForms }]);
   };
-
-  // const handleDeleteForm = (index) => {
-  //   const newArray = formdata.map((item, i) => ({
-  //     ...item,
-  //     isenabled: index === i ? false : item.isenabled,
-  //     displayindex: i < index ? item.displayindex : i === index ? -Infinity : item.displayindex - 1,
-  //   }));
-  //   setConfirmDeleteModal(true);
-  //   setFormdata(newArray);
-  // };
 
   const handleSkip = () => {
     setShowConfirmOptionalModal(false);
@@ -1575,6 +1916,11 @@ function EFilingCases({ path }) {
   };
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index, currentDisplayIndex) => {
+    runGenericTextSanitizer({
+      formData,
+      formConfig: modifiedFormConfig,
+      setValue,
+    });
     checkIfscValidation({ formData, setValue, selected });
     checkNameValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
     checkOnlyCharInCheque({ formData, setValue, selected });
@@ -1589,6 +1935,8 @@ function EFilingCases({ path }) {
         caseDetails,
         selected,
         setServiceOfDemandNoticeModal,
+        isCaseReAssigned,
+        errorCaseDetails,
       });
       checkDuplicateMobileEmailValidation({
         formData,
@@ -1607,7 +1955,7 @@ function EFilingCases({ path }) {
         setValue,
         caseDetails,
         selected,
-        toast,
+        setShowToast,
         t,
         history,
         caseId,
@@ -1620,7 +1968,7 @@ function EFilingCases({ path }) {
         isDcaPageRefreshed,
         setIsDcaPageRefreshed,
       });
-      showToastForComplainant({ formData, setValue, selected, setSuccessToast, formState, clearErrors });
+      showToastForComplainant({ t, formData, setValue, selected, setShowToast, formState, clearErrors });
       setFormdata(
         formdata.map((item, i) => {
           return i === index
@@ -1639,6 +1987,16 @@ function EFilingCases({ path }) {
         !isEqual(formdata[index].data, advPageData[index].data)
       ) {
         setValue("multipleAdvocatesAndPip", advPageData[index].data?.multipleAdvocatesAndPip);
+      }
+    }
+
+    if (selected === "processCourierService") {
+      if (
+        !formdata[index]?.data?.multipleAccusedProcessCourier &&
+        processCourierPageData[index]?.data?.multipleAccusedProcessCourier &&
+        !isEqual(formdata[index].data, processCourierPageData[index].data)
+      ) {
+        setValue("multipleAccusedProcessCourier", processCourierPageData[index].data?.multipleAccusedProcessCourier);
       }
     }
 
@@ -1668,7 +2026,73 @@ function EFilingCases({ path }) {
       // so there might not be any witness at all.
       totalMandatoryLeft = 0;
       totalOptionalLeft = 1;
-    } else if (currentSelected !== "advocateDetails") {
+    } else if (currentSelected === "processCourierService") {
+      for (let i = 0; i < currentPageData?.length; i++) {
+        const formData = currentPageData?.[i]?.data || {};
+
+        if (isDelayCondonation) {
+          let isNoticeCourierMissing = false;
+
+          if (formData?.multipleAccusedProcessCourier?.noticeCourierService?.length === 0) {
+            isNoticeCourierMissing = true;
+          }
+          const missingFields = [isNoticeCourierMissing];
+          totalMandatoryLeft += missingFields.filter(Boolean).length;
+        } else {
+          let isSummonCourierMissing = false;
+
+          if (formData?.multipleAccusedProcessCourier?.summonsCourierService?.length === 0) {
+            isSummonCourierMissing = true;
+          }
+          const missingFields = [isSummonCourierMissing];
+          totalMandatoryLeft += missingFields.filter(Boolean).length;
+        }
+      }
+    } else if (currentSelected === "advocateDetails") {
+      for (let i = 0; i < currentPageData?.length; i++) {
+        const formData = currentPageData?.[i]?.data || {};
+        const { boxComplainant, isComplainantPip, numberOfAdvocates, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload } =
+          formData?.multipleAdvocatesAndPip || {};
+
+        if (boxComplainant?.individualId) {
+          let isAnAdvocateMissing = false;
+          let isVakalatnamaFileMissing = false;
+          let isPipAffidavitFileMissing = false;
+          let isAdvocateCountDiffer = false;
+
+          if (isComplainantPip?.code === "NO") {
+            // IF complainant is not party in person, an advocate must be present
+            if (multipleAdvocateNameDetails && Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length > 0) {
+              if (multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
+                isAdvocateCountDiffer = true;
+              }
+            }
+            if (!multipleAdvocateNameDetails || (Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length === 0)) {
+              isAnAdvocateMissing = true;
+            } else if (
+              multipleAdvocateNameDetails &&
+              Array.isArray(multipleAdvocateNameDetails) &&
+              multipleAdvocateNameDetails?.length > 0 &&
+              multipleAdvocateNameDetails?.some((adv) => !adv?.advocateBarRegNumberWithName?.advocateId)
+            ) {
+              isAnAdvocateMissing = true;
+            }
+            // IF complainant is not party in person, there must be a vakalathnama document uploaded.
+            if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
+              isVakalatnamaFileMissing = true;
+            }
+          }
+          if (isComplainantPip?.code === "YES") {
+            // IF complainant is party in person, there must be a PIP affidavit document uploaded.
+            if (!pipAffidavitFileUpload || pipAffidavitFileUpload?.document?.length === 0) {
+              isPipAffidavitFileMissing = true;
+            }
+          }
+          const missingFields = [isAnAdvocateMissing, isVakalatnamaFileMissing, isPipAffidavitFileMissing, isAdvocateCountDiffer];
+          totalMandatoryLeft += missingFields.filter(Boolean).length;
+        }
+      }
+    } else {
       for (let i = 0; i < currentPageData?.length; i++) {
         const currentIndexData = currentPageData[i];
         const currentPageMandatoryFields = [];
@@ -1757,51 +2181,6 @@ function EFilingCases({ path }) {
           totalOptionalLeft += optionalLeft;
         }
       }
-    } else {
-      // Calculation of Mandatory fields for Advocate Details page
-      for (let i = 0; i < currentPageData?.length; i++) {
-        const formData = currentPageData?.[i]?.data || {};
-        const { boxComplainant, isComplainantPip, numberOfAdvocates, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload } =
-          formData?.multipleAdvocatesAndPip || {};
-
-        if (boxComplainant?.individualId) {
-          let isAnAdvocateMissing = false;
-          let isVakalatnamaFileMissing = false;
-          let isPipAffidavitFileMissing = false;
-          let isAdvocateCountDiffer = false;
-
-          if (isComplainantPip?.code === "NO") {
-            // IF complainant is not party in person, an advocate must be present
-            if (multipleAdvocateNameDetails && Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length > 0) {
-              if (multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
-                isAdvocateCountDiffer = true;
-              }
-            }
-            if (!multipleAdvocateNameDetails || (Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length === 0)) {
-              isAnAdvocateMissing = true;
-            } else if (
-              multipleAdvocateNameDetails &&
-              Array.isArray(multipleAdvocateNameDetails) &&
-              multipleAdvocateNameDetails?.length > 0 &&
-              multipleAdvocateNameDetails?.some((adv) => !adv?.advocateBarRegNumberWithName?.advocateId)
-            ) {
-              isAnAdvocateMissing = true;
-            }
-            // IF complainant is not party in person, there must be a vakalathnama document uploaded.
-            if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
-              isVakalatnamaFileMissing = true;
-            }
-          }
-          if (isComplainantPip?.code === "YES") {
-            // IF complainant is party in person, there must be a PIP affidavit document uploaded.
-            if (!pipAffidavitFileUpload || pipAffidavitFileUpload?.document?.length === 0) {
-              isPipAffidavitFileMissing = true;
-            }
-          }
-          const missingFields = [isAnAdvocateMissing, isVakalatnamaFileMissing, isPipAffidavitFileMissing, isAdvocateCountDiffer];
-          totalMandatoryLeft += missingFields.filter(Boolean).length;
-        }
-      }
     }
     const obj = {
       selectedPage: currentSelected,
@@ -1819,6 +2198,34 @@ function EFilingCases({ path }) {
       throw error; // or handle error appropriately
     }
   };
+
+  /**
+   * Triggers react-hook-form validation on ALL form instances in the current page.
+   * Returns true only if every enabled form passes validation.
+   * Used by FormComposerV2's validateAllForms prop for multi-form validation.
+   */
+  const validateAllForms = useCallback(async () => {
+    const refs = formRefsMap.current;
+    const indices = Object.keys(refs);
+    if (indices.length === 0) return true;
+
+    // Use handleSubmit (not trigger) on each form so formState.isSubmitted is set to true.
+    // This enables RHF's reValidateMode:'onChange', allowing errors to auto-clear
+    // when the user corrects a field value after a failed validation.
+    const results = await Promise.all(
+      indices
+        .filter((idx) => refs[idx]?.current?.handleSubmit && formdata?.[idx]?.isenabled)
+        .map((idx) => {
+          return new Promise((resolve) => {
+            refs[idx].current.handleSubmit(
+              () => resolve(true),
+              () => resolve(false)
+            )();
+          });
+        })
+    );
+    return results.every((isValid) => isValid === true);
+  }, [formdata]);
 
   const onSubmit = async (action, isCaseLocked = false, isWarning = false) => {
     if (isDisableAllFieldsMode) {
@@ -1841,42 +2248,104 @@ function EFilingCases({ path }) {
                 fData?.data?.poaVerification?.mobileNumber === userInfo?.mobileNumber)
           )
       ) {
-        setShowErrorToast(true);
-        setErrorMsg("LOGGED_IN_USER_MUST_BE_EITHER_COMPLAINANT_OR_POA");
+        setShowToast({ label: t("LOGGED_IN_USER_MUST_BE_EITHER_COMPLAINANT_OR_POA"), error: true });
         return;
       }
     }
 
     if (selected === "complainantDetails") {
+      if (validateComplainantDuplicateMobile({ formdata, setShowToast, t })) {
+        return;
+      }
+    }
+
+    if (selected === "complainantDetails") {
+      let isValidationError = false;
       if (
         formdata
           ?.filter((data) => data.isenabled)
           ?.some((data, index) =>
             addressValidation({
+              t,
               formData: data?.data,
               selected: selected === "complainantDetails" ? "complainantType" : "respondentType",
-              setAddressError,
+              setShowToast,
               config: modifiedFormConfig[index],
+              setFormErrors: setFormErrors.current,
             })
           )
       ) {
+        isValidationError = true;
+      }
+      if (
+        formdata
+          ?.filter((data) => data.isenabled)
+          ?.some((data, index) =>
+            ageValidation({
+              formData: data?.data,
+              selected: "poaAge",
+              setFormErrors: setFormErrors.current,
+              clearFormDataErrors: clearFormDataErrors.current,
+            })
+          )
+      ) {
+        isValidationError = isValidationError || true;
+      }
+      if (isValidationError) {
+        return;
+      }
+      if (
+        formdata
+          ?.filter((data) => data.isenabled)
+          ?.some((data) =>
+            ageValidation({
+              formData: data?.data,
+              selected: "complainantAge",
+              setFormErrors: setFormErrors.current,
+              clearFormDataErrors: clearFormDataErrors.current,
+            })
+          )
+      ) {
+        isValidationError = isValidationError || true;
+      }
+      if (isValidationError) {
         return;
       }
     }
 
     if (selected === "respondentDetails") {
+      let isValidationError = false;
       if (
         formdata
           ?.filter((data) => data.isenabled)
           ?.some((data, index) =>
             accusedAddressValidation({
+              t,
               formData: data?.data,
               selected: selected === "complainantDetails" ? "complainantType" : "respondentType",
-              setAddressError,
+              setShowToast,
               config: modifiedFormConfig[index],
+              setFormErrors: setFormErrors.current,
             })
           )
       ) {
+        isValidationError = true;
+      }
+      if (
+        formdata
+          ?.filter((data) => data.isenabled)
+          ?.some((data) =>
+            ageValidation({
+              formData: data?.data,
+              selected: "respondentAge",
+              setFormErrors: setFormErrors.current,
+              clearFormDataErrors: clearFormDataErrors.current,
+            })
+          )
+      ) {
+        isValidationError = isValidationError || true;
+      }
+      if (isValidationError) {
         return;
       }
     }
@@ -1886,13 +2355,11 @@ function EFilingCases({ path }) {
         .filter((data) => data.isenabled)
         .some((data) =>
           respondentValidation({
-            setErrorMsg,
             t,
             formData: data?.data,
             caseDetails,
             selected,
-            setShowErrorToast,
-            toast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
             clearFormDataErrors: clearFormDataErrors.current,
           })
@@ -1905,9 +2372,10 @@ function EFilingCases({ path }) {
         .filter((data) => data.isenabled)
         .some((data) =>
           demandNoticeFileValidation({
+            t,
             formData: data?.data,
             selected,
-            setShowErrorToast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
           })
         )
@@ -1917,7 +2385,7 @@ function EFilingCases({ path }) {
     if (
       formdata
         .filter((data) => data.isenabled)
-        .some((data) => chequeDetailFileValidation({ formData: data?.data, selected, setShowErrorToast, setFormErrors: setFormErrors.current }))
+        .some((data) => chequeDetailFileValidation({ t, formData: data?.data, selected, setShowToast, setFormErrors: setFormErrors.current }))
     ) {
       return;
     }
@@ -1925,6 +2393,17 @@ function EFilingCases({ path }) {
       const advocatesAndPipErrors = getAdvocatesAndPipRemainingFields(formdata, t);
       if (advocatesAndPipErrors?.length > 0) {
         setShowErrorDataModal({ page: "advocateDetails", show: true, errorData: advocatesAndPipErrors });
+        return;
+      }
+    }
+    if (
+      selected === "processCourierService" &&
+      !(scrutinyObj && Object?.keys(scrutinyObj)?.length > 0) &&
+      !(judgeObj && Object?.keys(judgeObj)?.length > 0)
+    ) {
+      const processCourierErrors = getProcessCourierRemainingFields(formdata, t, isDelayCondonation);
+      if (processCourierErrors?.length > 0) {
+        setShowErrorDataModal({ page: "processCourierService", show: true, errorData: processCourierErrors });
         return;
       }
     }
@@ -1937,13 +2416,11 @@ function EFilingCases({ path }) {
             t,
             caseDetails,
             selected,
-            setShowErrorToast,
-            toast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
             formState: setFormState.current,
             clearFormDataErrors: clearFormDataErrors.current,
             displayindex: data?.displayindex,
-            setErrorMsg,
           })
         )
     ) {
@@ -1958,8 +2435,7 @@ function EFilingCases({ path }) {
             t,
             caseDetails,
             selected,
-            setShowErrorToast,
-            toast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
           })
         )
@@ -1975,8 +2451,7 @@ function EFilingCases({ path }) {
             t,
             caseDetails,
             selected,
-            setShowErrorToast,
-            toast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
           })
         )
@@ -1992,8 +2467,7 @@ function EFilingCases({ path }) {
             t,
             caseDetails,
             selected,
-            setShowErrorToast,
-            toast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
             clearFormDataErrors: clearFormDataErrors.current,
           })
@@ -2009,30 +2483,9 @@ function EFilingCases({ path }) {
             t,
             formData: data?.data,
             selected,
-            setShowErrorToast,
-            setErrorMsg,
-            toast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
             clearFormDataErrors: clearFormDataErrors.current,
-          })
-        )
-    ) {
-      return;
-    }
-    if (
-      formdata
-        .filter((data) => data.isenabled)
-        .some((data) =>
-          signatureValidation({
-            formData: data?.data,
-            selected,
-            setShowErrorToast,
-            setErrorMsg,
-            caseDetails: modifiedFormConfig?.[0].reduce((res, curr) => {
-              if (curr?.body && Array.isArray(curr.body) && curr.body?.length === 0) return res;
-              else res[curr?.body?.[0]?.key] = curr?.body?.[0]?.populators?.inputs?.[0]?.data;
-              return res;
-            }, {}),
           })
         )
     ) {
@@ -2047,25 +2500,13 @@ function EFilingCases({ path }) {
     if (selected === "reviewCaseFile" && !showCaseLockingModal && isDraftInProgress) {
       setShowCaseLockingModal(true);
       return;
-    }
-
-    //check- include below commented code for signing process changes.
-
-    // if (selected === "addSignature" && (isPendingESign || isPendingReESign)) {
-    //   if (courtRooms?.length === 1) {
-    //     onSubmitCase({ court: courtRooms[0], action: CaseWorkflowAction.E_SIGN });
-    //     return;
-    //   } else {
-    //     setOpenConfirmCourtModal(true);
-    //   }
-    // }
-    else {
+    } else {
       let caseComplaintDocument = {};
       try {
         if (isCaseLocked) {
           setIsDisabled(true);
           const caseObject = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
-          const response = await axios.post(
+          const response = await axiosInstance.post(
             "/dristi-case-pdf/v1/fetchCaseComplaintPdf",
             {
               cases: caseObject,
@@ -2073,7 +2514,7 @@ function EFilingCases({ path }) {
                 authToken: Digit.UserService.getUser().access_token,
                 userInfo: Digit.UserService.getUser()?.info,
                 msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-                apiId: "Rainmaker",
+                apiId: "Dristi",
               },
             },
             { responseType: "blob" } // Important: Set responseType to handle binary data
@@ -2097,6 +2538,88 @@ function EFilingCases({ path }) {
             };
           } else {
             throw new Error("FILE_STORE_ID_MISSING");
+          }
+
+          try {
+            const processCourierDetails =
+              caseDetails?.additionalDetails?.processCourierService?.formdata?.map((process) => process?.data?.multipleAccusedProcessCourier) || [];
+
+            const respondentFormData =
+              caseDetails?.additionalDetails?.respondentDetails?.formdata?.map((respondent) => {
+                return {
+                  ...respondent,
+                  data: {
+                    ...respondent?.data,
+                    email: respondent?.data?.emails?.emailId || [],
+                    phone_numbers: respondent?.data?.phonenumbers?.mobileNumber || [],
+                  },
+                };
+              }) || [];
+
+            const getAccusedDetails = (type) =>
+              processCourierDetails?.filter((accused) => accused?.[`${type.toLowerCase()}CourierService`]?.length > 0);
+
+            const noticeAccusedDetails = getAccusedDetails("NOTICE");
+            const summonsAccusedDetails = getAccusedDetails("SUMMONS");
+            const warrantAccusedDetails = getAccusedDetails("WARRANT");
+
+            const noticeTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.NOTICE);
+            const summonsTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.SUMMONS);
+            const warrantTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.WARRANT);
+            let updatedWarrantTask = null;
+
+            // removing processDelieveryDetails for warrant because of payment calculation handled at backend
+            if (warrantTask) {
+              const warrantPartyDetails = warrantTask?.partyDetails || [];
+              const updatedWarrantPartyDetails = warrantPartyDetails?.map((party) => ({
+                ...party,
+                processDeliveryDetails: null,
+              }));
+
+              updatedWarrantTask = {
+                ...warrantTask,
+                partyDetails: updatedWarrantPartyDetails,
+              };
+            }
+
+            await createOrUpdateTask({
+              type: "NOTICE",
+              existingTask: noticeTask,
+              accusedDetails: noticeAccusedDetails,
+              respondentFormData,
+              filingNumber: caseDetails?.filingNumber,
+              tenantId,
+              isUpfrontPayment: true,
+              status: "NOT_COMPLETED",
+            });
+
+            await createOrUpdateTask({
+              type: "SUMMONS",
+              existingTask: summonsTask,
+              accusedDetails: summonsAccusedDetails,
+              respondentFormData,
+              filingNumber: caseDetails?.filingNumber,
+              tenantId,
+              isUpfrontPayment: true,
+              status: "NOT_COMPLETED",
+            });
+
+            await createOrUpdateTask({
+              type: "WARRANT",
+              existingTask: updatedWarrantTask,
+              accusedDetails: warrantAccusedDetails,
+              respondentFormData,
+              filingNumber: caseDetails?.filingNumber,
+              tenantId,
+              isUpfrontPayment: true,
+              status: "NOT_COMPLETED",
+            });
+
+            // Refresh task management data again after creating/updating tasks
+            await refetchTaskManagement();
+          } catch (error) {
+            console.error(error);
+            throw new Error("TASK_MANAGEMENT_ERROR");
           }
         }
         const newCaseDetails = {
@@ -2126,6 +2649,10 @@ function EFilingCases({ path }) {
           scrutinyObj,
           filingType: filingType,
           setShouldShowConfirmDcaModal,
+          isDelayCondonation,
+          isContinueClicked: true,
+          isCaseReAssigned,
+          isDraftInProgress,
         });
 
         if (resetFormData.current) {
@@ -2133,27 +2660,41 @@ function EFilingCases({ path }) {
           setIsDisabled(false);
         }
 
-        await refetchCaseData();
+        const updatedCaseResponse = await refetchCaseData();
+        const updatedCaseDetails = updatedCaseResponse?.data?.criteria[0].responseList[0];
         const caseData =
-          caseDetails?.additionalDetails?.[nextSelected]?.formdata ||
-          caseDetails?.caseDetails?.[nextSelected]?.formdata ||
+          updatedCaseDetails?.additionalDetails?.[nextSelected]?.formdata ||
+          updatedCaseDetails?.caseDetails?.[nextSelected]?.formdata ||
           (nextSelected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
 
         setFormdata(caseData);
         setIsDisabled(false);
         setPrevSelected(selected);
 
-        if (selected !== "reviewCaseFile") {
+        if (
+          selected !== "reviewCaseFile" &&
+          ![
+            CaseWorkflowState?.PENDING_RE_SIGN,
+            CaseWorkflowState.PENDING_RE_E_SIGN,
+            CaseWorkflowState.PENDING_E_SIGN,
+            CaseWorkflowState.PENDING_SIGN,
+          ]?.includes(updatedCaseDetails?.status)
+        ) {
           history.push(`?caseId=${caseId}&selected=${nextSelected}`);
         }
       } catch (error) {
-        let message = t("SOMETHING_WENT_WRONG");
+        let message = t("E_FILING_SUBMISSION_FAILED");
         if (error instanceof DocumentUploadError) {
-          message = `${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`;
+          message = `${t(error?.code || "DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`;
+        } else if (error?.response?.data?.Errors?.some?.((err) => err?.code === "INDIVIDUAL_ALREADY_EXISTS_FOR_USER")) {
+          // Idempotency guard: backend rejects creating a second individual for the same user
+          // (e.g. same mobile number verified and continued from two tabs simultaneously).
+          message = t("USER_ALREADY_EXISTS_WITH_THIS_MOBILE_NUMBER");
         } else if (extractCodeFromErrorMsg(error) === 413) {
           message = t("FAILED_TO_UPLOAD_FILE");
         }
-        toast.error(message);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: message, error: true, errorId });
         setIsDisabled(false);
         console.error("An error occurred:", error);
         return { error };
@@ -2199,7 +2740,10 @@ function EFilingCases({ path }) {
       multiUploadList,
       scrutinyObj,
       filingType: filingType,
+      isDelayCondonation,
       setShouldShowConfirmDcaModal,
+      isCaseReAssigned,
+      isDraftInProgress,
     })
       .then(() => {
         refetchCaseData().then((updatedCaseData) => {
@@ -2211,16 +2755,21 @@ function EFilingCases({ path }) {
         });
       })
       .then(() => {
-        toast.success(t("CS_SUCCESSFULLY_SAVED_DRAFT"));
+        setShowToast({ label: t("CS_SUCCESSFULLY_SAVED_DRAFT"), error: false });
       })
       .catch(async (error) => {
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         if (error instanceof DocumentUploadError) {
-          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`);
+          setShowToast({
+            label: `${t(error?.code || "DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`,
+            error: true,
+            errorId,
+          });
         } else if (extractCodeFromErrorMsg(error) === 413) {
-          toast.error(t("FAILED_TO_UPLOAD_FILE"));
+          setShowToast({ label: t("FAILED_TO_UPLOAD_FILE"), error: true, errorId });
         } else {
-          console.error("Error:", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
+          console.error("Failed to save case:", error);
+          setShowToast({ label: t("CASE_SAVE_FAILED"), error: true, errorId });
         }
         setIsDisabled(false);
       });
@@ -2234,6 +2783,7 @@ function EFilingCases({ path }) {
     //   setOpenConfigurationModal(key);
     //   return;
     // }
+    setIsLoader(true);
     setParmas({ ...params, [pageConfig.key]: formdata });
     setFormdata([{ isenabled: true, data: {}, displayindex: 0 }]);
     setOptionalFieldModalAlreadyViewed(false);
@@ -2278,6 +2828,9 @@ function EFilingCases({ path }) {
       scrutinyObj,
       filingType: filingType,
       setShouldShowConfirmDcaModal,
+      isDelayCondonation,
+      isCaseReAssigned,
+      isDraftInProgress,
     })
       .then(() => {
         if (!isCaseReAssigned) {
@@ -2287,6 +2840,8 @@ function EFilingCases({ path }) {
               caseDetails?.caseDetails?.[nextSelected]?.formdata ||
               (nextSelected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
             setFormdata(caseData);
+            setFormRenderKey(Date.now());
+
             setIsDisabled(false);
           });
         } else {
@@ -2294,186 +2849,29 @@ function EFilingCases({ path }) {
         }
       })
       .catch(async (error) => {
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         if (error instanceof DocumentUploadError) {
-          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`);
+          setShowToast({
+            label: `${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`,
+            error: true,
+            errorId,
+          });
         } else if (extractCodeFromErrorMsg(error) === 413) {
-          toast.error(t("FAILED_TO_UPLOAD_FILE"));
+          setShowToast({ label: t("FAILED_TO_UPLOAD_FILE"), error: true, errorId });
         } else {
-          console.error("Error:", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
+          console.error("Failed to submit case:", error);
+          setShowToast({ label: t("CASE_SUBMISSION_FAILED"), error: true, errorId });
         }
         setIsDisabled(false);
+      })
+      .finally(() => {
+        setIsLoader(false);
       });
     setPrevSelected(selected);
-    if (!isFilingParty) {
+    if (!isEditingAllowed) {
       history.replace(`?caseId=${caseId}&selected=${key}`);
     } else {
       history.push(`?caseId=${caseId}&selected=${key}`);
-    }
-  };
-
-  const chequeDetails = useMemo(() => {
-    const debtLiability = caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.[0]?.data;
-    if (debtLiability?.liabilityType?.code === "PARTIAL_LIABILITY") {
-      return {
-        totalAmount: debtLiability?.totalAmount,
-      };
-    } else {
-      const chequeData = caseDetails?.caseDetails?.chequeDetails?.formdata || [];
-      const totalAmount = chequeData.reduce((sum, item) => {
-        return sum + parseFloat(item.data.chequeAmount);
-      }, 0);
-      return {
-        totalAmount: totalAmount.toString(),
-      };
-    }
-  }, [caseDetails]);
-  const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "payment",
-    [{ name: "paymentType" }],
-    {
-      select: (data) => {
-        return data?.payment?.paymentType || [];
-      },
-    }
-  );
-
-  const { data: taxPeriodData, isLoading: taxPeriodLoading } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "BillingService",
-    [{ name: "TaxPeriod" }],
-    {
-      select: (data) => {
-        return data?.BillingService?.TaxPeriod || [];
-      },
-    }
-  );
-  const callCreateDemandAndCalculation = async (caseDetails, tenantId, caseId) => {
-    const suffix = getSuffixByBusinessCode(paymentTypeData, "case-default");
-    const taxPeriod = getTaxPeriodByBusinessService(taxPeriodData, "case-default");
-    const calculationResponse = await DRISTIService.getPaymentBreakup(
-      {
-        EFillingCalculationCriteria: [
-          {
-            checkAmount: chequeDetails?.totalAmount,
-            numberOfApplication: 1,
-            tenantId: tenantId,
-            caseId: caseId,
-            isDelayCondonation: isDelayCondonation,
-            filingNumber: caseDetails?.filingNumber,
-          },
-        ],
-      },
-      {},
-      "dristi",
-      Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
-    );
-
-    // await DRISTIService.createDemand({
-    //   Demands: [
-    //     {
-    //       tenantId,
-    //       consumerCode: caseDetails?.filingNumber + `_${suffix}`,
-    //       consumerType: "case-default",
-    //       businessService: "case-default",
-    //       taxPeriodFrom: taxPeriod?.fromDate,
-    //       taxPeriodTo: taxPeriod?.toDate,
-    //       demandDetails: [
-    //         {
-    //           taxHeadMasterCode: "CASE_ADVANCE_CARRYFORWARD",
-    //           taxAmount: 4, // amount to be replaced with calculationResponse
-    //           collectionAmount: 0,
-    //           isDelayCondonation: isDelayCondonation,
-    //         },
-    //       ],
-    //       additionalDetails: {
-    //         filingNumber: caseDetails?.filingNumber,
-    //         chequeDetails: chequeDetails,
-    //         cnrNumber: caseDetails?.cnrNumber,
-    //         payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
-    //         payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
-    //         isDelayCondonation: isDelayCondonation,
-    //       },
-    //     },
-    //   ],
-    // });
-
-    await DRISTIService.etreasuryCreateDemand({
-      tenantId,
-      entityType: "case-default",
-      filingNumber: caseDetails?.filingNumber,
-      consumerCode: caseDetails?.filingNumber + `_${suffix}`,
-      calculation: calculationResponse?.Calculation,
-    });
-    return calculationResponse;
-  };
-  const onSubmitCase = async (data) => {
-    setOpenConfirmCourtModal(false);
-    setIsDisabled(true);
-    let calculationResponse = {};
-    const assignees = getAllAssignees(caseDetails);
-    const poaHolders = (caseDetails?.poaHolders || [])?.map((poaHolder) => ({
-      uuid: poaHolder?.additionalDetails?.uuid,
-    }));
-
-    const fileStoreId = sessionStorage.getItem("fileStoreId");
-    await DRISTIService.caseUpdateService(
-      {
-        cases: {
-          ...caseDetails,
-          ...(fileStoreId && {
-            additionalDetails: {
-              ...caseDetails?.additionalDetails,
-              signedCaseDocument: fileStoreId,
-            },
-          }),
-          caseTitle:
-            `${getComplainantName(caseDetails?.additionalDetails?.complainantDetails?.formdata || {}, t)} vs ${getRespondentName(
-              caseDetails?.additionalDetails?.respondentDetails?.formdata || {},
-              t
-            )}` || caseDetails?.caseTitle,
-          courtId: "KLKM52" || data?.court?.code,
-          workflow: {
-            ...caseDetails?.workflow,
-            action: data?.action || "E-SIGN",
-            assignes: [],
-          },
-        },
-        tenantId,
-      },
-      tenantId
-    ).then(async (res) => {
-      await closePendingTask({ status: "PENDING_PAYMENT" });
-      if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
-        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-          pendingTask: {
-            name: "Pending Payment",
-            entityType: "case-default",
-            referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-            status: "PENDING_PAYMENT",
-            assignedTo: [...assignees?.map((uuid) => ({ uuid })), ...poaHolders],
-            assignedRole: ["CASE_CREATOR"],
-            cnrNumber: caseDetails?.cnrNumber,
-            filingNumber: caseDetails?.filingNumber,
-            caseId: caseDetails?.id,
-            caseTitle: caseDetails?.caseTitle,
-            isCompleted: false,
-            stateSla: stateSla.PENDING_PAYMENT * dayInMillisecond + todayDate,
-            additionalDetails: {},
-            tenantId,
-          },
-        });
-        calculationResponse = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
-      }
-      if (isPendingReESign) setCaseResubmitSuccess(true);
-      setIsDisabled(false);
-      return;
-    });
-
-    setPrevSelected(selected);
-    if (isPendingESign) {
-      history.push(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculationResponse } });
     }
   };
 
@@ -2507,10 +2905,6 @@ function EFilingCases({ path }) {
           : isPendingReESign
           ? t("CS_COMMON_CONTINUE")
           : t("CS_GO_TO_HOME")
-        : selected === "addSignature"
-        ? isPendingESign || isPendingReESign
-          ? t("CS_SUBMIT_CASE")
-          : t("CS_COMMON_CONTINUE")
         : isDisableAllFieldsMode
         ? t("CS_GO_TO_HOME")
         : isCaseReAssigned
@@ -2523,11 +2917,11 @@ function EFilingCases({ path }) {
 
   // show action bar only after all mandatory details are filed
   const showActionsLabels = useMemo(() => {
-    return !isFilingParty ? !mandatoryFieldsLeftTotalCount && !isDisableAllFieldsMode : true;
-  }, [isFilingParty, mandatoryFieldsLeftTotalCount, isDisableAllFieldsMode]);
+    return !isEditingAllowed ? !mandatoryFieldsLeftTotalCount && !isDisableAllFieldsMode : true;
+  }, [isEditingAllowed, mandatoryFieldsLeftTotalCount, isDisableAllFieldsMode]);
 
   const [isOpen, setIsOpen] = useState(false);
-  if (isLoading || isGetAllCasesLoading || isCourtIdsLoading || isLoader || isIndividualLoading || isFilingTypeLoading) {
+  if (isLoading || isLoader || isIndividualLoading || isFilingTypeLoading || isTaskManagementLoading) {
     return <Loader />;
   }
 
@@ -2538,33 +2932,100 @@ function EFilingCases({ path }) {
     courtName: "Kollam S-138 Special Court",
     href: "https://www.indiacode.nic.in/bitstream/123456789/2189/1/a1881-26.pdf",
   };
-
-  const takeUserToRemainingMandatoryFieldsPage = () => {
-    const firstPageInTheListWhichHasMandatoryFieldsLeft = checkAndGetMandatoryFieldLeftPages?.[0];
-    const selectedPage = firstPageInTheListWhichHasMandatoryFieldsLeft?.selectedPage;
+  const handleComplainantDetailsAdvisoryModal = (redirectTo) => {
     setPrevSelected(selected);
-    history.push(`?caseId=${caseId}&selected=${selectedPage}`);
-    setShowConfirmMandatoryModal(false);
+    history.push(`?caseId=${caseId}&selected=${redirectTo}`); // introduce refetch casedta here due to react 18 upgrade changes
+    setShowFillComplainantDetailsAdvisoryModal({ show: false, redirectTo: "" });
   };
 
-  const takeUserToRemainingOptionalFieldsPage = () => {
-    const firstPageInTheListWhichHasOptionalFieldsLeft = checkAndGetOptionalFieldLeftPages?.[0];
-    const selectedPage = firstPageInTheListWhichHasOptionalFieldsLeft?.selectedPage;
-    setPrevSelected(selected);
-    history.push(`?caseId=${caseId}&selected=${selectedPage}`);
-    setShowConfirmOptionalModal(false);
-    setOptionalFieldModalAlreadyViewed(true);
+  const takeUserToRemainingMandatoryFieldsPage = async () => {
+    try {
+      setIsLoader(true);
+
+      const firstPageInTheListWhichHasMandatoryFieldsLeft = checkAndGetMandatoryFieldLeftPages?.[0];
+
+      const selectedPage = firstPageInTheListWhichHasMandatoryFieldsLeft?.selectedPage;
+
+      // VERY IMPORTANT
+      // clear existing local state before refetch
+      setFormdata([]);
+
+      // refetch fresh case data exactly like refresh
+      const updatedCaseResponse = await refetchCaseData();
+
+      const updatedCaseDetails = updatedCaseResponse?.data?.criteria?.[0]?.responseList?.[0];
+
+      const freshFormData =
+        updatedCaseDetails?.additionalDetails?.[selectedPage]?.formdata ||
+        updatedCaseDetails?.caseDetails?.[selectedPage]?.formdata ||
+        (selectedPage === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
+
+      // load fresh state FIRST
+      setFormdata(freshFormData);
+
+      // force remount AFTER fresh data
+      setFormRenderKey(Date.now());
+
+      setPrevSelected(selected);
+
+      // navigate LAST
+      history.push(`?caseId=${caseId}&selected=${selectedPage}`);
+
+      setShowConfirmMandatoryModal(false);
+    } catch (error) {
+      console.error("Failed to reload mandatory page data", error);
+    } finally {
+      setIsLoader(false);
+    }
+  };
+
+  const takeUserToRemainingOptionalFieldsPage = async () => {
+    try {
+      setIsLoader(true);
+
+      const firstPageInTheListWhichHasOptionalFieldsLeft = checkAndGetOptionalFieldLeftPages?.[0];
+
+      const selectedPage = firstPageInTheListWhichHasOptionalFieldsLeft?.selectedPage;
+
+      // clear stale local state first
+      setFormdata([]);
+
+      // refetch latest backend data
+      const updatedCaseResponse = await refetchCaseData();
+
+      const updatedCaseDetails = updatedCaseResponse?.data?.criteria?.[0]?.responseList?.[0];
+
+      const freshFormData =
+        updatedCaseDetails?.additionalDetails?.[selectedPage]?.formdata ||
+        updatedCaseDetails?.caseDetails?.[selectedPage]?.formdata ||
+        (selectedPage === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
+
+      // hydrate fresh state
+      setFormdata(freshFormData);
+
+      // force FormComposerV2 remount
+      setFormRenderKey(Date.now());
+
+      setPrevSelected(selected);
+
+      // navigate after state hydration
+      history.push(`?caseId=${caseId}&selected=${selectedPage}`);
+
+      setShowConfirmOptionalModal(false);
+      setOptionalFieldModalAlreadyViewed(true);
+    } catch (error) {
+      console.error("Failed to reload optional page data", error);
+    } finally {
+      setIsLoader(false);
+    }
   };
 
   const handleGoToPage = (key) => {
-    if (!isFilingParty) {
+    if (!isEditingAllowed) {
       history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`);
     } else {
       history.push(`?caseId=${caseId}&selected=${key}`);
     }
-  };
-  const handleGoToHome = () => {
-    history.push(homepagePath);
   };
 
   if (typeof state === "string" && isDisableAllFieldsMode && selected !== "reviewCaseFile" && caseDetails) {
@@ -2572,7 +3033,7 @@ function EFilingCases({ path }) {
     history.push(`?caseId=${caseId}&selected=reviewCaseFile`);
   }
 
-  if (isCaseReAssigned && !errorPages.some((item) => item.key === selected) && selected !== "reviewCaseFile" && selected !== "addSignature") {
+  if (isCaseReAssigned && !errorPages.some((item) => item.key === selected) && selected !== "reviewCaseFile") {
     if (!judgeObj) {
       history.push(`?caseId=${caseId}&selected=${nextSelected}`);
     }
@@ -2582,7 +3043,8 @@ function EFilingCases({ path }) {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `${caseDetails?.filingNumber || "CasePdf"}.pdf`);
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Complaint.pdf`;
+    link.setAttribute("download", name);
     document.body.appendChild(link);
     link.click();
     link.parentNode.removeChild(link);
@@ -2593,7 +3055,7 @@ function EFilingCases({ path }) {
     setIsLoader(true);
     try {
       const caseObject = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         "/dristi-case-pdf/v1/generateCasePdf",
         {
           cases: caseObject,
@@ -2601,7 +3063,7 @@ function EFilingCases({ path }) {
             authToken: Digit.UserService.getUser().access_token,
             userInfo: Digit.UserService.getUser()?.info,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+            apiId: "Dristi",
           },
         },
         { responseType: "blob" } // Important: Set responseType to handle binary data
@@ -2609,8 +3071,9 @@ function EFilingCases({ path }) {
       setPdfDetails(response?.data);
       setIsModalOpen(true);
     } catch (error) {
-      console.error("Error generating case PDF:", error);
-      toast.error(t("CASE_PDF_GENERATION_ERROR"));
+      console.error("Failed to generate case PDF:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("CASE_PDF_GENERATION_ERROR"), error: true, errorId });
     } finally {
       setIsLoader(false);
     }
@@ -2733,7 +3196,7 @@ function EFilingCases({ path }) {
                   title={item.title}
                   handlePageChange={handlePageChange}
                   handleAccordionClick={() => {
-                    handleAccordionClick(isFilingParty ? index : accordion.length - 1);
+                    handleAccordionClick(isEditingAllowed ? index : accordion.length - 1);
                   }}
                   key={index}
                   children={item.children}
@@ -2742,7 +3205,7 @@ function EFilingCases({ path }) {
                   errorCount={scrutinyErrors?.[item.key]?.total - scrutinyErrors?.[item.key]?.warning || 0}
                   isCaseReAssigned={isCaseReAssigned}
                   isDraftInProgress={isDraftInProgress}
-                  isFilingParty={isFilingParty}
+                  isEditingAllowed={isEditingAllowed}
                   AccordionTabs={AccordionTabs}
                 />
               ))}
@@ -2757,7 +3220,7 @@ function EFilingCases({ path }) {
               title={item.title}
               handlePageChange={handlePageChange}
               handleAccordionClick={() => {
-                handleAccordionClick(isFilingParty ? index : accordion.length - 1);
+                handleAccordionClick(isEditingAllowed ? index : accordion.length - 1);
               }}
               key={index}
               children={item.children}
@@ -2767,7 +3230,7 @@ function EFilingCases({ path }) {
               errorCount={scrutinyErrors?.[item.key]?.total - scrutinyErrors?.[item.key]?.warning || 0}
               isCaseReAssigned={isCaseReAssigned}
               isDraftInProgress={isDraftInProgress}
-              isFilingParty={isFilingParty}
+              isEditingAllowed={isEditingAllowed}
               AccordionTabs={AccordionTabs}
             />
           ))}
@@ -2803,7 +3266,7 @@ function EFilingCases({ path }) {
                       </React.Fragment>
                     )}
                   </Header>
-                  {selected === "reviewCaseFile" && !isCaseReAssigned && isFilingParty && (
+                  {selected === "reviewCaseFile" && !isCaseReAssigned && isEditingAllowed && (
                     <div className="case-edit-icon" onClick={() => setShowEditCaseNameModal(true)} style={{ cursor: "pointer" }}>
                       <span style={{ position: "relative" }} data-tip data-for="Click">
                         <EditIcon style={{ display: "block", position: "relative" }} />
@@ -2839,58 +3302,74 @@ function EFilingCases({ path }) {
             />
           )}
           {sectionWiseErrors?.[selected] && <ScrutinyInfo t={t} config={{ populators: { scrutinyMessage: sectionWiseErrors?.[selected] } }} />}
-          {modifiedFormConfig.map((config, index) => {
-            return formdata[index].isenabled ? (
-              <div key={`${selected}-${index}`} className="form-wrapper-d">
-                {pageConfig?.addFormText && (
-                  <div className="form-item-name">
-                    <h1>{`${t(pageConfig?.formItemName)} ${formdata[index]?.displayindex + 1}`}</h1>
-                    {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) && isDraftInProgress && (
-                      <span
-                        style={{ cursor: "pointer" }}
-                        onClick={() => {
-                          setConfirmDeleteModal(true);
-                          setDeleteFormIndex(index);
-                        }}
-                      >
-                        <CustomDeleteIcon />
-                      </span>
-                    )}
-                  </div>
-                )}
-                <FormComposerV2
-                  label={showActionsLabels && actionName}
-                  config={config}
-                  onSubmit={() => onSubmit("SAVE_DRAFT")}
-                  onSecondayActionClick={onSaveDraft}
-                  defaultValues={getDefaultValues(index)}
-                  onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-                    onFormValueChange(
-                      setValue,
-                      formData,
-                      formState,
-                      reset,
-                      setError,
-                      clearErrors,
-                      trigger,
-                      getValues,
-                      index,
-                      formdata[index].displayindex
-                    );
-                  }}
-                  isDisabled={isSubmitDisabled}
-                  cardStyle={{ minWidth: "100%" }}
-                  cardClassName={`e-filing-card-form-style ${pageConfig.className}`}
-                  secondaryLabel={t("CS_SAVE_DRAFT")}
-                  showSecondaryLabel={isDraftInProgress}
-                  actionClassName="e-filing-action-bar"
-                  className={`${pageConfig.className} ${getFormClassName()}`}
-                  noBreakLine
-                  submitIcon={<RightArrow />}
-                />
-              </div>
-            ) : null;
-          })}
+          {!isLoading &&
+            !isLoader &&
+            modifiedFormConfig.map((config, index) => {
+              return formdata[index].isenabled ? (
+                <div key={`${selected}-${index}`} className={`${selected !== "processCourierService" ? "form-wrapper-d" : ""}`}>
+                  {pageConfig?.addFormText && (
+                    <div className="form-item-name">
+                      <h1>{`${t(pageConfig?.formItemName)} ${formdata[index]?.displayindex + 1}`}</h1>
+                      {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) &&
+                        (isDraftInProgress ||
+                          (isCaseReAssigned &&
+                            (Object?.keys(judgeObj || {})?.length > 0 ||
+                              (!!formdata?.[index] &&
+                                !(
+                                  caseDetails?.additionalDetails?.[selected]?.formdata?.[index] ||
+                                  caseDetails?.caseDetails?.[selected]?.formdata?.[index]
+                                ))))) && (
+                          <span
+                            style={{ cursor: "pointer" }}
+                            onClick={() => {
+                              setConfirmDeleteModal(true);
+                              setDeleteFormIndex(index);
+                            }}
+                          >
+                            <CustomDeleteIcon />
+                          </span>
+                        )}
+                    </div>
+                  )}
+                  <FormComposerV2
+                    key={`${selected}-${index}-${formRenderKey}-${
+                      (caseDetails || errorCaseDetails || {})?.additionalDetails?.[selected]?.formdata?.[index]?.transferredPOA?.code || "EMPTY"
+                    }`}
+                    label={showActionsLabels && actionName}
+                    config={config}
+                    onSubmit={() => onSubmit("SAVE_DRAFT")}
+                    onSecondayActionClick={onSaveDraft}
+                    defaultValues={getDefaultValues(index)}
+                    onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+                      onFormValueChange(
+                        setValue,
+                        formData,
+                        formState,
+                        reset,
+                        setError,
+                        clearErrors,
+                        trigger,
+                        getValues,
+                        index,
+                        formdata[index].displayindex
+                      );
+                    }}
+                    isDisabled={isSubmitDisabled}
+                    cardStyle={{ minWidth: "100%" }}
+                    cardClassName={`e-filing-card-form-style ${pageConfig.className}`}
+                    secondaryLabel={t("CS_SAVE_DRAFT")}
+                    showSecondaryLabel={isDraftInProgress}
+                    actionClassName="e-filing-action-bar"
+                    className={`${pageConfig.className} ${getFormClassName()}`}
+                    noBreakLine
+                    submitIcon={<RightArrow />}
+                    formRef={formRefsMap.current[index] || (formRefsMap.current[index] = { current: null })}
+                    validateAllForms={validateAllForms}
+                    allFormRefs={formRefsMap}
+                  />
+                </div>
+              ) : null;
+            })}
           {confirmDeleteModal && (
             <Modal
               headerBarMain={<Heading label={t("Are you sure?")} />}
@@ -2935,15 +3414,28 @@ function EFilingCases({ path }) {
                   });
                   onSaveDraft(true);
                 } catch (error) {
-                  console.log(error);
+                  console.error(error);
                 }
 
                 history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
               }}
             ></Modal>
           )}
+          {showFillComplainantDetailsAdvisoryModal?.show && (
+            <Modal
+              headerBarMain={<Heading label={t("ADVISORY_TITLE")} />}
+              headerBarEnd={<CloseBtn onClick={() => handleComplainantDetailsAdvisoryModal(showFillComplainantDetailsAdvisoryModal?.redirectTo)} />}
+              actionSaveLabel={t("OK")}
+              children={
+                showFillComplainantDetailsAdvisoryModal?.redirectTo === "complainantDetails"
+                  ? t("PLEASE_GO_TO_COMPLAINANT_SCREEN_AND_CLICK_CONTINUE")
+                  : t("PLEASE_GO_TO_ADVOCATE_SCREEN_AND_CLICK_CONTINUE")
+              }
+              actionSaveOnSubmit={() => handleComplainantDetailsAdvisoryModal(showFillComplainantDetailsAdvisoryModal?.redirectTo)}
+            ></Modal>
+          )}
           {/* show this modal only for filingParty */}
-          {isFilingParty && showMandatoryFieldsRemainingModal && showConfirmMandatoryModal && (
+          {isEditingAllowed && showMandatoryFieldsRemainingModal && showConfirmMandatoryModal && (
             <Modal
               headerBarMain={<Heading label={`${mandatoryFieldsLeftTotalCount} ${t("MANDATORY_FIELDS_REMAINING")}`} />}
               headerBarEnd={<CloseBtn onClick={() => takeUserToRemainingMandatoryFieldsPage()} />}
@@ -2958,7 +3450,7 @@ function EFilingCases({ path }) {
             !isDisableAllFieldsMode &&
             !optionalFieldModalAlreadyViewed && (
               <Modal
-                headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASE")} />}
+                headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASES")} />}
                 headerBarEnd={
                   <CloseBtn
                     onClick={() => {
@@ -2969,7 +3461,7 @@ function EFilingCases({ path }) {
                 }
                 actionCancelLabel={t("SKIP_AND_CONTINUE")}
                 actionCancelOnSubmit={handleSkip}
-                actionSaveLabel={isFilingParty && t("FILL_NOW")}
+                actionSaveLabel={isEditingAllowed && t("FILL_NOW")}
                 children={optionalFieldsRemainingText(optionalFieldsLeftTotalCount)}
                 actionSaveOnSubmit={() => takeUserToRemainingOptionalFieldsPage()}
               ></Modal>
@@ -3002,7 +3494,7 @@ function EFilingCases({ path }) {
               className="add-new-form"
               icon={<CustomAddIcon />}
               label={t(pageConfig.addFormText)}
-              isDisabled={!isDraftInProgress && ["chequeDetails", "complainantDetails"].includes(selected)}
+              isDisabled={!isDraftInProgress && ["complainantDetails"].includes(selected)}
             ></Button>
           )}
           {openConfigurationModal && (
@@ -3014,30 +3506,17 @@ function EFilingCases({ path }) {
               handlePageChange={handlePageChange}
             />
           )}
-          {showErrorToast && (
-            <Toast
-              error={true}
-              label={t(errorMsg ? errorMsg : "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")}
-              isDleteBtn={true}
-              onClose={closeToast}
+          {showToast && (
+            <CustomToast
+              error={showToast?.error}
+              label={showToast?.label ? showToast?.label : t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")}
+              errorId={showToast?.errorId}
+              onClose={() => setShowToast(null)}
+              duration={showToast?.errorId ? 7000 : 5000}
             />
           )}
-          {addressError?.show && <Toast error={true} label={t(addressError?.message)} isDleteBtn={true} onClose={closeToast} />}
-          {showSuccessToast && <Toast label={t(successMsg)} isDleteBtn={true} onClose={closeToast} />}
         </div>
       </div>
-      {openConfirmCourtModal && <ConfirmCourtModal setOpenConfirmCourtModal={setOpenConfirmCourtModal} t={t} onSubmitCase={onSubmitCase} />}
-
-      {caseResubmitSuccess && (
-        <CorrectionsSubmitModal
-          t={t}
-          filingNumber={caseDetails?.filingNumber}
-          handleGoToHome={handleGoToHome}
-          downloadPdf={downloadPdf}
-          tenantId={tenantId}
-          caseDetails={caseDetails}
-        />
-      )}
       {selected === "witnessDetails" && !isPendingESign && Object.keys(formdata.filter((data) => data.isenabled)?.[0] || {}).length === 0 && (
         <ActionBar className={"e-filing-action-bar"}>
           <SubmitBar
@@ -3107,7 +3586,6 @@ function EFilingCases({ path }) {
           path={path}
           setShowCaseLockingModal={setShowCaseLockingModal}
           setShowConfirmCaseDetailsModal={setShowConfirmCaseDetailsModal}
-          isAdvocateFilingCase={isAdvocateFilingCase}
           onSubmit={onSubmit}
           createPendingTask={createPendingTask}
           setPrevSelected={setPrevSelected}

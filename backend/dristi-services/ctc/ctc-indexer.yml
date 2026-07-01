@@ -1,0 +1,179 @@
+ServiceMaps:
+  serviceName: ctc services
+  version: 1.0.0
+  mappings:
+    - topic: save-ctc-application
+      configKey: INDEX
+      indexes:
+        - name: ctc-application-index
+          type: general
+          id: $.id
+          isBulk: false
+          timeStampField: $.auditDetails.createdTime
+          jsonPath: $.ctcApplication
+          customJsonMapping:
+            indexMapping: {"Data":{"ctcApplicationDetails":{},"history":{}}}
+            fieldMapping:
+              - inJsonPath: $.id
+                outJsonPath: $.Data.ctcApplicationDetails.id
+              - inJsonPath: $.tenantId
+                outJsonPath: $.Data.ctcApplicationDetails.tenantId
+              - inJsonPath: $.ctcApplicationNumber
+                outJsonPath: $.Data.ctcApplicationDetails.ctcApplicationNumber
+              - inJsonPath: $.caseNumber
+                outJsonPath: $.Data.ctcApplicationDetails.caseNumber
+              - inJsonPath: $.caseTitle
+                outJsonPath: $.Data.ctcApplicationDetails.caseTitle
+              - inJsonPath: $.filingNumber
+                outJsonPath: $.Data.ctcApplicationDetails.filingNumber
+              - inJsonPath: $.courtId
+                outJsonPath: $.Data.ctcApplicationDetails.courtId
+              - inJsonPath: $.applicantName
+                outJsonPath: $.Data.ctcApplicationDetails.applicantName
+              - inJsonPath: $.mobileNumber
+                outJsonPath: $.Data.ctcApplicationDetails.mobileNumber
+              - inJsonPath: $.isPartyToCase
+                outJsonPath: $.Data.ctcApplicationDetails.isPartyToCase
+              - inJsonPath: $.partyDesignation
+                outJsonPath: $.Data.ctcApplicationDetails.partyDesignation
+              - inJsonPath: $.affidavitDocument
+                outJsonPath: $.Data.ctcApplicationDetails.affidavitDocument
+              - inJsonPath: $.selectedCaseBundle
+                outJsonPath: $.Data.ctcApplicationDetails.selectedCaseBundle
+              - inJsonPath: $.caseBundles
+                outJsonPath: $.Data.ctcApplicationDetails.caseBundles
+              - inJsonPath: $.totalPages
+                outJsonPath: $.Data.ctcApplicationDetails.totalPages
+              - inJsonPath: $.status
+                outJsonPath: $.Data.ctcApplicationDetails.status
+              - inJsonPath: $.judgeComments
+                outJsonPath: $.Data.ctcApplicationDetails.judgeComments
+              - inJsonPath: $.auditDetails.createdBy
+                outJsonPath: $.Data.ctcApplicationDetails.createdBy
+              - inJsonPath: $.auditDetails.lastModifiedBy
+                outJsonPath: $.Data.ctcApplicationDetails.lastModifiedBy
+              - inJsonPath: $.auditDetails.createdTime
+                outJsonPath: $.Data.ctcApplicationDetails.createdTime
+              - inJsonPath: $.auditDetails.lastModifiedTime
+                outJsonPath: $.Data.ctcApplicationDetails.lastModifiedTime
+          externalUriMapping:
+            - path: http://egov-workflow-v2.egov:8080/egov-workflow-v2/egov-wf/process/_search
+              queryParam: businessIds=$.ctcApplicationNumber,tenantId=$.tenantId,history=true
+              apiRequest: { "RequestInfo": { "apiId": "","ver": "1.0","ts": 1502890899493,"action": "asd","did": "4354648646","key": "xyz","msgId": "654654","requesterId": "61","authToken": "d9994555-7656-4a67-ab3a-a952a0d4dfc8","userInfo": { "id": 1,"uuid": "1fec8102-0e02-4d0a-b283-cd80d5dab067","type": "EMPLOYEE","tenantId": "pg","roles": [ { "name": "Employee","code": "EMPLOYEE","tenantId": "pg" } ] } } }
+              uriResponseMapping:
+                - inJsonPath: $.ProcessInstances
+                  outJsonPath: $.Data.history
+                - inJsonPath: $.ProcessInstances[0]
+                  outJsonPath: $.Data.currentProcessInstance
+                - inJsonPath: $.ProcessInstances[0].state.uuid
+                  outJsonPath: $.Data.status
+
+    - topic: update-ctc-application
+      configKey: INDEX
+      indexes:
+        - name: ctc-application-index
+          type: general
+          id: $.id
+          isBulk: false
+          timeStampField: $.auditDetails.lastModifiedTime
+          jsonPath: $.ctcApplication
+          customJsonMapping:
+            indexMapping: {"Data":{"ctcApplicationDetails":{},"history":{}}}
+            fieldMapping:
+              - inJsonPath: $.id
+                outJsonPath: $.Data.ctcApplicationDetails.id
+              - inJsonPath: $.tenantId
+                outJsonPath: $.Data.ctcApplicationDetails.tenantId
+              - inJsonPath: $.ctcApplicationNumber
+                outJsonPath: $.Data.ctcApplicationDetails.ctcApplicationNumber
+              - inJsonPath: $.caseNumber
+                outJsonPath: $.Data.ctcApplicationDetails.caseNumber
+              - inJsonPath: $.caseTitle
+                outJsonPath: $.Data.ctcApplicationDetails.caseTitle
+              - inJsonPath: $.filingNumber
+                outJsonPath: $.Data.ctcApplicationDetails.filingNumber
+              - inJsonPath: $.courtId
+                outJsonPath: $.Data.ctcApplicationDetails.courtId
+              - inJsonPath: $.applicantName
+                outJsonPath: $.Data.ctcApplicationDetails.applicantName
+              - inJsonPath: $.mobileNumber
+                outJsonPath: $.Data.ctcApplicationDetails.mobileNumber
+              - inJsonPath: $.isPartyToCase
+                outJsonPath: $.Data.ctcApplicationDetails.isPartyToCase
+              - inJsonPath: $.partyDesignation
+                outJsonPath: $.Data.ctcApplicationDetails.partyDesignation
+              - inJsonPath: $.affidavitDocument
+                outJsonPath: $.Data.ctcApplicationDetails.affidavitDocument
+              - inJsonPath: $.selectedCaseBundle
+                outJsonPath: $.Data.ctcApplicationDetails.selectedCaseBundle
+              - inJsonPath: $.caseBundles
+                outJsonPath: $.Data.ctcApplicationDetails.caseBundles
+              - inJsonPath: $.totalPages
+                outJsonPath: $.Data.ctcApplicationDetails.totalPages
+              - inJsonPath: $.status
+                outJsonPath: $.Data.ctcApplicationDetails.status
+              - inJsonPath: $.judgeComments
+                outJsonPath: $.Data.ctcApplicationDetails.judgeComments
+              - inJsonPath: $.auditDetails.createdBy
+                outJsonPath: $.Data.ctcApplicationDetails.createdBy
+              - inJsonPath: $.auditDetails.lastModifiedBy
+                outJsonPath: $.Data.ctcApplicationDetails.lastModifiedBy
+              - inJsonPath: $.auditDetails.createdTime
+                outJsonPath: $.Data.ctcApplicationDetails.createdTime
+              - inJsonPath: $.auditDetails.lastModifiedTime
+                outJsonPath: $.Data.ctcApplicationDetails.lastModifiedTime
+          externalUriMapping:
+            - path: http://egov-workflow-v2.egov:8080/egov-workflow-v2/egov-wf/process/_search
+              queryParam: businessIds=$.ctcApplicationNumber,tenantId=$.tenantId,history=true
+              apiRequest: { "RequestInfo": { "apiId": "","ver": "1.0","ts": 1502890899493,"action": "asd","did": "4354648646","key": "xyz","msgId": "654654","requesterId": "61","authToken": "d9994555-7656-4a67-ab3a-a952a0d4dfc8","userInfo": { "id": 1,"uuid": "1fec8102-0e02-4d0a-b283-cd80d5dab067","type": "EMPLOYEE","tenantId": "pg","roles": [ { "name": "Employee","code": "EMPLOYEE","tenantId": "pg" } ] } } }
+              uriResponseMapping:
+                - inJsonPath: $.ProcessInstances
+                  outJsonPath: $.Data.history
+                - inJsonPath: $.ProcessInstances[0]
+                  outJsonPath: $.Data.currentProcessInstance
+                - inJsonPath: $.ProcessInstances[0].state.uuid
+                  outJsonPath: $.Data.status
+
+    - topic: update-ctc-judge-approval
+      configKey: INDEX
+      indexes:
+        - name: ctc-application-index
+          type: general
+          id: $.ctcApplicationNumber
+          isBulk: true
+          timeStampField: $.requestInfo.actionTime
+          jsonPath: $.ctcApplicationNumbers
+          customJsonMapping:
+            indexMapping: {"Data":{"ctcApplicationDetails":{}}}
+            fieldMapping:
+              - inJsonPath: $.ctcApplicationNumbers.*
+                outJsonPath: $.Data.ctcApplicationDetails.ctcApplicationNumber
+              - inJsonPath: $.approvalStatus
+                outJsonPath: $.Data.ctcApplicationDetails.status
+              - inJsonPath: $.comments
+                outJsonPath: $.Data.ctcApplicationDetails.judgeComments
+              - inJsonPath: $.requestInfo.userInfo.uuid
+                outJsonPath: $.Data.ctcApplicationDetails.lastModifiedBy
+              - inJsonPath: $.requestInfo.actionTime
+                outJsonPath: $.Data.ctcApplicationDetails.lastModifiedTime
+
+    - topic: issue-ctc-documents
+      configKey: INDEX
+      indexes:
+        - name: ctc-application-index
+          type: general
+          id: $.ctcApplicationNumber
+          isBulk: true
+          timeStampField: $.requestInfo.actionTime
+          jsonPath: $.ctcApplicationNumbers
+          customJsonMapping:
+            indexMapping: {"Data":{"ctcApplicationDetails":{}}}
+            fieldMapping:
+              - inJsonPath: $.ctcApplicationNumbers.*
+                outJsonPath: $.Data.ctcApplicationDetails.ctcApplicationNumber
+              - inJsonPath: $.ctcApplication.status
+                outJsonPath: $.Data.ctcApplicationDetails.status
+              - inJsonPath: $.requestInfo.userInfo.uuid
+                outJsonPath: $.Data.ctcApplicationDetails.lastModifiedBy
+              - inJsonPath: $.requestInfo.actionTime
+                outJsonPath: $.Data.ctcApplicationDetails.lastModifiedTime

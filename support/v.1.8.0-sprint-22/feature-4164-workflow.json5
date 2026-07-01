@@ -1,0 +1,549 @@
+{
+  "BusinessServices": [
+    {
+      "tenantId": "kl",
+      "business": "task",
+      "businessService": "task-notice",
+      "businessServiceSla": 4320000000,
+      "states": [
+        {
+          "sla": null,
+          "state": null,
+          "applicationStatus": null,
+          "docUploadRequired": true,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "CREATE",
+              "nextState": "PENDING_PAYMENT",
+              "roles": [
+                "TASK_CREATOR"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 172800000,
+          "state": "PENDING_PAYMENT",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": true,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "MAKE_PAYMENT",
+              "nextState": "ISSUE_NOTICE",
+              "roles": [
+                "TASK_CREATOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "EXPIRE",
+              "nextState": "EXPIRED",
+              "roles": [
+                "TASK_CREATOR",
+                "CITIZEN",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 172800000,
+          "state": "ISSUE_NOTICE",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "SEND",
+              "nextState": "NOTICE_SENT",
+              "roles": [
+                "TASK_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 3888000000,
+          "state": "NOTICE_SENT",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "SERVED",
+              "nextState": "DELIVERED",
+              "roles": [
+                "TASK_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "NOT_SERVED",
+              "nextState": "RE_ISSUE",
+              "roles": [
+                "TASK_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN",
+                "AUTO_ESCALATE"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 86400000,
+          "state": "RE_ISSUE",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "NEW_NOTICE",
+              "nextState": "UNDELIVERED",
+              "roles": [
+                "TASK_CREATOR",
+                "TASK_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "DELIVERED",
+          "applicationStatus": "ACTIVE",
+          "isStateUpdatable": false,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true
+        },
+        {
+          "sla": null,
+          "state": "UNDELIVERED",
+          "applicationStatus": "INACTIVE",
+          "isStateUpdatable": false,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true
+        },
+        {
+          "sla": null,
+          "state": "ABATED",
+          "applicationStatus": "INACTIVE",
+          "isStateUpdatable": false,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true
+        },
+        {
+          "sla": null,
+          "state": "EXPIRED",
+          "applicationStatus": "INACTIVE",
+          "isStateUpdatable": false,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true
+        }
+      ]
+    },
+    {
+      "tenantId": "kl",
+      "business": "task",
+      "businessService": "task-summons",
+      "businessServiceSla": 4147200000,
+      "states": [
+        {
+          "sla": null,
+          "state": null,
+          "applicationStatus": null,
+          "docUploadRequired": true,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "CREATE",
+              "nextState": "PENDING_PAYMENT",
+              "roles": [
+                "TASK_CREATOR"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 172800000,
+          "state": "PENDING_PAYMENT",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": true,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "MAKE_PAYMENT",
+              "nextState": "ISSUE_SUMMON",
+              "roles": [
+                "TASK_CREATOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "EXPIRE",
+              "nextState": "EXPIRED",
+              "roles": [
+                "TASK_CREATOR",
+                "CITIZEN",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 172800000,
+          "state": "ISSUE_SUMMON",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "SEND",
+              "nextState": "SUMMON_SENT",
+              "roles": [
+                "TASK_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 3888000000,
+          "state": "SUMMON_SENT",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "SERVED",
+              "nextState": "DELIVERED",
+              "roles": [
+                "TASK_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "NOT_SERVED",
+              "nextState": "RE_ISSUE",
+              "roles": [
+                "TASK_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN",
+                "AUTO_ESCALATE"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 86400000,
+          "state": "RE_ISSUE",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "NEW_SUMMON",
+              "nextState": "UNDELIVERED",
+              "roles": [
+                "TASK_CREATOR",
+                "TASK_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "DELIVERED",
+          "applicationStatus": "ACTIVE",
+          "isStateUpdatable": false,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true
+        },
+        {
+          "sla": null,
+          "state": "UNDELIVERED",
+          "applicationStatus": "INACTIVE",
+          "isStateUpdatable": false,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true
+        },
+        {
+          "sla": null,
+          "state": "ABATED",
+          "applicationStatus": "INACTIVE",
+          "isStateUpdatable": false,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true
+        },
+        {
+          "sla": null,
+          "state": "EXPIRED",
+          "applicationStatus": "INACTIVE",
+          "isStateUpdatable": false,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true
+        }
+      ]
+    },
+    {
+      "tenantId": "kl",
+      "businessService": "task-warrant",
+      "business": "task",
+      "businessServiceSla": 4320000000,
+      "states": [
+        {
+          "sla": null,
+          "state": null,
+          "applicationStatus": null,
+          "docUploadRequired": true,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "CREATE",
+              "nextState": "PENDING_PAYMENT",
+              "roles": [
+                "TASK_CREATOR"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 172800000,
+          "state": "PENDING_PAYMENT",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": true,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "MAKE_PAYMENT",
+              "nextState": "ISSUE_WARRANT",
+              "roles": [
+                "TASK_CREATOR",
+                "SYSTEM",
+                "CITIZEN",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "EXPIRE",
+              "nextState": "EXPIRED",
+              "roles": [
+                "TASK_CREATOR",
+                "CITIZEN",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 388000000,
+          "state": "ISSUE_WARRANT",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "SEND",
+              "nextState": "WARRANT_SENT",
+              "roles": [
+                "TASK_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 3888000000,
+          "state": "WARRANT_SENT",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "DELIVERED",
+              "nextState": "EXECUTED",
+              "roles": [
+                "TASK_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "NOT_DELIVERED",
+              "nextState": "NOT_EXECUTED",
+              "roles": [
+                "TASK_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN",
+                "AUTO_ESCALATE"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "EXECUTED",
+          "applicationStatus": "ACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": null
+        },
+        {
+          "sla": null,
+          "state": "NOT_EXECUTED",
+          "applicationStatus": "ACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": null
+        },
+        {
+          "sla": null,
+          "state": "ABATED",
+          "applicationStatus": "INACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": null
+        },
+        {
+          "sla": null,
+          "state": "EXPIRED",
+          "applicationStatus": "INACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": null
+        }
+      ]
+    }
+  ]
+}

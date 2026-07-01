@@ -13,6 +13,7 @@ import { useGetPendingTask } from "./orders/useGetPendingTask";
 import useUpdateEpost from "./Epost/UpdateEpost";
 import useDocumentUpload from "./orders/useDocumentUpload";
 import useSearchOrdersNotificationService from "./orders/useSearchOrdersNotificationService";
+import useSearchMiscellaneousTemplate from "./orders/useSearchMiscellaneousTemplate";
 
 const orders = {
   useIndividualView,
@@ -21,6 +22,7 @@ const orders = {
   useSearchOrdersNotificationService,
   useGetPendingTask,
   useDocumentUpload,
+  useSearchMiscellaneousTemplate,
 };
 
 const Epost = {

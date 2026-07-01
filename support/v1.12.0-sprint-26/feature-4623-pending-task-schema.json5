@@ -1,0 +1,92 @@
+{
+  "tenantId": "kl",
+  "code": "common-masters.PendingTaskType",
+  "description": null,
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "required": [
+      "id",
+      "pendingTask",
+      "actor",
+      "triggerAction",
+      "state",
+      "workflowModule",
+      "closerAction",
+      "screenType"
+    ],
+    "x-unique": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "actor": {
+        "type": "string"
+      },
+      "state": {
+        "type": "string"
+      },
+      "isgeneric": {
+        "type": "boolean"
+      },
+      "screenType": {
+        "type": "string"
+      },
+      "pendingTask": {
+        "type": "string"
+      },
+      "closerAction": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "defaultRoles": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "triggerAction": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "actionCategory": {
+        "type": "string"
+      },
+      "workflowModule": {
+        "type": "string"
+      },
+      "stateSla": {
+        "type": "string"
+      },
+      "referenceEntityTypeNameMapping": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "referenceEntityType"
+          ],
+          "properties": {
+            "pendingTaskName": {
+              "type": "string"
+            },
+            "referenceEntityType": {
+              "type": "string"
+            },
+            "actionCategory": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "additionalProperties": false
+  },
+  "isActive": true
+}

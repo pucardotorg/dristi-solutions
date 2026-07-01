@@ -33,9 +33,10 @@ const createPartyConfig = (index) => ({
     },
     {
       label: "PARTY_PHONE_NUMBER",
+      labelChildren: "optional",
       type: "number",
       key: `phoneNumber${index}`,
-      isMandatory: true,
+      isMandatory: false,
       populators: {
         name: `phoneNumber${index}`,
         error: "INVALID_PHONE_NUMBER",
@@ -46,16 +47,17 @@ const createPartyConfig = (index) => ({
           pattern: "[0-9]+",
           max: "9999999",
         },
-        required: true,
-        isMandatory: true,
+        required: false,
+        isMandatory: false,
         customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
       },
     },
     {
       label: "PARTY_EMAIL_ID",
+      labelChildren: "optional",
       key: `emailId${index}`,
       type: "text",
-      isMandatory: true,
+      isMandatory: false,
       populators: {
         name: `emailId${index}`,
         error: "CS_ENTER_VALID_EMAIL",
@@ -83,6 +85,7 @@ const createPartyConfig = (index) => ({
       inline: true,
       isMandatory: false,
       component: "SelectCustomTextArea",
+      isInfinite: true,
       populators: {
         inputs: [
           {

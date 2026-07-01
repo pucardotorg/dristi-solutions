@@ -1,17 +1,20 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Banner, Button, CloseSvg, FormComposerV2, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
+import { Banner, Button, CloseSvg, Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { Urls } from "../../hooks/services/Urls";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 import isEqual from "lodash/isEqual";
 import { hearingService } from "../../hooks/services";
-import Axios from "axios";
 import { useHistory } from "react-router-dom";
 import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 import BulkRescheduleModal from "../../components/BulkRescheduleModal";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const CloseBtn = ({ onClick }) => {
@@ -44,7 +47,6 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
 
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
@@ -55,14 +57,14 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const [isBulkRescheduleDisabled, setIsBulkRescheduleDisabled] = useState(true);
   const [businessOfTheDay, setBusinessOfTheDay] = useState("");
   const [Loading, setLoader] = useState(false);
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const accessToken = window.localStorage.getItem("token");
 
   const name = "Signature";
   const pageModule = "en";
-  const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
-  const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+  const courtId = localStorage.getItem("courtId");
 
   const bulkNotificationStepper = sessionStorage.getItem("bulkNotificationStepper")
     ? parseInt(sessionStorage.getItem("bulkNotificationStepper"))
@@ -85,6 +87,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     : null;
 
   const currentDiaryEntry = history.location?.state?.diaryEntry;
+  const isADiarySigned = history.location?.state?.aDiarySigned;
   const [bulkFormData, setBulkFormData] = useState(currentDiaryEntry?.additionalDetails?.formData || bulkNotificationFormData || {});
   const [bulkToDate, setBulkToDate] = useState(bulkFormData?.toDate || selectedDate);
   const [bulkFromDate, setBulkFromDate] = useState(bulkFormData?.fromDate || selectedDate);
@@ -95,6 +98,8 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const [notificationFileStoreId, setNotificationFileStoreId] = useState(bulkNotificationFileStoreId);
   const [notificationReviewBlob, setNotificationReviewBlob] = useState({});
   const [notificationReviewFilename, setNotificationReviewFilename] = useState("");
+  const [issignLoader, setSignLoader] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
 
@@ -103,13 +108,6 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     toDate: bulkFormData?.toDate || selectedDate,
     fromDate: bulkFormData?.fromDate || selectedDate,
     reason: bulkFormData?.reason || "",
-  };
-
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
   };
 
   useEffect(() => {
@@ -135,35 +133,15 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         tenantId,
         fromDate: bulkFromDate ? bulkFromDate : null,
         toDate: bulkToDate ? bulkToDate + 24 * 60 * 60 * 1000 - 1 : null, //to get the end of the day
+        ...(courtId && userType === "employee" && { courtId }),
       },
     },
     {},
     `${bulkFromDate}-${bulkToDate}`,
-    Boolean(bulkFromDate && bulkToDate && stepper > 0)
+    Boolean(bulkFromDate && bulkToDate && stepper > 0 && courtId)
   );
 
-  function formatTimeFromEpoch(epoch) {
-    return new Date(epoch).toLocaleTimeString("en-GB", { hour12: false });
-  }
-
-  function timeToSeconds(timeStr) {
-    const [hours, minutes, seconds] = timeStr.split(":").map(Number);
-    return hours * 3600 + minutes * 60 + seconds;
-  }
   const bulkHearingsCount = useMemo(() => {
-    // if (bulkFormData?.slotIds?.length > 0) {
-    //   const filteredHearings = hearingDetails?.HearingList?.filter((hearing) => {
-    //     const hearingStart = timeToSeconds(formatTimeFromEpoch(hearing.startTime));
-
-    //     return (
-    //       hearing?.status != "COMPLETED" &&
-    //       bulkFormData?.slotIds?.some((slot) => hearingStart >= timeToSeconds(slot.slotStartTime) && hearingStart <= timeToSeconds(slot.slotEndTime))
-    //     );
-    //   });
-
-    //   setOriginalHearingData(filteredHearings);
-    //   return filteredHearings?.length || 0;
-    // }
     setOriginalHearingData(hearingDetails?.HearingList);
     const filteredHearings = hearingDetails?.HearingList?.filter((hearing) => hearing?.status !== "COMPLETED");
     return filteredHearings?.length || 0;
@@ -179,27 +157,10 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
+  const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const clearLocalStorage = () => {
     sessionStorage.removeItem("bulkNotificationStepper");
@@ -227,6 +188,11 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       });
 
       const newFileStoreId = signedDocumentUploadID || localStorageID;
+      if (!newFileStoreId || newFileStoreId === notificationFileStoreId) {
+        setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+        setLoader(false);
+        return;
+      }
       fileStoreIds.delete(newFileStoreId);
       await hearingService?.updateNotification({
         notification: {
@@ -270,11 +236,15 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       const diaryEntries = newHearingData?.map((hearing) => {
         return {
           courtId: courtId,
-          businessOfDay: `No sitting notified on ${formatDate(hearing?.originalHearingDate)}. Case posted to ${formatDate(hearing?.hearingDate)}`,
+          businessOfDay: `No sitting notified on ${DateUtils.getFormattedDate(
+            hearing?.originalHearingDate,
+            "DD-MM-YYYY",
+            "/"
+          )}. Case posted to ${DateUtils.getFormattedDate(hearing?.hearingDate, "DD-MM-YYYY", "/")}`,
           tenantId: tenantId,
           entryDate: new Date().setHours(0, 0, 0, 0),
           hearingDate: hearing?.startTime,
-          referenceType: "bulkreschedule",
+          referenceType: "notice",
           caseNumber: hearing?.caseId,
           referenceId: notificationNumber,
           additionalDetails: {
@@ -291,9 +261,10 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       setIsSigned(false);
       setStepper((prev) => prev + 1);
     } catch (error) {
-      console.log("Error :", error);
+      console.error("Error :", error);
       setLoader(false);
-      showToast("error", t("ISSUE_IN_BULK_HEARING"), 5000);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ISSUE_IN_BULK_HEARING"), error: true, errorId });
       setStepper(0);
       setIsSigned(false);
       setSignedDocumentUploadID("");
@@ -317,8 +288,9 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           history.goBack();
         });
     } catch (error) {
-      console.error("error: ", error);
-      showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+      console.error("Failed to update business of the day entry:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("UPDATE_BUSINESS_OF_DAY_FAILED"), error: true, errorId });
     }
   };
 
@@ -473,16 +445,11 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     }
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-  };
-
   const onSumbitReschedule = async () => {
     try {
       setLoader(true);
 
-      const response = await Axios.post(
+      const response = await axiosInstance.post(
         Urls.hearing.createNotificationPdf,
 
         {
@@ -490,7 +457,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
             authToken: accessToken,
             userInfo: userInfo,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+            apiId: "Dristi",
           },
           BulkReschedule: {
             reason: bulkFormData?.reason,
@@ -541,7 +508,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         setNotificationFileStoreId(fileStoreId);
         setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, fileStoreId]));
       } else if (!notificationFileStoreId) {
-        showToast("error", t("SOME_ERRORS_IN_HEARING_RESCHEDULE"), 5000);
+        setShowToast({ label: t("SOME_ERRORS_IN_HEARING_RESCHEDULE"), error: true, errorId: null });
         return;
       }
       const caseNumbers = newHearingData?.filter((hearing) => hearing?.caseId).map((hearing) => hearing.caseId);
@@ -576,10 +543,12 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     downloadPdf(tenantId, downloadFileStoreId);
   };
 
-  const onUploadSubmit = async () => {
+  const onUploadSubmit = async (combineResult) => {
     if (signFormData?.uploadSignature?.Signature?.length > 0) {
       try {
-        const uploadedFileId = await uploadDocuments(signFormData?.uploadSignature?.Signature, tenantId);
+        setSignLoader(true);
+        const filesToUpload = combineResult?.combinedFiles || signFormData?.uploadSignature?.Signature;
+        const uploadedFileId = await uploadDocuments(filesToUpload, tenantId);
         const newFileStoreId = uploadedFileId?.[0]?.fileStoreId;
         setSignedDocumentUploadID(newFileStoreId);
         setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, newFileStoreId]));
@@ -589,6 +558,12 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         console.error("error", error);
         setSignFormData({});
         setIsSigned(false);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+        setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
+        setShowToast({ label: t(errorCode), error: true, errorId });
+      } finally {
+        setSignLoader(false);
       }
     }
   };
@@ -611,11 +586,12 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
           bulkFromDate={bulkFromDate}
           bulkToDate={bulkToDate}
-          toastMsg={toastMsg}
-          setToastMsg={setToastMsg}
+          showToast={showToast}
+          setShowToast={setShowToast}
           setNewHearingData={setNewHearingData}
           newHearingData={newHearingData}
           bulkFormData={bulkFormData}
+          isADiarySigned={isADiarySigned}
         />
       )}
       {stepper === 2 && (
@@ -683,7 +659,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
                     sessionStorage.setItem("bulkNewHearingData", JSON.stringify(newHearingData));
                     sessionStorage.setItem("bulkNotificationNumber", JSON.stringify(notificationNumber));
                     sessionStorage.setItem("bulkNotificationFileStoreId", JSON.stringify(notificationFileStoreId));
-                    handleEsign(name, pageModule, notificationFileStoreId, "Signature");
+                    handleEsign(name, pageModule, notificationFileStoreId, setShowToast, t, "Signature");
                   }} //as sending null throwing error in esign
                   className="aadhar-sign-in"
                   labelClassName="aadhar-sign-in"
@@ -714,15 +690,18 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       )}
 
       {stepper === 3 && openUploadSignatureModal && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key={name}
           name={name}
-          setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+          onClose={() => setOpenUploadSignatureModal(false)}
           onSelect={onSelect}
-          config={uploadModalConfig}
           formData={signFormData}
           onSubmit={onUploadSubmit}
+          isDisabled={issignLoader}
+          isParentLoading={issignLoader}
+          fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
 
@@ -828,13 +807,13 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           </div>
         </Modal>
       )}
-      {toastMsg && (
-        <Toast
-          error={toastMsg.key === "error"}
-          label={t(toastMsg.action)}
-          onClose={() => setToastMsg(null)}
-          isDleteBtn={true}
-          style={{ maxWidth: "500px" }}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
         />
       )}
     </React.Fragment>

@@ -1,0 +1,60 @@
+[
+  {
+    "tenantId": "kl",
+    "masterName": "INBOX",
+    "moduleName": "InboxQueryConfiguration",
+    "mdmsPayload": [
+      {
+        "id": "34cb5f4b-0dcf-4dc9-991b-5ffcca3a1436",
+        "tenantId": "kl",
+        "schemaCode": "INBOX.InboxQueryConfiguration",
+        "uniqueIdentifier": "bail-bond-index",
+        "data": {
+          "index": "bail-bond-index",
+          "module": "Bail Bond Service",
+          "sortBy": {
+            "path": "Data.bailDetails.caseNumber.keyword",
+            "defaultOrder": "DESC"
+          },
+          "sourceFilterPathList": [
+            "Data"
+          ],
+          "allowedSearchCriteria": [
+            {
+              "name": "caseNumber",
+              "path": "Data.bailDetails.caseNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseTitle",
+              "path": "Data.bailDetails.caseTitle.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "searchableFields",
+              "path": "Data.bailDetails.searchableFields.keyword",
+              "operator": "WILDCARD",
+              "isMandatory": false
+            },
+            {
+              "name": "tenantId",
+              "path": "Data.bailDetails.tenantId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "courtId",
+              "path": "Data.bailDetails.courtId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "status",
+              "path": "Data.bailDetails.status.keyword",
+              "isMandatory": false
+            }
+          ]
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

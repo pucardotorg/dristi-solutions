@@ -1,0 +1,15 @@
+[
+  {
+    "id": "2dfa01a4-c780-462e-9e6e-b10f8814e259",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.Designation",
+    "uniqueIdentifier": "JUDICIAL_MAGISTRATE",
+    "data": {
+      "code": "JUDICIAL_MAGISTRATE",
+      "name": "Judicial Magistrate of First Class",
+      "active": true,
+      "description": "Judicial Magistrate of First Class"
+    },
+    "isActive": true
+  }
+]

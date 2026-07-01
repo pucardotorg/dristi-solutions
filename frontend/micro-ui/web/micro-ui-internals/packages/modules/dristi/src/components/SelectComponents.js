@@ -1,10 +1,10 @@
 import { CardLabel, CardLabelError, LabelFieldPair, TextInput, RadioButtons } from "@egovernments/digit-ui-react-components";
-import Axios from "axios";
 import React, { useMemo, useState } from "react";
 import LocationSearch from "./LocationSearch";
 import { generateUUID, formatAddress } from "../Utils";
 import SelectCustomNote from "./SelectCustomNote";
 import { Controller } from "react-hook-form";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const getLocation = (places, code) => {
   let location = null;
@@ -50,7 +50,7 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
 
   const getLatLngByPincode = async (pincode) => {
     const key = window?.globalConfigs?.getConfig("GMAPS_API_KEY");
-    const response = await Axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${pincode}&key=${key}`);
+    const response = await axiosInstance.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${pincode}&key=${key}`);
     return response;
   };
 
@@ -231,7 +231,7 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
       } else if (config?.key === "addressDetails") {
         onSelect("currentAddressDetails", {
           ...formData?.["currentAddressDetails"],
-          isCurrAddrSame: { "code": "NO", "name": "NO" }
+          isCurrAddrSame: { code: "NO", name: "NO" },
         });
         onSelect("complainantVerification", {
           ...formData?.["complainantVerification"],
@@ -243,7 +243,7 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
               [input]: value,
               coordinates: formData?.["addressDetails"]?.coordinates ? formData["addressDetails"].coordinates : { longitude: "", latitude: "" },
             },
-            "currentAddressDetails": {...formData?.["currentAddressDetails"], isCurrAddrSame: { "code": "NO", "name": "NO" } },
+            currentAddressDetails: { ...formData?.["currentAddressDetails"], isCurrAddrSame: { code: "NO", name: "NO" } },
           },
         });
       } else if (config?.key === "currentAddressDetails") {
@@ -255,7 +255,9 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
             currentAddressDetails: {
               ...formData?.["currentAddressDetails"],
               [input]: value,
-              coordinates: formData?.["currentAddressDetails"]?.coordinates ? formData["currentAddressDetails"].coordinates : { longitude: "", latitude: "" },
+              coordinates: formData?.["currentAddressDetails"]?.coordinates
+                ? formData["currentAddressDetails"].coordinates
+                : { longitude: "", latitude: "" },
             },
           },
         });
@@ -269,9 +271,13 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
   };
   return (
     <div>
-      {config?.withoutLabel && <CardLabel className="card-label-smaller" style={{paddingBottom: "10px"}}>{t(config?.label)}</CardLabel>}
+      {config?.withoutLabel && (
+        <CardLabel className="card-label-smaller" style={{ paddingBottom: "10px" }}>
+          {t(config?.label)}
+        </CardLabel>
+      )}
       {config?.notes && <SelectCustomNote t={t} config={config?.notes} onClick={() => {}} />}
-        
+
       {inputs?.map((input, index) => {
         let currentValue = (formData && formData[configKey] && formData[configKey][input.name]) || "";
         let isFirstRender = true;

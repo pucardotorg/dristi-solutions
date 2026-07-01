@@ -4,6 +4,8 @@ import OverlayDropdown from "../components/HearingOverlayDropdown";
 import { hearingService } from "../hooks/services";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { formatNoticeDeliveryDate } from "@egovernments/digit-ui-module-home/src/utils";
+import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
+import { USER_TYPES, USER_ROLES, STATUS_TYPES } from "../utils/constants";
 
 function normalizeData(input) {
   try {
@@ -17,6 +19,8 @@ function normalizeData(input) {
 export const UICustomizations = {
   PreHearingsConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
+      const courtId = requestCriteria?.body?.courtId;
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       const updatedCriteria = {
         processSearchCriteria: {
           businessService: ["hearing-default"],
@@ -27,6 +31,8 @@ export const UICustomizations = {
           fromDate: requestCriteria?.params.fromDate,
           toDate: requestCriteria?.params.toDate,
           tenantId: requestCriteria?.params?.tenantId,
+          ...(courtId && { courtId }),
+          ...(userInfo?.type === USER_TYPES.CITIZEN && { searchableFields: additionalDetails?.attendeeIndividualId }),
         },
         tenantId: requestCriteria?.params?.tenantId,
         limit: requestCriteria?.state?.tableForm?.limit || 10,
@@ -42,16 +48,17 @@ export const UICustomizations = {
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-      const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+      const userType = userInfo?.type === USER_TYPES.CITIZEN ? "citizen" : "employee";
+      const courtId = localStorage.getItem("courtId");
       const searchParams = new URLSearchParams();
       const showAction =
-        userInfo?.roles.map((role) => role.code).includes("HEARING_EDITOR") || row.hearing.status === HearingWorkflowState?.INPROGRESS;
+        userInfo?.roles.map((role) => role.code).includes(USER_ROLES.HEARING_EDITOR) || row.hearing.status === HearingWorkflowState?.INPROGRESS;
       searchParams.set("hearingId", row.hearingId);
       switch (key) {
         case "Actions":
           return (
             <div style={{ display: "flex", justifyContent: "flex-end  ", alignItems: "center" }}>
-              {row.hearing.status === "SCHEDULED" && userInfo?.roles.map((role) => role.code).includes("HEARING_EDITOR") && (
+              {row.hearing.status === STATUS_TYPES.SCHEDULED && userInfo?.roles.map((role) => role.code).includes(USER_ROLES.HEARING_EDITOR) && (
                 <Button
                   variation={"secondary"}
                   label={t(`START_HEARING`)}
@@ -62,13 +69,14 @@ export const UICustomizations = {
                           criteria: {
                             hearingId: row?.hearingId,
                             tenantId: row?.tenantId,
+                            ...(courtId && userType === USER_TYPES.EMPLOYEE.toLocaleLowerCase() && { courtId }),
                           },
                         },
                         { tenantId: row?.tenantId }
                       )
                       .then((response) => {
                         hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                          window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
+                          window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row.caseId}&filingNumber=${row.filingNumber}&tab=Overview`;
                         });
                       });
                   }}
@@ -82,26 +90,28 @@ export const UICustomizations = {
                   }}
                 />
               )}
-              {row.hearing.status === "SCHEDULED" && !userInfo.roles.map((role) => role.code).includes("HEARING_EDITOR") && (
+              {row.hearing.status === STATUS_TYPES.SCHEDULED && !userInfo.roles.map((role) => role.code).includes(USER_ROLES.HEARING_EDITOR) && (
                 <span style={{ color: "#007E7E" }}>{t("HEARING_AWAITING_START")}</span>
               )}
-              {row.hearing.status === HearingWorkflowState?.INPROGRESS && userInfo.roles.map((role) => role.code).includes("HEARING_EDITOR") && (
-                <Button
-                  variation={"secondary"}
-                  label={t("JOIN_HEARING")}
-                  onButtonClick={() => {
-                    window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
-                  }}
-                  style={{ marginRight: "1rem" }}
-                  textStyles={{
-                    fontFamily: "Roboto",
-                    fontSize: "16px",
-                    fontWeight: 700,
-                    lineHeight: "18.75px",
-                    textAlign: "center",
-                  }}
-                />
-              )}
+              {row.hearing.status === HearingWorkflowState?.INPROGRESS &&
+                userInfo.roles.map((role) => role.code).includes(USER_ROLES.HEARING_EDITOR) && (
+                  <Button
+                    variation={"secondary"}
+                    label={t("JOIN_HEARING")}
+                    onButtonClick={() => {
+                      const path = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row.caseId}&filingNumber=${row.filingNumber}&tab=Overview`;
+                      window.location = path;
+                    }}
+                    style={{ marginRight: "1rem" }}
+                    textStyles={{
+                      fontFamily: "Roboto",
+                      fontSize: "16px",
+                      fontWeight: 700,
+                      lineHeight: "18.75px",
+                      textAlign: "center",
+                    }}
+                  />
+                )}
               {showAction && (
                 <OverlayDropdown
                   styles={{
@@ -121,6 +131,8 @@ export const UICustomizations = {
               )}
             </div>
           );
+        case "CS_STAGE":
+          return t(value);
         default:
           return t("ES_COMMON_NA");
       }
@@ -129,10 +141,10 @@ export const UICustomizations = {
       const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
       const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-      const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+      const userType = userInfo?.type === USER_TYPES.CITIZEN ? "citizen" : "employee";
       const searchParams = new URLSearchParams();
       const future = row.hearing.startTime > Date.now();
-      if (userInfo?.roles.map((role) => role.code).includes("EMPLOYEE")) {
+      if (userInfo?.roles.map((role) => role.code).includes(USER_ROLES.EMPLOYEE)) {
         if (future) {
           return [
             {
@@ -292,7 +304,10 @@ export const UICustomizations = {
                 (data) =>
                   data?.filingNumber === additionalDetails?.filingNumber &&
                   data?.orderId === additionalDetails?.orderId &&
-                  (!additionalDetails?.itemId || data?.additionalDetails?.itemId === additionalDetails?.itemId)
+                  (additionalDetails?.orderType === "SCHEDULE_OF_HEARING_DATE" ||
+                    !additionalDetails?.itemId ||
+                    data?.additionalDetails?.itemId === additionalDetails?.itemId ||
+                    data?.additionalDetails?.reissueSourceWarrantId)
               )
               ?.map((data) => {
                 let taskDetail = structuredClone(data?.taskDetails);
@@ -300,22 +315,72 @@ export const UICustomizations = {
                 const channelDetailsEnum = {
                   SMS: "phone",
                   Email: "email",
+                  EMAIL: "email",
                   Post: "address",
+                  EPOST: "address",
                   Police: "address",
+                  POLICE: "address",
                   RPAD: "address",
                 };
-                const channelDetails = taskDetail?.respondentDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]];
+                function mapStatus(status, taskType) {
+                  const mapping = {
+                    ISSUE_WARRANT: {
+                      PROCLAMATION: "ISSUE_PROCLAMATION",
+                      ATTACHMENT: "ISSUE_ATTACHMENT",
+                    },
+                    WARRANT_SENT: {
+                      PROCLAMATION: "PROCLAMATION_SENT",
+                      ATTACHMENT: "ATTACHMENT_SENT",
+                    },
+                  };
+                  return mapping[status]?.[taskType] || status; // fallback to original
+                }
+                let chanelDeatils = "";
+                if (data?.taskType === "MISCELLANEOUS_PROCESS") {
+                  const type = taskDetail?.miscellaneuosDetails?.addressee;
+                  switch (type) {
+                    case "POLICE":
+                      const policeDetails = taskDetail?.policeDetails;
+                      chanelDeatils = `${policeDetails?.name}, ${policeDetails?.district}`;
+                      break;
+                    case "OTHER":
+                      const othersDetails = taskDetail?.others;
+                      chanelDeatils = `${othersDetails?.name}`;
+                      break;
+                    default:
+                      chanelDeatils = "-";
+                      break;
+                  }
+                } else {
+                  const data =
+                    taskDetail?.respondentDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]] ||
+                    taskDetail?.witnessDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]];
+                  chanelDeatils = typeof data === "object" ? generateAddress({ ...data }) : data;
+                }
+
                 return {
                   deliveryChannel: taskDetail?.deliveryChannels?.channelName,
-                  channelDetails: typeof channelDetails === "object" ? generateAddress({ ...channelDetails }) : channelDetails,
-                  status: data?.status,
+                  channelDetails: chanelDeatils,
+                  status: mapStatus(data?.status, data?.taskType),
                   remarks: taskDetail?.remarks?.remark,
                   statusChangeDate: taskDetail?.deliveryChannels?.statusChangeDate,
                   taskType: data?.taskType,
                   documents: data?.documents,
+                  feePaidDate: taskDetail?.deliveryChannels?.feePaidDate,
                 };
               });
-            return { list: taskData };
+            if (typeof additionalDetails?.setHasTasks === "function") {
+              additionalDetails.setHasTasks(taskData.length > 0);
+            }
+
+            if (typeof additionalDetails?.setHearingDateInfo === "function") {
+              const caseDetails = data?.list?.[0]?.taskDetails?.caseDetails;
+              additionalDetails.setHearingDateInfo({
+                originalHearingDate: caseDetails?.originalHearingDate || null,
+                hearingDate: caseDetails?.hearingDate || null,
+              });
+            }
+            return { list: taskData || [] };
           },
         },
       };
@@ -335,9 +400,27 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       switch (key) {
         case "Status":
-          return t(value);
+          return (
+            <CustomChip
+              text={t(value)}
+              shade={
+                value === "DELIVERED"
+                  ? "green"
+                  : value === "UNDELIVERED" || value === "PAYMENT_EXPIRED"
+                  ? "red"
+                  : value === "pending" || value === "PAYMENT_PENDING"
+                  ? "grey"
+                  : "orange"
+              }
+            />
+          );
+        // return t(value);
         case "DELIEVRY_DATE":
           return formatNoticeDeliveryDate(value) || "N/A";
+        case "PROCESS_FEE_PAID_ON":
+          return value || "-";
+        case "Delivery Channels":
+          return value === "EPOST" ? t("CS_POST") : t(value);
         default:
           return t("ES_COMMON_NA");
       }

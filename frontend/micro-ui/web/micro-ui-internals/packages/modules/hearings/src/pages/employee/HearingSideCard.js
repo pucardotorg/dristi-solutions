@@ -62,29 +62,6 @@ const HearingSideCard = ({ hearingId, caseId, filingNumber }) => {
             iconFill={"#1C1B1F"}
             onClick={() => handleNavigate("dristi/home/view-case", { tab: "Submissions" })}
           />
-          {/* <Button
-            label={"Case History"}
-            variation={"default"}
-            style={{
-              border: "1px solid",
-              borderColor: "#E8E8E8",
-              width: "100%",
-              justifyContent: "center",
-              backgroundColor: "#fff",
-            }}
-            textStyles={{
-              fontFamily: "Roboto",
-              fontSize: "16px",
-              fontWeight: 700,
-              lineHeight: "18.75px",
-              textAlign: "center",
-              color: "#3D3C3C",
-            }}
-            className={"take-action-btn-class"}
-            icon={"History"}
-            iconFill={"#1C1B1F"}
-            onClick={() => handleNavigate("dristi/home/view-case", { tab: "History" })}
-          /> */}
           <Button
             label={t("PARTIES")}
             variation={"default"}

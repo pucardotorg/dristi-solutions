@@ -1,0 +1,189 @@
+{
+  "BusinessServices": [
+    {
+      "tenantId": "kl",
+      "business": "digitalized-document",
+      "businessService": "digitalized-document-mediation",
+      "businessServiceSla": 518400000,
+      "states": [
+        {
+          "sla": null,
+          "state": null,
+          "applicationStatus": null,
+          "docUploadRequired": false,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "INITIATE_E-SIGN",
+              "nextState": "PENDING_E-SIGN",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            },
+            {
+              "action": "INITIATE_UPLOAD",
+              "nextState": "PENDING_UPLOAD",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "PENDING_E-SIGN",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "E-SIGN",
+              "nextState": "PENDING_E-SIGN",
+              "roles": [
+                "MEDIATION_SIGNER"
+              ]
+            },
+            {
+              "action": "SKIP_SIGN_AND_SUBMIT",
+              "nextState": "PENDING_REVIEW",
+              "roles": [
+                "MEDIATION_SIGNER"
+              ]
+            },
+            {
+              "action": "E-SIGN_COMPLETE",
+              "nextState": "PENDING_REVIEW",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "INITIATE_E-SIGN",
+              "nextState": "PENDING_E-SIGN",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            },
+            {
+              "action": "INITIATE_UPLOAD",
+              "nextState": "PENDING_UPLOAD",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            },
+            {
+              "action": "DELETE_DRAFT",
+              "nextState": "DELETED_DRAFT",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "PENDING_UPLOAD",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "UPLOAD",
+              "nextState": "PENDING_REVIEW",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            },
+            {
+              "action": "INITIATE_UPLOAD",
+              "nextState": "PENDING_UPLOAD",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            },
+            {
+              "action": "INITIATE_E-SIGN",
+              "nextState": "PENDING_E-SIGN",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            },
+            {
+              "action": "DELETE_DRAFT",
+              "nextState": "DELETED_DRAFT",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "PENDING_REVIEW",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "SIGN",
+              "nextState": "COMPLETED",
+              "roles": [
+                "MEDIATION_APPROVER",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "INITIATE_E-SIGN",
+              "nextState": "PENDING_E-SIGN",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            },
+            {
+              "action": "INITIATE_UPLOAD",
+              "nextState": "PENDING_UPLOAD",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            },
+            {
+              "action": "DELETE_DRAFT",
+              "nextState": "DELETED_DRAFT",
+              "roles": [
+                "MEDIATION_CREATOR"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "DELETED_DRAFT",
+          "applicationStatus": "INACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false
+        },
+        {
+          "sla": null,
+          "state": "COMPLETED",
+          "applicationStatus": "ACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false
+        }
+      ]
+    }
+  ]
+}

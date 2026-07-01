@@ -1,0 +1,38 @@
+// TODO : can be added through workbench UI
+[
+  [
+    {
+      "tenantId": "kl",
+      "schemaCode": "Order.DigitalizationForm",
+      "uniqueIdentifier": "3",
+      "data": {
+        "id": 3,
+        "code": "PLEA",
+        "name": "PLEA"
+      },
+      "isActive": true
+    },
+    {
+      "tenantId": "kl",
+      "schemaCode": "Order.DigitalizationForm",
+      "uniqueIdentifier": "2",
+      "data": {
+        "id": 2,
+        "code": "EXAMINATION_OF_ACCUSED",
+        "name": "EXAMINATION_OF_ACCUSED"
+      },
+      "isActive": true
+    },
+    {
+      "tenantId": "kl",
+      "schemaCode": "Order.DigitalizationForm",
+      "uniqueIdentifier": "1",
+      "data": {
+        "id": 1,
+        "code": "MEDIATION",
+        "name": "MEDIATION"
+      },
+      "isActive": true
+    }
+  ]
+]

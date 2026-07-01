@@ -1,0 +1,562 @@
+[{
+  "tenantId": "kl",
+  "masterName": "common-masters",
+  "moduleName": "PendingTaskType",
+  "mdmsPayload": [
+    //schema update
+    {
+      "id": "7fdf132a-8d0e-430c-99bf-0532da21553a",
+      "tenantId": "kl",
+      "code": "common-masters.PendingTaskType",
+      "description": null,
+      "definition": {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "required": [
+          "id",
+          "pendingTask",
+          "actor",
+          "triggerAction",
+          "state",
+          "workflowModule",
+          "closerAction",
+          "screenType"
+        ],
+        "x-unique": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "isgeneric": {
+            "type": "boolean"
+          },
+          "screenType": {
+            "type": "string"
+          },
+          "actionCategory": {
+            "type": "string"
+          },
+          "pendingTask": {
+            "type": "string"
+          },
+          "closerAction": {
+            "type": "array",
+            "items": [
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "triggerAction": {
+            "type": "array",
+            "items": [
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "workflowModule": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "createdTime": 1740565416796,
+        "lastModifiedTime": 1740565416796
+      }
+    },
+
+    //data update
+    {
+      "id": "aa57771a-a58f-4bb6-9a44-354cdc7763c9",
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "1",
+      "data": {
+        "closerAction": [
+          "SEND_BACK",
+          "REGISTER"
+        ],
+        "triggerAction": [
+          "VALIDATE"
+        ],
+        "id": "1",
+        "actor": "Judge",
+        "state": "PENDING_REGISTRATION",
+        "isgeneric": false,
+        "screenType": "home",
+        "pendingTask": "Register Case",
+        "workflowModule": "case-default",
+        "actionCategory": "Register cases"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+        "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+        "createdTime": 1724750461420,
+        "lastModifiedTime": 1748345437658
+      }
+    },
+    {
+      "id": "59041f95-c91e-4a6f-a9a0-5c1dfe58f395",
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "15",
+      "data": {
+        "id": "15",
+        "actor": "Judge/CMO",
+        "state": "PENDINGAPPROVAL",
+        "isgeneric": false,
+        "screenType": "applicationCompositeOrder",
+        "pendingTask": "Accept Document Submission",
+        "actionCategory": "View Application",
+        "closerAction": [
+          "APPROVE",
+          "REJECT",
+          "DELETE",
+          "ABANDON"
+        ],
+        "triggerAction": [
+          "RESPONSE",
+          "AUTO ESCALATE"
+        ],
+        "workflowModule": "application-voluntary-submission"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+        "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "createdTime": 1724750461961,
+        "lastModifiedTime": 1740574119219
+      }
+    },
+    {
+      "id": "2e4402c8-8a7e-4527-8ac5-40905d01967d",
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "10",
+      "data": {
+        "id": "10",
+        "actor": "Judge/CMO",
+        "state": "REQUESTDELAY",
+        "isgeneric": false,
+        "screenType": "home",
+        "actionCategory": "View Application",
+        "pendingTask": "Review Delay in Submission",
+        "closerAction": [
+          "APPROVE",
+          "DELETE",
+          "REJECT",
+          "ABANDON"
+        ],
+        "triggerAction": [
+          "DELAY"
+        ],
+        "workflowModule": "application-order-submission-feedback"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+        "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "createdTime": 1724750461764,
+        "lastModifiedTime": 1740574189311
+      }
+    },
+
+    {
+      "id": "eae32a0f-2303-4265-ba32-e7e3c0c9984c",
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "8",
+      "data": {
+        "id": "8",
+        "actor": "Judge/CMO",
+        "state": "REQUESTDELAY",
+        "isgeneric": false,
+        "screenType": "home",
+        "actionCategory": "View Application",
+        "pendingTask": "Review Delay in Submission",
+        "closerAction": [
+          "APPROVE",
+          "DELETE",
+          "REJECT",
+          "ABANDON"
+        ],
+        "triggerAction": [
+          "DELAY"
+        ],
+        "workflowModule": "application-order-submission-default"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "createdTime": 1729236636800,
+        "lastModifiedTime": 1740574083931
+      }
+    },
+
+    {
+      "id": "0dfd13fa-0df2-408e-a744-226fbd148a77",
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "18",
+      "data": {
+        "id": "18",
+        "actor": "Judge/CMO",
+        "state": "PENDINGAPPROVAL",
+        "isgeneric": false,
+        "screenType": "applicationCompositeOrder",
+        "actionCategory": "View Application",
+        "pendingTask": "Review Delay Condonation application",
+        "closerAction": [
+          "REJECT",
+          "APPROVE",
+          "ABANDON"
+        ],
+        "triggerAction": [
+          "CREATE"
+        ],
+        "workflowModule": "delay-condonation-submission"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+        "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "createdTime": 1734947859667,
+        "lastModifiedTime": 1740573955925
+      }
+    },
+    {
+      "id": "020f04e4-3800-4c8c-aa97-d1cb9508e2f5",
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "19",
+      "data": {
+        "id": "19",
+        "actor": "Judge/CourtStaff",
+        "state": "PENDINGAPPROVAL",
+        "isgeneric": false,
+        "screenType": "applicationCompositeOrder",
+        "actionCategory": "View Application",
+        "pendingTask": "Review of Bail Application",
+        "closerAction": [
+          "APPROVE",
+          "SEND_BACK",
+          "DELETE",
+          "REJECT",
+          "ABANDON"
+        ],
+        "triggerAction": [
+          "PAY"
+        ],
+        "workflowModule": "voluntary-application-submission-bail"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "createdTime": 1735043495656,
+        "lastModifiedTime": 1740573940756
+      }
+    }
+,
+    {
+      "id": "2b12ba7c-faed-49c2-a162-d4c11731a02d",
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "20",
+      "data": {
+        "id": "20",
+        "actor": "Judge/CourtStaff",
+        "state": "PENDINGAPPROVAL",
+        "isgeneric": false,
+        "screenType": "applicationCompositeOrder",
+        "actionCategory": "View Application",
+        "pendingTask": "Review Bail Documents",
+        "closerAction": [
+          "APPROVE",
+          "DELETE",
+          "REJECT",
+          "ABANDON"
+        ],
+        "triggerAction": [
+          "ESIGN"
+        ],
+        "workflowModule": "voluntary-application-submission-bail-documents"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "createdTime": 1735043522949,
+        "lastModifiedTime": 1740573914318
+      }
+    },
+    {
+      "id": "ddfd3381-3089-4fe4-ad94-dd2627369489",
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "22",
+      "data": {
+        "id": "22",
+        "actor": "Judge/Advocate/Litigant",
+        "state": "PENDING_APPROVAL",
+        "isgeneric": false,
+        "screenType": "home",
+        "actionCategory": "View Application",
+        "pendingTask": "Review Advocate Replace Request",
+        "closerAction": [
+          "APPROVE",
+          "REJECT"
+        ],
+        "triggerAction": [
+          "CREATE"
+        ],
+        "workflowModule": "task-join-case"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "cf0b78ba-c58d-4314-ab02-aa69111f48e6",
+        "createdTime": 1742302110175,
+        "lastModifiedTime": 1742736736103
+      }
+    }
+,
+    {
+      "id": "a531a4b8-f820-4205-8a7d-e6a3f9dd4ad4",
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "24",
+      "data": {
+        "id": "24",
+        "actor": "JUDGE",
+        "state": "PENDINGREVIEW",
+        "isgeneric": true,
+        "screenType": "home",
+        "actionCategory": "View Application",
+        "pendingTask": "Review Litigant Details Change",
+        "closerAction": [
+          "APPROVE",
+          "REJECT"
+        ],
+        "triggerAction": [
+          "PAY"
+        ],
+        "workflowModule": "application-voluntary-submission"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1748259547890,
+        "lastModifiedTime": 1748259799618
+      }
+    },
+    {
+      "id": "01cccf1c-0d7b-4b08-be05-a7f89488cab1",
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "24",
+      "data": {
+        "id": "24",
+        "actor": "Judge",
+        "state": "ABANDONED",
+        "isgeneric": false,
+        "screenType": "home",
+        "pendingTask": "order for scheduling next hearing",
+        "closerAction": [
+          "CLOSE"
+        ],
+        "triggerAction": [
+          "ABANDON"
+        ],
+        "actionCategory": "Schedule Hearing",
+        "workflowModule": "hearing-default"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "createdTime": 1748874535499,
+        "lastModifiedTime": 1749034526349
+      }
+    },
+    {
+      "id": "10dd4f04-53d4-44c3-80c2-c5bd0b3eae9c",
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "14",
+      "data": {
+        "id": "14",
+        "actor": "Judge/CMO",
+        "state": "PENDINGREVIEW",
+        "isgeneric": false,
+        "screenType": "applicationCompositeOrder",
+        "pendingTask": "Review Document Submission",
+        "closerAction": [
+          "APPROVE",
+          "REJECT",
+          "AUTOESCALATE",
+          "DELETE",
+          "RESPOND",
+          "ABANDON"
+        ],
+        "triggerAction": [
+          "PAY"
+        ],
+        "actionCategory": "View Application",
+        "workflowModule": "application-voluntary-submission",
+        "referenceEntityTypeNameMapping": [
+          {
+            "pendingTaskName": "Review Litigant Details Change",
+            "referenceEntityType": "CORRECTION_IN_COMPLAINANT_DETAILS"
+          }
+        ]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+        "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "createdTime": 1724750461933,
+        "lastModifiedTime": 1748934207202
+      }
+    }
+
+  ]
+},
+  {
+    "tenantId": "kl",
+    "masterName": "INBOX",
+    "moduleName": "InboxQueryConfiguration",
+    "mdmsPayload": [
+      {
+        "id": "fcc825d8-cd98-4b46-96d1-876bcd9bedb6",
+        "tenantId": "kl",
+        "schemaCode": "INBOX.InboxQueryConfiguration",
+        "uniqueIdentifier": "pending-tasks-index",
+        "data": {
+          "sortBy": {
+            "path": "Data.isCompleted",
+            "defaultOrder": "ASC"
+          },
+          "sourceFilterPathList": [
+            "Data"
+          ],
+          "allowedSearchCriteria": [
+            {
+              "name": "id",
+              "path": "Data.id.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "entityType",
+              "path": "Data.entityType.keyword",
+              "operator": "EQUAL",
+              "isMandatory": false
+            },
+            {
+              "name": "referenceId",
+              "path": "Data.referenceId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "status",
+              "path": "Data.status.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "assignedTo",
+              "path": "Data.assignedTo.uuid.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "assignedRole",
+              "path": "Data.assignedRole.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "cnrNumber",
+              "path": "Data.cnrNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "filingNumber",
+              "path": "Data.filingNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "isCompleted",
+              "path": "Data.isCompleted",
+              "isMandatory": false
+            },
+            {
+              "name": "stateSla",
+              "path": "Data.stateSla",
+              "isMandatory": false,
+              "operator": "LTE"
+            },
+            {
+              "name": "businessServiceSla",
+              "path": "Data.businessServiceSla",
+              "isMandatory": false
+            },
+            {
+              "name": "isDiary",
+              "path": "Data.isDiary",
+              "isMandatory": false
+            },
+            {
+              "name": "screenType",
+              "path": "Data.screenType.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "courtId",
+              "path": "Data.courtId.keyword",
+              "isMandatory": false
+            },
+            {
+              "path": "Data.substage.keyword",
+              "name": "substage",
+              "isMandatory": false
+            },
+            {
+              "name": "searchableFields",
+              "path": "Data.searchableFields.keyword",
+              "operator": "WILDCARD",
+              "isMandatory": false
+            },
+            {
+              "path": "Data.actionCategory.keyword",
+              "name": "actionCategory",
+              "isMandatory": false
+            }
+          ],
+          "index": "pending-tasks-index",
+          "module": "Pending Tasks Service"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+          "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "createdTime": 1721905184083,
+          "lastModifiedTime": 1748349936478
+        }
+      }
+    ]
+  }
+]

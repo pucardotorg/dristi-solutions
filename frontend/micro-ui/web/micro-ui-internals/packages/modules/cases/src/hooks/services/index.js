@@ -1,10 +1,13 @@
-import { Request } from "@egovernments/digit-ui-libraries";
+import { Request } from "@egovernments/digit-ui-module-common/src/utils/Request";
 
 export const Urls = {
   Authenticate: "/user/oauth/token",
   case: {
     joinCase: "/case/v1/joincase/_joincase",
     verifyAccessCode: "/case/v2/joincase/_verifycode",
+  },
+  task: {
+    pendingTask: "/analytics/pending_task/v1/create",
   },
 };
 

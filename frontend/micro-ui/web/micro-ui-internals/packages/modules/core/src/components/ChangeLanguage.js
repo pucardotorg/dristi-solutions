@@ -28,13 +28,13 @@ const ChangeLanguage = ({ isProfileComponent, ...prop }) => {
       <div className="select-language" style={prop.style}>
         <Dropdown
           option={languages}
-          selected={languages.find((language) => language.value === selectedLanguage)}
+          selected={languages?.find((language) => language?.value === selectedLanguage)}
           optionKey={"label"}
           select={handleChangeLanguage}
           freeze={true}
           customSelector={
             <label
-              className={`cp ${prop.dropdownClassName}`}
+              className={`cp ${prop?.dropdownClassName}`}
               style={{ color: "black", display: "flex", gap: "4px", alignItems: "center", height: "40px" }}
             >
               {!isProfileComponent && (
@@ -50,7 +50,7 @@ const ChangeLanguage = ({ isProfileComponent, ...prop }) => {
                 <span>
                   {languages
                     .find((language) => language.value === selected)
-                    ?.label?.substring(0, 2)
+                    .label?.substring(0, 2)
                     ?.toUpperCase()}
                 </span>
               )}

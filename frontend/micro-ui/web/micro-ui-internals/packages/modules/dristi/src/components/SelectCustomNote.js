@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
-function SelectCustomNote({ t, config, onClick = () => {} }) {
+function SelectCustomNote({ t, config, onClick = () => {}, isWarning = false }) {
   const history = useHistory();
   const inputs = useMemo(
     () =>
@@ -19,38 +19,40 @@ function SelectCustomNote({ t, config, onClick = () => {} }) {
 
   return inputs.map((input) => {
     return (
-      <div className="custom-note-main-div" style={config?.styles}>
+      <div className="custom-note-main-div" style={{ ...config?.styles, ...(isWarning ? { backgroundColor: "#FEF9C3" } : {}) }}>
         <div className="custom-note-heading-div">
           <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage) || input?.showTooltip} />
-          <h2>{t(input?.infoHeader)}</h2>
+          <h2 style={{ fontSize: "16px" }}>{t(input?.infoHeader)}</h2>
         </div>
-        <div className="custom-note-info-div">
-          {
-            <p>
-              {`${t(input?.infoText)} `}
-              {!input?.key && <br />}
-              {input?.linkText && (
-                <span
-                  style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}
-                  onClick={() => {
-                    if (input.key === "witnessNote" || input.key === "evidenceNote") {
-                      if (input?.customFunction) {
-                        input?.customFunction();
+        {(input?.infoText || input?.linkText) && (
+          <div className="custom-note-info-div">
+            {
+              <p>
+                {`${t(input?.infoText)} `}
+                {!input?.key && <br />}
+                {input?.linkText && (
+                  <span
+                    style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}
+                    onClick={() => {
+                      if (input.key === "witnessNote" || input.key === "evidenceNote") {
+                        if (input?.customFunction) {
+                          input?.customFunction();
+                        }
+                        history.push(
+                          `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${input?.caseId}&filingNumber=${input?.filingNumber}&tab=${input?.tab}`
+                        );
+                      } else {
+                        onClick();
                       }
-                      history.push(
-                        `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${input?.caseId}&filingNumber=${input?.filingNumber}&tab=${input?.tab}`
-                      );
-                    } else {
-                      onClick();
-                    }
-                  }}
-                >
-                  {String(t(input?.linkText))}
-                </span>
-              )}
-            </p>
-          }
-        </div>
+                    }}
+                  >
+                    {String(t(input?.linkText))}
+                  </span>
+                )}
+              </p>
+            }
+          </div>
+        )}
         {input?.children}
       </div>
     );

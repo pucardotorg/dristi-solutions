@@ -1,18 +1,22 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import { initLibraries } from "@egovernments/digit-ui-libraries";
 import { DigitUI, initCoreComponents } from "@egovernments/digit-ui-module-core";
+import setupRequestInterceptor from "@egovernments/digit-ui-module-core/src/Utils/requestInterceptor";
 import { initOrdersComponents } from "@egovernments/digit-ui-module-orders";
 import { initSubmissionsComponents } from "@egovernments/digit-ui-module-submissions";
 import { initHearingsComponents } from "@egovernments/digit-ui-module-hearings";
 import { initCasesComponents } from "@egovernments/digit-ui-module-cases";
 import { initDRISTIComponents } from "@egovernments/digit-ui-module-dristi";
 import { initHomeComponents } from "@egovernments/digit-ui-module-home";
+import { initCommonComponents } from "@egovernments/digit-ui-module-common";
 
 // import "@egovernments/dristi-ui-css";
 import "dristi-ui-css";
 
 import { UICustomizations } from "./UICustomizations";
+import apiMonitor from "@egovernments/digit-ui-module-core/src/Utils/apiMonitor";
+import ApiMonitorPanel from "@egovernments/digit-ui-module-core/src/Utils/ApiMonitorPanel.js";
 
 var Digit = window.Digit || {};
 
@@ -48,12 +52,19 @@ const initTokens = (stateCode) => {
 };
 
 const initDigitUI = () => {
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const roles = userInfo?.roles;
+  const assignedRoles = roles?.map((role) => role?.code);
+  const hasViewApiMonitorAccess = assignedRoles?.includes("VIEW_API_MONITOR");
   window.contextPath = window?.globalConfigs?.getConfig("CONTEXT_PATH") || "ui";
   window.Digit.Customizations = {
     commonUiConfig: UICustomizations,
   };
   window?.Digit.ComponentRegistryService.setupRegistry({});
+  setupRequestInterceptor();
+  apiMonitor.init();
   initCoreComponents();
+  initCommonComponents();
   initDRISTIComponents();
   initOrdersComponents();
   initHearingsComponents();
@@ -62,12 +73,17 @@ const initDigitUI = () => {
   initHomeComponents();
   const moduleReducers = (initData) => ({});
 
-  const stateCode = window?.globalConfigs?.getConfig("STATE_LEVEL_TENANT_ID") || "pb";
+  const stateCode = window?.globalConfigs.getConfig("STATE_LEVEL_TENANT_ID");
   initTokens(stateCode);
 
-  ReactDOM.render(
-    <DigitUI stateCode={stateCode} enabledModules={enabledModules} defaultLanding="employee" moduleReducers={moduleReducers} />,
-    document.getElementById("root")
+  const container = document.getElementById("root");
+  if (!container) throw new Error("Root element #root not found");
+  const root = createRoot(container);
+  root.render(
+    <>
+      <DigitUI stateCode={stateCode} enabledModules={enabledModules} defaultLanding="employee" moduleReducers={moduleReducers} />
+      {hasViewApiMonitorAccess && <ApiMonitorPanel />}
+    </>
   );
 };
 
