@@ -106,8 +106,7 @@ const PaymentForSummonComponent = ({
           ))}
         </div>
       )}
-      {true ||
-        (isVerificationPending && (
+      {isVerificationPending && (
           <div style={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: "12px", marginTop: "8px" }}>
             <Button
               label={t("CS_TRY_PAYMENT_AGAIN")}
@@ -122,7 +121,7 @@ const PaymentForSummonComponent = ({
               style={{ border: "none", paddingRight: "20px", paddingLeft: "20px" }}
             />
           </div>
-        ))}
+      )}
     </div>
   );
 };
