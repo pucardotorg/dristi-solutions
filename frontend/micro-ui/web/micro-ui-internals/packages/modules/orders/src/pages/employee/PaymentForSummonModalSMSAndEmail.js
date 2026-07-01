@@ -107,20 +107,20 @@ const PaymentForSummonComponent = ({
         </div>
       )}
       {isVerificationPending && (
-          <div style={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: "12px", marginTop: "8px" }}>
-            <Button
-              label={t("CS_TRY_PAYMENT_AGAIN")}
-              variation="secondary"
-              className={"pay-online-button"}
-              onButtonClick={onTryPaymentAgain}
-              isDisabled={paymentLoader || isCaseLocked}
-            />
-            <Button
-              label={t("CS_WAIT_AND_CHECK_LATER")}
-              onButtonClick={onWaitAndCheckLater}
-              style={{ border: "none", paddingRight: "20px", paddingLeft: "20px" }}
-            />
-          </div>
+        <div style={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: "12px", marginTop: "8px" }}>
+          <Button
+            label={t("CS_TRY_PAYMENT_AGAIN")}
+            variation="secondary"
+            className={"pay-online-button"}
+            onButtonClick={onTryPaymentAgain}
+            isDisabled={paymentLoader || isCaseLocked}
+          />
+          <Button
+            label={t("CS_WAIT_AND_CHECK_LATER")}
+            onButtonClick={onWaitAndCheckLater}
+            style={{ border: "none", paddingRight: "20px", paddingLeft: "20px" }}
+          />
+        </div>
       )}
     </div>
   );
@@ -444,6 +444,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         }
         if (billPaymentStatus === "VERIFICATION_PENDING") {
           setIsPostPaymentVerificationPending(true);
+          return;
         }
         const resfileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: billResponse?.Bill?.[0]?.id, tenantId });
         const fileStoreId = resfileStoreId?.Document?.fileStore;
