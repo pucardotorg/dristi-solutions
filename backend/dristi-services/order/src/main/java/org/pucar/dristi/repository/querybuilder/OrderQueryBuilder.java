@@ -21,7 +21,7 @@ public class OrderQueryBuilder {
             "orders.filingnumber as filingnumber, orders.courtId as courtId, orders.comments as comments, orders.cnrnumber as cnrnumber, orders.linkedordernumber as linkedordernumber, orders.ordernumber as ordernumber, orders.applicationnumber as applicationnumber," +
             "orders.createddate as createddate, orders.ordertype as ordertype, orders.orderdetails as orderdetails, orders.issuedby as issuedby, orders.ordercategory as ordercategory,  orders.attendance as attendance,  orders.itemText as itemtext, orders.purposeofnexthearing as purposeofnexthearing, orders.nexthearingdate as nexthearingdate," +
             "orders.status as status, orders.isactive as isactive, orders.additionaldetails as additionaldetails, orders.compositeitems as compositeitems, orders.ordertitle as ordertitle, orders.createdby as createdby," +
-            "orders.lastmodifiedby as lastmodifiedby, orders.createdtime as createdtime, orders.lastmodifiedtime as lastmodifiedtime ";
+            "orders.lastmodifiedby as lastmodifiedby, orders.createdtime as createdtime, orders.lastmodifiedtime as lastmodifiedtime, orders.partyuniqueids as partyuniqueids ";
 
     private static final String FROM_ORDERS_TABLE = " FROM dristi_orders orders";
 

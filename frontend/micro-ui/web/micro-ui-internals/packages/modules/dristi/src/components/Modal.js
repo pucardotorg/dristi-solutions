@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 
 import { HeaderBar } from "@egovernments/digit-ui-react-components";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
@@ -47,6 +47,7 @@ const Modal = ({
   customActionClassName,
   submitClassName,
   cancelTheme,
+  footerChildren,
 }) => {
   /**
    * TODO: It needs to be done from the desgin changes
@@ -58,6 +59,93 @@ const Modal = ({
       document.body.style.overflowY = "auto";
     };
   }, []);
+
+  const buttonsSection = useMemo(() => {
+    return (
+      <React.Fragment>
+        {actionCancelLabel && !hideCancel ? (
+          <ButtonSelector
+            textStyles={{
+              margin: "0px",
+              color: cancelTheme === "primary" ? "#FFFFFF" : "#007E7E",
+              ...(actionCancelTextStyle ? actionCancelTextStyle : {}),
+            }}
+            theme={cancelTheme || "border"}
+            label={actionCancelLabel}
+            onSubmit={actionCancelOnSubmit}
+            style={
+              cancelTheme === "primary"
+                ? { backgroundColor: "#007e7e", border: "none", ...(actionCancelStyle ? actionCancelStyle : {}) }
+                : { border: "1px solid #007E7E", backgroundColor: "white", ...(actionCancelStyle ? actionCancelStyle : {}) }
+            }
+            ButtonBody={cancelButtonBody}
+            isDisabled={isBackButtonDisabled}
+            textClassName={cancelTextClassName}
+            className={cancelClassName}
+          />
+        ) : null}
+        {actionCustomLabel ? (
+          <ButtonSelector
+            textStyles={{
+              margin: "0px",
+              ...(customActionTextStyle || {}),
+            }}
+            label={actionCustomLabel}
+            onSubmit={actionCustomLabelSubmit}
+            formId={formId}
+            isDisabled={isCustomButtonDisabled}
+            style={customActionStyle}
+            textClassName={customActionTextClassName}
+            className={customActionClassName}
+          />
+        ) : null}
+        {actionSaveLabel && !hideSubmit ? (
+          <ButtonSelector
+            textStyles={{
+              margin: "0px",
+              ...(textStyle || {}),
+            }}
+            label={actionSaveLabel}
+            onSubmit={actionSaveOnSubmit}
+            formId={formId}
+            isDisabled={isDisabled}
+            style={style}
+            className={submitClassName}
+            textClassName={submitTextClassName}
+            title={titleSaveButton || ""}
+          />
+        ) : null}
+      </React.Fragment>
+    );
+  }, [
+    actionCancelLabel,
+    actionCancelOnSubmit,
+    actionCancelStyle,
+    actionCancelTextStyle,
+    actionCustomLabel,
+    actionCustomLabelSubmit,
+    actionSaveLabel,
+    actionSaveOnSubmit,
+    cancelButtonBody,
+    cancelClassName,
+    cancelTextClassName,
+    cancelTheme,
+    customActionClassName,
+    customActionStyle,
+    customActionTextClassName,
+    customActionTextStyle,
+    formId,
+    hideCancel,
+    hideSubmit,
+    isBackButtonDisabled,
+    isCustomButtonDisabled,
+    isDisabled,
+    style,
+    submitClassName,
+    submitTextClassName,
+    textStyle,
+    titleSaveButton,
+  ]);
   return (
     <PopUp popUpStyleMain={popUpStyleMain}>
       <div className={`popup-module ${className}`} style={popupStyles}>
@@ -67,7 +155,25 @@ const Modal = ({
           style={popupModuleMianStyles ? popupModuleMianStyles : {}}
         >
           {children}
-          {!hideModalActionbar && (
+          {!hideModalActionbar && footerChildren ? (
+            <div
+              className="popup-module-action-bar"
+              style={
+                isOBPSFlow
+                  ? !mobileView
+                    ? { marginRight: "18px" }
+                    : { position: "absolute", bottom: "5%", right: "10%", left: window.location.href.includes("employee") ? "0%" : "7%" }
+                  : footerChildren
+                  ? { justifyContent: "space-between", alignItems: "center", ...popupModuleActionBarStyles }
+                  : popupModuleActionBarStyles
+              }
+            >
+              {footerChildren && <div>{footerChildren}</div>}
+              <div style={{ display: "flex", flexDirection: "row", gap: "16px" }} className="popup-module-action-bar-buttons">
+                {buttonsSection}
+              </div>
+            </div>
+          ) : (
             <div
               className="popup-module-action-bar"
               style={
@@ -78,54 +184,10 @@ const Modal = ({
                   : popupModuleActionBarStyles
               }
             >
-              {actionCancelLabel && !hideCancel ? (
-                <ButtonSelector
-                  textStyles={{
-                    margin: "0px",
-                    color: cancelTheme === "primary" ? "#FFFFFF" : "#007E7E",
-                    ...(actionCancelTextStyle ? actionCancelTextStyle : {}),
-                  }}
-                  theme={cancelTheme || "border"}
-                  label={actionCancelLabel}
-                  onSubmit={actionCancelOnSubmit}
-                  style={
-                    cancelTheme === "primary"
-                      ? { backgroundColor: "#007e7e", border: "none", ...(actionCancelStyle ? actionCancelStyle : {}) }
-                      : { border: "1px solid #007E7E", backgroundColor: "white", ...(actionCancelStyle ? actionCancelStyle : {}) }
-                  }
-                  ButtonBody={cancelButtonBody}
-                  isDisabled={isBackButtonDisabled}
-                  textClassName={cancelTextClassName}
-                  className={cancelClassName}
-                />
-              ) : null}
-              {actionCustomLabel ? (
-                <ButtonSelector
-                  textStyles={{ margin: "0px", ...(customActionTextStyle ? customActionTextStyle : {}) }}
-                  label={actionCustomLabel}
-                  onSubmit={actionCustomLabelSubmit}
-                  formId={formId}
-                  isDisabled={isCustomButtonDisabled}
-                  style={customActionStyle}
-                  textClassName={customActionTextClassName}
-                  className={customActionClassName}
-                />
-              ) : null}
-              {actionSaveLabel && !hideSubmit ? (
-                <ButtonSelector
-                  textStyles={{ margin: "0px", ...(textStyle ? textStyle : {}) }}
-                  label={actionSaveLabel}
-                  onSubmit={actionSaveOnSubmit}
-                  formId={formId}
-                  isDisabled={isDisabled}
-                  style={style}
-                  className={submitClassName}
-                  textClassName={submitTextClassName}
-                  title={titleSaveButton ? titleSaveButton : ""}
-                />
-              ) : null}
+              {buttonsSection}
             </div>
           )}
+          {hideModalActionbar && footerChildren}
         </div>
       </div>
       {error && <CustomToast error={true} label={error} errorId={null} onClose={() => setError(null)} duration={5000} />}

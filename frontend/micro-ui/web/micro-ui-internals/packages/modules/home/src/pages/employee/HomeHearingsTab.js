@@ -8,7 +8,7 @@ import { CheckBox } from "@egovernments/digit-ui-react-components";
 import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 import useGetHearingLink from "@egovernments/digit-ui-module-hearings/src/hooks/hearings/useGetHearingLink";
-import useInboxSearch from "../../hooks/useInboxSearch";
+import useGetHearingCauseList from "../../hooks/useGetHearingCauseList";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { ConferenceIcon, DocumentSignedIcon, DocumentNotSignedIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
@@ -29,7 +29,7 @@ const HomeHearingsTab = ({
   const history = useHistory();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(30);
-  const { data: tableData, loading, error, fetchInbox } = useInboxSearch({ limit: rowsPerPage, offset: page * rowsPerPage });
+  const { data: tableData, loading, error, fetchCauseList } = useGetHearingCauseList({ limit: rowsPerPage, offset: page * rowsPerPage });
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
@@ -57,17 +57,17 @@ const HomeHearingsTab = ({
     setFilters(cleared);
     setPage(0);
     setRowsPerPage(30);
-    fetchInbox(cleared, setHearingCount);
-  }, [fetchInbox, setHearingCount]);
+    fetchCauseList(cleared, setHearingCount);
+  }, [fetchCauseList, setHearingCount]);
 
   const handleSearch = useCallback(() => {
     setPage(0);
     setRowsPerPage(30);
-    fetchInbox(filters, setHearingCount);
-  }, [fetchInbox, filters, setHearingCount]);
+    fetchCauseList(filters, setHearingCount);
+  }, [fetchCauseList, filters, setHearingCount]);
 
   useEffect(() => {
-    fetchInbox(filters, setHearingCount);
+    fetchCauseList(filters, setHearingCount);
   }, [page, rowsPerPage]);
 
   useEffect(() => {
@@ -161,7 +161,7 @@ const HomeHearingsTab = ({
                     hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
                       setTimeout(() => {
                         setLoader(false);
-                        if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                        if (res?.hearing?.status === "IN_PROGRESS") fetchCauseList(filters, setHearingCount);
                       }, 100);
                     });
                   } else {
@@ -182,7 +182,7 @@ const HomeHearingsTab = ({
           } else {
             setTimeout(() => {
               setLoader(false);
-              fetchInbox(filters, setHearingCount);
+              fetchCauseList(filters, setHearingCount);
             }, 100);
           }
         }
@@ -214,12 +214,12 @@ const HomeHearingsTab = ({
                     hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
                       setTimeout(() => {
                         setLoader(false);
-                        if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                        if (res?.hearing?.status === "IN_PROGRESS") fetchCauseList(filters, setHearingCount);
                       }, 100);
                     });
                   } else {
                     setLoader(false);
-                    fetchInbox(filters, setHearingCount);
+                    fetchCauseList(filters, setHearingCount);
                     setShowToast({ error: true, label: t("HEARING_STATUS_ALREADY_CHANGED") });
                   }
                 } else {
@@ -288,14 +288,14 @@ const HomeHearingsTab = ({
 
       const startDate = hearingDetails?.fromDate || hearingDetails?.toDate;
       const isFutureHearing = startDate ? new Date(startDate).setHours(0, 0, 0, 0) > new Date().setHours(0, 0, 0, 0) : false;
-      if ((hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") && isFutureHearing) {
-        dropDownitems.push({
-          label: "FUTURE_HEARING_CANNOT_BE_STARTED",
-          id: "start_hearing_disabled",
-          action: () => {},
-        });
-        return dropDownitems;
-      }
+      // if ((hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") && isFutureHearing) {
+      //   dropDownitems.push({
+      //     label: "FUTURE_HEARING_CANNOT_BE_STARTED",
+      //     id: "start_hearing_disabled",
+      //     action: () => {},
+      //   });
+      //   return dropDownitems;
+      // }
 
       if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
         if (!hasHearingPriorityView) {
@@ -324,13 +324,13 @@ const HomeHearingsTab = ({
                           //   { homeFilteredData: filters }
                           // );
                           setTimeout(() => {
-                            if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                            if (res?.hearing?.status === "IN_PROGRESS") fetchCauseList(filters, setHearingCount);
                             setLoader(false);
                           }, 100);
                         });
                       } else {
                         setLoader(false);
-                        fetchInbox(filters, setHearingCount);
+                        fetchCauseList(filters, setHearingCount);
                         setShowToast({ error: true, label: t("HEARING_ALREADY_STARTED") });
                       }
                     } else {
@@ -420,12 +420,12 @@ const HomeHearingsTab = ({
                           .then((res) => {
                             setTimeout(() => {
                               setLoader(false);
-                              if (res?.hearing?.status === "PASSED_OVER") fetchInbox(filters, setHearingCount);
+                              if (res?.hearing?.status === "PASSED_OVER") fetchCauseList(filters, setHearingCount);
                             }, 100);
                           });
                       } else {
                         setLoader(false);
-                        fetchInbox(filters, setHearingCount);
+                        fetchCauseList(filters, setHearingCount);
                         setShowToast({ error: true, label: t("HEARING_STATUS_ALREADY_CHANGED") });
                       }
                     } else {
@@ -460,7 +460,7 @@ const HomeHearingsTab = ({
                       setTimeout(() => {
                         setLoader(false);
                         if (res?.hearing?.status === "PASSED_OVER") {
-                          fetchInbox(filters, setHearingCount);
+                          fetchCauseList(filters, setHearingCount);
                         }
                       }, 100);
                     })
@@ -756,7 +756,7 @@ const HomeHearingsTab = ({
                 if (!loading) {
                   setPage(0);
                   setRowsPerPage(10);
-                  fetchInbox(filters, setHearingCount);
+                  fetchCauseList(filters, setHearingCount);
                 }
               }}
             >
@@ -775,7 +775,7 @@ const HomeHearingsTab = ({
                   if (e.key === "Enter" && !loading) {
                     setPage(0);
                     setRowsPerPage(10);
-                    fetchInbox(filters, setHearingCount);
+                    fetchCauseList(filters, setHearingCount);
                   }
                 }}
               />
@@ -965,7 +965,7 @@ const HomeHearingsTab = ({
                     } else {
                       setLoader(false);
                       setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-                      fetchInbox(filters, setHearingCount);
+                      fetchCauseList(filters, setHearingCount);
                       setShowToast({ error: true, label: t("HEARING_STATUS_ALREADY_CHANGED") });
                     }
                   } else {
@@ -1018,12 +1018,13 @@ const HomeHearingsTab = ({
                           setTimeout(() => {
                             setLoader(false);
                             setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-                            if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED") fetchInbox(filters, setHearingCount);
+                            if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED")
+                              fetchCauseList(filters, setHearingCount);
                           }, 100);
                         });
                     } else {
                       setLoader(false);
-                      fetchInbox(filters, setHearingCount);
+                      fetchCauseList(filters, setHearingCount);
                       setShowToast({ error: true, label: t("HEARING_STATUS_ALREADY_CHANGED") });
                       setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
                     }

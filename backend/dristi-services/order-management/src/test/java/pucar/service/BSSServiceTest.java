@@ -22,6 +22,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -47,6 +48,12 @@ class BSSServiceTest {
     private Configuration configuration;
     @Mock
     private ADiaryUtil aDiaryUtil;
+
+    @Mock
+    private HearingUtil hearingUtil;
+
+    @Mock
+    private OrderSignValidationService orderSignValidationService;
 
     @InjectMocks
     private BSSService bssService;
@@ -86,6 +93,15 @@ class BSSServiceTest {
     void createOrderToSignRequest_CoordinatesMismatch() {
         when(eSignUtil.getCoordinateForSign(any())).thenReturn(Collections.emptyList());
         assertThrows(CustomException.class, () -> bssService.createOrderToSignRequest(request));
+    }
+
+    @Test
+    void createOrderToSignRequest_PropagatesPreSignValidationFailure() {
+        doThrow(new CustomException("HEARING_ALREADY_SCHEDULED_ERROR", "A hearing is already scheduled"))
+                .when(orderSignValidationService).validate(any());
+
+        CustomException exception = assertThrows(CustomException.class, () -> bssService.createOrderToSignRequest(request));
+        assertEquals("HEARING_ALREADY_SCHEDULED_ERROR", exception.getCode());
     }
 
     @Test

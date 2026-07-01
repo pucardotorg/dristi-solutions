@@ -10,6 +10,20 @@ import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/cas
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { PrintIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
+import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote";
+import useGetPaymentVerificationStatus from "../../../submissions/src/hooks/submissions/useGetPaymentVerificationStatus";
+
+const verificationPendingNoteConfig = {
+  populators: {
+    inputs: [
+      {
+        infoHeader: "WARNING",
+        infoText: "PAYMENT_VERIFICATION_PENDING_INFO",
+        showTooltip: true,
+      },
+    ],
+  },
+};
 
 function NoticeSummonPaymentModal({
   suffix,
@@ -20,6 +34,7 @@ function NoticeSummonPaymentModal({
   setIsPaymentCompleted,
   caseDetails,
   authorizedUuid,
+  onClose = () => {},
 }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -32,6 +47,7 @@ function NoticeSummonPaymentModal({
   const { downloadPdf } = useDownloadCasePdf();
   const [receiptFilstoreId, setReceiptFilstoreId] = useState(null);
   const [retryPayment, setRetryPayment] = useState(false);
+  const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
 
   const taskManagement = useMemo(() => taskManagementList?.find((task) => task?.taskType === courierOrderDetails?.orderType), [
     taskManagementList,
@@ -138,6 +154,17 @@ function NoticeSummonPaymentModal({
     scenario,
   });
 
+  const { data: paymentStatusData } = useGetPaymentVerificationStatus(
+    taskManagement?.taskManagementNumber ? `${taskManagement.taskManagementNumber}_${suffix}` : "",
+    tenantId,
+    Boolean(taskManagement?.taskManagementNumber && suffix)
+  );
+
+  const isVerificationPending = useMemo(
+    () => Boolean(paymentStatusData && paymentStatusData.PaymentStatus && paymentStatusData.PaymentStatus.status === "VERIFICATION_PENDING"),
+    [paymentStatusData]
+  );
+
   useEffect(() => {
     if (taskManagement?.taskManagementNumber) {
       const fetchCaseLockStatus = async () => {
@@ -184,7 +211,7 @@ function NoticeSummonPaymentModal({
       await DRISTIService.setCaseLock({ Lock: { uniqueId: taskManagement?.taskManagementNumber, tenantId: tenantId, lockType: "PAYMENT" } }, {});
       const paymentStatus = await openPaymentPortal(bill);
       await DRISTIService.setCaseUnlock({}, { uniqueId: taskManagement?.taskManagementNumber, tenantId: tenantId });
-      const success = Boolean(paymentStatus);
+      const success = paymentStatus === "PAID";
       if (success) {
         const response = await DRISTIService.fetchBillFileStoreId({}, { billId: bill?.Bill?.[0]?.id, tenantId });
         const fileStoreId = response?.Document?.fileStore;
@@ -193,6 +220,8 @@ function NoticeSummonPaymentModal({
           setIsPaymentCompleted(true);
           setHideCancelButton(true);
         }
+      } else if (paymentStatus === "VERIFICATION_PENDING") {
+        setIsPostPaymentVerificationPending(true);
       } else {
         setRetryPayment(true);
       }
@@ -243,6 +272,9 @@ function NoticeSummonPaymentModal({
         inline
         className={"adhaar-verification-info-card"}
       />
+      {(isVerificationPending || isPostPaymentVerificationPending) && (
+        <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
+      )}
       <div className="total-payment">
         {paymentCalculation
           ?.filter((item) => item?.isTotalFee)
@@ -275,14 +307,31 @@ function NoticeSummonPaymentModal({
           ))}
       </div>
 
-      <Button
-        label={receiptFilstoreId ? t("CS_TASK_DOWNLOAD_RECEIPT") : retryPayment ? t("CS_TASK_RETRY_PAYMENT") : t("CS_TASK_PAY_ONLINE")}
-        variation="secondary"
-        className={"pay-online-button"}
-        icon={receiptFilstoreId && <PrintIcon />}
-        onButtonClick={receiptFilstoreId ? () => downloadPdf(tenantId, receiptFilstoreId) : onTaskPayOnline}
-        isDisabled={isCaseLocked || !isUserAdv}
-      />
+      {isVerificationPending || isPostPaymentVerificationPending ? (
+        <div style={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: "12px" }}>
+          <Button
+            label={t("CS_TRY_PAYMENT_AGAIN")}
+            variation="secondary"
+            className={"pay-online-button"}
+            onButtonClick={onTaskPayOnline}
+            isDisabled={isCaseLocked || !isUserAdv}
+          />
+          <Button
+            label={t("CS_WAIT_AND_CHECK_LATER")}
+            onButtonClick={onClose}
+            style={{ border: "none", paddingRight: "20px", paddingLeft: "20px" }}
+          />
+        </div>
+      ) : (
+        <Button
+          label={receiptFilstoreId ? t("CS_TASK_DOWNLOAD_RECEIPT") : retryPayment ? t("CS_TASK_RETRY_PAYMENT") : t("CS_TASK_PAY_ONLINE")}
+          variation="secondary"
+          className={"pay-online-button"}
+          icon={receiptFilstoreId && <PrintIcon />}
+          onButtonClick={receiptFilstoreId ? () => downloadPdf(tenantId, receiptFilstoreId) : onTaskPayOnline}
+          isDisabled={isCaseLocked || !isUserAdv}
+        />
+      )}
       {showToast && (
         <CustomToast
           error={showToast?.error}

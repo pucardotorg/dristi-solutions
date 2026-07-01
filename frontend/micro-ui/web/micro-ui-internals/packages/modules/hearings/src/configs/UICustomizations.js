@@ -304,7 +304,10 @@ export const UICustomizations = {
                 (data) =>
                   data?.filingNumber === additionalDetails?.filingNumber &&
                   data?.orderId === additionalDetails?.orderId &&
-                  (!additionalDetails?.itemId || data?.additionalDetails?.itemId === additionalDetails?.itemId)
+                  (additionalDetails?.orderType === "SCHEDULE_OF_HEARING_DATE" ||
+                    !additionalDetails?.itemId ||
+                    data?.additionalDetails?.itemId === additionalDetails?.itemId ||
+                    data?.additionalDetails?.reissueSourceWarrantId)
               )
               ?.map((data) => {
                 let taskDetail = structuredClone(data?.taskDetails);
@@ -370,6 +373,13 @@ export const UICustomizations = {
               additionalDetails.setHasTasks(taskData.length > 0);
             }
 
+            if (typeof additionalDetails?.setHearingDateInfo === "function") {
+              const caseDetails = data?.list?.[0]?.taskDetails?.caseDetails;
+              additionalDetails.setHearingDateInfo({
+                originalHearingDate: caseDetails?.originalHearingDate || null,
+                hearingDate: caseDetails?.hearingDate || null,
+              });
+            }
             return { list: taskData || [] };
           },
         },

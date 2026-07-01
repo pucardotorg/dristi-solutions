@@ -38,9 +38,10 @@ public class BSSService {
     private final OrderServiceFactoryProvider factoryProvider;
     private final ADiaryUtil aDiaryUtil;
     private final HearingUtil hearingUtil;
+    private final OrderSignValidationService orderSignValidationService;
 
     @Autowired
-    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil) {
+    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil, OrderSignValidationService orderSignValidationService) {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.eSignUtil = eSignUtil;
         this.fileStoreUtil = fileStoreUtil;
@@ -50,12 +51,18 @@ public class BSSService {
         this.factoryProvider = factoryProvider;
         this.aDiaryUtil = aDiaryUtil;
         this.hearingUtil = hearingUtil;
+        this.orderSignValidationService = orderSignValidationService;
     }
 
     public List<OrderToSign> createOrderToSignRequest(OrdersToSignRequest request) {
 
         // get location to sign here from esign
         log.info("creating order to sign request, result= IN_PROGRESS, orderCriteria:{}", request.getCriteria().size());
+
+        // Pre Validation
+        // Runs all pre-sign validators (e.g. a case cannot be published with a new hearing order if it
+        // already has a scheduled hearing). New rules plug in via the OrderSignValidator strategy.
+        orderSignValidationService.validate(request);
 
         List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
 

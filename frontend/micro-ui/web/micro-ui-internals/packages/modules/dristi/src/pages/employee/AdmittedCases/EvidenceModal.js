@@ -1,7 +1,7 @@
 import { TextInput, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory, Link } from "react-router-dom/cjs/react-router-dom.min";
 import CommentComponent from "../../../components/CommentComponent";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import ConfirmSubmissionAction from "../../../components/ConfirmSubmissionAction";
@@ -17,6 +17,7 @@ import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import {
   cleanString,
+  downloadCombinedDocuments,
   getAllAssociatedPartyUuids,
   getAuthorizedUuid,
   getDate,
@@ -275,21 +276,12 @@ const EvidenceModal = ({
         const applicationType = documentSubmission?.[0]?.applicationList?.applicationType;
         label = applicationType === "CORRECTION_IN_COMPLAINANT_DETAILS" ? t("REVIEW_CHANGES") : t("Approve");
       } else {
-        const asUser = documentSubmission?.[0]?.applicationList?.asUser || documentSubmission?.[0]?.artifactList?.asUser;
-        const allPartiesIncludingMembers = getAllAssociatedPartyUuids(caseData?.case, asUser);
-        if (allPartiesIncludingMembers?.includes(userInfo?.uuid)) {
-          label = t("DOWNLOAD_SUBMISSION");
-        } else if (isLitigent && [...(allAdvocates?.[userInfo?.uuid] || []), userInfo?.uuid]?.includes(createdBy)) {
-          label = t("DOWNLOAD_SUBMISSION");
-        } else if (!isLitigent) {
-          // For All advocates and clerks, show the download submisison button.
-          label = t("DOWNLOAD_SUBMISSION");
-        } else if (
+        if (
           (respondingUuids?.includes(userInfo?.uuid) || !documentSubmission?.[0]?.details?.referenceId) &&
           [SubmissionWorkflowState.PENDINGRESPONSE, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus)
         ) {
           label = t("ADD_COMMENT");
-        }
+        } else return null;
       }
     } else {
       if (
@@ -303,7 +295,7 @@ const EvidenceModal = ({
       }
     }
     return label;
-  }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType, caseData]);
+  }, [applicationStatus, documentSubmission, modalType, respondingUuids, t, userInfo?.uuid, userType]);
 
   const actionCancelLabel = useMemo(() => {
     if (
@@ -1012,13 +1004,6 @@ const EvidenceModal = ({
   }, [documentSubmission]);
 
   const actionSaveOnSubmit = async () => {
-    if (actionSaveLabel === t("DOWNLOAD_SUBMISSION") && signedSubmission?.applicationContent?.fileStoreId) {
-      const name = `${caseData?.courtCaseNumber || caseData?.cmpNumber || caseData?.filingNumber || "Case"}_${
-        signedSubmission?.applicationList?.applicationNumber || ""
-      }_Application`;
-      downloadPdf(tenantId, signedSubmission?.applicationContent?.fileStoreId, name);
-      return;
-    }
     setIsActionLoading(true);
     try {
       if (userType === "employee") {
@@ -1102,7 +1087,41 @@ const EvidenceModal = ({
       setIsActionLoading(false);
     }
   };
+  const downloadSubmissionLabel = useMemo(() => {
+    if (modalType === "Submissions") {
+      if (signedSubmission?.applicationContent?.fileStoreId || allCombineDocs?.length > 0) {
+        return t("DOWNLOAD_SUBMISSION");
+      }
+    }
+    return false;
+  }, [modalType, signedSubmission, t, allCombineDocs]);
+
   const actionCustomLabelSubmit = async () => {
+    if (downloadSubmissionLabel) {
+      if (signedSubmission?.applicationContent?.fileStoreId) {
+        const name = `${caseData?.case?.courtCaseNumber || caseData?.case?.cmpNumber || caseData?.case?.filingNumber || "Case"}_${
+          signedSubmission?.applicationList?.applicationNumber || ""
+        }_Application`;
+        downloadPdf(tenantId, signedSubmission?.applicationContent?.fileStoreId, name);
+        return;
+      }
+      if (allCombineDocs?.length > 0) {
+        setIsActionLoading(true);
+        try {
+          const name = `${caseData?.case?.courtCaseNumber || caseData?.case?.cmpNumber || caseData?.case?.filingNumber || "Case"}_${
+            documentSubmission?.[0]?.applicationList?.applicationNumber || ""
+          }_Application.pdf`;
+          await downloadCombinedDocuments(allCombineDocs, name);
+        } catch (error) {
+          console.error("Error combining documents:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setToast({ label: t("ERROR_COMBINING_DOCUMENTS"), error: true, errorId });
+        } finally {
+          setIsActionLoading(false);
+        }
+        return;
+      }
+    }
     setIsActionLoading(true);
     try {
       if (userType === "employee") {
@@ -1283,6 +1302,16 @@ const EvidenceModal = ({
           textStyle={{
             color: "#fff",
           }}
+          footerChildren={
+            downloadSubmissionLabel ? (
+              <div
+                onClick={actionCustomLabelSubmit}
+                style={{ fontWeight: 700, fontSize: "16px", lineHeight: "18.75px", color: "#007E7E", cursor: "pointer" }}
+              >
+                {t("DOWNLOAD_SUBMISSION")}
+              </div>
+            ) : null
+          }
           // actionCancelTextStyle={
           //   customLabelShow
           //     ? {
@@ -1352,6 +1381,25 @@ const EvidenceModal = ({
                   </div>
                 )}
                 <div className="application-info-new" style={{ display: "flex", flexDirection: "column" }}>
+                  <div className="info-row">
+                    <div className="info-key">
+                      <h3>{t("CASE_NUMBER")}</h3>
+                    </div>
+                    <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <h3>{caseData?.case?.courtCaseNumber || caseData?.case?.cmpNumber || caseData?.case?.filingNumber}</h3>
+                      <Link
+                        to={`/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview&fromHome=true`}
+                        style={{
+                          color: "rgb(0, 126, 126)",
+                          fontWeight: "700",
+                          fontSize: "14px",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        ({t("VIEW_CASE")})
+                      </Link>
+                    </div>
+                  </div>
                   <div className="info-row">
                     <div className="info-key">
                       <h3>{t("APPLICATION_TYPE")}</h3>

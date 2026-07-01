@@ -1,0 +1,13 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+  "uniqueIdentifier": "2084",
+  "data": {
+    "id": 2084,
+    "url": "/etreasury/payment/v1/_paymentStatus", // TODO : need to give access to CITIZEN
+    "code": "2084",
+    "name": "payment status",
+    "displayName": "payment status"
+  },
+  "isActive": true
+}

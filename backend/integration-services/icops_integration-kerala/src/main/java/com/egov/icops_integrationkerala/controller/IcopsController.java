@@ -62,4 +62,15 @@ public class IcopsController {
         log.info("api = /_getLocationBasedJurisdiction , Status = SUCCESS");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @PostMapping("/v1/integrations/iCops/_rescheduleProcess")
+    public ResponseEntity<ProcessResponse> rescheduleProcess(@RequestBody TaskRequest taskRequest) throws Exception {
+        log.info("api = /v1/integrations/iCops/_rescheduleProcess , Status = IN-PROGRESS");
+        ChannelMessage response = icopsService.rescheduleProcess(taskRequest);
+        ResponseInfo responseInfo = ResponseInfo.builder().build();
+        ProcessResponse processResponse = ProcessResponse.builder()
+                .responseInfo(responseInfo).channelMessage(response).build();
+        log.info("api = /v1/integrations/iCops/_rescheduleProcess , Status = SUCCESS");
+        return new ResponseEntity<>(processResponse, HttpStatus.OK);
+    }
 }

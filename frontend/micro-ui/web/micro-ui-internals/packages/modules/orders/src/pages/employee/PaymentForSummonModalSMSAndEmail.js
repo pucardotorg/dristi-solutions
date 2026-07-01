@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState, useEffect } from "react";
-import { Loader } from "@egovernments/digit-ui-react-components";
+import { Loader, Button } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
@@ -14,7 +14,9 @@ import { DateUtils, extractFeeMedium, getAuthorizedUuid, getTaskType } from "@eg
 import { getFormattedName, getSuffixByDeliveryChannel } from "../../utils";
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
-import { ORDER_TYPES } from "../../utils/constants";
+import { ORDER_TYPES, TASK_TYPES } from "../../utils/constants";
+import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote";
+import useGetPaymentVerificationStatus from "../../../../submissions/src/hooks/submissions/useGetPaymentVerificationStatus";
 
 const submitModalInfo = {
   header: "CS_HEADER_FOR_SUMMON_POST",
@@ -29,12 +31,24 @@ const submitModalInfo = {
   showTable: true,
 };
 
-const orderTypeEnum = {
+const taskTypeEnum = {
   SUMMONS: "Summons",
   NOTICE: "Notice",
   WARRANT: "Warrant",
   PROCLAMATION: "Proclamation",
   ATTACHMENT: "Attachment",
+};
+
+const verificationPendingNoteConfig = {
+  populators: {
+    inputs: [
+      {
+        infoHeader: "WARNING",
+        infoText: "PAYMENT_VERIFICATION_PENDING_INFO",
+        showTooltip: true,
+      },
+    ],
+  },
 };
 
 const PaymentForSummonComponent = ({
@@ -45,18 +59,22 @@ const PaymentForSummonComponent = ({
   paymentLoader,
   channelId,
   formattedChannelId,
-  orderType,
+  taskType,
   isCaseLocked = false,
   payOnlineButtonTitle = null,
+  isVerificationPending = false,
+  onTryPaymentAgain = () => {},
+  onWaitAndCheckLater = () => {},
 }) => {
   const { t } = useTranslation();
 
   return (
     <div className="payment-for-summon">
       <p style={{ marginTop: "0px", marginBottom: "0px" }}>
-        {t("MAKE_PAYMENT_IN_ORDER_TO_SEND_FOLLOWING")} {orderTypeEnum?.[orderType]} via {formattedChannelId}.
+        {t("MAKE_PAYMENT_IN_ORDER_TO_SEND_FOLLOWING")} {taskTypeEnum?.[taskType]} via {formattedChannelId}.
       </p>
       <ApplicationInfoComponent infos={infos} links={links} />
+      {isVerificationPending && <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />}
       {channelId && feeOptions[channelId]?.length > 0 && (
         <div className="summon-payment-action-table">
           {feeOptions[channelId]?.map((action, index) => (
@@ -65,6 +83,7 @@ const PaymentForSummonComponent = ({
               <div className="payment-amount">{action?.action !== "offline-process" && action?.amount ? `Rs. ${action?.amount}/-` : "-"}</div>
               <div className="payment-action">
                 {!action?.isCompleted &&
+                  !isVerificationPending &&
                   (index === 0 ? (
                     t(action?.action)
                   ) : action?.action !== "offline-process" ? (
@@ -87,6 +106,23 @@ const PaymentForSummonComponent = ({
           ))}
         </div>
       )}
+      {true ||
+        (isVerificationPending && (
+          <div style={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: "12px", marginTop: "8px" }}>
+            <Button
+              label={t("CS_TRY_PAYMENT_AGAIN")}
+              variation="secondary"
+              className={"pay-online-button"}
+              onButtonClick={onTryPaymentAgain}
+              isDisabled={paymentLoader || isCaseLocked}
+            />
+            <Button
+              label={t("CS_WAIT_AND_CHECK_LATER")}
+              onButtonClick={onWaitAndCheckLater}
+              style={{ border: "none", paddingRight: "20px", paddingLeft: "20px" }}
+            />
+          </div>
+        ))}
     </div>
   );
 };
@@ -103,6 +139,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const [isCaseLocked, setIsCaseLocked] = useState(false);
   const [payOnlineButtonTitle, setPayOnlineButtonTitle] = useState("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
   const [showToast, setShowToast] = useState(null);
+  const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
 
   useEffect(() => {
     // If we don't have query params, redirect to home
@@ -187,7 +224,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     [isCaseAdmitted]
   );
 
-  const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
+  const { data: tasksData, isLoading: isTasksLoading } = Digit.Hooks.hearings.useGetTaskList(
     {
       criteria: {
         tenantId: tenantId,
@@ -200,7 +237,9 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     Boolean(filingNumber && caseCourtId)
   );
 
-  const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
+  const filteredTasks = useMemo(() => tasksData?.list, [tasksData]); //here add
+  const partyUniqueId = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.uniqueId, [filteredTasks]);
+  const partyName = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.name, [filteredTasks]);
 
   const { data: orderData, isLoading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
     { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
@@ -237,19 +276,21 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     Boolean((orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber) && caseCourtId)
   );
 
-  const getBusinessService = (orderType) => {
+  const getBusinessService = (taskType) => {
     const businessServiceMap = {
       SUMMONS: paymentType.TASK_SUMMON,
       WARRANT: paymentType.TASK_WARRANT,
       PROCLAMATION: paymentType.TASK_PROCLAMATION,
       ATTACHMENT: paymentType.TASK_ATTACHMENT,
       NOTICE: paymentType.TASK_NOTICE,
+      // SCHEDULE_OF_HEARING_DATE: paymentType.TASK_WARRANT,
     };
-    return businessServiceMap?.[orderType];
+
+    return businessServiceMap?.[taskType];
   };
 
-  const businessService = useMemo(() => getBusinessService(orderType), [orderType]);
-  const taskType = useMemo(() => getTaskType(businessService), [businessService]);
+  const taskType = useMemo(() => filteredTasks?.[0]?.taskType, [filteredTasks]);
+  const businessService = useMemo(() => getBusinessService(taskType), [taskType]);
   const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "payment",
@@ -260,7 +301,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       },
     }
   );
-
   const suffix = useMemo(() => getSuffixByDeliveryChannel(paymentTypeData, channelId, businessService), [
     businessService,
     channelId,
@@ -280,8 +320,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       ],
     },
     {},
-    `breakup-response-${summonsPincode}${channelId}${taskNumber}${businessService}`,
-    Boolean(filteredTasks && channelId && orderType && taskNumber && businessService)
+    `breakup-response-${summonsPincode}${channelId}${taskNumber}`,
+    Boolean(filteredTasks && channelId && taskNumber && businessService && taskType)
   );
 
   const courtFeeAmount = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown.find((data) => data?.type === "Court Fee")?.amount, [
@@ -295,6 +335,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     caseDetails,
     totalAmount: courtFeeAmount,
   });
+
+  const { data: paymentStatusData } = useGetPaymentVerificationStatus(`${taskNumber}_${suffix}`, tenantId, Boolean(taskNumber && suffix));
+
+  const isVerificationPending = useMemo(() => Boolean(paymentStatusData?.PaymentStatus?.status === "VERIFICATION_PENDING"), [paymentStatusData]);
 
   const status = useMemo(() => {
     if (channelId === "SMS") {
@@ -324,16 +368,19 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   ]);
 
   const service = useMemo(() => {
-    if (orderType === ORDER_TYPES.WARRANT) {
+    if (taskType === TASK_TYPES.WARRANT) {
       return paymentType.TASK_WARRANT;
-    } else if (orderType === ORDER_TYPES.PROCLAMATION) {
+    }
+    if (taskType === TASK_TYPES.SUMMONS) {
+      return paymentType.TASK_SUMMON;
+    } else if (taskType === TASK_TYPES.PROCLAMATION) {
       return paymentType.TASK_PROCLAMATION;
-    } else if (orderType === ORDER_TYPES.ATTACHMENT) {
+    } else if (taskType === TASK_TYPES.ATTACHMENT) {
       return paymentType.TASK_ATTACHMENT;
     } else {
       return paymentType.TASK_NOTICE;
     }
-  }, [orderType]);
+  }, [taskType]);
 
   const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchCourtBill } = Digit.Hooks.dristi.useBillSearch(
     {},
@@ -343,7 +390,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       service: service,
     },
     `${taskNumber}_POST_COURT_${service}`,
-    Boolean(taskNumber && orderType)
+    Boolean(taskNumber && taskType && service)
   );
 
   const { data: ePostBillResponse, isLoading: isEPOSTBillLoading } = Digit.Hooks.dristi.useBillSearch(
@@ -354,7 +401,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       service: service,
     },
     `${taskNumber}_POST_PROCESS_${service}`,
-    Boolean(taskNumber && orderType)
+    Boolean(taskNumber && taskType && service)
   );
 
   const partyIndex = useMemo(
@@ -396,11 +443,15 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         if (!billPaymentStatus) {
           return;
         }
+        if (billPaymentStatus === "VERIFICATION_PENDING") {
+          setIsPostPaymentVerificationPending(true);
+        }
         const resfileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: billResponse?.Bill?.[0]?.id, tenantId });
         const fileStoreId = resfileStoreId?.Document?.fileStore;
         const postPaymenScreenObj = {
           state: {
-            success: Boolean(fileStoreId),
+            success: billPaymentStatus === "PAID",
+            paymentStatus: billPaymentStatus,
             receiptData: {
               ...mockSubmitModalInfo,
               caseInfo: [
@@ -423,57 +474,12 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
               isArrow: false,
               showTable: true,
               showCopytext: true,
-              orderType: orderType,
+              taskType: taskType,
             },
             fileStoreId: fileStoreId || "",
           },
         };
 
-        if (type !== "EPOST") {
-          await ordersService.customApiService(Urls.orders.pendingTask, {
-            pendingTask: {
-              name:
-                orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
-                  ? `PAYMENT_PENDING_FOR_${orderType}`
-                  : `MAKE_PAYMENT_FOR_${orderType}_POST`,
-              entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
-              referenceId: `MANUAL_${taskNumber}`,
-              status: status,
-              assignedTo: [],
-              assignedRole: [],
-              cnrNumber: filteredTasks?.[0]?.cnrNumber,
-              filingNumber: filingNumber,
-              caseId: caseDetails?.id,
-              caseTitle: caseDetails?.caseTitle,
-              isCompleted: true,
-              stateSla: "",
-              additionalDetails: {},
-              tenantId,
-            },
-          });
-        } else if (fileStoreId && ePostBillResponse?.Bill?.[0]?.status === "PAID") {
-          await ordersService.customApiService(Urls.orders.pendingTask, {
-            pendingTask: {
-              name:
-                orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
-                  ? `PAYMENT_PENDING_FOR_${orderType}`
-                  : `MAKE_PAYMENT_FOR_${orderType}_POST`,
-              entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
-              referenceId: `MANUAL_${taskNumber}`,
-              status: status,
-              assignedTo: [],
-              assignedRole: [],
-              cnrNumber: filteredTasks?.[0]?.cnrNumber,
-              filingNumber: filingNumber,
-              caseId: caseDetails?.id,
-              caseTitle: caseDetails?.caseTitle,
-              isCompleted: true,
-              stateSla: "",
-              additionalDetails: {},
-              tenantId,
-            },
-          });
-        }
         history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, postPaymenScreenObj);
       } catch (error) {
         console.error(error);
@@ -605,6 +611,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     service,
     orderData,
     partyIndex,
+    taskType,
   ]);
 
   const infos = useMemo(() => {
@@ -635,6 +642,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       formdata?.warrantFor ||
       formdata?.proclamationFor ||
       formdata?.attachmentFor ||
+      partyName ||
       "";
 
     const task = filteredTasks?.[0];
@@ -662,7 +670,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         value: deliveryChannel ? `${deliveryChannel} (${contactDetail})` : "Not available",
       },
     ];
-  }, [orderDetails, compositeItem, orderType, filteredTasks, hearingsData?.HearingList]);
+  }, [orderDetails, compositeItem, orderType, filteredTasks, hearingsData?.HearingList, partyName]);
 
   const orderDate = useMemo(() => {
     return hearingsData?.HearingList?.[0]?.startTime;
@@ -675,21 +683,28 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       );
     };
     return [{ text: "View order", link: "", onClick: onViewOrderClick }];
-  }, [caseData?.criteria, caseId, filingNumber, history]);
+  }, [caseData?.criteria, filingNumber, history]);
+
+  const handleClose = useCallback(() => {
+    if (paymentLoader === false) {
+      history.goBack();
+    }
+  }, [history, paymentLoader]);
+
+  const handleTryPaymentAgain = useCallback(() => {
+    if (channelId && feeOptions[channelId]?.[1]?.onClick) {
+      feeOptions[channelId][1].onClick();
+    }
+  }, [channelId, feeOptions]);
 
   const paymentForSummonModalConfig = useMemo(() => {
-    const handleClose = () => {
-      if (paymentLoader === false) {
-        history.goBack();
-      }
-    };
     const formattedChannelId =
       channelId === "SMS" ? "SMS" : channelId ? channelId?.charAt(0)?.toUpperCase() + channelId?.slice(1)?.toLowerCase() : "";
 
     return {
       handleClose: handleClose,
       heading: {
-        label: `Payment for ${orderTypeEnum?.[orderType]} via ${formattedChannelId}`,
+        label: `Payment for ${taskTypeEnum?.[taskType]} via ${formattedChannelId}`,
       },
       isStepperModal: false,
       isCaseLocked: isCaseLocked,
@@ -705,15 +720,18 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           channelId={channelId}
           formattedChannelId={formattedChannelId}
           isCaseAdmitted={isCaseAdmitted}
-          orderType={orderType}
+          taskType={taskType}
           isCaseLocked={isCaseLocked}
           payOnlineButtonTitle={payOnlineButtonTitle}
+          isVerificationPending={isVerificationPending || isPostPaymentVerificationPending}
+          onTryPaymentAgain={handleTryPaymentAgain}
+          onWaitAndCheckLater={handleClose}
         />
       ),
     };
   }, [
     channelId,
-    orderType,
+    taskType,
     isCaseLocked,
     payOnlineButtonTitle,
     infos,
@@ -723,10 +741,13 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     paymentLoader,
     isCaseAdmitted,
     isUserAdv,
-    history,
+    isVerificationPending,
+    isPostPaymentVerificationPending,
+    handleClose,
+    handleTryPaymentAgain,
   ]);
 
-  if (isOrdersLoading || !orderData || isPaymentTypeLoading || isSummonsBreakUpLoading || isBillLoading) {
+  if (isOrdersLoading || !orderData || isPaymentTypeLoading || isSummonsBreakUpLoading || isBillLoading || isTasksLoading) {
     return <Loader />;
   }
   return (

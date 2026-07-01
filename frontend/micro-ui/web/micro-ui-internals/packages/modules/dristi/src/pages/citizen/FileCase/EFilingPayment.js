@@ -193,22 +193,6 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
         await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
 
         if (paymentStatus) {
-          await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-            pendingTask: {
-              name: "Pending Payment",
-              entityType: "case-default",
-              referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-              status: "PENDING_PAYMENT",
-              cnrNumber: caseDetails?.cnrNumber,
-              filingNumber: caseDetails?.filingNumber,
-              caseId: caseDetails?.id,
-              caseTitle: caseDetails?.caseTitle,
-              isCompleted: true,
-              stateSla: null,
-              additionalDetails: {},
-              tenantId,
-            },
-          });
           const response = await DRISTIService.fetchBillFileStoreId({}, { billId: bill?.Bill?.[0]?.id, tenantId });
           const fileStoreId = response?.Document?.fileStore;
           if (fileStoreId) {

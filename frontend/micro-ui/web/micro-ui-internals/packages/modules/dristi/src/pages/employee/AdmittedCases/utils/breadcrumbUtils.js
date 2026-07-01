@@ -33,14 +33,12 @@ export const getEmployeeCrumbs = ({ t, isCitizen, homeFilteredData, homeActiveTa
 // Helper function to generate advocate name display
 export const getAdvocateName = ({ caseDetails, t }) => {
   if (!caseDetails?.representatives?.length) return "";
-  
+
   const complainantAdvocates = caseDetails?.representatives?.filter((rep) =>
     rep?.representing?.some((lit) => lit?.partyType?.includes("complainant"))
   );
-  const accusedAdvocates = caseDetails?.representatives?.filter((rep) => 
-    rep?.representing?.some((lit) => lit?.partyType?.includes("respondent"))
-  );
-  
+  const accusedAdvocates = caseDetails?.representatives?.filter((rep) => rep?.representing?.some((lit) => lit?.partyType?.includes("respondent")));
+
   const complainantAdvocateName =
     complainantAdvocates?.length > 0
       ? `${complainantAdvocates?.[0]?.additionalDetails?.advocateName} (C)${
@@ -51,7 +49,7 @@ export const getAdvocateName = ({ caseDetails, t }) => {
             : ""
         }`
       : "";
-      
+
   const accusedAdvocateName =
     accusedAdvocates?.length > 0
       ? `${accusedAdvocates?.[0]?.additionalDetails?.advocateName} (A)${
@@ -62,6 +60,31 @@ export const getAdvocateName = ({ caseDetails, t }) => {
             : ""
         }`
       : "";
-      
+
+  return `${t("CS_COMMON_ADVOCATES")}: ${complainantAdvocateName} ${accusedAdvocateName ? ", " + accusedAdvocateName : ""}`;
+};
+
+// Helper function to generate advocate name display from cause-list hearing data (advocate is a JSON string like {"accused":[],"complainant":[]})
+export const getAdvocateNameFromHearingData = ({ advocate, t }) => {
+  let parsedAdvocate = advocate;
+  if (typeof advocate === "string") {
+    try {
+      parsedAdvocate = JSON.parse(advocate);
+    } catch (e) {
+      return "";
+    }
+  }
+
+  const formatNames = (names, suffix) =>
+    names?.length > 0
+      ? `${names[0]} (${suffix})${
+          names.length > 1 ? ` ${t("CS_COMMON_AND")} ${names.length - 1} ${names.length === 2 ? t("CS_COMMON_OTHER") : t("CS_COMMON_OTHERS")}` : ""
+        }`
+      : "";
+
+  const complainantAdvocateName = formatNames(parsedAdvocate?.complainant, "C");
+  const accusedAdvocateName = formatNames(parsedAdvocate?.accused, "A");
+  if (!complainantAdvocateName && !accusedAdvocateName) return "";
+
   return `${t("CS_COMMON_ADVOCATES")}: ${complainantAdvocateName} ${accusedAdvocateName ? ", " + accusedAdvocateName : ""}`;
 };

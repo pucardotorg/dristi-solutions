@@ -195,7 +195,8 @@ export const downloadFile = (responseBlob, fileName) => {
   window.URL.revokeObjectURL(url);
 };
 
-export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, taskDetails) => {
+export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, rowData) => {
+  const taskDetails = rowData?.taskDetails;
   if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
     const type = taskDetails?.miscellaneuosDetails?.addressee || "";
 
@@ -207,6 +208,11 @@ export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, tas
       default:
         return taskDetails?.respondentDetails?.name || taskDetails?.complainantDetails?.name || "";
     }
+  }
+
+  if (orderType === ORDER_TYPES.SCHEDULE_OF_HEARING_DATE) {
+    // For warrant tasks which are automatically created by hearing order flow.
+    return taskDetails?.witnessDetails?.name || taskDetails?.respondentDetails?.name || "";
   }
 
   const formDataKeyMap = {
@@ -239,6 +245,8 @@ export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, tas
     formdata?.warrantFor ||
     formdata?.proclamationFor ||
     formdata?.attachmentFor ||
+    taskDetails?.witnessDetails?.name ||
+    taskDetails?.respondentDetails?.name ||
     "";
 
   return name;
