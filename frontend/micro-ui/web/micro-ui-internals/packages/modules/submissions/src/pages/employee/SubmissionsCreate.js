@@ -1957,6 +1957,9 @@ const SubmissionsCreate = ({ path }) => {
         const billPaymentStatus = await openPaymentPortal(bill, bill?.Bill?.totalAmount);
         setPaymentStatus(billPaymentStatus);
         await applicationRefetch();
+        if (billPaymentStatus === "VERIFICATION_PENDING") {
+          return;
+        }
         if (billPaymentStatus === "PAID") {
           setMakePaymentLabel(false);
           setShowPaymentModal(false);
