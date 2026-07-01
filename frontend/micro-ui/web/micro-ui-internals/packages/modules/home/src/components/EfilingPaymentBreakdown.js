@@ -245,7 +245,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     }
   };
 
-  if (isLoading || ispaymentLoading || isPaymentTypeLoading || loader) {
+  if (!isPostPaymentVerificationPending && (isLoading || ispaymentLoading || isPaymentTypeLoading || loader)) {
     return <Loader />;
   }
   return (
