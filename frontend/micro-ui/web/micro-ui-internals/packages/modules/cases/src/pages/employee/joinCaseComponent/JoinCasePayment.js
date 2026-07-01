@@ -88,10 +88,11 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
             };
           });
         });
+        refetch();
       } else if (paymentStatus === "VERIFICATION_PENDING") {
         setIsPostPaymentVerificationPending(true);
+        return;
       }
-      refetch();
     } catch (error) {
       console.error("error", error);
     }

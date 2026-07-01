@@ -354,26 +354,6 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
                   <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
                 </div>
               )}
-              {/* {isVerificationPending || isPostPaymentVerificationPending ? (
-                <div
-                  className="verification-pending-actions"
-                  style={{ display: "flex", flexDirection: "row", justifyContent: "end", alignItems: "center", gap: "12px" }}
-                >
-                  <Button
-                    label={t("CS_TRY_PAYMENT_AGAIN")}
-                    variation="secondary"
-                    className={"pay-online-button"}
-                    onButtonClick={onSubmitCase}
-                    isDisabled={paymentLoader || isCaseLocked}
-                  />
-                  <Button
-                    label={t("CS_WAIT_AND_CHECK_LATER")}
-                    onButtonClick={onCancel}
-                    isDisabled={paymentLoader}
-                    style={{ border: "none", paddingRight: "20px", paddingLeft: "20px" }}
-                  />
-                </div>
-              ) : null} */}
               {showToast && (
                 <CustomToast
                   error={showToast?.error}

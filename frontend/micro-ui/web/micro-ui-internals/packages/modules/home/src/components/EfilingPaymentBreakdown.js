@@ -233,6 +233,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
         }
       } else if (paymentStatus === "VERIFICATION_PENDING") {
         setIsPostPaymentVerificationPending(true);
+        return;
       } else {
         setRetryPayment(true);
       }
