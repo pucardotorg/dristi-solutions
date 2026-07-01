@@ -29,7 +29,17 @@ const verificationPendingNoteConfig = {
   },
 };
 
-function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMakePayment, tenantId, consumerCode, paymentLoader, totalAmount }) {
+function PaymentModal({
+  t,
+  handleClosePaymentModal,
+  handleSkipPayment,
+  handleMakePayment,
+  tenantId,
+  consumerCode,
+  paymentLoader,
+  totalAmount,
+  isPostPaymentVerificationPending,
+}) {
   const { data: paymentStatusData, isLoading: isPaymentStatusLoading } = useGetPaymentVerificationStatus(
     consumerCode,
     tenantId,
@@ -44,11 +54,13 @@ function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMak
     <Modal
       headerBarMain={<Heading label={t("SUBMISSION_APPLICATION_PAYMENT")} />}
       headerBarEnd={<CloseBtn onClick={handleClosePaymentModal} />}
-      actionCancelLabel={isVerificationPending ? t("CS_TRY_PAYMENT_AGAIN") : t("SKIP")}
-      actionCancelOnSubmit={isVerificationPending ? () => handleMakePayment(totalAmount) : () => handleSkipPayment()}
-      actionSaveLabel={isVerificationPending ? t("CS_WAIT_AND_CHECK_LATER") : t("CS_MAKE_PAYMENT")}
+      actionCancelLabel={isVerificationPending || isPostPaymentVerificationPending ? t("CS_TRY_PAYMENT_AGAIN") : t("SKIP")}
+      actionCancelOnSubmit={
+        isVerificationPending || isPostPaymentVerificationPending ? () => handleMakePayment(totalAmount) : () => handleSkipPayment()
+      }
+      actionSaveLabel={isVerificationPending || isPostPaymentVerificationPending ? t("CS_WAIT_AND_CHECK_LATER") : t("CS_MAKE_PAYMENT")}
       actionSaveOnSubmit={() => {
-        isVerificationPending ? handleClosePaymentModal() : handleMakePayment(totalAmount);
+        isVerificationPending || isPostPaymentVerificationPending ? handleClosePaymentModal() : handleMakePayment(totalAmount);
       }}
       isDisabled={paymentLoader}
       className={"submission-payment-modal"}

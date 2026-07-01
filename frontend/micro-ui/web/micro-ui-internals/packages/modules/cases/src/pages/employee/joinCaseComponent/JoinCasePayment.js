@@ -187,7 +187,7 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
           className={"adhaar-verification-info-card"}
         />
       </div>
-      {(true || isVerificationPending || isPostPaymentVerificationPending || externalPostPaymentVerificationPending) && (
+      {(isVerificationPending || isPostPaymentVerificationPending || externalPostPaymentVerificationPending) && (
         <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
       )}
       {type !== "join-case-flow" && (
