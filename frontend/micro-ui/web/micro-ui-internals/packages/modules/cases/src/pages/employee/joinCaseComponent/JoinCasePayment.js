@@ -88,10 +88,11 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
             };
           });
         });
+        refetch();
       } else if (paymentStatus === "VERIFICATION_PENDING") {
         setIsPostPaymentVerificationPending(true);
+        return;
       }
-      refetch();
     } catch (error) {
       console.error("error", error);
     }
@@ -187,7 +188,7 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
           className={"adhaar-verification-info-card"}
         />
       </div>
-      {(true || isVerificationPending || isPostPaymentVerificationPending || externalPostPaymentVerificationPending) && (
+      {(isVerificationPending || isPostPaymentVerificationPending || externalPostPaymentVerificationPending) && (
         <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
       )}
       {type !== "join-case-flow" && (

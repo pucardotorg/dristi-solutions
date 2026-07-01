@@ -182,7 +182,6 @@
     width: 536px;
     .popup-module-main {
       .submission-payment-modal-body-main {
-        height: 268px;
         display: flex;
         flex-direction: column;
         margin-bottom: 10px;
@@ -281,13 +280,13 @@
         font-size: 16px;
       }
 
-      .field{
-        .custom-text-area-main-div{
+      .field {
+        .custom-text-area-main-div {
           margin-bottom: 20px !important;
-          .custom-text-area-header-div{
-            .custom-sub-header{
-              font-size:16px !important;
-              font-weight:400 !important;
+          .custom-text-area-header-div {
+            .custom-sub-header {
+              font-size: 16px !important;
+              font-weight: 400 !important;
             }
           }
         }
