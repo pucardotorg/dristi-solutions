@@ -701,6 +701,33 @@ public class InboxServiceV2 {
         return listOfFields;
     }
 
+    public InboxBulkCountResponse getBulkIndexCount(InboxBulkCountRequest bulkCountRequest) {
+        org.egov.common.contract.request.RequestInfo requestInfo = bulkCountRequest.getRequestInfo();
+        List<InboxCountItem> items = new ArrayList<>();
+
+        for (InboxSearchCriteria criteria : bulkCountRequest.getInboxList()) {
+            InboxRequest inboxRequest = InboxRequest.builder()
+                    .RequestInfo(requestInfo)
+                    .inbox(criteria)
+                    .build();
+
+            String tenantId = criteria.getTenantId();
+            String moduleName = criteria.getProcessSearchCriteria().getModuleName();
+            InboxQueryConfiguration inboxQueryConfiguration = mdmsUtil.getConfigFromMDMS(tenantId, moduleName);
+
+            Integer count = getTotalApplicationCount(inboxRequest, inboxQueryConfiguration.getIndex());
+
+            items.add(InboxCountItem.builder()
+                    .inbox(criteria)
+                    .count(count)
+                    .build());
+        }
+
+        return InboxBulkCountResponse.builder()
+                .items(items)
+                .build();
+    }
+
     public InboxResponse getIndexResponse(InboxRequest inboxRequest) {
 
         validator.validateSearchCriteria(inboxRequest);
