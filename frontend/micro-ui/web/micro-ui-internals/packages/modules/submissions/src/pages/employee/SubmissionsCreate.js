@@ -92,6 +92,7 @@ const SubmissionsCreate = ({ path }) => {
   const [applicationPdfFileStoreId, setApplicationPdfFileStoreId] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState();
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
+  const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
   const scenario = "applicationSubmission";
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
@@ -1958,6 +1959,7 @@ const SubmissionsCreate = ({ path }) => {
         setPaymentStatus(billPaymentStatus);
         await applicationRefetch();
         if (billPaymentStatus === "VERIFICATION_PENDING") {
+          setIsPostPaymentVerificationPending(true);
           return;
         }
         if (billPaymentStatus === "PAID") {
@@ -2091,6 +2093,7 @@ const SubmissionsCreate = ({ path }) => {
             paymentLoader={paymentLoader}
             entityType={entityType}
             totalAmount={_getApplicationAmount(applicationTypeAmount, applicationType)}
+            isPostPaymentVerificationPending={isPostPaymentVerificationPending}
           />
         )}
         {showSuccessModal && (
