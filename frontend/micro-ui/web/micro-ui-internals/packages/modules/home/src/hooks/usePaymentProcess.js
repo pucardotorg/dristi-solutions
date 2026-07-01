@@ -4,7 +4,7 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 
-const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails, totalAmount, mockSubmitModalInfo, scenario }) => {
+const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails, totalAmount, mockSubmitModalInfo, scenario, businessService }) => {
   const history = useHistory();
   const toast = useToast();
   const [paymentLoader, setPaymentLoader] = useState(false);
@@ -16,7 +16,8 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
     return await DRISTIService.callFetchBill({}, { consumerCode: consumerCode, tenantId, businessService: service });
   };
   const userInfo = Digit.UserService.getUser()?.info;
-  const openPaymentPortal = async (bill, billAmount = null) => {
+  const openPaymentPortal = async (bill, billAmount = null, paymentBusinessService = null) => {
+    const effectiveBusinessService = paymentBusinessService || businessService || null;
     try {
       const gateway = await DRISTIService.callETreasury(
         {
@@ -57,7 +58,8 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
           bill?.Bill?.[0]?.consumerCode,
           bill?.Bill?.[0]?.businessService,
           isMockEnabled,
-          gateway
+          gateway,
+          effectiveBusinessService
         );
         return status;
       } else {
@@ -69,7 +71,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
     }
   };
 
-  const handleButtonClick = async (url, data, header, billConsumerCode, billBusinessService, isMockEnabled, gateway) => {
+  const handleButtonClick = async (url, data, header, billConsumerCode, billBusinessService, isMockEnabled, gateway, effectiveBusinessService) => {
     if (isMockEnabled) {
       const apiUrl = `${window.location.origin}/epayments`;
       let jsonData = JSON.parse(data);
@@ -136,12 +138,10 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
 
             const intervalId = setInterval(async () => {
               try {
-                const paymentStatusResponse = await DRISTIService.getPaymentStatus(
-                  {},
-                  { tenantId, consumerCode: consumerCode || billConsumerCode }
-                );
-                const paymentStatusValue =
-                  paymentStatusResponse && paymentStatusResponse.PaymentStatus && paymentStatusResponse.PaymentStatus.status;
+                const mockStatusParams = { tenantId, consumerCode: consumerCode || billConsumerCode };
+                if (effectiveBusinessService) mockStatusParams.businessService = effectiveBusinessService;
+                const paymentStatusResponse = await DRISTIService.getPaymentStatus({}, mockStatusParams);
+                const paymentStatusValue = paymentStatusResponse && paymentStatusResponse.PaymentStatus && paymentStatusResponse.PaymentStatus.status;
 
                 if (paymentStatusValue) {
                   lastKnownStatus = paymentStatusValue;
@@ -234,9 +234,10 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
         const checkBillStatus = setInterval(async () => {
           pollCount++;
           try {
-            const paymentStatusResponse = await DRISTIService.getPaymentStatus({}, { tenantId, consumerCode: consumerCode || billConsumerCode });
-            const paymentStatusValue =
-              paymentStatusResponse && paymentStatusResponse.PaymentStatus && paymentStatusResponse.PaymentStatus.status;
+            const pollStatusParams = { tenantId, consumerCode: consumerCode || billConsumerCode };
+            if (effectiveBusinessService) pollStatusParams.businessService = effectiveBusinessService;
+            const paymentStatusResponse = await DRISTIService.getPaymentStatus({}, pollStatusParams);
+            const paymentStatusValue = paymentStatusResponse && paymentStatusResponse.PaymentStatus && paymentStatusResponse.PaymentStatus.status;
 
             if (paymentStatusValue) {
               lastKnownStatus = paymentStatusValue;

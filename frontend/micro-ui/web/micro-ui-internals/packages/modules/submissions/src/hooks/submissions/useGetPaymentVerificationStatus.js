@@ -1,10 +1,14 @@
 import { useQuery } from "react-query";
 import { submissionService } from "../services";
 
-function useGetPaymentVerificationStatus(consumerCode, tenantId, enabled) {
+function useGetPaymentVerificationStatus(consumerCode, tenantId, enabled, businessService) {
+  const statusParams = { consumerCode: consumerCode, tenantId };
+  if (businessService) {
+    statusParams.businessService = businessService;
+  }
   const { isLoading, data, isFetching, error } = useQuery(
     `GET_PAYMENT_VERIFICATION_STATUS_${consumerCode}`,
-    () => submissionService.getPaymentStatus({}, { consumerCode: consumerCode, tenantId }),
+    () => submissionService.getPaymentStatus({}, statusParams),
     {
       cacheTime: 2 * 60,
       staleTime: 2 * 60,

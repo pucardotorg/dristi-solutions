@@ -1,14 +1,23 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
+import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote";
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import usePaymentProcess from "../../../../../home/src/hooks/usePaymentProcess";
+import useGetPaymentVerificationStatus from "../../../../../submissions/src/hooks/submissions/useGetPaymentVerificationStatus";
 
-const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type }) => {
+const verificationPendingNoteConfig = {
+  populators: {
+    inputs: [{ infoHeader: "WARNING", infoText: "PAYMENT_VERIFICATION_PENDING_INFO", showTooltip: true }],
+  },
+};
+
+const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type, externalPostPaymentVerificationPending = false }) => {
   const { t } = useTranslation();
 
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const [isApiCalled, setIsApiCalled] = useState(false);
+  const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
 
   const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
   const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
@@ -48,7 +57,17 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
 
   const { fetchBill, openPaymentPortal } = usePaymentProcess({
     tenantId,
+    businessService: "task-payment",
   });
+
+  const { data: paymentStatusData } = useGetPaymentVerificationStatus(
+    taskNumber ? `${taskNumber}_JOIN_CASE` : "",
+    tenantId,
+    Boolean(taskNumber),
+    "task-payment"
+  );
+
+  const isVerificationPending = useMemo(() => Boolean(paymentStatusData?.PaymentStatus?.status === "VERIFICATION_PENDING"), [paymentStatusData]);
 
   return (
     <div
@@ -132,6 +151,9 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
           className={"adhaar-verification-info-card"}
         />
       </div>
+      {(true || isVerificationPending || isPostPaymentVerificationPending || externalPostPaymentVerificationPending) && (
+        <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
+      )}
       {type !== "join-case-flow" && (
         <div className="advocate-replacement-request-footer" style={{ justifyContent: "flex-end", marginBottom: "0px" }}>
           <ButtonSelector
@@ -140,8 +162,8 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
               setIsApiCalled(true);
               try {
                 const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
-                const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount);
-                if (paymentStatus) {
+                const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount, "task-payment");
+                if (paymentStatus === "PAID") {
                   triggerSurvey("JOIN_CASE_PAYMENT", () => {
                     setPendingTaskActionModals((pendingTaskActionModals) => {
                       const data = pendingTaskActionModals?.data;
@@ -154,6 +176,8 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
                       };
                     });
                   });
+                } else if (paymentStatus === "VERIFICATION_PENDING") {
+                  setIsPostPaymentVerificationPending(true);
                 }
                 refetch();
               } catch (error) {

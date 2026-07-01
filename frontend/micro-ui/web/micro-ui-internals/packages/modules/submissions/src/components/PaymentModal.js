@@ -21,7 +21,7 @@ const verificationPendingNoteConfig = {
   populators: {
     inputs: [
       {
-        infoHeader: "INFO",
+        infoHeader: "WARNING",
         infoText: "PAYMENT_VERIFICATION_PENDING_INFO",
         showTooltip: true,
       },

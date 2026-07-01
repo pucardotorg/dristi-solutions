@@ -20,7 +20,7 @@ import useGetPaymentVerificationStatus from "../../../submissions/src/hooks/subm
 
 const verificationPendingNoteConfig = {
   populators: {
-    inputs: [{ infoHeader: "INFO", infoText: "PAYMENT_VERIFICATION_PENDING_INFO", showTooltip: true }],
+    inputs: [{ infoHeader: "WARNING", infoText: "PAYMENT_VERIFICATION_PENDING_INFO", showTooltip: true }],
   },
 };
 
@@ -331,20 +331,22 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
           </div>
 
           {isVerificationPending || isPostPaymentVerificationPending ? (
-            <div className="verification-pending-actions" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-              <Button
-                label={t("CS_WAIT_AND_CHECK_LATER")}
-                variation="secondary"
-                className={"pay-online-button"}
-                onButtonClick={onCancel}
-                isDisabled={paymentLoader}
-              />
+            <div
+              className="verification-pending-actions"
+              style={{ display: "flex", flexDirection: "row", justifyContent: "end", alignItems: "center", gap: "12px" }}
+            >
               <Button
                 label={t("CS_TRY_PAYMENT_AGAIN")}
                 variation="secondary"
                 className={"pay-online-button"}
                 onButtonClick={onTaskPayOnline}
                 isDisabled={paymentLoader || isCaseLocked}
+              />
+              <Button
+                label={t("CS_WAIT_AND_CHECK_LATER")}
+                onButtonClick={onCancel}
+                isDisabled={paymentLoader}
+                style={{ border: "none", paddingRight: "20px", paddingLeft: "20px" }}
               />
             </div>
           ) : (
