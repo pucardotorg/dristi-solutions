@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState, useEffect } from "react";
-import { Loader } from "@egovernments/digit-ui-react-components";
+import { Loader, Button } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
@@ -63,6 +63,8 @@ const PaymentForSummonComponent = ({
   isCaseLocked = false,
   payOnlineButtonTitle = null,
   isVerificationPending = false,
+  onTryPaymentAgain = () => {},
+  onWaitAndCheckLater = () => {},
 }) => {
   const { t } = useTranslation();
 
@@ -81,6 +83,7 @@ const PaymentForSummonComponent = ({
               <div className="payment-amount">{action?.action !== "offline-process" && action?.amount ? `Rs. ${action?.amount}/-` : "-"}</div>
               <div className="payment-action">
                 {!action?.isCompleted &&
+                  !isVerificationPending &&
                   (index === 0 ? (
                     t(action?.action)
                   ) : action?.action !== "offline-process" ? (
@@ -103,6 +106,23 @@ const PaymentForSummonComponent = ({
           ))}
         </div>
       )}
+      {true ||
+        (isVerificationPending && (
+          <div style={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: "12px", marginTop: "8px" }}>
+            <Button
+              label={t("CS_TRY_PAYMENT_AGAIN")}
+              variation="secondary"
+              className={"pay-online-button"}
+              onButtonClick={onTryPaymentAgain}
+              isDisabled={paymentLoader || isCaseLocked}
+            />
+            <Button
+              label={t("CS_WAIT_AND_CHECK_LATER")}
+              onButtonClick={onWaitAndCheckLater}
+              style={{ border: "none", paddingRight: "20px", paddingLeft: "20px" }}
+            />
+          </div>
+        ))}
     </div>
   );
 };
@@ -710,12 +730,19 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     return [{ text: "View order", link: "", onClick: onViewOrderClick }];
   }, [caseData?.criteria, filingNumber, history]);
 
+  const handleClose = useCallback(() => {
+    if (paymentLoader === false) {
+      history.goBack();
+    }
+  }, [history, paymentLoader]);
+
+  const handleTryPaymentAgain = useCallback(() => {
+    if (channelId && feeOptions[channelId]?.[1]?.onClick) {
+      feeOptions[channelId][1].onClick();
+    }
+  }, [channelId, feeOptions]);
+
   const paymentForSummonModalConfig = useMemo(() => {
-    const handleClose = () => {
-      if (paymentLoader === false) {
-        history.goBack();
-      }
-    };
     const formattedChannelId =
       channelId === "SMS" ? "SMS" : channelId ? channelId?.charAt(0)?.toUpperCase() + channelId?.slice(1)?.toLowerCase() : "";
 
@@ -742,6 +769,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           isCaseLocked={isCaseLocked}
           payOnlineButtonTitle={payOnlineButtonTitle}
           isVerificationPending={isVerificationPending || isPostPaymentVerificationPending}
+          onTryPaymentAgain={handleTryPaymentAgain}
+          onWaitAndCheckLater={handleClose}
         />
       ),
     };
@@ -759,7 +788,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     isUserAdv,
     isVerificationPending,
     isPostPaymentVerificationPending,
-    history,
+    handleClose,
+    handleTryPaymentAgain,
   ]);
 
   if (isOrdersLoading || !orderData || isPaymentTypeLoading || isSummonsBreakUpLoading || isBillLoading || isTasksLoading) {

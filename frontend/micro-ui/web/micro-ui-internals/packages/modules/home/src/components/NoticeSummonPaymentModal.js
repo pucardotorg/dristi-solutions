@@ -34,6 +34,7 @@ function NoticeSummonPaymentModal({
   setIsPaymentCompleted,
   caseDetails,
   authorizedUuid,
+  onClose = () => {},
 }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -306,14 +307,31 @@ function NoticeSummonPaymentModal({
           ))}
       </div>
 
-      <Button
-        label={receiptFilstoreId ? t("CS_TASK_DOWNLOAD_RECEIPT") : retryPayment ? t("CS_TASK_RETRY_PAYMENT") : t("CS_TASK_PAY_ONLINE")}
-        variation="secondary"
-        className={"pay-online-button"}
-        icon={receiptFilstoreId && <PrintIcon />}
-        onButtonClick={receiptFilstoreId ? () => downloadPdf(tenantId, receiptFilstoreId) : onTaskPayOnline}
-        isDisabled={isCaseLocked || !isUserAdv}
-      />
+      {isVerificationPending || isPostPaymentVerificationPending ? (
+        <div style={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: "12px" }}>
+          <Button
+            label={t("CS_TRY_PAYMENT_AGAIN")}
+            variation="secondary"
+            className={"pay-online-button"}
+            onButtonClick={onTaskPayOnline}
+            isDisabled={isCaseLocked || !isUserAdv}
+          />
+          <Button
+            label={t("CS_WAIT_AND_CHECK_LATER")}
+            onButtonClick={onClose}
+            style={{ border: "none", paddingRight: "20px", paddingLeft: "20px" }}
+          />
+        </div>
+      ) : (
+        <Button
+          label={receiptFilstoreId ? t("CS_TASK_DOWNLOAD_RECEIPT") : retryPayment ? t("CS_TASK_RETRY_PAYMENT") : t("CS_TASK_PAY_ONLINE")}
+          variation="secondary"
+          className={"pay-online-button"}
+          icon={receiptFilstoreId && <PrintIcon />}
+          onButtonClick={receiptFilstoreId ? () => downloadPdf(tenantId, receiptFilstoreId) : onTaskPayOnline}
+          isDisabled={isCaseLocked || !isUserAdv}
+        />
+      )}
       {showToast && (
         <CustomToast
           error={showToast?.error}

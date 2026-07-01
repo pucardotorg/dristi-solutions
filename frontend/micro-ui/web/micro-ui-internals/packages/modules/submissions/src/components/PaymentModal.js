@@ -47,9 +47,9 @@ function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMak
       }}
       headerBarMain={<Heading label={t("SUBMISSION_APPLICATION_PAYMENT")} />}
       headerBarEnd={<CloseBtn onClick={handleClosePaymentModal} />}
-      actionCancelLabel={t("SKIP")}
-      actionCancelOnSubmit={() => handleSkipPayment()}
-      actionSaveLabel={t("CS_MAKE_PAYMENT")}
+      actionCancelLabel={isVerificationPending ? t("CS_WAIT_AND_CHECK_LATER") : t("SKIP")}
+      actionCancelOnSubmit={isVerificationPending ? handleClosePaymentModal : () => handleSkipPayment()}
+      actionSaveLabel={isVerificationPending ? t("CS_TRY_PAYMENT_AGAIN") : t("CS_MAKE_PAYMENT")}
       actionSaveOnSubmit={() => {
         handleMakePayment(totalAmount);
       }}
