@@ -314,8 +314,8 @@ const TopBarComponent = ({
       ];
       if (officeMembersData?.members?.length > 0) {
         const seniorAdvocatesList = Array.isArray(officeMembersData?.members) ? extractedSeniorAdvocates(officeMembersData) || [] : [];
-        const totalList = [...selfDetails, ...seniorAdvocatesList];
-        return [...(totalList || [])].sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName));
+        const sortedOthers = [...seniorAdvocatesList].sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName));
+        return [...selfDetails, ...sortedOthers];
       } else return selfDetails;
     } else if (userType === "ADVOCATE_CLERK" && advClerkId) {
       const selfEntry = {
