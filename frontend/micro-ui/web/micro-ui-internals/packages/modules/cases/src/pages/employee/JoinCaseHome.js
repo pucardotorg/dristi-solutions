@@ -1471,7 +1471,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     },
     // 4
     {
-      modalMain: <JoinCasePayment type="join-case-flow" taskNumber={taskNumber} externalPostPaymentVerificationPending={isPostPaymentVerificationPending} />,
+      modalMain: (
+        <JoinCasePayment type="join-case-flow" taskNumber={taskNumber} externalPostPaymentVerificationPending={isPostPaymentVerificationPending} />
+      ),
     },
     // 5
     {

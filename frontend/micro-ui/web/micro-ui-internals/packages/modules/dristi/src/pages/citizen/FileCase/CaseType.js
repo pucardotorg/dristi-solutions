@@ -48,7 +48,6 @@ function CaseType({ t }) {
   const onSelect = () => {
     setPage(1);
   };
-
   const { data: complainantRespondentTypeData, isLoading: isComplainantRespondentTypeLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "case",

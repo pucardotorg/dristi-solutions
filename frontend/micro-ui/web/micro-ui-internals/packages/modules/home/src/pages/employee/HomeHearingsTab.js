@@ -1018,7 +1018,8 @@ const HomeHearingsTab = ({
                           setTimeout(() => {
                             setLoader(false);
                             setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-                            if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED") fetchCauseList(filters, setHearingCount);
+                            if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED")
+                              fetchCauseList(filters, setHearingCount);
                           }, 100);
                         });
                     } else {
