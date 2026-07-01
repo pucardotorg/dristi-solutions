@@ -1,7 +1,7 @@
-import { CloseSvg, TextInput } from "@egovernments/digit-ui-react-components";
+import { TextInput, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory, Link } from "react-router-dom/cjs/react-router-dom.min";
 import CommentComponent from "../../../components/CommentComponent";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import ConfirmSubmissionAction from "../../../components/ConfirmSubmissionAction";
@@ -17,20 +17,23 @@ import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import {
   cleanString,
+  downloadCombinedDocuments,
   getAllAssociatedPartyUuids,
   getAuthorizedUuid,
   getDate,
   getOrderActionName,
   getOrderTypes,
+  isLPRCase,
   setApplicationStatus,
 } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
-import { useToast } from "../../../components/Toast/useToast";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
 import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
 import DOMPurify from "dompurify";
-import { getUserInfoFromIndividualId, getUserInfoFromUuids } from "../../../../../submissions/src/utils";
+import { getUserInfoFromUuids } from "../../../../../submissions/src/utils";
+import { CloseBtn } from "../../../components/ModalComponents";
+import CustomToast from "../../../components/CustomToast";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -45,7 +48,7 @@ const EvidenceModal = ({
   userRoles,
   modalType,
   setUpdateCounter,
-  showToast,
+  setShowToast,
   caseId,
   setIsDelayApplicationPending,
   currentDiaryEntry,
@@ -81,8 +84,9 @@ const EvidenceModal = ({
   const { downloadPdf } = useDownloadCasePdf();
   const { documents: allCombineDocs, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments({ caseCourtId });
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
-  const toast = useToast();
+  const [toast, setToast] = useState(null);
   const urlParams = new URLSearchParams(window.location.search);
   const applicationNumber = urlParams.get("applicationNumber");
   const compositeOrderObj = history.location?.state?.compositeOrderObj;
@@ -98,13 +102,6 @@ const EvidenceModal = ({
     setFormData(data);
   };
 
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
   const Heading = (props) => {
     return (
       <div className="evidence-title">
@@ -279,21 +276,12 @@ const EvidenceModal = ({
         const applicationType = documentSubmission?.[0]?.applicationList?.applicationType;
         label = applicationType === "CORRECTION_IN_COMPLAINANT_DETAILS" ? t("REVIEW_CHANGES") : t("Approve");
       } else {
-        const asUser = documentSubmission?.[0]?.applicationList?.asUser || documentSubmission?.[0]?.artifactList?.asUser;
-        const allPartiesIncludingMembers = getAllAssociatedPartyUuids(caseData?.case, asUser);
-        if (allPartiesIncludingMembers?.includes(userInfo?.uuid)) {
-          label = t("DOWNLOAD_SUBMISSION");
-        } else if (isLitigent && [...(allAdvocates?.[userInfo?.uuid] || []), userInfo?.uuid]?.includes(createdBy)) {
-          label = t("DOWNLOAD_SUBMISSION");
-        } else if (!isLitigent) {
-          // For All advocates and clerks, show the download submisison button.
-          label = t("DOWNLOAD_SUBMISSION");
-        } else if (
+        if (
           (respondingUuids?.includes(userInfo?.uuid) || !documentSubmission?.[0]?.details?.referenceId) &&
           [SubmissionWorkflowState.PENDINGRESPONSE, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus)
         ) {
           label = t("ADD_COMMENT");
-        }
+        } else return null;
       }
     } else {
       if (
@@ -307,7 +295,7 @@ const EvidenceModal = ({
       }
     }
     return label;
-  }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType, caseData]);
+  }, [applicationStatus, documentSubmission, modalType, respondingUuids, t, userInfo?.uuid, userType]);
 
   const actionCancelLabel = useMemo(() => {
     if (
@@ -445,9 +433,9 @@ const EvidenceModal = ({
       }
     }
     if (message) {
-      showToast({
-        isError: false,
-        message,
+      setShowToast({
+        label: t(message),
+        error: false,
       });
     }
     counterUpdate();
@@ -457,9 +445,9 @@ const EvidenceModal = ({
 
   const onError = async (result) => {
     if (modalType === "Documents") {
-      showToast({
-        isError: true,
-        message: documentSubmission?.[0].artifactList?.isEvidence ? "UNSUCCESSFULLY_UNMARKED_MESSAGE" : "UNSUCCESSFULLY_MARKED_MESSAGE",
+      setShowToast({
+        label: t(documentSubmission?.[0].artifactList?.isEvidence ? "UNSUCCESSFULLY_UNMARKED_MESSAGE" : "UNSUCCESSFULLY_MARKED_MESSAGE"),
+        error: true,
       });
     }
     handleBack();
@@ -620,7 +608,7 @@ const EvidenceModal = ({
   };
 
   const artifactNumber = documentSubmission?.[0]?.artifactList?.artifactNumber;
-  const { data: evidenceData, isloading: isEvidenceLoading, refetch: evidenceRefetch } = useSearchEvidenceService(
+  const { data: evidenceData } = useSearchEvidenceService(
     {
       criteria: {
         filingNumber,
@@ -641,52 +629,88 @@ const EvidenceModal = ({
   const handleEvidenceAction = async () => {
     if (businessOfTheDay) {
       setIsSubmitDisabled(true);
-      const response = await Digit.HearingService.searchHearings(
-        {
-          criteria: {
-            tenantId: Digit.ULBService.getCurrentTenantId(),
-            filingNumber: filingNumber,
-            ...(caseCourtId && { courtId: caseCourtId }),
+
+      // Search for hearings
+      let response;
+      try {
+        response = await Digit.HearingService.searchHearings(
+          {
+            criteria: {
+              tenantId: Digit.ULBService.getCurrentTenantId(),
+              filingNumber: filingNumber,
+              ...(caseCourtId && { courtId: caseCourtId }),
+            },
           },
-        },
-        {}
-      );
+          {}
+        );
+      } catch (error) {
+        console.error("Failed to search hearings:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setToast({ label: t("FAILED_TO_SEARCH_HEARINGS"), error: true, errorId });
+        setIsSubmitDisabled(false);
+        return;
+      }
+
       const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
       const courtId = localStorage.getItem("courtId");
       let evidenceReqBody = {};
-      let evidence = {};
       evidenceReqBody = {
         artifact: {
           ...evidenceDetails,
           publishedDate: new Date().getTime(),
         },
       };
-      await DRISTIService.updateEvidence(evidenceReqBody);
-      await DRISTIService.addADiaryEntry(
-        {
-          diaryEntry: {
-            courtId: courtId,
-            businessOfDay: businessOfTheDay,
-            tenantId: tenantId,
-            entryDate: new Date().setHours(0, 0, 0, 0),
-            caseNumber: caseData?.case?.cmpNumber,
-            referenceId: documentSubmission?.[0]?.artifactList?.artifactNumber,
-            referenceType: "Documents",
-            hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
-            additionalDetails: {
-              filingNumber: filingNumber,
-              caseId: caseId,
+
+      // Update evidence
+      try {
+        await DRISTIService.updateEvidence(evidenceReqBody);
+      } catch (error) {
+        console.error("Failed to update evidence:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setToast({ label: t("EVIDENCE_UPDATE_FAILED"), error: true, errorId });
+        setIsSubmitDisabled(false);
+        return;
+      }
+
+      // Add diary entry
+      try {
+        await DRISTIService.addADiaryEntry(
+          {
+            diaryEntry: {
+              courtId: courtId,
+              businessOfDay: businessOfTheDay,
+              tenantId: tenantId,
+              entryDate: new Date().setHours(0, 0, 0, 0),
+              caseNumber: caseData?.case?.cmpNumber,
+              referenceId: documentSubmission?.[0]?.artifactList?.artifactNumber,
+              referenceType: "Documents",
+              hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
+              additionalDetails: {
+                filingNumber: filingNumber,
+                caseId: caseId,
+              },
             },
           },
-        },
-        {}
-      ).catch((error) => {
-        console.error("error: ", error);
-        toast.error(t("SOMETHING_WENT_WRONG"));
+          {}
+        );
+      } catch (error) {
+        console.error("Failed to add diary entry:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setToast({ label: t("FAILED_TO_ADD_DIARY_ENTRY"), error: true, errorId });
         setIsSubmitDisabled(false);
-      });
+        return;
+      }
     }
-    await handleMarkEvidence();
+
+    // Mark evidence
+    try {
+      await handleMarkEvidence();
+    } catch (error) {
+      console.error("Failed to mark evidence:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setToast({ label: t("EVIDENCE_MARK_FAILED"), error: true, errorId });
+      setIsSubmitDisabled(false);
+    }
   };
 
   const isMandatoryOrderCreation = useMemo(() => {
@@ -802,7 +826,7 @@ const EvidenceModal = ({
       const applicationCMPNumber = documentSubmission?.[0]?.applicationList?.applicationCMPNumber;
       const currentHearingPurpose = documentSubmission?.[0]?.applicationList?.applicationDetails?.initialHearingPurpose || "";
       const caseNumber =
-        (caseData?.isLPRCase ? caseData?.lprNumber : caseData?.courtCaseNumber) ||
+        (isLPRCase(caseData) ? caseData?.lprNumber : caseData?.courtCaseNumber) ||
         caseData?.courtCaseNumber ||
         caseData?.cmpNumber ||
         caseData?.filingNumber;
@@ -916,8 +940,9 @@ const EvidenceModal = ({
         } catch (error) {
           const errorCode = error?.response?.data?.Errors?.[0]?.code;
           const errorMsg =
-            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
-          toast.error(errorMsg);
+            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("ORDER_UPDATE_FAILED");
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setToast({ label: errorMsg, error: true, errorId });
         }
       } else {
         if (showConfirmationModal.type === "reject") {
@@ -936,7 +961,9 @@ const EvidenceModal = ({
         setShowConfirmationModal(null);
       }
     } catch (error) {
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("Failed to save evidence changes:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setToast({ label: t("EVIDENCE_SAVE_FAILED"), error: true, errorId });
     }
   };
 
@@ -945,6 +972,8 @@ const EvidenceModal = ({
       history.goBack();
     } else if (modalType === "Submissions" && history.location?.state?.applicationDocObj) {
       history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`);
+    } else if (history.location?.state?.submissionEvidenceModal) {
+      history.goBack();
     } else {
       if (currentDiaryEntry) {
         history.goBack();
@@ -956,11 +985,17 @@ const EvidenceModal = ({
   };
 
   const handleSubmitComment = async (newComment) => {
-    if (modalType === "Submissions") {
-      await submitCommentApplication(newComment);
-      setShowFileIcon(false);
-    } else {
-      await submitCommentEvidence(newComment);
+    try {
+      if (modalType === "Submissions") {
+        await submitCommentApplication(newComment);
+        setShowFileIcon(false);
+      } else {
+        await submitCommentEvidence(newComment);
+      }
+    } catch (error) {
+      console.error("Error in submitting comment:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setToast({ label: t("ERROR_SUBMITTING_COMMENT"), error: true, errorId });
     }
   };
 
@@ -969,83 +1004,137 @@ const EvidenceModal = ({
   }, [documentSubmission]);
 
   const actionSaveOnSubmit = async () => {
-    if (actionSaveLabel === t("DOWNLOAD_SUBMISSION") && signedSubmission?.applicationContent?.fileStoreId) {
-      downloadPdf(tenantId, signedSubmission?.applicationContent?.fileStoreId);
-      return;
-    }
-    if (userType === "employee") {
-      if (documentApplicationType === "CORRECTION_IN_COMPLAINANT_DETAILS") {
-        const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
-        history.push(
-          `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${documentSubmission?.[0]?.details?.additionalDetails?.pendingTaskRefId}&refApplicationId=${refApplicationId}`,
-          {
-            dateOfApplication: documentSubmission?.[0]?.applicationList?.additionalDetails?.dateOfApplication,
-            uniqueId: documentSubmission?.[0]?.applicationList?.additionalDetails?.uniqueId,
+    setIsActionLoading(true);
+    try {
+      if (userType === "employee") {
+        if (documentApplicationType === "CORRECTION_IN_COMPLAINANT_DETAILS") {
+          const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
+          history.push(
+            `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${documentSubmission?.[0]?.details?.additionalDetails?.pendingTaskRefId}&refApplicationId=${refApplicationId}`,
+            {
+              dateOfApplication: documentSubmission?.[0]?.applicationList?.additionalDetails?.dateOfApplication,
+              uniqueId: documentSubmission?.[0]?.applicationList?.additionalDetails?.uniqueId,
+            }
+          );
+          return;
+        }
+        if (isBail) {
+          await handleApplicationAction(true, "accept");
+        } else if (modalType === "Submissions") {
+          await handleApplicationAction(true, "accept");
+        } else {
+          if (modalType === "Documents") {
+            setShow(false);
+            setShowMakeAsEvidenceModal(true);
           }
-        );
-        return;
-      }
-      if (isBail) {
-        await handleApplicationAction(true, "accept");
-      } else if (modalType === "Submissions") {
-        await handleApplicationAction(true, "accept");
+        }
       } else {
-        if (modalType === "Documents") {
-          setShow(false);
-          setShowMakeAsEvidenceModal(true);
+        if (actionSaveLabel === t("ADD_COMMENT")) {
+          try {
+          } catch (error) {}
+          await handleRespondApplication();
+          try {
+            DRISTIService.customApiService(Urls.dristi.pendingTask, {
+              pendingTask: {
+                entityType: "application-order-submission-feedback",
+                status: "RESPOND_TO_PRODUCTION_DOCUMENTS",
+                referenceId: `MANUAL_${signedSubmission?.applicationList?.applicationNumber}`,
+                cnrNumber,
+                filingNumber,
+                caseId,
+                caseTitle: caseData?.title,
+                isCompleted: true,
+                tenantId,
+              },
+            });
+          } catch (error) {
+            console.error("error :>> ", error);
+          }
         }
+        counterUpdate();
+        setShow(false);
+        counterUpdate();
+        history.replace(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`);
       }
-    } else {
-      if (actionSaveLabel === t("ADD_COMMENT")) {
-        try {
-        } catch (error) {}
-        await handleRespondApplication();
-        try {
-          DRISTIService.customApiService(Urls.dristi.pendingTask, {
-            pendingTask: {
-              entityType: "application-order-submission-feedback",
-              status: "RESPOND_TO_PRODUCTION_DOCUMENTS",
-              referenceId: `MANUAL_${signedSubmission?.applicationList?.applicationNumber}`,
-              cnrNumber,
-              filingNumber,
-              caseId,
-              caseTitle: caseData?.title,
-              isCompleted: true,
-              tenantId,
-            },
-          });
-        } catch (error) {
-          console.error("error :>> ", error);
-        }
-      }
-      ///show a toast message
-      counterUpdate();
-      setShow(false);
-      counterUpdate();
-      history.replace(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`);
+    } catch (error) {
+      console.error("Error in accepting submission", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setToast({ label: t("ERROR_ACCEPTING_SUBMISSION"), error: true, errorId });
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
   const actionCancelOnSubmit = async () => {
-    if (userType === "employee") {
-      if (isBail) {
-        await handleApplicationAction(true, "reject");
-      } else if (modalType === "Submissions") {
-        await handleApplicationAction(true, "reject");
-      }
-    } else {
-      try {
+    setIsActionLoading(true);
+    try {
+      if (userType === "employee") {
+        if (isBail) {
+          await handleApplicationAction(true, "reject");
+        } else if (modalType === "Submissions") {
+          await handleApplicationAction(true, "reject");
+        }
+      } else {
         await handleDeleteApplication();
         setShow(false);
         counterUpdate();
-      } catch (error) {}
+      }
+    } catch (error) {
+      console.error("Error in rejecting submission", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setToast({ label: t("ERROR_REJECTING_SUBMISSION"), error: true, errorId });
+    } finally {
+      setIsActionLoading(false);
     }
   };
+  const downloadSubmissionLabel = useMemo(() => {
+    if (modalType === "Submissions") {
+      if (signedSubmission?.applicationContent?.fileStoreId || allCombineDocs?.length > 0) {
+        return t("DOWNLOAD_SUBMISSION");
+      }
+    }
+    return false;
+  }, [modalType, signedSubmission, t, allCombineDocs]);
+
   const actionCustomLabelSubmit = async () => {
-    if (userType === "employee") {
-      await handleApplicationAction(true, "SET_TERM_BAIL");
-    } else {
-      setShow(false);
+    if (downloadSubmissionLabel) {
+      if (signedSubmission?.applicationContent?.fileStoreId) {
+        const name = `${caseData?.case?.courtCaseNumber || caseData?.case?.cmpNumber || caseData?.case?.filingNumber || "Case"}_${
+          signedSubmission?.applicationList?.applicationNumber || ""
+        }_Application`;
+        downloadPdf(tenantId, signedSubmission?.applicationContent?.fileStoreId, name);
+        return;
+      }
+      if (allCombineDocs?.length > 0) {
+        setIsActionLoading(true);
+        try {
+          const name = `${caseData?.case?.courtCaseNumber || caseData?.case?.cmpNumber || caseData?.case?.filingNumber || "Case"}_${
+            documentSubmission?.[0]?.applicationList?.applicationNumber || ""
+          }_Application.pdf`;
+          await downloadCombinedDocuments(allCombineDocs, name);
+        } catch (error) {
+          console.error("Error combining documents:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setToast({ label: t("ERROR_COMBINING_DOCUMENTS"), error: true, errorId });
+        } finally {
+          setIsActionLoading(false);
+        }
+        return;
+      }
+    }
+    setIsActionLoading(true);
+    try {
+      if (userType === "employee") {
+        await handleApplicationAction(true, "SET_TERM_BAIL");
+      } else {
+        setShow(false);
+      }
+    } catch (error) {
+      console.error("Error in setting term bail:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setToast({ label: t("ERROR_SETTING_TERM_BAIL"), error: true, errorId });
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -1151,6 +1240,25 @@ const EvidenceModal = ({
         margin: 0;
       }`}
       </style>
+      {isActionLoading && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "10001",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
       {!showConfirmationModal && !showSuccessModal && (
         <Modal
           hideModalActionbar={actionSaveLabel === t("UNMARK_AS_EVIDENCE")}
@@ -1164,6 +1272,9 @@ const EvidenceModal = ({
           // actionCustomLabel={!customLabelShow ? false : actionCustomLabel} // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
           actionCustomLabelSubmit={actionCustomLabelSubmit}
+          isDisabled={isSubmitDisabled || isActionLoading}
+          isBackButtonDisabled={isSubmitDisabled || isActionLoading}
+          isCustomButtonDisabled={isActionLoading}
           formId="modal-action"
           headerBarMain={
             <Heading
@@ -1191,6 +1302,16 @@ const EvidenceModal = ({
           textStyle={{
             color: "#fff",
           }}
+          footerChildren={
+            downloadSubmissionLabel ? (
+              <div
+                onClick={actionCustomLabelSubmit}
+                style={{ fontWeight: 700, fontSize: "16px", lineHeight: "18.75px", color: "#007E7E", cursor: "pointer" }}
+              >
+                {t("DOWNLOAD_SUBMISSION")}
+              </div>
+            ) : null
+          }
           // actionCancelTextStyle={
           //   customLabelShow
           //     ? {
@@ -1260,6 +1381,25 @@ const EvidenceModal = ({
                   </div>
                 )}
                 <div className="application-info-new" style={{ display: "flex", flexDirection: "column" }}>
+                  <div className="info-row">
+                    <div className="info-key">
+                      <h3>{t("CASE_NUMBER")}</h3>
+                    </div>
+                    <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <h3>{caseData?.case?.courtCaseNumber || caseData?.case?.cmpNumber || caseData?.case?.filingNumber}</h3>
+                      <Link
+                        to={`/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview&fromHome=true`}
+                        style={{
+                          color: "rgb(0, 126, 126)",
+                          fontWeight: "700",
+                          fontSize: "14px",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        ({t("VIEW_CASE")})
+                      </Link>
+                    </div>
+                  </div>
                   <div className="info-row">
                     <div className="info-key">
                       <h3>{t("APPLICATION_TYPE")}</h3>
@@ -1545,6 +1685,15 @@ const EvidenceModal = ({
         />
       )}
       {showSuccessModal && modalType === "Submissions" && <SubmissionSuccessModal t={t} handleBack={handleBack} />}
+      {toast && (
+        <CustomToast
+          error={toast?.error}
+          label={toast?.label}
+          errorId={toast?.errorId}
+          onClose={() => setToast(null)}
+          duration={toast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

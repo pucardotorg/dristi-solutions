@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ActionBar, SubmitBar, Loader, Button, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { ActionBar, SubmitBar, Loader, Button } from "@egovernments/digit-ui-react-components";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import { FileUploadIcon } from "../../../icons/svgIndex";
@@ -15,12 +15,13 @@ import {
   getSuffixByBusinessCode,
   getUniqueAcronym,
 } from "../../../Utils";
-import UploadSignatureModal from "../../../components/UploadSignatureModal";
 import { Urls } from "../../../hooks";
-import { useToast } from "../../../components/Toast/useToast";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Modal from "../../../components/Modal";
 import { mergeBreakdowns } from "./EfilingValidationUtils";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import { UploadModal } from "@egovernments/digit-ui-module-common";
 
 const getStyles = () => ({
   container: { display: "flex", flexDirection: "row", marginBottom: "50px" },
@@ -126,29 +127,6 @@ const getStyles = () => ({
   submitButton: { backgroundColor: "#008080", color: "#fff", fontWeight: "bold", cursor: "pointer" },
   editCaseButton: { backgroundColor: "#fff", border: "#007E7E solid", color: "#007E7E", cursor: "pointer" },
 });
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        paddingRight: "20px",
-        cursor: "pointer",
-        ...(props?.backgroundColor && { backgroundColor: props.backgroundColor }),
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-
 const RightArrow = () => (
   <svg style={{ marginLeft: "8px" }} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M8 0L6.59 1.41L12.17 7H0V9H12.17L6.59 14.59L8 16L16 8L8 0Z" fill="white" />
@@ -195,7 +173,7 @@ const dayInMillisecond = 24 * 3600 * 1000;
 const ComplainantSignature = ({ path }) => {
   const { t } = useTranslation();
   const history = useHistory();
-  const toast = useToast();
+  const [showToast, setShowToast] = useState(null);
   const Digit = window.Digit || {};
   const { filingNumber, caseId } = Digit.Hooks.useQueryParams();
   const todayDate = new Date().getTime();
@@ -228,26 +206,6 @@ const ComplainantSignature = ({ path }) => {
     return userInfo.roles?.some((role) => role?.code === "ADVOCATE_CLERK_ROLE");
   }, [userInfo.roles]);
 
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
-
   const onSelect = (key, value) => {
     if (value?.[name] === null) {
       setFormData({});
@@ -262,17 +220,21 @@ const ComplainantSignature = ({ path }) => {
     setFileUploadError(null);
   };
 
-  const onSubmit = async () => {
+  const onSubmit = async (combineResult) => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
+        const filesToUpload = combineResult?.combinedFiles || formData?.uploadSignature?.Signature;
+        const uploadedFileId = await uploadDocuments(filesToUpload, tenantId);
         setSignatureDocumentId(uploadedFileId?.[0]?.fileStoreId);
         setUploadDoc(true);
         setDocumentUpload(false);
       } catch (error) {
         console.error("error", error);
         setFormData({});
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+        setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
+        setShowToast({ label: t(errorCode), error: true, errorId });
       }
     }
   };
@@ -465,6 +427,7 @@ const ComplainantSignature = ({ path }) => {
       const courierGroups = [
         { taskType: "NOTICE", channels: accused?.noticeCourierService || [] },
         { taskType: "SUMMONS", channels: accused?.summonsCourierService || [] },
+        { taskType: "WARRANT", channels: accused?.warrantCourierService || [] },
       ];
       courierGroups.forEach(({ taskType, channels }) => {
         channels.forEach((channel) => {
@@ -486,23 +449,37 @@ const ComplainantSignature = ({ path }) => {
     });
   }, [caseDetails, tenantId]);
 
+  const handlePendingTaskApiError = (error) => {
+    const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+    setShowToast({ label: t("FAILED_TO_UPDATE_PENDING_TASKS"), error: true, errorId });
+    const taggedError = new Error(error?.message || "PENDING_TASK_API_FAILED");
+    taggedError.isPendingTaskError = true;
+    taggedError.originalError = error;
+    taggedError.errorId = errorId;
+    return taggedError;
+  };
+
   const closePendingTask = async ({ status, assignee, closeUploadDoc }) => {
     const entityType = "case-default";
     const filingNumber = caseDetails?.filingNumber;
-    await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-      pendingTask: {
-        entityType,
-        status,
-        referenceId: closeUploadDoc ? `MANUAL_${filingNumber}` : `MANUAL_${filingNumber}_${assignee}`,
-        cnrNumber: caseDetails?.cnrNumber,
-        filingNumber: filingNumber,
-        caseId: caseDetails?.id,
-        caseTitle: caseDetails?.caseTitle,
-        isCompleted: true,
-        additionalDetails: {},
-        tenantId,
-      },
-    });
+    try {
+      await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+        pendingTask: {
+          entityType,
+          status,
+          referenceId: closeUploadDoc ? `MANUAL_${filingNumber}` : `MANUAL_${filingNumber}_${assignee}`,
+          cnrNumber: caseDetails?.cnrNumber,
+          filingNumber: filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
+          isCompleted: true,
+          additionalDetails: {},
+          tenantId,
+        },
+      });
+    } catch (error) {
+      throw handlePendingTaskApiError(error);
+    }
   };
 
   const handleEditCase = async () => {
@@ -590,8 +567,12 @@ const ComplainantSignature = ({ path }) => {
         }
       });
     } catch (error) {
-      console.error("Error:", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("Failed to close pending tasks:", error);
+      if (!error?.isPendingTaskError) {
+        const sourceError = error?.originalError || error;
+        const errorId = sourceError?.response?.headers?.["x-correlation-id"] || sourceError?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("FAILED_TO_CLOSE_PENDING_TASKS"), error: true, errorId });
+      }
       setLoader(false);
     }
   };
@@ -648,7 +629,8 @@ const ComplainantSignature = ({ path }) => {
   }, [litigants, loggedInUserOnBehalfOfUuid]);
 
   const handleCasePdf = () => {
-    downloadPdf(tenantId, signatureDocumentId ? signatureDocumentId : DocumentFileStoreId);
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Complaint`;
+    downloadPdf(tenantId, signatureDocumentId ? signatureDocumentId : DocumentFileStoreId, name);
   };
 
   const getPlaceholder = () => {
@@ -710,7 +692,7 @@ const ComplainantSignature = ({ path }) => {
         }
       );
       if (caseLockStatus?.Lock?.isLocked) {
-        toast.error(t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"));
+        setShowToast({ label: t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"), error: true, errorId: null });
         setLoader(false);
         return;
       }
@@ -723,15 +705,17 @@ const ComplainantSignature = ({ path }) => {
         try {
           await handleCaseUnlockingWhenMockESign();
         } catch (error) {
-          console.error("Error:", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
+          console.error("Failed to unlock case:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("FAILED_TO_UNLOCK_CASE"), error: true, errorId });
         }
       } else {
-        handleEsign(name, "ci", DocumentFileStoreId, getPlaceholder());
+        handleEsign(name, "ci", DocumentFileStoreId, setShowToast, t, getPlaceholder());
       }
     } catch (error) {
-      console.error("Error:", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("Failed to initiate e-signature:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ESIGN_INITIATION_FAILED"), error: true, errorId });
       setLoader(false);
     }
   };
@@ -852,6 +836,7 @@ const ComplainantSignature = ({ path }) => {
           });
         } catch (err) {
           console.error("Recovery: failed to close old pending task:", err);
+          throw err;
         }
 
         // Step 2: Create Pending Payment pending task (best-effort)
@@ -887,6 +872,7 @@ const ComplainantSignature = ({ path }) => {
           });
         } catch (err) {
           console.error("Recovery: failed to create payment pending task:", err);
+          throw err;
         }
 
         // Step 3: Create demand/calculation and redirect to payment
@@ -905,13 +891,17 @@ const ComplainantSignature = ({ path }) => {
             calculation = { Calculation: [resp?.TreasuryHeadMapping?.calculation] };
           } catch (error) {
             console.error("Recovery: error fetching treasury payment breakup:", error);
+            throw error;
           }
         }
         setCalculationResponse(calculation);
         history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculation } });
       } catch (err) {
         console.error("Payment recovery failed:", err);
-        toast.error(t("SOMETHING_WENT_WRONG"));
+        if (!err?.isPendingTaskError) {
+          const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("PAYMENT_RECOVERY_FAILED"), error: true, errorId });
+        }
         history.replace(`/${window?.contextPath}/${userInfoType}/home/home-pending-task`);
       } finally {
         setLoader(false);
@@ -950,19 +940,17 @@ const ComplainantSignature = ({ path }) => {
 
   const updateCase = async (state) => {
     updatedOnceRef.current = true;
-    const isTopbarMounted = sessionStorage.getItem("isTopbarMounted");
-    console.log("updatecase1", isTopbarMounted);
-
     sessionStorage.removeItem("isTopbarMounted");
     setLoader(true);
-    console.log("updatecase11", isTopbarMounted);
     const caseDocList = updateSignedDocInCaseDoc();
-    console.log("updatecase12");
     let tempDocList = [...caseDocList];
     const isSignedDocumentsPresent = tempDocList?.some((doc) => doc?.documentType === "case.complaint.signed");
     if (isSignedDocumentsPresent) tempDocList = tempDocList?.filter((doc) => doc?.documentType !== "case.complaint.unsigned");
-    console.log("updatecase123");
-
+    if (!mockESignEnabled && (!signatureDocumentId || signatureDocumentId === caseDetails?.additionalDetails?.signedCaseDocument)) {
+      setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+      setLoader(false);
+      return false;
+    }
     try {
       await DRISTIService.caseUpdateService(
         {
@@ -1027,24 +1015,28 @@ const ComplainantSignature = ({ path }) => {
                   }))
                 : []),
             ];
-            await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-              pendingTask: {
-                name: "Pending Payment",
-                entityType: "case-default",
-                referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-                status: CaseWorkflowState.PENDING_PAYMENT,
-                assignedTo: uuids,
-                assignedRole: ["CASE_CREATOR"],
-                cnrNumber: caseDetails?.cnrNumber,
-                filingNumber: caseDetails?.filingNumber,
-                caseId: caseDetails?.id,
-                caseTitle: caseDetails?.caseTitle,
-                isCompleted: false,
-                stateSla: stateSla.PENDING_PAYMENT * dayInMillisecond + todayDate,
-                additionalDetails: {},
-                tenantId,
-              },
-            });
+            try {
+              await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                pendingTask: {
+                  name: "Pending Payment",
+                  entityType: "case-default",
+                  referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+                  status: CaseWorkflowState.PENDING_PAYMENT,
+                  assignedTo: uuids,
+                  assignedRole: ["CASE_CREATOR"],
+                  cnrNumber: caseDetails?.cnrNumber,
+                  filingNumber: caseDetails?.filingNumber,
+                  caseId: caseDetails?.id,
+                  caseTitle: caseDetails?.caseTitle,
+                  isCompleted: false,
+                  stateSla: stateSla.PENDING_PAYMENT * dayInMillisecond + todayDate,
+                  additionalDetails: {},
+                  tenantId,
+                },
+              });
+            } catch (error) {
+              throw handlePendingTaskApiError(error);
+            }
             let calculation = null;
             if (!res?.cases?.[0]?.additionalDetails?.lastSubmissionConsumerCode) {
               calculation = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
@@ -1077,15 +1069,26 @@ const ComplainantSignature = ({ path }) => {
           }
         })
         .catch((error) => {
-          toast.error(t("SOMETHING_WENT_WRONG"));
-          setEsignSuccess(false);
-          throw error;
+          // Pending-task failures already show a specific toast at source.
+          if (error?.isPendingTaskError) {
+            throw error;
+          }
+          const taggedError = new Error(error?.message || "CASE_UPDATE_CALLBACK_FAILED");
+          taggedError.isCaseUpdateCallbackError = true;
+          taggedError.originalError = error;
+          throw taggedError;
         });
+      return true;
     } catch (error) {
-      console.error("Error:", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("E-sign process failed:", error);
+      if (!error?.isPendingTaskError) {
+        const sourceError = error?.originalError || error;
+        const errorId = sourceError?.response?.headers?.["x-correlation-id"] || sourceError?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: error?.isCaseUpdateCallbackError ? t("ESIGN_CALLBACK_FAILED") : t("ESIGN_PROCESS_FAILED"), error: true, errorId });
+      }
       setEsignSuccess(false);
       setLoader(false);
+      return false;
     }
   };
 
@@ -1109,11 +1112,8 @@ const ComplainantSignature = ({ path }) => {
     );
   };
 
-  console.log("caseDetails", caseDetails, isEsignSuccess, isLoading, updatedOnceRef.current);
-
   useEffect(() => {
     return () => {
-      console.log("useeffect12345", updatedOnceRef.current);
       updatedOnceRef.current = false;
     };
   }, []);
@@ -1128,59 +1128,41 @@ const ComplainantSignature = ({ path }) => {
   useEffect(() => {
     const esignCaseUpdate = async () => {
       const isTopbarMounted = sessionStorage.getItem("isTopbarMounted");
-      console.log("useeffect1", isLoading, isEsignSuccess, caseDetails?.filingNumber, isTopbarMounted, updatedOnceRef.current);
       const ifRemountCheck = isLitigant ? !updatedOnceRef.current : !updatedOnceRef.current && isTopbarMounted;
 
       if (!isLoading && isEsignSuccess && caseDetails?.filingNumber && ifRemountCheck) {
-        await updateCase(state).then(async () => {
-          console.log("useeffect123", isLoading, isEsignSuccess, caseDetails?.filingNumber);
+        try {
+          await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId });
+        } catch (err) {
+          console.error("Failed to release case lock before eSign update", err);
+        }
+
+        const updateSucceeded = await updateCase(state);
+        if (updateSucceeded) {
           await refetchCaseData();
-          setEsignSuccess(false);
-        });
+        }
+        setEsignSuccess(false);
       }
     };
 
     if (!userInfo) return;
     esignCaseUpdate();
-    return () => {
-      console.log("useeffect1234", updatedOnceRef.current);
-    };
   }, [isEsignSuccess, caseDetails, isLoading, isLitigant, userInfo]);
 
   useEffect(() => {
-    console.log("mounted");
-    return () => {
-      console.log("unmounted");
-    };
-  }, []);
-
-  useEffect(() => {
     if (!caseDetails?.filingNumber || isLoading) return;
-    console.log("set-esign");
-    const handleCaseUnlocking = async () => {
-      await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
-    };
 
     const isSignSuccess = sessionStorage.getItem("isSignSuccess");
     const storedESignObj = sessionStorage.getItem("signStatus");
     const parsedESignObj = JSON.parse(storedESignObj);
-    const esignProcess = sessionStorage.getItem("esignProcess");
-    console.log("set-esign1", isSignSuccess);
 
     if (isSignSuccess) {
-      console.log("set-esign12", isSignSuccess);
-
       const matchedSignStatus = parsedESignObj?.find((obj) => obj.name === name && obj.isSigned === true);
-      console.log("set-esign123", isSignSuccess, matchedSignStatus);
-
       if (isSignSuccess === "success" && matchedSignStatus) {
         const fileStoreId = sessionStorage.getItem("fileStoreId");
         setSignatureDocumentId(fileStoreId);
         setEsignSuccess(true);
       }
-    }
-    if (esignProcess && caseDetails?.filingNumber) {
-      handleCaseUnlocking();
     }
 
     if (!isLitigant) {
@@ -1401,18 +1383,18 @@ const ComplainantSignature = ({ path }) => {
       </ActionBar>
 
       {isDocumentUpload && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key={name}
           name={name}
-          setOpenUploadSignatureModal={setDocumentUpload}
+          onClose={() => setDocumentUpload(false)}
           onSelect={onSelect}
-          config={uploadModalConfig}
           formData={formData}
           showWarning={true}
           warningText={t("UPLOAD_SIGNED_DOC_WARNING")}
           onSubmit={onSubmit}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {isEditCaseModal && (
@@ -1438,6 +1420,15 @@ const ComplainantSignature = ({ path }) => {
             handleEditCase();
           }}
         ></Modal>
+      )}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
     </div>
   );

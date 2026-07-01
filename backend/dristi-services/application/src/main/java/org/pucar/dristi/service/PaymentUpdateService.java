@@ -14,6 +14,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.ApplicationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ApplicationRepository;
+import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.SmsNotificationUtil;
 import org.pucar.dristi.web.models.*;
@@ -43,9 +44,10 @@ public class PaymentUpdateService {
     private final ObjectMapper objectMapper;
     private final IndividualService individualService;
     private final SmsNotificationService notificationService;
+    private final ServiceRequestRepository serviceRequestRepository;
 
     @Autowired
-    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, ApplicationRepository repository, Producer producer, Configuration configuration, ApplicationEnrichment enrichment, SmsNotificationUtil smsNotificationUtil, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService) {
+    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, ApplicationRepository repository, Producer producer, Configuration configuration, ApplicationEnrichment enrichment, SmsNotificationUtil smsNotificationUtil, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService, ServiceRequestRepository serviceRequestRepository) {
         this.workflowService = workflowService;
         this.mapper = mapper;
         this.repository = repository;
@@ -63,6 +65,7 @@ public class PaymentUpdateService {
         this.objectMapper = objectMapper;
         this.individualService = individualService;
         this.notificationService = notificationService;
+        this.serviceRequestRepository = serviceRequestRepository;
     }
 
     public void process(Map<String, Object> record) {
@@ -95,6 +98,7 @@ public class PaymentUpdateService {
             String applicationNumber = consumerCodeSplitArray[0];
             ApplicationCriteria criteria = ApplicationCriteria.builder()
                     .applicationNumber(applicationNumber)
+                    .includePendingPayment(true)
                     .build();
             ApplicationSearchRequest applicationSearchRequest = new ApplicationSearchRequest();
             applicationSearchRequest.setRequestInfo(requestInfo);
@@ -136,25 +140,92 @@ public class PaymentUpdateService {
 
                 String applicationType = application.getApplicationType();
 
+                // Fetch case details once and reuse for both the SMS and the pending-task closure below,
+                // to avoid a duplicate case search.
+                JsonNode caseDetails = null;
+                try {
+                    caseDetails = caseUtil.searchCaseDetails(createCaseSearchRequest(requestInfo, application));
+                } catch (Exception e) {
+                    log.error("Error fetching case details for application [{}]: {}", application.getApplicationNumber(), e.getMessage(), e);
+                }
+
                 try{
                     log.info("Sending SMS for application [{}]", application.getApplicationNumber());
-                    getSmsAfterPayment(applicationRequest, applicationType);
+                    if (caseDetails != null) {
+                        getSmsAfterPayment(applicationRequest, applicationType, caseDetails);
+                    }
                     smsNotificationUtil.callNotificationService(applicationRequest, state.getState(), applicationType, false);
                     log.info("SMS sent for application [{}]", application.getApplicationNumber());
                 } catch (Exception e) {
                     log.error("Error while sending SMS for application [{}]: {}", application.getApplicationNumber(), e.getMessage(), e);
                 }
                 producer.push(configuration.getApplicationUpdateStatusTopic(), applicationRequest);
+
+                // Close the "Make Payment" submission pending task server-side. The online flow does
+                // this in the browser after the bill turns PAID; payment reconciliation (cron) has no
+                // browser, so without this the application advances but the pending task stays open.
+                closePaymentPendingTask(requestInfo, application, paymentDetail.getBusinessService(), caseDetails);
             }
         } catch (Exception e) {
             log.error("Error updating workflow for application payment: {}", e.getMessage(), e);
         }
     }
 
-    private void getSmsAfterPayment(ApplicationRequest applicationRequest,String applicationType) throws JsonProcessingException {
-        CaseSearchRequest caseSearchRequest = createCaseSearchRequest(applicationRequest.getRequestInfo(), applicationRequest.getApplication());
-        JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+    private void closePaymentPendingTask(RequestInfo requestInfo, Application application, String businessService, JsonNode caseDetails) {
+        try {
+            PendingTask pendingTask = PendingTask.builder()
+                    .name(MAKE_PAYMENT_SUBMISSION)
+                    .entityType(businessService)
+                    .referenceId(MANUAL_PENDING_TASK_PREFIX + application.getApplicationNumber())
+                    .status(MAKE_PAYMENT_SUBMISSION)
+                    .cnrNumber(application.getCnrNumber())
+                    .filingNumber(application.getFilingNumber())
+                    .caseId(application.getCaseId())
+                    .caseTitle(getCaseTitle(caseDetails, application))
+                    .isCompleted(true)
+                    .stateSla(null)
+                    .additionalDetails(new HashMap<>())
+                    .build();
 
+            PendingTaskRequest pendingTaskRequest = PendingTaskRequest.builder()
+                    .requestInfo(requestInfo)
+                    .pendingTask(pendingTask)
+                    .build();
+
+            StringBuilder uri = new StringBuilder(configuration.getAnalyticsHost())
+                    .append(configuration.getCreatePendingTaskEndpoint());
+            serviceRequestRepository.fetchResult(uri, pendingTaskRequest);
+            log.info("Closed 'Make Payment' submission pending task for applicationNumber: {}", application.getApplicationNumber());
+        } catch (Exception e) {
+            // Never fail payment processing because of pending-task closure.
+            log.error("Error closing submission pending task for applicationNumber: {}", application.getApplicationNumber(), e);
+        }
+    }
+
+    // Mirrors the UI's caseTitle source: caseDetails.caseTitle (from the case search already done in
+    // process()), falling back to applicationDetails.additionalDetails.caseTitle when absent.
+    private String getCaseTitle(JsonNode caseDetails, Application application) {
+        if (caseDetails != null && caseDetails.hasNonNull("caseTitle")) {
+            return caseDetails.get("caseTitle").asText();
+        }
+        return getCaseTitleFromAdditionalDetails(application);
+    }
+
+    private String getCaseTitleFromAdditionalDetails(Application application) {
+        try {
+            Object additionalDetailsObject = application.getAdditionalDetails();
+            if (additionalDetailsObject == null) {
+                return null;
+            }
+            JsonNode additionalData = objectMapper.readTree(objectMapper.writeValueAsString(additionalDetailsObject));
+            return additionalData.hasNonNull("caseTitle") ? additionalData.get("caseTitle").asText() : null;
+        } catch (Exception e) {
+            log.error("Error reading caseTitle from additionalDetails for applicationNumber: {}", application.getApplicationNumber(), e);
+            return null;
+        }
+    }
+
+    private void getSmsAfterPayment(ApplicationRequest applicationRequest, String applicationType, JsonNode caseDetails) throws JsonProcessingException {
         Object additionalDetailsObject = applicationRequest.getApplication().getAdditionalDetails();
         String jsonData = objectMapper.writeValueAsString(additionalDetailsObject);
         JsonNode additionalData = objectMapper.readTree(jsonData);

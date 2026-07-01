@@ -1,21 +1,15 @@
-import { Header, Card, Loader, ActionBar, SubmitBar, Modal, CardText, Toast, TextArea, BackButton } from "@egovernments/digit-ui-react-components";
+import { Header, Card, Loader, SubmitBar, Modal, CardText, TextArea } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams, useHistory } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import DocumentDetailCard from "../../components/DocumentDetailCard";
 import DocViewerWrapper from "./docViewerWrapper";
 import { ReactComponent as LocationOnMapIcon } from "../../images/location_onmap.svg";
 import { userTypeOptions } from "../citizen/registration/config";
-import Menu from "../../components/Menu";
-import { useToast } from "../../components/Toast/useToast";
 import { ErrorInfoIcon, SuccessIcon } from "../../icons/svgIndex";
 import ImageModal from "../../components/ImageModal";
-import { sanitizeData } from "../../Utils";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { Heading } from "../../components/ModalComponents";
+import CustomToast from "../../components/CustomToast";
 const Close = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFFFFF">
     <path d="M0 0h24v24H0V0z" fill="none" />
@@ -82,28 +76,23 @@ const extractFormattedAddresses = (individualData, t) => {
 
 const ApplicationDetails = ({ location, match }) => {
   const urlParams = new URLSearchParams(window.location.search);
-
-  const toast = useToast();
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const individualId = urlParams.get("individualId");
   const applicationNo = urlParams.get("applicationNo");
-  const type = urlParams.get("type") || "advocate";
   const moduleCode = "DRISTI";
   const { t } = useTranslation();
   const history = useHistory();
   const [showModal, setShowModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState({ isOpen: false, status: "" });
-  const [displayMenu, setDisplayMenu] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const [message, setMessage] = useState(null);
   const [reasons, setReasons] = useState(null);
-  const [isAction, setIsAction] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [isSubmittingAction, setIsSubmittingAction] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [imageInfo, setImageInfo] = useState(null);
+  const [showToast, setShowToast] = useState(null);
 
-  const { data: individualData, isLoading: isGetUserLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data: individualData, isLoading: isGetUserLoading, error: individualError } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
         individualId,
@@ -132,7 +121,7 @@ const ApplicationDetails = ({ location, match }) => {
     [individualData?.Individual]
   );
 
-  const { data: searchData, isLoading: isSearchLoading } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
+  const { data: searchData, isLoading: isSearchLoading, error: advocateSearchError } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
     {
       criteria: [{ applicationNumber: applicationNo }],
       tenantId: tenantId,
@@ -147,7 +136,7 @@ const ApplicationDetails = ({ location, match }) => {
     return userTypeOptions.find((item) => item.code === userType) || {};
   }, [userType]);
 
-  const { isLoading: isWorkFlowLoading, data: workFlowDetails } = window?.Digit.Hooks.useWorkflowDetails({
+  const { isLoading: isWorkFlowLoading, data: workFlowDetails, error: workflowError } = window?.Digit.Hooks.useWorkflowDetails({
     tenantId,
     id: applicationNo,
     moduleCode,
@@ -163,6 +152,37 @@ const ApplicationDetails = ({ location, match }) => {
         .map((action) => action.action) || [],
     [workFlowDetails?.processInstances, userRoles]
   );
+
+  useEffect(() => {
+    if (individualError) {
+      const errorId = individualError?.response?.headers?.["x-correlation-id"] || individualError?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        error: true,
+        label: t("FAILED_TO_FETCH_INDIVIDUAL_DETAILS"),
+        errorId,
+      });
+      return;
+    }
+
+    if (advocateSearchError) {
+      const errorId = advocateSearchError?.response?.headers?.["x-correlation-id"] || advocateSearchError?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        error: true,
+        label: t("FAILED_TO_FETCH_APPLICATION_DETAILS"),
+        errorId,
+      });
+      return;
+    }
+
+    if (workflowError) {
+      const errorId = workflowError?.response?.headers?.["x-correlation-id"] || workflowError?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        error: true,
+        label: t("FAILED_TO_FETCH_WORKFLOW_DETAILS"),
+        errorId,
+      });
+    }
+  }, [individualError, advocateSearchError, workflowError, t]);
 
   const searchResult = useMemo(() => {
     const requestKey = userTypeDetail?.apiDetails?.requestKey;
@@ -182,9 +202,6 @@ const ApplicationDetails = ({ location, match }) => {
   }, [searchResult]);
   const fileName = useMemo(() => {
     return searchResult?.[0]?.documents?.[0]?.additionalDetails?.fileName;
-  }, [searchResult]);
-  useEffect(() => {
-    setIsAction(searchResult?.[0]?.status === "INWORKFLOW");
   }, [searchResult]);
 
   const applicationNumber = useMemo(() => {
@@ -243,6 +260,7 @@ const ApplicationDetails = ({ location, match }) => {
         setShowApproveModal(false);
         setIsSubmittingAction(false);
         setShowInfoModal({ isOpen: true, status: "ES_API_ERROR" });
+        setShowToast({ error: true, label: t("FAILED_TO_UPDATE_APPLICATION_STATUS") });
       });
   }
 
@@ -253,7 +271,6 @@ const ApplicationDetails = ({ location, match }) => {
     if (action === "REJECT") {
       setShowModal(true);
     }
-    setDisplayMenu(false);
   }
 
   const handleDelete = (action) => {
@@ -319,7 +336,7 @@ const ApplicationDetails = ({ location, match }) => {
         ),
       },
     ];
-  }, [identifierIdDetails?.fileStoreId, identifierIdDetails?.filename, individualData?.Individual, tenantId]);
+  }, [identifierIdDetails?.fileStoreId, identifierIdDetails?.filename, individualData?.Individual, tenantId, t]);
 
   const header = useMemo(() => {
     return applicationNo || applicationNumber ? ` ${t("APPLICATION_NUMBER")} ${applicationNo || applicationNumber}` : "My Application";
@@ -475,6 +492,15 @@ const ApplicationDetails = ({ location, match }) => {
                 </div>
               </div>
             </Modal>
+          )}
+          {showToast && (
+            <CustomToast
+              error={showToast?.error}
+              label={showToast?.label}
+              errorId={showToast?.errorId}
+              onClose={() => setShowToast(null)}
+              duration={showToast?.errorId ? 7000 : 5000}
+            />
           )}
         </div>
       </div>

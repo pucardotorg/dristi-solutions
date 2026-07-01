@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -37,4 +39,7 @@ public class CaseSearchCriteriaV2 {
 
     @JsonProperty("isClerk")
     private Boolean isClerk = null;
+
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = null;
 }

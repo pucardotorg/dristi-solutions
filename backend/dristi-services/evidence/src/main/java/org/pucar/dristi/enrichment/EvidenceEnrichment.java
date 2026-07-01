@@ -211,15 +211,19 @@ public class EvidenceEnrichment {
             String idName = "";
             String idFormat = "";
             if(WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType())) {
-                if(COMPLAINANT.equalsIgnoreCase(body.getArtifact().getSourceType())) {
+                String sourceType = body.getArtifact().getSourceType();
+                if(COMPLAINANT.equalsIgnoreCase(sourceType)) {
                     idName = configuration.getProsecutionWitnessConfig();
                     idFormat = configuration.getProsecutionWitnessFormat();
-                } else if (ACCUSED.equalsIgnoreCase(body.getArtifact().getSourceType())) {
+                } else if (ACCUSED.equalsIgnoreCase(sourceType)) {
                     idName = configuration.getDefenceWitnessConfig();
                     idFormat = configuration.getDefenceWitnessFormat();
-                } else if (COURT.equalsIgnoreCase(body.getArtifact().getSourceType())) {
+                } else if (COURT.equalsIgnoreCase(sourceType)) {
                     idName = configuration.getCourtWitnessConfig();
                     idFormat = configuration.getCourtWitnessFormat();
+                } else {
+                    throw new CustomException(ENRICHMENT_EXCEPTION,
+                            "Unsupported source type for witness deposition tag enrichment: " + sourceType);
                 }
             }
             String tenantId = getTenantId(body.getArtifact().getFilingNumber());
@@ -234,9 +238,6 @@ public class EvidenceEnrichment {
 
     public String enrichPseudoTag(EvidenceRequest body) {
         String sequenceName = getSequenceName(body.getArtifact().getTag());
-        if(sequenceName.isEmpty()){
-            return sequenceName;
-        }
         sequenceName = sequenceName.replace("[TENANT_ID]", getTenantId(body.getArtifact().getFilingNumber()).toLowerCase());
         Integer nextVal = evidenceRepository.getNextValForSequence(sequenceName);
         log.debug("Retrieved sequence value {} for sequence {}", nextVal, sequenceName);
@@ -249,10 +250,11 @@ public class EvidenceEnrichment {
 
     private String getSequenceName(String tag) {
         return switch (tag) {
-            case PROSECUTION_WITNESS -> "seq_prsqnwtns_[TENANT_ID]";
-            case DEFENCE_WITNESS -> "seq_dfncwtns_[TENANT_ID]";
-            case COURT_WITNESS -> "seq_courtwtns_[TENANT_ID]";
-            default -> "";
+            case PROSECUTION_WITNESS -> configuration.getProsecutionWitnessSequence();
+            case DEFENCE_WITNESS -> configuration.getDefenceWitnessSequence();
+            case COURT_WITNESS -> configuration.getCourtWitnessSequence();
+            default -> throw new CustomException(ENRICHMENT_EXCEPTION,
+                    "Unsupported tag for sequence name lookup: " + tag);
         };
     }
 }

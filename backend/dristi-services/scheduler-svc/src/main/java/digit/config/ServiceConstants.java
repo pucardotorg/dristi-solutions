@@ -74,6 +74,7 @@ public class ServiceConstants {
     public static final String msgId = "1730882648558|en_IN";
 
     public static final String DATE_FORMAT = "dd-MM-yyyy";
+    public static final String DATE_FORMAT_REDIS= "ddMMyyyy";
 
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
     public static final String INDIVIDUAL_SERVICE_EXCEPTION = "INDIVIDUAL_SERVICE_EXCEPTION";
@@ -128,5 +129,10 @@ public class ServiceConstants {
     // roles
     public static final String VIEW_RE_SCHEDULE_APPLICATION = "VIEW_RE_SCHEDULE_APPLICATION";
     public static final String CACHE_KEY_PREFIX = "DRISTI:COURT:";
+    public static final String CACHE_COURT_META_SUFFIX = ":COURT_META";
+    public static final String CACHE_CAUSE_LIST_SUFFIX = ":CAUSE_LIST";
+    public static final String CACHE_HEARING_PREFIX = ":HEARING:";
+    public static final String SESSION_STATUS_NOT_STARTED = "NOT_STARTED";
+    public static final String SESSION_STATUS_ACTIVE = "ACTIVE";
 
 }

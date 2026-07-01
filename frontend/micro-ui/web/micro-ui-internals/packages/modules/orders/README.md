@@ -5,6 +5,7 @@
 The **Orders** module (`@egovernments/digit-ui-module-orders`) manages the complete order lifecycle within the DRISTI judicial platform — order creation, drafting, review, e-signing, publishing, and delivery (including summons, warrants, and notices). It also handles payment processing for summons delivery via multiple channels (post, RPAD, iCOPS, SMS, email, SBI e-post) and provides the e-post tracking interface.
 
 **Business Purpose:**
+
 - Generate and manage court orders (drafting, review, e-sign, publish)
 - Manage order workflow states (DRAFT_IN_PROGRESS → PENDING_BULK_E_SIGN → PUBLISHED / ABATED)
 - Handle summons, warrants, and notice issuance with delivery channel selection
@@ -14,6 +15,7 @@ The **Orders** module (`@egovernments/digit-ui-module-orders`) manages the compl
 - Manage order notification delivery
 
 **Where it is used:**
+
 - Rendered under `/{contextPath}/employee/orders/*`
 - Multiple components are globally registered: `OrderWorkflowAction`, `OrderWorkflowState`, `OrdersService`, `OrderReviewModal`, `PaymentForSummonModal`, etc.
 
@@ -22,9 +24,11 @@ The **Orders** module (`@egovernments/digit-ui-module-orders`) manages the compl
 ## 🏗 Architecture
 
 ### Entry Point
+
 - `src/Module.js` — Exports `OrdersModule` (main component) and `initOrdersComponents` with 20+ registered components
 
 ### Folder Structure
+
 ```
 src/
 ├── Module.js                          # Entry point, 20+ registrations
@@ -51,7 +55,6 @@ src/
 │   ├── NoticeSummonPartyComponent.js  # Notice/summon party config
 │   ├── OrderTypeControls.js           # Order type control panel
 │   ├── OrderTypeControlItem.js        # Individual order type control
-│   ├── OrdersCard.js                  # Dashboard card
 │   ├── PaymentStatus.js               # Payment status display
 │   ├── Print&SendDocuments.js         # Print and send workflow
 │   ├── ReIssueSummonsModal.js         # Re-issue summons modal
@@ -101,7 +104,6 @@ src/
 ├── pages/
 │   └── employee/
 │       ├── index.js                   # Route definitions
-│       ├── OrdersHome.js              # Orders home page
 │       ├── OrdersResponse.js          # Order action response
 │       ├── GenerateOrdersV2.js        # Order generation (V2)
 │       ├── ReviewSummonsNoticeAndWarrant.js # Summons/notice review
@@ -119,6 +121,7 @@ src/
 ```
 
 ### Key Design Patterns
+
 - **Workflow state machine:** `OrderWorkflowState` and `OrderWorkflowAction` enums drive order lifecycle
 - **Multi-service architecture:** 8 distinct service objects (`ordersService`, `EpostService`, `schedulerService`, `taskService`, `SBIPaymentService`, `orderManagementService`, `digitalizationService`, `processManagementService`, `openApiService`)
 - **Open API pattern:** SMS payment flow uses `/openapi/*` endpoints for unauthenticated access
@@ -130,16 +133,15 @@ src/
 
 All routes in `src/pages/employee/index.js` use `PrivateRoute`.
 
-| Route Path | Component | Description |
-|---|---|---|
-| `{path}/orders-response` | `OrdersResponse` | Order action response |
-| `{path}/orders-home` | `OrdersHome` | Orders listing/home |
-| `{path}/generate-order` | `GenerateOrdersV2` | Order generation interface |
+| Route Path              | Component                       | Description                   |
+| ----------------------- | ------------------------------- | ----------------------------- |
+| `{path}/generate-order` | `GenerateOrdersV2`              | Order generation interface    |
 | `{path}/Summons&Notice` | `ReviewSummonsNoticeAndWarrant` | Summons/notice/warrant review |
-| `{path}/payment-screen` | `PaymentStatus` | Payment status display |
-| `{path}/payment-modal` | `PaymentForSummonModal` | Payment modal for summons |
+| `{path}/payment-screen` | `PaymentStatus`                 | Payment status display        |
+| `{path}/payment-modal`  | `PaymentForSummonModal`         | Payment modal for summons     |
 
 ### Route Guards
+
 - All routes use `PrivateRoute` with authentication check
 - Role-based redirection: Citizens → citizen home, Employees → employee home
 - `PROCESS_VIEWER` role hides breadcrumbs and gets a custom home path pointing to `Summons&Notice`
@@ -169,10 +171,12 @@ All routes in `src/pages/employee/index.js` use `PrivateRoute`.
 | `DELETE` | Delete order |
 
 ### Global State Dependencies
+
 - `Digit.Services.useStore` — Loads modules: `["orders", "hearings", "common", "case", "workflow"]`
 - `BreadCrumbsParamsDataContext` — Case navigation context from Core
 
 ### Local State Strategy
+
 - Custom hooks for order search, e-sign, document upload
 - `react-query` for data fetching and mutations
 
@@ -182,83 +186,84 @@ All routes in `src/pages/employee/index.js` use `PrivateRoute`.
 
 ### ordersService
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `createOrder` | `/order-management/v1/_createOrder` | Create order via management service |
-| `addOrderItem` | `/order-management/v2/add-item` | Add item to order |
-| `removeOrderItem` | `/order/v2/remove-item` | Remove item from order |
-| `updateOrder` | `/order-management/v1/_updateOrder` | Update order |
-| `searchOrder` | `/order/v1/search` | Search orders |
-| `searchOrderNotifications` | `/inbox/v2/index/_search` | Search order notifications |
-| `createHearings` | `/hearing/v1/create` | Create hearing from order |
-| `updateHearings` | `/hearing/v1/update` | Update hearing from order |
-| `customApiService` | Dynamic URL | Generic API caller |
-| `getPendingTaskService` | `/inbox/v2/_getFields` | Get pending task fields |
+| Method                     | Endpoint                            | Description                         |
+| -------------------------- | ----------------------------------- | ----------------------------------- |
+| `createOrder`              | `/order-management/v1/_createOrder` | Create order via management service |
+| `addOrderItem`             | `/order-management/v2/add-item`     | Add item to order                   |
+| `removeOrderItem`          | `/order/v2/remove-item`             | Remove item from order              |
+| `updateOrder`              | `/order-management/v1/_updateOrder` | Update order                        |
+| `searchOrder`              | `/order/v1/search`                  | Search orders                       |
+| `searchOrderNotifications` | `/inbox/v2/index/_search`           | Search order notifications          |
+| `createHearings`           | `/hearing/v1/create`                | Create hearing from order           |
+| `updateHearings`           | `/hearing/v1/update`                | Update hearing from order           |
+| `customApiService`         | Dynamic URL                         | Generic API caller                  |
+| `getPendingTaskService`    | `/inbox/v2/_getFields`              | Get pending task fields             |
 
 ### EpostService
 
-| Method | Endpoint |
-|---|---|
-| `EpostUpdate` | `/epost-tracker/epost/v1/_updateEPost` |
-| `epostUser` | MDMS search for e-post users |
+| Method                 | Endpoint                                 |
+| ---------------------- | ---------------------------------------- |
+| `EpostUpdate`          | `/epost-tracker/epost/v1/_updateEPost`   |
+| `epostUser`            | MDMS search for e-post users             |
 | `ePostDownloadReports` | `/epost-tracker/epost/v1/download/excel` |
 
 ### schedulerService
 
-| Method | Endpoint |
-|---|---|
+| Method              | Endpoint                            |
+| ------------------- | ----------------------------------- |
 | `RescheduleHearing` | `/scheduler/hearing/v1/_reschedule` |
 
 ### taskService
 
-| Method | Endpoint |
-|---|---|
+| Method               | Endpoint                  |
+| -------------------- | ------------------------- |
 | `UploadTaskDocument` | `/task/v1/uploadDocument` |
-| `updateTask` | `/task/v1/update` |
-| `searchTask` | `/task/v1/search` |
+| `updateTask`         | `/task/v1/update`         |
+| `searchTask`         | `/task/v1/search`         |
 
 ### SBIPaymentService
 
-| Method | Endpoint |
-|---|---|
+| Method       | Endpoint                                      |
+| ------------ | --------------------------------------------- |
 | `SBIPayment` | `/sbi-backend/payment/v1/_processTransaction` |
 
 ### orderManagementService
 
-| Method | Endpoint |
-|---|---|
-| `getOrdersToSign` | `/order-management/v1/_getOrdersToSign` |
+| Method               | Endpoint                                   |
+| -------------------- | ------------------------------------------ |
+| `getOrdersToSign`    | `/order-management/v1/_getOrdersToSign`    |
 | `updateSignedOrders` | `/order-management/v1/_updateSignedOrders` |
 
 ### processManagementService
 
-| Method | Endpoint |
-|---|---|
-| `getProcessToSign` | `/task/v1/_getTasksToSign` |
+| Method                | Endpoint                      |
+| --------------------- | ----------------------------- |
+| `getProcessToSign`    | `/task/v1/_getTasksToSign`    |
 | `updateSignedProcess` | `/task/v1/_updateSignedTasks` |
-| `bulkSend` | `/task/v1/bulk-send` |
+| `bulkSend`            | `/task/v1/bulk-send`          |
 
 ### openApiService (unauthenticated)
 
-| Method | Endpoint |
-|---|---|
-| `searchOpenApiOrders` | `/openapi/v1/getOrderDetails` |
-| `createTaskManagementService` | `/openapi/task-management/v1/_create` |
-| `updateTaskManagementService` | `/openapi/task-management/v1/_update` |
-| `searchTaskManagementService` | `/openapi/task-management/v1/_search` |
-| `getSummonsPaymentBreakup` | `/openapi/payment/v1/_calculate` |
-| `getTreasuryPaymentBreakup` | `/openapi/payment/v1/_getHeadBreakDown` |
-| `fetchBill` | `/openapi/payment/v1/_fetchbill` |
-| `callETreasury` | `/openapi/payment/v1/_processChallan` |
-| `setCaseLock` / `setCaseUnlock` | `/openapi/lock/v1/_set` / `_release` |
-| `offlinePayment` | `/openapi/offline-payment/_create` |
-| `addAddress` | `/openapi/v1/case/addAddress` |
+| Method                          | Endpoint                                |
+| ------------------------------- | --------------------------------------- |
+| `searchOpenApiOrders`           | `/openapi/v1/getOrderDetails`           |
+| `createTaskManagementService`   | `/openapi/task-management/v1/_create`   |
+| `updateTaskManagementService`   | `/openapi/task-management/v1/_update`   |
+| `searchTaskManagementService`   | `/openapi/task-management/v1/_search`   |
+| `getSummonsPaymentBreakup`      | `/openapi/payment/v1/_calculate`        |
+| `getTreasuryPaymentBreakup`     | `/openapi/payment/v1/_getHeadBreakDown` |
+| `fetchBill`                     | `/openapi/payment/v1/_fetchbill`        |
+| `callETreasury`                 | `/openapi/payment/v1/_processChallan`   |
+| `setCaseLock` / `setCaseUnlock` | `/openapi/lock/v1/_set` / `_release`    |
+| `offlinePayment`                | `/openapi/offline-payment/_create`      |
+| `addAddress`                    | `/openapi/v1/case/addAddress`           |
 
 ---
 
 ## 🧩 Key Components
 
 ### Container Components
+
 - **`GenerateOrdersV2`** — Order generation/drafting interface with form configuration
 - **`ReviewSummonsNoticeAndWarrant`** — Summons, notices, and warrants review and dispatch
 - **`PaymentForSummonModal`** — Payment processing for summon delivery (post)
@@ -269,8 +274,8 @@ All routes in `src/pages/employee/index.js` use `PrivateRoute`.
 - **`SmsPaymentPage`** — Unauthenticated SMS payment page (for summons recipients)
 
 ### Globally Registered Components
+
 - **`OrdersModule`** — Main module component
-- **`OrdersCard`** — Dashboard card
 - **`DeliveryChannels`** — Delivery channel selection component
 - **`OrderWorkflowActionEnum`** / **`OrderWorkflowStateEnum`** — Workflow constants
 - **`OrdersService`** — Service object for external use
@@ -309,22 +314,23 @@ Summons Payment Flow (SMS - unauthenticated):
 ## 🔗 Dependencies
 
 ### Internal Module Dependencies
+
 - `@egovernments/digit-ui-module-core` — `BreadCrumbsParamsDataContext`
 - `@egovernments/digit-ui-module-dristi` — `MediationFormSignaturePage` (direct package import)
 
 ### External Library Dependencies
-| Library | Version | Purpose |
-|---|---|---|
-| `react` | 17.0.2 | UI framework |
-| `react-router-dom` | 5.3.0 | Routing |
-| `react-hook-form` | 6.15.8 | Form management |
-| `react-i18next` | 11.16.2 | i18n |
-| `react-query` | 3.6.1 | Data fetching |
-| `react-date-range` | ^1.4.0 | Date range picker |
-| `react-tooltip` | 4.1.2 | Tooltips |
-| `@egovernments/digit-ui-react-components` | 1.8.2-beta.11 | Shared UI |
-| `@egovernments/digit-ui-components` | 0.0.2-beta.1 | Design system |
-| `@egovernments/digit-ui-module-core` | 1.8.1-beta.6 | Core module |
+
+| Library                                   | Version       | Purpose         |
+| ----------------------------------------- | ------------- | --------------- |
+| `react`                                   | 17.0.2        | UI framework    |
+| `react-router-dom`                        | 5.3.0         | Routing         |
+| `react-hook-form`                         | 6.15.8        | Form management |
+| `react-i18next`                           | 11.16.2       | i18n            |
+| `react-query`                             | 3.6.1         | Data fetching   |
+| `react-tooltip`                           | 4.1.2         | Tooltips        |
+| `@egovernments/digit-ui-react-components` | 1.8.2-beta.11 | Shared UI       |
+| `@egovernments/digit-ui-components`       | 0.0.2-beta.1  | Design system   |
+| `@egovernments/digit-ui-module-core`      | 1.8.1-beta.6  | Core module     |
 
 ---
 

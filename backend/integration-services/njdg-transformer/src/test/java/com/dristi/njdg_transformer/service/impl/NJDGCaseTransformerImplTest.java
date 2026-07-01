@@ -98,7 +98,6 @@ class NJDGCaseTransformerImplTest {
         when(caseRepository.findByCino(anyString())).thenReturn(null);
         when(dateUtil.formatDate(anyLong())).thenReturn(LocalDate.now());
         when(numberExtractor.extractCaseNumber(anyString())).thenReturn(1);
-        when(numberExtractor.extractFilingNumber(anyString())).thenReturn(1);
         when(properties.getStateCode()).thenReturn(32);
         when(properties.getCicriType()).thenReturn('1');
         when(properties.getApplicationZoneId()).thenReturn("Asia/Kolkata");
@@ -120,7 +119,6 @@ class NJDGCaseTransformerImplTest {
         when(caseRepository.findByCino(anyString())).thenReturn(null);
         when(dateUtil.formatDate(anyLong())).thenReturn(LocalDate.now());
         when(numberExtractor.extractCaseNumber(anyString())).thenReturn(1);
-        when(numberExtractor.extractFilingNumber(anyString())).thenReturn(1);
         when(properties.getStateCode()).thenReturn(32);
         when(properties.getCicriType()).thenReturn('1');
         when(properties.getApplicationZoneId()).thenReturn("Asia/Kolkata");
@@ -145,7 +143,6 @@ class NJDGCaseTransformerImplTest {
         when(caseRepository.findByCino(anyString())).thenReturn(existingRecord);
         when(dateUtil.formatDate(anyLong())).thenReturn(LocalDate.now());
         when(numberExtractor.extractCaseNumber(anyString())).thenReturn(1);
-        when(numberExtractor.extractFilingNumber(anyString())).thenReturn(1);
         when(properties.getStateCode()).thenReturn(32);
         when(properties.getCicriType()).thenReturn('1');
         when(properties.getApplicationZoneId()).thenReturn("Asia/Kolkata");
@@ -171,7 +168,6 @@ class NJDGCaseTransformerImplTest {
         when(caseRepository.findByCino(anyString())).thenReturn(null);
         when(dateUtil.formatDate(anyLong())).thenReturn(LocalDate.now());
         when(numberExtractor.extractCaseNumber(anyString())).thenReturn(1);
-        when(numberExtractor.extractFilingNumber(anyString())).thenReturn(1);
         when(properties.getStateCode()).thenReturn(32);
         when(properties.getCicriType()).thenReturn('1');
         when(properties.getApplicationZoneId()).thenReturn("Asia/Kolkata");
@@ -195,7 +191,6 @@ class NJDGCaseTransformerImplTest {
         when(caseRepository.getDisposalStatus(anyString())).thenReturn(1);
         when(dateUtil.formatDate(anyLong())).thenReturn(LocalDate.now());
         when(numberExtractor.extractCaseNumber(anyString())).thenReturn(1);
-        when(numberExtractor.extractFilingNumber(anyString())).thenReturn(1);
         when(properties.getStateCode()).thenReturn(32);
         when(properties.getCicriType()).thenReturn('1');
         when(properties.getApplicationZoneId()).thenReturn("Asia/Kolkata");
@@ -264,17 +259,18 @@ class NJDGCaseTransformerImplTest {
     }
 
     @Test
-    void testTransform_CMPCaseType() {
+    void testTransform_CMPCaseType_RegNoIsBlank() {
+        // CMP-only case: regNo must be null (blank), filNo must hold the CMP number
         courtCase.setCaseType("CMP");
         courtCase.setCmpNumber("CMP/001/2024");
+        courtCase.setCourtCaseNumber(null); // No ST number
 
         when(caseRepository.getJudge(any(LocalDate.class))).thenReturn(Collections.singletonList(judgeDetails));
         when(caseRepository.getDesignationMaster(anyString())).thenReturn(designationMaster);
         when(caseRepository.getCaseTypeCode(anyString())).thenReturn(2);
         when(caseRepository.findByCino(anyString())).thenReturn(null);
         when(dateUtil.formatDate(anyLong())).thenReturn(LocalDate.now());
-        when(numberExtractor.extractCaseNumber(anyString())).thenReturn(1);
-        when(numberExtractor.extractFilingNumber(anyString())).thenReturn(1);
+        when(numberExtractor.extractCaseNumber("CMP/001/2024")).thenReturn(1);
         when(properties.getStateCode()).thenReturn(32);
         when(properties.getCicriType()).thenReturn('1');
         when(properties.getApplicationZoneId()).thenReturn("Asia/Kolkata");
@@ -285,5 +281,38 @@ class NJDGCaseTransformerImplTest {
 
         assertNotNull(result);
         assertEquals(2, result.getCaseType());
+        // regNo must be null for CMP-only cases so they are NOT counted in NJDG pendency
+        assertNull(result.getRegNo());
+        // filNo must carry the extracted CMP number
+        assertEquals(1, result.getFilNo());
+    }
+
+    @Test
+    void testTransform_STCaseType_RegNoIsSTNumber() {
+        // ST case: regNo must use the ST (courtCaseNumber), filNo must use the CMP number
+        courtCase.setCaseType("ST");
+        courtCase.setCourtCaseNumber("ST/002/2024");
+        courtCase.setCmpNumber("CMP/001/2024");
+
+        when(caseRepository.getJudge(any(LocalDate.class))).thenReturn(Collections.singletonList(judgeDetails));
+        when(caseRepository.getDesignationMaster(anyString())).thenReturn(designationMaster);
+        when(caseRepository.getCaseTypeCode(anyString())).thenReturn(1);
+        when(caseRepository.findByCino(anyString())).thenReturn(null);
+        when(dateUtil.formatDate(anyLong())).thenReturn(LocalDate.now());
+        when(numberExtractor.extractCaseNumber("ST/002/2024")).thenReturn(2);
+        when(numberExtractor.extractCaseNumber("CMP/001/2024")).thenReturn(1);
+        when(properties.getStateCode()).thenReturn(32);
+        when(properties.getCicriType()).thenReturn('1');
+        when(properties.getApplicationZoneId()).thenReturn("Asia/Kolkata");
+        when(hearingRepository.getHearingDetailsByCino(anyString())).thenReturn(Collections.emptyList());
+        when(orderUtil.getOrders(any())).thenReturn(new OrderListResponse());
+
+        NJDGTransformRecord result = njdgCaseTransformer.transform(courtCase, requestInfo);
+
+        assertNotNull(result);
+        // regNo must carry the ST number
+        assertEquals(2, result.getRegNo());
+        // filNo must carry the CMP number
+        assertEquals(1, result.getFilNo());
     }
 }

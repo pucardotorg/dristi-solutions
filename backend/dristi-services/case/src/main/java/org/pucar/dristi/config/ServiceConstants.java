@@ -129,6 +129,12 @@ public class ServiceConstants {
 
     public static final String CASE_PAYMENT_COMPLETED = "CASE_PAYMENT_COMPLETED";
 
+    // Used to close the "Pending Payment" pending task server-side once a case-filing payment is
+    // received (so payment reconciliation works even when no browser runs the post-payment UI logic).
+    public static final String MANUAL_PENDING_TASK_PREFIX = "MANUAL_";
+    public static final String PENDING_PAYMENT_TASK_NAME = "Pending Payment";
+    public static final String CASE_DEFAULT_ENTITY_TYPE = "case-default";
+
     public static final String PENDING_REGISTRATION = "PENDING_REGISTRATION";
 
     public static final String CASE_FORWARDED_TO_JUDGE = "JUDGE_ASSIGNED,FSO_VALIDATED";
@@ -243,6 +249,7 @@ public class ServiceConstants {
     public static final String PAYMENT_RECEIPT = "PAYMENT_RECEIPT";
     public static final String ONLINE = "ONLINE";
     public static final String COMPLAINANT_ID_PROOF = "COMPLAINANT_ID_PROOF";
+    public static final String ADVOCATE_ID_PROOF="ADVOCATE_ID_PROOF";
     public static final String DIRECT = "DIRECT";
     public static final String COMPLAINANT = "COMPLAINANT";
     public static final String ACCUSED = "ACCUSED";

@@ -28,6 +28,7 @@ public class ServiceConstants {
     public static final String COORDINATES_ERROR = "COORDINATES_ERROR";
     public static final String EMPTY_ORDERS_ERROR = "EMPTY_ORDERS_ERROR";
     public static final String ORDER_SIGN_ERROR = "ORDER_SIGN_ERROR";
+    public static final String HEARING_ALREADY_SCHEDULED_ERROR = "HEARING_ALREADY_SCHEDULED_ERROR";
     public static final String UPDATE_ORDER_SIGN_ERROR = "UPDATE_ORDER_SIGN_ERROR";
     public static final String UPDATE_ORDER_SIGN_ERROR_MESSAGE = "Error while updating order with signed doc";
     public static final String XML_CREATE_ERROR = "XML_CREATE_ERROR";
@@ -53,6 +54,8 @@ public class ServiceConstants {
     public static final String CO_ORDINATES = "cood";
     public static final String SIZE = "size";
     public static final String DATE_FORMAT = "dateformat";
+
+    public static final String LOCAL_DATE_FORMAT="dd-MM-yyyy";
     public static final String ESIGN_DATE_FORMAT = "dd-MMM-yyyy";
     public static final String DATA = "data";
     public static final String OMIT_XML_DECLARATION = "omit-xml-declaration";
@@ -216,5 +219,15 @@ public class ServiceConstants {
 
     public static final String ES_UPDATE_DOCUMENT_FORMAT =
             "{\"doc\":{\"Data\":{\"hearingDetails\":{\"orderStatus\":\"%s\"}}}}\n";
+
+    public static final String COMPLETE_TASK_CREATION = "COMPLETE_TASK_CREATION";
+
+    public static final String UPDATE_UPFRONT_PAYMENT = "UPDATE_UPFRONT_PAYMENT";
+
+    public static final String SYSTEM_ADMIN = "SYSTEM_ADMIN";
+
+    public static final String CHANNEL_CODE = "channelCode";
+
+    public static final String PENDING_ENVELOPE_SUBMISSION = "PENDING_ENVELOPE_SUBMISSION";
 
 }

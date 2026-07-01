@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Modal from "../../../dristi/src/components/Modal";
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import SelectCustomNote from "../../../dristi/src/components/SelectCustomNote";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import useGetPaymentVerificationStatus from "../hooks/submissions/useGetPaymentVerificationStatus";
+import { Loader } from "@egovernments/digit-ui-react-components";
 
 const customNoteConfig = {
   populators: {
@@ -9,45 +11,87 @@ const customNoteConfig = {
       {
         infoHeader: "INFO",
         infoText: "VISIT_NYAYMITRA_FOR_OFFLINE_PAYMENT",
-        // infoTooltipMessage: "CS_NOTE_TOOLTIP",
         showTooltip: true,
       },
     ],
   },
 };
 
-function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMakePayment, tenantId, consumerCode, paymentLoader, totalAmount }) {
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
+const verificationPendingNoteConfig = {
+  populators: {
+    inputs: [
+      {
+        infoHeader: "WARNING",
+        infoText: "PAYMENT_VERIFICATION_PENDING_INFO",
+        showTooltip: true,
+      },
+    ],
+  },
+};
 
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
+function PaymentModal({
+  t,
+  handleClosePaymentModal,
+  handleSkipPayment,
+  handleMakePayment,
+  tenantId,
+  consumerCode,
+  paymentLoader,
+  totalAmount,
+  isPostPaymentVerificationPending,
+}) {
+  const { data: paymentStatusData, isLoading: isPaymentStatusLoading } = useGetPaymentVerificationStatus(
+    consumerCode,
+    tenantId,
+    Boolean(consumerCode)
+  );
+  console.log("paymentStatusData", paymentStatusData, isPaymentStatusLoading);
+  const isVerificationPending = useMemo(() => paymentStatusData && paymentStatusData.PaymentStatus?.status === "VERIFICATION_PENDING", [
+    paymentStatusData,
+  ]);
 
   return (
     <Modal
-      popupStyles={{
-        height: "300px",
-      }}
       headerBarMain={<Heading label={t("SUBMISSION_APPLICATION_PAYMENT")} />}
       headerBarEnd={<CloseBtn onClick={handleClosePaymentModal} />}
-      actionCancelLabel={t("SKIP")}
-      actionCancelOnSubmit={() => handleSkipPayment()}
-      actionSaveLabel={t("CS_MAKE_PAYMENT")}
+      actionCancelLabel={isVerificationPending || isPostPaymentVerificationPending ? t("CS_TRY_PAYMENT_AGAIN") : t("SKIP")}
+      actionCancelOnSubmit={
+        isVerificationPending || isPostPaymentVerificationPending ? () => handleMakePayment(totalAmount) : () => handleSkipPayment()
+      }
+      actionSaveLabel={isVerificationPending || isPostPaymentVerificationPending ? t("CS_WAIT_AND_CHECK_LATER") : t("CS_MAKE_PAYMENT")}
       actionSaveOnSubmit={() => {
-        handleMakePayment(totalAmount);
+        isVerificationPending || isPostPaymentVerificationPending ? handleClosePaymentModal() : handleMakePayment(totalAmount);
       }}
       isDisabled={paymentLoader}
       className={"submission-payment-modal"}
     >
-      <div className="submission-payment-modal-body-main" style={{ maxHeight: "180px" }}>
+      <div className="submission-payment-modal-body-main" style={{ height: "auto" }}>
+        {(isPaymentStatusLoading || paymentLoader) && (
+          <div
+            style={{
+              width: "100vw",
+              height: "100vh",
+              zIndex: "999999999999999999",
+              position: "fixed",
+              right: "0",
+              display: "flex",
+              top: "0",
+              background: "rgb(234 234 245 / 50%)",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            className="submit-loader"
+          >
+            <Loader />
+          </div>
+        )}
         <div className="note-div">
-          <SelectCustomNote t={t} config={customNoteConfig}></SelectCustomNote>
+          <SelectCustomNote t={t} config={customNoteConfig} />
+          {isVerificationPending && (
+            <div style={{ marginTop: "10px" }}>
+              <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
+            </div>
+          )}
         </div>
         <div className="submission-payment-modal-amount-div">
           <div className="amount-div">

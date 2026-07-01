@@ -113,7 +113,11 @@ public class ApplicationQueryBuilder {
             }
             else {
                 addClauseIfRequired(query, firstCriteria);
-                query.append("app.status != 'DRAFT_IN_PROGRESS'");
+                if (Boolean.TRUE.equals(applicationCriteria.getIncludePendingPayment())) {
+                    query.append("app.status NOT IN ('DRAFT_IN_PROGRESS', 'PENDINGESIGN')");
+                } else {
+                    query.append("app.status NOT IN ('DRAFT_IN_PROGRESS', 'PENDINGESIGN', 'PENDINGPAYMENT')");
+                }
                 firstCriteria = false;
             }
 

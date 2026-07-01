@@ -233,6 +233,7 @@ class SummonsServiceTest {
         request.setSummonsDelivery(summonsDelivery);
 
         Task task = new Task();
+        task.setTaskDetails(TaskDetails.builder().deliveryChannel(DeliveryChannel.builder().build()).build());
         task.setTaskType("SUMMON");
         TaskListResponse taskListResponse = new TaskListResponse();
         taskListResponse.setList(Collections.singletonList(task));

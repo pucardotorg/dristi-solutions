@@ -1,18 +1,11 @@
 import React from "react";
 import Modal from "../../../components/Modal";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import { useHistory } from "react-router-dom";
+import { CloseBtn } from "../../../components/ModalComponents";
 
 const ViewAllOrderDrafts = ({ t, setShow, draftOrderList, filingNumber }) => {
   const history = useHistory();
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   const Heading = (props) => {
     return (
       <div className="evidence-title">

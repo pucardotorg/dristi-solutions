@@ -12,6 +12,7 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { getAdvocates } = require("../applicationHandlers/getAdvocates");
 const { handleApiCall } = require("../utils/handleApiCall");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 async function orderSetTermsOfBail(
   req,
@@ -153,12 +154,7 @@ async function orderSetTermsOfBail(
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
 
     const caseNumber =
-      (courtCase?.isLPRCase
-        ? courtCase?.lprNumber
-        : courtCase?.courtCaseNumber) ||
-      courtCase?.courtCaseNumber ||
-      courtCase?.cmpNumber ||
-      "";
+      getCaseNumber(courtCase);
     const data = {
       Data: [
         {

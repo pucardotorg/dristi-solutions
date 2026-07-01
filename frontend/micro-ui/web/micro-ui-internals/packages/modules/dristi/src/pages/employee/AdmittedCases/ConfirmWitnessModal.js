@@ -1,19 +1,9 @@
 import React from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
-
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 function ConfirmWitnessModal({ t, selectedWitness, witnessTag, onCancel, onSubmit, allParties }) {
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
+  
+  
   const sourceName = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value)?.sourceName;
 
   return (

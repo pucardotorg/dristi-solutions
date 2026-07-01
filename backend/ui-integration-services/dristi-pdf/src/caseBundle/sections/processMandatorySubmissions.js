@@ -1,12 +1,9 @@
 const { search_application_v2, search_order_v2 } = require("../../api");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
-const {
-  combineMultipleFilestores,
-} = require("../utils/combineMultipleFilestores");
+const { combineMultipleFilestores } = require("../utils/combineMultipleFilestores");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 async function processMandatorySubmissions(
   courtCase,
@@ -17,6 +14,7 @@ async function processMandatorySubmissions(
   indexCopy,
   messagesMap
 ) {
+  logger.info(`[processMandatorySubmissions] Started | filingNumber: ${courtCase?.filingNumber}`);
   const mandatorySubmissionsSection = filterCaseBundleBySection(
     caseBundleMaster,
     "mandatorysubmissions"

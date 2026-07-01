@@ -1,9 +1,9 @@
 import React from "react";
 import Modal from "../../../dristi/src/components/Modal";
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import SelectCustomNote from "../../../dristi/src/components/SelectCustomNote";
 import { Banner } from "@egovernments/digit-ui-react-components";
 import CustomCopyTextDiv from "../../../dristi/src/components/CustomCopyTextDiv";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const customNoteConfig = {
   populators: {
@@ -30,17 +30,17 @@ const paymentFailedNoteConfig = {
   },
 };
 
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingTop: "10px", cursor: "pointer" }}
-    >
-      <CloseSvg />
-    </div>
-  );
+const verificationPendingNoteConfig = {
+  populators: {
+    inputs: [
+      {
+        infoHeader: "WARNING",
+        infoText: "PAYMENT_VERIFICATION_PENDING_INFO",
+        showTooltip: true,
+      },
+    ],
+  },
 };
-
 function SuccessModal({
   t,
   actionCancelLabel,
@@ -55,18 +55,21 @@ function SuccessModal({
   bannerlabel,
 }) {
   const submissionData = [
+    //
     { key: "SUBMISSION_DATE", value: createdDate, copyData: false },
     { key: "SUBMISSION_ID", value: applicationNumber, copyData: true },
   ];
   return (
     <Modal
-      actionCancelLabel={t(actionCancelLabel)}
+      headerBarMain={<Heading label={t("")} />}
+      headerBarEnd={<CloseBtn onClick={headerBarEndClose} />}
+      headerBarMainStyle={{ padding: "10px 0px" }}
+      actionCancelLabel={paymentStatus === "VERIFICATION_PENDING" ? t("CS_WAIT_AND_CHECK_LATER") : t(actionCancelLabel)}
       actionCancelOnSubmit={actionCancelOnSubmit}
-      actionSaveLabel={makePayment ? t("CS_MAKE_PAYMENT") : t("CS_CLOSE")}
+      actionSaveLabel={paymentStatus === "VERIFICATION_PENDING" ? t("CS_TRY_PAYMENT_AGAIN") : makePayment ? t("CS_MAKE_PAYMENT") : t("CS_CLOSE")}
       actionSaveOnSubmit={handleCloseSuccessModal}
       className={"submission-success-modal"}
     >
-      {headerBarEndClose && <CloseBtn onClick={headerBarEndClose}></CloseBtn>}
       <div className="submission-success-modal-body-main">
         <Banner
           whichSvg={"tick"}
@@ -76,7 +79,8 @@ function SuccessModal({
           style={{ minWidth: "100%", ...(!headerBarEndClose && { marginTop: "10px" }) }}
         ></Banner>
         {isPaymentDone && <SelectCustomNote t={t} config={customNoteConfig} />}
-        {paymentStatus === false && <SelectCustomNote t={t} config={paymentFailedNoteConfig} />}
+        {paymentStatus === "VERIFICATION_PENDING" && <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />}
+        {paymentStatus === "FAILED" && <SelectCustomNote t={t} config={paymentFailedNoteConfig} />}
 
         <CustomCopyTextDiv
           t={t}

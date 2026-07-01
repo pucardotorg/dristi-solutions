@@ -61,4 +61,10 @@ public class DeliveryChannel {
 
     @JsonProperty("channelDetails")
     private Map<String, String> channelDetails;
+
+    @JsonProperty("notDeliveredReason")
+    private String notDeliveredReason;
+
+    @JsonProperty("notDeliveredReasonText")
+    private String notDeliveredReasonText;
 }

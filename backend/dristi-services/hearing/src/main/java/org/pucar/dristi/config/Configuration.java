@@ -345,9 +345,12 @@ public class Configuration {
     private String taskManagementSuffix;
 
 
-    @Value("${spring.redis.timeout}")
+    @Value("${dristi.redis.cache.ttl.minutes}")
     private Long redisTimeout;
 
-    @Value("${redis.enabled}")
+    @Value("${spring.redis.enabled}")
     private Boolean redisEnabled;
+
+    @Value("${court.id}")
+    private String courtId;
 }

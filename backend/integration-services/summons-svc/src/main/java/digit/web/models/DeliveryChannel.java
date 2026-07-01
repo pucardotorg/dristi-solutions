@@ -52,4 +52,10 @@ public class DeliveryChannel {
     @JsonProperty("isPendingCollection")
     private Boolean isPendingCollection = false;
 
+    @JsonProperty("notDeliveredReason")
+    private String notDeliveredReason;
+
+    @JsonProperty("notDeliveredReasonText")
+    private String notDeliveredReasonText;
+
 }

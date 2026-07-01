@@ -1,8 +1,9 @@
-import _ from "lodash";
 import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { ORDER_TYPES } from "./constants";
+import { getFormattedName } from "@egovernments/digit-ui-module-common";
 
 export const overrideHooks = () => {
   Object.keys(CustomisedHooks).map((ele) => {
@@ -45,7 +46,6 @@ export const updateCustomConfigs = () => {
 };
 
 export default {};
-
 
 export const convertToDateInputFormat = (dateInput) => {
   if (!dateInput) {
@@ -100,29 +100,19 @@ export const constructFullName = (firstName, middleName, lastName) => {
     ?.trim();
 };
 
-export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
-  const nameParts = [firstName, middleName, lastName]
-    ?.map((part) => part?.trim())
-    ?.filter(Boolean)
-    ?.join(" ")
-    ?.trim();
-
-  const nameWithDesignation = designation && nameParts ? `${nameParts} - ${designation}` : designation || nameParts;
-
-  return partyTypeLabel ? `${nameWithDesignation} ${partyTypeLabel}` : nameWithDesignation;
-};
+export { getFormattedName };
 
 // name format for entity type
 export const getRespondantName = (respondentNameData) => {
   const isWitness = respondentNameData?.partyType?.toLowerCase() === "witness";
   const partyName = isWitness
     ? getFormattedName(
-      respondentNameData?.firstName,
-      respondentNameData?.middleName,
-      respondentNameData?.lastName,
-      respondentNameData?.witnessDesignation,
-      null
-    )
+        respondentNameData?.firstName,
+        respondentNameData?.middleName,
+        respondentNameData?.lastName,
+        respondentNameData?.witnessDesignation,
+        null
+      )
     : constructFullName(respondentNameData?.firstName, respondentNameData?.middleName, respondentNameData?.lastName);
 
   if (respondentNameData?.respondentCompanyName) {
@@ -135,8 +125,9 @@ export const getRespondantName = (respondentNameData) => {
 export const getComplainantName = (complainantDetails) => {
   const partyName =
     complainantDetails?.firstName &&
-    `${complainantDetails?.firstName?.trim() || ""} ${complainantDetails?.middleName?.trim() || ""} ${complainantDetails?.lastName?.trim() || ""
-      }`.trim();
+    `${complainantDetails?.firstName?.trim() || ""} ${complainantDetails?.middleName?.trim() || ""} ${
+      complainantDetails?.lastName?.trim() || ""
+    }`.trim();
   if (complainantDetails?.complainantType?.code === "INDIVIDUAL") {
     return partyName;
   }
@@ -204,8 +195,9 @@ export const downloadFile = (responseBlob, fileName) => {
   window.URL.revokeObjectURL(url);
 };
 
-export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, taskDetails) => {
-  if (orderType === "MISCELLANEOUS_PROCESS") {
+export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, rowData) => {
+  const taskDetails = rowData?.taskDetails;
+  if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
     const type = taskDetails?.miscellaneuosDetails?.addressee || "";
 
     switch (type) {
@@ -216,6 +208,11 @@ export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, tas
       default:
         return taskDetails?.respondentDetails?.name || taskDetails?.complainantDetails?.name || "";
     }
+  }
+
+  if (orderType === ORDER_TYPES.SCHEDULE_OF_HEARING_DATE) {
+    // For warrant tasks which are automatically created by hearing order flow.
+    return taskDetails?.witnessDetails?.name || taskDetails?.respondentDetails?.name || "";
   }
 
   const formDataKeyMap = {
@@ -242,12 +239,14 @@ export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, tas
       null
     ) ||
     (["NOTICE", "SUMMONS"]?.includes(orderType) && (taskDetails?.respondentDetails?.name || taskDetails?.witnessDetails?.name)) ||
-    (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
-    (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name) ||
-    (orderType === "ATTACHMENT" && formdata?.attachmentFor?.name) ||
+    (orderType === ORDER_TYPES.WARRANT && formdata?.warrantFor?.name) ||
+    (orderType === ORDER_TYPES.PROCLAMATION && formdata?.proclamationFor?.name) ||
+    (orderType === ORDER_TYPES.ATTACHMENT && formdata?.attachmentFor?.name) ||
     formdata?.warrantFor ||
     formdata?.proclamationFor ||
     formdata?.attachmentFor ||
+    taskDetails?.witnessDetails?.name ||
+    taskDetails?.respondentDetails?.name ||
     "";
 
   return name;

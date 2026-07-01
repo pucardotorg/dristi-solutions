@@ -1,5 +1,5 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import { initLibraries } from "@egovernments/digit-ui-libraries";
 import { DigitUI, initCoreComponents } from "@egovernments/digit-ui-module-core";
 import setupRequestInterceptor from "@egovernments/digit-ui-module-core/src/Utils/requestInterceptor";
@@ -9,6 +9,7 @@ import { initHearingsComponents } from "@egovernments/digit-ui-module-hearings";
 import { initCasesComponents } from "@egovernments/digit-ui-module-cases";
 import { initDRISTIComponents } from "@egovernments/digit-ui-module-dristi";
 import { initHomeComponents } from "@egovernments/digit-ui-module-home";
+import { initCommonComponents } from "@egovernments/digit-ui-module-common";
 
 // import "@egovernments/dristi-ui-css";
 import "dristi-ui-css";
@@ -63,6 +64,7 @@ const initDigitUI = () => {
   setupRequestInterceptor();
   apiMonitor.init();
   initCoreComponents();
+  initCommonComponents();
   initDRISTIComponents();
   initOrdersComponents();
   initHearingsComponents();
@@ -71,15 +73,17 @@ const initDigitUI = () => {
   initHomeComponents();
   const moduleReducers = (initData) => ({});
 
-  const stateCode = window?.globalConfigs.getConfig("STATE_LEVEL_TENANT_ID") || "kl";
+  const stateCode = window?.globalConfigs.getConfig("STATE_LEVEL_TENANT_ID");
   initTokens(stateCode);
 
-  ReactDOM.render(
+  const container = document.getElementById("root");
+  if (!container) throw new Error("Root element #root not found");
+  const root = createRoot(container);
+  root.render(
     <>
       <DigitUI stateCode={stateCode} enabledModules={enabledModules} defaultLanding="employee" moduleReducers={moduleReducers} />
       {hasViewApiMonitorAccess && <ApiMonitorPanel />}
-    </>,
-    document.getElementById("root")
+    </>
   );
 };
 

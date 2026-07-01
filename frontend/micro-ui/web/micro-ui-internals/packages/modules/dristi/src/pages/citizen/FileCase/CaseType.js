@@ -1,5 +1,4 @@
 import { Loader } from "@egovernments/digit-ui-components";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
 import Button from "../../../components/Button";
@@ -12,6 +11,7 @@ import { DRISTIService } from "../../../services";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import { userTypeOptions } from "../registration/config";
 import CustomDetailsDropdownCard from "../../../components/CustomDetailsDropdownCard";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 const customNoteConfig = {
   populators: {
@@ -48,16 +48,6 @@ function CaseType({ t }) {
   const onSelect = () => {
     setPage(1);
   };
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
   const { data: complainantRespondentTypeData, isLoading: isComplainantRespondentTypeLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "case",
@@ -92,20 +82,35 @@ function CaseType({ t }) {
     );
     const individualId = individualData?.Individual?.[0]?.individualId;
 
-    const addressLine1 = individualData?.Individual?.[0]?.address[0]?.addressLine1 || "Telangana";
-    const addressLine2 = individualData?.Individual?.[0]?.address[0]?.addressLine2 || "Rangareddy";
-    const buildingName = individualData?.Individual?.[0]?.address[0]?.buildingName || "";
-    const street = individualData?.Individual?.[0]?.address[0]?.street || "";
-    const city = individualData?.Individual?.[0]?.address[0]?.city || "";
-    const pincode = individualData?.Individual?.[0]?.address[0]?.pincode || "";
-    const latitude = individualData?.Individual?.[0]?.address[0]?.latitude || "";
-    const longitude = individualData?.Individual?.[0]?.address[0]?.longitude || "";
-    const doorNo = individualData?.Individual?.[0]?.address[0]?.doorNo || "";
+    const addressArray = individualData?.Individual?.[0]?.address || [];
+    const permanentAddress = addressArray.length > 1 ? addressArray.find((addr) => addr?.type === "PERMANENT") : addressArray[0];
+    const correspondenceAddress = addressArray.length > 1 ? addressArray.find((addr) => addr?.type === "CORRESPONDENCE") : addressArray[0];
+
+    const addressLine1 = permanentAddress?.addressLine1 || "Telangana";
+    const addressLine2 = permanentAddress?.addressLine2 || "Rangareddy";
+    const buildingName = permanentAddress?.buildingName || "";
+    const street = permanentAddress?.street || "";
+    const city = permanentAddress?.city || "";
+    const pincode = permanentAddress?.pincode || "";
+    const latitude = permanentAddress?.latitude || "";
+    const longitude = permanentAddress?.longitude || "";
+    const doorNo = permanentAddress?.doorNo || "";
     const idType = individualData?.Individual?.[0]?.identifiers[0]?.identifierType || "";
     const identifierIdDetails = JSON.parse(
       individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}"
     );
     const address = `${doorNo ? doorNo + "," : ""} ${buildingName ? buildingName + "," : ""} ${street}`.trim();
+
+    const currAddressLine1 = correspondenceAddress?.addressLine1 || "";
+    const currAddressLine2 = correspondenceAddress?.addressLine2 || "";
+    const currBuildingName = correspondenceAddress?.buildingName || "";
+    const currStreet = correspondenceAddress?.street || "";
+    const currCity = correspondenceAddress?.city || "";
+    const currPincode = correspondenceAddress?.pincode || "";
+    const currLatitude = correspondenceAddress?.latitude || "";
+    const currLongitude = correspondenceAddress?.longitude || "";
+    const currDoorNo = correspondenceAddress?.doorNo || "";
+    const currAddress = `${currDoorNo ? currDoorNo + "," : ""} ${currBuildingName ? currBuildingName + "," : ""} ${currStreet}`.trim();
 
     const givenName = individualData?.Individual?.[0]?.name?.givenName || "";
     const otherNames = individualData?.Individual?.[0]?.name?.otherNames || "";
@@ -214,70 +219,44 @@ function CaseType({ t }) {
                 additionalDetails: {
                   payerMobileNo: individualData?.Individual?.[0]?.mobileNumber,
                   payerName: `${givenName} ${familyName}`,
-                  ...(selectedAdvocateId
-                    ? {
-                        advocateDetails: {
-                          formdata: [
-                            {
-                              isenabled: true,
-                              displayindex: 0,
-                              data: {},
+                  ...(!selectedAdvocateId && {
+                    complainantDetails: {
+                      formdata: [
+                        {
+                          isenabled: true,
+                          data: {
+                            complainantType: complainantRespondentTypeData.find((item) => item.id === 1),
+                            "addressDetails-select": {
+                              pincode: pincode,
+                              district: addressLine2,
+                              city: city,
+                              state: addressLine1,
+                              locality: address,
                             },
-                          ],
-                        },
-                      }
-                    : {
-                        complainantDetails: {
-                          formdata: [
-                            {
-                              isenabled: true,
-                              data: {
-                                complainantType: complainantRespondentTypeData.find((item) => item.id === 1),
+                            complainantId: { complainantId: true },
+                            firstName: givenName,
+                            middleName: otherNames,
+                            lastName: familyName,
+                            complainantVerification: {
+                              mobileNumber: userInfo?.userName,
+                              otpNumber: "123456",
+                              individualDetails: {
+                                individualId: individualId,
+                                document: identifierIdDetails?.fileStoreId
+                                  ? [
+                                      {
+                                        fileName: idType,
+                                        fileStore: identifierIdDetails?.fileStoreId,
+                                        documentName: identifierIdDetails?.filename,
+                                      },
+                                    ]
+                                  : null,
                                 "addressDetails-select": {
                                   pincode: pincode,
                                   district: addressLine2,
                                   city: city,
                                   state: addressLine1,
                                   locality: address,
-                                },
-                                complainantId: { complainantId: true },
-                                firstName: givenName,
-                                middleName: otherNames,
-                                lastName: familyName,
-                                complainantVerification: {
-                                  mobileNumber: userInfo?.userName,
-                                  otpNumber: "123456",
-                                  individualDetails: {
-                                    individualId: individualId,
-                                    document: identifierIdDetails?.fileStoreId
-                                      ? [
-                                          {
-                                            fileName: idType,
-                                            fileStore: identifierIdDetails?.fileStoreId,
-                                            documentName: identifierIdDetails?.filename,
-                                          },
-                                        ]
-                                      : null,
-                                    "addressDetails-select": {
-                                      pincode: pincode,
-                                      district: addressLine2,
-                                      city: city,
-                                      state: addressLine1,
-                                      locality: address,
-                                    },
-                                    addressDetails: {
-                                      pincode: pincode,
-                                      district: addressLine2,
-                                      city: city,
-                                      state: addressLine1,
-                                      coordinates: {
-                                        longitude: longitude,
-                                        latitude: latitude,
-                                      },
-                                      locality: address,
-                                    },
-                                  },
-                                  isUserVerified: true,
                                 },
                                 addressDetails: {
                                   pincode: pincode,
@@ -290,12 +269,66 @@ function CaseType({ t }) {
                                   },
                                   locality: address,
                                 },
+                                "currentAddressDetails-select": {
+                                  pincode: currPincode,
+                                  district: currAddressLine2,
+                                  city: currCity,
+                                  state: currAddressLine1,
+                                  locality: currAddress,
+                                  isCurrAddrSame: addressArray.length > 1 ? { code: "NO", name: "NO" } : { code: "YES", name: "YES" },
+                                },
+                                currentAddressDetails: {
+                                  pincode: currPincode,
+                                  district: currAddressLine2,
+                                  city: currCity,
+                                  state: currAddressLine1,
+                                  coordinates: {
+                                    longitude: currLongitude,
+                                    latitude: currLatitude,
+                                  },
+                                  locality: currAddress,
+                                  isCurrAddrSame: addressArray.length > 1 ? { code: "NO", name: "NO" } : { code: "YES", name: "YES" },
+                                },
                               },
-                              displayindex: 0,
+                              isUserVerified: true,
                             },
-                          ],
+                            addressDetails: {
+                              pincode: pincode,
+                              district: addressLine2,
+                              city: city,
+                              state: addressLine1,
+                              coordinates: {
+                                longitude: longitude,
+                                latitude: latitude,
+                              },
+                              locality: address,
+                            },
+                            "currentAddressDetails-select": {
+                              pincode: currPincode,
+                              district: currAddressLine2,
+                              city: currCity,
+                              state: currAddressLine1,
+                              locality: currAddress,
+                              isCurrAddrSame: addressArray.length > 1 ? { code: "NO", name: "NO" } : { code: "YES", name: "YES" },
+                            },
+                            currentAddressDetails: {
+                              pincode: currPincode,
+                              district: currAddressLine2,
+                              city: currCity,
+                              state: currAddressLine1,
+                              coordinates: {
+                                longitude: currLongitude,
+                                latitude: currLatitude,
+                              },
+                              locality: currAddress,
+                              isCurrAddrSame: addressArray.length > 1 ? { code: "NO", name: "NO" } : { code: "YES", name: "YES" },
+                            },
+                          },
+                          displayindex: 0,
                         },
-                      }),
+                      ],
+                    },
+                  }),
                 },
               };
               DRISTIService.caseCreateService({ cases, tenantId })

@@ -70,6 +70,8 @@ public class NotificationService {
             case SIGN_EXAMINATION_DOCUMENT -> config.getExaminationSignTemplateId();
             case SIGN_PLEA_DOCUMENT -> config.getPleaSignTemplateId();
             case SIGN_MEDIATION_DOCUMENT -> config.getMediationSignTemplateId();
+            case CLIENT_EXAMINATION_ESIGN -> config.getClientExaminationEsignTemplateId();
+            case CLIENT_PLEA_ESIGN -> config.getClientPleaEsignTemplateId();
             default -> null;
         };
 
