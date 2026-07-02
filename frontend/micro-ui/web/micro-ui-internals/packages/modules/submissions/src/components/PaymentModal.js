@@ -87,7 +87,7 @@ function PaymentModal({
         )}
         <div className="note-div">
           <SelectCustomNote t={t} config={customNoteConfig} />
-          {isVerificationPending && (
+          {(isVerificationPending || isPostPaymentVerificationPending) && (
             <div style={{ marginTop: "10px" }}>
               <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
             </div>
