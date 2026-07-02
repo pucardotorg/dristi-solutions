@@ -1387,17 +1387,19 @@ const EvidenceModal = ({
                     </div>
                     <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <h3>{caseData?.case?.courtCaseNumber || caseData?.case?.cmpNumber || caseData?.case?.filingNumber}</h3>
-                      <Link
-                        to={`/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview&fromHome=true`}
-                        style={{
-                          color: "rgb(0, 126, 126)",
-                          fontWeight: "700",
-                          fontSize: "14px",
-                          textDecoration: "underline",
-                        }}
-                      >
-                        ({t("VIEW_CASE")})
-                      </Link>
+                      {userType === "employee" && (
+                        <Link
+                          to={`/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview&fromHome=true`}
+                          style={{
+                            color: "rgb(0, 126, 126)",
+                            fontWeight: "700",
+                            fontSize: "14px",
+                            textDecoration: "underline",
+                          }}
+                        >
+                          ({t("VIEW_CASE")})
+                        </Link>
+                      )}
                     </div>
                   </div>
                   <div className="info-row">
