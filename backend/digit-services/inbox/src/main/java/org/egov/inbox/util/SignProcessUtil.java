@@ -52,8 +52,8 @@ public class SignProcessUtil {
 
         try {
             Map<String, Object> response = (Map<String, Object>) serviceRequestRepository.fetchResult(uri, requestBody);
-            Integer totalCount = JsonPath.read(response, "$.pagination.totalCount");
-            log.info("Sign process count: {}", totalCount);
+            Integer totalCount = JsonPath.read(response, "$.TotalCount");
+            log.info("Sign process TotalCount: {}", totalCount);
             return totalCount;
         } catch (Exception e) {
             log.error("Error fetching sign process count: {}", e.getMessage());
