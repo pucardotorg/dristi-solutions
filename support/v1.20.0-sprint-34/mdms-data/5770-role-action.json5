@@ -1,4 +1,4 @@
-{
+[{
   "tenantId": "kl",
   "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
   "uniqueIdentifier": "2084",
@@ -10,4 +10,59 @@
     "displayName": "payment status"
   },
   "isActive": true
-}
+},
+
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2085",
+    "data": {
+      "id": 2085,
+      "url": "/hearing/v1/current-hearing",
+      "code": "2085",
+      "name": "/hearing/v1/current-hearing",
+      "path": "/hearing/v1/current-hearing"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2086",
+    "data": {
+      "id": 2086,
+      "url": "/hearing/v1/cause-list",
+      "code": "2086",
+      "name": "/hearing/v1/cause-list",
+      "path": "/hearing/v1/cause-list"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "583",
+    "data": {
+      "id": 583,
+      "actionid": 2085,
+      "rolecode": "EMPLOYEE",
+      "tenantid": "kl",
+      "actioncode": "2085"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "583",
+    "data": {
+      "id": 583,
+      "actionid": 2086,
+      "rolecode": "EMPLOYEE",
+      "tenantid": "kl",
+      "actioncode": "2086"
+    },
+    "isActive": true
+  }
+
+]
