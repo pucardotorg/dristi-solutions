@@ -26,12 +26,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.egov.inbox.util.InboxConstants.*;
 
@@ -71,6 +76,10 @@ public class InboxServiceV2 {
 
     @Autowired
     private org.egov.inbox.util.SignProcessUtil signProcessUtil;
+
+    @Autowired
+    @Qualifier("inboxCountExecutor")
+    private Executor inboxCountExecutor;
 
 
     /**
@@ -709,42 +718,53 @@ public class InboxServiceV2 {
 
     public InboxBulkCountResponse getBulkIndexCount(InboxBulkCountRequest bulkCountRequest) {
         org.egov.common.contract.request.RequestInfo requestInfo = bulkCountRequest.getRequestInfo();
-        List<InboxCountItem> items = new ArrayList<>();
 
-        for (InboxSearchCriteria criteria : bulkCountRequest.getInboxList()) {
-            InboxRequest inboxRequest = InboxRequest.builder()
-                    .RequestInfo(requestInfo)
-                    .inbox(criteria)
-                    .build();
+        // ES index counts — each criteria runs in parallel
+        List<CompletableFuture<InboxCountItem>> itemFutures = bulkCountRequest.getInboxList().stream()
+                .map(criteria -> CompletableFuture.supplyAsync(() -> {
+                    InboxRequest inboxRequest = InboxRequest.builder()
+                            .RequestInfo(requestInfo)
+                            .inbox(criteria)
+                            .build();
+                    InboxQueryConfiguration inboxQueryConfiguration = mdmsUtil.getConfigFromMDMS(
+                            criteria.getTenantId(),
+                            criteria.getProcessSearchCriteria().getModuleName());
+                    Integer count = getTotalApplicationCount(inboxRequest, inboxQueryConfiguration.getIndex());
+                    return InboxCountItem.builder().inbox(criteria).count(count).build();
+                }, inboxCountExecutor))
+                .collect(Collectors.toList());
 
-            String tenantId = criteria.getTenantId();
-            String moduleName = criteria.getProcessSearchCriteria().getModuleName();
-            InboxQueryConfiguration inboxQueryConfiguration = mdmsUtil.getConfigFromMDMS(tenantId, moduleName);
+        // ab-diary count
+        CompletableFuture<Integer> abDiaryFuture = bulkCountRequest.getAbDiaryCriteria() != null
+                ? CompletableFuture.supplyAsync(() -> {
+                    log.info("Fetching ab-diary count for courtId: {}", bulkCountRequest.getAbDiaryCriteria().getCourtId());
+                    return abDiaryUtil.getDiaryEntryCount(bulkCountRequest.getAbDiaryCriteria(), requestInfo);
+                }, inboxCountExecutor)
+                : CompletableFuture.completedFuture(null);
 
-            Integer count = getTotalApplicationCount(inboxRequest, inboxQueryConfiguration.getIndex());
+        // sign process count
+        CompletableFuture<Integer> signProcessFuture = bulkCountRequest.getSignProcessCriteria() != null
+                ? CompletableFuture.supplyAsync(() -> {
+                    log.info("Fetching sign process count for tenantId: {}", bulkCountRequest.getSignProcessCriteria().getTenantId());
+                    return signProcessUtil.getSignProcessCount(bulkCountRequest.getSignProcessCriteria(), requestInfo);
+                }, inboxCountExecutor)
+                : CompletableFuture.completedFuture(null);
 
-            items.add(InboxCountItem.builder()
-                    .inbox(criteria)
-                    .count(count)
-                    .build());
-        }
+        // wait for all futures
+        CompletableFuture.allOf(
+                CompletableFuture.allOf(itemFutures.toArray(new CompletableFuture[0])),
+                abDiaryFuture,
+                signProcessFuture
+        ).join();
 
-        Integer abDiaryCount = null;
-        if (bulkCountRequest.getAbDiaryCriteria() != null) {
-            log.info("Fetching ab-diary count for courtId: {}", bulkCountRequest.getAbDiaryCriteria().getCourtId());
-            abDiaryCount = abDiaryUtil.getDiaryEntryCount(bulkCountRequest.getAbDiaryCriteria(), requestInfo);
-        }
-
-        Integer signProcessCount = null;
-        if (bulkCountRequest.getSignProcessCriteria() != null) {
-            log.info("Fetching sign process count for tenantId: {}", bulkCountRequest.getSignProcessCriteria().getTenantId());
-            signProcessCount = signProcessUtil.getSignProcessCount(bulkCountRequest.getSignProcessCriteria(), requestInfo);
-        }
+        List<InboxCountItem> items = itemFutures.stream()
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
 
         return InboxBulkCountResponse.builder()
                 .items(items)
-                .abDiaryCount(abDiaryCount)
-                .signProcessCount(signProcessCount)
+                .abDiaryCount(abDiaryFuture.join())
+                .signProcessCount(signProcessFuture.join())
                 .build();
     }
 
