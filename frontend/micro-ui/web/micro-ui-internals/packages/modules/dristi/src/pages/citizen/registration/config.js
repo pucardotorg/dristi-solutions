@@ -652,7 +652,6 @@ export const newConfig = [
           inputs: [
             {
               label: "ES_COMMON_USER_TERMS_AND_CONDITIONS",
-              subLabel: "CS_VERFIY_IDENTITY_SUB_TEXT",
               type: "multiple",
               name: "terms_condition",
               optionsKey: "name",
