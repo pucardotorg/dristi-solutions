@@ -153,7 +153,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     tenantId,
     Boolean(statusConsumerCode),
     undefined,
-    `efiling-payment-breakdown_${receiptFilstoreId}`
+    `efiling-payment-breakdown_${receiptFilstoreId}_${retryPayment}`
   );
 
   const isVerificationPending = useMemo(() => Boolean(paymentStatusData?.PaymentStatus?.status === "VERIFICATION_PENDING"), [paymentStatusData]);
@@ -238,11 +238,15 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
         const fileStoreId = response?.Document?.fileStore;
         if (fileStoreId) {
           setReceiptFilstoreId(fileStoreId);
+          isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+          retryPayment && setRetryPayment(false);
         }
       } else if (paymentStatus === "VERIFICATION_PENDING") {
         setIsPostPaymentVerificationPending(true);
+        retryPayment && setRetryPayment(false);
         return;
       } else {
+        isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
         setRetryPayment(true);
       }
     } catch (error) {
