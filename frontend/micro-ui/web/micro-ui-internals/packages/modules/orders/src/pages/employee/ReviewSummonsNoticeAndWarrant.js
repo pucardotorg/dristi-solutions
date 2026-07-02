@@ -76,7 +76,7 @@ export const getJudgeDefaultConfig = (courtId) => {
   });
 };
 
-function getAction(selectedDelievery, orderType) {
+function getAction(selectedDelievery, taskType) {
   const key = selectedDelievery?.key;
 
   if (key === "OTHER") {
@@ -84,12 +84,10 @@ function getAction(selectedDelievery, orderType) {
   }
 
   if (key === "DELIVERED") {
-    return orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
-      ? "DELIVERED"
-      : "SERVED";
+    return taskType === TASK_TYPES.WARRANT || taskType === TASK_TYPES.PROCLAMATION || taskType === TASK_TYPES.ATTACHMENT ? "DELIVERED" : "SERVED";
   }
 
-  return orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
+  return taskType === TASK_TYPES.WARRANT || taskType === TASK_TYPES.PROCLAMATION || taskType === TASK_TYPES.ATTACHMENT
     ? "NOT_DELIVERED"
     : "NOT_SERVED";
 }
@@ -246,6 +244,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+
+  const taskType = useMemo(() => {
+    return rowData?.taskType;
+  }, [rowData]);
 
   const [tabData, setTabData] = useState(
     isJudge
@@ -539,85 +541,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     handleBulkSendSubmit();
   }, [bulkSendList, t, handleBulkSendSubmit]);
 
-  const handleUpdateStatus = useCallback(async () => {
-    const { data: tasksData } = await refetch();
-    if (tasksData) {
-      try {
-        const task = tasksData?.list?.[0];
-        const reqBody = {
-          task: {
-            ...task,
-            ...(typeof task?.taskDetails === "string" && { taskDetails: JSON.parse(task?.taskDetails) }),
-            taskDetails: {
-              ...(typeof task?.taskDetails === "string" ? JSON.parse(task?.taskDetails) : task?.taskDetails),
-              deliveryChannels: {
-                ...task?.taskDetails?.deliveryChannels,
-                statusChangeDate: updateStatusDate
-                  ? updateStatusDate
-                  : convertToDateInputFormat(rowData?.taskDetails?.deliveryChannels?.statusChangeDate),
-                ...(selectedDelievery?.key === "NOT_DELIVERED" &&
-                  rowData?.taskDetails?.deliveryChannels?.channelCode !== "POLICE" &&
-                  selectedReason?.key && {
-                    notDeliveredReason: selectedReason.key,
-                    notDeliveredReasonText: reasonText,
-                  }),
-              },
-              remarks: {
-                remark: remarks,
-              },
-            },
-            workflow: {
-              ...tasksData?.list?.[0]?.workflow,
-              action: getAction(selectedDelievery, orderType),
-              documents: [{}],
-            },
-          },
-        };
-        await taskService.updateTask(reqBody, { tenantId }).then(async (res) => {
-          if (
-            res?.task &&
-            selectedDelievery?.key === "NOT_DELIVERED" &&
-            !(orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT)
-          ) {
-            let action = "";
-            if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
-              action = "NEW_PROCESS";
-            } else {
-              action = orderType === ORDER_TYPES.SUMMONS ? "NEW_SUMMON" : "NEW_NOTICE";
-            }
-
-            await taskService.updateTask(
-              {
-                task: {
-                  ...res.task,
-                  workflow: {
-                    ...res.task?.workflow,
-                    action: action,
-                  },
-                },
-              },
-              { tenantId }
-            );
-          }
-        });
-        setShowActionModal(false);
-        // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
-        isInitialLoadRef.current = true;
-        setReload(!reload);
-        setTimeout(() => {
-          isInitialLoadRef.current = false;
-        }, 1000);
-      } catch (error) {
-        console.error("Error updating task data:", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-        setShowToast({ label: t("HOME_SCREEN_UPDATE_FAILED"), error: true, errorId });
-      } finally {
-        setSelectedReason({});
-        setReasonText("");
-      }
-    }
-  }, [dayInMillisecond, orderData, orderType, refetch, reload, selectedDelievery, selectedReason, reasonText, tasksData, tenantId, todayDate]);
-
   useEffect(() => {
     // Set default values when component mounts
     setDefaultValues(defaultSearchValues);
@@ -736,7 +659,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData) },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData, taskType) },
         {
           key: "NEXT_HEARING_DATE",
           value: caseDetails?.caseDetails?.hearingDate ? DateUtils.getFormattedDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
@@ -747,7 +670,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "E_PROCESS_ID", value: rowData?.taskNumber },
       ];
     }
-  }, [rowData?.taskDetails, rowData?.taskNumber, nextHearingDate, orderDetails, compositeItem, orderType]);
+  }, [rowData?.taskDetails, rowData?.taskNumber, nextHearingDate, orderDetails, compositeItem, orderType, taskType]);
 
   const reverseToDDMMYYYY = (dateStr) => {
     if (!dateStr) return "N/A";
@@ -768,7 +691,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData) },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData, taskType) },
         { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
         { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
         { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
@@ -779,13 +702,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
         },
       ];
     }
-  }, [rowData?.taskDetails, rowData?.createdDate, nextHearingDate, orderDetails, compositeItem, orderType]);
+  }, [rowData?.taskDetails, rowData?.createdDate, nextHearingDate, orderDetails, compositeItem, orderType, taskType]);
 
   const ReviewInfo = useMemo(() => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData) },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData, taskType) },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         {
           key: "NEXT_HEARING_DATE",
@@ -798,7 +721,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "REMARKS", value: caseDetails?.remarks?.remark ? caseDetails?.remarks?.remark : "N/A" },
       ];
     }
-  }, [rowData?.taskDetails, rowData?.status, nextHearingDate, orderDetails, compositeItem, orderType]);
+  }, [rowData?.taskDetails, rowData?.status, nextHearingDate, orderDetails, compositeItem, orderType, taskType]);
 
   const links = useMemo(() => {
     return [{ text: "View order", link: "" }];
@@ -809,7 +732,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       return rowData?.documents?.map((document) => {
         return { ...document, fileName: `${t(rowData?.taskType)} ${t("DOCUMENT_TEXT")}` };
       });
-  }, [rowData, orderType]);
+  }, [rowData]);
 
   // Detect if a signed document already exists for the selected row
   const hasSignedDoc = useMemo(() => {
@@ -836,9 +759,84 @@ const ReviewSummonsNoticeAndWarrant = () => {
     ];
   }, [rowData, isIcops]);
 
-  const taskType = useMemo(() => {
-    return rowData?.taskType;
-  }, [rowData]);
+  const handleUpdateStatus = useCallback(async () => {
+    const { data: tasksData } = await refetch();
+    if (tasksData) {
+      try {
+        const task = tasksData?.list?.[0];
+        const reqBody = {
+          task: {
+            ...task,
+            ...(typeof task?.taskDetails === "string" && { taskDetails: JSON.parse(task?.taskDetails) }),
+            taskDetails: {
+              ...(typeof task?.taskDetails === "string" ? JSON.parse(task?.taskDetails) : task?.taskDetails),
+              deliveryChannels: {
+                ...task?.taskDetails?.deliveryChannels,
+                statusChangeDate: updateStatusDate
+                  ? updateStatusDate
+                  : convertToDateInputFormat(rowData?.taskDetails?.deliveryChannels?.statusChangeDate),
+                ...(selectedDelievery?.key === "NOT_DELIVERED" &&
+                  rowData?.taskDetails?.deliveryChannels?.channelCode !== "POLICE" &&
+                  selectedReason?.key && {
+                    notDeliveredReason: selectedReason.key,
+                    notDeliveredReasonText: reasonText,
+                  }),
+              },
+              remarks: {
+                remark: remarks,
+              },
+            },
+            workflow: {
+              ...tasksData?.list?.[0]?.workflow,
+              action: getAction(selectedDelievery, taskType),
+              documents: [{}],
+            },
+          },
+        };
+        await taskService.updateTask(reqBody, { tenantId }).then(async (res) => {
+          if (
+            res?.task &&
+            selectedDelievery?.key === "NOT_DELIVERED" &&
+            !(taskType === TASK_TYPES.WARRANT || taskType === TASK_TYPES.PROCLAMATION || taskType === TASK_TYPES.ATTACHMENT)
+          ) {
+            let action = "";
+            if (taskType === TASK_TYPES.MISCELLANEOUS_PROCESS) {
+              action = "NEW_PROCESS";
+            } else {
+              action = taskType === TASK_TYPES.SUMMONS ? "NEW_SUMMON" : "NEW_NOTICE";
+            }
+
+            await taskService.updateTask(
+              {
+                task: {
+                  ...res.task,
+                  workflow: {
+                    ...res.task?.workflow,
+                    action: action,
+                  },
+                },
+              },
+              { tenantId }
+            );
+          }
+        });
+        setShowActionModal(false);
+        // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
+        isInitialLoadRef.current = true;
+        setReload(!reload);
+        setTimeout(() => {
+          isInitialLoadRef.current = false;
+        }, 1000);
+      } catch (error) {
+        console.error("Error updating task data:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("HOME_SCREEN_UPDATE_FAILED"), error: true, errorId });
+      } finally {
+        setSelectedReason({});
+        setReasonText("");
+      }
+    }
+  }, [dayInMillisecond, orderData, taskType, refetch, reload, selectedDelievery, selectedReason, reasonText, tasksData, tenantId, todayDate]);
 
   const successMessage = useMemo(() => {
     let msg = "";
