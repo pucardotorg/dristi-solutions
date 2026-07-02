@@ -18,6 +18,7 @@
           "action": "CREATE_WITH_OUT_PAYMENT",
           "nextState": "ISSUE_WARRANT",
           "roles": [
+            // TODO : need to check this SYSTEM role
             "TASK_CREATOR",
             "SYSTEM"
           ]
@@ -26,6 +27,7 @@
           "action": "CREATE",
           "nextState": "PENDING_PAYMENT",
           "roles": [
+            // TODO : need to check this SYSTEM role
             "TASK_CREATOR",
             "SYSTEM"
           ]
@@ -116,6 +118,7 @@
             "SYSTEM_ADMIN"
           ]
         },
+        // NEW : expire warrant, terminates this task
         {
           "action": "EXPIRE",
           "nextState": "EXPIRED",
@@ -235,6 +238,7 @@
             "SYSTEM_ADMIN"
           ]
         },
+        // NEW : expire warrant, terminates this task
         {
           "action": "EXPIRE",
           "nextState": "EXPIRED",
