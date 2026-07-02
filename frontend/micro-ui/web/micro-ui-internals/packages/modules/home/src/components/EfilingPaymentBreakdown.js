@@ -148,9 +148,17 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     ? `${caseDetails.filingNumber}_${suffix}`
     : "";
 
-  const { data: paymentStatusData } = useGetPaymentVerificationStatus(statusConsumerCode, tenantId, Boolean(statusConsumerCode));
+  const { data: paymentStatusData } = useGetPaymentVerificationStatus(
+    statusConsumerCode,
+    tenantId,
+    Boolean(statusConsumerCode),
+    undefined,
+    `efiling-payment-breakdown_${receiptFilstoreId}`
+  );
 
   const isVerificationPending = useMemo(() => Boolean(paymentStatusData?.PaymentStatus?.status === "VERIFICATION_PENDING"), [paymentStatusData]);
+  // Override stale hook data once we have a definitive post-payment outcome
+  const showVerificationPending = (isVerificationPending || isPostPaymentVerificationPending) && !receiptFilstoreId && !retryPayment;
 
   const fetchCaseLockStatus = useCallback(async () => {
     try {
@@ -246,7 +254,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     }
   };
 
-  if (!isPostPaymentVerificationPending && (isLoading || ispaymentLoading || isPaymentTypeLoading || loader)) {
+  if (!showVerificationPending && (isLoading || ispaymentLoading || isPaymentTypeLoading || loader)) {
     return <Loader />;
   }
   return (
@@ -274,9 +282,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
             inline
             className={"adhaar-verification-info-card"}
           />
-          {(isVerificationPending || isPostPaymentVerificationPending) && (
-            <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
-          )}
+          {showVerificationPending && <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />}
           <div className="total-payment">
             {paymentCalculation
               ?.filter((item) => item?.isTotalFee)
@@ -288,7 +294,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
                       text={
                         receiptFilstoreId
                           ? t("CS_TASK_PAYMENT_DONE")
-                          : isVerificationPending || isPostPaymentVerificationPending
+                          : showVerificationPending
                           ? t("PAYMENT_VERIFICATION_IS_PENDING")
                           : t("CS_TASK_PENDING")
                       }
@@ -315,7 +321,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
               ))}
           </div>
 
-          {isVerificationPending || isPostPaymentVerificationPending ? (
+          {showVerificationPending ? (
             <div
               className="verification-pending-actions"
               style={{ display: "flex", flexDirection: "row", justifyContent: "end", alignItems: "center", gap: "12px" }}
