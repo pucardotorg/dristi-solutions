@@ -66,6 +66,12 @@ public class InboxServiceV2 {
     @Autowired
     private CacheService cacheService;
 
+    @Autowired
+    private org.egov.inbox.util.AbDiaryUtil abDiaryUtil;
+
+    @Autowired
+    private org.egov.inbox.util.SignProcessUtil signProcessUtil;
+
 
     /**
      * @param inboxRequest
@@ -723,8 +729,22 @@ public class InboxServiceV2 {
                     .build());
         }
 
+        Integer abDiaryCount = null;
+        if (bulkCountRequest.getAbDiaryCriteria() != null) {
+            log.info("Fetching ab-diary count for courtId: {}", bulkCountRequest.getAbDiaryCriteria().getCourtId());
+            abDiaryCount = abDiaryUtil.getDiaryEntryCount(bulkCountRequest.getAbDiaryCriteria(), requestInfo);
+        }
+
+        Integer signProcessCount = null;
+        if (bulkCountRequest.getSignProcessCriteria() != null) {
+            log.info("Fetching sign process count for tenantId: {}", bulkCountRequest.getSignProcessCriteria().getTenantId());
+            signProcessCount = signProcessUtil.getSignProcessCount(bulkCountRequest.getSignProcessCriteria(), requestInfo);
+        }
+
         return InboxBulkCountResponse.builder()
                 .items(items)
+                .abDiaryCount(abDiaryCount)
+                .signProcessCount(signProcessCount)
                 .build();
     }
 

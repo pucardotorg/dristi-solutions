@@ -17,4 +17,10 @@ public class InboxBulkCountResponse {
 
     @JsonProperty("items")
     private List<InboxCountItem> items;
+
+    @JsonProperty("abDiaryCount")
+    private Integer abDiaryCount;
+
+    @JsonProperty("signProcessCount")
+    private Integer signProcessCount;
 }

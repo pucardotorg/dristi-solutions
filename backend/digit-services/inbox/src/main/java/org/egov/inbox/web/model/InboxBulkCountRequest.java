@@ -20,4 +20,12 @@ public class InboxBulkCountRequest {
     @Valid
     @JsonProperty("inboxList")
     private List<InboxSearchCriteria> inboxList;
+
+    @Valid
+    @JsonProperty("signProcessCriteria")
+    private SignProcessCriteria signProcessCriteria;
+
+    @Valid
+    @JsonProperty("abDiaryCriteria")
+    private AbDiaryCriteria abDiaryCriteria;
 }
