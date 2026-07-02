@@ -21,18 +21,41 @@ This module is intentionally court-agnostic: a thin, swappable signing core.
 import io
 import os
 
+from pyhanko.pdf_utils.images import PdfImage
 from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
 from pyhanko.sign import signers
 from pyhanko.sign.fields import SigFieldSpec
 from pyhanko.sign.signers import PdfSignatureMetadata
 from pyhanko.stamp import TextStampStyle
 
-# Visible-signature appearance. Text-only box (no background graphic). The text is
-# overridable via SIGN_STAMP_TEXT; %(signer)s = certificate CN, %(ts)s = timestamp.
+# --- Visible-signature appearance -------------------------------------------
+# Text lines, drawn over an optional background seal/logo image.
+#
+# Configurable via env:
+#   SIGN_STAMP_TEXT    text template; %(signer)s = certificate CN, %(ts)s = time
+#   SIGN_STAMP_IMAGE   path to a seal/logo image (PNG/JPG); omitted -> text only
+#   SIGN_STAMP_OPACITY 0..1 opacity of that image (default 1.0)
+#
+# border_width=0 removes pyHanko's default heavy black box (which basic viewers
+# render as a solid black rectangle). Note: the "?" / "Signature Not Verified"
+# in Adobe is the VIEWER's validity icon for an untrusted cert (turns into a green
+# check once CCA trust is configured) -- it is NOT drawn here.
 _STAMP_TEXT = os.environ.get(
-    "SIGN_STAMP_TEXT", "Digitally signed by %(signer)s.\nTimestamp: %(ts)s."
+    "SIGN_STAMP_TEXT", "Digitally signed by %(signer)s\nDate: %(ts)s"
 )
-_TEXT_ONLY_STAMP_STYLE = TextStampStyle(stamp_text=_STAMP_TEXT, background=None)
+_STAMP_IMAGE = os.environ.get("SIGN_STAMP_IMAGE")
+_STAMP_OPACITY = float(os.environ.get("SIGN_STAMP_OPACITY", "1.0"))
+
+_BACKGROUND = None
+if _STAMP_IMAGE and os.path.exists(_STAMP_IMAGE):
+    _BACKGROUND = PdfImage(_STAMP_IMAGE)
+
+_STAMP_STYLE = TextStampStyle(
+    stamp_text=_STAMP_TEXT,
+    background=_BACKGROUND,
+    background_opacity=_STAMP_OPACITY,
+    border_width=0,
+)
 
 
 def _build_signer():
@@ -121,7 +144,7 @@ def sign_pdf_bytes(pdf_bytes: bytes, page: int, x: float, y: float,
         pdf_signer = signers.PdfSigner(
             meta,
             signer=real_signer,
-            stamp_style=_TEXT_ONLY_STAMP_STYLE,
+            stamp_style=_STAMP_STYLE,
             new_field_spec=field_spec,
         )
         pdf_signer.sign_pdf(writer, output=out_buf)
