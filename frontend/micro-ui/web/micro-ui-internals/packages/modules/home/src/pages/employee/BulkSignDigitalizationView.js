@@ -1,6 +1,6 @@
 import { SubmitBar, Loader, Banner } from "@egovernments/digit-ui-react-components";
 import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { bulkSignFormsConfig } from "../../configs/BulkSignFormsConfig";
@@ -30,7 +30,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-function BulkSignDigitalizationView() {
+function BulkSignDigitalizationView({ refetchCounts }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
   const history = useHistory();
@@ -42,6 +42,10 @@ function BulkSignDigitalizationView() {
   const [isLoading, setIsLoading] = useState(false);
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
   const [signedList, setSignedList] = useState([]);
+  useEffect(() => {
+    if (!showBulkSignSuccessModal) return;
+    if (refetchCounts) refetchCounts();
+  }, [showBulkSignSuccessModal, refetchCounts]);
 
   const [showToast, setShowToast] = useState(null);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
