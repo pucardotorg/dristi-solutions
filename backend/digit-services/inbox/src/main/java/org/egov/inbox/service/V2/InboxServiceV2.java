@@ -34,6 +34,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -719,8 +720,11 @@ public class InboxServiceV2 {
     public InboxBulkCountResponse getBulkIndexCount(InboxBulkCountRequest bulkCountRequest) {
         org.egov.common.contract.request.RequestInfo requestInfo = bulkCountRequest.getRequestInfo();
 
+        List<InboxSearchCriteria> inboxList = Optional.ofNullable(bulkCountRequest.getInboxList())
+                .orElse(Collections.emptyList());
+
         // ES index counts — each criteria runs in parallel
-        List<CompletableFuture<InboxCountItem>> itemFutures = bulkCountRequest.getInboxList().stream()
+        List<CompletableFuture<InboxCountItem>> itemFutures = inboxList.stream()
                 .map(criteria -> CompletableFuture.supplyAsync(() -> {
                     InboxRequest inboxRequest = InboxRequest.builder()
                             .RequestInfo(requestInfo)
@@ -751,11 +755,14 @@ public class InboxServiceV2 {
                 : CompletableFuture.completedFuture(null);
 
         // wait for all futures
-        CompletableFuture.allOf(
-                CompletableFuture.allOf(itemFutures.toArray(new CompletableFuture[0])),
-                abDiaryFuture,
-                signProcessFuture
-        ).join();
+        try {
+            List<CompletableFuture<?>> allFutures = new ArrayList<>(itemFutures);
+            allFutures.add(abDiaryFuture);
+            allFutures.add(signProcessFuture);
+            CompletableFuture.allOf(allFutures.toArray(new CompletableFuture[0])).join();
+        } catch (CompletionException e) {
+            throw new CustomException("INBOX_BULK_COUNT_ERR", "Error occurred while executing bulk count query");
+        }
 
         List<InboxCountItem> items = itemFutures.stream()
                 .map(CompletableFuture::join)
