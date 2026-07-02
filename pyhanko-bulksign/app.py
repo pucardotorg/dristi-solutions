@@ -1,5 +1,5 @@
 """
-PUCAR bulk-sign agent -- Capricorn-compatible HTTP service backed by pyHanko.
+OnCourts bulk-sign agent -- Capricorn-compatible HTTP service backed by pyHanko.
 
 Drop-in replacement for the proprietary Capricorn `pkiNetworkSign` desktop agent.
 It runs locally on the signing machine (where the DSC token is plugged in) and
@@ -46,7 +46,7 @@ from pyhanko_signer import sign_pdf_bytes
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("pyhanko-bulksign")
 
-app = FastAPI(title="PUCAR pyHanko bulk-sign agent")
+app = FastAPI(title="OnCourts pyHanko bulk-sign agent")
 
 # The browser runs on the court web domain but posts to http://localhost:1620,
 # i.e. a cross-origin request. CORS headers are required for the JS to read the

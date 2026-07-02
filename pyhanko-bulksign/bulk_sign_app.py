@@ -1,5 +1,5 @@
 """
-PUCAR Bulk Sign -- desktop app for court staff.
+OnCourts Bulk Sign -- desktop app for court staff.
 
 A tiny window so non-technical staff can run the bulk-sign agent without any
 terminal or Python commands:
@@ -81,7 +81,7 @@ class BulkSignApp:
         self.thread = None
         self.log_queue: "queue.Queue[str]" = queue.Queue()
 
-        root.title("PUCAR Bulk Sign")
+        root.title("OnCourts Bulk Sign")
         root.configure(bg=BG)
         root.geometry("520x520")
         root.minsize(480, 480)
@@ -96,7 +96,7 @@ class BulkSignApp:
         wrap = tk.Frame(self.root, bg=BG, padx=22, pady=18)
         wrap.pack(fill="both", expand=True)
 
-        tk.Label(wrap, text="PUCAR Bulk Sign", bg=BG, fg=TEAL,
+        tk.Label(wrap, text="OnCourts Bulk Sign", bg=BG, fg=TEAL,
                  font=("Segoe UI", 18, "bold")).pack(anchor="w")
         tk.Label(wrap, text="Sign court documents in bulk using your DSC token.",
                  bg=BG, fg=GREY, font=("Segoe UI", 10)).pack(anchor="w", pady=(0, 14))

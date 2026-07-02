@@ -25,8 +25,8 @@ def ensure_test_cert(path: str = "test-cert.p12", passphrase: bytes = b"test") -
 
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     name = x509.Name([
-        x509.NameAttribute(NameOID.COMMON_NAME, "PUCAR Test Judge"),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "PUCAR eCourts (TEST)"),
+        x509.NameAttribute(NameOID.COMMON_NAME, "OnCourts Test Judge"),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "OnCourts eCourts (TEST)"),
     ])
     now = datetime.datetime.utcnow()
     cert = (
@@ -41,7 +41,7 @@ def ensure_test_cert(path: str = "test-cert.p12", passphrase: bytes = b"test") -
         .sign(key, hashes.SHA256())
     )
     blob = pkcs12.serialize_key_and_certificates(
-        name=b"pucar-test",
+        name=b"oncourts-test",
         key=key,
         cert=cert,
         cas=None,
