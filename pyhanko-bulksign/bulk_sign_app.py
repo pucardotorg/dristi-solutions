@@ -215,7 +215,8 @@ class BulkSignApp:
             ids = list_token_identities(module_path)
             self.root.after(0, lambda: self._on_token_detected(ids, None))
         except Exception as e:  # noqa: BLE001 - show any failure in the panel
-            self.root.after(0, lambda: self._on_token_detected(None, e))
+            err = str(e)  # `e` is cleared when the except block exits
+            self.root.after(0, lambda: self._on_token_detected(None, err))
 
     def _on_token_detected(self, ids, err):
         self.detect_btn.configure(state="normal")
@@ -292,7 +293,10 @@ class BulkSignApp:
             os.environ.pop("PKCS11_USER_PIN", None)
             self.server = None
             self.thread = None
-            self.root.after(0, lambda: self._on_start_failed(e))
+            # Capture as a string: the `except` var `e` is cleared when the block
+            # exits, so a lambda referencing it later would NameError.
+            err = str(e)
+            self.root.after(0, lambda: self._on_start_failed(err))
 
     def _on_started(self):
         # Don't keep the PIN on screen once we're signing.
