@@ -288,14 +288,14 @@ const HomeHearingsTab = ({
 
       const startDate = hearingDetails?.fromDate || hearingDetails?.toDate;
       const isFutureHearing = startDate ? new Date(startDate).setHours(0, 0, 0, 0) > new Date().setHours(0, 0, 0, 0) : false;
-      // if ((hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") && isFutureHearing) {
-      //   dropDownitems.push({
-      //     label: "FUTURE_HEARING_CANNOT_BE_STARTED",
-      //     id: "start_hearing_disabled",
-      //     action: () => {},
-      //   });
-      //   return dropDownitems;
-      // }
+      if ((hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") && isFutureHearing) {
+        dropDownitems.push({
+          label: "FUTURE_HEARING_CANNOT_BE_STARTED",
+          id: "start_hearing_disabled",
+          action: () => {},
+        });
+        return dropDownitems;
+      }
 
       if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
         if (!hasHearingPriorityView) {
@@ -1018,7 +1018,8 @@ const HomeHearingsTab = ({
                           setTimeout(() => {
                             setLoader(false);
                             setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-                            if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED") fetchCauseList(filters, setHearingCount);
+                            if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED")
+                              fetchCauseList(filters, setHearingCount);
                           }, 100);
                         });
                     } else {
