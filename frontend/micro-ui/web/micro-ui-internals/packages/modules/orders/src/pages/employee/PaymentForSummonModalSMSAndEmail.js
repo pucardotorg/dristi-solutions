@@ -139,6 +139,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const [payOnlineButtonTitle, setPayOnlineButtonTitle] = useState("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
   const [showToast, setShowToast] = useState(null);
   const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
+  const [paymentResolved, setPaymentResolved] = useState(false);
 
   useEffect(() => {
     // If we don't have query params, redirect to home
@@ -338,6 +339,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const { data: paymentStatusData } = useGetPaymentVerificationStatus(`${taskNumber}_${suffix}`, tenantId, Boolean(taskNumber && suffix));
 
   const isVerificationPending = useMemo(() => Boolean(paymentStatusData?.PaymentStatus?.status === "VERIFICATION_PENDING"), [paymentStatusData]);
+  // Override stale hook data once we have a definitive post-payment outcome (PAID / failed / api error)
+  const showVerificationPending = (isVerificationPending || isPostPaymentVerificationPending) && !paymentResolved;
 
   const status = useMemo(() => {
     if (channelId === "SMS") {
@@ -414,6 +417,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const feeOptions = useMemo(() => {
     const onPayOnline = async (type) => {
       try {
+        isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+        setPaymentResolved(false);
         const { data: freshBillResponse } = await refetchBill();
         if (!billResponse?.Bill?.length) {
           return null;
@@ -446,6 +451,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           setIsPostPaymentVerificationPending(true);
           return;
         }
+        isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+        setPaymentResolved(true);
         const resfileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: billResponse?.Bill?.[0]?.id, tenantId });
         const fileStoreId = resfileStoreId?.Document?.fileStore;
         const postPaymenScreenObj = {
@@ -483,6 +490,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, postPaymenScreenObj);
       } catch (error) {
         console.error(error);
+        isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+        setPaymentResolved(true);
         const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("ERROR_PROCESSING_PAYMENT"), error: true, errorId });
       }
@@ -612,6 +621,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     orderData,
     partyIndex,
     taskType,
+    isPostPaymentVerificationPending,
   ]);
 
   const infos = useMemo(() => {
@@ -723,7 +733,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           taskType={taskType}
           isCaseLocked={isCaseLocked}
           payOnlineButtonTitle={payOnlineButtonTitle}
-          isVerificationPending={isVerificationPending || isPostPaymentVerificationPending}
+          isVerificationPending={showVerificationPending}
           onTryPaymentAgain={handleTryPaymentAgain}
           onWaitAndCheckLater={handleClose}
         />
@@ -741,8 +751,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     paymentLoader,
     isCaseAdmitted,
     isUserAdv,
-    isVerificationPending,
-    isPostPaymentVerificationPending,
+    showVerificationPending,
     handleClose,
     handleTryPaymentAgain,
   ]);
