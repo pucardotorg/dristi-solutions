@@ -15,6 +15,7 @@ const HomeSidebar = ({
   applicationOptions,
   hearingCount = 0,
   pendingTaskCount,
+  signTabCounts = {},
   setShowToast = () => {},
 }) => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -123,6 +124,7 @@ const HomeSidebar = ({
             <SidebarItem
               t={t}
               label="CS_HOME_SIGN_FORMS"
+              count={signTabCounts?.CS_HOME_SIGN_FORMS}
               active={activeTab === "CS_HOME_SIGN_FORMS"}
               onClick={() => onTabChange("CS_HOME_SIGN_FORMS")}
             />
@@ -131,6 +133,7 @@ const HomeSidebar = ({
             <SidebarItem
               t={t}
               label="CS_HOME_ORDERS"
+              count={signTabCounts?.CS_HOME_ORDERS}
               active={activeTab === "CS_HOME_ORDERS"}
               onClick={async (e) => {
                 e.preventDefault();
@@ -172,12 +175,19 @@ const HomeSidebar = ({
             />
           )}
           {hasViewSignProcessAccess && (
-            <SidebarItem t={t} label="CS_HOME_PROCESS" active={activeTab === "CS_HOME_PROCESS"} onClick={() => onTabChange("CS_HOME_PROCESS")} />
+            <SidebarItem
+              t={t}
+              label="CS_HOME_PROCESS"
+              count={signTabCounts?.CS_HOME_PROCESS}
+              active={activeTab === "CS_HOME_PROCESS"}
+              onClick={() => onTabChange("CS_HOME_PROCESS")}
+            />
           )}
           {hasViewSignBailBondAccess && (
             <SidebarItem
               t={t}
               label="BULK_BAIL_BOND_SIGN"
+              count={signTabCounts?.BULK_BAIL_BOND_SIGN}
               active={activeTab === "BULK_BAIL_BOND_SIGN"}
               onClick={() => onTabChange("BULK_BAIL_BOND_SIGN")}
             />
@@ -186,6 +196,7 @@ const HomeSidebar = ({
             <SidebarItem
               t={t}
               label="BULK_WITNESS_DEPOSITION_SIGN"
+              count={signTabCounts?.BULK_WITNESS_DEPOSITION_SIGN}
               active={activeTab === "BULK_WITNESS_DEPOSITION_SIGN"}
               onClick={() => onTabChange("BULK_WITNESS_DEPOSITION_SIGN")}
             />
@@ -194,17 +205,25 @@ const HomeSidebar = ({
             <SidebarItem
               t={t}
               label="BULK_EVIDENCE_SIGN"
+              count={signTabCounts?.BULK_EVIDENCE_SIGN}
               active={activeTab === "BULK_EVIDENCE_SIGN"}
               onClick={() => onTabChange("BULK_EVIDENCE_SIGN")}
             />
           )}
           {hasViewSignADiaryAccess && (
-            <SidebarItem t={t} label="CS_HOME_A_DAIRY" active={activeTab === "CS_HOME_A_DAIRY"} onClick={() => onTabChange("CS_HOME_A_DAIRY")} />
+            <SidebarItem
+              t={t}
+              label="CS_HOME_A_DAIRY"
+              count={signTabCounts?.CS_HOME_A_DAIRY}
+              active={activeTab === "CS_HOME_A_DAIRY"}
+              onClick={() => onTabChange("CS_HOME_A_DAIRY")}
+            />
           )}
           {hasIssueCTCAccess && (
             <SidebarItem
               t={t}
               label="CS_HOME_ISSUE_CTC_COPY"
+              count={signTabCounts?.CS_HOME_ISSUE_CTC_COPY}
               active={activeTab === "CS_HOME_ISSUE_CTC_COPY"}
               onClick={() => onTabChange("CS_HOME_ISSUE_CTC_COPY")}
             />

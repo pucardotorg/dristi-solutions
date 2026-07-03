@@ -1,6 +1,6 @@
 import { CloseSvg, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
 import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { bulkBailBondSignConfig } from "../../configs/BulkBailBondSignConfig";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
@@ -27,7 +27,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-function BulkBailBondSignView({ setShowToast = () => {} }) {
+function BulkBailBondSignView({ setShowToast = () => {}, refetchCounts }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
   const userInfo = Digit.UserService.getUser()?.info;
@@ -45,6 +45,10 @@ function BulkBailBondSignView({ setShowToast = () => {} }) {
   const courtId = localStorage.getItem("courtId");
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const [successCount, setSuccessCount] = useState(0);
+  useEffect(() => {
+    if (!showBulkSignSuccessModal) return;
+    if (refetchCounts) refetchCounts();
+  }, [showBulkSignSuccessModal, refetchCounts]);
   const hasBailBondEsignAccess = useMemo(() => roles?.some((role) => role.code === "BAIL_BOND_ESIGN"), [roles]);
   const [needConfigRefresh, setNeedConfigRefresh] = useState(false);
   const [counter, setCounter] = useState(0);
