@@ -23,7 +23,11 @@ call .venv\Scripts\pyinstaller --noconfirm --clean --onefile --windowed ^
   --hidden-import gen_test_cert ^
   bulk_sign_app.py
 
+REM Seal lives next to the exe so a bare SIGN_STAMP_IMAGE=court-seal.png resolves.
+if exist court-seal.png copy /y court-seal.png dist\ >nul
+
 echo.
 echo Built: dist\PucarBulkSign.exe
-echo Distribute that file together with a .env (see .env.example) placed NEXT TO it.
+echo Distribute dist\PucarBulkSign.exe together with a .env (see .env.example)
+echo and court-seal.png, all placed NEXT TO each other.
 endlocal

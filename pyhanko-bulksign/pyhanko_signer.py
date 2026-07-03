@@ -20,6 +20,7 @@ This module is intentionally court-agnostic: a thin, swappable signing core.
 
 import io
 import os
+import sys
 
 from pyhanko.pdf_utils.images import PdfImage
 from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
@@ -33,18 +34,33 @@ from pyhanko.stamp import TextStampStyle
 #
 # Configurable via env:
 #   SIGN_STAMP_TEXT    text template; %(signer)s = certificate CN, %(ts)s = time
-#   SIGN_STAMP_IMAGE   path to a seal/logo image (PNG/JPG); omitted -> text only
+#   SIGN_STAMP_IMAGE   seal/logo image (PNG/JPG). A relative name or bare filename
+#                      is resolved NEXT TO the .env / executable, so the seal can
+#                      simply live in the same folder. Default: "court-seal.png"
+#                      (used only if that file is actually present). Absolute paths
+#                      are used as-is.
 #   SIGN_STAMP_OPACITY 0..1 opacity of that image (default 1.0)
 #
 # border_width=0 removes pyHanko's default heavy black box (which basic viewers
 # render as a solid black rectangle). Note: the "?" / "Signature Not Verified"
 # in Adobe is the VIEWER's validity icon for an untrusted cert (turns into a green
 # check once CCA trust is configured) -- it is NOT drawn here.
+
+# Folder that holds .env / the seal: the executable's dir when frozen, else this
+# module's dir (both are where the app is deployed and .env lives).
+if getattr(sys, "frozen", False):
+    _BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))
+else:
+    _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 _STAMP_TEXT = os.environ.get(
     "SIGN_STAMP_TEXT", "Digitally signed by %(signer)s\nDate: %(ts)s"
 )
-_STAMP_IMAGE = os.environ.get("SIGN_STAMP_IMAGE")
+_STAMP_IMAGE = os.environ.get("SIGN_STAMP_IMAGE", "court-seal.png")
 _STAMP_OPACITY = float(os.environ.get("SIGN_STAMP_OPACITY", "1.0"))
+
+if _STAMP_IMAGE and not os.path.isabs(_STAMP_IMAGE):
+    _STAMP_IMAGE = os.path.join(_BASE_DIR, _STAMP_IMAGE)
 
 _BACKGROUND = None
 if _STAMP_IMAGE and os.path.exists(_STAMP_IMAGE):

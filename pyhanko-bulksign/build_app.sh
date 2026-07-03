@@ -24,6 +24,10 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
   --hidden-import gen_test_cert \
   bulk_sign_app.py
 
+# Seal lives next to the exe so a bare SIGN_STAMP_IMAGE=court-seal.png resolves.
+[ -f court-seal.png ] && cp court-seal.png dist/ || true
+
 echo
 echo "Built: dist/PucarBulkSign"
-echo "Distribute that file together with a .env (see .env.example) placed NEXT TO it."
+echo "Distribute dist/PucarBulkSign together with a .env (see .env.example) and"
+echo "court-seal.png, all placed NEXT TO each other."
