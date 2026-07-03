@@ -164,7 +164,8 @@ function NoticeSummonPaymentModal({
     () => Boolean(paymentStatusData && paymentStatusData.PaymentStatus && paymentStatusData.PaymentStatus.status === "VERIFICATION_PENDING"),
     [paymentStatusData]
   );
-  const showVerificationPending = (isVerificationPending || isPostPaymentVerificationPending) && !receiptFilstoreId;
+  // Override stale hook data once we have a definitive post-payment outcome (PAID -> receipt, or failed -> retry)
+  const showVerificationPending = (isVerificationPending || isPostPaymentVerificationPending) && !receiptFilstoreId && !retryPayment;
 
   console.log("[NoticeSummonPaymentModal] render", {
     isVerificationPending,
@@ -285,6 +286,8 @@ function NoticeSummonPaymentModal({
     } catch (error) {
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       console.error("[NoticeSummonPaymentModal][onTaskPayOnline] EXCEPTION", { error, errorId, isPostPaymentVerificationPending, retryPayment, receiptFilstoreId });
+      isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+      setRetryPayment(true);
       setShowToast({ label: t("CS_PAYMENT_ERROR"), error: true, errorId });
     } finally {
       console.log("[NoticeSummonPaymentModal][onTaskPayOnline] finally — setIsLoading(false)");
