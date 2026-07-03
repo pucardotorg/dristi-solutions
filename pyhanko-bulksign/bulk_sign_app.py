@@ -204,8 +204,10 @@ class BulkSignApp:
         threading.Thread(target=self._detect_worker, daemon=True).start()
 
     def _detect_worker(self):
-        module_path = os.environ.get("PKCS11_MODULE_PATH", "")
         try:
+            from pyhanko_signer import resolve_app_path
+
+            module_path = resolve_app_path(os.environ.get("PKCS11_MODULE_PATH", ""))
             if not module_path:
                 raise RuntimeError("PKCS11_MODULE_PATH is not set in .env")
             from token_utils import list_token_identities

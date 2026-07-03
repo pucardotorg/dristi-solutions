@@ -31,15 +31,19 @@ status light, and an activity log.
 **One-time setup (admin/IT), two options:**
 
 - *Option A — packaged executable (best for staff machines, no Python at all):*
-  build once per OS, then just copy two files to each machine.
+  build once per OS → a **self-contained folder**, then copy that whole folder to
+  each machine.
   ```bash
-  ./build_app.sh        # Linux  -> dist/PucarBulkSign
-  build_app.bat         # Windows-> dist\PucarBulkSign.exe
+  # Linux  -> dist/linux/   (bundles the token .so if PKCS11_MODULE_SRC is set)
+  PKCS11_MODULE_SRC=/path/to/vendor.so ./build_app.sh
+  # Windows -> dist\windows\
+  set PKCS11_MODULE_SRC=C:\path\to\vendor.dll && build_app.bat
   ```
-  Ship the produced binary **plus a `.env`** (from `.env.example`, with this
-  machine's `PKCS11_MODULE_PATH` + cert/key labels) sitting **next to it**.
-  Double-click to launch. (PyInstaller is not a cross-compiler: build the Windows
-  `.exe` on Windows, the Linux binary on Linux.)
+  Each folder holds **everything**: the binary, `.env`, `court-seal.png`, and the
+  vendor PKCS#11 module. `.env` refers to the module and seal by **bare filename**
+  (resolved next to the exe), so nothing has machine-specific absolute paths. Copy
+  the folder, double-click the binary. (PyInstaller is not a cross-compiler: build
+  the Windows folder on Windows, the Linux folder on Linux.)
 
 - *Option B — run from source (needs Python on the machine):*
   ```bash
@@ -88,19 +92,24 @@ must be built **on Windows**.
 **Build + configure:**
 1. Get the code on the machine (clone the repo + `git checkout pyhanko-bulk-sign-poc`,
    or copy the `pyhanko-bulksign\` folder).
-2. In `pyhanko-bulksign\`, run **`build_app.bat`** → `dist\PucarBulkSign.exe`
-   (also copies `court-seal.png` into `dist\`).
-3. Edit **`dist\.env`**:
+2. In `pyhanko-bulksign\`, point `PKCS11_MODULE_SRC` at the vendor `.dll` and build:
+   ```
+   set PKCS11_MODULE_SRC=C:\Windows\System32\<vendor-pkcs11>.dll
+   build_app.bat
+   ```
+   → a self-contained **`dist\windows\`** with `PucarBulkSign.exe`, `.env`,
+   `court-seal.png`, and the vendor `.dll` copied in.
+3. Edit **`dist\windows\.env`** — everything is a **bare filename** (no absolute paths):
    ```
    SIGNER_MODE=pkcs11
-   PKCS11_MODULE_PATH=C:\Windows\System32\<vendor-pkcs11>.dll
-   PKCS11_CERT_LABEL=            # blank -> auto-detect
+   PKCS11_MODULE_PATH=<vendor-pkcs11>.dll   # the file now sitting in this folder
+   PKCS11_CERT_LABEL=                        # blank -> auto-detect
    PKCS11_KEY_LABEL=
-   SIGN_STAMP_IMAGE=court-seal.png   # bare filename -> resolved next to the exe
+   SIGN_STAMP_IMAGE=court-seal.png
    SIGN_STAMP_OPACITY=0.3
    ```
-4. Distribute `dist\PucarBulkSign.exe` + `.env` + `court-seal.png` together in one
-   folder. Double-click the exe → PIN → **START** → bulk-sign in the browser.
+4. Copy the whole **`dist\windows\`** folder to each machine. Double-click the exe →
+   the DSC-token panel shows the label → PIN → **START** → bulk-sign in the browser.
 
 **Windows gotchas:** module path is the **`.dll`** (not the Linux `.so`); SmartScreen
 may warn on the unsigned exe ("More info → Run anyway"); allow the firewall prompt for

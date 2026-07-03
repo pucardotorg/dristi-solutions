@@ -53,14 +53,22 @@ if getattr(sys, "frozen", False):
 else:
     _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+
+def resolve_app_path(path):
+    """Resolve a bare filename / relative path against the app folder (where .env
+    and the exe live). Absolute paths and empty values pass through unchanged.
+    Lets .env reference the seal image AND the PKCS#11 module by bare filename, so
+    everything can live self-contained in one folder."""
+    if path and not os.path.isabs(path):
+        return os.path.join(_BASE_DIR, path)
+    return path
+
+
 _STAMP_TEXT = os.environ.get(
     "SIGN_STAMP_TEXT", "Digitally signed by %(signer)s\nDate: %(ts)s"
 )
-_STAMP_IMAGE = os.environ.get("SIGN_STAMP_IMAGE", "court-seal.png")
+_STAMP_IMAGE = resolve_app_path(os.environ.get("SIGN_STAMP_IMAGE", "court-seal.png"))
 _STAMP_OPACITY = float(os.environ.get("SIGN_STAMP_OPACITY", "1.0"))
-
-if _STAMP_IMAGE and not os.path.isabs(_STAMP_IMAGE):
-    _STAMP_IMAGE = os.path.join(_BASE_DIR, _STAMP_IMAGE)
 
 _BACKGROUND = None
 if _STAMP_IMAGE and os.path.exists(_STAMP_IMAGE):
@@ -97,7 +105,9 @@ def _build_signer():
         from pyhanko.config.pkcs11 import PKCS11SignatureConfig
         from pyhanko.sign.pkcs11 import PKCS11SigningContext
 
-        module_path = os.environ["PKCS11_MODULE_PATH"]   # e.g. .../libcastle_v2.so.1.0.0 or vendor .dll
+        # Bare filename -> resolved next to .env/exe, so the vendor .so/.dll can
+        # live in the same self-contained folder.
+        module_path = resolve_app_path(os.environ["PKCS11_MODULE_PATH"])
         cert_label = os.environ.get("PKCS11_CERT_LABEL") or None
         key_label = os.environ.get("PKCS11_KEY_LABEL") or None
 

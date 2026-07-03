@@ -7,8 +7,8 @@ Comment=Sign court documents in bulk with your DSC token
 #   chmod +x ~/Desktop/PucarBulkSign.desktop      (then right-click -> Allow Launching)
 #
 # Packaged executable (built with build_app.sh) -- recommended for staff machines:
-Exec=/full/path/to/pyhanko-bulksign/dist/PucarBulkSign
-Path=/full/path/to/pyhanko-bulksign/dist
+Exec=/full/path/to/pyhanko-bulksign/dist/linux/PucarBulkSign
+Path=/full/path/to/pyhanko-bulksign/dist/linux
 #
 # Or, to run from source instead, point Exec at the launcher (and remove Path):
 #   Exec=/full/path/to/pyhanko-bulksign/run_app.sh

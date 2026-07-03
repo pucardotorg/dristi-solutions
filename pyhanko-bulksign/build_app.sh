@@ -1,18 +1,27 @@
 #!/usr/bin/env bash
-# Build a STANDALONE executable (no Python needed on the staff machine).
-# Run this once on a LINUX machine -> produces dist/PucarBulkSign
+# Build a SELF-CONTAINED Linux package -> dist/linux/
+#   dist/linux/{ PucarBulkSign, .env, court-seal.png, <vendor pkcs11 .so> }
+# Everything the app needs sits in that one folder (paths in .env are bare
+# filenames resolved next to the exe).
 #
-# Note: PyInstaller is not a cross-compiler. Build the Linux binary on Linux and
-# the Windows .exe on Windows (build_app.bat).
+# To include the token's PKCS#11 module in the folder, point PKCS11_MODULE_SRC at it:
+#   PKCS11_MODULE_SRC=/path/to/libcastle_v2.so.1.0.0 ./build_app.sh
+#
+# Note: PyInstaller is not a cross-compiler -- build the Windows package on Windows
+# (build_app.bat -> dist\windows\).
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
+
+DIST="dist/linux"
 
 [ -d .venv ] || python3 -m venv .venv
 ./.venv/bin/pip install -q --upgrade pip
 ./.venv/bin/pip install -q -r requirements.txt pyinstaller
 
+rm -rf "$DIST"
 ./.venv/bin/pyinstaller --noconfirm --clean --onefile --windowed \
   --name PucarBulkSign \
+  --distpath "$DIST" \
   --collect-submodules uvicorn \
   --collect-all pyhanko \
   --collect-all pyhanko_certvalidator \
@@ -25,10 +34,17 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
   --hidden-import token_utils \
   bulk_sign_app.py
 
-# Seal lives next to the exe so a bare SIGN_STAMP_IMAGE=court-seal.png resolves.
-[ -f court-seal.png ] && cp court-seal.png dist/ || true
+# --- assemble the self-contained folder -------------------------------------
+[ -f .env ] && cp .env "$DIST/.env"
+[ -f court-seal.png ] && cp court-seal.png "$DIST/"
+if [ -n "${PKCS11_MODULE_SRC:-}" ] && [ -f "${PKCS11_MODULE_SRC}" ]; then
+  cp "${PKCS11_MODULE_SRC}" "$DIST/"
+  echo "Included PKCS#11 module: $(basename "$PKCS11_MODULE_SRC")"
+else
+  echo "NOTE: set PKCS11_MODULE_SRC=/path/to/vendor.so to bundle the token module,"
+  echo "      then set PKCS11_MODULE_PATH=<that filename> in $DIST/.env."
+fi
 
 echo
-echo "Built: dist/PucarBulkSign"
-echo "Distribute dist/PucarBulkSign together with a .env (see .env.example) and"
-echo "court-seal.png, all placed NEXT TO each other."
+echo "Built self-contained package: $DIST/"
+ls -1 "$DIST"
