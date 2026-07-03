@@ -79,6 +79,17 @@ const MainHomeScreen = () => {
   const [scrutinyDueCount, setScrutinyDueCount] = useState(0);
   const [reschedulingRequestDueCount, setReschedulingRequestDueCount] = useState(0);
   const [ctcApplicationCount, setCtcApplicationCount] = useState(0);
+  const [isSignTabCountsLoading, setIsSignTabCountsLoading] = useState(false);
+  const [signTabCounts, setSignTabCounts] = useState({
+    CS_HOME_SIGN_FORMS: 0,
+    CS_HOME_ORDERS: 0,
+    CS_HOME_PROCESS: 0,
+    BULK_BAIL_BOND_SIGN: 0,
+    BULK_WITNESS_DEPOSITION_SIGN: 0,
+    BULK_EVIDENCE_SIGN: 0,
+    CS_HOME_A_DAIRY: 0,
+    CS_HOME_ISSUE_CTC_COPY: 0,
+  });
 
   const [activeTabTitle, setActiveTabTitle] = useState(homeActiveTab);
   const [pendingTaskCount, setPendingTaskCount] = useState({
@@ -530,6 +541,154 @@ const MainHomeScreen = () => {
       console.error(err);
     }
   };
+
+  const fetchSignTabCounts = useCallback(
+    async (extraCriteria = {}) => {
+      const currentCourtId = localStorage.getItem("courtId");
+      if (!currentCourtId) return;
+      try {
+        setIsSignTabCountsLoading(true);
+        const inboxList = [
+          {
+            processSearchCriteria: {
+              businessService: ["digitalized-document-examination", "digitalized-document-mediation", "digitalized-document-plea"],
+              moduleName: "Digitalized Document Service",
+              tenantId,
+            },
+            moduleSearchCriteria: {
+              tenantId,
+              status: "PENDING_REVIEW",
+              courtId: currentCourtId,
+              ...extraCriteria?.CS_HOME_SIGN_FORMS,
+            },
+            tenantId,
+          },
+          {
+            processSearchCriteria: {
+              businessService: ["notification"],
+              moduleName: "Transformer service",
+              tenantId,
+            },
+            moduleSearchCriteria: {
+              entityType: "Order",
+              tenantId,
+              status: "PENDING_BULK_E-SIGN",
+              courtId: currentCourtId,
+              ...extraCriteria?.CS_HOME_ORDERS,
+            },
+            tenantId,
+          },
+          {
+            processSearchCriteria: {
+              businessService: ["bail-bond-default"],
+              moduleName: "Bail Bond Service",
+              tenantId,
+            },
+            moduleSearchCriteria: {
+              tenantId,
+              status: "PENDING_REVIEW",
+              courtId: currentCourtId,
+              ...extraCriteria?.BULK_BAIL_BOND_SIGN,
+            },
+            tenantId,
+          },
+          {
+            processSearchCriteria: {
+              businessService: ["evidence-default"],
+              moduleName: "Evidence Service",
+              tenantId,
+            },
+            moduleSearchCriteria: {
+              tenantId,
+              status: "PENDING_REVIEW",
+              courtId: currentCourtId,
+              ...extraCriteria?.BULK_WITNESS_DEPOSITION_SIGN,
+            },
+            tenantId,
+          },
+          {
+            processSearchCriteria: {
+              businessService: ["evidence-default"],
+              moduleName: "Evidence Service",
+              tenantId,
+            },
+            moduleSearchCriteria: {
+              tenantId,
+              evidenceMarkedStatus: "PENDING_BULK_E-SIGN",
+              courtId: currentCourtId,
+              ...extraCriteria?.BULK_EVIDENCE_SIGN,
+            },
+            tenantId,
+          },
+          {
+            processSearchCriteria: {
+              businessService: ["ctc-default"],
+              moduleName: "CTC Issue Doc",
+              tenantId,
+            },
+            moduleSearchCriteria: {
+              tenantId,
+              courtId: currentCourtId,
+              ...extraCriteria?.CS_HOME_ISSUE_CTC_COPY,
+            },
+            tenantId,
+          },
+        ];
+
+        const signProcessCriteria = {
+          applicationStatus: "SIGN_PENDING",
+          tenantId,
+          completeStatus: [
+            "ISSUE_SUMMON",
+            "ISSUE_NOTICE",
+            "ISSUE_WARRANT",
+            "ISSUE_PROCLAMATION",
+            "ISSUE_ATTACHMENT",
+            "ISSUE_PROCESS",
+            "WARRANT_REISSUED",
+          ],
+          isPendingCollection: false,
+          ...extraCriteria?.CS_HOME_PROCESS,
+        };
+
+        const abDiaryCriteria = {
+          courtId: currentCourtId,
+          tenantId,
+          date: new Date().setHours(0, 0, 0, 0),
+          ...extraCriteria?.CS_HOME_A_DAIRY,
+        };
+
+        const res = await HomeService.bulkCountSearch(
+          { inboxList, signProcessCriteria, abDiaryCriteria, RequestInfo: { apiId: "Rainmaker", plainAccessRequest: {} } },
+          { tenantId }
+        );
+
+        const tabKeys = [
+          "CS_HOME_SIGN_FORMS",
+          "CS_HOME_ORDERS",
+          "BULK_BAIL_BOND_SIGN",
+          "BULK_WITNESS_DEPOSITION_SIGN",
+          "BULK_EVIDENCE_SIGN",
+          "CS_HOME_ISSUE_CTC_COPY",
+        ];
+        const counts = {};
+        (res?.items || []).forEach((item, index) => {
+          if (tabKeys[index] !== undefined) {
+            counts[tabKeys[index]] = item?.count || 0;
+          }
+        });
+        counts["CS_HOME_PROCESS"] = res?.signProcessCount || 0;
+        counts["CS_HOME_A_DAIRY"] = res?.abDiaryCount || 0;
+
+        setSignTabCounts((prev) => ({ ...prev, ...counts }));
+      } catch (err) {
+        console.error("Error fetching sign tab counts:", err);
+      } finally {
+        setIsSignTabCountsLoading(false);
+      }
+    },
+    [tenantId]
+  );
 
   const fetchPendingTaskCounts = async () => {
     const { toDate } = getTodayRange();
@@ -1160,6 +1319,7 @@ const MainHomeScreen = () => {
       fetchPendingTaskCounts();
       fetchHearingCount(filters, activeTab);
       fetchReschedulingRequestCount();
+      fetchSignTabCounts();
     }
   }, [userType]);
 
@@ -1446,12 +1606,27 @@ const MainHomeScreen = () => {
     }
   }, [tenantId]);
 
+  const SIGN_TABS = new Set([
+    "CS_HOME_SIGN_FORMS",
+    "CS_HOME_ORDERS",
+    "CS_HOME_PROCESS",
+    "BULK_BAIL_BOND_SIGN",
+    "BULK_WITNESS_DEPOSITION_SIGN",
+    "BULK_EVIDENCE_SIGN",
+    "CS_HOME_A_DAIRY",
+    "CS_HOME_ISSUE_CTC_COPY",
+  ]);
+
   const handleTabChange = (title, label) => {
     if (title !== activeTabTitle) {
       if (activeTabTitle === "TOTAL_HEARINGS_TAB") {
         fetchHearingCount();
       } else {
         fetchPendingTaskCounts();
+      }
+      // Re-fetch sign tab counts whenever leaving any sign tab so counts stay fresh
+      if (SIGN_TABS.has(activeTab)) {
+        fetchSignTabCounts();
       }
     }
     fetchCTCApplicationCount();
@@ -1515,6 +1690,7 @@ const MainHomeScreen = () => {
     <React.Fragment>
       {" "}
       {(loader ||
+        isSignTabCountsLoading ||
         rescheduleEvidenceCaseLoading ||
         rescheduleEvidenceApplicationLoading ||
         ((isTaskManagementLoading || isCaseLoading || orderLoader) && courierServiceSteps?.length === 0) ||
@@ -1547,7 +1723,13 @@ const MainHomeScreen = () => {
           isOptionsLoading={false}
           applicationOptions={applicationOptions}
           hearingCount={hearingCount}
-          pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount, CTC_APPLICATIONS: ctcApplicationCount, RESCHEDULE_REQUEST: reschedulingRequestDueCount }}
+          pendingTaskCount={{
+            ...pendingTaskCount,
+            SCRUTINISE_CASES: scrutinyDueCount,
+            CTC_APPLICATIONS: ctcApplicationCount,
+            RESCHEDULE_REQUEST: reschedulingRequestDueCount,
+          }}
+          signTabCounts={signTabCounts}
           setShowToast={setShowToast}
         />
         {activeTab === "TEMPLATE_OR_CONFIGURATION" ? (
@@ -1578,7 +1760,7 @@ const MainHomeScreen = () => {
           </div>
         ) : activeTab === "BULK_BAIL_BOND_SIGN" ? (
           <div className="home-bulk-sign">
-            <BulkBailBondSignView setShowToast={setShowToast} />
+            <BulkBailBondSignView setShowToast={setShowToast} refetchCounts={fetchSignTabCounts} />
           </div>
         ) : activeTab === "REGISTER_USERS" ? (
           <div className="home-bulk-sign">
@@ -1590,27 +1772,27 @@ const MainHomeScreen = () => {
           </div>
         ) : activeTab === "CS_HOME_PROCESS" ? (
           <div className="home-bulk-sign">
-            <ReviewSummonsNoticeAndWarrant />
+            <ReviewSummonsNoticeAndWarrant refetchCounts={fetchSignTabCounts} />
           </div>
         ) : activeTab === "CS_HOME_A_DAIRY" ? (
           <div className="home-bulk-sign">
-            <BulkSignADiaryView />
+            <BulkSignADiaryView refetchCounts={fetchSignTabCounts} />
           </div>
         ) : activeTab === "BULK_EVIDENCE_SIGN" ? (
           <div className="home-bulk-sign">
-            <BulkMarkAsEvidenceView setShowToast={setShowToast} />
+            <BulkMarkAsEvidenceView setShowToast={setShowToast} refetchCounts={fetchSignTabCounts} />
           </div>
         ) : activeTab === "BULK_WITNESS_DEPOSITION_SIGN" ? (
           <div className="home-bulk-sign">
-            <BulkWitnessDepositionView setShowToast={setShowToast} />
+            <BulkWitnessDepositionView setShowToast={setShowToast} refetchCounts={fetchSignTabCounts} />
           </div>
         ) : activeTab === "CS_HOME_ORDERS" ? (
           <div className="home-bulk-sign">
-            <BulkESignView />
+            <BulkESignView refetchCounts={fetchSignTabCounts} />
           </div>
         ) : activeTab === "CS_HOME_SIGN_FORMS" ? (
           <div className="home-bulk-sign">
-            <BulkSignDigitalizationView />
+            <BulkSignDigitalizationView refetchCounts={fetchSignTabCounts} />
           </div>
         ) : activeTab === "CTC_APPLICATIONS" ? (
           <div className="home-bulk-sign">
@@ -1618,7 +1800,7 @@ const MainHomeScreen = () => {
           </div>
         ) : activeTab === "CS_HOME_ISSUE_CTC_COPY" ? (
           <div className="home-bulk-sign">
-            <BulkIssueCTC />
+            <BulkIssueCTC refetchCounts={fetchSignTabCounts} />
           </div>
         ) : (
           <div className={`bulk-esign-order-view`}>

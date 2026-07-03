@@ -46,7 +46,7 @@ const Heading = ({ label }) => {
   );
 };
 
-function BulkSignADiaryView() {
+function BulkSignADiaryView({ refetchCounts }) {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const queryStrings = Digit.Hooks.useQueryParams();
   const { t } = useTranslation();
@@ -393,6 +393,7 @@ function BulkSignADiaryView() {
       sessionStorage.removeItem("adiarypdf");
       sessionStorage.removeItem("adiaryStepper");
       sessionStorage.removeItem("diaryDateFilter");
+      if (refetchCounts) refetchCounts();
     } catch (error) {
       console.error("Error :", error);
       setIsSigned(false);

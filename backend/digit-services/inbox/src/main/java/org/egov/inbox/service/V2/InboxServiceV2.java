@@ -26,12 +26,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.egov.inbox.util.InboxConstants.*;
 
@@ -65,6 +71,16 @@ public class InboxServiceV2 {
 
     @Autowired
     private CacheService cacheService;
+
+    @Autowired
+    private org.egov.inbox.util.AbDiaryUtil abDiaryUtil;
+
+    @Autowired
+    private org.egov.inbox.util.SignProcessUtil signProcessUtil;
+
+    @Autowired
+    @Qualifier("inboxCountExecutor")
+    private Executor inboxCountExecutor;
 
 
     /**
@@ -699,6 +715,64 @@ public class InboxServiceV2 {
             throw new CustomException("EG_INBOX_GET_FIELDS_ERR", "Error while processing JSON.");
         }
         return listOfFields;
+    }
+
+    public InboxBulkCountResponse getBulkIndexCount(InboxBulkCountRequest bulkCountRequest) {
+        org.egov.common.contract.request.RequestInfo requestInfo = bulkCountRequest.getRequestInfo();
+
+        List<InboxSearchCriteria> inboxList = Optional.ofNullable(bulkCountRequest.getInboxList())
+                .orElse(Collections.emptyList());
+
+        // ES index counts — each criteria runs in parallel
+        List<CompletableFuture<InboxCountItem>> itemFutures = inboxList.stream()
+                .map(criteria -> CompletableFuture.supplyAsync(() -> {
+                    InboxRequest inboxRequest = InboxRequest.builder()
+                            .RequestInfo(requestInfo)
+                            .inbox(criteria)
+                            .build();
+                    InboxQueryConfiguration inboxQueryConfiguration = mdmsUtil.getConfigFromMDMS(
+                            criteria.getTenantId(),
+                            criteria.getProcessSearchCriteria().getModuleName());
+                    Integer count = getTotalApplicationCount(inboxRequest, inboxQueryConfiguration.getIndex());
+                    return InboxCountItem.builder().inbox(criteria).count(count).build();
+                }, inboxCountExecutor))
+                .collect(Collectors.toList());
+
+        // ab-diary count
+        CompletableFuture<Integer> abDiaryFuture = bulkCountRequest.getAbDiaryCriteria() != null
+                ? CompletableFuture.supplyAsync(() -> {
+                    log.info("Fetching ab-diary count for courtId: {}", bulkCountRequest.getAbDiaryCriteria().getCourtId());
+                    return abDiaryUtil.getDiaryEntryCount(bulkCountRequest.getAbDiaryCriteria(), requestInfo);
+                }, inboxCountExecutor)
+                : CompletableFuture.completedFuture(null);
+
+        // sign process count
+        CompletableFuture<Integer> signProcessFuture = bulkCountRequest.getSignProcessCriteria() != null
+                ? CompletableFuture.supplyAsync(() -> {
+                    log.info("Fetching sign process count for tenantId: {}", bulkCountRequest.getSignProcessCriteria().getTenantId());
+                    return signProcessUtil.getSignProcessCount(bulkCountRequest.getSignProcessCriteria(), requestInfo);
+                }, inboxCountExecutor)
+                : CompletableFuture.completedFuture(null);
+
+        // wait for all futures
+        try {
+            List<CompletableFuture<?>> allFutures = new ArrayList<>(itemFutures);
+            allFutures.add(abDiaryFuture);
+            allFutures.add(signProcessFuture);
+            CompletableFuture.allOf(allFutures.toArray(new CompletableFuture[0])).join();
+        } catch (CompletionException e) {
+            throw new CustomException("INBOX_BULK_COUNT_ERR", "Error occurred while executing bulk count query");
+        }
+
+        List<InboxCountItem> items = itemFutures.stream()
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
+
+        return InboxBulkCountResponse.builder()
+                .items(items)
+                .abDiaryCount(abDiaryFuture.join())
+                .signProcessCount(signProcessFuture.join())
+                .build();
     }
 
     public InboxResponse getIndexResponse(InboxRequest inboxRequest) {

@@ -160,7 +160,7 @@ const createUpdatedConfig = (baseConfig, formValues) => ({
   },
 });
 
-const ReviewSummonsNoticeAndWarrant = () => {
+const ReviewSummonsNoticeAndWarrant = ({ refetchCounts }) => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
@@ -212,6 +212,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [signatureId, setSignatureId] = useState("");
   const [deliveryChannel, setDeliveryChannel] = useState("");
   const [reload, setReload] = useState(false);
+  const isFirstReloadRef = useRef(true);
+  useEffect(() => {
+    if (isFirstReloadRef.current) {
+      isFirstReloadRef.current = false;
+      return;
+    }
+    if (refetchCounts) refetchCounts();
+  }, [reload]);
   // const [taskDetails, setTaskDetails] = useState({});
   const [tasksData, setTasksData] = useState(null);
   const [remarks, setRemarks] = useState("");
