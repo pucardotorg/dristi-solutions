@@ -164,6 +164,23 @@ function NoticeSummonPaymentModal({
     () => Boolean(paymentStatusData && paymentStatusData.PaymentStatus && paymentStatusData.PaymentStatus.status === "VERIFICATION_PENDING"),
     [paymentStatusData]
   );
+  const showVerificationPending = (isVerificationPending || isPostPaymentVerificationPending) && !receiptFilstoreId;
+
+  console.log("[NoticeSummonPaymentModal] render", {
+    isVerificationPending,
+    isPostPaymentVerificationPending,
+    retryPayment,
+    receiptFilstoreId,
+    showVerificationPending,
+    isLoading,
+    isCaseLocked,
+    isUserAdv,
+    totalAmount,
+    paymentStatusRaw: paymentStatusData?.PaymentStatus?.status,
+    taskManagementNumber: taskManagement?.taskManagementNumber,
+    suffix,
+    consumerCode: taskManagement?.taskManagementNumber ? `${taskManagement.taskManagementNumber}_${suffix}` : "",
+  });
 
   useEffect(() => {
     if (taskManagement?.taskManagementNumber) {
@@ -189,9 +206,27 @@ function NoticeSummonPaymentModal({
 
   const onTaskPayOnline = async () => {
     try {
+      console.log("[NoticeSummonPaymentModal][onTaskPayOnline] START — closure-captured state", {
+        isPostPaymentVerificationPending,
+        retryPayment,
+        receiptFilstoreId,
+        isCaseLocked,
+        isVerificationPending,
+        showVerificationPending,
+        taskManagementNumber: taskManagement?.taskManagementNumber,
+        suffix,
+      });
       setIsLoading(true);
+      setIsPostPaymentVerificationPending(false);
+      setRetryPayment(false);
       const bill = await fetchBill(taskManagement?.taskManagementNumber + `_${suffix}`, tenantId, "task-management-payment");
+      console.log("[NoticeSummonPaymentModal][onTaskPayOnline] fetchBill result", {
+        billCount: bill?.Bill?.length,
+        billId: bill?.Bill?.[0]?.id,
+        consumerCode: bill?.Bill?.[0]?.consumerCode,
+      });
       if (!bill?.Bill?.length) {
+        console.log("[NoticeSummonPaymentModal][onTaskPayOnline] no pending bill — aborting");
         setShowToast({ label: t("CS_NO_PENDING_PAYMENT"), error: false });
         setIsCaseLocked(true);
         return;
@@ -203,33 +238,56 @@ function NoticeSummonPaymentModal({
           tenantId: tenantId,
         }
       );
+      console.log("[NoticeSummonPaymentModal][onTaskPayOnline] caseLockStatus", { isLocked: caseLockStatus?.Lock?.isLocked });
       if (caseLockStatus?.Lock?.isLocked) {
+        console.log("[NoticeSummonPaymentModal][onTaskPayOnline] case is locked — aborting");
         setIsCaseLocked(true);
         setShowToast({ label: t("CS_CASE_LOCKED_BY_ANOTHER_USER"), error: false });
         return;
       }
       await DRISTIService.setCaseLock({ Lock: { uniqueId: taskManagement?.taskManagementNumber, tenantId: tenantId, lockType: "PAYMENT" } }, {});
+      console.log("[NoticeSummonPaymentModal][onTaskPayOnline] case locked, opening payment portal");
       const paymentStatus = await openPaymentPortal(bill);
+      console.log("[NoticeSummonPaymentModal][onTaskPayOnline] openPaymentPortal resolved", { paymentStatus });
       await DRISTIService.setCaseUnlock({}, { uniqueId: taskManagement?.taskManagementNumber, tenantId: tenantId });
+      console.log("[NoticeSummonPaymentModal][onTaskPayOnline] case unlocked");
       const success = paymentStatus === "PAID";
       if (success) {
+        console.log("[NoticeSummonPaymentModal][onTaskPayOnline] PAID — fetching receipt fileStoreId", { billId: bill?.Bill?.[0]?.id });
         const response = await DRISTIService.fetchBillFileStoreId({}, { billId: bill?.Bill?.[0]?.id, tenantId });
         const fileStoreId = response?.Document?.fileStore;
+        console.log("[NoticeSummonPaymentModal][onTaskPayOnline] fetchBillFileStoreId result", { fileStoreId });
         if (fileStoreId) {
           setReceiptFilstoreId(fileStoreId);
           setIsPaymentCompleted(true);
           setHideCancelButton(true);
+          isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+          retryPayment && setRetryPayment(false);
+        } else {
+          console.warn("[NoticeSummonPaymentModal][onTaskPayOnline] PAID but no fileStoreId returned — receipt not set");
         }
       } else if (paymentStatus === "VERIFICATION_PENDING") {
+        console.log("[NoticeSummonPaymentModal][onTaskPayOnline] VERIFICATION_PENDING — staying on screen", {
+          prevIsPostPaymentVerificationPending: isPostPaymentVerificationPending,
+          prevRetryPayment: retryPayment,
+        });
         setIsPostPaymentVerificationPending(true);
+        retryPayment && setRetryPayment(false);
       } else {
+        console.log("[NoticeSummonPaymentModal][onTaskPayOnline] FAILED/other — setting retryPayment=true", {
+          paymentStatus,
+          prevIsPostPaymentVerificationPending: isPostPaymentVerificationPending,
+          prevRetryPayment: retryPayment,
+        });
+        isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
         setRetryPayment(true);
       }
     } catch (error) {
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      console.error("[NoticeSummonPaymentModal][onTaskPayOnline] EXCEPTION", { error, errorId, isPostPaymentVerificationPending, retryPayment, receiptFilstoreId });
       setShowToast({ label: t("CS_PAYMENT_ERROR"), error: true, errorId });
-      console.error(error);
     } finally {
+      console.log("[NoticeSummonPaymentModal][onTaskPayOnline] finally — setIsLoading(false)");
       setIsLoading(false);
     }
   };
@@ -272,7 +330,7 @@ function NoticeSummonPaymentModal({
         inline
         className={"adhaar-verification-info-card"}
       />
-      {(isVerificationPending || isPostPaymentVerificationPending) && (
+      {showVerificationPending && (
         <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
       )}
       <div className="total-payment">
@@ -307,7 +365,7 @@ function NoticeSummonPaymentModal({
           ))}
       </div>
 
-      {isVerificationPending || isPostPaymentVerificationPending ? (
+      {showVerificationPending ? (
         <div style={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: "12px" }}>
           <Button
             label={t("CS_TRY_PAYMENT_AGAIN")}
