@@ -39,6 +39,7 @@ function PaymentModal({
   paymentLoader,
   totalAmount,
   isPostPaymentVerificationPending,
+  paymentResolved,
 }) {
   const { data: paymentStatusData, isLoading: isPaymentStatusLoading } = useGetPaymentVerificationStatus(
     consumerCode,
@@ -49,18 +50,18 @@ function PaymentModal({
   const isVerificationPending = useMemo(() => paymentStatusData && paymentStatusData.PaymentStatus?.status === "VERIFICATION_PENDING", [
     paymentStatusData,
   ]);
+  // Override stale hook data once we have a definitive post-payment outcome (PAID or failed/other)
+  const showVerificationPending = (isVerificationPending || isPostPaymentVerificationPending) && !paymentResolved;
 
   return (
     <Modal
       headerBarMain={<Heading label={t("SUBMISSION_APPLICATION_PAYMENT")} />}
       headerBarEnd={<CloseBtn onClick={handleClosePaymentModal} />}
-      actionCancelLabel={isVerificationPending || isPostPaymentVerificationPending ? t("CS_TRY_PAYMENT_AGAIN") : t("SKIP")}
-      actionCancelOnSubmit={
-        isVerificationPending || isPostPaymentVerificationPending ? () => handleMakePayment(totalAmount) : () => handleSkipPayment()
-      }
-      actionSaveLabel={isVerificationPending || isPostPaymentVerificationPending ? t("CS_WAIT_AND_CHECK_LATER") : t("CS_MAKE_PAYMENT")}
+      actionCancelLabel={showVerificationPending ? t("CS_TRY_PAYMENT_AGAIN") : t("SKIP")}
+      actionCancelOnSubmit={showVerificationPending ? () => handleMakePayment(totalAmount) : () => handleSkipPayment()}
+      actionSaveLabel={showVerificationPending ? t("CS_WAIT_AND_CHECK_LATER") : t("CS_MAKE_PAYMENT")}
       actionSaveOnSubmit={() => {
-        isVerificationPending || isPostPaymentVerificationPending ? handleClosePaymentModal() : handleMakePayment(totalAmount);
+        showVerificationPending ? handleClosePaymentModal() : handleMakePayment(totalAmount);
       }}
       isDisabled={paymentLoader}
       className={"submission-payment-modal"}
@@ -87,7 +88,7 @@ function PaymentModal({
         )}
         <div className="note-div">
           <SelectCustomNote t={t} config={customNoteConfig} />
-          {(isVerificationPending || isPostPaymentVerificationPending) && (
+          {showVerificationPending && (
             <div style={{ marginTop: "10px" }}>
               <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
             </div>
