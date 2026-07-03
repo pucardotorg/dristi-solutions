@@ -28,18 +28,14 @@ import CustomToast from "../../../components/CustomToast";
 
 const formatAddress = (addr) => {
   if (!addr) return "";
-  // const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "" } = addr;
 
-  const { locality = "", city = "", district = "", state = "", pincode = "" } = addr;
-
-  return `${locality}, ${city}, ${district}, ${state}, ${pincode}`.trim();
+  return [addr.locality, addr.city, addr.district, addr.state, addr.pincode].filter(Boolean).join(", ");
 };
 
 const formatAddressFromIndividualData = (addr) => {
   if (!addr) return "";
-  const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "" } = addr;
 
-  return `${addressLine1}, ${addressLine2}, ${buildingName}, ${street}, ${city}, ${pincode}`.trim();
+  return [addr.addressLine1, addr.addressLine2, addr.buildingName, addr.street, addr.city, addr.pincode].filter(Boolean).join(", ");
 };
 
 const WitnessDrawerV2 = ({
