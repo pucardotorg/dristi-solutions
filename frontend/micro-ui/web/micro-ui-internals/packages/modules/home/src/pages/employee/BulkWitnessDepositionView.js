@@ -1,6 +1,6 @@
 import { CloseSvg, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
 import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { bulkWitnessDepositionSignConfig } from "../../configs/BulkWitnessDepositionSignConfig";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
@@ -27,7 +27,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-function BulkWitnessDepositionView({ setShowToast = () => {} }) {
+function BulkWitnessDepositionView({ setShowToast = () => {}, refetchCounts }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
   const userInfo = Digit.UserService.getUser()?.info;
@@ -43,6 +43,10 @@ function BulkWitnessDepositionView({ setShowToast = () => {} }) {
   const [showBulkSignModal, setShowBulkSignModal] = useState(sessionStorage.getItem("bulkWitnessDepositionSignSelectedItem") ? true : false);
   const [witnessDepositionPaginationData, setWitnessDepositionPaginationData] = useState({});
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
+  useEffect(() => {
+    if (!showBulkSignSuccessModal) return;
+    if (refetchCounts) refetchCounts();
+  }, [showBulkSignSuccessModal, refetchCounts]);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
   const courtId = localStorage.getItem("courtId");
   const roles = useMemo(() => userInfo?.roles, [userInfo]);

@@ -138,7 +138,7 @@ const AdvocateProfileUpdate = ({ tenantId }) => {
       const fileType = filedata?.type;
 
       await performUpdate({
-        identifierType: IdType?.code || "OTHER_ID",
+        identifierType: IdType?.type || "OTHER",
         identifierId: fileStoreId,
         identifierIdDetails: {
           fileStoreId,
