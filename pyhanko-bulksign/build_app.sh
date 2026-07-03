@@ -22,6 +22,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
   --hidden-import app \
   --hidden-import pyhanko_signer \
   --hidden-import gen_test_cert \
+  --hidden-import token_utils \
   bulk_sign_app.py
 
 # Seal lives next to the exe so a bare SIGN_STAMP_IMAGE=court-seal.png resolves.

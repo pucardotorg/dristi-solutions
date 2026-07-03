@@ -83,13 +83,16 @@ class BulkSignApp:
 
         root.title("OnCourts Bulk Sign")
         root.configure(bg=BG)
-        root.geometry("520x520")
-        root.minsize(480, 480)
+        root.geometry("520x580")
+        root.minsize(480, 520)
 
         self._build_ui()
         self._setup_logging()
         self.root.after(150, self._drain_log)
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+        if MODE == "pkcs11":
+            # Read the token identity on launch (no PIN needed).
+            self.root.after(300, self.detect_token)
 
     # ----- UI ---------------------------------------------------------------
     def _build_ui(self):
@@ -99,7 +102,23 @@ class BulkSignApp:
         tk.Label(wrap, text="OnCourts Bulk Sign", bg=BG, fg=TEAL,
                  font=("Segoe UI", 18, "bold")).pack(anchor="w")
         tk.Label(wrap, text="Sign court documents in bulk using your DSC token.",
-                 bg=BG, fg=GREY, font=("Segoe UI", 10)).pack(anchor="w", pady=(0, 14))
+                 bg=BG, fg=GREY, font=("Segoe UI", 10)).pack(anchor="w", pady=(0, 12))
+
+        # DSC token panel (pkcs11 mode): shows the detected token cert + label,
+        # read without a PIN, so staff can see/confirm the token identity.
+        if MODE == "pkcs11":
+            self.token_var = tk.StringVar(value="DSC token: checking…")
+            tbox = tk.Frame(wrap, bg="#eef5f5", bd=1, relief="solid")
+            tbox.pack(fill="x", pady=(0, 12))
+            inner = tk.Frame(tbox, bg="#eef5f5", padx=10, pady=8)
+            inner.pack(fill="x")
+            tk.Label(inner, textvariable=self.token_var, bg="#eef5f5", fg="#1a2b34",
+                     font=("Segoe UI", 9), justify="left", anchor="w").pack(
+                side="left", fill="x", expand=True)
+            self.detect_btn = tk.Button(inner, text="Detect", command=self.detect_token,
+                                        bg="#dcebeb", fg=TEAL, relief="flat",
+                                        font=("Segoe UI", 9, "bold"), cursor="hand2", padx=10)
+            self.detect_btn.pack(side="right", anchor="n")
 
         # Status pill
         self.status_var = tk.StringVar(value="● Stopped")
@@ -175,6 +194,46 @@ class BulkSignApp:
 
     def _log(self, msg: str):
         self.log_queue.put(msg)
+
+    # ----- token detection --------------------------------------------------
+    def detect_token(self):
+        if MODE != "pkcs11":
+            return
+        self.detect_btn.configure(state="disabled")
+        self.token_var.set("DSC token: checking…")
+        threading.Thread(target=self._detect_worker, daemon=True).start()
+
+    def _detect_worker(self):
+        module_path = os.environ.get("PKCS11_MODULE_PATH", "")
+        try:
+            if not module_path:
+                raise RuntimeError("PKCS11_MODULE_PATH is not set in .env")
+            from token_utils import list_token_identities
+
+            ids = list_token_identities(module_path)
+            self.root.after(0, lambda: self._on_token_detected(ids, None))
+        except Exception as e:  # noqa: BLE001 - show any failure in the panel
+            self.root.after(0, lambda: self._on_token_detected(None, e))
+
+    def _on_token_detected(self, ids, err):
+        self.detect_btn.configure(state="normal")
+        if err is not None:
+            self.token_var.set(f"DSC token: could not read — {err}")
+            return
+        if not ids:
+            self.token_var.set("DSC token: none detected — plug it in, then click Detect.")
+            return
+        if len(ids) == 1:
+            i = ids[0]
+            cn = i.get("cn") or "(no common name)"
+            self.token_var.set(f"DSC token: {cn}\nCertificate label: {i['cert_label']}")
+        else:
+            lines = "\n".join(
+                f"  • {i.get('cn') or '(no CN)'}  [{i['cert_label']}]" for i in ids
+            )
+            self.token_var.set(
+                f"DSC token: {len(ids)} certificates found — set PKCS11_CERT_LABEL in .env:\n{lines}"
+            )
 
     # ----- start / stop -----------------------------------------------------
     def start(self):

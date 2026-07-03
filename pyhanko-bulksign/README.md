@@ -60,8 +60,51 @@ token, edit `.env`: set `SIGNER_MODE=pkcs11` and uncomment the `PKCS11_*` block
 with this machine's module path + labels. The token PIN is never stored; the app
 prompts for it.
 
+**Finding the token labels (any new DSC pendrive):** you don't have to. In pkcs11
+mode the app reads the token under the title and shows the certificate + label
+(no PIN needed). Leave `PKCS11_CERT_LABEL`/`PKCS11_KEY_LABEL` **blank** in `.env`
+and the app auto-uses a single-identity token — plug in a new pendrive and it works.
+(Set the label explicitly only if a token carries several certificates.)
+
 The sections below describe the underlying agent (HTTP contract, CLI run, config)
 for developers; staff only need the app above.
+
+---
+
+## Windows setup
+
+Same app, built for Windows. PyInstaller is not a cross-compiler, so the `.exe`
+must be built **on Windows**.
+
+**Prerequisites (Windows machine):**
+1. Install the **DSC token vendor's Windows driver/middleware** (this is the key
+   step). It provides the PC/SC driver *and* the **PKCS#11 `.dll`** (e.g. HyperPKI/
+   `castle` for HYP2003; ePass2003 / WatchData / SafeNet have their own). Find the
+   `.dll` afterwards (often `C:\Windows\System32\<vendor>.dll` or the vendor's
+   install folder). OpenSC does **not** work with Indian-CA tokens.
+2. Install **Python 3.10+** from python.org (includes Tkinter) — needed only to
+   *build* the exe.
+
+**Build + configure:**
+1. Get the code on the machine (clone the repo + `git checkout pyhanko-bulk-sign-poc`,
+   or copy the `pyhanko-bulksign\` folder).
+2. In `pyhanko-bulksign\`, run **`build_app.bat`** → `dist\PucarBulkSign.exe`
+   (also copies `court-seal.png` into `dist\`).
+3. Edit **`dist\.env`**:
+   ```
+   SIGNER_MODE=pkcs11
+   PKCS11_MODULE_PATH=C:\Windows\System32\<vendor-pkcs11>.dll
+   PKCS11_CERT_LABEL=            # blank -> auto-detect
+   PKCS11_KEY_LABEL=
+   SIGN_STAMP_IMAGE=court-seal.png   # bare filename -> resolved next to the exe
+   SIGN_STAMP_OPACITY=0.3
+   ```
+4. Distribute `dist\PucarBulkSign.exe` + `.env` + `court-seal.png` together in one
+   folder. Double-click the exe → PIN → **START** → bulk-sign in the browser.
+
+**Windows gotchas:** module path is the **`.dll`** (not the Linux `.so`); SmartScreen
+may warn on the unsigned exe ("More info → Run anyway"); allow the firewall prompt for
+`localhost:1620`; install the token driver before first run.
 
 ---
 
@@ -150,10 +193,11 @@ Verify end-to-end (agent running):
 |---|---|
 | `SIGNER_MODE` | `pkcs11` (DSC token, prod) or `software` (test `.p12`) |
 | `PKCS11_MODULE_PATH` | path to the token vendor's PKCS#11 `.so`/`.dll` |
-| `PKCS11_CERT_LABEL` / `PKCS11_KEY_LABEL` | object labels on the token (`pkcs11-tool --module <so> -O`) |
+| `PKCS11_CERT_LABEL` / `PKCS11_KEY_LABEL` | token object labels; **blank = auto-detect** a single-identity token (shown under the app title) |
 | `PKCS11_USER_PIN` | token PIN — prefer passing interactively via `run.sh` |
 | `SIGNER_P12_PATH` / `SIGNER_P12_PASSWORD` | software-mode key file |
 | `SIGN_STAMP_TEXT` | visible signature text (`%(signer)s`, `%(ts)s`) |
+| `SIGN_STAMP_IMAGE` / `SIGN_STAMP_OPACITY` | seal image (bare filename resolved next to the exe/.env; default `court-seal.png`) + opacity 0..1 |
 | `HOST` / `PORT` | bind address (default `127.0.0.1:1620`) |
 | `CORS_ALLOW_ORIGINS` | allowed browser origin(s); `*` for local testing |
 

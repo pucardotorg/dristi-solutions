@@ -97,11 +97,23 @@ def _build_signer():
         from pyhanko.config.pkcs11 import PKCS11SignatureConfig
         from pyhanko.sign.pkcs11 import PKCS11SigningContext
 
+        module_path = os.environ["PKCS11_MODULE_PATH"]   # e.g. .../libcastle_v2.so.1.0.0 or vendor .dll
+        cert_label = os.environ.get("PKCS11_CERT_LABEL") or None
+        key_label = os.environ.get("PKCS11_KEY_LABEL") or None
+
+        # Auto-detect: if no cert label is configured, use the token's sole identity
+        # (raises a clear error for zero / multiple certs). Lets a new DSC pendrive
+        # work with no .env editing.
+        if not cert_label:
+            from token_utils import detect_single_cert_label
+
+            cert_label = detect_single_cert_label(module_path)
+
         config = PKCS11SignatureConfig(
-            module_path=os.environ["PKCS11_MODULE_PATH"],   # e.g. .../libcastle_v2.so.1.0.0
-            token_criteria=None,                            # narrow by label if needed
-            cert_label=os.environ.get("PKCS11_CERT_LABEL"),
-            key_label=os.environ.get("PKCS11_KEY_LABEL"),
+            module_path=module_path,
+            token_criteria=None,
+            cert_label=cert_label,
+            key_label=key_label,   # None -> pyHanko defaults key_label to cert_label
             user_pin=os.environ.get("PKCS11_USER_PIN"),
         )
         # Context manager; the caller keeps it open for the duration of the request.
