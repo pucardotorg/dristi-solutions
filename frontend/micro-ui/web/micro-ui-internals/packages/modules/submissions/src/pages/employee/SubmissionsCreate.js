@@ -92,6 +92,7 @@ const SubmissionsCreate = ({ path }) => {
   const [applicationPdfFileStoreId, setApplicationPdfFileStoreId] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState();
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
+  const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
   const scenario = "applicationSubmission";
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
@@ -1957,11 +1958,14 @@ const SubmissionsCreate = ({ path }) => {
         const billPaymentStatus = await openPaymentPortal(bill, bill?.Bill?.totalAmount);
         setPaymentStatus(billPaymentStatus);
         await applicationRefetch();
-        if (billPaymentStatus === true) {
+        if (billPaymentStatus === "VERIFICATION_PENDING") {
+          setIsPostPaymentVerificationPending(true);
+          return;
+        }
+        if (billPaymentStatus === "PAID") {
           setMakePaymentLabel(false);
           setShowPaymentModal(false);
           setShowSuccessModal(true);
-          await createPendingTask({ name: t("MAKE_PAYMENT_SUBMISSION"), status: "MAKE_PAYMENT_SUBMISSION", isCompleted: true });
         } else {
           setMakePaymentLabel(true);
           setShowPaymentModal(false);
@@ -2085,10 +2089,11 @@ const SubmissionsCreate = ({ path }) => {
             handleSkipPayment={handleSkipPayment}
             handleMakePayment={handleMakePayment}
             tenantId={tenantId}
-            consumerCode={applicationDetails?.applicationNumber}
+            consumerCode={applicationDetails?.applicationNumber ? applicationDetails.applicationNumber + "_" + suffix : ""}
             paymentLoader={paymentLoader}
             entityType={entityType}
             totalAmount={_getApplicationAmount(applicationTypeAmount, applicationType)}
+            isPostPaymentVerificationPending={isPostPaymentVerificationPending}
           />
         )}
         {showSuccessModal && (

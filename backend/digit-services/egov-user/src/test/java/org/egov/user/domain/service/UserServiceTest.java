@@ -72,6 +72,7 @@ public class UserServiceTest {
 
     @Mock
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
+    @Mock
     private EgovTokenStore tokenStore;
 
     private UserService userService;

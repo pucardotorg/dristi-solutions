@@ -296,7 +296,7 @@ public class PaymentService {
             if ("Y".equalsIgnoreCase(String.valueOf(transactionDetails.getStatus()))) {
                 status = PaymentStatus.SUCCESS;
             }
-            repository.updateAuthSekStatus(authSek.getAuthToken(), status.name(), "CALLBACK", System.currentTimeMillis(), "PROCESSED");
+            repository.updateAuthSekStatus(authSek.getAuthToken(), status.name(), COMPLETION_SOURCE_CALLBACK, System.currentTimeMillis(), PROCESSED_STATUS);
 
             return data;
 
@@ -397,14 +397,29 @@ public class PaymentService {
      * stored state (auth_sek_session_data + treasury_payment_data for the receipt); no live treasury
      * call is made here. PENDING sessions are resolved by the reconciliation crons.
      */
-    public PaymentStatusData getPaymentStatus(String billId, String consumerCode) {
+    public PaymentStatusData getPaymentStatus(String billId, String consumerCode, String businessService, RequestInfo requestInfo) {
         // Either identifier may be supplied; consumerCode is stored as service_number on the session.
         boolean lookupByConsumerCode = !StringUtils.hasText(billId) && StringUtils.hasText(consumerCode);
-        log.info("Fetching payment status for billId: {}, consumerCode: {}", billId, consumerCode);
+        log.info("Fetching payment status for billId: {}, consumerCode: {}, businessService: {}", billId, consumerCode, businessService);
 
-        Optional<AuthSek> latestSession = lookupByConsumerCode
-                ? repository.getAuthSekByServiceNumber(consumerCode).stream().findFirst()
-                : repository.getAuthSekByBillId(billId).stream().findFirst();
+        Optional<AuthSek> latestSession;
+        if (lookupByConsumerCode) {
+            latestSession = repository.getAuthSekByServiceNumber(consumerCode).stream().findFirst();
+            if (latestSession.isEmpty() && StringUtils.hasText(businessService)) {
+                // service_number (which carries the consumerCode) may be null on the session, so the
+                // by-serviceNumber lookup can miss a real attempt. Fall back to resolving the billId
+                // from the consumerCode via the billing service and look it up by billId, which is
+                // always populated on the session. The bill search requires the businessService too,
+                // so the fallback only runs when it is supplied.
+                String resolvedBillId = demandUtil.searchBillIdByConsumerCode(consumerCode, businessService, requestInfo);
+                if (StringUtils.hasText(resolvedBillId)) {
+                    log.info("service_number lookup empty for consumerCode: {}; resolved billId: {} via bill search", consumerCode, resolvedBillId);
+                    latestSession = repository.getAuthSekByBillId(resolvedBillId).stream().findFirst();
+                }
+            }
+        } else {
+            latestSession = repository.getAuthSekByBillId(billId).stream().findFirst();
+        }
 
         PaymentStatusData.PaymentStatusDataBuilder data = PaymentStatusData.builder()
                 .billId(billId)
@@ -905,7 +920,7 @@ public class PaymentService {
         List<AuthSek> agedPending = repository.getAgedPendingAuthSeks(thresholdTime);
         log.info("V3 reconciliation: found {} aged PENDING auth_sek rows", agedPending.size());
 
-        int reconciledCount = 0, failedTerminalCount = 0, inconclusiveCount = 0, errorCount = 0;
+        int reconciledCount = 0, failedTerminalCount = 0, inconclusiveCount = 0, pendingRetryCount = 0, errorCount = 0;
         for (AuthSek authSek : agedPending) {
             try {
                 ReconcileV3Outcome outcome = reconcileV3(authSek, requestInfo);
@@ -913,6 +928,7 @@ public class PaymentService {
                     case RECONCILED:      reconciledCount++;    break;
                     case FAILED_TERMINAL: failedTerminalCount++; break;
                     case INCONCLUSIVE:    inconclusiveCount++;  break;
+                    case PENDING_RETRY:   pendingRetryCount++;  break;
                 }
             } catch (Exception e) {
                 errorCount++;
@@ -920,8 +936,8 @@ public class PaymentService {
                         authSek.getBillId(), authSek.getDepartmentId(), e.getMessage(), e);
             }
         }
-        log.info("V3 reconciliation batch finished | reconciled={} | failedTerminal={} | inconclusive={} | errors={}",
-                reconciledCount, failedTerminalCount, inconclusiveCount, errorCount);
+        log.info("V3 reconciliation batch finished | reconciled={} | failedTerminal={} | inconclusive={} | pendingRetry={} | errors={}",
+                reconciledCount, failedTerminalCount, inconclusiveCount, pendingRetryCount, errorCount);
     }
 
     ReconcileV3Outcome reconcileV3(AuthSek authSek, RequestInfo requestInfo) throws Exception {
@@ -982,6 +998,33 @@ public class PaymentService {
                 status, errorMsg, authSek.getBillId(), v3.getGrn());
 
         if (!TREASURY_STATUS_SUCCESS.equalsIgnoreCase(status)) {
+            // G — the bank has not yet sent any status update to eTreasury. This is not a failure and
+            // there is no retry to consume: leave the row PENDING so the next cron cycle re-checks it,
+            // and keep doing so until the bank reports a definitive status.
+            if (TREASURY_STATUS_PENDING_NO_UPDATE.equalsIgnoreCase(status)) {
+                log.info("V3 reconciliation: treasury reported status=G (no bank update yet), leaving PENDING | billId={} | departmentId={}",
+                        authSek.getBillId(), departmentId);
+                return PENDING_RETRY;
+            }
+
+            // P — the bank has explicitly reported the transaction as Pending. Retry a bounded number of
+            // cron cycles; if it is still P after the retry limit, treat it as terminal FAILED. If it
+            // changes to Y (or any other definitive status) before then, that cycle handles it normally.
+            if (TREASURY_STATUS_PENDING.equalsIgnoreCase(status)) {
+                int attempts = (authSek.getRetryCount() == null ? 0 : authSek.getRetryCount()) + 1;
+                int maxRetries = config.getReconciliationV3MaxPendingRetries();
+                if (attempts > maxRetries) {
+                    log.info("V3 reconciliation: treasury still status=P after {} retries (max={}), marking terminal FAILED | billId={} | departmentId={}",
+                            attempts - 1, maxRetries, authSek.getBillId(), departmentId);
+                    markTerminalFailure(authSek, "TREASURY_STATUS_P_MAX_RETRIES");
+                    return FAILED_TERMINAL;
+                }
+                repository.updatePendingRetryCount(authSek.getAuthToken(), attempts);
+                log.info("V3 reconciliation: treasury reported status=P (bank pending), retry {}/{}, leaving PENDING | billId={} | departmentId={}",
+                        attempts, maxRetries, authSek.getBillId(), departmentId);
+                return PENDING_RETRY;
+            }
+
             // Treasury has a definitive record and it is not a success. This covers the abandoned-payment
             // case the user described: opening the payment and closing the tab without paying comes back
             // as status=N, error="No Transaction found". There is no path for this to later become Y,
@@ -1074,6 +1117,8 @@ public class PaymentService {
                 case RECONCILED -> "Row reconciled to SUCCESS via V3.";
                 case FAILED_TERMINAL ->
                         "Row moved to terminal FAILED (treasury reported non-success or no transaction / abandoned payment).";
+                case PENDING_RETRY ->
+                        "Treasury reported a pending status (G or P); row left PENDING for the next cron cycle.";
                 default -> "Treasury could not be reached/parsed; row left PENDING for the next cron cycle.";
             };
             return result

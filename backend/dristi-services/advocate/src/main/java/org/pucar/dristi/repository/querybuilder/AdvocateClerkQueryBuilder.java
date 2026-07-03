@@ -68,7 +68,21 @@ public class AdvocateClerkQueryBuilder {
         hasPreviousClause = addSingleCriteria(criteria.getId(), "advc.id", query, preparedStmtList, preparedStmtArgList,hasPreviousClause);
         hasPreviousClause = addSingleCriteria(criteria.getStateRegnNumber(), "advc.stateregnnumber", query, preparedStmtList, preparedStmtArgList,hasPreviousClause);
         hasPreviousClause = addSingleCriteria(criteria.getApplicationNumber(), "advc.applicationNumber", query, preparedStmtList,preparedStmtArgList, hasPreviousClause);
-        addSingleCriteria(criteria.getIndividualId(), "advc.individualId", query, preparedStmtList, preparedStmtArgList,hasPreviousClause);
+        hasPreviousClause = addSingleCriteria(criteria.getIndividualId(), "advc.individualId", query, preparedStmtList, preparedStmtArgList,hasPreviousClause);
+        addStatusCriteria(criteria.getStatus(), query, preparedStmtList, preparedStmtArgList, hasPreviousClause);
+    }
+
+    private void addStatusCriteria(String status, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgsList, boolean hasPreviousClause) {
+        if (status != null && !status.isEmpty()) {
+            if (hasPreviousClause) {
+                query.append(" AND ");
+            } else {
+                addClauseIfRequired(query, preparedStmtList);
+            }
+            query.append("LOWER(advc.status) = LOWER(?) ");
+            preparedStmtList.add(status.toLowerCase());
+            preparedStmtArgsList.add(Types.VARCHAR);
+        }
     }
 
     private boolean addSingleCriteria(String value, String column, StringBuilder query, List<Object> preparedStmtList,List<Integer> preparedStmtArgsList, boolean hasPreviousClause) {
@@ -87,7 +101,7 @@ public class AdvocateClerkQueryBuilder {
     }
 
 
-    public String getAdvocateClerkSearchQueryByStatus(String status, List<Object> preparedStmtList,List<Integer> preparedStmtArguList, String tenantId, Integer limit, Integer offset){
+    public String getAdvocateClerkSearchQueryByStatus(String stateRegnNumber, String status, List<Object> preparedStmtList,List<Integer> preparedStmtArguList, String tenantId, Integer limit, Integer offset){
         try {
             StringBuilder query = new StringBuilder(BASE_ATR_QUERY);
             query.append(FROM_CLERK_TABLES);
@@ -104,6 +118,13 @@ public class AdvocateClerkQueryBuilder {
                 addClauseIfRequiredForTenantId(query, preparedStmtList);
                 query.append(ADV_TENANT_ID_QUERY);
                 preparedStmtList.add(tenantId.toLowerCase());
+                preparedStmtArguList.add(Types.VARCHAR);
+            }
+
+            if(stateRegnNumber != null && !stateRegnNumber.isEmpty()){
+                addClauseIfRequiredForTenantId(query, preparedStmtList);
+                query.append("LOWER(advc.stateregnnumber) LIKE LOWER(?)");
+                preparedStmtList.add("%" + stateRegnNumber + "%");
                 preparedStmtArguList.add(Types.VARCHAR);
             }
 

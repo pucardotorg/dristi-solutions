@@ -63,6 +63,8 @@ class PaymentServiceTest {
     private TreasuryEnrichment enrichment;
     @Mock
     private CaseUtil caseUtil;
+    @Mock
+    private DemandUtil demandUtil;
 
     @Test
     void verifyConnection_success() {
@@ -240,7 +242,7 @@ class PaymentServiceTest {
         String billId = "bill-none";
         when(authSekRepository.getAuthSekByBillId(billId)).thenReturn(Collections.emptyList());
 
-        PaymentStatusData result = paymentService.getPaymentStatus(billId, null);
+        PaymentStatusData result = paymentService.getPaymentStatus(billId, null, null, new RequestInfo());
 
         assertNotNull(result);
         assertEquals(PaymentStatusType.NO_ATTEMPT, result.getStatus());
@@ -259,11 +261,68 @@ class PaymentServiceTest {
                 .build();
         when(authSekRepository.getAuthSekByServiceNumber(consumerCode)).thenReturn(Collections.singletonList(session));
 
-        PaymentStatusData result = paymentService.getPaymentStatus(null, consumerCode);
+        PaymentStatusData result = paymentService.getPaymentStatus(null, consumerCode, "task-summons", new RequestInfo());
 
         assertEquals(PaymentStatusType.VERIFICATION_PENDING, result.getStatus());
         assertEquals("bill-resolved", result.getBillId());
         assertEquals(consumerCode, result.getServiceNumber());
+        verify(authSekRepository, never()).getAuthSekByBillId(anyString());
+        verify(demandUtil, never()).searchBillIdByConsumerCode(anyString(), anyString(), any());
+    }
+
+    @Test
+    void getPaymentStatus_consumerCodeFallback_whenServiceNumberNull() {
+        // service_number is null on the session, so the by-serviceNumber lookup misses; the billId is
+        // resolved from the consumerCode via the billing service and the session is found by billId.
+        String consumerCode = "consumer-null-sn";
+        String resolvedBillId = "bill-from-consumer";
+        AuthSek session = AuthSek.builder()
+                .billId(resolvedBillId)
+                .serviceNumber(null)
+                .sessionTime(4000L)
+                .paymentStatus(PaymentStatus.SUCCESS)
+                .completionSource("CALLBACK")
+                .processedStatus("PROCESSED")
+                .build();
+        String businessService = "task-summons";
+        when(authSekRepository.getAuthSekByServiceNumber(consumerCode)).thenReturn(Collections.emptyList());
+        when(demandUtil.searchBillIdByConsumerCode(eq(consumerCode), eq(businessService), any())).thenReturn(resolvedBillId);
+        when(authSekRepository.getAuthSekByBillId(resolvedBillId)).thenReturn(Collections.singletonList(session));
+        when(treasuryPaymentRepository.getTreasuryPaymentData(resolvedBillId)).thenReturn(Collections.emptyList());
+
+        PaymentStatusData result = paymentService.getPaymentStatus(null, consumerCode, businessService, new RequestInfo());
+
+        assertEquals(PaymentStatusType.PAID, result.getStatus());
+        assertEquals(resolvedBillId, result.getBillId());
+        verify(demandUtil).searchBillIdByConsumerCode(eq(consumerCode), eq(businessService), any());
+        verify(authSekRepository).getAuthSekByBillId(resolvedBillId);
+    }
+
+    @Test
+    void getPaymentStatus_noAttempt_whenConsumerCodeUnresolvable() {
+        // service_number lookup misses and no bill maps to the consumerCode -> NO_ATTEMPT (no failure).
+        String consumerCode = "consumer-unknown";
+        String businessService = "task-summons";
+        when(authSekRepository.getAuthSekByServiceNumber(consumerCode)).thenReturn(Collections.emptyList());
+        when(demandUtil.searchBillIdByConsumerCode(eq(consumerCode), eq(businessService), any())).thenReturn(null);
+
+        PaymentStatusData result = paymentService.getPaymentStatus(null, consumerCode, businessService, new RequestInfo());
+
+        assertEquals(PaymentStatusType.NO_ATTEMPT, result.getStatus());
+        assertEquals(consumerCode, result.getServiceNumber());
+        verify(authSekRepository, never()).getAuthSekByBillId(anyString());
+    }
+
+    @Test
+    void getPaymentStatus_consumerCodeNoFallback_whenBusinessServiceMissing() {
+        // service_number lookup misses and no businessService supplied -> bill search is skipped.
+        String consumerCode = "consumer-no-bs";
+        when(authSekRepository.getAuthSekByServiceNumber(consumerCode)).thenReturn(Collections.emptyList());
+
+        PaymentStatusData result = paymentService.getPaymentStatus(null, consumerCode, null, new RequestInfo());
+
+        assertEquals(PaymentStatusType.NO_ATTEMPT, result.getStatus());
+        verify(demandUtil, never()).searchBillIdByConsumerCode(anyString(), anyString(), any());
         verify(authSekRepository, never()).getAuthSekByBillId(anyString());
     }
 
@@ -290,7 +349,7 @@ class PaymentServiceTest {
         when(treasuryPaymentRepository.getTreasuryPaymentData(billId))
                 .thenReturn(Collections.singletonList(receipt));
 
-        PaymentStatusData result = paymentService.getPaymentStatus(billId, null);
+        PaymentStatusData result = paymentService.getPaymentStatus(billId, null, null, new RequestInfo());
 
         assertEquals(PaymentStatusType.PAID, result.getStatus());
         assertEquals("CALLBACK", result.getCompletionSource());
@@ -310,7 +369,7 @@ class PaymentServiceTest {
                 .build();
         when(authSekRepository.getAuthSekByBillId(billId)).thenReturn(Collections.singletonList(session));
 
-        PaymentStatusData result = paymentService.getPaymentStatus(billId, null);
+        PaymentStatusData result = paymentService.getPaymentStatus(billId, null, null, new RequestInfo());
 
         assertEquals(PaymentStatusType.VERIFICATION_PENDING, result.getStatus());
         assertEquals(Long.valueOf(2000L), result.getLastAttemptTime());
@@ -328,7 +387,7 @@ class PaymentServiceTest {
                 .build();
         when(authSekRepository.getAuthSekByBillId(billId)).thenReturn(Collections.singletonList(session));
 
-        PaymentStatusData result = paymentService.getPaymentStatus(billId, null);
+        PaymentStatusData result = paymentService.getPaymentStatus(billId, null, null, new RequestInfo());
 
         assertEquals(PaymentStatusType.FAILED, result.getStatus());
         verify(treasuryPaymentRepository, never()).getTreasuryPaymentData(anyString());

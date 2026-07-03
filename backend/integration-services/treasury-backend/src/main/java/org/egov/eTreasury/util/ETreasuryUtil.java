@@ -97,11 +97,7 @@ public class ETreasuryUtil {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        // V3 endpoint authenticates via basic auth; force it on regardless of isTest()
-        if (paymentConfiguration.getBasicAuthUsername() != null
-                && !paymentConfiguration.getBasicAuthUsername().isEmpty()) {
-            headers.setBasicAuth(paymentConfiguration.getBasicAuthUsername(), paymentConfiguration.getBasicAuthPassword());
-        }
+        addBasicAuthIfRequired(headers);
 
         // Updated TransactionDetailsV3.php API requires CLIENTID/CLIENTSECRET headers (in addition to basic auth).
         headers.add(CLIENT_ID_HEADER, paymentConfiguration.getReconciliationV3ClientId());

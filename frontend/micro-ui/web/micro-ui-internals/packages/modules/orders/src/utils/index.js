@@ -2,7 +2,7 @@ import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { ORDER_TYPES } from "./constants";
+import { ORDER_TYPES, TASK_TYPES } from "./constants";
 import { getFormattedName } from "@egovernments/digit-ui-module-common";
 
 export const overrideHooks = () => {
@@ -195,7 +195,7 @@ export const downloadFile = (responseBlob, fileName) => {
   window.URL.revokeObjectURL(url);
 };
 
-export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, rowData) => {
+export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, rowData, taskType) => {
   const taskDetails = rowData?.taskDetails;
   if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
     const type = taskDetails?.miscellaneuosDetails?.addressee || "";
@@ -210,7 +210,7 @@ export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, row
     }
   }
 
-  if (orderType === ORDER_TYPES.SCHEDULE_OF_HEARING_DATE) {
+  if (taskType === TASK_TYPES.WARRANT) {
     // For warrant tasks which are automatically created by hearing order flow.
     return taskDetails?.witnessDetails?.name || taskDetails?.respondentDetails?.name || "";
   }

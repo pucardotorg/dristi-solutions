@@ -262,4 +262,9 @@ public class PaymentConfiguration {
     @Value("${payment.reconciliation.v3.threshold.minutes:30}")
     private Long reconciliationV3ThresholdMinutes;
 
+    // Max number of cron cycles a row may stay PENDING on treasury status=P (bank-reported "Pending")
+    // before V3 reconciliation gives up and marks it terminal FAILED.
+    @Value("${payment.reconciliation.v3.max.pending.retries:3}")
+    private Integer reconciliationV3MaxPendingRetries;
+
 }

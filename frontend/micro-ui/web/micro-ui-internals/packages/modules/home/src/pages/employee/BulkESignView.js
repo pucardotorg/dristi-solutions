@@ -33,7 +33,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-function BulkESignView() {
+function BulkESignView({ refetchCounts }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
   const history = useHistory();
@@ -47,6 +47,10 @@ function BulkESignView() {
   const [isDeleteOrderLoading, setIsDeleteOrderLoading] = useState(false);
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
   const [signedList, setSignedList] = useState([]);
+  useEffect(() => {
+    if (!showBulkSignSuccessModal) return;
+    if (refetchCounts) refetchCounts();
+  }, [showBulkSignSuccessModal, refetchCounts]);
 
   const [showToast, setShowToast] = useState(null);
   const { orderNumber, deleteOrder } = Digit.Hooks.useQueryParams();
