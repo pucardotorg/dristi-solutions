@@ -193,7 +193,7 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
       )}
       {type !== "join-case-flow" && (
         <div className="advocate-replacement-request-footer" style={{ justifyContent: "flex-end", marginBottom: "0px" }}>
-          {true || isVerificationPending || isPostPaymentVerificationPending || externalPostPaymentVerificationPending ? (
+          {isVerificationPending || isPostPaymentVerificationPending || externalPostPaymentVerificationPending ? (
             <div
               style={{
                 display: "flex",
