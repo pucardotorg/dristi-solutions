@@ -265,16 +265,20 @@ public class HearingService {
             return courtCase.getLprNumber();
         }
 
-        String caseRefNumber = hearing.getCaseReferenceNumber();
-
-        if (caseRefNumber != null && !caseRefNumber.isEmpty()) {
-            return caseRefNumber;
+        // Prefer the live court case, as hearing events can arrive stale/out-of-order and clobber
+        // a corrected case number in the open-hearing index. Fall back to the (possibly stale)
+        // value on the hearing event only when the live case has neither number.
+        String courtCaseNumber = courtCase.getCourtCaseNumber();
+        if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
+            return courtCaseNumber;
         }
 
-        String courtCaseNumber = courtCase.getCourtCaseNumber();
-        return (courtCaseNumber != null && !courtCaseNumber.isEmpty())
-                ? courtCaseNumber
-                : courtCase.getCmpNumber();
+        String cmpNumber = courtCase.getCmpNumber();
+        if (cmpNumber != null && !cmpNumber.isEmpty()) {
+            return cmpNumber;
+        }
+
+        return hearing.getCaseReferenceNumber();
     }
 
     public void pushHearingToLegacy(HearingRequest hearingRequest) {
