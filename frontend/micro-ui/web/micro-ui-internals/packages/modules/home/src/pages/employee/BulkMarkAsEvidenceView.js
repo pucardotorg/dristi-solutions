@@ -1,6 +1,6 @@
 import { CloseSvg, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
 import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { bulkMarkAsEvidenceConfig } from "../../configs/BulkMarkAsEvidenceConfig";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
@@ -38,10 +38,6 @@ function BulkMarkAsEvidenceView({ setShowToast = () => {}, refetchCounts }) {
   );
   const [showMakeAsEvidenceModal, setShowMakeAsEvidenceModal] = useState(sessionStorage.getItem("markAsEvidenceSelectedItem") ? true : false);
   const [showBulkEvidenceSuccessModal, setShowBulkEvidenceSuccessModal] = useState(false);
-  useEffect(() => {
-    if (!showBulkEvidenceSuccessModal) return;
-    if (refetchCounts) refetchCounts();
-  }, [showBulkEvidenceSuccessModal, refetchCounts]);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const hasEvidenceEsignAccess = useMemo(() => roles?.some((role) => role.code === "EVIDENCE_ESIGN"), [roles]);
@@ -209,6 +205,7 @@ function BulkMarkAsEvidenceView({ setShowToast = () => {}, refetchCounts }) {
             ).then((response) => {
               setShowBulkSignConfirmModal(false);
               setShowBulkEvidenceSuccessModal(true);
+              if (refetchCounts && typeof refetchCounts === "function") setTimeout(() => refetchCounts(), 1000);
             });
           });
         }
@@ -301,6 +298,7 @@ function BulkMarkAsEvidenceView({ setShowToast = () => {}, refetchCounts }) {
           paginatedData={paginatedData}
           setDocumentCounter={setCounter}
           setShowToast={setShowToast}
+          refetchCounts={refetchCounts}
         />
       )}
       {showBulkEvidenceSuccessModal && (

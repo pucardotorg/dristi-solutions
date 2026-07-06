@@ -406,7 +406,7 @@ const BulkIssueCTC = ({ refetchCounts }) => {
         setShowToast({ error: false, label: t("CTC_DOCUMENT_ISSUED_SUCCESSFULLY") });
       }
       setRefreshKey((prev) => prev + 1);
-      if (refetchCounts) refetchCounts();
+      if (refetchCounts) setTimeout(() => refetchCounts(), 1000);
     } catch (e) {
       console.error("Failed to perform bulk sign", e?.message || e);
       const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
@@ -447,7 +447,7 @@ const BulkIssueCTC = ({ refetchCounts }) => {
       setShowToast({ error: false, label: t(successMessage) });
 
       setRefreshKey((prev) => prev + 1);
-      if (refetchCounts) refetchCounts();
+      if (refetchCounts) setTimeout(() => refetchCounts(), 1000);
     } catch (error) {
       console.error("error while updating", error);
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];

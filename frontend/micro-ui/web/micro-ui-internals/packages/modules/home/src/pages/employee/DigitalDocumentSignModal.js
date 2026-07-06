@@ -79,6 +79,7 @@ export const DigitalDocumentSignModal = ({
   setShowBulkSignModal = () => {},
   digitalDocumentPaginationData,
   setCounter = () => {},
+  refetchCounts = () => {},
 }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
 
@@ -289,6 +290,7 @@ export const DigitalDocumentSignModal = ({
                   setFormData({});
                   clearDigitalDocumentSessionData();
                   setStepper(2);
+                  if (refetchCounts && typeof refetchCounts === "function") setTimeout(() => refetchCounts(), 1000);
                 } else {
                   setShowBulkSignModal(false);
                   if (queryStrings?.documentNumber) {

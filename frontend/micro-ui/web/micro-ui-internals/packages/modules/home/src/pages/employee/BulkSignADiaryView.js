@@ -393,7 +393,7 @@ function BulkSignADiaryView({ refetchCounts }) {
       sessionStorage.removeItem("adiarypdf");
       sessionStorage.removeItem("adiaryStepper");
       sessionStorage.removeItem("diaryDateFilter");
-      if (refetchCounts) refetchCounts();
+      if (refetchCounts) setTimeout(() => refetchCounts(), 1000);
     } catch (error) {
       console.error("Error :", error);
       setIsSigned(false);

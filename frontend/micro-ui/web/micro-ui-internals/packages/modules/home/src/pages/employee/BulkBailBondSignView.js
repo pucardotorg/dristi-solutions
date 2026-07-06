@@ -1,6 +1,6 @@
 import { CloseSvg, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
 import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
-import React, { useMemo, useState, useCallback, useEffect } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { bulkBailBondSignConfig } from "../../configs/BulkBailBondSignConfig";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
@@ -45,10 +45,6 @@ function BulkBailBondSignView({ setShowToast = () => {}, refetchCounts }) {
   const courtId = localStorage.getItem("courtId");
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const [successCount, setSuccessCount] = useState(0);
-  useEffect(() => {
-    if (!showBulkSignSuccessModal) return;
-    if (refetchCounts) refetchCounts();
-  }, [showBulkSignSuccessModal, refetchCounts]);
   const hasBailBondEsignAccess = useMemo(() => roles?.some((role) => role.code === "BAIL_BOND_ESIGN"), [roles]);
   const [needConfigRefresh, setNeedConfigRefresh] = useState(false);
   const [counter, setCounter] = useState(0);
@@ -221,6 +217,7 @@ function BulkBailBondSignView({ setShowToast = () => {}, refetchCounts }) {
               setShowBulkSignSuccessModal(true);
               setSuccessCount(response?.bails?.length);
               setShowToast({ error: false, label: t("BAIL_BULK_SIGN_SUCCESS_MSG") });
+              if (refetchCounts && typeof refetchCounts === "function") setTimeout(() => refetchCounts(), 1000);
             });
           });
         }
@@ -311,6 +308,7 @@ function BulkBailBondSignView({ setShowToast = () => {}, refetchCounts }) {
           setShowBulkSignModal={setShowBulkSignModal}
           bailBondPaginationData={bailBondPaginationData}
           setCounter={setCounter}
+          refetchCounts={refetchCounts}
         />
       )}
       {showBulkSignSuccessModal && (
