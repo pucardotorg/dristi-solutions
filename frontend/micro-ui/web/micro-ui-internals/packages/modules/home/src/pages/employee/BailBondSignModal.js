@@ -24,7 +24,13 @@ export const clearBailBondSessionData = () => {
   sessionStorage.removeItem("homeActiveTab");
 };
 
-export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () => {}, bailBondPaginationData, setCounter = () => {} }) => {
+export const BailBondSignModal = ({
+  selectedBailBond,
+  setShowBulkSignModal = () => {},
+  bailBondPaginationData,
+  setCounter = () => {},
+  refetchCounts = () => {},
+}) => {
   const queryStrings = Digit.Hooks.useQueryParams();
 
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -219,6 +225,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
                 setFormData({});
                 clearBailBondSessionData();
                 setStepper(2);
+                if (refetchCounts && typeof refetchCounts === "function") setTimeout(() => refetchCounts(), 1000);
               } else {
                 setIsRejectModalOpen(false);
                 setShowBulkSignModal(false);

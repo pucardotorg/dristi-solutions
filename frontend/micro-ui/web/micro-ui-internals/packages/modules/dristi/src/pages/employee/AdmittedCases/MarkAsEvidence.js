@@ -114,6 +114,7 @@ const MarkAsEvidence = ({
   paginatedData,
   evidenceDetailsObj,
   setDocumentCounter = (e) => {},
+  refetchCounts,
 }) => {
   const [loader, setLoader] = useState(false); // Loader state for API calls
   const [stepper, setStepper] = useState(0);
@@ -1204,6 +1205,7 @@ const MarkAsEvidence = ({
             clearEvidenceSessionData();
             setShowMakeAsEvidenceModal(false);
             setDocumentCounter((prevCount) => prevCount + 1);
+            if (refetchCounts && typeof refetchCounts === "function") setTimeout(() => refetchCounts(), 1000);
           }}
           message={"MARK_AS_EVIDENCE_SUCCESS"}
         />

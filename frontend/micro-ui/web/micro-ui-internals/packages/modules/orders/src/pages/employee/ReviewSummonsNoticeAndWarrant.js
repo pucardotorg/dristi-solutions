@@ -212,14 +212,7 @@ const ReviewSummonsNoticeAndWarrant = ({ refetchCounts }) => {
   const [signatureId, setSignatureId] = useState("");
   const [deliveryChannel, setDeliveryChannel] = useState("");
   const [reload, setReload] = useState(false);
-  const isFirstReloadRef = useRef(true);
-  useEffect(() => {
-    if (isFirstReloadRef.current) {
-      isFirstReloadRef.current = false;
-      return;
-    }
-    if (refetchCounts) refetchCounts();
-  }, [reload]);
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
   // const [taskDetails, setTaskDetails] = useState({});
   const [tasksData, setTasksData] = useState(null);
   const [remarks, setRemarks] = useState("");
@@ -571,8 +564,6 @@ const ReviewSummonsNoticeAndWarrant = ({ refetchCounts }) => {
       sessionStorage.removeItem("homeActiveTab");
     }
   }, []);
-
-  const [activeTabIndex, setActiveTabIndex] = useState(0);
 
   const handleClose = useCallback(() => {
     sessionStorage.removeItem("SignedFileStoreID");
@@ -961,6 +952,7 @@ const ReviewSummonsNoticeAndWarrant = ({ refetchCounts }) => {
         }));
         setIsSigned(true);
         setActionModalType("SIGNED");
+        if (currentConfig?.label === "PENDING_SIGN" && refetchCounts) setTimeout(() => refetchCounts(), 1000);
       }
 
       if (rowData?.taskDetails?.deliveryChannels?.channelCode === CHANNEL_IDS.POLICE) {
@@ -1010,7 +1002,7 @@ const ReviewSummonsNoticeAndWarrant = ({ refetchCounts }) => {
         isInitialLoadRef.current = false;
       }, 1000);
     }
-  }, [rowData, signatureId, tenantId]);
+  }, [rowData, signatureId, tenantId, mockESignEnabled, isJudge, courtId, activeTabIndex, refetch, t, refetchCounts]);
 
   const handleBulkSign = useCallback(() => {
     const selectedItems = bulkSignList?.filter((item) => item?.isSelected) || [];
@@ -1368,6 +1360,9 @@ const ReviewSummonsNoticeAndWarrant = ({ refetchCounts }) => {
           }, 1000);
           // Reset the count and police tasks when modal closes
           setShowBulkSignSuccessModal(true);
+
+          const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
+          if (currentConfig?.label === "PENDING_SIGN" && refetchCounts) setTimeout(() => refetchCounts(), 1000);
         } catch (e) {
           console.error("Error preparing bulk send after bulk sign:", e);
           const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
@@ -1391,7 +1386,19 @@ const ReviewSummonsNoticeAndWarrant = ({ refetchCounts }) => {
       ?.filter((item) => item?.isSelected)
       ?.every((item) => item?.taskDetails?.deliveryChannels?.channelCode === CHANNEL_IDS.POLICE);
     setAllSelectedPolice(isPolice ? true : false);
-  }, [bulkSignList, tenantId, t, setShowToast, setIsBulkLoading, fetchResponseFromXmlRequest, callBulkSendApi]);
+  }, [
+    bulkSignList,
+    tenantId,
+    t,
+    setShowToast,
+    setIsBulkLoading,
+    fetchResponseFromXmlRequest,
+    callBulkSendApi,
+    isJudge,
+    courtId,
+    activeTabIndex,
+    refetchCounts,
+  ]);
 
   const handleBulkDownload = useCallback(async () => {
     try {
