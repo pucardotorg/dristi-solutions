@@ -305,7 +305,7 @@ const SelectEmail = ({
   if (
     individualId &&
     (userType === "LITIGANT" ? !isLitigantPartialRegistered : true) &&
-    (userType !== "LITIGANT" ? !isApprovalPending && !isRejected : true) &&
+    (userType !== "LITIGANT" ? !isApprovalPending && !isRejected && searchResult?.length !== 0 : true) &&
     !isProfile
   ) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
