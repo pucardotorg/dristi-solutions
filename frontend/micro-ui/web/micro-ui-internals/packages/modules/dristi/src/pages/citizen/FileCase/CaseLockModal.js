@@ -45,7 +45,7 @@ function CaseLockModal({
   }, [caseDetails?.representatives, userInfo?.uuid]);
 
   const isLitigantInCase = useMemo(() => {
-    return Boolean(caseDetails?.litigants?.some((litigant) => litigant?.userUuid === userInfo?.uuid));
+    return Boolean(caseDetails?.litigants?.some((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid));
   }, [caseDetails?.litigants, userInfo?.uuid]);
 
   const isPoaHolderInCase = useMemo(() => {
@@ -53,7 +53,7 @@ function CaseLockModal({
   }, [caseDetails?.poaHolders, userInfo?.uuid]);
 
   const isAdvocateFlow = selectedAdvocateUuid && (isAdvocateInCase || !isLitigantInCase) && !isPoaHolderInCase;
-
+  debugger;
   const filingNumber = useMemo(() => {
     return caseDetails?.filingNumber;
   }, [caseDetails]);
