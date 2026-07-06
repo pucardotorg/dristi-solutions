@@ -254,9 +254,33 @@ const GenerateBailBondV2 = () => {
     }
   }, [complainantsList, pendingTaskId, pendingTaskrefId, pendingTasksResponse]);
 
+  // First accused (in dropdown order) that actually has a bail-bond pending task. Used to pre-select
+  // and auto-fill in the multi-accused "Raise Bail Bond" flow that is opened directly (not from a tile).
+  const firstAccusedWithTaskUuid = useMemo(() => {
+    const tasks = Array.isArray(pendingTasksResponse?.data) ? pendingTasksResponse.data : [];
+    if (!Array.isArray(complainantsList) || complainantsList.length === 0 || tasks.length === 0) return null;
+    const match = complainantsList.find((complainant) =>
+      tasks.some((task) =>
+        task?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field.value === complainant?.uuid)
+      )
+    );
+    return match?.uuid || null;
+  }, [complainantsList, pendingTasksResponse]);
+
+  // In the multi-accused direct flow the pending tasks are not pre-filtered to a single accused, so
+  // resolve the task belonging to the currently selected (or first-with-task) accused instead of
+  // blindly taking the first task in the list. For single-accused / pending-task-click flows this
+  // stays null so the existing (working) first-task behaviour is preserved.
+  const activeAccusedUuid = useMemo(() => {
+    if (complainantsList?.length > 1 && !pendingTaskrefId && !pendingTaskId) {
+      return formdata?.selectComplainant?.uuid || firstAccusedWithTaskUuid || null;
+    }
+    return null;
+  }, [complainantsList, pendingTaskrefId, pendingTaskId, formdata?.selectComplainant?.uuid, firstAccusedWithTaskUuid]);
+
   const pendingTaskAdditionalDetails = useMemo(() => {
-    return convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
-  }, [pendingTasks]);
+    return convertTaskResponseToPayload(pendingTasks, activeAccusedUuid)?.additionalDetails || {};
+  }, [pendingTasks, activeAccusedUuid]);
 
   const selectedRepresentative = useMemo(() => {
     return caseDetails?.litigants?.filter((litigant) => litigant?.additionalDetails?.uuid === pendingTaskAdditionalDetails?.litigantUuid)?.[0] || {};
@@ -438,11 +462,12 @@ const GenerateBailBondV2 = () => {
   const handleComplainantSelection = async (selectedComplainant, setValue) => {
     if (!selectedComplainant?.uuid || complainantsList?.length <= 1) return;
 
-    const litigantId =
-      caseDetails?.litigants?.filter((litigant) => litigant?.additionalDetails?.uuid === selectedComplainant?.uuid)?.[0]?.individualId || {};
-
+    // The bail-bond pending task stores the accused's user uuid (litigant.additionalDetails.uuid)
+    // under additionalDetails.litigantUuid, which is exactly what complainantsList carries as `uuid`.
+    // Match on that uuid directly (previously this compared against the litigant's individualId,
+    // which never matched and wiped the auto-populated data).
     const filteredTasks = (Array.isArray(pendingTasksResponse?.data) ? pendingTasksResponse.data : [])?.filter((item) =>
-      item?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field.value === litigantId)
+      item?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field.value === selectedComplainant?.uuid)
     );
 
     if (filteredTasks?.length > 0) {
@@ -682,6 +707,62 @@ const GenerateBailBondV2 = () => {
       return convertToFormData(t, newObject);
     }
 
+    // Multi-accused opened directly via "Raise Bail Bond" (not from a pending-task tile):
+    // resolve the selected (or first-with-task) accused and mount the form already populated, so
+    // surety rows are filled on first render. Filling via defaultValues (instead of setValue after
+    // mount) avoids the race where surety inputs mount empty and only fill after switching accused.
+    if (!bailBond && complainantsList?.length > 1 && !pendingTaskrefId && !pendingTaskId) {
+      const selectedUuid = formdata?.selectComplainant?.uuid || firstAccusedWithTaskUuid || complainantsList?.[0]?.uuid;
+      const selectedComplainant = complainantsList?.find((complainant) => complainant?.uuid === selectedUuid);
+      if (!selectedComplainant) return {};
+
+      const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks, selectedUuid)?.additionalDetails || {};
+
+      // Selected accused has no bail-bond task → empty form, but keep the accused selected/enabled.
+      if (Object.keys(getPendingTaskPayload).length === 0) {
+        return {
+          selectComplainant: {
+            code: selectedComplainant.code,
+            name: selectedComplainant.name,
+            uuid: selectedComplainant.uuid,
+          },
+        };
+      }
+
+      const applicationDetailsData = getPendingTaskPayload?.refApplicationId ? applicationDetails?.applicationDetails || {} : {};
+      const noOfSureties = getPendingTaskPayload?.noOfSureties || 0;
+      const providedSureties = Array.isArray(applicationDetailsData?.sureties)
+        ? applicationDetailsData.sureties.map((s) => ({
+            id: s?.id || s?.index || null,
+            name: s?.name || "",
+            fatherName: s?.fatherName || "",
+            mobileNumber: s?.mobileNumber || "",
+            address: s?.address || {},
+            email: s?.email || "",
+            documents: [...(applicationDetailsData?.applicationDocuments?.filter((doc) => doc?.suretyIndex === s?.suretyIndex) || [])].map((d) => ({
+              ...d,
+              documentName: d?.documentTitle,
+              isActive: true,
+            })),
+          }))
+        : [];
+
+      const sureties =
+        providedSureties.length < noOfSureties
+          ? [...providedSureties, ...Array.from({ length: noOfSureties - providedSureties.length }, () => ({}))]
+          : providedSureties;
+
+      const newObject = {
+        ...getPendingTaskPayload,
+        litigantFatherName: applicationDetailsData?.litigantFatherName || getPendingTaskPayload?.litigantFatherName,
+        litigantName: selectedComplainant.name,
+        litigantId: selectedComplainant.uuid,
+        sureties,
+      };
+
+      return convertToFormData(t, newObject);
+    }
+
     if (Object.keys(defaultFormValueData).length > 0) {
       return convertToFormData(t, defaultFormValueData);
     }
@@ -707,6 +788,7 @@ const GenerateBailBondV2 = () => {
     clearAutoPopulatedData,
     complainantsList,
     defaultFormValueData,
+    firstAccusedWithTaskUuid,
     formdata,
     pendingTaskAdditionalDetails,
     pendingTaskrefId,
