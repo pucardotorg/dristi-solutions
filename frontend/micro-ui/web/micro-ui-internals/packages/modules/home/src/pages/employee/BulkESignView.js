@@ -47,10 +47,6 @@ function BulkESignView({ refetchCounts }) {
   const [isDeleteOrderLoading, setIsDeleteOrderLoading] = useState(false);
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
   const [signedList, setSignedList] = useState([]);
-  useEffect(() => {
-    if (!showBulkSignSuccessModal) return;
-    if (refetchCounts) refetchCounts();
-  }, [showBulkSignSuccessModal, refetchCounts]);
 
   const [showToast, setShowToast] = useState(null);
   const { orderNumber, deleteOrder } = Digit.Hooks.useQueryParams();
@@ -350,6 +346,7 @@ function BulkESignView({ refetchCounts }) {
 
         setSignedList(signedList);
         setShowBulkSignSuccessModal(true);
+        if (refetchCounts && typeof refetchCounts === "function") setTimeout(() => refetchCounts(), 1000);
       });
     } catch (e) {
       const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
