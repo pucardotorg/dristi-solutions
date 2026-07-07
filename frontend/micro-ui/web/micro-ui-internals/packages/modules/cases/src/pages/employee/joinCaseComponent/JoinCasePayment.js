@@ -19,6 +19,7 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const [isApiCalled, setIsApiCalled] = useState(false);
   const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
+  const [paymentResolved, setPaymentResolved] = useState(false);
 
   const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
   const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
@@ -69,9 +70,15 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
   );
 
   const isVerificationPending = useMemo(() => Boolean(paymentStatusData?.PaymentStatus?.status === "VERIFICATION_PENDING"), [paymentStatusData]);
+  // Override stale hook data once we have a definitive post-payment outcome (PAID or failed/other)
+  const showVerificationPending =
+    (isVerificationPending || isPostPaymentVerificationPending || externalPostPaymentVerificationPending) && !paymentResolved;
 
   const handlePayOnline = async () => {
     setIsApiCalled(true);
+    isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+    setPaymentResolved(false);
+
     try {
       const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
       const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount, "task-payment");
@@ -88,15 +95,24 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
             };
           });
         });
+        isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+        setPaymentResolved(true);
+
         refetch();
       } else if (paymentStatus === "VERIFICATION_PENDING") {
         setIsPostPaymentVerificationPending(true);
         return;
+      } else {
+        isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+        setPaymentResolved(true);
       }
     } catch (error) {
       console.error("error", error);
+      isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+      setPaymentResolved(true);
+    } finally {
+      setIsApiCalled(false);
     }
-    setIsApiCalled(false);
   };
 
   const handleCloseModal = () => {
@@ -188,12 +204,10 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
           className={"adhaar-verification-info-card"}
         />
       </div>
-      {(isVerificationPending || isPostPaymentVerificationPending || externalPostPaymentVerificationPending) && (
-        <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
-      )}
+      {showVerificationPending && <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />}
       {type !== "join-case-flow" && (
         <div className="advocate-replacement-request-footer" style={{ justifyContent: "flex-end", marginBottom: "0px" }}>
-          {isVerificationPending || isPostPaymentVerificationPending || externalPostPaymentVerificationPending ? (
+          {showVerificationPending ? (
             <div
               style={{
                 display: "flex",
