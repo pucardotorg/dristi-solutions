@@ -29,17 +29,12 @@ function useGetHearingCauseList({ limit = 300, offset = 0 } = {}) {
           tenantId,
           courtId: localStorage.getItem("courtId"),
           date: filters?.date || todayStr,
+          ...(filters?.status?.code && { status: filters.status.code }),
+          ...(filters?.purpose?.code && { hearingType: filters.purpose.code }),
+          ...(filters?.caseQuery && { searchableFields: filters.caseQuery.trim() }),
         };
         const res = await HomeService.getHearingCauseList(payload, { tenantId });
         let hearings = Array.isArray(res?.hearings) ? res.hearings : [];
-        if (filters?.status?.code) hearings = hearings.filter((hearing) => hearing?.status === filters.status.code);
-        if (filters?.purpose) hearings = hearings.filter((hearing) => hearing?.hearingType === filters.purpose?.code);
-        if (filters?.caseQuery) {
-          const query = filters.caseQuery.trim().toLowerCase();
-          hearings = hearings.filter(
-            (hearing) => hearing?.caseTitle?.toLowerCase()?.includes(query) || hearing?.caseNumber?.toLowerCase()?.includes(query)
-          );
-        }
         const items = hearings.slice(offset, offset + limit).map((hearing) => ({
           businessObject: {
             hearingDetails: { ...hearing, advocate: parseAdvocate(hearing?.advocate) },
