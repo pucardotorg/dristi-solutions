@@ -578,6 +578,8 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
             baseEsQuery.put("size", inboxRequest.getInbox().getLimit());
         }
         baseEsQuery.put("query", boolQuery);
+        // Pin search/count reads to the primary shard copy so they can't disagree with a lagging replica
+        baseEsQuery.put("preference", "_primary");
 
         return baseEsQuery;
     }
@@ -597,6 +599,8 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
             baseEsQuery.put("size", searchRequest.getIndexSearchCriteria().getLimit());
         }
         baseEsQuery.put("query", boolQuery);
+        // Pin search/count reads to the primary shard copy so they can't disagree with a lagging replica
+        baseEsQuery.put("preference", "_primary");
 
         return baseEsQuery;
     }
