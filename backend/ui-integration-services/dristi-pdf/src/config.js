@@ -326,6 +326,7 @@ module.exports = {
     application_ctc_certification_qr:
       process.env.APPLICATION_CTC_CERTIFICATION_QR ||
       "application-ctc-certification-qr",
+    case_summary: process.env.CASE_SUMMARY || "case-summary",
   },
 
   app: {
@@ -358,6 +359,8 @@ module.exports = {
       process.env.DRISTI_DIGITALIZED_DOCUMENTS_HOST || "http://localhost:8333",
     ctcApplications:
       process.env.DRISTI_CTC_APPLICATIONS_HOST || "http://localhost:8098",
+    orderManagement:
+      process.env.DRISTI_ORDER_MANAGEMENT_HOST || "http://localhost:8092",
   },
 
   paths: {
@@ -386,6 +389,7 @@ module.exports = {
     digitalized_documents_search: "/digitalized-documents/v1/_search",
     template_configuration_search: "/template-configuration/v1/_search",
     ctc_applications_search: "/ctc/applications/_search", // TODO : verify the path
+    botd_orders_search: "/order-management/v1/getBotdOrders",
 
     // TODO : Add mdms response and role action to support folder
   },

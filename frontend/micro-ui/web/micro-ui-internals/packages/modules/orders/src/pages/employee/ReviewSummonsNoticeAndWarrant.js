@@ -10,7 +10,7 @@ import AddSignatureComponent from "../../components/AddSignatureComponent";
 import useDocumentUpload from "../../hooks/orders/useDocumentUpload";
 import CustomStepperSuccess from "../../components/CustomStepperSuccess";
 import UpdateDeliveryStatusComponent from "../../components/UpdateDeliveryStatusComponent";
-import { ordersService, taskService, processManagementService } from "../../hooks/services";
+import { taskService, processManagementService } from "../../hooks/services";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import qs from "qs";
 import { Urls } from "../../hooks/services/Urls";
@@ -20,7 +20,7 @@ import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
 import ReviewNoticeModal from "../../components/ReviewNoticeModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
-import { DateUtils, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, isLPRCase, getDisplayCaseNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS, TASK_TYPES } from "../../utils/constants";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
@@ -562,8 +562,49 @@ const ReviewSummonsNoticeAndWarrant = ({ refetchCounts }) => {
       sessionStorage.removeItem("ESignSummons");
       sessionStorage.removeItem("delieveryChannel");
       sessionStorage.removeItem("homeActiveTab");
+      return;
+    }
+
+    const returnStateRaw = sessionStorage.getItem("ReviewSummonsReturnState");
+    if (returnStateRaw) {
+      try {
+        const returnState = JSON.parse(returnStateRaw);
+        if (typeof returnState?.activeTabIndex === "number") {
+          setActiveTabIndex(returnState.activeTabIndex);
+          setTabData((prev) => prev?.map((i, c) => ({ ...i, active: c === returnState.activeTabIndex })));
+        }
+        if (returnState?.rowData) {
+          // Mirror handleRowClick exactly so reopening after "View Case" behaves the same as clicking the row
+          const original = returnState.rowData;
+          if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER", "WARRANT_REISSUED_WITH_NEW_WARRANT"].includes(original?.status)) {
+            setRowData(original);
+            setshowNoticeModal(true);
+          } else {
+            setRemarks("");
+            setSelectedDelievery({});
+            setRowData(original);
+            const lastSignedTN = typeof window !== "undefined" ? sessionStorage.getItem("LastSignedTaskNumber") : null;
+            const isLastSigned = lastSignedTN && original?.taskNumber && original.taskNumber === lastSignedTN;
+            setActionModalType(isLastSigned ? "SIGNED" : original?.documentStatus);
+            setShowActionModal(true);
+            setStep(typeof returnState?.step === "number" ? returnState.step : 0);
+            setIsSigned(isLastSigned ? true : original?.documentStatus === "SIGN_PENDING" ? false : true);
+            setDeliveryChannel(handleTaskDetails(original?.taskDetails)?.deliveryChannels?.channelName);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to restore ReviewSummonsReturnState:", e);
+      }
     }
   }, []);
+
+  // Once the restored modal (or notice modal) is actually open, the saved return state has served its purpose
+  useEffect(() => {
+    if (showActionModal || showNoticeModal) {
+      sessionStorage.removeItem("ReviewSummonsReturnState");
+      sessionStorage.removeItem("homeActiveTab");
+    }
+  }, [showActionModal, showNoticeModal]);
 
   const handleClose = useCallback(() => {
     sessionStorage.removeItem("SignedFileStoreID");
@@ -654,10 +695,28 @@ const ReviewSummonsNoticeAndWarrant = ({ refetchCounts }) => {
     }
   };
 
+  const viewCaseLink = useMemo(() => {
+    if (userType !== "employee" || !tasksData?.list[0]?.caseId) return null;
+    return `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${tasksData?.list[0]?.caseId}&filingNumber=${tasksData?.list[0]?.filingNumber}&tab=Overview&fromHome=true`;
+  }, [userType, tasksData]);
+
+  const onViewCaseClick = useCallback(() => {
+    sessionStorage.setItem("homeActiveTab", "CS_HOME_PROCESS");
+    sessionStorage.setItem(
+      "ReviewSummonsReturnState",
+      JSON.stringify({
+        rowData,
+        activeTabIndex,
+        step,
+      })
+    );
+  }, [rowData, activeTabIndex, step]);
+
   const infos = useMemo(() => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
+        { key: "CASE_NUMBER", value: getDisplayCaseNumber(rowData), viewCaseLink, onViewCaseClick },
         { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData, taskType) },
         {
           key: "NEXT_HEARING_DATE",
@@ -669,7 +728,7 @@ const ReviewSummonsNoticeAndWarrant = ({ refetchCounts }) => {
         { key: "E_PROCESS_ID", value: rowData?.taskNumber },
       ];
     }
-  }, [rowData?.taskDetails, rowData?.taskNumber, nextHearingDate, orderDetails, compositeItem, orderType, taskType]);
+  }, [rowData, nextHearingDate, orderDetails, compositeItem, orderType, taskType, viewCaseLink, onViewCaseClick]);
 
   const reverseToDDMMYYYY = (dateStr) => {
     if (!dateStr) return "N/A";
