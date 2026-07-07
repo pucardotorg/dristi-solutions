@@ -375,8 +375,6 @@ public class InboxServiceV2 {
         StringBuilder uri = new StringBuilder(config.getIndexServiceHost());
         uri.append(indexName);
         uri.append(endpoint);
-        // Pin search/count reads to the primary shard copy so they can't disagree with a lagging replica
-        uri.append("?preference=_primary");
         return uri;
     }
 
