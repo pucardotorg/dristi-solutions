@@ -134,7 +134,15 @@ const CaseOverviewV2 = ({
         </div>
       )}
       {showAllTranscript && (
-        <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} botdOrderList={previousBotdOrders} judgeView={true} />
+        <ShowAllTranscriptModal
+          setShowAllTranscript={setShowAllTranscript}
+          botdOrderList={previousBotdOrders}
+          judgeView={true}
+          filingNumber={filingNumber}
+          cnrNumber={cnrNumber}
+          tenantId={tenantId}
+          courtId={caseData?.courtId || localStorage.getItem("courtId")}
+        />
       )}
     </div>
   );

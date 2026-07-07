@@ -1,16 +1,35 @@
 import { TextArea } from "@egovernments/digit-ui-components";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Modal from "./Modal";
 import { SubmitBar } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
-import { DateUtils } from "../Utils";
+import { DateUtils, downloadCaseSummaryPdf } from "../Utils";
 import { CloseBtn } from "./ModalComponents";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.heading}</h1>;
 };
-const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView = false }) => {
+const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView = false, filingNumber, cnrNumber, tenantId, courtId }) => {
   const { t } = useTranslation();
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadCaseSummary = async () => {
+    if (isDownloading) return;
+    try {
+      setIsDownloading(true);
+      await downloadCaseSummaryPdf({
+        tenantId: tenantId || window?.Digit?.ULBService?.getCurrentTenantId(),
+        filingNumber,
+        cnrNumber,
+        courtId,
+        fileName: `case-summary-${filingNumber || ""}.pdf`,
+      });
+    } catch (error) {
+      console.error("Error downloading case summary PDF:", error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <Modal
@@ -60,7 +79,14 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView
           ))
         )}
       </div>
-      <div className="submit-bar-div">
+      <div className="submit-bar-div" style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+        <SubmitBar
+          variation="secondary"
+          onSubmit={handleDownloadCaseSummary}
+          className="secondary-label-btn"
+          label={isDownloading ? t("CS_DOWNLOADING") : t("CS_COMMON_DOWNLOAD")}
+          disabled={isDownloading}
+        ></SubmitBar>
         <SubmitBar
           variation="primary"
           onSubmit={() => setShowAllTranscript(false)}
