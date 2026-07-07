@@ -148,9 +148,38 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     ? `${caseDetails.filingNumber}_${suffix}`
     : "";
 
-  const { data: paymentStatusData } = useGetPaymentVerificationStatus(statusConsumerCode, tenantId, Boolean(statusConsumerCode));
+  const { data: paymentStatusData } = useGetPaymentVerificationStatus(
+    statusConsumerCode,
+    tenantId,
+    Boolean(statusConsumerCode),
+    undefined,
+    `efiling-payment-breakdown_${receiptFilstoreId}_${retryPayment}`
+  );
 
   const isVerificationPending = useMemo(() => Boolean(paymentStatusData?.PaymentStatus?.status === "VERIFICATION_PENDING"), [paymentStatusData]);
+  // Override stale hook data once we have a definitive post-payment outcome
+  const showVerificationPending = (isVerificationPending || isPostPaymentVerificationPending) && !receiptFilstoreId && !retryPayment;
+
+  console.log("[EfilingPaymentBreakdown] render", {
+    isVerificationPending,
+    isPostPaymentVerificationPending,
+    retryPayment,
+    receiptFilstoreId,
+    showVerificationPending,
+    loader,
+    ispaymentLoading,
+    isLoading,
+    isPaymentTypeLoading,
+    paymentStatusRaw: paymentStatusData?.PaymentStatus?.status,
+    statusConsumerCode,
+    suffix,
+    filingNumber: caseDetails?.filingNumber,
+    lastSubmissionConsumerCode: caseDetails?.additionalDetails?.lastSubmissionConsumerCode,
+    caseStatus: caseDetails?.status,
+    isCaseLocked,
+    totalAmount,
+    paymentLoader,
+  });
 
   const fetchCaseLockStatus = useCallback(async () => {
     try {
@@ -192,7 +221,17 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
 
   const onTaskPayOnline = async () => {
     try {
+      console.log("[onTaskPayOnline] START — closure-captured state", {
+        isPostPaymentVerificationPending,
+        retryPayment,
+        receiptFilstoreId,
+        isCaseLocked,
+        isVerificationPending,
+        showVerificationPending,
+      });
       setLoader(true);
+      setIsPostPaymentVerificationPending(false);
+      setRetryPayment(false);
       const bill = await fetchBill(
         caseDetails?.additionalDetails?.lastSubmissionConsumerCode
           ? caseDetails?.additionalDetails?.lastSubmissionConsumerCode
@@ -200,7 +239,9 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
         tenantId,
         "case-default"
       );
+      console.log("[onTaskPayOnline] fetchBill result", { billCount: bill?.Bill?.length, billId: bill?.Bill?.[0]?.id, consumerCode: bill?.Bill?.[0]?.consumerCode });
       if (!bill?.Bill?.length) {
+        console.log("[onTaskPayOnline] no pending bill — aborting");
         setShowToast({ label: t("CS_NO_PENDING_PAYMENT"), error: false });
         setIsCaseLocked(true);
         return;
@@ -213,40 +254,63 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
           tenantId: tenantId,
         }
       );
+      console.log("[onTaskPayOnline] caseLockStatus", { isLocked: caseLockStatus?.Lock?.isLocked });
       if (caseLockStatus?.Lock?.isLocked) {
+        console.log("[onTaskPayOnline] case is locked — aborting");
         setIsCaseLocked(true);
         setShowToast({ label: t("CS_CASE_LOCKED_BY_ANOTHER_USER"), error: false });
         return;
       }
 
       await DRISTIService.setCaseLock({ Lock: { uniqueId: caseDetails?.filingNumber, tenantId: tenantId, lockType: "PAYMENT" } }, {});
+      console.log("[onTaskPayOnline] case locked, opening payment portal");
 
       const paymentStatus = await openPaymentPortal(bill);
+      console.log("[onTaskPayOnline] openPaymentPortal resolved", { paymentStatus });
       await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
+      console.log("[onTaskPayOnline] case unlocked");
       const success = paymentStatus === "PAID";
 
       if (success) {
+        console.log("[onTaskPayOnline] PAID — fetching receipt fileStoreId", { billId: bill?.Bill?.[0]?.id });
         const response = await DRISTIService.fetchBillFileStoreId({}, { billId: bill?.Bill?.[0]?.id, tenantId });
         const fileStoreId = response?.Document?.fileStore;
+        console.log("[onTaskPayOnline] fetchBillFileStoreId result", { fileStoreId });
         if (fileStoreId) {
           setReceiptFilstoreId(fileStoreId);
+          isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+          retryPayment && setRetryPayment(false);
+        } else {
+          console.warn("[onTaskPayOnline] PAID but no fileStoreId returned — receipt not set");
         }
       } else if (paymentStatus === "VERIFICATION_PENDING") {
+        console.log("[onTaskPayOnline] VERIFICATION_PENDING — staying on screen, setting isPostPaymentVerificationPending=true", {
+          prevIsPostPaymentVerificationPending: isPostPaymentVerificationPending,
+          prevRetryPayment: retryPayment,
+        });
         setIsPostPaymentVerificationPending(true);
+        retryPayment && setRetryPayment(false);
         return;
       } else {
+        console.log("[onTaskPayOnline] FAILED/other — setting retryPayment=true", {
+          paymentStatus,
+          prevIsPostPaymentVerificationPending: isPostPaymentVerificationPending,
+          prevRetryPayment: retryPayment,
+        });
+        isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
         setRetryPayment(true);
       }
     } catch (error) {
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      console.error("[onTaskPayOnline] EXCEPTION", { error, errorId, isPostPaymentVerificationPending, retryPayment, receiptFilstoreId });
       setShowToast({ label: t("CS_PAYMENT_ERROR"), error: true, errorId });
-      console.error(error);
     } finally {
+      console.log("[onTaskPayOnline] finally — setLoader(false)");
       setLoader(false);
     }
   };
 
-  if (!isPostPaymentVerificationPending && (isLoading || ispaymentLoading || isPaymentTypeLoading || loader)) {
+  if (!showVerificationPending && (isLoading || ispaymentLoading || isPaymentTypeLoading || loader)) {
     return <Loader />;
   }
   return (
@@ -274,9 +338,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
             inline
             className={"adhaar-verification-info-card"}
           />
-          {(isVerificationPending || isPostPaymentVerificationPending) && (
-            <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
-          )}
+          {showVerificationPending && <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />}
           <div className="total-payment">
             {paymentCalculation
               ?.filter((item) => item?.isTotalFee)
@@ -288,7 +350,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
                       text={
                         receiptFilstoreId
                           ? t("CS_TASK_PAYMENT_DONE")
-                          : isVerificationPending || isPostPaymentVerificationPending
+                          : showVerificationPending
                           ? t("PAYMENT_VERIFICATION_IS_PENDING")
                           : t("CS_TASK_PENDING")
                       }
@@ -315,7 +377,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
               ))}
           </div>
 
-          {isVerificationPending || isPostPaymentVerificationPending ? (
+          {showVerificationPending ? (
             <div
               className="verification-pending-actions"
               style={{ display: "flex", flexDirection: "row", justifyContent: "end", alignItems: "center", gap: "12px" }}
