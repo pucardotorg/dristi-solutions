@@ -1388,7 +1388,7 @@ const EvidenceModal = ({
                     </div>
                     <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <h3>{caseData?.case?.courtCaseNumber || caseData?.case?.cmpNumber || caseData?.case?.filingNumber}</h3>
-                      {userType === "employee" && (
+                      {userType === "employee" && documentSubmission?.[0]?.applicationList?.applicationNumber && (
                         <Link
                           to={`/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview&fromHome=true`}
                           style={{
