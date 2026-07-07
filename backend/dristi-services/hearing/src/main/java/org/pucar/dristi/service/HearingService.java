@@ -742,6 +742,11 @@ public class HearingService {
         data.put("outcome", caseFields.getOrDefault("outcome", ""));
         data.put("accessCode", caseFields.getOrDefault("accessCode", ""));
         data.put("caseStatus", caseFields.getOrDefault("caseStatus", ""));
+        try {
+            data.put("advocate", objectMapper.writeValueAsString(h.getAdvocate()));
+        } catch (Exception ex) {
+            data.put("advocate", "{}");
+        }
         return data;
     }
 
