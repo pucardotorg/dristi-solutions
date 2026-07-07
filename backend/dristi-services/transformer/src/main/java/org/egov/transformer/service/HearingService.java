@@ -261,7 +261,21 @@ public class HearingService {
 
     private String enrichCaseNumber(Hearing hearing, CourtCase courtCase) {
 
+        // Log the candidate values up front so that if an open hearing ends up with an unexpected
+        // case number, we can tell from the logs which source was available and which branch won.
+        log.info("Enriching open-hearing case number for hearingId: {}, filingNumber: {} | lifecycleStatus: {}, "
+                        + "lprNumber: {}, courtCaseNumber: {}, cmpNumber: {}, hearing.caseReferenceNumber: {}",
+                hearing.getHearingId(),
+                hearing.getFilingNumber() != null && !hearing.getFilingNumber().isEmpty() ? hearing.getFilingNumber().get(0) : null,
+                courtCase.getLifecycleStatus(),
+                courtCase.getLprNumber(),
+                courtCase.getCourtCaseNumber(),
+                courtCase.getCmpNumber(),
+                hearing.getCaseReferenceNumber());
+
         if (LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus())) {
+            log.info("Resolved case number from lprNumber (LPR lifecycle): {}, for hearingId: {}",
+                    courtCase.getLprNumber(), hearing.getHearingId());
             return courtCase.getLprNumber();
         }
 
@@ -270,14 +284,21 @@ public class HearingService {
         // value on the hearing event only when the live case has neither number.
         String courtCaseNumber = courtCase.getCourtCaseNumber();
         if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
+            log.info("Resolved case number from courtCaseNumber: {}, for hearingId: {}",
+                    courtCaseNumber, hearing.getHearingId());
             return courtCaseNumber;
         }
 
         String cmpNumber = courtCase.getCmpNumber();
         if (cmpNumber != null && !cmpNumber.isEmpty()) {
+            log.info("Resolved case number from cmpNumber: {}, for hearingId: {}",
+                    cmpNumber, hearing.getHearingId());
             return cmpNumber;
         }
 
+        // Live case has neither number; fall back to the (possibly stale) value on the hearing event.
+        log.warn("Live court case has no courtCaseNumber/cmpNumber; falling back to hearing.caseReferenceNumber: {}, "
+                + "for hearingId: {}", hearing.getCaseReferenceNumber(), hearing.getHearingId());
         return hearing.getCaseReferenceNumber();
     }
 
