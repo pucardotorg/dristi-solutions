@@ -1436,17 +1436,21 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
           addressLine2: data?.addressDetails?.district,
           street: data?.addressDetails?.locality,
         },
-        {
-          tenantId: tenantId,
-          type: "CORRESPONDENCE",
-          latitude: data?.currentAddressDetails?.coordinates?.latitude,
-          longitude: data?.currentAddressDetails?.coordinates?.longitude,
-          city: data?.currentAddressDetails?.city,
-          pincode: data?.currentAddressDetails?.pincode || data?.["currentAddressDetails-select"]?.pincode,
-          addressLine1: data?.currentAddressDetails?.state,
-          addressLine2: data?.currentAddressDetails?.district,
-          street: data?.currentAddressDetails?.locality,
-        },
+        ...(data?.currentAddressDetails?.isCurrAddrSame?.code === "NO"
+          ? [
+              {
+                tenantId: tenantId,
+                type: "CORRESPONDENCE",
+                latitude: data?.currentAddressDetails?.coordinates?.latitude,
+                longitude: data?.currentAddressDetails?.coordinates?.longitude,
+                city: data?.currentAddressDetails?.city,
+                pincode: data?.currentAddressDetails?.pincode || data?.["currentAddressDetails-select"]?.pincode,
+                addressLine1: data?.currentAddressDetails?.state,
+                addressLine2: data?.currentAddressDetails?.district,
+                street: data?.currentAddressDetails?.locality,
+              },
+            ]
+          : []),
       ],
       identifiers: [
         {
@@ -1507,17 +1511,21 @@ export const updateIndividualUser = async ({ data, documentData, tenantId, indiv
             addressLine2: data?.addressDetails?.district,
             street: data?.addressDetails?.locality,
           },
-          {
-            tenantId: tenantId,
-            type: "CORRESPONDENCE",
-            latitude: data?.currentAddressDetails?.coordinates?.latitude,
-            longitude: data?.currentAddressDetails?.coordinates?.longitude,
-            city: data?.currentAddressDetails?.city,
-            pincode: data?.currentAddressDetails?.pincode || data?.["currentAddressDetails-select"]?.pincode,
-            addressLine1: data?.currentAddressDetails?.state,
-            addressLine2: data?.currentAddressDetails?.district,
-            street: data?.currentAddressDetails?.locality,
-          },
+          ...(data?.currentAddressDetails?.isCurrAddrSame?.code === "NO"
+            ? [
+                {
+                  tenantId: tenantId,
+                  type: "CORRESPONDENCE",
+                  latitude: data?.currentAddressDetails?.coordinates?.latitude,
+                  longitude: data?.currentAddressDetails?.coordinates?.longitude,
+                  city: data?.currentAddressDetails?.city,
+                  pincode: data?.currentAddressDetails?.pincode || data?.["currentAddressDetails-select"]?.pincode,
+                  addressLine1: data?.currentAddressDetails?.state,
+                  addressLine2: data?.currentAddressDetails?.district,
+                  street: data?.currentAddressDetails?.locality,
+                },
+              ]
+            : []),
         ];
   let Individual = {
     Individual: {
@@ -1717,7 +1725,12 @@ export const getRespondentName = (respondentDetails, t) => {
   if (respondentDetails?.[0]?.data?.respondentType?.code === "INDIVIDUAL") {
     concatenatedRespondentName =
       respondentDetails?.[0]?.data?.respondentFirstName &&
-      getFullName(" ", respondentDetails?.[0]?.data?.respondentFirstName, respondentDetails?.[0]?.data?.respondentMiddleName, respondentDetails?.[0]?.data?.respondentLastName);
+      getFullName(
+        " ",
+        respondentDetails?.[0]?.data?.respondentFirstName,
+        respondentDetails?.[0]?.data?.respondentMiddleName,
+        respondentDetails?.[0]?.data?.respondentLastName
+      );
   } else concatenatedRespondentName = respondentDetails?.[0]?.data?.respondentCompanyName || "";
   if (count > 1) {
     concatenatedRespondentName = concatenatedRespondentName + ` and ${count - 1} ${t(count === 2 ? "TITLE_OTHER" : "TITLE_OTHERS")}`;

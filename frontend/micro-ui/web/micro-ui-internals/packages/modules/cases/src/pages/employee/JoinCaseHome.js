@@ -612,8 +612,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const registerLitigants = useCallback(
     async (data) => {
       const usersWithUUID = data
-        .filter((item) => item?.phoneNumberVerification?.userDetails?.uuid)
-        .map((item) => ({
+        ?.filter((item) => item?.phoneNumberVerification?.userDetails?.uuid)
+        ?.map((item) => ({
           firstName: item?.firstName,
           middleName: item?.middleName,
           lastName: item?.lastName,
@@ -625,7 +625,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           fatherName: item.fatherName,
         }));
 
-      if (usersWithUUID.length === 0) {
+      if (usersWithUUID?.length === 0) {
         return data?.map((item) => ({
           ...item,
           individualId: item?.phoneNumberVerification?.individualDetails?.individualId,
@@ -636,7 +636,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       }
 
       try {
-        const apiCalls = usersWithUUID.map((user) =>
+        const apiCalls = usersWithUUID?.map((user) =>
           registerIndividualWithNameAndMobileNumber(user, tenantId).then((userData) => ({
             ...user,
             individualDetails: userData?.Individual,
@@ -645,8 +645,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
 
         const results = await Promise.all(apiCalls);
 
-        const updatedData = data.map((item) => {
-          const matchedUser = results.find((res) => res.userUuid === item.phoneNumberVerification?.userDetails?.uuid);
+        const updatedData = data?.map((item) => {
+          const matchedUser = results?.find((res) => res.userUuid === item.phoneNumberVerification?.userDetails?.uuid);
           return matchedUser
             ? {
                 ...item,
@@ -678,7 +678,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
 
   const getRespondentDetails = (respondentDetails, updatedParty) => {
     let modifiedRespondentDetails = structuredClone(respondentDetails?.formdata)?.map((formdataItem, index) => {
-      const matchedUser = updatedParty.find((res) => index === res?.index);
+      const matchedUser = updatedParty?.find((res) => index === res?.index);
       return matchedUser
         ? {
             ...formdataItem,
@@ -1471,7 +1471,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     },
     // 4
     {
-      modalMain: <JoinCasePayment type="join-case-flow" taskNumber={taskNumber} externalPostPaymentVerificationPending={isPostPaymentVerificationPending} />,
+      modalMain: (
+        <JoinCasePayment type="join-case-flow" taskNumber={taskNumber} externalPostPaymentVerificationPending={isPostPaymentVerificationPending} />
+      ),
     },
     // 5
     {

@@ -50,7 +50,7 @@ const CaseHeader = ({
   handleAllNoticeGeneratedForHearing,
 }) => {
   const isCaseLoading = caseApiLoading || isCaseFetching;
-  const showFallback = Boolean(fallbackCaseDetails);
+  const showFallback = Boolean(fallbackCaseDetails) && isCaseLoading;
   const displayCaseDetails = showFallback ? fallbackCaseDetails : caseDetails;
   const displayAdvocateName = showFallback ? fallbackAdvocateName : advocateName;
   return (
