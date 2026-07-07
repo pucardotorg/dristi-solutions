@@ -1,0 +1,41 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2806",
+    "data": {
+      "id": 2806,
+      "url": "/egov-pdf/case-summary",
+      "code": "2806",
+      "name": "case summary pdf",
+      "displayName": "case summary pdf"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "586",
+    "data": {
+      "id": 586,
+      "actionid": 2806,
+      "rolecode": "EMPLOYEE",
+      "tenantid": "kl",
+      "actioncode": "2806"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "587",
+    "data": {
+      "id": 587,
+      "actionid": 2806,
+      "rolecode": "CITIZEN",
+      "tenantid": "kl",
+      "actioncode": "2806"
+    },
+    "isActive": true
+  }
+]

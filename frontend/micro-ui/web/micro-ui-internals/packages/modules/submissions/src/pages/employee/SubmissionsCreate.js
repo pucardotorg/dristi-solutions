@@ -94,6 +94,7 @@ const SubmissionsCreate = ({ path }) => {
   const [paymentStatus, setPaymentStatus] = useState();
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
+  const [paymentResolved, setPaymentResolved] = useState(false);
   const scenario = "applicationSubmission";
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
@@ -1925,6 +1926,8 @@ const SubmissionsCreate = ({ path }) => {
   });
 
   const handleMakePayment = async (totalAmount) => {
+    isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+    setPaymentResolved(false);
     try {
       const bill = await fetchBill(applicationDetails?.applicationNumber + `_${suffix}`, tenantId, entityType);
       if (bill?.Bill?.length) {
@@ -1936,10 +1939,14 @@ const SubmissionsCreate = ({ path }) => {
           return;
         }
         if (billPaymentStatus === "PAID") {
+          isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+          setPaymentResolved(true);
           setMakePaymentLabel(false);
           setShowPaymentModal(false);
           setShowSuccessModal(true);
         } else {
+          isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+          setPaymentResolved(true);
           setMakePaymentLabel(true);
           setShowPaymentModal(false);
           setShowSuccessModal(true);
@@ -1947,6 +1954,8 @@ const SubmissionsCreate = ({ path }) => {
       }
     } catch (error) {
       console.error(error);
+      isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+      setPaymentResolved(true);
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_PROCESSING_PAYMENT"), error: true, errorId });
     }
@@ -2067,6 +2076,7 @@ const SubmissionsCreate = ({ path }) => {
             entityType={entityType}
             totalAmount={_getApplicationAmount(applicationTypeAmount, applicationType)}
             isPostPaymentVerificationPending={isPostPaymentVerificationPending}
+            paymentResolved={paymentResolved}
           />
         )}
         {showSuccessModal && (

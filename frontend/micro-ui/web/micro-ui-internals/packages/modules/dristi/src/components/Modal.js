@@ -155,38 +155,37 @@ const Modal = ({
           style={popupModuleMianStyles ? popupModuleMianStyles : {}}
         >
           {children}
-          {!hideModalActionbar && footerChildren ? (
-            <div
-              className="popup-module-action-bar"
-              style={
-                isOBPSFlow
-                  ? !mobileView
-                    ? { marginRight: "18px" }
-                    : { position: "absolute", bottom: "5%", right: "10%", left: window.location.href.includes("employee") ? "0%" : "7%" }
-                  : footerChildren
-                  ? { justifyContent: "space-between", alignItems: "center", ...popupModuleActionBarStyles }
-                  : popupModuleActionBarStyles
-              }
-            >
-              {footerChildren && <div>{footerChildren}</div>}
-              <div style={{ display: "flex", flexDirection: "row", gap: "16px" }} className="popup-module-action-bar-buttons">
+          {!hideModalActionbar &&
+            (footerChildren ? (
+              <div
+                className="popup-module-action-bar"
+                style={
+                  isOBPSFlow
+                    ? !mobileView
+                      ? { marginRight: "18px" }
+                      : { position: "absolute", bottom: "5%", right: "10%", left: window.location.href.includes("employee") ? "0%" : "7%" }
+                    : { justifyContent: "space-between", alignItems: "center", ...popupModuleActionBarStyles }
+                }
+              >
+                {footerChildren && <div>{footerChildren}</div>}
+                <div style={{ display: "flex", flexDirection: "row", gap: "16px" }} className="popup-module-action-bar-buttons">
+                  {buttonsSection}
+                </div>
+              </div>
+            ) : (
+              <div
+                className="popup-module-action-bar"
+                style={
+                  isOBPSFlow
+                    ? !mobileView
+                      ? { marginRight: "18px" }
+                      : { position: "absolute", bottom: "5%", right: "10%", left: window.location.href.includes("employee") ? "0%" : "7%" }
+                    : popupModuleActionBarStyles
+                }
+              >
                 {buttonsSection}
               </div>
-            </div>
-          ) : (
-            <div
-              className="popup-module-action-bar"
-              style={
-                isOBPSFlow
-                  ? !mobileView
-                    ? { marginRight: "18px" }
-                    : { position: "absolute", bottom: "5%", right: "10%", left: window.location.href.includes("employee") ? "0%" : "7%" }
-                  : popupModuleActionBarStyles
-              }
-            >
-              {buttonsSection}
-            </div>
-          )}
+            ))}
           {hideModalActionbar && footerChildren}
         </div>
       </div>
