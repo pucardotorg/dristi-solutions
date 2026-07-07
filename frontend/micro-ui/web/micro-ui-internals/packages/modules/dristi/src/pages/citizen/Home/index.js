@@ -71,19 +71,19 @@ function CitizenHome({ tenantId, setHideBack = () => {} }) {
     return searchData?.[`${userTypeDetail?.apiDetails?.requestKey}s`]?.[0]?.responseList;
   }, [searchData, userTypeDetail?.apiDetails?.requestKey]);
 
-  const isAdvocateMissingDetails = useMemo(() => {
-    if (!data?.Individual || data?.Individual?.length === 0) return false;
-    const individual = data?.Individual[0];
-    if (!individual?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE")) return false;
-    if (!Array.isArray(searchResult) || searchResult.length === 0) return false;
+  // const isAdvocateMissingDetails = useMemo(() => {
+  //   if (!data?.Individual || data?.Individual?.length === 0) return false;
+  //   const individual = data?.Individual[0];
+  //   if (!individual?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE")) return false;
+  //   if (!Array.isArray(searchResult) || searchResult.length === 0) return false;
 
-    const hasAddress = Array?.isArray(individual?.address) && individual?.address?.length > 0;
-    const hasIdentifiers = Array?.isArray(individual?.identifiers) && individual?.identifiers?.length > 0;
-    const identifierIdDetails = individual?.additionalFields?.fields?.find((f) => f?.key === "identifierIdDetails")?.value;
-    const hasIdentifierIdDetails = Boolean(identifierIdDetails) && identifierIdDetails !== "{}" && identifierIdDetails !== "null";
+  //   const hasAddress = Array?.isArray(individual?.address) && individual?.address?.length > 0;
+  //   const hasIdentifiers = Array?.isArray(individual?.identifiers) && individual?.identifiers?.length > 0;
+  //   const identifierIdDetails = individual?.additionalFields?.fields?.find((f) => f?.key === "identifierIdDetails")?.value;
+  //   const hasIdentifierIdDetails = Boolean(identifierIdDetails) && identifierIdDetails !== "{}" && identifierIdDetails !== "null";
 
-    return !hasAddress || !hasIdentifiers || !hasIdentifierIdDetails;
-  }, [data?.Individual, searchResult]);
+  //   return !hasAddress || !hasIdentifiers || !hasIdentifierIdDetails;
+  // }, [data?.Individual, searchResult]);
 
   const isApprovalPending = useMemo(() => {
     return (
@@ -125,23 +125,12 @@ function CitizenHome({ tenantId, setHideBack = () => {} }) {
       !isApprovalPending &&
       !isRejected &&
       !isLitigantPartialRegistered &&
-      !isAdvocateMissingDetails &&
+      // !isAdvocateMissingDetails &&
       (userType !== "ADVOCATE" || (userType === "ADVOCATE" && searchResult?.length > 0))
     ) {
       history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
     }
-  }, [
-    individualId,
-    isLitigantPartialRegistered,
-    isRejected,
-    history,
-    isApprovalPending,
-    searchResult,
-    data,
-    searchData,
-    userType,
-    isAdvocateMissingDetails,
-  ]);
+  }, [individualId, isLitigantPartialRegistered, isRejected, history, isApprovalPending, searchResult, data, searchData, userType]);
 
   useEffect(() => {
     setHideBack(userHasIncompleteRegistration || registrationIsDoneApprovalIsPending);
@@ -184,7 +173,7 @@ function CitizenHome({ tenantId, setHideBack = () => {} }) {
           advocate={searchResult?.[0]}
         />
       )}
-      {isAdvocateMissingDetails && (
+      {/* {isAdvocateMissingDetails && (
         <Modal
           headerBarMain={<Heading label={t("PROFILE_DETAILS_MISSING")} />}
           headerBarEnd={null}
@@ -195,7 +184,7 @@ function CitizenHome({ tenantId, setHideBack = () => {} }) {
         >
           <div style={{ padding: "16px 0" }}>{t("ADVOCATE_PROFILE_DETAILS_MISSING_MSG")}</div>
         </Modal>
-      )}
+      )} */}
     </div>
   );
 }
