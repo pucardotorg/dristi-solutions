@@ -1,7 +1,7 @@
 import { TextArea } from "@egovernments/digit-ui-components";
 import React, { useEffect, useState } from "react";
 import Modal from "./Modal";
-import { SubmitBar } from "@egovernments/digit-ui-react-components";
+import { Loader, SubmitBar } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { DateUtils, downloadCaseSummaryPdf } from "../Utils";
 import { CloseBtn } from "./ModalComponents";
@@ -11,12 +11,12 @@ const Heading = (props) => {
 };
 const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView = false, filingNumber, cnrNumber, tenantId, courtId }) => {
   const { t } = useTranslation();
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [loader, setLoader] = useState(false);
 
   const handleDownloadCaseSummary = async () => {
-    if (isDownloading) return;
+    if (loader) return;
     try {
-      setIsDownloading(true);
+      setLoader(true);
       await downloadCaseSummaryPdf({
         tenantId: tenantId || window?.Digit?.ULBService?.getCurrentTenantId(),
         filingNumber,
@@ -27,7 +27,7 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView
     } catch (error) {
       console.error("Error downloading case summary PDF:", error);
     } finally {
-      setIsDownloading(false);
+      setLoader(false);
     }
   };
 
@@ -81,11 +81,11 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView
       </div>
       <div className="submit-bar-div" style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
         <SubmitBar
-          variation="secondary"
+          variation="primary"
           onSubmit={handleDownloadCaseSummary}
-          className="secondary-label-btn"
-          label={isDownloading ? t("CS_DOWNLOADING") : t("CS_COMMON_DOWNLOAD")}
-          disabled={isDownloading}
+          className="primary-label-btn"
+          style={{ width: "120px" }}
+          label={t("CS_COMMON_DOWNLOAD")}
         ></SubmitBar>
         <SubmitBar
           variation="primary"
@@ -94,6 +94,25 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView
           label={t("CS_COMMON_BACK")}
         ></SubmitBar>
       </div>
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "9999",
+            position: "fixed",
+            right: "0",
+            top: "0",
+            display: "flex",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
     </Modal>
   );
 };
