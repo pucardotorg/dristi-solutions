@@ -7,6 +7,10 @@ export const getEmployeeCrumbs = ({ t, isCitizen, homeFilteredData, homeActiveTa
       show: true,
       isLast: false,
       homeFilteredData: homeFilteredData,
+      onClick: () => {
+        sessionStorage.removeItem("ReviewSummonsReturnState");
+        sessionStorage.removeItem("homeActiveTab");
+      },
     },
     {
       path: `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/home-screen`,
