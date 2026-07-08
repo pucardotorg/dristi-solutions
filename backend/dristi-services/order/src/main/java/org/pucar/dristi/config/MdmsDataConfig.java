@@ -45,89 +45,54 @@ public class MdmsDataConfig {
     }
 
     /**
-     * Loads all MDMS-backed config at startup. If any dataset fails to load or comes back empty,
-     * this throws so bean initialization (and hence the whole application context) fails fast.
-     * This prevents pods from coming up with empty MDMS data and serving broken traffic in prod.
+     * Loads all MDMS-backed config at startup. Every master is attempted, and any that fails to load
+     * or comes back empty is collected; if the collection is non-empty this throws so bean initialization
+     * (and hence the whole application context) fails fast, listing every broken master in a single message.
+     * This prevents pods from coming up with empty MDMS data and serving broken traffic in prod, while
+     * surfacing all broken masters in one restart cycle instead of one at a time.
      */
     @PostConstruct
-    public void loadConfigData(){
-        loadNonOverlappingMdmsData();
-        loadNonRepeatingOrdersMdmsData();
-        loadItemTextMdmsData();
-    }
+    public void loadConfigData() {
+        List<String> failures = new ArrayList<>();
 
-    private void loadNonOverlappingMdmsData(){
-        try {
-            RequestInfo requestInfo = RequestInfo.builder().build();
-            String mdmsDataResponse = mdmsUtil.fetchMdmsData(requestInfo, configuration.getTenantId(), configuration.getOrderModule(), List.of(configuration.getMdmsNonOverlappingOrders()));
-            MdmsResponse mdmsResponse = objectMapper.readValue(mdmsDataResponse, MdmsResponse.class);
-            JSONArray mdmsData = mdmsResponse.getMdmsRes().get(configuration.getOrderModule()).get(configuration.getMdmsNonOverlappingOrders());
+        nonOverlappingOrdersMdmsData = loadMdmsMasterData(configuration.getMdmsNonOverlappingOrders(), CompositeOrderMdms.class, "NonOverlappingOrdersMdmsData", failures);
+        nonRepeatingOrdersMdmsData = loadMdmsMasterData(configuration.getMdmsNonRepeatingCompositeOrders(), CompositeOrderMdms.class, "NonRepeatingOrdersMdmsData", failures);
+        itemTextMdmsData = loadMdmsMasterData(configuration.getMdmsItemText(), ItemTextMdms.class, "ItemTextMdmsData", failures);
 
-            nonOverlappingOrdersMdmsData = new ArrayList<>();
-            for (Object o : mdmsData) {
-                CompositeOrderMdms compositeOrderMdmsMdmsData = objectMapper.convertValue(o, CompositeOrderMdms.class);
-                nonOverlappingOrdersMdmsData.add(compositeOrderMdmsMdmsData);
-            }
-            log.info("NonOverlappingOrdersMdmsData ::{}", nonOverlappingOrdersMdmsData);
-
-        } catch (Exception e) {
-            log.error("Unable to create NonOverlappingOrdersMdmsData :: {}", e.getMessage(), e);
-            throw new CustomException(MDMS_DATA_LOAD_ERROR, "Unable to load NonOverlappingOrdersMdmsData from MDMS: " + e.getMessage());
-        }
-
-        if (CollectionUtils.isEmpty(nonOverlappingOrdersMdmsData)) {
-            log.error("NonOverlappingOrdersMdmsData loaded empty from MDMS");
-            throw new CustomException(MDMS_DATA_LOAD_ERROR, "NonOverlappingOrdersMdmsData loaded empty from MDMS");
+        if (!failures.isEmpty()) {
+            String message = "Failed to load MDMS data for: " + String.join("; ", failures);
+            log.error(message);
+            throw new CustomException(MDMS_DATA_LOAD_ERROR, message);
         }
     }
 
-    private void loadNonRepeatingOrdersMdmsData() {
+    /**
+     * Fetches and parses a single MDMS master. On fetch/parse failure or an empty result the failure is
+     * recorded in {@code failures} (rather than thrown here) so that every master is still attempted and
+     * all failures can be reported together by {@link #loadConfigData()}.
+     */
+    private <T> List<T> loadMdmsMasterData(String masterName, Class<T> targetClass, String label, List<String> failures) {
         try {
             RequestInfo requestInfo = RequestInfo.builder().build();
-            String mdmsDataResponse = mdmsUtil.fetchMdmsData(requestInfo, configuration.getTenantId(), configuration.getOrderModule(), List.of(configuration.getMdmsNonRepeatingCompositeOrders()));
+            String mdmsDataResponse = mdmsUtil.fetchMdmsData(requestInfo, configuration.getTenantId(), configuration.getOrderModule(), List.of(masterName));
             MdmsResponse mdmsResponse = objectMapper.readValue(mdmsDataResponse, MdmsResponse.class);
-            JSONArray mdmsData = mdmsResponse.getMdmsRes().get(configuration.getOrderModule()).get(configuration.getMdmsNonRepeatingCompositeOrders());
+            JSONArray mdmsData = mdmsResponse.getMdmsRes().get(configuration.getOrderModule()).get(masterName);
 
-            nonRepeatingOrdersMdmsData = new ArrayList<>();
-
+            List<T> result = new ArrayList<>();
             for (Object o : mdmsData) {
-                CompositeOrderMdms compositeOrderMdmsMdmsData = objectMapper.convertValue(o, CompositeOrderMdms.class);
-                nonRepeatingOrdersMdmsData.add(compositeOrderMdmsMdmsData);
+                result.add(objectMapper.convertValue(o, targetClass));
             }
-            log.info("NonRepeatingOrdersMdmsData ::{}", nonRepeatingOrdersMdmsData);
-        } catch (Exception e) {
-            log.error("Unable to create NonRepeatingOrdersMdmsData :: {}", e.getMessage(), e);
-            throw new CustomException(MDMS_DATA_LOAD_ERROR, "Unable to load NonRepeatingOrdersMdmsData from MDMS: " + e.getMessage());
-        }
+            log.info("{} :: {}", label, result);
 
-        if (CollectionUtils.isEmpty(nonRepeatingOrdersMdmsData)) {
-            log.error("NonRepeatingOrdersMdmsData loaded empty from MDMS");
-            throw new CustomException(MDMS_DATA_LOAD_ERROR, "NonRepeatingOrdersMdmsData loaded empty from MDMS");
-        }
-    }
-
-    private void loadItemTextMdmsData() {
-        try {
-            RequestInfo requestInfo = RequestInfo.builder().build();
-            String mdmsDataResponse = mdmsUtil.fetchMdmsData(requestInfo, configuration.getTenantId(), configuration.getOrderModule(), List.of(configuration.getMdmsItemText()));
-            MdmsResponse mdmsResponse = objectMapper.readValue(mdmsDataResponse, MdmsResponse.class);
-            JSONArray mdmsData = mdmsResponse.getMdmsRes().get(configuration.getOrderModule()).get(configuration.getMdmsItemText());
-
-            itemTextMdmsData = new ArrayList<>();
-
-            for (Object o : mdmsData) {
-                ItemTextMdms itemTextMdms = objectMapper.convertValue(o, ItemTextMdms.class);
-                itemTextMdmsData.add(itemTextMdms);
+            if (CollectionUtils.isEmpty(result)) {
+                log.error("{} loaded empty from MDMS", label);
+                failures.add(label + " (empty)");
             }
-            log.info("ItemTextMdmsData ::{}", itemTextMdmsData);
+            return result;
         } catch (Exception e) {
-            log.error("Unable to create ItemTextMdmsData :: {}", e.getMessage(), e);
-            throw new CustomException(MDMS_DATA_LOAD_ERROR, "Unable to load ItemTextMdmsData from MDMS: " + e.getMessage());
-        }
-
-        if (CollectionUtils.isEmpty(itemTextMdmsData)) {
-            log.error("ItemTextMdmsData loaded empty from MDMS");
-            throw new CustomException(MDMS_DATA_LOAD_ERROR, "ItemTextMdmsData loaded empty from MDMS");
+            log.error("Unable to create {} :: {}", label, e.getMessage(), e);
+            failures.add(label + " (" + e.getMessage() + ")");
+            return new ArrayList<>();
         }
     }
 }
