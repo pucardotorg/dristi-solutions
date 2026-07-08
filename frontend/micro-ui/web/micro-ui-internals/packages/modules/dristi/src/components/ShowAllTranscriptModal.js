@@ -79,14 +79,13 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView
           ))
         )}
       </div>
-      <div className="submit-bar-div" style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
-        <SubmitBar
-          variation="primary"
-          onSubmit={handleDownloadCaseSummary}
-          className="primary-label-btn"
-          style={{ width: "120px" }}
-          label={t("CS_COMMON_DOWNLOAD")}
-        ></SubmitBar>
+      <div className="submit-bar-div" style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center" }}>
+        <div
+          onClick={handleDownloadCaseSummary}
+          style={{ fontWeight: 700, fontSize: "16px", lineHeight: "18.75px", color: "#007E7E", cursor: "pointer" }}
+        >
+          {t("CS_COMMON_DOWNLOAD")}
+        </div>
         <SubmitBar
           variation="primary"
           onSubmit={() => setShowAllTranscript(false)}
