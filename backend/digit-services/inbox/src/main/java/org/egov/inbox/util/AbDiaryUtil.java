@@ -44,9 +44,10 @@ public class AbDiaryUtil {
 
         try {
             Map<String, Object> response = (Map<String, Object>) serviceRequestRepository.fetchResult(uri, requestBody);
-            Integer totalCount = JsonPath.read(response, "$.pagination.totalCount");
-            log.info("Ab-diary entry count: {}", totalCount);
-            return totalCount;
+            Double totalCount = JsonPath.read(response, "$.pagination.totalCount");
+            Integer count = totalCount != null ? totalCount.intValue() : 0;
+            log.info("Ab-diary entry count: {}", count);
+            return count;
         } catch (Exception e) {
             log.error("Error fetching ab-diary count: {}", e.getMessage());
             return 0;
