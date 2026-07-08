@@ -22,16 +22,10 @@ public class ServiceHealthRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public void upsert(ServiceHealthStatus status) {
+    public void insert(ServiceHealthStatus status) {
         String sql = "INSERT INTO eg_service_health_status " +
                 "(service_name, service_url, last_status, last_updated_time, response_time_ms, message) " +
-                "VALUES (?, ?, ?, ?, ?, ?) " +
-                "ON CONFLICT (service_name) DO UPDATE SET " +
-                "service_url = EXCLUDED.service_url, " +
-                "last_status = EXCLUDED.last_status, " +
-                "last_updated_time = EXCLUDED.last_updated_time, " +
-                "response_time_ms = EXCLUDED.response_time_ms, " +
-                "message = EXCLUDED.message";
+                "VALUES (?, ?, ?, ?, ?, ?)";
 
         jdbcTemplate.update(sql,
                 status.getServiceName(),
@@ -41,7 +35,7 @@ public class ServiceHealthRepository {
                 status.getResponseTimeMs(),
                 status.getMessage());
 
-        log.info("Upserted health status: service={}, status={}, responseTime={}ms",
+        log.info("Inserted health status: service={}, status={}, responseTime={}ms",
                 status.getServiceName(), status.getLastStatus(), status.getResponseTimeMs());
     }
 
@@ -54,7 +48,8 @@ public class ServiceHealthRepository {
 
     public ServiceHealthStatus findByServiceName(String serviceName) {
         String sql = "SELECT id, service_name, service_url, last_status, last_updated_time, response_time_ms, message " +
-                "FROM eg_service_health_status WHERE service_name = ?";
+                "FROM eg_service_health_status WHERE service_name = ? " +
+                "ORDER BY last_updated_time DESC NULLS LAST LIMIT 1";
         List<ServiceHealthStatus> results = jdbcTemplate.query(sql, new ServiceHealthRowMapper(), serviceName);
         return results.isEmpty() ? null : results.get(0);
     }

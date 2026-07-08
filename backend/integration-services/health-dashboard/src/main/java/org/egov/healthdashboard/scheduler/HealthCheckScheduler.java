@@ -60,7 +60,7 @@ public class HealthCheckScheduler {
 
     private void checkAndStore(ServiceHealthStatus status) {
         try {
-            serviceHealthRepository.upsert(status);
+            serviceHealthRepository.insert(status);
         } catch (Exception e) {
             log.error("Failed to store health status for [{}]: {}", status.getServiceName(), e.getMessage(), e);
         }
