@@ -1,6 +1,8 @@
 package org.egov.eTreasury.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.egov.eTreasury.kafka.Producer;
+import org.egov.eTreasury.model.HealthStatusEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -15,6 +17,7 @@ import org.egov.eTreasury.config.PaymentConfiguration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static org.egov.eTreasury.config.ServiceConstants.CLIENT_ID_HEADER;
 import static org.egov.eTreasury.config.ServiceConstants.CLIENT_SECRET_HEADER;
@@ -27,18 +30,48 @@ public class ETreasuryUtil {
 
     private final RestTemplate restTemplate;
     private final PaymentConfiguration paymentConfiguration;
+    private final Producer producer;
 
     @Autowired
-    public ETreasuryUtil(RestTemplate restTemplate, PaymentConfiguration paymentConfiguration) {
+    public ETreasuryUtil(RestTemplate restTemplate, PaymentConfiguration paymentConfiguration, Producer producer) {
         this.restTemplate = restTemplate;
         this.paymentConfiguration = paymentConfiguration;
+        this.producer = producer;
     }
 
     private void addBasicAuthIfRequired(HttpHeaders headers) {
-        if (paymentConfiguration.isTest() && 
-            paymentConfiguration.getBasicAuthUsername() != null && 
+        if (paymentConfiguration.isTest() &&
+            paymentConfiguration.getBasicAuthUsername() != null &&
             !paymentConfiguration.getBasicAuthUsername().isEmpty()) {
             headers.setBasicAuth(paymentConfiguration.getBasicAuthUsername(), paymentConfiguration.getBasicAuthPassword());
+        }
+    }
+
+    private <T> ResponseEntity<T> callAndTrackHealth(String url, Supplier<ResponseEntity<T>> call) {
+        long start = System.currentTimeMillis();
+        try {
+            ResponseEntity<T> response = call.get();
+            pushHealthStatus(url, "UP", System.currentTimeMillis() - start, "HTTP " + response.getStatusCode());
+            return response;
+        } catch (RuntimeException e) {
+            pushHealthStatus(url, "DOWN", System.currentTimeMillis() - start, e.getMessage());
+            throw e;
+        }
+    }
+
+    private void pushHealthStatus(String serviceUrl, String status, long elapsedMs, String message) {
+        try {
+            HealthStatusEvent event = HealthStatusEvent.builder()
+                    .serviceName("TREASURY")
+                    .serviceUrl(serviceUrl)
+                    .lastStatus(status)
+                    .lastUpdatedTime(System.currentTimeMillis())
+                    .responseTimeMs(elapsedMs)
+                    .message(message)
+                    .build();
+            producer.push(paymentConfiguration.getHealthStatusTopic(), event);
+        } catch (Exception e) {
+            log.error("Failed to push TREASURY health status to kafka: {}", e.getMessage(), e);
         }
     }
 
@@ -51,7 +84,7 @@ public class ETreasuryUtil {
         addBasicAuthIfRequired(headers);
 
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
-        return restTemplate.postForEntity(url, requestEntity, responseType);
+        return callAndTrackHealth(url, () -> restTemplate.postForEntity(url, requestEntity, responseType));
     }
 
     public ResponseEntity<Object> callAuthService(String clientId, String clientSecret, String payload, String url) {
@@ -64,7 +97,7 @@ public class ETreasuryUtil {
         addBasicAuthIfRequired(httpHeaders);
 
         HttpEntity<String> httpEntity = new HttpEntity<>(payload, httpHeaders);
-        return restTemplate.postForEntity(url, httpEntity, Object.class);
+        return callAndTrackHealth(url, () -> restTemplate.postForEntity(url, httpEntity, Object.class));
     }
 
     public <T> ResponseEntity<T> callService(String inputHeaders, String inputBody, String url, Class<T> responseType, MediaType mediaType) {
@@ -78,7 +111,7 @@ public class ETreasuryUtil {
         addBasicAuthIfRequired(headers);
 
         HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
-        return restTemplate.postForEntity(url, requestEntity, responseType);
+        return callAndTrackHealth(url, () -> restTemplate.postForEntity(url, requestEntity, responseType));
     }
 
     public <T> ResponseEntity<T> callRefundService(String clientId, String authToken, String payload, String url,  Class<T> responseType) {
@@ -90,7 +123,7 @@ public class ETreasuryUtil {
 
         HttpEntity<String> requestEntity = new HttpEntity<>(payload, headers);
 
-        return restTemplate.postForEntity(url, requestEntity, responseType);
+        return callAndTrackHealth(url, () -> restTemplate.postForEntity(url, requestEntity, responseType));
     }
 
     public ResponseEntity<String> callTransactionDetailsV3(String departmentId, String url) {
@@ -109,6 +142,6 @@ public class ETreasuryUtil {
         body.add(DEPARTMENT_ID_PARAM, departmentId);
 
         HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
-        return restTemplate.postForEntity(url, requestEntity, String.class);
+        return callAndTrackHealth(url, () -> restTemplate.postForEntity(url, requestEntity, String.class));
     }
 }
