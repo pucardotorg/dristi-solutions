@@ -500,6 +500,9 @@ public class HearingService {
         if (!allHearings.isEmpty()) {
             boolean partialMiss = allHearings.stream().anyMatch(Map::isEmpty);
             if (!partialMiss) {
+                // Defensive default: hash entries warmed before orderStatus was added to the cache
+                // won't carry the field. Backfill NOT_CREATED so the response stays consistent.
+                allHearings.forEach(h -> h.putIfAbsent("orderStatus", OrderStatus.NOT_CREATED.toString()));
                 allHearings.sort(Comparator
                         .comparingInt((Map<String, Object> h) -> {
                             Object so = h.get("statusOrder");
@@ -556,6 +559,7 @@ public class HearingService {
         map.put("hearingUuid", h.getHearingUuid() != null ? h.getHearingUuid() : "");
         map.put("status", h.getStatus() != null ? h.getStatus() : "");
         map.put("statusOrder", h.getStatusOrder() != null ? h.getStatusOrder() : 99);
+        map.put("orderStatus", h.getOrderStatus() != null ? h.getOrderStatus().toString() : OrderStatus.NOT_CREATED.toString());
         map.put("caseNumber", h.getCaseNumber() != null ? h.getCaseNumber() : "");
         map.put("caseTitle", h.getCaseTitle() != null ? h.getCaseTitle() : "");
         map.put("hearingType", h.getHearingType() != null ? h.getHearingType() : "");
