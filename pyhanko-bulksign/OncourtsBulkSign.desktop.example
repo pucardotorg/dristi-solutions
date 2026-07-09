@@ -1,13 +1,13 @@
 [Desktop Entry]
 Type=Application
-Name=PUCAR Bulk Sign
+Name=OnCourts Bulk Sign
 Comment=Sign court documents in bulk with your DSC token
 # Edit the two /full/path/... lines to the absolute paths on THIS machine, then:
-#   cp PucarBulkSign.desktop.example ~/Desktop/PucarBulkSign.desktop
-#   chmod +x ~/Desktop/PucarBulkSign.desktop      (then right-click -> Allow Launching)
+#   cp OncourtsBulkSign.desktop.example ~/Desktop/OncourtsBulkSign.desktop
+#   chmod +x ~/Desktop/OncourtsBulkSign.desktop      (then right-click -> Allow Launching)
 #
 # Packaged executable (built with build_app.sh) -- recommended for staff machines:
-Exec=/full/path/to/pyhanko-bulksign/dist/linux/PucarBulkSign
+Exec=/full/path/to/pyhanko-bulksign/dist/linux/OncourtsBulkSign
 Path=/full/path/to/pyhanko-bulksign/dist/linux
 #
 # Or, to run from source instead, point Exec at the launcher (and remove Path):

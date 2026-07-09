@@ -1,6 +1,6 @@
 @echo off
 REM Build a SELF-CONTAINED Windows package -> dist\windows\
-REM   dist\windows\{ PucarBulkSign.exe, .env, court-seal.png, <vendor pkcs11 .dll> }
+REM   dist\windows\{ OncourtsBulkSign.exe, .env, court-seal.png, <vendor pkcs11 .dll> }
 REM Everything the app needs sits in that one folder (paths in .env are bare
 REM filenames resolved next to the exe).
 REM
@@ -20,7 +20,7 @@ call .venv\Scripts\pip install -q -r requirements.txt pyinstaller
 
 if exist "%DIST%" rmdir /s /q "%DIST%"
 call .venv\Scripts\pyinstaller --noconfirm --clean --onefile --windowed ^
-  --name PucarBulkSign ^
+  --name OncourtsBulkSign ^
   --distpath "%DIST%" ^
   --collect-submodules uvicorn ^
   --collect-all pyhanko ^

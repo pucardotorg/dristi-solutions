@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build a SELF-CONTAINED Linux package -> dist/linux/
-#   dist/linux/{ PucarBulkSign, .env, court-seal.png, <vendor pkcs11 .so> }
+#   dist/linux/{ OncourtsBulkSign, .env, court-seal.png, <vendor pkcs11 .so> }
 # Everything the app needs sits in that one folder (paths in .env are bare
 # filenames resolved next to the exe).
 #
@@ -20,7 +20,7 @@ DIST="dist/linux"
 
 rm -rf "$DIST"
 ./.venv/bin/pyinstaller --noconfirm --clean --onefile --windowed \
-  --name PucarBulkSign \
+  --name OncourtsBulkSign \
   --distpath "$DIST" \
   --collect-submodules uvicorn \
   --collect-all pyhanko \

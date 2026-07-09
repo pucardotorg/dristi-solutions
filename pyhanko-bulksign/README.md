@@ -51,8 +51,8 @@ status light, and an activity log.
   run_app.bat           # Windows      (python.org Python includes Tkinter)
   ```
   First launch auto-creates the venv and installs deps, then opens the window.
-  For a double-click icon on Linux, copy `PucarBulkSign.desktop.example` →
-  `PucarBulkSign.desktop`, set its `Exec=` path, and mark it "Allow Launching".
+  For a double-click icon on Linux, copy `OncourtsBulkSign.desktop.example` →
+  `OncourtsBulkSign.desktop`, set its `Exec=` path, and mark it "Allow Launching".
 
 Either way the app listens on `http://localhost:1620` — the same `BULK_SIGN_URL`
 the frontend already uses. STOP shuts the service down cleanly.
@@ -97,7 +97,7 @@ must be built **on Windows**.
    set PKCS11_MODULE_SRC=C:\Windows\System32\<vendor-pkcs11>.dll
    build_app.bat
    ```
-   → a self-contained **`dist\windows\`** with `PucarBulkSign.exe`, `.env`,
+   → a self-contained **`dist\windows\`** with `OncourtsBulkSign.exe`, `.env`,
    `court-seal.png`, and the vendor `.dll` copied in.
 3. Edit **`dist\windows\.env`** — everything is a **bare filename** (no absolute paths):
    ```

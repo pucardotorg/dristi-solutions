@@ -27,7 +27,7 @@ from tkinter import messagebox, scrolledtext, ttk
 # Run from the app's own folder so .env (and, when running from source, app.py /
 # pyhanko_signer.py) resolve -- including when launched by double-click or from a
 # PyInstaller bundle. For a frozen build, the folder is where the executable lives
-# (sys.executable), so staff drop a .env next to PucarBulkSign(.exe).
+# (sys.executable), so staff drop a .env next to OncourtsBulkSign(.exe).
 if getattr(sys, "frozen", False):
     APP_DIR = os.path.dirname(os.path.abspath(sys.executable))
 else:
