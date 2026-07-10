@@ -27,7 +27,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-function BulkWitnessDepositionView({ setShowToast = () => {} }) {
+function BulkWitnessDepositionView({ setShowToast = () => {}, refetchCounts }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
   const userInfo = Digit.UserService.getUser()?.info;
@@ -229,6 +229,7 @@ function BulkWitnessDepositionView({ setShowToast = () => {} }) {
               setShowBulkSignSuccessModal(true);
               setSuccessCount(response?.artifacts?.length);
               setShowToast({ label: t("WITNESS_DEPOSITION_BULK_SIGN_SUCCESS_MSG"), error: false });
+              if (refetchCounts && typeof refetchCounts === "function") setTimeout(() => refetchCounts(), 1000);
             });
           });
         }
@@ -320,6 +321,7 @@ function BulkWitnessDepositionView({ setShowToast = () => {} }) {
           witnessDepositionPaginationData={witnessDepositionPaginationData}
           setCounter={setCounter}
           setShowToast={setToast}
+          refetchCounts={refetchCounts}
         />
       )}
       {showBulkSignSuccessModal && (

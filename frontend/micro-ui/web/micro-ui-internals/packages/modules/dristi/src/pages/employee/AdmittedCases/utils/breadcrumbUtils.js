@@ -7,6 +7,10 @@ export const getEmployeeCrumbs = ({ t, isCitizen, homeFilteredData, homeActiveTa
       show: true,
       isLast: false,
       homeFilteredData: homeFilteredData,
+      onClick: () => {
+        sessionStorage.removeItem("ReviewSummonsReturnState");
+        sessionStorage.removeItem("homeActiveTab");
+      },
     },
     {
       path: `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/home-screen`,
@@ -33,12 +37,14 @@ export const getEmployeeCrumbs = ({ t, isCitizen, homeFilteredData, homeActiveTa
 // Helper function to generate advocate name display
 export const getAdvocateName = ({ caseDetails, t }) => {
   if (!caseDetails?.representatives?.length) return "";
-
+  
   const complainantAdvocates = caseDetails?.representatives?.filter((rep) =>
     rep?.representing?.some((lit) => lit?.partyType?.includes("complainant"))
   );
-  const accusedAdvocates = caseDetails?.representatives?.filter((rep) => rep?.representing?.some((lit) => lit?.partyType?.includes("respondent")));
-
+  const accusedAdvocates = caseDetails?.representatives?.filter((rep) => 
+    rep?.representing?.some((lit) => lit?.partyType?.includes("respondent"))
+  );
+  
   const complainantAdvocateName =
     complainantAdvocates?.length > 0
       ? `${complainantAdvocates?.[0]?.additionalDetails?.advocateName} (C)${
@@ -49,7 +55,7 @@ export const getAdvocateName = ({ caseDetails, t }) => {
             : ""
         }`
       : "";
-
+      
   const accusedAdvocateName =
     accusedAdvocates?.length > 0
       ? `${accusedAdvocates?.[0]?.additionalDetails?.advocateName} (A)${
@@ -60,7 +66,7 @@ export const getAdvocateName = ({ caseDetails, t }) => {
             : ""
         }`
       : "";
-
+      
   return `${t("CS_COMMON_ADVOCATES")}: ${complainantAdvocateName} ${accusedAdvocateName ? ", " + accusedAdvocateName : ""}`;
 };
 

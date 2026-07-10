@@ -1,6 +1,7 @@
 import { Request } from "@egovernments/digit-ui-module-common/src/utils/Request";
 
 export const Urls = {
+  inboxBulkCount: "/inbox/v2/index/_bulkCount",
   getEvidencesToSign: "/evidence/v1/_getArtifactsToSign",
   updateSignedEvidences: "/evidence/v1/_updateSignedArtifacts",
   getPendingTaskFields: "/inbox/v2/_getFields",
@@ -270,6 +271,14 @@ export const HomeService = {
   getHearingCauseList: (data, params) =>
     Request({
       url: Urls.getHearingCauseList,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  bulkCountSearch: (data, params) =>
+    Request({
+      url: Urls.inboxBulkCount,
       useCache: false,
       userService: true,
       data,

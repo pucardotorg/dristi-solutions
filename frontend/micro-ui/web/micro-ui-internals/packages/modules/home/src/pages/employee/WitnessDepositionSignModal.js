@@ -29,6 +29,7 @@ export const WitnessDepositionSignModal = ({
   witnessDepositionPaginationData,
   setCounter = () => {},
   setShowToast = () => {},
+  refetchCounts = () => {},
 }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
   const location = useLocation();
@@ -233,6 +234,7 @@ export const WitnessDepositionSignModal = ({
                 setFormData({});
                 clearWitnessDepositionSessionData();
                 setStepper(2);
+                if (refetchCounts && typeof refetchCounts === "function") setTimeout(() => refetchCounts(), 1000);
               } else {
                 setShowBulkSignModal(false);
                 if (queryStrings?.artifactNumber) {

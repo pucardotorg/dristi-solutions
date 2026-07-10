@@ -57,6 +57,13 @@ public class ServiceConstants {
 
     public static final String LOCAL_DATE_FORMAT="dd-MM-yyyy";
     public static final String ESIGN_DATE_FORMAT = "dd-MMM-yyyy";
+
+    // Cause-list Redis cache key parts. MUST stay in sync with the constants used by
+    // hearing-service (ServiceConstants) and scheduler-svc that own/warm these hashes.
+    public static final String CACHE_KEY_PREFIX = "DRISTI:COURT:";
+    public static final String CACHE_HEARING_PREFIX = ":HEARING:";
+    public static final String DATE_FORMAT_REDIS = "ddMMyyyy";
+    public static final String CACHE_FIELD_ORDER_STATUS = "orderStatus";
     public static final String DATA = "data";
     public static final String OMIT_XML_DECLARATION = "omit-xml-declaration";
 

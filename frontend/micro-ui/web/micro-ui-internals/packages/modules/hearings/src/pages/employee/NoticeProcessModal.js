@@ -358,7 +358,7 @@ const NoticeProcessModal = ({
         typeCounters[type]++;
       });
 
-      const updatedOrdersList = partyGroup?.ordersList?.map((order) => {
+      const updatedOrdersList = partyGroup.ordersList.map((order) => {
         const type = order?.orderType === "MISCELLANEOUS_PROCESS" ? order?.orderDetails?.processTemplate?.processTitle : order?.orderType;
         const round = typeCounters[type]--;
         const titleCaseType = type

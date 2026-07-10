@@ -26,7 +26,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-function BulkMarkAsEvidenceView({ setShowToast = () => {} }) {
+function BulkMarkAsEvidenceView({ setShowToast = () => {}, refetchCounts }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
   const userInfo = Digit.UserService.getUser()?.info;
@@ -205,6 +205,7 @@ function BulkMarkAsEvidenceView({ setShowToast = () => {} }) {
             ).then((response) => {
               setShowBulkSignConfirmModal(false);
               setShowBulkEvidenceSuccessModal(true);
+              if (refetchCounts && typeof refetchCounts === "function") setTimeout(() => refetchCounts(), 1000);
             });
           });
         }
@@ -297,6 +298,7 @@ function BulkMarkAsEvidenceView({ setShowToast = () => {} }) {
           paginatedData={paginatedData}
           setDocumentCounter={setCounter}
           setShowToast={setShowToast}
+          refetchCounts={refetchCounts}
         />
       )}
       {showBulkEvidenceSuccessModal && (

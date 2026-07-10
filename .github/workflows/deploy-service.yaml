@@ -31,6 +31,7 @@ on:
           - dev
           - qa
           - demo
+          - sdc-uat
       service_group:
         required: true
         description: "Service group in kubernetes cluster (eg: egov)"
