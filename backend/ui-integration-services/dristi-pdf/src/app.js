@@ -38,7 +38,10 @@ app.use(config.app.contextPath + "/hearing", hearing);
 app.use(config.app.contextPath + "/bailBond", bailBond);
 app.use(config.app.contextPath + "/evidence", evidence);
 app.use(config.app.contextPath + "/digitisation", digitisation);
-app.use(config.app.contextPath + "/template-configuration", templateConfiguration); 
+app.use(
+  config.app.contextPath + "/template-configuration",
+  templateConfiguration,
+);
 app.use(config.app.contextPath + "/ctc-applications", ctcApplications);
 app.use(config.app.contextPath + "/ctc-certification", ctcCertification);
 app.use(config.app.contextPath + "/case-summary", caseSummary);
