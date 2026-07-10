@@ -88,7 +88,17 @@ public class HearingService {
         openHearing.setHearingNumber(hearing.getHearingId());
         openHearing.setFilingNumber(hearing.getFilingNumber().get(0));
         openHearing.setCaseTitle(courtCase.getCaseTitle());
-        openHearing.setCaseNumber(enrichCaseNumber(hearing, courtCase));
+        // Resolve the case number from a Redis-first metadata lookup (cache hit avoids the DB
+        // case body; miss falls back to dristi_cases) rather than the search-sourced courtCase.
+        // Kept non-fatal: a failure here must not drop the rest of the open-hearing enrichment.
+        CaseMeta caseMeta = null;
+        try {
+            caseMeta = caseService.getCaseMeta(hearing.getFilingNumber().get(0), hearing.getTenantId(), requestInfo);
+        } catch (Exception ex) {
+            log.error("Error fetching case meta for filingNumber: {}, hearingId: {}; will fall back to hearing case reference number",
+                    hearing.getFilingNumber().get(0), hearing.getHearingId(), ex);
+        }
+        openHearing.setCaseNumber(enrichCaseNumber(hearing, caseMeta));
         openHearing.setStage(courtCase.getStage());
         openHearing.setSubStage(courtCase.getSubstage());
         openHearing.setCaseUuid(courtCase.getId().toString());
@@ -259,22 +269,59 @@ public class HearingService {
 
     }
 
-    private String enrichCaseNumber(Hearing hearing, CourtCase courtCase) {
+    private String enrichCaseNumber(Hearing hearing, CaseMeta caseMeta) {
 
-        if (LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus())) {
-            return courtCase.getLprNumber();
+        String filingNumber = hearing.getFilingNumber() != null && !hearing.getFilingNumber().isEmpty()
+                ? hearing.getFilingNumber().get(0) : null;
+
+        // caseMeta comes from the Redis-first metadata lookup. If it could not be resolved at all,
+        // fall back to the (possibly stale) value carried on the hearing event.
+        if (caseMeta == null) {
+            log.warn("No case metadata resolved (Redis/DB) for filingNumber: {}; falling back to "
+                    + "hearing.caseReferenceNumber: {}, for hearingId: {}",
+                    filingNumber, hearing.getCaseReferenceNumber(), hearing.getHearingId());
+            return hearing.getCaseReferenceNumber();
         }
 
-        String caseRefNumber = hearing.getCaseReferenceNumber();
+        // Log the candidate values up front so that if an open hearing ends up with an unexpected
+        // case number, we can tell from the logs which source was available and which branch won.
+        log.info("Enriching open-hearing case number for hearingId: {}, filingNumber: {} | lifecycleStatus: {}, "
+                        + "lprNumber: {}, courtCaseNumber: {}, cmpNumber: {}, hearing.caseReferenceNumber: {}",
+                hearing.getHearingId(),
+                filingNumber,
+                caseMeta.getLifecycleStatus(),
+                caseMeta.getLprNumber(),
+                caseMeta.getCourtCaseNumber(),
+                caseMeta.getCmpNumber(),
+                hearing.getCaseReferenceNumber());
 
-        if (caseRefNumber != null && !caseRefNumber.isEmpty()) {
-            return caseRefNumber;
+        if (LifecycleStatus.LPR.equals(caseMeta.getLifecycleStatus())) {
+            log.info("Resolved case number from lprNumber (LPR lifecycle): {}, for hearingId: {}",
+                    caseMeta.getLprNumber(), hearing.getHearingId());
+            return caseMeta.getLprNumber();
         }
 
-        String courtCaseNumber = courtCase.getCourtCaseNumber();
-        return (courtCaseNumber != null && !courtCaseNumber.isEmpty())
-                ? courtCaseNumber
-                : courtCase.getCmpNumber();
+        // Prefer the live case, as hearing events can arrive stale/out-of-order and clobber
+        // a corrected case number in the open-hearing index. Fall back to the (possibly stale)
+        // value on the hearing event only when the live case has neither number.
+        String courtCaseNumber = caseMeta.getCourtCaseNumber();
+        if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
+            log.info("Resolved case number from courtCaseNumber: {}, for hearingId: {}",
+                    courtCaseNumber, hearing.getHearingId());
+            return courtCaseNumber;
+        }
+
+        String cmpNumber = caseMeta.getCmpNumber();
+        if (cmpNumber != null && !cmpNumber.isEmpty()) {
+            log.info("Resolved case number from cmpNumber: {}, for hearingId: {}",
+                    cmpNumber, hearing.getHearingId());
+            return cmpNumber;
+        }
+
+        // Live case has neither number; fall back to the (possibly stale) value on the hearing event.
+        log.warn("Live court case has no courtCaseNumber/cmpNumber; falling back to hearing.caseReferenceNumber: {}, "
+                + "for hearingId: {}", hearing.getCaseReferenceNumber(), hearing.getHearingId());
+        return hearing.getCaseReferenceNumber();
     }
 
     public void pushHearingToLegacy(HearingRequest hearingRequest) {

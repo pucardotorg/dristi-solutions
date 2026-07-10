@@ -441,6 +441,78 @@ public class CaseService {
         }
     }
 
+    /**
+     * Redis-first, scalar-metadata lookup by filingNumber.
+     *
+     * For each filingNumber: resolve its caseId (lightweight indexed read), then look the case
+     * up in Redis by caseId. On a cache hit the metadata is built from the cached CourtCase and
+     * no case body is read from the database. On a miss it falls back to a single-table
+     * dristi_cases projection. All returned fields are plaintext, so no enc-service decryption
+     * is performed.
+     *
+     * Note: Redis is caseId-keyed, so the filingNumber -> caseId resolution is one unavoidable
+     * lightweight DB read. Only the (expensive, in the full-case sense) case body read is skipped
+     * on a cache hit. The cache is not repopulated from here, since this endpoint never
+     * materialises a full CourtCase to store.
+     *
+     * Intended for trusted internal/system callers that need case identifiers/scalars only; it
+     * does not apply the court/advocate/litigant ACL scoping that searchCases does, so it must
+     * not be exposed to citizen/advocate tokens without adding equivalent scoping.
+     */
+    public List<CaseMeta> searchCaseMeta(CaseMetaRequest request) {
+        try {
+            RequestInfo requestInfo = request.getRequestInfo();
+            List<CaseMeta> result = new ArrayList<>();
+            for (String filingNumber : request.getFilingNumbers()) {
+                CaseMeta meta = null;
+
+                String caseId = caseRepository.getCaseIdByFilingNumber(filingNumber);
+                if (caseId != null) {
+                    CourtCase cachedCase = searchRedisCache(requestInfo, caseId);
+                    if (cachedCase != null) {
+                        log.info("CaseMeta served from Redis for caseId: {}", caseId);
+                        meta = toCaseMeta(cachedCase);
+                    }
+                }
+
+                if (meta == null) {
+                    log.info("CaseMeta not found in Redis; reading dristi_cases for filingNumber: {}", filingNumber);
+                    List<CaseMeta> dbResult = caseRepository.getCaseMeta(Collections.singletonList(filingNumber));
+                    if (!dbResult.isEmpty()) {
+                        meta = dbResult.get(0);
+                    }
+                }
+
+                if (meta != null) {
+                    result.add(meta);
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("Error while fetching case meta :: {}", e.toString());
+            throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
+        }
+    }
+
+    private CaseMeta toCaseMeta(CourtCase courtCase) {
+        return CaseMeta.builder()
+                .caseId(courtCase.getId() != null ? courtCase.getId().toString() : null)
+                .tenantId(courtCase.getTenantId())
+                .filingNumber(courtCase.getFilingNumber())
+                .courtId(courtCase.getCourtId())
+                .courtCaseNumber(courtCase.getCourtCaseNumber())
+                .cmpNumber(courtCase.getCmpNumber())
+                .lprNumber(courtCase.getLprNumber())
+                .cnrNumber(courtCase.getCnrNumber())
+                .lifecycleStatus(courtCase.getLifecycleStatus())
+                .caseTitle(courtCase.getCaseTitle())
+                .status(courtCase.getStatus())
+                .stage(courtCase.getStage())
+                .filingDate(courtCase.getFilingDate())
+                .registrationDate(courtCase.getRegistrationDate())
+                .build();
+    }
+
     private void enrichAdvocateJoinedStatus(CourtCase courtCase, String advocateId) {
         if (advocateId != null && courtCase.getPendingAdvocateRequests() != null) {
             Optional<PendingAdvocateRequest> foundPendingAdvocateRequest = courtCase.getPendingAdvocateRequests().stream().filter(pendingAdvocateRequest -> pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateId)).findFirst();
