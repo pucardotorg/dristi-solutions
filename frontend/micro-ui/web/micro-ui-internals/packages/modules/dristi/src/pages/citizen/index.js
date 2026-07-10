@@ -314,9 +314,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
                 : ""
             }
           >
-          <PrivateRoute path={`${path}/home/advocate-profile-update`}>
-            <AdvocateProfileUpdate tenantId={tenantId} />
-          </PrivateRoute>
+            <PrivateRoute path={`${path}/home/advocate-profile-update`}>
+              <AdvocateProfileUpdate tenantId={tenantId} />
+            </PrivateRoute>
             <PrivateRoute exact path={`${path}/home`}>
               <CitizenHome tenantId={tenantId} setHideBack={setHideBack} />
             </PrivateRoute>
