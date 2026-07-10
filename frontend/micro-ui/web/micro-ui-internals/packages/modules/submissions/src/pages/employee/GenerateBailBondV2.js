@@ -289,9 +289,7 @@ const GenerateBailBondV2 = () => {
     const tasks = Array.isArray(pendingTasksResponse?.data) ? pendingTasksResponse.data : [];
     if (!Array.isArray(complainantsList) || complainantsList.length === 0 || tasks.length === 0) return null;
     const match = complainantsList.find((complainant) =>
-      tasks.some((task) =>
-        task?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field.value === complainant?.uuid)
-      )
+      tasks.some((task) => task?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field.value === complainant?.uuid))
     );
     return match?.uuid || null;
   }, [complainantsList, pendingTasksResponse]);
