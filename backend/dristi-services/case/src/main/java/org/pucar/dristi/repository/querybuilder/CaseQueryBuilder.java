@@ -100,7 +100,31 @@ public class CaseQueryBuilder {
 
     private static final String BASE_CASE_EXIST_QUERY = " SELECT COUNT(*) FROM dristi_cases cases ";
 
+    // Scalar-only projection (single table, no joins). All selected columns are plaintext,
+    // so results need no enc-service decryption.
+    private static final String BASE_CASE_META_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.filingnumber as filingnumber, " +
+            " cases.courtid as courtid, cases.courtcasenumber as courtcasenumber, cases.cmpnumber as cmpnumber, cases.lprnumber as lprnumber, " +
+            " cases.cnrnumber as cnrnumber, cases.lifecyclestatus as lifecyclestatus, cases.casetitle as casetitle, cases.status as status, " +
+            " cases.stage as stage, cases.filingdate as filingdate, cases.registrationdate as registrationdate ";
+
     public static final String AND = " AND ";
+
+    public String getCaseMetaQuery(List<String> filingNumbers, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        try {
+            StringBuilder query = new StringBuilder(BASE_CASE_META_QUERY);
+            query.append(FROM_CASES_TABLE);
+            String placeholders = filingNumbers.stream().map(f -> "?").collect(Collectors.joining(", "));
+            query.append(" WHERE cases.filingnumber IN (").append(placeholders).append(")");
+            for (String filingNumber : filingNumbers) {
+                preparedStmtList.add(filingNumber);
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
+            return query.toString();
+        } catch (Exception e) {
+            log.error("Error while building case meta query :: {}", e.toString());
+            throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the case meta query: " + e.getMessage());
+        }
+    }
 
     public String getCaseSummarySearchQuery(CaseSummarySearchCriteria criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         try {

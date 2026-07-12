@@ -241,6 +241,38 @@ public class CaseRepository {
         }
     }
 
+    /**
+     * Resolves a filingNumber to its caseId. Lightweight single-column, indexed lookup
+     * used to build the Redis key (tenantId:caseId) for the Redis-first metadata read.
+     * Returns null when the filingNumber does not exist.
+     */
+    public String getCaseIdByFilingNumber(String filingNumber) {
+        if (filingNumber == null || filingNumber.trim().isEmpty()) {
+            return null;
+        }
+        String query = "SELECT cases.id FROM dristi_cases cases WHERE cases.filingnumber = ? LIMIT 1";
+        List<String> ids = jdbcTemplate.query(query, new Object[]{filingNumber}, new int[]{java.sql.Types.VARCHAR},
+                (rs, rowNum) -> rs.getString("id"));
+        return ids.isEmpty() ? null : ids.get(0);
+    }
+
+    /**
+     * Scalar-only case metadata lookup by filingNumber(s). Single-table read against
+     * dristi_cases with no child-table joins, no Redis, and no decryption. Used as the
+     * database fallback when the case is not present in the Redis cache.
+     */
+    public List<CaseMeta> getCaseMeta(List<String> filingNumbers) {
+        if (filingNumbers == null || filingNumbers.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<Object> preparedStmtList = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+        String query = queryBuilder.getCaseMetaQuery(filingNumbers, preparedStmtList, preparedStmtArgList);
+        log.info("Final case meta query :: {}", query);
+        return jdbcTemplate.query(query, preparedStmtList.toArray(),
+                preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), new CaseMetaRowMapper());
+    }
+
     public List<CaseCriteria> getCases(List<CaseCriteria> searchCriteria, RequestInfo requestInfo) {
 
         try {

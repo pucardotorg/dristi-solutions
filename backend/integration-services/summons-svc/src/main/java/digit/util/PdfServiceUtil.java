@@ -26,10 +26,15 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static digit.config.ServiceConstants.*;
 
@@ -213,6 +218,16 @@ public class PdfServiceUtil {
                 summonsPdf.setCmpNumber(cmpNumber);
                 summonsPdf.setAccessCode(accessCode);
                 summonsPdf.setCourtCaseNumber(courtCaseNumber);
+
+                // For summons to witness, render the complainant/accused party table
+                // (instead of naming a single respondent) so multiple accused are covered.
+                if (SUMMON.equalsIgnoreCase(taskRequest.getTask().getTaskType())) {
+                    var summonDetails = taskRequest.getTask().getTaskDetails().getSummonDetails();
+                    if (summonDetails != null && WITNESS.equalsIgnoreCase(summonDetails.getDocSubType())) {
+                        summonsPdf.setComplainantList(buildComplainantList(caseDetails));
+                        summonsPdf.setAccusedList(buildAccusedList(caseDetails));
+                    }
+                }
             }
             if (qrCode && taskRequest.getTask().getDocuments() != null && !taskRequest.getTask().getDocuments().isEmpty()) {
                 List<Document> documents = taskRequest.getTask().getDocuments();
@@ -342,6 +357,98 @@ public class PdfServiceUtil {
                 .address(address)
                 .infoPdfUrl(config.getInfoPdfUrl())
                 .helplineNumber(config.getHelplineNumber())
+                .build();
+    }
+
+    private List<PartyDetail> buildComplainantList(JsonNode caseDetails) {
+        List<PartyDetail> complainantList = new ArrayList<>();
+        if (caseDetails == null) {
+            return complainantList;
+        }
+        JsonNode litigants = caseDetails.get("litigants");
+        JsonNode representatives = caseDetails.get("representatives");
+        if (litigants == null || !litigants.isArray()) {
+            return complainantList;
+        }
+        for (JsonNode litigant : litigants) {
+            String partyType = litigant.path("partyType").asText("");
+            if (partyType.contains("complainant")) {
+                complainantList.add(buildPartyDetail(litigant, representatives));
+            }
+        }
+        return complainantList;
+    }
+
+    private List<PartyDetail> buildAccusedList(JsonNode caseDetails) {
+        List<PartyDetail> accusedList = new ArrayList<>();
+        if (caseDetails == null) {
+            return accusedList;
+        }
+        JsonNode litigants = caseDetails.get("litigants");
+        JsonNode representatives = caseDetails.get("representatives");
+        Set<String> joinedIndividualIds = new HashSet<>();
+        if (litigants != null && litigants.isArray()) {
+            for (JsonNode litigant : litigants) {
+                String partyType = litigant.path("partyType").asText("");
+                if (!partyType.contains("respondent")) {
+                    continue;
+                }
+                String individualId = litigant.path("individualId").asText("");
+                if (!individualId.isEmpty()) {
+                    joinedIndividualIds.add(individualId);
+                }
+                accusedList.add(buildPartyDetail(litigant, representatives));
+            }
+        }
+        // Include accused captured in the complaint but not yet joined as litigants.
+        JsonNode respondentFormData = caseDetails.path("additionalDetails").path("respondentDetails").path("formdata");
+        if (respondentFormData.isArray()) {
+            for (JsonNode formData : respondentFormData) {
+                JsonNode data = formData.path("data");
+                String individualId = data.path("respondentVerification").path("individualDetails").path("individualId").asText("");
+                if (!individualId.isEmpty() && joinedIndividualIds.contains(individualId)) {
+                    continue;
+                }
+                String firstName = data.path("respondentFirstName").asText("");
+                String middleName = data.path("respondentMiddleName").asText("");
+                String lastName = data.path("respondentLastName").asText("");
+                String name = Stream.of(firstName, middleName, lastName)
+                        .filter(s -> s != null && !s.isBlank())
+                        .collect(Collectors.joining(" "));
+                accusedList.add(PartyDetail.builder().name(name).listOfAdvocatesRepresenting("").build());
+            }
+        }
+        return accusedList;
+    }
+
+    private PartyDetail buildPartyDetail(JsonNode litigant, JsonNode representatives) {
+        String name = litigant.path("additionalDetails").path("fullName").asText("");
+        String individualId = litigant.path("individualId").asText("");
+        List<String> advocateNames = new ArrayList<>();
+        if (representatives != null && representatives.isArray() && !individualId.isEmpty()) {
+            for (JsonNode representative : representatives) {
+                JsonNode representing = representative.get("representing");
+                if (representing == null || !representing.isArray()) {
+                    continue;
+                }
+                boolean representsLitigant = false;
+                for (JsonNode party : representing) {
+                    if (individualId.equals(party.path("individualId").asText(""))) {
+                        representsLitigant = true;
+                        break;
+                    }
+                }
+                if (representsLitigant) {
+                    String advocateName = representative.path("additionalDetails").path("advocateName").asText("");
+                    if (!advocateName.isBlank()) {
+                        advocateNames.add(advocateName);
+                    }
+                }
+            }
+        }
+        return PartyDetail.builder()
+                .name(name)
+                .listOfAdvocatesRepresenting(String.join(", ", advocateNames))
                 .build();
     }
 

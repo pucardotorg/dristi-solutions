@@ -5,6 +5,7 @@ import com.jayway.jsonpath.JsonPath;
 import digit.config.Configuration;
 import digit.service.CacheService;
 import digit.web.models.OpenHearing;
+import digit.web.models.OrderStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -99,6 +100,7 @@ public class EsUtil {
                 hearingMap.put("hearingUuid", h.getHearingUuid() != null ? h.getHearingUuid() : "");
                 hearingMap.put("status", h.getStatus() != null ? h.getStatus() : "");
                 hearingMap.put("statusOrder", h.getStatusOrder() != null ? h.getStatusOrder() : 99);
+                hearingMap.put("orderStatus", h.getOrderStatus() != null ? h.getOrderStatus().toString() : OrderStatus.NOT_CREATED.toString());
                 hearingMap.put("caseNumber", h.getCaseNumber() != null ? h.getCaseNumber() : "");
                 hearingMap.put("caseTitle", h.getCaseTitle() != null ? h.getCaseTitle() : "");
                 hearingMap.put("hearingType", h.getHearingType() != null ? h.getHearingType() : "");
