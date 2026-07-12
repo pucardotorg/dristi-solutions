@@ -1,23 +1,14 @@
 package org.egov.healthdashboard.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpHead;
 import org.egov.healthdashboard.web.models.ServiceHealthStatus;
 import org.springframework.stereotype.Service;
 
-import javax.net.ssl.SSLContext;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
@@ -25,47 +16,29 @@ import java.net.Socket;
 @Slf4j
 public class HealthCheckService {
 
+    private final CloseableHttpClient httpClient = HttpClients.createDefault();
+
     /**
      * Checks HTTP/HTTPS endpoint availability.
-     * Uses HEAD request with a trust-all SSL client.
      * Any HTTP response (including 4xx/5xx) = UP — only connection failure = DOWN.
      */
     public ServiceHealthStatus checkHttp(String serviceName, String url, int timeoutMs) {
         long start = System.currentTimeMillis();
         try {
-            SSLContext sslContext = SSLContextBuilder.create()
-                    .loadTrustMaterial(null, (cert, authType) -> true)
-                    .build();
-
-            SSLConnectionSocketFactory sslSocketFactory =
-                    new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
-
-            Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
-                    .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                    .register("https", sslSocketFactory)
-                    .build();
-
-            PoolingHttpClientConnectionManager connManager =
-                    new PoolingHttpClientConnectionManager(socketFactoryRegistry);
-
             RequestConfig requestConfig = RequestConfig.custom()
                     .setConnectTimeout(timeoutMs)
                     .setSocketTimeout(timeoutMs)
                     .setConnectionRequestTimeout(timeoutMs)
                     .build();
 
-            try (CloseableHttpClient httpClient = HttpClients.custom()
-                    .setConnectionManager(connManager)
-                    .setDefaultRequestConfig(requestConfig)
-                    .build()) {
-
-                HttpHead request = new HttpHead(url);
-                try (CloseableHttpResponse response = httpClient.execute(request)) {
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    long elapsed = System.currentTimeMillis() - start;
-                    log.info("HTTP check [{}] {} → HTTP {}, {}ms", serviceName, url, statusCode, elapsed);
-                    return build(serviceName, url, "UP", elapsed, "HTTP " + statusCode);
-                }
+            HttpHead request = new HttpHead(url);
+            request.setConfig(requestConfig);
+            try (CloseableHttpResponse response = httpClient.execute(request)) {
+                int statusCode = response.getStatusLine().getStatusCode();
+                long elapsed = System.currentTimeMillis() - start;
+                String status = statusCode >= 500 ? "DOWN" : "UP";
+                log.info("HTTP check [{}] {} → HTTP {}, {}ms", serviceName, url, statusCode, elapsed);
+                return build(serviceName, url, status, elapsed, "HTTP " + statusCode);
             }
         } catch (Exception e) {
             long elapsed = System.currentTimeMillis() - start;

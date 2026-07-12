@@ -1,10 +1,10 @@
 package org.egov.healthdashboard.config;
 
-import lombok.Data;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-@Data
+@Getter
 @Component
 public class Configuration {
 

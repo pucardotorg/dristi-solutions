@@ -6,10 +6,10 @@ import org.egov.healthdashboard.repository.ServiceHealthRepository;
 import org.egov.healthdashboard.service.HealthCheckService;
 import org.egov.healthdashboard.web.models.ServiceHealthStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 
 @Component
 @Slf4j
@@ -28,7 +28,7 @@ public class HealthCheckScheduler {
         this.config = config;
     }
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void runOnStartup() {
         log.info("Running initial health check on startup");
         executeChecks();
