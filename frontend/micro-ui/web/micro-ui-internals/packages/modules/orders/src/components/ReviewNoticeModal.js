@@ -93,7 +93,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
       actionSaveOnSubmit={() => {}}
       popupStyles={{ minWidth: "880px", width: "80%", maxHeight: "95vh" }}
     >
-      {infos && <ApplicationInfoComponent infos={infos} />}
+      {infos && <ApplicationInfoComponent infos={infos} className="wide-label-info" />}
       {showDocument}
       <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "16px" }}>
         <div

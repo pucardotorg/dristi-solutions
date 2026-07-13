@@ -2,11 +2,11 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
-const ApplicationInfoComponent = ({ infos, links }) => {
+const ApplicationInfoComponent = ({ infos, links, className = "" }) => {
   const { t } = useTranslation();
   return (
     <React.Fragment>
-      <div className="application-info" style={{ flexWrap: "wrap" }}>
+      <div className={`application-info ${className}`} style={{ flexWrap: "wrap" }}>
         <div className={`info-row-wrapper ${links && links?.length > 0 ? "with-link" : ""}`}>
           {infos &&
             infos?.map((info, index) => (
