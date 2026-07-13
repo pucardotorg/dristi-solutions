@@ -5,7 +5,7 @@ import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/comp
 // import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 // import downloadPdfFromFile from "@egovernments/digit-ui-module-dristi/src/Utils/downloadPdfFromFile";
 
-function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
+function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos, filingNumber }) {
   // const [file, setFile] = React.useState([]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
@@ -17,15 +17,15 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
   const handleDownload = async (tenantId, filestoreId, filestoreIdPolice) => {
     // await downloadPdfFromFile(file?.[0]);
     if (filestoreId) {
-      const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber || "Case"}_${rowData?.taskNumber}_${t(
-        rowData?.taskType
-      )}`;
+      const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber || filingNumber || "Case"}_${
+        rowData?.taskNumber || ""
+      }_${t(rowData?.taskType)}`;
       downloadPdf(tenantId, filestoreId, fileName);
     }
     if (filestoreIdPolice) {
-      const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber || "Case"}_${rowData?.taskNumber}_${t(
-        "Police_Report"
-      )}`;
+      const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber || filingNumber || "Case"}_${
+        rowData?.taskNumber || ""
+      }_${t("Police_Report")}`;
       downloadPdf(tenantId, filestoreIdPolice, fileName);
     }
   };
