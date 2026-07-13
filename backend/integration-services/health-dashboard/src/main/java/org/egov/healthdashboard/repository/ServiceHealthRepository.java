@@ -21,7 +21,7 @@ public class ServiceHealthRepository {
     private static final String SELECT_COLUMNS =
             "h.id, s.service_name, s.service_url, h.last_status, h.last_updated_time, h.response_time_ms, h.message";
     private static final String FROM_JOIN =
-            "FROM eg_service_health_status h JOIN eg_service s ON s.id = h.service_id ";
+            "FROM eg_service_health_status h JOIN eg_service_health s ON s.id = h.service_id ";
 
     @Autowired
     public ServiceHealthRepository(JdbcTemplate jdbcTemplate, ServiceRepository serviceRepository) {
