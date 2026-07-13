@@ -21,7 +21,7 @@ import isEqual from "lodash/isEqual";
 import ReviewNoticeModal from "../../components/ReviewNoticeModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
 import { DateUtils, isLPRCase, getDisplayCaseNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS, TASK_TYPES } from "../../utils/constants";
+import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS, TASK_TYPES, getNonDeliveryReasonLabel } from "../../utils/constants";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { UploadModal } from "@egovernments/digit-ui-module-common";
@@ -765,6 +765,11 @@ const ReviewSummonsNoticeAndWarrant = ({ refetchCounts }) => {
   const ReviewInfo = useMemo(() => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
+      const nonDeliveryReasonLabel = getNonDeliveryReasonLabel(
+        rowData?.taskType,
+        caseDetails?.deliveryChannels?.notDeliveredReason,
+        caseDetails?.deliveryChannels?.notDeliveredReasonText
+      );
       return [
         { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData, taskType) },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
@@ -776,10 +781,13 @@ const ReviewSummonsNoticeAndWarrant = ({ refetchCounts }) => {
         { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
         { key: "STATUS", value: rowData?.status },
         { key: "STATUS_UPDATED_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
+        // Show the recorded reason for non-delivery only when one exists (RPAD summons/warrant marked NOT_DELIVERED).
+        // Reuses the same REASON_FOR_NON_DELIVERY localization key as the update-status modal.
+        ...(nonDeliveryReasonLabel ? [{ key: "REASON_FOR_NON_DELIVERY", value: nonDeliveryReasonLabel }] : []),
         { key: "REMARKS", value: caseDetails?.remarks?.remark ? caseDetails?.remarks?.remark : "N/A" },
       ];
     }
-  }, [rowData?.taskDetails, rowData?.status, nextHearingDate, orderDetails, compositeItem, orderType, taskType]);
+  }, [rowData?.taskDetails, rowData?.status, rowData?.taskType, nextHearingDate, orderDetails, compositeItem, orderType, taskType]);
 
   const links = useMemo(() => {
     return [{ text: "View order", link: "" }];
