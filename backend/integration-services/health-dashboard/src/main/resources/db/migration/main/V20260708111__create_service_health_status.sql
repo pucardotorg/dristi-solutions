@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS eg_service_health (
     id           BIGSERIAL PRIMARY KEY,
     service_name VARCHAR(100) NOT NULL,
-    service_url  VARCHAR(500),
+    service_url  VARCHAR(500)
 );
 
 CREATE TABLE IF NOT EXISTS eg_service_health_status (
