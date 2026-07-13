@@ -55,6 +55,10 @@ const useGenerateOrdersComputedValues = ({
     hearingsData?.HearingList,
   ]);
 
+  const currentPassedOverHearing = useMemo(() => hearingsData?.HearingList?.find((list) => ["PASSED_OVER"]?.includes(list?.status)), [
+    hearingsData?.HearingList,
+  ]);
+
   const todayScheduledHearing = useMemo(() => {
     const now = new Date();
     const fromDate = new Date(now.setHours(0, 0, 0, 0)).getTime();
@@ -294,6 +298,7 @@ const useGenerateOrdersComputedValues = ({
     currentInProgressHearing,
     currentScheduledHearing,
     currentOptOutHearing,
+    currentPassedOverHearing,
     todayScheduledHearing,
     lastCompletedHearing,
     hearingDetails,
