@@ -2,22 +2,8 @@ import { CardLabel, Dropdown, LabelFieldPair, TextInput } from "@egovernments/di
 import React, { useEffect, useState } from "react";
 import ApplicationInfoComponent from "./ApplicationInfoComponent";
 import { convertToDateInputFormat } from "../utils/index";
+import { NON_DELIVERY_REASON_OPTIONS } from "../utils/constants";
 import { sanitizeData } from "@egovernments/digit-ui-module-dristi/src/Utils";
-
-const SUMMONS_REASON_OPTIONS = [
-  { key: "ADDRESS_NOT_FOUND", value: "Address not found" },
-  { key: "DOOR_LOCKED", value: "Door locked" },
-  { key: "PERSON_NOT_PRESENT", value: "Person not present" },
-  { key: "DELIVERY_REFUSED", value: "Delivery Refused" },
-  { key: "OTHER", value: "Other" },
-];
-
-const WARRANT_REASON_OPTIONS = [
-  { key: "ACCUSED_NOT_FOUND", value: "Accused not found" },
-  { key: "SHO_SOUGHT_TIME", value: "SHO sought time" },
-  { key: "ACCUSED_ABSCONDING", value: "Accused absconding" },
-  { key: "OTHER", value: "Other" },
-];
 
 const UpdateDeliveryStatusComponent = ({
   t,
@@ -45,7 +31,7 @@ const UpdateDeliveryStatusComponent = ({
   const isIcops = rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE";
   const isRpad = rowData?.taskDetails?.deliveryChannels?.channelCode === "RPAD";
   const isSummons = (orderType || rowData?.taskType) === "SUMMONS";
-  const reasonOptions = isSummons ? SUMMONS_REASON_OPTIONS : WARRANT_REASON_OPTIONS;
+  const reasonOptions = isSummons ? NON_DELIVERY_REASON_OPTIONS.SUMMONS : NON_DELIVERY_REASON_OPTIONS.WARRANT;
   const showReasonDropdown = ["SUMMONS", "WARRANT"].includes(rowData?.taskType) && selectedDelievery?.key === "NOT_DELIVERED" && isRpad;
   const showReasonText = showReasonDropdown && selectedReason?.key === "OTHER";
 
@@ -90,7 +76,7 @@ const UpdateDeliveryStatusComponent = ({
 
       {showReasonDropdown && (
         <LabelFieldPair className="case-label-field-pair">
-          <CardLabel className="case-input-label">{`${t("Reason for Non-Delivery")} *`}</CardLabel>
+          <CardLabel className="case-input-label">{`${t("REASON_FOR_NON_DELIVERY")} *`}</CardLabel>
           <Dropdown
             t={t}
             option={reasonOptions}
