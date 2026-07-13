@@ -139,6 +139,13 @@ const CaseOverviewV2 = ({
           botdOrderList={previousBotdOrders}
           judgeView={true}
           filingNumber={filingNumber}
+          caseNumber={
+            caseData?.courtCaseNumber ||
+            caseData?.cmpNumber ||
+            caseDetails?.courtCaseNumber ||
+            caseDetails?.cmpNumber ||
+            filingNumber
+          }
           cnrNumber={cnrNumber}
           tenantId={tenantId}
           courtId={caseData?.courtId || localStorage.getItem("courtId")}
