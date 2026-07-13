@@ -9,7 +9,7 @@ import { CloseBtn } from "./ModalComponents";
 const Heading = (props) => {
   return <h1 className="heading-m">{props.heading}</h1>;
 };
-const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView = false, filingNumber, cnrNumber, tenantId, courtId }) => {
+const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView = false, filingNumber, caseNumber, cnrNumber, tenantId, courtId }) => {
   const { t } = useTranslation();
   const [loader, setLoader] = useState(false);
 
@@ -22,7 +22,7 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView
         filingNumber,
         cnrNumber,
         courtId,
-        fileName: `case-summary-${filingNumber || ""}.pdf`,
+        fileName: `${(caseNumber || filingNumber || "Case").replace(/\//g, "_")}_botd-summary.pdf`,
       });
     } catch (error) {
       console.error("Error downloading case summary PDF:", error);
