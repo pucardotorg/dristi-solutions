@@ -22,7 +22,7 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView
         filingNumber,
         cnrNumber,
         courtId,
-        fileName: `${(caseNumber || filingNumber || "Case").replace(/\//g, "_")}_botd-summary.pdf`,
+        fileName: `${(caseNumber || filingNumber || "Case").replace(/\//g, "_")}_BDiary.pdf`,
       });
     } catch (error) {
       console.error("Error downloading case summary PDF:", error);
@@ -33,7 +33,7 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView
 
   return (
     <Modal
-      headerBarMain={<Heading heading={judgeView ? t("BOTD_SUMMARIES") : t("ALL_BOTD_TRANSCRIPT")} />}
+      headerBarMain={<Heading heading={t("CS_BDIARY")} />}
       headerBarEnd={<CloseBtn onClick={() => setShowAllTranscript(false)} />}
       actionCancelLabel={null}
       actionCancelOnSubmit={() => {}}

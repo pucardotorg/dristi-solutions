@@ -83,7 +83,7 @@ const CaseOverviewV2 = ({
                   style={{ color: "#007E7E", cursor: "pointer", fontWeight: 700, fontSize: "16px", lineHeight: "18.75px" }}
                   onClick={() => setShowAllTranscript(true)}
                 >
-                  {t("VIEW_ALL_SUMMARIES")}
+                  {t("VIEW_BDIARY")}
                 </div>
               </div>
               <hr style={{ borderTop: "1px solid #E8E8E8", margin: "10px -15px 0px -15px" }} />
