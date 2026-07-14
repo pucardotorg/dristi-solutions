@@ -163,6 +163,12 @@ public class PdfServiceUtil {
                 summonsPdf.setExecutorName(executorName);
                 String docSubType = warrantDetails.getDocSubType();
 
+                if (taskRequest.getTask().getTaskDetails().getWitnessDetails() != null) {
+                    var witnessDetails = taskRequest.getTask().getTaskDetails().getWitnessDetails();
+                    summonsPdf.setWitnessName(witnessDetails.getName());
+                    summonsPdf.setWitnessAddress(witnessDetails.getAddress().toString());
+                }
+
                 if (BAILABLE.equalsIgnoreCase(docSubType)) {
                     Integer surety = warrantDetails.getSurety();
                     double bailableAmount = Double.parseDouble(warrantDetails.getBailableAmount());
@@ -219,14 +225,16 @@ public class PdfServiceUtil {
                 summonsPdf.setAccessCode(accessCode);
                 summonsPdf.setCourtCaseNumber(courtCaseNumber);
 
-                // For summons to witness, render the complainant/accused party table
+                // For summons/warrant to witness, render the complainant/accused party table
                 // (instead of naming a single respondent) so multiple accused are covered.
-                if (SUMMON.equalsIgnoreCase(taskRequest.getTask().getTaskType())) {
-                    var summonDetails = taskRequest.getTask().getTaskDetails().getSummonDetails();
-                    if (summonDetails != null && WITNESS.equalsIgnoreCase(summonDetails.getDocSubType())) {
-                        summonsPdf.setComplainantList(buildComplainantList(caseDetails));
-                        summonsPdf.setAccusedList(buildAccusedList(caseDetails));
-                    }
+                var summonDetails = taskRequest.getTask().getTaskDetails().getSummonDetails();
+                boolean isSummonToWitness = SUMMON.equalsIgnoreCase(taskRequest.getTask().getTaskType())
+                        && summonDetails != null && WITNESS.equalsIgnoreCase(summonDetails.getDocSubType());
+                boolean isWarrantToWitness = WARRANT.equalsIgnoreCase(taskRequest.getTask().getTaskType())
+                        && taskRequest.getTask().getTaskDetails().getWitnessDetails() != null;
+                if (isSummonToWitness || isWarrantToWitness) {
+                    summonsPdf.setComplainantList(buildComplainantList(caseDetails));
+                    summonsPdf.setAccusedList(buildAccusedList(caseDetails));
                 }
             }
             if (qrCode && taskRequest.getTask().getDocuments() != null && !taskRequest.getTask().getDocuments().isEmpty()) {
@@ -331,9 +339,12 @@ public class PdfServiceUtil {
                 .map(ComplainantDetails::getAddress)
                 .map(Object::toString)
                 .orElse("");
-        String respondentName = docSubType.equals(WITNESS) ? task.getTaskDetails().getWitnessDetails().getName() : task.getTaskDetails().getRespondentDetails().getName();
-        String respondentAddress = docSubType.equals(WITNESS) ? task.getTaskDetails().getWitnessDetails().getAddress().toString() : task.getTaskDetails().getRespondentDetails().getAddress().toString();
-        Address address = docSubType.equals(WITNESS) ? task.getTaskDetails().getWitnessDetails().getAddress() : task.getTaskDetails().getRespondentDetails().getAddress();
+        boolean isWitness = WARRANT.equals(task.getTaskType())
+                ? task.getTaskDetails().getWitnessDetails() != null
+                : docSubType.equals(WITNESS);
+        String respondentName = isWitness ? task.getTaskDetails().getWitnessDetails().getName() : task.getTaskDetails().getRespondentDetails().getName();
+        String respondentAddress = isWitness ? task.getTaskDetails().getWitnessDetails().getAddress().toString() : task.getTaskDetails().getRespondentDetails().getAddress().toString();
+        Address address = isWitness ? task.getTaskDetails().getWitnessDetails().getAddress() : task.getTaskDetails().getRespondentDetails().getAddress();
         return SummonsPdf.builder()
                 .tenantId(task.getTenantId())
                 .cnrNumber(task.getCnrNumber())
@@ -372,7 +383,7 @@ public class PdfServiceUtil {
         }
         for (JsonNode litigant : litigants) {
             String partyType = litigant.path("partyType").asText("");
-            if (partyType.contains("complainant")) {
+            if (partyType != null && partyType.contains("complainant")) {
                 complainantList.add(buildPartyDetail(litigant, representatives));
             }
         }
@@ -390,7 +401,7 @@ public class PdfServiceUtil {
         if (litigants != null && litigants.isArray()) {
             for (JsonNode litigant : litigants) {
                 String partyType = litigant.path("partyType").asText("");
-                if (!partyType.contains("respondent")) {
+                if (partyType == null || !partyType.contains("respondent")) {
                     continue;
                 }
                 String individualId = litigant.path("individualId").asText("");
