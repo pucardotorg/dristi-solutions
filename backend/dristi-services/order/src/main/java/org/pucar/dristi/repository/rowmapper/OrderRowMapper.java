@@ -100,6 +100,10 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                 if(pgObject4!=null)
                     order.setAttendance(objectMapper.readTree(pgObject4.getValue()));
 
+                PGobject pgObject5 = (PGobject) rs.getObject("partyuniqueids");
+                if(pgObject5!=null)
+                    order.setPartyUniqueIds(objectMapper.readValue(pgObject5.getValue(), List.class));
+
                 orderMap.put(uuid, order);
             }
         }

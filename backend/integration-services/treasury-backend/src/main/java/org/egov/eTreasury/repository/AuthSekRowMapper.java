@@ -40,6 +40,8 @@ public class AuthSekRowMapper implements RowMapper<AuthSek> {
             authSek.setVerificationTimestamp(verificationTimestamp);
         }
         authSek.setProcessedStatus(rs.getString("processed_status"));
+        int retryCount = rs.getInt("retry_count");
+        authSek.setRetryCount(rs.wasNull() ? 0 : retryCount);
 
         String requestBlobJson = rs.getString("request_blob");
         if (requestBlobJson != null && !requestBlobJson.trim().isEmpty()) {

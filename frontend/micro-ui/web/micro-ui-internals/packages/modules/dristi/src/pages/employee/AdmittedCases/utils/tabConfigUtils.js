@@ -1,3 +1,4 @@
+import { downloadCombinedDocuments } from "../../../../Utils";
 import { removeInvalidNameParts } from "./partyUtils";
 
 // Helper function to configure tab-specific settings based on tab label
@@ -336,6 +337,13 @@ export const getTabConfig = ({
                     return {
                       ...column,
                       clickFunc: handleApplicationDeleteFunc,
+                      downloadFunc: (row) => {
+                        const docs = row?.documents?.filter((d) => d?.fileStore);
+                        if (docs?.length) {
+                          const name = `${row?.applicationNumber || ""}_Submission.pdf`;
+                          downloadCombinedDocuments(docs, name);
+                        }
+                      },
                     };
                   case "OWNER":
                     return {

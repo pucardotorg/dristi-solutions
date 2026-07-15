@@ -1,11 +1,3 @@
-
-
---STEP-1
---remove proclamation and attachment->proclamation from mdms
---DELETE FROM public.eg_mdms_data WHERE id='7df1f326-1d42-4577-a05f-066f6439fa35';
---restart analytics
-
-
 BEGIN;
 
 WITH active_flags AS (

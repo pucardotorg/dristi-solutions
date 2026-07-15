@@ -158,4 +158,9 @@ public class ServiceConstants {
     public static final String APPLICATION_TYPE_MASTER = "ApplicationType";
 
     public static final String ERROR_WHILE_SEARCHING_FOR_BILL = "ERROR_WHILE_SEARCHING_FOR_BILL";
+
+    // Used to close the submission "Make Payment" pending task server-side once payment is received
+    // (so payment reconciliation works even when no browser runs the post-payment UI logic).
+    public static final String MANUAL_PENDING_TASK_PREFIX = "MANUAL_";
+    public static final String MAKE_PAYMENT_SUBMISSION = "MAKE_PAYMENT_SUBMISSION";
 }

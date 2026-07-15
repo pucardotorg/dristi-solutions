@@ -1,0 +1,42 @@
+[
+  {
+    "id": "23a0ccbe-6036-494b-adb3-22ddf005f476",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2805",
+    "data": {
+      "id": 2805,
+      "url": "/inbox/v2/index/_bulkCount",
+      "code": "2805",
+      "name": "pending count",
+      "displayName": "pending count"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1782932352662,
+      "lastModifiedTime": 1782932352662
+    }
+  },
+  {
+    "id": "b36c7a88-c02b-47a1-b1b4-dde776ac29a9",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "585",
+    "data": {
+      "id": 585,
+      "actionid": 2805,
+      "rolecode": "EMPLOYEE",
+      "tenantid": "kl",
+      "actioncode": "2805"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1782932400692,
+      "lastModifiedTime": 1782932400692
+    }
+  }
+]

@@ -4,7 +4,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getFileByFileStore } from "../../../Utils";
 import CustomToast from "../../../components/CustomToast";
 
-function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pathOnRefresh, isAdvocateUploading, onFormValueChange }) {
+function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pathOnRefresh, isAdvocateUploading, onFormValueChange, isDisabled }) {
   const [showToast, setShowToast] = useState(false);
   const history = useHistory();
   const validateFormData = (data) => {
@@ -133,7 +133,7 @@ function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pat
             : {}
         }
         onSubmit={(data) => {
-          if (isAdvocateUploading) {
+          if (isAdvocateUploading || isDisabled) {
             return;
           }
           if (!validateFormData(data)) {
@@ -149,6 +149,7 @@ function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pat
           }
           return;
         }}
+        isDisabled={isAdvocateUploading || isDisabled}
         onFormValueChange={onFormValueChange}
         noBoxShadow
         inline

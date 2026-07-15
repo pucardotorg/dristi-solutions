@@ -194,5 +194,13 @@ public class ServiceConstants {
 
     public static final String HEARING_RESCHEDULED = "HEARING_RESCHEDULED";
     public static final String CACHE_KEY_PREFIX = "DRISTI:COURT:";
+    public static final String CACHE_COURT_META_SUFFIX = ":COURT_META";
+    public static final String CACHE_CAUSE_LIST_SUFFIX = ":CAUSE_LIST";
+    public static final String CACHE_HEARING_PREFIX = ":HEARING:";
+    public static final String DATE_FORMAT_REDIS = "ddMMyyyy";
+    public static final String IN_PROGRESS = "IN_PROGRESS";
+    public static final String PASSED_OVER = "PASSED_OVER";
+    public static final String SESSION_STATUS_ACTIVE = "ACTIVE";
+    public static final String SESSION_STATUS_NOT_STARTED = "NOT_STARTED";
 
 }

@@ -8,6 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.*;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.egov.eTreasury.config.PaymentConfiguration;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,11 +22,14 @@ class ETreasuryUtilTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private PaymentConfiguration paymentConfiguration;
+
     private ETreasuryUtil eTreasuryUtil;
 
     @BeforeEach
     void setUp() {
-        eTreasuryUtil = new ETreasuryUtil(restTemplate);
+        eTreasuryUtil = new ETreasuryUtil(restTemplate, paymentConfiguration);
     }
 
     @Test
@@ -105,6 +109,31 @@ class ETreasuryUtilTest {
                             body.get("input_headers").contains(inputHeaders) &&
                             body.get("input_data").contains(inputBody);
                 }
+            }
+            return false;
+        }), eq(String.class));
+    }
+
+    @Test
+    void testBasicAuthAddedInLowerEnvironment() {
+        String url = "http://example.com/api";
+        ResponseEntity<String> expectedResponse = new ResponseEntity<>("Success", HttpStatus.OK);
+
+        when(paymentConfiguration.isTest()).thenReturn(true);
+        when(paymentConfiguration.getBasicAuthUsername()).thenReturn("user");
+        when(paymentConfiguration.getBasicAuthPassword()).thenReturn("pass");
+        
+        when(restTemplate.postForEntity(eq(url), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(expectedResponse);
+
+        eTreasuryUtil.callConnectionService(url, String.class);
+
+        verify(restTemplate).postForEntity(eq(url), argThat(argument -> {
+            if (argument instanceof HttpEntity) {
+                HttpEntity<?> entity = (HttpEntity<?>) argument;
+                HttpHeaders headers = entity.getHeaders();
+                return headers.containsKey(HttpHeaders.AUTHORIZATION) &&
+                       headers.getFirst(HttpHeaders.AUTHORIZATION).startsWith("Basic ");
             }
             return false;
         }), eq(String.class));

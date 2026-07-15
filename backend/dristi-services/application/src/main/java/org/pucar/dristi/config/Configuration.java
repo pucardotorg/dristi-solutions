@@ -300,4 +300,11 @@ public class Configuration {
     @Value("${egov.billing.bill.search.path}")
     private String billSearchPath;
 
+    //analytics Config (pending task)
+    @Value("${egov.analytics.host}")
+    private String analyticsHost;
+
+    @Value("${egov.analytics.create.pendingtask}")
+    private String createPendingTaskEndpoint;
+
 }

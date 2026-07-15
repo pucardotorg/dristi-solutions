@@ -59,7 +59,12 @@ public class LitigantDocumentRowMapper implements ResultSetExtractor<Map<UUID,Li
                 } catch (Exception ignored) {}
 
                 if (documentMap.containsKey(uuid) ) {
-                    documentMap.get(uuid).add(document);
+                    boolean duplicateFileStore = documentMap.get(uuid).stream()
+                            .anyMatch(existingDocument -> existingDocument.getFileStore() != null
+                                    && existingDocument.getFileStore().equals(document.getFileStore()));
+                    if (!duplicateFileStore) {
+                        documentMap.get(uuid).add(document);
+                    }
                 }
                 else{
                     List<Document> documents = new ArrayList<>();

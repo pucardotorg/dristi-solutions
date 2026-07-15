@@ -146,6 +146,14 @@ export const submissionService = {
       data,
       params,
     }),
+  getPaymentStatus: (data, params) =>
+    Request({
+      url: Urls.payment.paymentStatus,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
   getPendingTask: (data, params) =>
     Request({
       url: Urls.getPendingTaskFields,

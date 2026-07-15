@@ -93,6 +93,7 @@ export const Urls = {
     fetchBill: "/billing-service/bill/v2/_fetchbill",
     searchBill: "/billing-service/bill/v2/_search",
     eTreasury: "/etreasury/payment/v1/_processChallan",
+    paymentStatus: "/etreasury/payment/v1/_paymentStatus",
     judgeAvailabilityDates: "/scheduler/judge/v1/_availability",
     sendOCR: "/ocr-service/verify",
     receiveOCR: "/ocr-service/data",

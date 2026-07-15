@@ -22,25 +22,26 @@ const formatToUI = (dateStr) => {
   return dateStr;
 };
 
-const Chip = ({ label, isSelected, handleClick, icon }) => {
+const Chip = ({ label, isSelected, handleClick, icon, disabled }) => {
   const chipStyle = {
-    backgroundColor: isSelected ? "#ecf3fd" : "#FAFAFA",
-    color: "#505A5F",
-    border: isSelected ? "2px solid #007E7E" : "2px solid #D6D5D4",
+    backgroundColor: disabled ? "#F0F0F0" : isSelected ? "#ecf3fd" : "#FAFAFA",
+    color: disabled ? "#B0B0B0" : "#505A5F",
+    border: disabled ? "2px solid #E0E0E0" : isSelected ? "2px solid #007E7E" : "2px solid #D6D5D4",
     borderRadius: "8px",
     padding: "10px 20px",
     margin: "5px",
-    cursor: "pointer",
+    cursor: disabled ? "not-allowed" : "pointer",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     minWidth: "150px",
     fontWeight: isSelected ? "700" : "400",
     gap: "10px",
+    opacity: disabled ? 0.9 : 1,
   };
 
   return (
-    <div style={chipStyle} onClick={handleClick}>
+    <div style={chipStyle} onClick={disabled ? undefined : handleClick}>
       {formatToUI(label)}
       {icon && <span>{icon}</span>}
     </div>
@@ -124,7 +125,12 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
       <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", borderRadius: "4px", paddingTop: "10px", backgroundColor: "#FBFAFA" }}>
         {suggestedDates.map((date, index) => {
           const internalDate = internalSuggestedDates[index];
-          return <Chip key={index} label={date} isSelected={selectedValue === internalDate} handleClick={() => handleChipClick(date)} />;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const isPast = new Date(internalDate) < today;
+          return (
+            <Chip key={index} label={date} isSelected={selectedValue === internalDate} handleClick={() => handleChipClick(date)} disabled={isPast} />
+          );
         })}
 
         <Chip

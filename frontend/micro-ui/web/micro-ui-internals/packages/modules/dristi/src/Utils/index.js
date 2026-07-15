@@ -296,6 +296,59 @@ export const combineMultipleFiles = async (pdfFilesArray, finalFileName = "combi
   }
 };
 
+export const downloadCombinedDocuments = async (documents, fileName = "combined-document.pdf") => {
+  const validDocs = documents?.filter((d) => d?.fileStore);
+  if (!validDocs?.length) return;
+  const combinedFiles = await combineMultipleFiles(validDocs, fileName);
+  if (combinedFiles?.[0]) {
+    const url = URL.createObjectURL(combinedFiles[0]);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+};
+
+export const downloadCaseSummaryPdf = async ({ tenantId, filingNumber, cnrNumber, courtId, fileName = "case-summary.pdf" }) => {
+  const token = localStorage.getItem("token");
+  const userInfo = Digit.UserService.getUser()?.info;
+  const response = await axiosInstance.post(
+    "/egov-pdf/case-summary",
+    {
+      RequestInfo: {
+        authToken: token,
+        userInfo,
+        msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+        apiId: "Dristi",
+      },
+    },
+    {
+      params: {
+        tenantId,
+        filingNumber,
+        ...(cnrNumber && { cnrNumber }),
+        ...(courtId && { courtId }),
+      },
+      responseType: "blob",
+      headers: {
+        "auth-token": `${token}`,
+      },
+    }
+  );
+  const blob = new Blob([response.data], { type: response.data.type || "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
 export const cleanString = (input) => {
   return input.trim().replace(/\s+/g, " ");
 };

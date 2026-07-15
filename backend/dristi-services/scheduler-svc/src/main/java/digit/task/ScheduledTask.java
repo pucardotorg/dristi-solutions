@@ -4,14 +4,17 @@ import digit.config.Configuration;
 import digit.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalTime;
+import java.time.ZoneId;
+
 @Component
 @Slf4j
-@EnableScheduling
 public class ScheduledTask {
 
     private final CauseListService causeListService;
@@ -84,5 +87,17 @@ public class ScheduledTask {
         log.info("Starting Cron Job for clearing open hearing cache");
         openHearingService.clearOpenHearingsCache();
         log.info("Completed Cron Job For clearing open hearing cache");
+    }
+
+    @Async
+    @EventListener(ApplicationReadyEvent.class)
+    public void warmCacheOnStartup() {
+        LocalTime now = LocalTime.now(ZoneId.of(config.getZoneId()));
+        LocalTime sessionStart = LocalTime.of(10, 0);
+        LocalTime sessionEnd = LocalTime.of(14, 0);
+        if (!now.isBefore(sessionStart) && now.isBefore(sessionEnd)) {
+            log.info("Application started during court session window — warming open hearing cache");
+            openHearingService.loadOpenHearingsToCache();
+        }
     }
 }

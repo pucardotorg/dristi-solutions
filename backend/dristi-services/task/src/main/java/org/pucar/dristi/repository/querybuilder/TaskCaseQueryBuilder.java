@@ -24,7 +24,7 @@ public class TaskCaseQueryBuilder {
             " task.taskdetails as taskdetails, task.assignedto as assignedto, task.tasktype as tasktype, task.assignedto as assignedto, task.status as status, task.isactive as isactive,task.additionaldetails as additionaldetails, task.createdby as createdby," +
             " task.lastmodifiedby as lastmodifiedby, task.createdtime as createdtime, task.lastmodifiedtime as lastmodifiedtime ,c.caseTitle as caseName , o.orderType as orderType, c.cmpNumber as cmpNumber, c.courtId as courtId , c.courtCaseNumber as courtCaseNumber";
 
-    private static final String DOCUMENT_SWITCH_CASE = " ,CASE WHEN EXISTS (SELECT 1 FROM dristi_task_document dtd WHERE dtd.task_id = task.id AND dtd.documentType = 'SIGNED_TASK_DOCUMENT')" +
+    private static final String DOCUMENT_SWITCH_CASE = " ,CASE WHEN EXISTS (SELECT 1 FROM dristi_task_document dtd WHERE dtd.task_id = task.id AND dtd.documentType = 'SIGNED_TASK_DOCUMENT' AND dtd.isactive = true)" +
             "THEN 'SIGNED' ELSE 'SIGN_PENDING' END AS documentstatus";
     private static final String FROM_TASK_TABLE = " FROM dristi_task task";
     private static final String FROM_DOCUMENTS_TABLE = " FROM dristi_task_document doc";

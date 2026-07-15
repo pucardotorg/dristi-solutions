@@ -19,7 +19,13 @@ import JoinCaseSuccess from "./joinCaseComponent/JoinCaseSuccess";
 import LitigantVerification from "./joinCaseComponent/LitigantVerification";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import POAInfo from "./joinCaseComponent/POAInfo";
-import { cleanString, combineMultipleFiles, getAuthorizedUuid, isLPRCase, removeInvalidNameParts } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import {
+  cleanString,
+  combineMultipleFiles,
+  getAuthorizedUuid,
+  isLPRCase,
+  removeInvalidNameParts,
+} from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-orders/src/utils/submissionWorkflow";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
@@ -102,6 +108,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const history = useHistory();
 
   const [isVerified, setIsVerified] = useState(false);
+  const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
@@ -116,7 +123,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     }
   }, [data?.caseDetails, showJoinCase, type]);
 
-  const { fetchBill, openPaymentPortal } = usePaymentProcess({ tenantId });
+  const { fetchBill, openPaymentPortal, paymentLoader } = usePaymentProcess({ tenantId, businessService: "task-payment" });
 
   const searchCase = useCallback(
     async (caseNumber) => {
@@ -605,8 +612,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const registerLitigants = useCallback(
     async (data) => {
       const usersWithUUID = data
-        .filter((item) => item?.phoneNumberVerification?.userDetails?.uuid)
-        .map((item) => ({
+        ?.filter((item) => item?.phoneNumberVerification?.userDetails?.uuid)
+        ?.map((item) => ({
           firstName: item?.firstName,
           middleName: item?.middleName,
           lastName: item?.lastName,
@@ -618,7 +625,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           fatherName: item.fatherName,
         }));
 
-      if (usersWithUUID.length === 0) {
+      if (usersWithUUID?.length === 0) {
         return data?.map((item) => ({
           ...item,
           individualId: item?.phoneNumberVerification?.individualDetails?.individualId,
@@ -629,7 +636,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       }
 
       try {
-        const apiCalls = usersWithUUID.map((user) =>
+        const apiCalls = usersWithUUID?.map((user) =>
           registerIndividualWithNameAndMobileNumber(user, tenantId).then((userData) => ({
             ...user,
             individualDetails: userData?.Individual,
@@ -638,8 +645,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
 
         const results = await Promise.all(apiCalls);
 
-        const updatedData = data.map((item) => {
-          const matchedUser = results.find((res) => res.userUuid === item.phoneNumberVerification?.userDetails?.uuid);
+        const updatedData = data?.map((item) => {
+          const matchedUser = results?.find((res) => res.userUuid === item.phoneNumberVerification?.userDetails?.uuid);
           return matchedUser
             ? {
                 ...item,
@@ -671,7 +678,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
 
   const getRespondentDetails = (respondentDetails, updatedParty) => {
     let modifiedRespondentDetails = structuredClone(respondentDetails?.formdata)?.map((formdataItem, index) => {
-      const matchedUser = updatedParty.find((res) => index === res?.index);
+      const matchedUser = updatedParty?.find((res) => index === res?.index);
       return matchedUser
         ? {
             ...formdataItem,
@@ -1164,10 +1171,12 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         setIsApiCalled(true);
         try {
           const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
-          const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount);
-          if (paymentStatus) {
+          const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount, "task-payment");
+          if (paymentStatus === "PAID") {
             setStep(step + 1);
             setSuccess(true);
+          } else if (paymentStatus === "VERIFICATION_PENDING") {
+            setIsPostPaymentVerificationPending(true);
           }
         } catch (error) {
           console.error("error", error);
@@ -1462,7 +1471,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     },
     // 4
     {
-      modalMain: <JoinCasePayment type="join-case-flow" taskNumber={taskNumber} />,
+      modalMain: (
+        <JoinCasePayment type="join-case-flow" taskNumber={taskNumber} externalPostPaymentVerificationPending={isPostPaymentVerificationPending} />
+      ),
     },
     // 5
     {

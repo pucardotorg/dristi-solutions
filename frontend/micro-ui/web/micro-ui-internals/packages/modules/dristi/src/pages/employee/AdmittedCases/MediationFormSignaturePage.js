@@ -617,7 +617,7 @@ const MediationFormSignaturePage = () => {
                       color: "#007E7E",
                     }}
                     onButtonClick={() => {
-                      const name = `${digitalizationServiceDetails?.mediationDetails?.mediationId}_mediation`;
+                      const name = `${documentNumber}_mediation`;
                       downloadPdf(tenantId, signatureDocumentId || mediationFileStoreId, name);
                     }}
                   />
@@ -739,7 +739,7 @@ const MediationFormSignaturePage = () => {
           isParentLoading={uploadLoader}
           fileUploadError={fileUploadError}
           setFileUploadError={setFileUploadError}
-          downloadedFileName={`${digitalizationServiceDetails?.mediationDetails?.mediationId}_mediation`}
+          downloadedFileName={`${documentNumber}_mediation`}
         />
       )}
       {showSkipConfirmModal && (

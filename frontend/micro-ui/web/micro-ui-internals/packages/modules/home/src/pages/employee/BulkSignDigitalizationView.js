@@ -30,7 +30,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-function BulkSignDigitalizationView() {
+function BulkSignDigitalizationView({ refetchCounts }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
   const history = useHistory();
@@ -269,6 +269,7 @@ function BulkSignDigitalizationView() {
 
         setSignedList(signedList);
         setShowBulkSignSuccessModal(true);
+        if (refetchCounts && typeof refetchCounts === "function") setTimeout(() => refetchCounts(), 1000);
       });
     } catch (e) {
       const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
@@ -334,6 +335,7 @@ function BulkSignDigitalizationView() {
           setShowBulkSignModal={setShowBulkSignModal}
           digitalDocumentPaginationData={digitalDocumentPaginationData}
           setCounter={setCounter}
+          refetchCounts={refetchCounts}
         />
       )}
       {showBulkSignConfirmModal && (

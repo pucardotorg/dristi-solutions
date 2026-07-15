@@ -34,4 +34,10 @@ public interface EgovTokenStore {
 
     /** Remove all access tokens issued to a given username (used on account lock). */
     void removeAllTokensByUsername(String username);
+
+    /**
+     * Return the active access token for a user+tenantId combination if one
+     * exists and has not yet expired in the store.  Returns null if none found.
+     */
+    String getActiveAccessToken(String username, String tenantId);
 }

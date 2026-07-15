@@ -287,6 +287,7 @@ public class TaskCreationService {
         return CaseDetails.builder()
                 .caseTitle(courtCase.getCaseTitle())
                 .hearingDate(hearingDateEpoch)
+                .originalHearingDate(hearingDateEpoch)
                 .courtName((String) courtDetails.get("name"))
                 .courtAddress((String) courtDetails.get("address"))
                 .courtId((String) courtDetails.get("code"))

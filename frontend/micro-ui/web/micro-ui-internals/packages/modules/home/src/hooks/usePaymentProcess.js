@@ -4,7 +4,7 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 
-const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails, totalAmount, mockSubmitModalInfo, scenario }) => {
+const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails, totalAmount, mockSubmitModalInfo, scenario, businessService }) => {
   const history = useHistory();
   const toast = useToast();
   const [paymentLoader, setPaymentLoader] = useState(false);
@@ -16,7 +16,20 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
     return await DRISTIService.callFetchBill({}, { consumerCode: consumerCode, tenantId, businessService: service });
   };
   const userInfo = Digit.UserService.getUser()?.info;
-  const openPaymentPortal = async (bill, billAmount = null) => {
+  const openPaymentPortal = async (bill, billAmount = null, paymentBusinessService = null) => {
+    const effectiveBusinessService = paymentBusinessService || businessService || null;
+    console.log("[usePaymentProcess] openPaymentPortal called", {
+      consumerCode,
+      service,
+      scenario,
+      billAmount,
+      totalAmount,
+      effectiveBusinessService,
+      isMockEnabled,
+      billId: bill?.Bill?.[0]?.id,
+      billConsumerCode: bill?.Bill?.[0]?.consumerCode,
+      billBusinessService: bill?.Bill?.[0]?.businessService,
+    });
     try {
       const gateway = await DRISTIService.callETreasury(
         {
@@ -49,6 +62,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
         },
         {}
       );
+      console.log("[usePaymentProcess] callETreasury result", { hasGateway: Boolean(gateway), grn: gateway?.payload?.grn, url: gateway?.payload?.url });
       if (gateway) {
         const status = await handleButtonClick(
           gateway?.payload?.url,
@@ -57,7 +71,8 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
           bill?.Bill?.[0]?.consumerCode,
           bill?.Bill?.[0]?.businessService,
           isMockEnabled,
-          gateway
+          gateway,
+          effectiveBusinessService
         );
         return status;
       } else {
@@ -69,7 +84,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
     }
   };
 
-  const handleButtonClick = async (url, data, header, billConsumerCode, billBusinessService, isMockEnabled, gateway) => {
+  const handleButtonClick = async (url, data, header, billConsumerCode, billBusinessService, isMockEnabled, gateway, effectiveBusinessService) => {
     if (isMockEnabled) {
       const apiUrl = `${window.location.origin}/epayments`;
       let jsonData = JSON.parse(data);
@@ -132,36 +147,49 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
           return new Promise((resolve) => {
             let retryCount = 0;
             const maxRetries = 6;
+            let lastKnownStatus = null;
+            console.log("[usePaymentProcess][mock] starting poll — maxRetries:", maxRetries, "interval: 10s");
 
             const intervalId = setInterval(async () => {
               try {
-                const billAfterPayment = await DRISTIService.callSearchBill(
-                  {},
-                  { tenantId, consumerCode: consumerCode || billConsumerCode, service: service || billBusinessService }
-                );
+                const mockStatusParams = { tenantId, consumerCode: consumerCode || billConsumerCode };
+                if (effectiveBusinessService) mockStatusParams.businessService = effectiveBusinessService;
+                const paymentStatusResponse = await DRISTIService.getPaymentStatus({}, mockStatusParams);
+                const paymentStatusValue = paymentStatusResponse && paymentStatusResponse.PaymentStatus && paymentStatusResponse.PaymentStatus.status;
 
-                if (billAfterPayment?.Bill?.[0]?.status === "PAID") {
+                console.log("[usePaymentProcess][mock] poll tick", { retryCount, paymentStatusValue, lastKnownStatus, mockStatusParams });
+
+                if (paymentStatusValue) {
+                  lastKnownStatus = paymentStatusValue;
+                }
+
+                if (paymentStatusValue === "PAID") {
+                  console.log("[usePaymentProcess][mock] PAID — resolving");
                   setPaymentLoader(false);
                   popup?.close();
                   clearInterval(intervalId);
-                  resolve(true);
+                  resolve("PAID");
                 } else {
                   retryCount++;
                   if (retryCount >= maxRetries) {
+                    const result = lastKnownStatus === "VERIFICATION_PENDING" ? "VERIFICATION_PENDING" : "FAILED";
+                    console.log("[usePaymentProcess][mock] maxRetries reached — resolving", { result, lastKnownStatus });
                     setPaymentLoader(false);
                     popup?.close();
                     clearInterval(intervalId);
-                    resolve(false);
+                    resolve(result);
                   }
                 }
               } catch (error) {
-                console.error("Error checking bill status:", error);
+                console.error("[usePaymentProcess][mock] poll error", { error, retryCount, lastKnownStatus });
                 retryCount++;
                 if (retryCount >= maxRetries) {
+                  const result = lastKnownStatus === "VERIFICATION_PENDING" ? "VERIFICATION_PENDING" : "FAILED";
+                  console.log("[usePaymentProcess][mock] maxRetries after error — resolving", { result, lastKnownStatus });
                   setPaymentLoader(false);
                   popup?.close();
                   clearInterval(intervalId);
-                  resolve(false);
+                  resolve(result);
                 }
               }
             }, 10000);
@@ -170,7 +198,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
           console.error(error);
           setPaymentLoader(false);
           popup?.close();
-          return false;
+          return "FAILED";
         }
       };
 
@@ -205,28 +233,67 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
           setPaymentLoader(true);
           popup.document.body.removeChild(form);
         }
-        let retryCount = 0;
-        const maxRetries = 3;
-        const checkPopupClosed = setInterval(async () => {
-          if (popup.closed) {
-            setPaymentLoader(false);
-            if (retryCount < maxRetries) {
-              retryCount++;
-              const billAfterPayment = await DRISTIService.callSearchBill(
-                {},
-                { tenantId, consumerCode: consumerCode || billConsumerCode, service: service || billBusinessService }
-              );
-              if (billAfterPayment?.Bill?.[0]?.status === "PAID") {
-                clearInterval(checkPopupClosed);
-                resolve(true);
-              } else if (retryCount === maxRetries) {
-                clearInterval(checkPopupClosed);
-                resolve(false);
-              }
-            } else {
-              clearInterval(checkPopupClosed);
-              resolve(false);
+        // Poll the bill status every second instead of waiting for the success popup's
+        // auto-close. The moment the bill is PAID we close the popup and resolve(true),
+        // so the user no longer waits out the success page timer.
+        let isResolved = false;
+        let pollCount = 0;
+        let graceCount = 0;
+        let lastKnownStatus = null;
+        const maxPolls = 600; // safety cap (~10 min) so the interval can never run forever
+        const graceAfterClose = 5; // keep polling ~5s after the user closes the popup, to let the async reconciliation catch up
+
+        console.log("[usePaymentProcess][real] starting poll — maxPolls:", maxPolls, "graceAfterClose:", graceAfterClose, "interval: 1s");
+
+        const finish = (intervalId, result) => {
+          if (isResolved) return;
+          isResolved = true;
+          clearInterval(intervalId);
+          console.log("[usePaymentProcess][real] finish called", { result, pollCount, graceCount, lastKnownStatus });
+          setPaymentLoader(false);
+          popup?.close();
+          resolve(result);
+        };
+
+        const checkBillStatus = setInterval(async () => {
+          pollCount++;
+          try {
+            const pollStatusParams = { tenantId, consumerCode: consumerCode || billConsumerCode };
+            if (effectiveBusinessService) pollStatusParams.businessService = effectiveBusinessService;
+            const paymentStatusResponse = await DRISTIService.getPaymentStatus({}, pollStatusParams);
+            const paymentStatusValue = paymentStatusResponse && paymentStatusResponse.PaymentStatus && paymentStatusResponse.PaymentStatus.status;
+
+            if (paymentStatusValue) {
+              lastKnownStatus = paymentStatusValue;
             }
+
+            if (pollCount % 10 === 0 || paymentStatusValue) {
+              console.log("[usePaymentProcess][real] poll tick", { pollCount, paymentStatusValue, lastKnownStatus, popupClosed: popup?.closed, graceCount });
+            }
+
+            if (paymentStatusValue === "PAID") {
+              finish(checkBillStatus, "PAID");
+              return;
+            }
+            // VERIFICATION_PENDING is transitional — keep polling until popup closes or max polls
+          } catch (error) {
+            console.error("[usePaymentProcess][real] poll error", { error, pollCount, lastKnownStatus });
+          }
+
+          // Once the user closes the popup, give the async reconciliation a short grace
+          // window to mark the bill PAID before treating the attempt as failed.
+          if (popup?.closed) {
+            graceCount++;
+            console.log("[usePaymentProcess][real] popup closed — grace tick", { graceCount, graceAfterClose, lastKnownStatus });
+            if (graceCount >= graceAfterClose) {
+              finish(checkBillStatus, lastKnownStatus === "VERIFICATION_PENDING" ? "VERIFICATION_PENDING" : "FAILED");
+              return;
+            }
+          }
+
+          if (pollCount >= maxPolls) {
+            console.log("[usePaymentProcess][real] maxPolls reached", { pollCount, lastKnownStatus });
+            finish(checkBillStatus, lastKnownStatus === "VERIFICATION_PENDING" ? "VERIFICATION_PENDING" : "FAILED");
           }
         }, 1000);
         if (!["applicationSubmission", "EfillingCase"?.includes(scenario)]) {

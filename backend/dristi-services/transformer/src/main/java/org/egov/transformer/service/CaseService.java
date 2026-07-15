@@ -1,5 +1,6 @@
 package org.egov.transformer.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
@@ -119,6 +120,30 @@ public class CaseService {
         } catch (Exception e) {
             log.error("Error executing case search query", e);
             throw new CustomException("Error fetching case: ", ServiceConstants.ERROR_CASE_SEARCH);
+        }
+    }
+
+    /**
+     * Lightweight scalar case-metadata lookup by filingNumber. Hits the dedicated
+     * case/v1/casemeta/_search endpoint, which reads dristi_cases directly (always fresh,
+     * no Redis, no decryption, no child-table joins). Returns null when the case is not found.
+     */
+    public CaseMeta getCaseMeta(String filingNumber, String tenantId, RequestInfo requestInfo) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(properties.getCaseSearchUrlHost()).append(properties.getCaseMetaPath());
+        CaseMetaRequest request = CaseMetaRequest.builder()
+                .requestInfo(requestInfo)
+                .tenantId(tenantId)
+                .filingNumbers(Collections.singletonList(filingNumber))
+                .build();
+        try {
+            Object response = repository.fetchResult(uri, request);
+            List<CaseMeta> cases = objectMapper.convertValue(JsonPath.read(response, "$.cases"),
+                    new TypeReference<List<CaseMeta>>() {});
+            return (cases == null || cases.isEmpty()) ? null : cases.get(0);
+        } catch (Exception e) {
+            log.error("Error executing case meta query", e);
+            throw new CustomException("Error fetching case meta: ", ServiceConstants.ERROR_CASE_SEARCH);
         }
     }
 

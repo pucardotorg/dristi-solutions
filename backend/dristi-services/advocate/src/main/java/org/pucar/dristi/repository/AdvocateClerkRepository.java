@@ -65,11 +65,16 @@ public class AdvocateClerkRepository {
         }
     }
 
-    public List<AdvocateClerk> getApplicationsByStatus(String status, String tenantId, Integer limit, Integer offset) {
+    public List<AdvocateClerk> getApplicationsByStatus(AdvocateClerkSearchCriteria searchCriteria, String status, String tenantId, Integer limit, Integer offset) {
         try {
+            String stateRegnNumber = null;
+            if (searchCriteria != null && searchCriteria.getStateRegnNumber() != null && !searchCriteria.getStateRegnNumber().isEmpty()) {
+                stateRegnNumber = searchCriteria.getStateRegnNumber();
+            }
+
             List<Object> preparedStmtList = new ArrayList<>();
             List<Integer> preparedStmtArgList = new ArrayList<>();
-            String query = queryBuilder.getAdvocateClerkSearchQueryByStatus(status, preparedStmtList,preparedStmtArgList, tenantId, limit, offset);
+            String query = queryBuilder.getAdvocateClerkSearchQueryByStatus(stateRegnNumber, status, preparedStmtList,preparedStmtArgList, tenantId, limit, offset);
             log.info(FINAL_QUERY, query);
             if(preparedStmtList.size()!=preparedStmtArgList.size()){
                 log.info("Search by status Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(),preparedStmtArgList.size());

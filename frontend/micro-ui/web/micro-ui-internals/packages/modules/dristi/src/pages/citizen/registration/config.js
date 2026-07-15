@@ -652,7 +652,6 @@ export const newConfig = [
           inputs: [
             {
               label: "ES_COMMON_USER_TERMS_AND_CONDITIONS",
-              subLabel: "CS_VERFIY_IDENTITY_SUB_TEXT",
               type: "multiple",
               name: "terms_condition",
               optionsKey: "name",
@@ -753,7 +752,7 @@ export const advocateClerkConfig = [
               name: "barRegistrationNumber",
               validation: {
                 isRequired: true,
-                pattern: "^K/\\d{1,6}/\\d{4}$",
+                pattern: "^[A-Z]{1,4}/\\d{1,6}/\\d{4}$",
                 errMsg: "BAR_REGISTRATION_NUMBER_INVALID_PATTERN",
                 maxlength: 20,
                 minlength: 1,

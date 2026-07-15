@@ -187,6 +187,7 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    closeSummonNoticePaymentPendingTask(task, requestInfo);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -200,6 +201,7 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    closeSummonNoticePaymentPendingTask(task, requestInfo);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -213,6 +215,7 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    closeSummonNoticePaymentPendingTask(task, requestInfo);
                     task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
                     task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 
@@ -228,6 +231,7 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    closeSummonNoticePaymentPendingTask(task, requestInfo);
                     task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
                     task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 
@@ -243,6 +247,7 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    closeSummonNoticePaymentPendingTask(task, requestInfo);
                     task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
                     task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 
@@ -481,12 +486,30 @@ public class PaymentUpdateService {
         task.setTaskDetails(taskDetails);
     }
 
+    /**
+     * Closes the "Make Payment for <orderType>" pending task (referenceId MANUAL_<taskNumber>) once
+     * the summons/notice/warrant/proclamation/attachment payment is received. In the normal online
+     * flow the browser closes this after the bill turns PAID; payment reconciliation (cron) has no
+     * browser, so without this the task lifecycle advances but the pending task stays open.
+     */
+    private void closeSummonNoticePaymentPendingTask(Task task, RequestInfo requestInfo) {
+        try {
+            pendingTaskUtil.closeManualPendingTask(MANUAL + task.getTaskNumber(), requestInfo, task.getFilingNumber(),
+                    task.getCnrNumber(), task.getCaseId(), task.getCaseTitle(), task.getTaskType());
+            log.info("Closed payment pending task for taskNumber: {}", task.getTaskNumber());
+        } catch (Exception e) {
+            // Never fail payment processing because of pending-task closure.
+            log.error("Error closing payment pending task for taskNumber: {}", task.getTaskNumber(), e);
+        }
+    }
+
     public void createPendingTaskForRPAD(Task task, RequestInfo requestInfo) {
         if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
                 || task.getTaskType().equalsIgnoreCase(NOTICE) || task.getTaskType().equalsIgnoreCase(PROCLAMATION) || task.getTaskType().equalsIgnoreCase(ATTACHMENT)) && (isRPADdeliveryChannel(task))) {
             createPendingTaskForEnvelope(task, requestInfo);
         }
     }
+
 
     public boolean isRPADdeliveryChannel(Task task) {
         JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
@@ -530,14 +553,14 @@ public class PaymentUpdateService {
             if(task.getOrderId() != null){
                 Order order = orderUtil.getOrderByOrderId(requestInfo, String.valueOf(task.getOrderId()));
                 if(INTERMEDIATE.equals(order.getOrderCategory())){
-                    if(isWarrantForAccusedWitness(order))
+                    if(isWarrantForAccusedWitness(order, task))
                         type = "respondent";
                 }
                 else {
                     List<Order> orders = getItemListFormCompositeItem(order);
                     for(Order orderItem: orders){
                         if(WARRANT.equals(orderItem.getOrderType())){
-                            if(isWarrantForAccusedWitness(orderItem))
+                            if(isWarrantForAccusedWitness(orderItem, task))
                                 type = "respondent";
                             break;
                         }
@@ -561,7 +584,6 @@ public class PaymentUpdateService {
             );
         } catch (Exception e) {
             log.error("Error while creating pending task for envelope submission", e);
-            throw new CustomException("CREATE_PENDING_TASK_ERROR", "Error while creating pending task for envelope submission");
         }
     }
 
@@ -613,21 +635,41 @@ public class PaymentUpdateService {
         return compositeItemsList;
     }
 
-    private boolean isWarrantForAccusedWitness(Order order) {
+    private boolean isWarrantForAccusedWitness(Order order, Task task) {
+        JsonNode taskDetail = getTaskDetailNode(order, task);
+        return taskDetail != null
+                && taskDetail.get("respondentDetails") != null
+                && taskDetail.get("respondentDetails").get("ownerType") != null
+                && taskDetail.get("respondentDetails").get("ownerType").textValue() != null
+                && taskDetail.get("respondentDetails").get("ownerType").textValue().equalsIgnoreCase(ACCUSED);
+    }
+
+    /**
+     * Resolves the taskDetail node that carries respondentDetails.
+     * Prefers the order's additionalDetails.taskDetails (a JSON string holding an array of task details);
+     * falls back to the task's own taskDetails (a JSON object) when the order does not carry it.
+     */
+    private JsonNode getTaskDetailNode(Order order, Task task) {
         String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
-        try {
-            JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
-            JsonNode taskDetail = taskDetailsArray.get(0);
-            if(taskDetail.get("respondentDetails") != null
-                    && taskDetail.get("respondentDetails").get("ownerType") != null
-                    && taskDetail.get("respondentDetails").get("ownerType").textValue().equalsIgnoreCase(ACCUSED)){
-                return true;
+        if (taskDetails != null && !taskDetails.isBlank()) {
+            try {
+                JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
+                if (taskDetailsArray != null && taskDetailsArray.isArray() && !taskDetailsArray.isEmpty()) {
+                    return taskDetailsArray.get(0);
+                }
+            } catch (JsonProcessingException e) {
+                log.error("Error while processing taskDetails from order {}", order.getOrderNumber(), e);
             }
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
         }
 
-        return false;
+        // Fallback: order did not carry taskDetails, use the task's own taskDetails object
+        if (task != null && task.getTaskDetails() != null) {
+            log.info("taskDetails not found on order {}, falling back to taskDetails from task {}",
+                    order.getOrderNumber(), task.getTaskNumber());
+            return objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
+        }
+
+        return null;
     }
 
 

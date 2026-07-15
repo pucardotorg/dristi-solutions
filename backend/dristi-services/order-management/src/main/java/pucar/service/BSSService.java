@@ -38,9 +38,10 @@ public class BSSService {
     private final OrderServiceFactoryProvider factoryProvider;
     private final ADiaryUtil aDiaryUtil;
     private final HearingUtil hearingUtil;
+    private final OrderSignValidationService orderSignValidationService;
 
     @Autowired
-    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil) {
+    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil, OrderSignValidationService orderSignValidationService) {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.eSignUtil = eSignUtil;
         this.fileStoreUtil = fileStoreUtil;
@@ -50,12 +51,18 @@ public class BSSService {
         this.factoryProvider = factoryProvider;
         this.aDiaryUtil = aDiaryUtil;
         this.hearingUtil = hearingUtil;
+        this.orderSignValidationService = orderSignValidationService;
     }
 
     public List<OrderToSign> createOrderToSignRequest(OrdersToSignRequest request) {
 
         // get location to sign here from esign
         log.info("creating order to sign request, result= IN_PROGRESS, orderCriteria:{}", request.getCriteria().size());
+
+        // Pre Validation
+        // Runs all pre-sign validators (e.g. a case cannot be published with a new hearing order if it
+        // already has a scheduled hearing). New rules plug in via the OrderSignValidator strategy.
+        orderSignValidationService.validate(request);
 
         List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
 
@@ -86,12 +93,53 @@ public class BSSService {
             Resource resource = fileStoreUtil.fetchFileStoreObjectById(coordinate.getFileStoreId(), coordinate.getTenantId());
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
-                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
+                double cx = coordinate.getX();
+                double cy = coordinate.getY();
+                double pageWidth = coordinate.getPageWidth();
+                double pageHeight = coordinate.getPageHeight();
+                int sigWidth = configuration.getEsignSignatureWidth();
+                int sigHeight = configuration.getEsignSignatureHeight();
+                if (pageWidth > 0) {
+                    double overflow = cx + sigWidth - pageWidth;
+                    if (overflow > 0) {
+                        int phase1MaxReduction = sigWidth - configuration.getEsignSignaturePreferredWidthThreshold();
+                        int phase1Reduction = (int) Math.min(overflow, phase1MaxReduction);
+                        sigWidth -= phase1Reduction;
+                        overflow -= phase1Reduction;
+                        if (overflow > 0) {
+                            int widthBudget = sigWidth - configuration.getEsignSignatureMinWidth();
+                            int maxOffset = configuration.getEsignSignatureMaxLeftOffset();
+                            int half = (int) (overflow / 2);
+                            int wReduce, offset;
+                            if (half <= widthBudget && half <= maxOffset) {
+                                wReduce = (int) overflow / 2;
+                                offset = (int) overflow - wReduce;
+                            } else if (half > widthBudget) {
+                                wReduce = widthBudget;
+                                offset = (int) Math.min(overflow - wReduce, maxOffset);
+                            } else {
+                                offset = maxOffset;
+                                wReduce = (int) Math.min(overflow - offset, widthBudget);
+                            }
+                            sigWidth -= wReduce;
+                            cx = Math.max(cx - offset, 0);
+                        }
+                    }
+                    double remainingOverflow = cx + sigWidth - pageWidth;
+                    if (remainingOverflow > 0) {
+                        cx = Math.max(cx - remainingOverflow, 0);
+                    }
+                }
+                if (pageHeight > 0) {
+                    cy = Math.min(cy, pageHeight - sigHeight);
+                    cy = Math.max(cy, 0);
+                }
+                String coord = (int) Math.floor(cx) + "," + (int) Math.floor(cy);
                 String txnId = UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
                 ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of(configuration.getZoneId()));
 
-                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
+                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo, sigWidth);
                 String orderNumber = ordersCriteriaMap.get(coordinate.getFileStoreId()).getOrderNumber();  // error handling
                 order.setOrderNumber(orderNumber);
                 order.setRequest(xmlRequest);
@@ -108,7 +156,7 @@ public class BSSService {
     }
 
 
-    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
+    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber, int effectiveWidth) {
         log.info("generating request, result= IN_PROGRESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
         Map<String, Object> requestData = new LinkedHashMap<>();
 
@@ -139,7 +187,7 @@ public class BSSService {
         Map<String, Object> pdf = new LinkedHashMap<>();
         pdf.put(PAGE, pageNumber);
         pdf.put(CO_ORDINATES, coordination);
-        pdf.put(SIZE, configuration.getEsignSignatureWidth() + "," + configuration.getEsignSignatureHeight());
+        pdf.put(SIZE, effectiveWidth + "," + configuration.getEsignSignatureHeight());
         pdf.put(DATE_FORMAT, ESIGN_DATE_FORMAT);
         requestData.put(PDF, pdf);
 

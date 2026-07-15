@@ -26,7 +26,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-const BulkIssueCTC = () => {
+const BulkIssueCTC = ({ refetchCounts }) => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
 
@@ -406,6 +406,7 @@ const BulkIssueCTC = () => {
         setShowToast({ error: false, label: t("CTC_DOCUMENT_ISSUED_SUCCESSFULLY") });
       }
       setRefreshKey((prev) => prev + 1);
+      if (refetchCounts) setTimeout(() => refetchCounts(), 1000);
     } catch (e) {
       console.error("Failed to perform bulk sign", e?.message || e);
       const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
@@ -446,6 +447,7 @@ const BulkIssueCTC = () => {
       setShowToast({ error: false, label: t(successMessage) });
 
       setRefreshKey((prev) => prev + 1);
+      if (refetchCounts) setTimeout(() => refetchCounts(), 1000);
     } catch (error) {
       console.error("error while updating", error);
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
