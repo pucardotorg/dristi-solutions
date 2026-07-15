@@ -70,7 +70,7 @@ export const NON_DELIVERY_REASON_OPTIONS = {
 // For the "OTHER" reason, appends the user-entered free text when present.
 export const getNonDeliveryReasonLabel = (taskType, reasonKey, reasonText) => {
   if (!reasonKey) return "";
-  const options = NON_DELIVERY_REASON_OPTIONS[taskType] || [];
+  const options = taskType === "WARRANT" ? NON_DELIVERY_REASON_OPTIONS.WARRANT : NON_DELIVERY_REASON_OPTIONS.SUMMONS;
   const matchedOption = options.find((option) => option.key === reasonKey);
   const label = matchedOption?.value || reasonKey;
   if (reasonKey === "OTHER" && reasonText) {
