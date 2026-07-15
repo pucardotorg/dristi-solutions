@@ -842,7 +842,7 @@ const ReviewSummonsNoticeAndWarrant = ({ refetchCounts }) => {
                   ? updateStatusDate
                   : convertToDateInputFormat(rowData?.taskDetails?.deliveryChannels?.statusChangeDate),
                 ...(selectedDelievery?.key === "NOT_DELIVERED" &&
-                  rowData?.taskDetails?.deliveryChannels?.channelCode !== "POLICE" &&
+                  rowData?.taskDetails?.deliveryChannels?.channelCode === "RPAD" &&
                   selectedReason?.key && {
                     notDeliveredReason: selectedReason.key,
                     notDeliveredReasonText: reasonText,
