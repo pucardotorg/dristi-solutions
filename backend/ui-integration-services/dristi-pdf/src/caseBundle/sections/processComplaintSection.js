@@ -1,4 +1,6 @@
-const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
+const {
+  filterCaseBundleBySection,
+} = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 const { logger } = require("../../logger");
@@ -9,31 +11,35 @@ async function processComplaintSection(
   tenantId,
   requestInfo,
   TEMP_FILES_DIR,
-  indexCopy
+  indexCopy,
 ) {
-  logger.info(`[processComplaintSection] Started | filingNumber: ${courtCase?.filingNumber}`);
+  logger.info(
+    `[processComplaintSection] Started | filingNumber: ${courtCase?.filingNumber}`,
+  );
   const complaintSection = filterCaseBundleBySection(
     caseBundleMaster,
-    "complaint"
+    "complaint",
   );
 
   const sectionPosition = indexCopy.sections?.findIndex(
-    (s) => s.name === "complaint"
+    (s) => s.name === "complaint",
   );
 
   const dynamicSectionNumber = getDynamicSectionNumber(
     indexCopy,
-    sectionPosition
+    sectionPosition,
   );
 
   if (complaintSection?.length !== 0) {
     const section = complaintSection[0];
 
     const complaintFileStoreId = courtCase.documents?.find(
-      (doc) => doc.documentType === "case.complaint.signed"
+      (doc) => doc.documentType === "case.complaint.signed",
     )?.fileStore;
     if (!complaintFileStoreId) {
-      logger.error(`[processComplaintSection] No complaint document found | filingNumber: ${courtCase?.filingNumber}, expected documentType: case.complaint.signed`);
+      logger.error(
+        `[processComplaintSection] No complaint document found | filingNumber: ${courtCase?.filingNumber}, expected documentType: case.complaint.signed`,
+      );
       throw new Error("no case complaint");
     }
 
@@ -41,14 +47,16 @@ async function processComplaintSection(
 
     if (section.docketpagerequired === "yes") {
       const complainant = courtCase.litigants?.find((litigant) =>
-        litigant?.partyType?.includes("complainant.primary")
+        litigant?.partyType?.includes("complainant.primary"),
       );
-      const docketComplainantName = complainant?.additionalDetails?.fullName || "";
-      const docketNameOfAdvocate = courtCase.representatives?.find((adv) =>
-        adv?.representing?.some(
-          (party) => party?.individualId === complainant?.individualId
-        )
-      )?.additionalDetails?.advocateName || "";
+      const docketComplainantName =
+        complainant?.additionalDetails?.fullName || "";
+      const docketNameOfAdvocate =
+        courtCase.representatives?.find((adv) =>
+          adv?.representing?.some(
+            (party) => party?.individualId === complainant?.individualId,
+          ),
+        )?.additionalDetails?.advocateName || "";
 
       const docketCounselFor = docketNameOfAdvocate
         ? `COUNSEL FOR THE COMPLAINANT - ${docketComplainantName}`
@@ -61,21 +69,21 @@ async function processComplaintSection(
           docketCounselFor: docketCounselFor,
           docketNameOfFiling: docketNameOfAdvocate || docketComplainantName,
           docketDateOfSubmission: new Date(
-            courtCase.registrationDate
+            courtCase.registrationDate,
           ).toLocaleDateString("en-IN"),
           documentPath: `${dynamicSectionNumber} ${section.section}`,
         },
         courtCase,
         tenantId,
         requestInfo,
-        TEMP_FILES_DIR
+        TEMP_FILES_DIR,
       );
     }
 
     // update index
 
     const complaintIndexSection = indexCopy.sections?.find(
-      (section) => section.name === "complaint"
+      (section) => section.name === "complaint",
     );
     complaintIndexSection.lineItems = complaintIndexSection.lineItems || [];
     complaintIndexSection.lineItems[0] = {
