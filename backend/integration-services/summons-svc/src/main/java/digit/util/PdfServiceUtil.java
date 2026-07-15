@@ -153,7 +153,7 @@ public class PdfServiceUtil {
                 if (WITNESS.equalsIgnoreCase(summonDetails.getDocSubType())) {
                     var witnessDetails = taskRequest.getTask().getTaskDetails().getWitnessDetails();
                     summonsPdf.setWitnessName(witnessDetails.getName());
-                    if (witnessDetails.getAddress() != null) {
+                    if (witnessDetails != null && witnessDetails.getAddress() != null) {
                         summonsPdf.setWitnessAddress(witnessDetails.getAddress().toString());
                     }
                 }
@@ -168,7 +168,7 @@ public class PdfServiceUtil {
                 if (taskRequest.getTask().getTaskDetails().getWitnessDetails() != null) {
                     var witnessDetails = taskRequest.getTask().getTaskDetails().getWitnessDetails();
                     summonsPdf.setWitnessName(witnessDetails.getName());
-                    if (witnessDetails.getAddress() != null) {
+                    if (witnessDetails != null && witnessDetails.getAddress() != null) {
                         summonsPdf.setWitnessAddress(witnessDetails.getAddress().toString());
                     }
                 }
