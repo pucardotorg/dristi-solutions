@@ -153,7 +153,9 @@ public class PdfServiceUtil {
                 if (WITNESS.equalsIgnoreCase(summonDetails.getDocSubType())) {
                     var witnessDetails = taskRequest.getTask().getTaskDetails().getWitnessDetails();
                     summonsPdf.setWitnessName(witnessDetails.getName());
-                    summonsPdf.setWitnessAddress(witnessDetails.getAddress().toString());
+                    if (witnessDetails.getAddress() != null) {
+                        summonsPdf.setWitnessAddress(witnessDetails.getAddress().toString());
+                    }
                 }
             }
 
@@ -166,7 +168,9 @@ public class PdfServiceUtil {
                 if (taskRequest.getTask().getTaskDetails().getWitnessDetails() != null) {
                     var witnessDetails = taskRequest.getTask().getTaskDetails().getWitnessDetails();
                     summonsPdf.setWitnessName(witnessDetails.getName());
-                    summonsPdf.setWitnessAddress(witnessDetails.getAddress().toString());
+                    if (witnessDetails.getAddress() != null) {
+                        summonsPdf.setWitnessAddress(witnessDetails.getAddress().toString());
+                    }
                 }
 
                 if (BAILABLE.equalsIgnoreCase(docSubType)) {
@@ -341,10 +345,29 @@ public class PdfServiceUtil {
                 .orElse("");
         boolean isWitness = WARRANT.equals(task.getTaskType())
                 ? task.getTaskDetails().getWitnessDetails() != null
-                : docSubType.equals(WITNESS);
-        String respondentName = isWitness ? task.getTaskDetails().getWitnessDetails().getName() : task.getTaskDetails().getRespondentDetails().getName();
-        String respondentAddress = isWitness ? task.getTaskDetails().getWitnessDetails().getAddress().toString() : task.getTaskDetails().getRespondentDetails().getAddress().toString();
-        Address address = isWitness ? task.getTaskDetails().getWitnessDetails().getAddress() : task.getTaskDetails().getRespondentDetails().getAddress();
+                : WITNESS.equals(docSubType);
+
+        String respondentName = null;
+        String respondentAddress = null;
+        Address address = null;
+
+        if (isWitness) {
+            var witnessDetails = task.getTaskDetails().getWitnessDetails();
+            if (witnessDetails != null) {
+                respondentName = witnessDetails.getName();
+                address = witnessDetails.getAddress();
+            }
+        } else {
+            var respondentDetails = task.getTaskDetails().getRespondentDetails();
+            if (respondentDetails != null) {
+                respondentName = respondentDetails.getName();
+                address = respondentDetails.getAddress();
+            }
+        }
+
+        if (address != null) {
+            respondentAddress = address.toString();
+        }
         return SummonsPdf.builder()
                 .tenantId(task.getTenantId())
                 .cnrNumber(task.getCnrNumber())
