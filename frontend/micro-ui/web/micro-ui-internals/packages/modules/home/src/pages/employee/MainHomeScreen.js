@@ -703,7 +703,6 @@ const MainHomeScreen = () => {
             isCompleted: false,
             courtId: localStorage.getItem("courtId"),
             assignedRole: assignedRoles,
-            ...(activeTab !== "RESCHEDULE_REQUEST" ? { assignedRole: assignedRoles } : {}),
           },
           limit: 10,
           offset: 0,
@@ -1549,7 +1548,7 @@ const MainHomeScreen = () => {
                 screenType: ["home", "applicationCompositeOrder"],
                 isCompleted: false,
                 courtId: localStorage.getItem("courtId"),
-                ...(activeTab !== "RESCHEDULE_REQUEST" ? { assignedRole: assignedRoles } : {}),
+                assignedRole: assignedRoles,
               },
               searchScrutinyCases: {
                 date: null,
