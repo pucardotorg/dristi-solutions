@@ -145,26 +145,26 @@ async function processAccusedEvidence(
 
             if (sourceLitigant) {
               docketNameOfFiling =
-                sourceLitigant.additionalDetails?.fullName || "";
+                sourceLitigant?.additionalDetails?.fullName || "";
               docketCounselFor = "";
             } else if (sourceRepresentative) {
-              const docketNameOfComplainants = sourceRepresentative.representing
-                ?.map((lit) => lit.additionalDetails.fullName)
+              const docketNameOfComplainants = sourceRepresentative?.representing
+                ?.map((lit) => lit?.additionalDetails?.fullName)
                 ?.filter(Boolean)
                 .join(", ");
               docketNameOfFiling =
-                sourceRepresentative.additionalDetails?.advocateName || "";
-              docketCounselFor = `COUNSEL FOR THE ${evidence.sourceType} - ${docketNameOfComplainants}`;
+                sourceRepresentative?.additionalDetails?.advocateName || "";
+              docketCounselFor = `COUNSEL FOR THE ${evidence?.sourceType} - ${docketNameOfComplainants}`;
             } else {
               const complainant = courtCase.litigants?.find((litigant) =>
-                litigant.partyType.includes("complainant.primary")
+                litigant?.partyType?.includes("complainant.primary")
               );
               const docketNameOfComplainants =
-                complainant.additionalDetails.fullName;
+                complainant?.additionalDetails?.fullName || "";
               docketNameOfFiling =
                 courtCase.representatives?.find((adv) =>
-                  adv.representing?.find(
-                    (party) => party.individualId === complainant.individualId
+                  adv?.representing?.some(
+                    (party) => party?.individualId === complainant?.individualId
                   )
                 )?.additionalDetails?.advocateName || docketNameOfComplainants;
               docketCounselFor =

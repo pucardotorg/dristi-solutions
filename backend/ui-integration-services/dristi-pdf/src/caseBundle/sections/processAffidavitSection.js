@@ -44,16 +44,16 @@ async function processAffidavitSection(
             const index = ind + i;
             if (section.docketpagerequired === "yes") {
               const complainant = courtCase.litigants?.find((litigant) =>
-                litigant.partyType.includes("complainant.primary")
+                litigant?.partyType?.includes("complainant.primary")
               );
               const docketComplainantName =
-                complainant.additionalDetails.fullName;
+                complainant?.additionalDetails?.fullName || "";
               const docketNameOfAdvocate = courtCase.representatives?.find(
                 (adv) =>
-                  adv.representing?.find(
-                    (party) => party.individualId === complainant.individualId
+                  adv?.representing?.some(
+                    (party) => party?.individualId === complainant?.individualId
                   )
-              )?.additionalDetails?.advocateName;
+              )?.additionalDetails?.advocateName || "";
 
               const docketCounselFor = docketNameOfAdvocate
                 ? `COUNSEL FOR THE COMPLAINANT - ${docketComplainantName}`

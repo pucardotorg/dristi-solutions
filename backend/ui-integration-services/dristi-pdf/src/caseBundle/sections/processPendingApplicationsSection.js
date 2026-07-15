@@ -145,13 +145,13 @@ async function processPendingApplicationsSection(
           let newApplicationFileStoreId = applicationFileStoreId;
 
           if (section.docketpagerequired === "yes") {
-            const sourceUuid = application.auditDetails.createdBy;
+            const sourceUuid = application?.auditDetails?.createdBy;
 
             const sourceLitigant = courtCase.litigants?.find(
-              (litigant) => litigant.additionalDetails.uuid === sourceUuid
+              (litigant) => litigant?.additionalDetails?.uuid === sourceUuid
             );
             const sourceRepresentative = courtCase.representatives?.find(
-              (rep) => rep.additionalDetails.uuid === sourceUuid
+              (rep) => rep?.additionalDetails?.uuid === sourceUuid
             );
 
             let docketNameOfFiling;
@@ -159,32 +159,32 @@ async function processPendingApplicationsSection(
 
             if (sourceLitigant) {
               docketNameOfFiling =
-                sourceLitigant.additionalDetails?.fullName || "";
+                sourceLitigant?.additionalDetails?.fullName || "";
               docketCounselFor = "";
             } else if (sourceRepresentative) {
-              const docketNameOfComplainants = sourceRepresentative.representing
-                ?.map((lit) => lit.additionalDetails.fullName)
+              const docketNameOfComplainants = sourceRepresentative?.representing
+                ?.map((lit) => lit?.additionalDetails?.fullName)
                 ?.filter(Boolean)
                 ?.join(", ");
               const partyType =
-                sourceRepresentative.representing[0].partyType.includes(
+                sourceRepresentative?.representing?.[0]?.partyType?.includes(
                   "complainant"
                 )
                   ? "COMPLAINANT"
                   : "ACCUSED";
               docketNameOfFiling =
-                sourceRepresentative.additionalDetails?.advocateName || "";
+                sourceRepresentative?.additionalDetails?.advocateName || "";
               docketCounselFor = `COUNSEL FOR THE ${partyType} - ${docketNameOfComplainants}`;
             } else {
               const complainant = courtCase.litigants?.find((litigant) =>
-                litigant.partyType.includes("complainant.primary")
+                litigant?.partyType?.includes("complainant.primary")
               );
               const docketNameOfComplainants =
-                complainant.additionalDetails.fullName;
+                complainant?.additionalDetails?.fullName || "";
               docketNameOfFiling =
                 courtCase.representatives?.find((adv) =>
-                  adv.representing?.find(
-                    (party) => party.individualId === complainant.individualId
+                  adv?.representing?.some(
+                    (party) => party?.individualId === complainant?.individualId
                   )
                 )?.additionalDetails?.advocateName || docketNameOfComplainants;
               docketCounselFor =

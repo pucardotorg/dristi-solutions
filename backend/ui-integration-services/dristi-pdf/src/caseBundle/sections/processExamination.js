@@ -79,15 +79,15 @@ async function processExamination(
 
         if (section.docketpagerequired === "yes" && index === 0) {
           const complainant = courtCase.litigants?.find((litigant) =>
-            litigant.partyType?.includes("complainant.primary")
+            litigant?.partyType?.includes("complainant.primary")
           );
 
           const docketComplainantName =
             complainant?.additionalDetails?.fullName || "";
 
           const docketAdvocate = courtCase.representatives?.find((adv) =>
-            adv.representing?.some(
-              (party) => party.individualId === complainant?.individualId
+            adv?.representing?.some(
+              (party) => party?.individualId === complainant?.individualId
             )
           );
 

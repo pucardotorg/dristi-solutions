@@ -119,36 +119,36 @@ async function processMandatorySubmissions(
 
                     if (sourceLitigant) {
                       docketNameOfFiling =
-                        sourceLitigant.additionalDetails?.fullName || "";
+                        sourceLitigant?.additionalDetails?.fullName || "";
                       docketCounselFor = "";
                     } else if (sourceRepresentative) {
                       const docketNameOfComplainants =
-                        sourceRepresentative.representing
-                          ?.map((lit) => lit.additionalDetails.fullName)
+                        sourceRepresentative?.representing
+                          ?.map((lit) => lit?.additionalDetails?.fullName)
                           ?.filter(Boolean)
                           ?.join(", ");
                       const partyType =
-                        sourceRepresentative.representing[0].partyType.includes(
+                        sourceRepresentative?.representing?.[0]?.partyType?.includes(
                           "complainant"
                         )
                           ? "COMPLAINANT"
                           : "ACCUSED";
                       docketNameOfFiling =
-                        sourceRepresentative.additionalDetails?.advocateName ||
+                        sourceRepresentative?.additionalDetails?.advocateName ||
                         "";
                       docketCounselFor = `COUNSEL FOR THE ${partyType} - ${docketNameOfComplainants}`;
                     } else {
                       const complainant = courtCase.litigants?.find(
                         (litigant) =>
-                          litigant.partyType.includes("complainant.primary")
+                          litigant?.partyType?.includes("complainant.primary")
                       );
                       const docketNameOfComplainants =
-                        complainant.additionalDetails.fullName;
+                        complainant?.additionalDetails?.fullName || "";
                       docketNameOfFiling =
                         courtCase.representatives?.find((adv) =>
-                          adv.representing?.find(
+                          adv?.representing?.some(
                             (party) =>
-                              party.individualId === complainant.individualId
+                              party?.individualId === complainant?.individualId
                           )
                         )?.additionalDetails?.advocateName ||
                         docketNameOfComplainants;
