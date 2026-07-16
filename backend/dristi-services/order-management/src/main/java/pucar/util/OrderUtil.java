@@ -129,14 +129,18 @@ public class OrderUtil {
 
     }
 
+    private static final Set<String> ORDER_TYPES_REQUIRING_REF_APPLICATION = Set.of(SET_BAIL_TERMS, RESCHEDULE_OF_HEARING_DATE, CHECKOUT_ACCEPTANCE, ASSIGNING_DATE_RESCHEDULED_HEARING,
+            INITIATING_RESCHEDULING_OF_HEARING_DATE);
+
     public void validateRefApplicationId(Order order) {
         String orderType = order.getOrderType();
         String action = order.getWorkflow() != null ? order.getWorkflow().getAction() : null;
 
-        if (E_SIGN.equalsIgnoreCase(action) && APPROVE_VOLUNTARY_SUBMISSIONS.equalsIgnoreCase(orderType)) {
+        if (E_SIGN.equalsIgnoreCase(action) && ORDER_TYPES_REQUIRING_REF_APPLICATION.contains(orderType)) {
             String refApplicationId = getReferenceId(order);
             if (refApplicationId == null || refApplicationId.isBlank()) {
-                throw new CustomException("REF_APPLICATION_ID_NOT_FOUND", "refApplicationId is required in additionalDetails.formdata for order type: " + orderType);
+                log.error("refApplicationId is required in additionalDetails.formdata for order: {}", order);
+                throw new CustomException("REF_APPLICATION_ID_NOT_FOUND", "Please remove the "+orderType+" item and add again");
             }
         }
     }
