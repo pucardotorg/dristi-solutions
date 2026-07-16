@@ -3,6 +3,7 @@ package org.pucar.dristi.repository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.pucar.dristi.web.models.Document;
 import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
 import org.pucar.dristi.repository.querybuilder.TaskCaseQueryBuilder;
