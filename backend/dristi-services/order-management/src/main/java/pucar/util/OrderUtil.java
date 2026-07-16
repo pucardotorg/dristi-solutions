@@ -129,6 +129,18 @@ public class OrderUtil {
 
     }
 
+    public void validateRefApplicationId(Order order) {
+        String orderType = order.getOrderType();
+        String action = order.getWorkflow() != null ? order.getWorkflow().getAction() : null;
+
+        if (E_SIGN.equalsIgnoreCase(action) && APPROVE_VOLUNTARY_SUBMISSIONS.equalsIgnoreCase(orderType)) {
+            String refApplicationId = getReferenceId(order);
+            if (refApplicationId == null || refApplicationId.isBlank()) {
+                throw new CustomException("REF_APPLICATION_ID_NOT_FOUND", "refApplicationId is required in additionalDetails.formdata for order type: " + orderType);
+            }
+        }
+    }
+
     public String getHearingNumberFormApplicationAdditionalDetails(Object additionalDetails) {
         return Optional.ofNullable(additionalDetails)
                 .filter(Map.class::isInstance)
