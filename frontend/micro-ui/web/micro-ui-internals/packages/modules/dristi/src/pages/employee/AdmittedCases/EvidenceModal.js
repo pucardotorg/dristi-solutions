@@ -275,14 +275,7 @@ const EvidenceModal = ({
       if (userType === "employee") {
         const applicationType = documentSubmission?.[0]?.applicationList?.applicationType;
         label = applicationType === "CORRECTION_IN_COMPLAINANT_DETAILS" ? t("REVIEW_CHANGES") : t("Approve");
-      } else {
-        if (
-          (respondingUuids?.includes(userInfo?.uuid) || !documentSubmission?.[0]?.details?.referenceId) &&
-          [SubmissionWorkflowState.PENDINGRESPONSE, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus)
-        ) {
-          label = t("ADD_COMMENT");
-        } else return null;
-      }
+      } else return null;
     } else {
       if (
         documentSubmission?.[0]?.artifactList?.isEvidence ||
@@ -295,7 +288,7 @@ const EvidenceModal = ({
       }
     }
     return label;
-  }, [applicationStatus, documentSubmission, modalType, respondingUuids, t, userInfo?.uuid, userType]);
+  }, [documentSubmission, modalType, t, userType]);
 
   const actionCancelLabel = useMemo(() => {
     if (
@@ -425,9 +418,6 @@ const EvidenceModal = ({
       }
       if (showConfirmationModal?.type === "accept") {
         message = "SUCCESSFULLY_ACCEPTED_APPLICATION_MESSAGE";
-      }
-      if (actionSaveLabel === t("ADD_COMMENT")) {
-        message = "SUCCESSFULLY_RESPONDED_APPLICATION_MESSAGE";
       } else {
         message = "";
       }
@@ -508,28 +498,6 @@ const EvidenceModal = ({
         }
       );
     }
-  };
-
-  const handleRespondApplication = async () => {
-    await mutation.mutate(
-      {
-        url: Urls.dristi.submissionsUpdate,
-        params: {},
-        body: {
-          application: {
-            ...respondApplicationPayload,
-            comment: comments,
-          },
-        },
-        config: {
-          enable: true,
-        },
-      },
-      {
-        onSuccess,
-        onError,
-      }
-    );
   };
 
   const handleDeleteApplication = async () => {
@@ -1029,28 +997,6 @@ const EvidenceModal = ({
           }
         }
       } else {
-        if (actionSaveLabel === t("ADD_COMMENT")) {
-          try {
-          } catch (error) {}
-          await handleRespondApplication();
-          try {
-            DRISTIService.customApiService(Urls.dristi.pendingTask, {
-              pendingTask: {
-                entityType: "application-order-submission-feedback",
-                status: "RESPOND_TO_PRODUCTION_DOCUMENTS",
-                referenceId: `MANUAL_${signedSubmission?.applicationList?.applicationNumber}`,
-                cnrNumber,
-                filingNumber,
-                caseId,
-                caseTitle: caseData?.title,
-                isCompleted: true,
-                tenantId,
-              },
-            });
-          } catch (error) {
-            console.error("error :>> ", error);
-          }
-        }
         counterUpdate();
         setShow(false);
         counterUpdate();

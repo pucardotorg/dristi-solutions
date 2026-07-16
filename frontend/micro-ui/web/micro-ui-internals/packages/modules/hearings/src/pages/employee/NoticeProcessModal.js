@@ -694,7 +694,7 @@ const NoticeProcessModal = ({
         <div>{modalContent}</div>
       )}
 
-      {showNoticeModal && <ReviewNoticeModal rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
+      {showNoticeModal && <ReviewNoticeModal filingNumber={filingNumber} rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
     </React.Fragment>
   );
 };
