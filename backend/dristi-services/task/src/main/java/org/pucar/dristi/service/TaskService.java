@@ -275,6 +275,7 @@ public class TaskService {
             }
 
             producer.push(config.getTaskUpdateTopic(), body);
+            taskRepository.updateTask(body.getTask());
 
             if (!isValidTask) {
                 // join case pending task is not valid
@@ -436,6 +437,7 @@ public class TaskService {
             enrichmentUtil.enrichIsPendingCollectionUponUpdate(taskRequest, body);
 
             producer.push(config.getTaskUpdateTopic(), taskRequest);
+            taskRepository.updateTask(taskRequest.getTask());
 
             return taskRequest.getTask();
 
@@ -979,6 +981,7 @@ public class TaskService {
                     .requestInfo(RequestInfo.builder().build())
                     .build();
             producer.push(config.getTaskUpdateTopic(), taskRequest);
+            taskRepository.updateTask(taskRequest.getTask());
         }
     }
 
