@@ -840,6 +840,10 @@ const EvidenceModal = ({
       };
 
       if (generateOrder) {
+        if (!refApplicationId) {
+          setToast({ label: t("SOMETHING_WENT_WRONG_REFRESH_AND_TRY_AGAIN"), error: true });
+          return;
+        }
         const reqbody = {
           order: {
             createdDate: null,

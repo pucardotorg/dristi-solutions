@@ -2577,6 +2577,10 @@ const GenerateOrdersV2 = () => {
     try {
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
       const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
+      if (!refApplicationId) {
+        setShowToast({ label: t("SOMETHING_WENT_WRONG_REFRESH_AND_TRY_AGAIN"), error: true });
+        return;
+      }
       const applicationCMPNumber = documentSubmission?.[0]?.applicationList?.applicationCMPNumber;
       const currentHearingPurpose = documentSubmission?.[0]?.applicationList?.applicationDetails?.initialHearingPurpose || "";
       const caseNumber =
