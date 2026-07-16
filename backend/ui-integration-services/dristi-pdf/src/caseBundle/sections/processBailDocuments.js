@@ -222,6 +222,8 @@ async function processBailDocuments(
                 );
                 const sourceRepresentative = courtCase.representatives?.find(
                   (rep) => rep?.additionalDetails?.uuid === sourceUuid
+                );
+                
                   let docketNameOfFiling;
                   let docketCounselFor;
 
