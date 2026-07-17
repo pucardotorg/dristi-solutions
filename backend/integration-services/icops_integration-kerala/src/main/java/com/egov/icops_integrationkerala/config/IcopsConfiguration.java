@@ -97,4 +97,7 @@ public class IcopsConfiguration {
     @Value("${egov.user.password}")
     private String password;
 
+    @Value("${kafka.topics.health.status}")
+    private String healthStatusTopic;
+
 }
