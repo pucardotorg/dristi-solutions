@@ -9,3 +9,5 @@ need to restart egov-accesscontrol, pdf-service
 ## Config changes
 - dristi-pdf: add env `DRISTI_ORDER_MANAGEMENT_HOST=http://order-management.egov:8080`
   (#5754 Case Summary PDF now calls order-management `/order-management/v1/getBotdOrders` for BoTD summaries)
+
+- white list health dashboard api

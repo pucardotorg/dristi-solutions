@@ -267,4 +267,7 @@ public class PaymentConfiguration {
     @Value("${payment.reconciliation.v3.max.pending.retries:3}")
     private Integer reconciliationV3MaxPendingRetries;
 
+    @Value("${kafka.topics.health.status}")
+    private String healthStatusTopic;
+
 }
