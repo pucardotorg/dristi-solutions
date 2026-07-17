@@ -149,8 +149,9 @@ function CaseFileAdmission({ t, path }) {
     return allAdvocates?.[caseDetails?.litigants?.find((litigant) => litigant?.partyType === "complainant.primary")?.additionalDetails?.uuid];
   }, [allAdvocates, caseDetails]);
 
+  // Currently for DCA application through efiling, primary complainant is targeted as per current flow.
   const complainantPrimaryUUId = useMemo(
-    () => caseDetails?.litigants?.find((item) => item?.partyType === "complainant.primary").additionalDetails?.uuid || "",
+    () => caseDetails?.litigants?.find((item) => item?.partyType === "complainant.primary")?.additionalDetails?.uuid || "",
     [caseDetails]
   );
 

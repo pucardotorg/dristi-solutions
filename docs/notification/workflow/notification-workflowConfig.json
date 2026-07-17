@@ -1,0 +1,93 @@
+{
+  "BusinessServices": [
+    {
+      "tenantId": "kl",
+      "business": "notification",
+      "businessService": "notification-default",
+      "businessServiceSla": 0,
+      "states": [
+        {
+          "sla": null,
+          "state": null,
+          "applicationStatus": null,
+          "docUploadRequired": false,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "CREATE",
+              "nextState": "PENDING_E-SIGN",
+              "roles": [
+                "NOTIFICATION_CREATOR"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "PENDING_E-SIGN",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": true,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "E-SIGN",
+              "nextState": "PUBLISHED",
+              "roles": [
+                "NOTIFICATION_APPROVER",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "DELETE",
+              "nextState": "DELETED",
+              "roles": [
+                "NOTIFICATION_CREATOR",
+                "NOTIFICATION_APPROVER"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "PUBLISHED",
+          "applicationStatus": "ACTIVE",
+          "isStateUpdatable": false,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true
+        },
+        {
+          "sla": null,
+          "state": "DELETED",
+          "applicationStatus": "INACTIVE",
+          "isStateUpdatable": false,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true
+        },
+        {
+          "sla": null,
+          "state": "ABATED",
+          "applicationStatus": "INACTIVE",
+          "isStateUpdatable": false,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true
+        }
+      ]
+    }
+  ]
+}

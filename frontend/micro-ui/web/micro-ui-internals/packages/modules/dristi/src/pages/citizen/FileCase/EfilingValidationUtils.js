@@ -3478,7 +3478,7 @@ export const updateCaseDetails = async ({
               caseId: litigant?.caseId,
               partyCategory: litigant?.partyCategory,
               individualId: litigant?.individualId,
-              partyType: litigant?.partyType?.includes("complainant") ? "complainant.primary" : "respondent.primary",
+              partyType: litigant?.partyType,
               documents: complainant?.vakalathnamaDoc,
             };
             representings.push(representingData);
