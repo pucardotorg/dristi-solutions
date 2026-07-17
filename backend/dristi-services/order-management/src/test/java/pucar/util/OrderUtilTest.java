@@ -50,7 +50,7 @@ class OrderUtilTest {
 
     private static final List<String> ORDER_TYPES_REQUIRING_REF_APPLICATION = List.of(
             SET_BAIL_TERMS, RESCHEDULE_OF_HEARING_DATE, CHECKOUT_ACCEPTANCE,
-            ASSIGNING_DATE_RESCHEDULED_HEARING, INITIATING_RESCHEDULING_OF_HEARING_DATE);
+            ASSIGNING_DATE_RESCHEDULED_HEARING, INITIATING_RESCHEDULING_OF_HEARING_DATE,APPROVE_VOLUNTARY_SUBMISSIONS);
 
     private Order buildOrder(String orderType, String action, String refApplicationId) {
         WorkflowObject workflow = null;
@@ -124,14 +124,6 @@ class OrderUtilTest {
     @Test
     void testValidateRefApplicationId_NullWorkflow_DoesNotThrow() {
         Order order = buildOrder(SET_BAIL_TERMS, null, null);
-
-        assertDoesNotThrow(() -> orderUtil.validateRefApplicationId(order));
-    }
-
-    @Test
-    void testValidateRefApplicationId_OrderTypeNotInRequiredSet_DoesNotThrow() {
-        // APPROVE_VOLUNTARY_SUBMISSIONS is no longer part of ORDER_TYPES_REQUIRING_REF_APPLICATION
-        Order order = buildOrder(APPROVE_VOLUNTARY_SUBMISSIONS, E_SIGN, null);
 
         assertDoesNotThrow(() -> orderUtil.validateRefApplicationId(order));
     }

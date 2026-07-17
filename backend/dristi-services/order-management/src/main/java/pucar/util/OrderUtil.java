@@ -130,7 +130,7 @@ public class OrderUtil {
     }
 
     private static final Set<String> ORDER_TYPES_REQUIRING_REF_APPLICATION = Set.of(SET_BAIL_TERMS, RESCHEDULE_OF_HEARING_DATE, CHECKOUT_ACCEPTANCE, ASSIGNING_DATE_RESCHEDULED_HEARING,
-            INITIATING_RESCHEDULING_OF_HEARING_DATE);
+            INITIATING_RESCHEDULING_OF_HEARING_DATE, APPROVE_VOLUNTARY_SUBMISSIONS);
 
     public void validateRefApplicationId(Order order) {
         String orderType = order.getOrderType();
