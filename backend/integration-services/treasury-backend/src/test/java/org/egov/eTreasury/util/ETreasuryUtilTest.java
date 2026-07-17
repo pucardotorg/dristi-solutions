@@ -9,6 +9,7 @@ import org.springframework.http.*;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.egov.eTreasury.config.PaymentConfiguration;
+import org.egov.eTreasury.kafka.Producer;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,11 +26,14 @@ class ETreasuryUtilTest {
     @Mock
     private PaymentConfiguration paymentConfiguration;
 
+    @Mock
+    private Producer producer;
+
     private ETreasuryUtil eTreasuryUtil;
 
     @BeforeEach
     void setUp() {
-        eTreasuryUtil = new ETreasuryUtil(restTemplate, paymentConfiguration);
+        eTreasuryUtil = new ETreasuryUtil(restTemplate, paymentConfiguration, producer);
     }
 
     @Test
