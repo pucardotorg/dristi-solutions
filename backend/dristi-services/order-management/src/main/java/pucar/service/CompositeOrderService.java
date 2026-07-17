@@ -42,6 +42,14 @@ public class CompositeOrderService implements OrderProcessor {
     }
 
     @Override
+    public void validateOrder(OrderRequest request) {
+        Order order = request.getOrder();
+        for (Order compositeOrderItem : getItemListFormCompositeItem(order)) {
+            orderUtil.validateRefApplicationId(compositeOrderItem);
+        }
+    }
+
+    @Override
     public void preProcessOrder(OrderRequest orderRequest) {
 
         Order order = orderRequest.getOrder();

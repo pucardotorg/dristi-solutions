@@ -4,6 +4,7 @@ package pucar.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pucar.util.OrderUtil;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
 
@@ -14,10 +15,17 @@ import java.util.List;
 public class IntermediateOrderService implements OrderProcessor {
 
     private final OrderStrategyExecutor orderStrategyExecutor;
+    private final OrderUtil orderUtil;
 
     @Autowired
-    public IntermediateOrderService(OrderStrategyExecutor orderStrategyExecutor) {
+    public IntermediateOrderService(OrderStrategyExecutor orderStrategyExecutor, OrderUtil orderUtil) {
         this.orderStrategyExecutor = orderStrategyExecutor;
+        this.orderUtil = orderUtil;
+    }
+
+    @Override
+    public void validateOrder(OrderRequest request) {
+        orderUtil.validateRefApplicationId(request.getOrder());
     }
 
     @Override
