@@ -264,6 +264,7 @@ public class BSSService {
                             .requestInfo(request.getRequestInfo())
                             .order(order).build();
 
+                    orderProcessor.validateOrder(orderUpdateRequest);
                     orderProcessor.preProcessOrder(orderUpdateRequest);
 
                     if (order.getNextHearingDate() != null) {
