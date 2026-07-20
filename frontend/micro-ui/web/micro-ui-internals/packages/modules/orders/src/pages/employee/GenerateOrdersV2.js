@@ -1722,9 +1722,11 @@ const GenerateOrdersV2 = () => {
           return response;
         });
     } catch (error) {
+      const errorCode = error?.response?.data?.Errors?.[0]?.code;
+      let label = errorCode ? t(errorCode) : action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("ORDER_SAVE_FAILED");
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
-        label: action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("ORDER_SAVE_FAILED"),
+        label: label,
         error: true,
         errorId,
       });
@@ -2461,6 +2463,9 @@ const GenerateOrdersV2 = () => {
       );
     } catch (error) {
       console.error("Error in processHandleIssueOrder:", error);
+      const errorCode = error?.response?.data?.Errors?.[0]?.code;
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: errorCode, error: true, errorId });
     } finally {
       setIsLoading(false);
     }
