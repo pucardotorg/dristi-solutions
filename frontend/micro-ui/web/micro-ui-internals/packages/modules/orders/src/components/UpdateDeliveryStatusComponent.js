@@ -44,7 +44,7 @@ const UpdateDeliveryStatusComponent = ({
   useEffect(() => {
     if (date) setUpdateStatusDate(date);
     const isSelectedDeliveryEmpty = !selectedDelievery || Object.keys(selectedDelievery).length === 0;
-    const isReasonRequired = selectedDelievery?.key === "NOT_DELIVERED" && !isIcops;
+    const isReasonRequired = showReasonDropdown;
     const isReasonEmpty = !selectedReason || Object.keys(selectedReason).length === 0;
     if (!isSelectedDeliveryEmpty && date && (!isReasonRequired || !isReasonEmpty)) {
       handleSubmitButtonDisable(false);
