@@ -32,20 +32,22 @@ public class CompositeOrderService implements OrderProcessor {
     private final OrderStrategyExecutor orderStrategyExecutor;
     private final OrderUtil orderUtil;
     private final CaseUtil caseUtil;
+    private final ApplicationValidationService applicationValidationService;
 
     @Autowired
-    public CompositeOrderService(ObjectMapper objectMapper, OrderStrategyExecutor orderStrategyExecutor, OrderUtil orderUtil, CaseUtil caseUtil) {
+    public CompositeOrderService(ObjectMapper objectMapper, OrderStrategyExecutor orderStrategyExecutor, OrderUtil orderUtil, CaseUtil caseUtil, ApplicationValidationService applicationValidationService) {
         this.objectMapper = objectMapper;
         this.orderStrategyExecutor = orderStrategyExecutor;
         this.orderUtil = orderUtil;
         this.caseUtil = caseUtil;
+        this.applicationValidationService = applicationValidationService;
     }
 
     @Override
     public void validateOrder(OrderRequest request) {
         Order order = request.getOrder();
         for (Order compositeOrderItem : getItemListFormCompositeItem(order)) {
-            orderUtil.validateRefApplicationId(compositeOrderItem);
+            applicationValidationService.validate(compositeOrderItem);
         }
     }
 
