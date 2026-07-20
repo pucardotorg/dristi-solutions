@@ -720,6 +720,10 @@
     overflow: auto;
     border-radius: 8px;
     background: #fafafa;
+
+    .doc-card {
+      max-width: 100%;
+    }
   }
 
   .litigant-details {
