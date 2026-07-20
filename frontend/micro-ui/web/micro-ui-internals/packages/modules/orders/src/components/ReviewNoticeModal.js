@@ -9,7 +9,9 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos, filingNu
   // const [file, setFile] = React.useState([]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const doc = rowData?.documents?.find((doc) => ["SIGNED_TASK_DOCUMENT", "GENERATE_TASK_DOCUMENT"]?.includes(doc.documentType));
+  const doc =
+    rowData?.documents?.find((doc) => doc.documentType === "SIGNED_TASK_DOCUMENT") ||
+    rowData?.documents?.find((doc) => doc.documentType === "GENERATE_TASK_DOCUMENT");
   const policeDoc = rowData?.documents?.find((doc) => doc.documentType === "POLICE_REPORT");
   const useDownloadCasePdf = Digit?.Hooks?.dristi?.useDownloadCasePdf;
   const { downloadPdf } = useDownloadCasePdf();
