@@ -439,7 +439,7 @@ export const BailBondSignModal = ({
         >
           <div className="review-submission-appl-body-main">
             <div className="application-details">
-              <div className="application-view">{bailBondLoader ? <Loader /> : <React.Fragment>{MemoizedDocViewers}</React.Fragment>}</div>
+              <div className="application-view doc-preview">{bailBondLoader ? <Loader /> : <React.Fragment>{MemoizedDocViewers}</React.Fragment>}</div>
             </div>
           </div>
         </Modal>
