@@ -131,6 +131,12 @@ public class ServiceConstants {
 
     // order type
     public static final String ACCEPTANCE_REJECTION_DCA = "ACCEPTANCE_REJECTION_DCA";
+    public static final String CASE_TRANSFER_REJECT = "CASE_TRANSFER_REJECT";
+    public static final String CASE_TRANSFER_ACCEPT = "CASE_TRANSFER_ACCEPT";
+    public static final String SETTLEMENT_REJECT = "SETTLEMENT_REJECT";
+    public static final String SETTLEMENT_ACCEPT = "SETTLEMENT_ACCEPT";
+    public static final String WITHDRAWAL_ACCEPT = "WITHDRAWAL_ACCEPT";
+    public static final String WITHDRAWAL_REJECT = "WITHDRAWAL_REJECT";
     public static final String ACCEPT_BAIL = "ACCEPT_BAIL";
     public static final String TAKE_COGNIZANCE = "TAKE_COGNIZANCE";
     public static final String ADMIT_DISMISS_CASE = "ADMIT_DISMISS_CASE";

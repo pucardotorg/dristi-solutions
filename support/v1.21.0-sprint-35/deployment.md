@@ -11,3 +11,5 @@ need to restart egov-accesscontrol, pdf-service
   (#5754 Case Summary PDF now calls order-management `/order-management/v1/getBotdOrders` for BoTD summaries)
 
 - white list health dashboard api
+- disable one of settlement_accept item text in mdms
+- restart order service

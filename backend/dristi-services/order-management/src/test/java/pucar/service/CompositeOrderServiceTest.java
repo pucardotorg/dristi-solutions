@@ -36,6 +36,9 @@ class CompositeOrderServiceTest {
     @Mock
     private CaseUtil caseUtil;
 
+    @Mock
+    private  ApplicationValidationService applicationValidationService;
+
     private CompositeOrderService compositeOrderService;
 
     private Order order;
@@ -44,7 +47,7 @@ class CompositeOrderServiceTest {
     @BeforeEach
     void setUp() {
         ObjectMapper objectMapper = new ObjectMapper();
-        compositeOrderService = new CompositeOrderService(objectMapper, orderStrategyExecutor, orderUtil, caseUtil);
+        compositeOrderService = new CompositeOrderService(objectMapper, orderStrategyExecutor, orderUtil, caseUtil, applicationValidationService);
 
         requestInfo = new RequestInfo();
 
