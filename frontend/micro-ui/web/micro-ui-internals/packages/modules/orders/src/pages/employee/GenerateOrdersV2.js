@@ -1722,9 +1722,11 @@ const GenerateOrdersV2 = () => {
           return response;
         });
     } catch (error) {
+      const errorCode = error?.response?.data?.Errors?.[0]?.code;
+      let label = errorCode ? t(errorCode) : action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("ORDER_SAVE_FAILED");
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
-        label: action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("ORDER_SAVE_FAILED"),
+        label: label,
         error: true,
         errorId,
       });
@@ -1873,6 +1875,7 @@ const GenerateOrdersV2 = () => {
       setAddOrderModal(false);
       setEditOrderModal(false);
       sessionStorage.removeItem("currentOrderType");
+      sessionStorage.removeItem("currentOrderRefApplicationId");
 
       if (!orderNumber || orderNumber === "null" || orderNumber === "undefined" || updateOrderResponse?.order?.orderNumber) {
         history.replace(
@@ -2460,6 +2463,9 @@ const GenerateOrdersV2 = () => {
       );
     } catch (error) {
       console.error("Error in processHandleIssueOrder:", error);
+      const errorCode = error?.response?.data?.Errors?.[0]?.code;
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: errorCode, error: true, errorId });
     } finally {
       setIsLoading(false);
     }
@@ -2797,6 +2803,7 @@ const GenerateOrdersV2 = () => {
             },
           });
           sessionStorage.setItem("currentOrderType", orderType);
+          sessionStorage.setItem("currentOrderRefApplicationId", refApplicationId || "");
           await refetchOrdersData();
           history.replace(
             `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
@@ -2872,6 +2879,7 @@ const GenerateOrdersV2 = () => {
             },
           });
           sessionStorage.setItem("currentOrderType", orderType);
+          sessionStorage.setItem("currentOrderRefApplicationId", refApplicationId || "");
           await refetchOrdersData();
           history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
         } catch (error) {
@@ -2893,10 +2901,20 @@ const GenerateOrdersV2 = () => {
 
   useEffect(() => {
     const currentOrderType = sessionStorage.getItem("currentOrderType");
+    const currentOrderRefApplicationId = sessionStorage.getItem("currentOrderRefApplicationId");
     if (!isOrderTypeLoading && !isOrdersLoading && currentOrderType && Object.keys(currentOrder).length > 0 && !Object.keys(orderType).length > 0) {
       let currentOrderTypeIndex = 0;
       if (currentOrder?.orderCategory !== "INTERMEDIATE") {
-        currentOrderTypeIndex = currentOrder?.compositeItems?.findIndex((item) => item?.orderType === currentOrderType);
+        currentOrderTypeIndex = currentOrderRefApplicationId
+          ? currentOrder?.compositeItems?.findIndex(
+              (item) =>
+                item?.orderType === currentOrderType &&
+                item?.orderSchema?.additionalDetails?.formdata?.refApplicationId === currentOrderRefApplicationId
+            )
+          : currentOrder?.compositeItems?.findIndex((item) => item?.orderType === currentOrderType);
+        if (currentOrderTypeIndex === -1) {
+          currentOrderTypeIndex = currentOrder?.compositeItems?.findIndex((item) => item?.orderType === currentOrderType);
+        }
       }
       setOrderType(
         {
@@ -3167,6 +3185,7 @@ const GenerateOrdersV2 = () => {
             setEditOrderModal(false);
             setAddOrderModal(false);
             sessionStorage.removeItem("currentOrderType");
+            sessionStorage.removeItem("currentOrderRefApplicationId");
           }}
           headerLabel={
             showEditOrderModal
