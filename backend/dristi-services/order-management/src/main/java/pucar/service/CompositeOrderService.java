@@ -47,7 +47,7 @@ public class CompositeOrderService implements OrderProcessor {
     public void validateOrder(OrderRequest request) {
         Order order = request.getOrder();
         for (Order compositeOrderItem : getItemListFormCompositeItem(order)) {
-            applicationValidationService.validate(compositeOrderItem);
+            applicationValidationService.validate(request.getRequestInfo(), compositeOrderItem);
         }
     }
 

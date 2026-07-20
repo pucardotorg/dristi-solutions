@@ -1,32 +1,28 @@
 package pucar.service;
 
 import lombok.RequiredArgsConstructor;
+import org.egov.common.contract.request.RequestInfo;
 import org.springframework.stereotype.Service;
-import pucar.strategy.validation.ApplicationValidator;
+import pucar.strategy.validation.application.AbstractApplicationValidator;
 import pucar.web.models.Order;
 
 import java.util.List;
 
-import static pucar.config.ServiceConstants.E_SIGN;
-
 /**
- * Runs the {@link ApplicationValidator} strategy that supports the given order's type, if any.
- * Adding validation for a new order type only requires a new {@code ApplicationValidator} bean.
+ * Runs every {@link AbstractApplicationValidator} bean (one per order type) against a single order
+ * during order create/update. Each validator decides internally whether it applies via
+ * {@code supports(orderType)}, so adding validation for a new order type only requires a new bean.
+ *
+ * <p>These same beans are also picked up by {@code OrderSignValidationService}, since they implement
+ * the shared {@code OrderSignValidator} contract.
  */
 @Service
 @RequiredArgsConstructor
 public class ApplicationValidationService {
 
-    private final List<ApplicationValidator> validators;
+    private final List<AbstractApplicationValidator> validators;
 
-    public void validate(Order order) {
-        String action = order.getWorkflow() != null ? order.getWorkflow().getAction() : null;
-        if (!E_SIGN.equalsIgnoreCase(action)) {
-            return;
-        }
-
-        validators.stream()
-                .filter(validator -> validator.supports(order.getOrderType()))
-                .forEach(validator -> validator.validate(order));
+    public void validate(RequestInfo requestInfo, Order order) {
+        validators.forEach(validator -> validator.validate(requestInfo, List.of(order)));
     }
 }

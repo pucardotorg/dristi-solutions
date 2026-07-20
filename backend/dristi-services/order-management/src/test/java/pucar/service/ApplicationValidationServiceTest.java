@@ -1,5 +1,6 @@
 package pucar.service;
 
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.Test;
 import pucar.strategy.validation.application.AssigningDateRescheduledHearingApplicationValidator;
@@ -27,6 +28,7 @@ class ApplicationValidationServiceTest {
 
     // getReferenceId only reads Order.additionalDetails, so the collaborator dependencies are irrelevant here.
     private final OrderUtil orderUtil = new OrderUtil(null, null, null, null, null);
+    private final RequestInfo requestInfo = new RequestInfo();
 
     private ApplicationValidationService service(OrderUtil orderUtil) {
         return new ApplicationValidationService(List.of(
@@ -64,14 +66,14 @@ class ApplicationValidationServiceTest {
     @Test
     void doesNotThrowWhenRefApplicationIdPresentForSupportedOrderType() {
         Order order = buildOrder(SET_BAIL_TERMS, E_SIGN, "APP-123");
-        assertDoesNotThrow(() -> service(orderUtil).validate(order));
+        assertDoesNotThrow(() -> service(orderUtil).validate(requestInfo, order));
     }
 
     @Test
     void throwsWhenRefApplicationIdMissingForSupportedOrderType() {
         Order order = buildOrder(CHECKOUT_ACCEPTANCE, E_SIGN, null);
 
-        CustomException exception = assertThrows(CustomException.class, () -> service(orderUtil).validate(order));
+        CustomException exception = assertThrows(CustomException.class, () -> service(orderUtil).validate(requestInfo, order));
         assertEquals("REF_APPLICATION_ID_NOT_FOUND", exception.getCode());
         assertTrue(exception.getMessage().contains(CHECKOUT_ACCEPTANCE));
     }
@@ -80,25 +82,25 @@ class ApplicationValidationServiceTest {
     void throwsWhenRefApplicationIdBlank() {
         Order order = buildOrder(SET_BAIL_TERMS, E_SIGN, "   ");
 
-        CustomException exception = assertThrows(CustomException.class, () -> service(orderUtil).validate(order));
+        CustomException exception = assertThrows(CustomException.class, () -> service(orderUtil).validate(requestInfo, order));
         assertEquals("REF_APPLICATION_ID_NOT_FOUND", exception.getCode());
     }
 
     @Test
     void doesNotThrowForOrderTypeWithoutRegisteredValidator() {
         Order order = buildOrder("OTHER_ORDER_TYPE", E_SIGN, null);
-        assertDoesNotThrow(() -> service(orderUtil).validate(order));
+        assertDoesNotThrow(() -> service(orderUtil).validate(requestInfo, order));
     }
 
     @Test
     void doesNotThrowForNonEsignAction() {
         Order order = buildOrder(SET_BAIL_TERMS, "SAVE_DRAFT", null);
-        assertDoesNotThrow(() -> service(orderUtil).validate(order));
+        assertDoesNotThrow(() -> service(orderUtil).validate(requestInfo, order));
     }
 
     @Test
     void doesNotThrowWhenWorkflowNull() {
         Order order = buildOrder(SET_BAIL_TERMS, null, null);
-        assertDoesNotThrow(() -> service(orderUtil).validate(order));
+        assertDoesNotThrow(() -> service(orderUtil).validate(requestInfo, order));
     }
 }

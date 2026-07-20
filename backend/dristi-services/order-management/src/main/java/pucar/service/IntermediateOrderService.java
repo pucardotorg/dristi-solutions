@@ -24,7 +24,7 @@ public class IntermediateOrderService implements OrderProcessor {
 
     @Override
     public void validateOrder(OrderRequest request) {
-        applicationValidationService.validate(request.getOrder());
+        applicationValidationService.validate(request.getRequestInfo(), request.getOrder());
     }
 
     @Override
