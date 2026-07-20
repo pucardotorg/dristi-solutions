@@ -127,7 +127,7 @@ const BailBondReviewModal = ({
       >
         <div className="review-submission-appl-body-main">
           <div className="application-details">
-            <div className="application-view">
+            <div className="application-view doc-preview">
               {showDocument}
               {bailBondPreviewPdf &&
                 documents?.map((docs) => (
