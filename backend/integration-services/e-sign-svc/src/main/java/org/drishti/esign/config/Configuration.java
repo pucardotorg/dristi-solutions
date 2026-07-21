@@ -75,4 +75,7 @@ public class Configuration {
     @Value("${esign.signature.container.size}")
     private int signatureContainerSize;
 
+    @Value("${kafka.topics.health.status}")
+    private String healthStatusTopic;
+
 }

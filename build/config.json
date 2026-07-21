@@ -248,6 +248,14 @@
         "language": "java",
         "version": "17"
     },
+    "health-dashboard": {
+        "service_group": "core-services",
+        "db_source_path": "backend/integration-services/health-dashboard/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile.v2",
+        "service_source_path": "backend/integration-services/health-dashboard",
+        "language": "java",
+        "version": "17"
+    },
     "njdg-transformer": {
         "service_group": "core-services",
         "db_source_path": "",
