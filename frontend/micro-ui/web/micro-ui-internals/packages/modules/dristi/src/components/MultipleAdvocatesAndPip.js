@@ -421,11 +421,8 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const isAdvocateActingAsComplainant = useMemo(() => {
     const complainantUserType = selectedComplainantIndividual?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")
       ?.value;
-    return (
-      selectedComplainantIndividual?.Individual?.[0]?.userUuid === userUuid &&
-      (complainantUserType === "ADVOCATE" || complainantUserType === "ADVOCATE_CLERK")
-    );
-  }, [selectedComplainantIndividual, userUuid]);
+    return complainantUserType === "ADVOCATE" || complainantUserType === "ADVOCATE_CLERK";
+  }, [selectedComplainantIndividual]);
 
   useEffect(() => {
     if (
