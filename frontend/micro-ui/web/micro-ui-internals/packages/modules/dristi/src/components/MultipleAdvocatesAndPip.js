@@ -429,6 +429,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
       (userType === "ADVOCATE" &&
         selectedComplainantIndividual &&
         !isAdvocateActingAsComplainant &&
+        selectedComplainantIndividual?.Individual?.[0]?.userUuid !== userUuid &&
         advocateAndPipData?.multipleAdvocateNameDetails?.[0]?.advocateBarRegNumberWithName?.individualId !== individualId &&
         advocateAndPipData?.boxComplainant?.index === 0 &&
         advocateAndPipData?.boxComplainant?.individualId) ||
@@ -703,11 +704,12 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     return Boolean(
       (userType === "ADVOCATE" &&
         !isAdvocateActingAsComplainant &&
+        selectedComplainantIndividual?.Individual?.[0]?.userUuid !== userUuid &&
         advocateAndPipData?.boxComplainant?.index === 0 &&
         advocateAndPipData?.boxComplainant?.individualId) ||
         litigants?.find((litigant) => litigant?.individualId === advocateAndPipData?.boxComplainant?.individualId)?.poaHolder
     );
-  }, [userType, advocateAndPipData, litigants, isAdvocateActingAsComplainant]);
+  }, [userType, advocateAndPipData, litigants, isAdvocateActingAsComplainant, selectedComplainantIndividual, userUuid]);
 
   const isDeleteAllowed = useCallback(
     (i) => {
