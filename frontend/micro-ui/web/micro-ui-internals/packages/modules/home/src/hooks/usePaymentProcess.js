@@ -18,6 +18,18 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
   const userInfo = Digit.UserService.getUser()?.info;
   const openPaymentPortal = async (bill, billAmount = null, paymentBusinessService = null) => {
     const effectiveBusinessService = paymentBusinessService || businessService || null;
+    console.log("[usePaymentProcess] openPaymentPortal called", {
+      consumerCode,
+      service,
+      scenario,
+      billAmount,
+      totalAmount,
+      effectiveBusinessService,
+      isMockEnabled,
+      billId: bill?.Bill?.[0]?.id,
+      billConsumerCode: bill?.Bill?.[0]?.consumerCode,
+      billBusinessService: bill?.Bill?.[0]?.businessService,
+    });
     try {
       const gateway = await DRISTIService.callETreasury(
         {
@@ -50,6 +62,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
         },
         {}
       );
+      console.log("[usePaymentProcess] callETreasury result", { hasGateway: Boolean(gateway), grn: gateway?.payload?.grn, url: gateway?.payload?.url });
       if (gateway) {
         const status = await handleButtonClick(
           gateway?.payload?.url,
@@ -135,6 +148,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
             let retryCount = 0;
             const maxRetries = 6;
             let lastKnownStatus = null;
+            console.log("[usePaymentProcess][mock] starting poll — maxRetries:", maxRetries, "interval: 10s");
 
             const intervalId = setInterval(async () => {
               try {
@@ -143,11 +157,14 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
                 const paymentStatusResponse = await DRISTIService.getPaymentStatus({}, mockStatusParams);
                 const paymentStatusValue = paymentStatusResponse && paymentStatusResponse.PaymentStatus && paymentStatusResponse.PaymentStatus.status;
 
+                console.log("[usePaymentProcess][mock] poll tick", { retryCount, paymentStatusValue, lastKnownStatus, mockStatusParams });
+
                 if (paymentStatusValue) {
                   lastKnownStatus = paymentStatusValue;
                 }
 
                 if (paymentStatusValue === "PAID") {
+                  console.log("[usePaymentProcess][mock] PAID — resolving");
                   setPaymentLoader(false);
                   popup?.close();
                   clearInterval(intervalId);
@@ -155,20 +172,24 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
                 } else {
                   retryCount++;
                   if (retryCount >= maxRetries) {
+                    const result = lastKnownStatus === "VERIFICATION_PENDING" ? "VERIFICATION_PENDING" : "FAILED";
+                    console.log("[usePaymentProcess][mock] maxRetries reached — resolving", { result, lastKnownStatus });
                     setPaymentLoader(false);
                     popup?.close();
                     clearInterval(intervalId);
-                    resolve(lastKnownStatus === "VERIFICATION_PENDING" ? "VERIFICATION_PENDING" : "FAILED");
+                    resolve(result);
                   }
                 }
               } catch (error) {
-                console.error("Error checking bill status:", error);
+                console.error("[usePaymentProcess][mock] poll error", { error, retryCount, lastKnownStatus });
                 retryCount++;
                 if (retryCount >= maxRetries) {
+                  const result = lastKnownStatus === "VERIFICATION_PENDING" ? "VERIFICATION_PENDING" : "FAILED";
+                  console.log("[usePaymentProcess][mock] maxRetries after error — resolving", { result, lastKnownStatus });
                   setPaymentLoader(false);
                   popup?.close();
                   clearInterval(intervalId);
-                  resolve(lastKnownStatus === "VERIFICATION_PENDING" ? "VERIFICATION_PENDING" : "FAILED");
+                  resolve(result);
                 }
               }
             }, 10000);
@@ -222,10 +243,13 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
         const maxPolls = 600; // safety cap (~10 min) so the interval can never run forever
         const graceAfterClose = 5; // keep polling ~5s after the user closes the popup, to let the async reconciliation catch up
 
+        console.log("[usePaymentProcess][real] starting poll — maxPolls:", maxPolls, "graceAfterClose:", graceAfterClose, "interval: 1s");
+
         const finish = (intervalId, result) => {
           if (isResolved) return;
           isResolved = true;
           clearInterval(intervalId);
+          console.log("[usePaymentProcess][real] finish called", { result, pollCount, graceCount, lastKnownStatus });
           setPaymentLoader(false);
           popup?.close();
           resolve(result);
@@ -243,19 +267,24 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
               lastKnownStatus = paymentStatusValue;
             }
 
+            if (pollCount % 10 === 0 || paymentStatusValue) {
+              console.log("[usePaymentProcess][real] poll tick", { pollCount, paymentStatusValue, lastKnownStatus, popupClosed: popup?.closed, graceCount });
+            }
+
             if (paymentStatusValue === "PAID") {
               finish(checkBillStatus, "PAID");
               return;
             }
             // VERIFICATION_PENDING is transitional — keep polling until popup closes or max polls
           } catch (error) {
-            console.error("Error checking bill status:", error);
+            console.error("[usePaymentProcess][real] poll error", { error, pollCount, lastKnownStatus });
           }
 
           // Once the user closes the popup, give the async reconciliation a short grace
           // window to mark the bill PAID before treating the attempt as failed.
           if (popup?.closed) {
             graceCount++;
+            console.log("[usePaymentProcess][real] popup closed — grace tick", { graceCount, graceAfterClose, lastKnownStatus });
             if (graceCount >= graceAfterClose) {
               finish(checkBillStatus, lastKnownStatus === "VERIFICATION_PENDING" ? "VERIFICATION_PENDING" : "FAILED");
               return;
@@ -263,6 +292,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
           }
 
           if (pollCount >= maxPolls) {
+            console.log("[usePaymentProcess][real] maxPolls reached", { pollCount, lastKnownStatus });
             finish(checkBillStatus, lastKnownStatus === "VERIFICATION_PENDING" ? "VERIFICATION_PENDING" : "FAILED");
           }
         }, 1000);

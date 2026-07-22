@@ -1,6 +1,7 @@
 package com.egov.icops_integrationkerala.util;
 
 import com.egov.icops_integrationkerala.config.IcopsConfiguration;
+import com.egov.icops_integrationkerala.kafka.Producer;
 import com.egov.icops_integrationkerala.model.AuthResponse;
 import com.egov.icops_integrationkerala.model.ChannelMessage;
 import com.egov.icops_integrationkerala.model.ProcessRequest;
@@ -36,6 +37,9 @@ class ProcessRequestUtilTest {
 
     @Mock
     private ProcessRequest processRequest;
+
+    @Mock
+    private Producer producer;
 
     @InjectMocks
     private ProcessRequestUtil processRequestUtil;

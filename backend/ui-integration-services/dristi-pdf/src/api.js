@@ -689,10 +689,34 @@ async function search_ctc_applications(
   }
 }
 
+async function search_botd_orders(tenantId, requestinfo, criteria, pagination) {
+  try {
+    return await axios({
+      method: "post",
+      url: URL.resolve(
+        config.host.orderManagement,
+        config.paths.botd_orders_search,
+      ),
+      data: {
+        RequestInfo: requestinfo,
+        criteria,
+        pagination,
+        tenantId,
+      },
+    });
+  } catch (error) {
+    logger.error(
+      `Error in ${config.paths.botd_orders_search}: ${error.message}`,
+    );
+    throw error;
+  }
+}
+
 module.exports = {
   pool,
   create_pdf,
   create_pdf_v2,
+  search_botd_orders,
   search_hrms,
   search_case,
   search_case_v2,

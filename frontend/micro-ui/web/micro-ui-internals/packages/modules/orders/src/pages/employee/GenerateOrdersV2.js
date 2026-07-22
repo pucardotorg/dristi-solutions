@@ -276,6 +276,7 @@ const GenerateOrdersV2 = () => {
     currentInProgressHearing,
     currentScheduledHearing,
     currentOptOutHearing,
+    currentPassedOverHearing,
     todayScheduledHearing,
     lastCompletedHearing,
     hearingDetails,
@@ -1204,7 +1205,10 @@ const GenerateOrdersV2 = () => {
             updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
           }
         } else if (isHearingScheduled || isHearingInPassedOver) {
-          updatedFormdata.dateForHearing = DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), requiredDateFormat);
+          updatedFormdata.dateForHearing = DateUtils.getFormattedDate(
+            new Date(currentScheduledHearing?.startTime || currentPassedOverHearing?.startTime),
+            requiredDateFormat
+          );
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
           updatedFormdata.dateForHearing = DateUtils.getFormattedDate(new Date(currentOrder?.nextHearingDate), requiredDateFormat);
         } else if (!currentOrder?.nextHearingDate && skipScheduling) {
@@ -1258,7 +1262,10 @@ const GenerateOrdersV2 = () => {
             updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
           }
         } else if (isHearingScheduled || isHearingInPassedOver) {
-          updatedFormdata.dateForHearing = DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), requiredDateFormat);
+          updatedFormdata.dateForHearing = DateUtils.getFormattedDate(
+            new Date(currentScheduledHearing?.startTime || currentPassedOverHearing?.startTime),
+            requiredDateFormat
+          );
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
           updatedFormdata.dateForHearing = DateUtils.getFormattedDate(new Date(currentOrder?.nextHearingDate), requiredDateFormat);
         } else if (!currentOrder?.nextHearingDate && skipScheduling) {
@@ -1318,7 +1325,10 @@ const GenerateOrdersV2 = () => {
             updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
           }
         } else if (isHearingScheduled || isHearingInPassedOver) {
-          updatedFormdata.dateOfHearing = DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), requiredDateFormat);
+          updatedFormdata.dateOfHearing = DateUtils.getFormattedDate(
+            new Date(currentScheduledHearing?.startTime || currentPassedOverHearing?.startTime),
+            requiredDateFormat
+          );
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
           updatedFormdata.dateOfHearing = DateUtils.getFormattedDate(new Date(currentOrder?.nextHearingDate), requiredDateFormat);
         } else if (!currentOrder?.nextHearingDate && skipScheduling) {
@@ -1343,7 +1353,10 @@ const GenerateOrdersV2 = () => {
         } else if (rescheduleHearingItem) {
           updatedFormdata.hearingDate = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
         } else if (isHearingScheduled || isHearingInPassedOver) {
-          updatedFormdata.hearingDate = DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), requiredDateFormat);
+          updatedFormdata.hearingDate = DateUtils.getFormattedDate(
+            new Date(currentScheduledHearing?.startTime || currentPassedOverHearing?.startTime),
+            requiredDateFormat
+          );
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
           updatedFormdata.hearingDate = DateUtils.getFormattedDate(new Date(currentOrder?.nextHearingDate), requiredDateFormat);
         } else if (!currentOrder?.nextHearingDate && skipScheduling) {
@@ -1860,6 +1873,7 @@ const GenerateOrdersV2 = () => {
       setAddOrderModal(false);
       setEditOrderModal(false);
       sessionStorage.removeItem("currentOrderType");
+      sessionStorage.removeItem("currentOrderRefApplicationId");
 
       if (!orderNumber || orderNumber === "null" || orderNumber === "undefined" || updateOrderResponse?.order?.orderNumber) {
         history.replace(
@@ -2564,6 +2578,10 @@ const GenerateOrdersV2 = () => {
     try {
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
       const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
+      if (!refApplicationId) {
+        setShowToast({ label: t("SOMETHING_WENT_WRONG_REFRESH_AND_TRY_AGAIN"), error: true });
+        return;
+      }
       const applicationCMPNumber = documentSubmission?.[0]?.applicationList?.applicationCMPNumber;
       const currentHearingPurpose = documentSubmission?.[0]?.applicationList?.applicationDetails?.initialHearingPurpose || "";
       const caseNumber =
@@ -2784,6 +2802,7 @@ const GenerateOrdersV2 = () => {
             },
           });
           sessionStorage.setItem("currentOrderType", orderType);
+          sessionStorage.setItem("currentOrderRefApplicationId", refApplicationId || "");
           await refetchOrdersData();
           history.replace(
             `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
@@ -2859,6 +2878,7 @@ const GenerateOrdersV2 = () => {
             },
           });
           sessionStorage.setItem("currentOrderType", orderType);
+          sessionStorage.setItem("currentOrderRefApplicationId", refApplicationId || "");
           await refetchOrdersData();
           history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
         } catch (error) {
@@ -2880,10 +2900,20 @@ const GenerateOrdersV2 = () => {
 
   useEffect(() => {
     const currentOrderType = sessionStorage.getItem("currentOrderType");
+    const currentOrderRefApplicationId = sessionStorage.getItem("currentOrderRefApplicationId");
     if (!isOrderTypeLoading && !isOrdersLoading && currentOrderType && Object.keys(currentOrder).length > 0 && !Object.keys(orderType).length > 0) {
       let currentOrderTypeIndex = 0;
       if (currentOrder?.orderCategory !== "INTERMEDIATE") {
-        currentOrderTypeIndex = currentOrder?.compositeItems?.findIndex((item) => item?.orderType === currentOrderType);
+        currentOrderTypeIndex = currentOrderRefApplicationId
+          ? currentOrder?.compositeItems?.findIndex(
+              (item) =>
+                item?.orderType === currentOrderType &&
+                item?.orderSchema?.additionalDetails?.formdata?.refApplicationId === currentOrderRefApplicationId
+            )
+          : currentOrder?.compositeItems?.findIndex((item) => item?.orderType === currentOrderType);
+        if (currentOrderTypeIndex === -1) {
+          currentOrderTypeIndex = currentOrder?.compositeItems?.findIndex((item) => item?.orderType === currentOrderType);
+        }
       }
       setOrderType(
         {
@@ -3154,6 +3184,7 @@ const GenerateOrdersV2 = () => {
             setEditOrderModal(false);
             setAddOrderModal(false);
             sessionStorage.removeItem("currentOrderType");
+            sessionStorage.removeItem("currentOrderRefApplicationId");
           }}
           headerLabel={
             showEditOrderModal

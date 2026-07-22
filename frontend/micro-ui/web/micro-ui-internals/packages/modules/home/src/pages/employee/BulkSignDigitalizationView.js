@@ -1,6 +1,6 @@
 import { SubmitBar, Loader, Banner } from "@egovernments/digit-ui-react-components";
 import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { bulkSignFormsConfig } from "../../configs/BulkSignFormsConfig";
@@ -42,10 +42,6 @@ function BulkSignDigitalizationView({ refetchCounts }) {
   const [isLoading, setIsLoading] = useState(false);
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
   const [signedList, setSignedList] = useState([]);
-  useEffect(() => {
-    if (!showBulkSignSuccessModal) return;
-    if (refetchCounts) refetchCounts();
-  }, [showBulkSignSuccessModal, refetchCounts]);
 
   const [showToast, setShowToast] = useState(null);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
@@ -273,6 +269,7 @@ function BulkSignDigitalizationView({ refetchCounts }) {
 
         setSignedList(signedList);
         setShowBulkSignSuccessModal(true);
+        if (refetchCounts && typeof refetchCounts === "function") setTimeout(() => refetchCounts(), 1000);
       });
     } catch (e) {
       const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
@@ -338,6 +335,7 @@ function BulkSignDigitalizationView({ refetchCounts }) {
           setShowBulkSignModal={setShowBulkSignModal}
           digitalDocumentPaginationData={digitalDocumentPaginationData}
           setCounter={setCounter}
+          refetchCounts={refetchCounts}
         />
       )}
       {showBulkSignConfirmModal && (

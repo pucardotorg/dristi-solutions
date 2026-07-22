@@ -27,6 +27,7 @@ const Breadcrumb = (props) => {
                   state: { count: crumb?.count, homeFilteredData: crumb?.homeFilteredData, homeActiveTab: crumb?.homeActiveTab },
                   search: crumb?.query,
                 }}
+                onClick={crumb?.onClick}
               >
                 {crumb.content}
               </Link>

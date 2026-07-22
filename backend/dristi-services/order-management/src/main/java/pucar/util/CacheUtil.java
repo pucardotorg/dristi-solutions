@@ -32,6 +32,24 @@ public class CacheUtil {
         log.info("Fetching from cache with key :: {}", key);
         return redisTemplate.opsForValue().get(key);
     }
+
+    /**
+     * Updates a single field of a Redis hash, but only if the hash already exists.
+     * The cause-list hash is warmed by scheduler-svc; we never create a fresh hash here,
+     * we only keep an existing one in sync so ES remains the source of truth for absent entries.
+     */
+    public void updateHashFieldIfPresent(String key, String field, Object value) {
+        try {
+            if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+                redisTemplate.opsForHash().put(key, field, value);
+                log.info("Updated hash field {} for key {}", field, key);
+            } else {
+                log.info("Hash key {} not present in cache, skipping field {} update", key, field);
+            }
+        } catch (Exception e) {
+            log.error("Error updating hash field {} for key {}", field, key, e);
+        }
+    }
 }
 
 

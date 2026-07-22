@@ -8,6 +8,7 @@ import digit.util.CaseUtil;
 import digit.util.DateUtil;
 import digit.util.InboxUtil;
 import digit.web.models.OpenHearing;
+import digit.web.models.OrderStatus;
 import digit.web.models.cases.CaseCriteria;
 import digit.web.models.cases.SearchCaseRequest;
 import digit.web.models.inbox.InboxRequest;
@@ -123,6 +124,7 @@ public class OpenHearingService  {
         data.put("hearingUuid", hearing.getHearingUuid() != null ? hearing.getHearingUuid() : "");
         data.put("status", hearing.getStatus() != null ? hearing.getStatus() : "");
         data.put("statusOrder", hearing.getStatusOrder() != null ? hearing.getStatusOrder() : 99);
+        data.put("orderStatus", hearing.getOrderStatus() != null ? hearing.getOrderStatus().toString() : OrderStatus.NOT_CREATED.toString());
         data.put("caseNumber", hearing.getCaseNumber() != null ? hearing.getCaseNumber() : "");
         data.put("caseTitle", hearing.getCaseTitle() != null ? hearing.getCaseTitle() : "");
         data.put("hearingType", hearing.getHearingType() != null ? hearing.getHearingType() : "");

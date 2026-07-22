@@ -20,15 +20,7 @@ import {
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
 import { getAdvocates, transformCaseDataForFetching } from "../../citizen/FileCase/EfilingValidationUtils";
 import AdmissionActionModal from "./AdmissionActionModal";
-import {
-  advocateCaseFilingStatusTypes,
-  DateUtils,
-  getAuthorizedUuid,
-  getCaseEditAllowedAssignees,
-  getFilingType,
-  runComprehensiveSanitizer,
-} from "../../../Utils";
-import { documentTypeMapping } from "../../citizen/FileCase/Config";
+import { advocateCaseFilingStatusTypes, DateUtils, getAuthorizedUuid, getCaseEditAllowedAssignees, runComprehensiveSanitizer } from "../../../Utils";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
@@ -149,8 +141,9 @@ function CaseFileAdmission({ t, path }) {
     return allAdvocates?.[caseDetails?.litigants?.find((litigant) => litigant?.partyType === "complainant.primary")?.additionalDetails?.uuid];
   }, [allAdvocates, caseDetails]);
 
+  // Currently for DCA application through efiling, primary complainant is targeted as per current flow.
   const complainantPrimaryUUId = useMemo(
-    () => caseDetails?.litigants?.find((item) => item?.partyType === "complainant.primary").additionalDetails?.uuid || "",
+    () => caseDetails?.litigants?.find((item) => item?.partyType === "complainant.primary")?.additionalDetails?.uuid || "",
     [caseDetails]
   );
 
@@ -165,12 +158,6 @@ function CaseFileAdmission({ t, path }) {
   });
 
   const filingNumber = useMemo(() => caseDetails?.filingNumber, [caseDetails?.filingNumber]);
-
-  const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
-    { name: "FilingType" },
-  ]);
-
-  const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "CaseFiling"), [filingTypeData?.FilingType]);
 
   const { data: hearingDetails } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -579,21 +566,6 @@ function CaseFileAdmission({ t, path }) {
       });
   };
 
-  const fetchBasicUserInfo = async () => {
-    const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
-      {
-        Individual: {
-          userUuid: [caseDetails?.auditDetails?.createdBy],
-        },
-      },
-      { tenantId, limit: 1000, offset: 0 },
-      "",
-      caseDetails?.auditDetails?.createdBy
-    );
-
-    return individualData?.Individual?.[0]?.individualId;
-  };
-
   const efilingCreatorMainUser = useMemo(() => {
     // If either an advocate or its associated members(jr. advocate/clerk) created the case.
     const isAdvocateOfficeCreator = caseDetails?.representatives?.find(
@@ -609,103 +581,9 @@ function CaseFileAdmission({ t, path }) {
   const handleRegisterCase = async () => {
     setIsDisabled(true);
     setCaseADmitLoader(true);
-    const individualId = await fetchBasicUserInfo();
-    let documentList = [];
-    documentList = [
-      ...documentList,
-      ...caseDetails?.caseDetails?.chequeDetails?.formdata?.map((form) => ({
-        document: form?.data?.bouncedChequeFileUpload?.document,
-        key: "bouncedChequeFileUpload",
-      })),
-      ...caseDetails?.caseDetails?.chequeDetails?.formdata?.map((form) => ({
-        document: form?.data?.depositChequeFileUpload?.document,
-        key: "depositChequeFileUpload",
-      })),
-      ...caseDetails?.caseDetails?.chequeDetails?.formdata?.map((form) => ({
-        document: form?.data?.returnMemoFileUpload?.document,
-        key: "returnMemoFileUpload",
-      })),
-      ...caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.map((form) => ({
-        document: form?.data?.debtLiabilityFileUpload?.document,
-        key: "debtLiabilityFileUpload",
-      })),
-      ...caseDetails?.caseDetails?.demandNoticeDetails?.formdata?.map((form) => ({
-        document: form?.data?.legalDemandNoticeFileUpload?.document,
-        key: "legalDemandNoticeFileUpload",
-      })),
-      ...caseDetails?.caseDetails?.demandNoticeDetails?.formdata?.map((form) => ({
-        document: form?.data?.proofOfAcknowledgmentFileUpload?.document,
-        key: "proofOfAcknowledgmentFileUpload",
-      })),
-      ...caseDetails?.caseDetails?.demandNoticeDetails?.formdata?.map((form) => ({
-        document: form?.data?.proofOfDispatchFileUpload?.document,
-        key: "proofOfDispatchFileUpload",
-      })),
-      ...caseDetails?.caseDetails?.demandNoticeDetails?.formdata?.map((form) => ({
-        document: form?.data?.proofOfReplyFileUpload?.document,
-        key: "proofOfReplyFileUpload",
-      })),
-      ...caseDetails?.additionalDetails?.prayerSwornStatement?.formdata?.map((form) => ({
-        document: form?.data?.swornStatement?.document,
-        key: "swornStatement",
-      })),
-      ...caseDetails?.additionalDetails?.respondentDetails?.formdata?.map((form) => ({
-        document: form?.data?.inquiryAffidavitFileUpload?.document,
-        key: "inquiryAffidavitFileUpload",
-      })),
-      ...caseDetails?.advocateDetailBlock?.map((data) => ({
-        document: data?.documents?.vakalatnama?.length > 0 ? data?.documents?.vakalatnama : data?.documents?.pipAffidavit,
-        key: data?.documents?.vakalatnama?.length > 0 ? "vakalatnamaFileUpload" : "pipAffidavitFileUpload",
-      })),
-    ].flat();
 
     try {
       const res = await updateCaseDetails("REGISTER", formdata);
-      await Promise.all(
-        documentList
-          ?.filter((data) => data)
-          ?.map(async (data) => {
-            data?.document?.forEach(async (docFile) => {
-              if (docFile?.fileStore) {
-                try {
-                  await DRISTIService.createEvidence({
-                    artifact: {
-                      artifactType: documentTypeMapping[data?.key],
-                      sourceType: "COMPLAINANT",
-                      sourceID: individualId,
-                      asUser: efilingCreatorMainUser, // Sending uuid of the main advocate even if clerk/jr. adv has filed/edited the case.
-                      caseId: caseDetails?.id,
-                      filingNumber: caseDetails?.filingNumber,
-                      cnrNumber: res?.cases?.[0]?.cnrNumber,
-                      tenantId,
-                      comments: [],
-                      file: {
-                        documentType: docFile?.fileType || docFile?.documentType,
-                        fileStore: docFile?.fileStore,
-                        fileName: docFile?.fileName,
-                        documentName: docFile?.documentName,
-                      },
-                      filingType: filingType,
-                      workflow: {
-                        action: "TYPE DEPOSITION",
-                        documents: [
-                          {
-                            documentType: docFile?.fileType || docFile?.documentType,
-                            fileName: docFile?.fileName,
-                            documentName: docFile?.documentName,
-                            fileStoreId: docFile?.fileStore,
-                          },
-                        ],
-                      },
-                    },
-                  });
-                } catch (error) {
-                  console.error(`Error creating evidence for document ${docFile.fileName}:`, error);
-                }
-              }
-            });
-          })
-      );
       setCaseADmitLoader(false);
       setSubmitModalInfo({
         ...registerCaseConfig,
@@ -1017,7 +895,7 @@ function CaseFileAdmission({ t, path }) {
     );
   }
 
-  if (isLoading || isWorkFlowLoading || isLoader || caseAdmitLoader || isApplicationLoading || isFilingTypeLoading) {
+  if (isLoading || isWorkFlowLoading || isLoader || caseAdmitLoader || isApplicationLoading) {
     return <Loader />;
   }
   const scrollToHeading = (heading) => {

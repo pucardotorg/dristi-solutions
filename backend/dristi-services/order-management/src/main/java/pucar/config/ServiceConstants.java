@@ -57,6 +57,13 @@ public class ServiceConstants {
 
     public static final String LOCAL_DATE_FORMAT="dd-MM-yyyy";
     public static final String ESIGN_DATE_FORMAT = "dd-MMM-yyyy";
+
+    // Cause-list Redis cache key parts. MUST stay in sync with the constants used by
+    // hearing-service (ServiceConstants) and scheduler-svc that own/warm these hashes.
+    public static final String CACHE_KEY_PREFIX = "DRISTI:COURT:";
+    public static final String CACHE_HEARING_PREFIX = ":HEARING:";
+    public static final String DATE_FORMAT_REDIS = "ddMMyyyy";
+    public static final String CACHE_FIELD_ORDER_STATUS = "orderStatus";
     public static final String DATA = "data";
     public static final String OMIT_XML_DECLARATION = "omit-xml-declaration";
 
@@ -124,6 +131,12 @@ public class ServiceConstants {
 
     // order type
     public static final String ACCEPTANCE_REJECTION_DCA = "ACCEPTANCE_REJECTION_DCA";
+    public static final String CASE_TRANSFER_REJECT = "CASE_TRANSFER_REJECT";
+    public static final String CASE_TRANSFER_ACCEPT = "CASE_TRANSFER_ACCEPT";
+    public static final String SETTLEMENT_REJECT = "SETTLEMENT_REJECT";
+    public static final String SETTLEMENT_ACCEPT = "SETTLEMENT_ACCEPT";
+    public static final String WITHDRAWAL_ACCEPT = "WITHDRAWAL_ACCEPT";
+    public static final String WITHDRAWAL_REJECT = "WITHDRAWAL_REJECT";
     public static final String ACCEPT_BAIL = "ACCEPT_BAIL";
     public static final String TAKE_COGNIZANCE = "TAKE_COGNIZANCE";
     public static final String ADMIT_DISMISS_CASE = "ADMIT_DISMISS_CASE";

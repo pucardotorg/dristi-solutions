@@ -5,11 +5,13 @@ import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/comp
 // import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 // import downloadPdfFromFile from "@egovernments/digit-ui-module-dristi/src/Utils/downloadPdfFromFile";
 
-function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
+function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos, filingNumber }) {
   // const [file, setFile] = React.useState([]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const doc = rowData?.documents?.find((doc) => ["SIGNED_TASK_DOCUMENT", "GENERATE_TASK_DOCUMENT"]?.includes(doc.documentType));
+  const doc =
+    rowData?.documents?.find((doc) => doc.documentType === "SIGNED_TASK_DOCUMENT") ||
+    rowData?.documents?.find((doc) => doc.documentType === "GENERATE_TASK_DOCUMENT");
   const policeDoc = rowData?.documents?.find((doc) => doc.documentType === "POLICE_REPORT");
   const useDownloadCasePdf = Digit?.Hooks?.dristi?.useDownloadCasePdf;
   const { downloadPdf } = useDownloadCasePdf();
@@ -17,15 +19,15 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
   const handleDownload = async (tenantId, filestoreId, filestoreIdPolice) => {
     // await downloadPdfFromFile(file?.[0]);
     if (filestoreId) {
-      const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber || "Case"}_${rowData?.taskNumber}_${t(
-        rowData?.taskType
-      )}`;
+      const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber || filingNumber || "Case"}_${
+        rowData?.taskNumber || ""
+      }_${t(rowData?.taskType)}`;
       downloadPdf(tenantId, filestoreId, fileName);
     }
     if (filestoreIdPolice) {
-      const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber || "Case"}_${rowData?.taskNumber}_${t(
-        "Police_Report"
-      )}`;
+      const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber || filingNumber || "Case"}_${
+        rowData?.taskNumber || ""
+      }_${t("Police_Report")}`;
       downloadPdf(tenantId, filestoreIdPolice, fileName);
     }
   };
@@ -93,7 +95,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
       actionSaveOnSubmit={() => {}}
       popupStyles={{ minWidth: "880px", width: "80%", maxHeight: "95vh" }}
     >
-      {infos && <ApplicationInfoComponent infos={infos} />}
+      {infos && <ApplicationInfoComponent infos={infos} className="wide-label-info" />}
       {showDocument}
       <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "16px" }}>
         <div

@@ -2111,14 +2111,21 @@ export const UICustomizations = {
       const currentDateInMs = new Date().setHours(23, 59, 59, 999);
       const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(23, 59, 59, 999);
       const activeTab = additionalDetails?.activeTab;
+      const { assignedRole, ...restModuleSearchCriteria } = requestCriteria?.body?.SearchCriteria?.moduleSearchCriteria || {};
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      const roles = userInfo?.roles;
+      const assignedRoles = roles?.map((role) => role?.code);
+      const isJudge = assignedRoles?.includes("JUDGE_ROLE");
       return {
         ...requestCriteria,
         body: {
           SearchCriteria: {
             ...requestCriteria.body.SearchCriteria,
             moduleSearchCriteria: {
-              ...requestCriteria?.body?.SearchCriteria?.moduleSearchCriteria,
+              ...restModuleSearchCriteria,
               courtId: localStorage.getItem("courtId"),
+              // keep assignedRole for all tabs except RESCHEDULE_REQUEST, where it must be omitted entirely
+              ...((activeTab !== "RESCHEDULE_REQUEST" || isJudge) && { assignedRole }),
             },
             searchReviewProcess: {
               date: activeTab === "REVIEW_PROCESS" ? selectedDateInMs : currentDateInMs,
