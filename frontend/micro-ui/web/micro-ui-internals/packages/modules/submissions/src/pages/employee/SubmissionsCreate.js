@@ -1441,8 +1441,22 @@ const SubmissionsCreate = ({ path }) => {
 
   const updateSubmission = async (action, isESign) => {
     try {
+      // `applicationDetails` is a cached search result. Spreading it into the update payload can
+      // revert whatever the draft save immediately before this call persisted (surety details,
+      // addresses and documents have been lost this way on SUBMIT), so re-read the application
+      // and transition off the latest persisted state instead.
+      let latestApplication = applicationDetails;
+      if (applicationNumber) {
+        try {
+          const refetchedApplication = await applicationRefetch();
+          latestApplication = refetchedApplication?.data?.applicationList?.[0] || applicationDetails;
+        } catch (refetchError) {
+          console.error("Failed to refetch application before update:", refetchError);
+        }
+      }
+
       const localStorageID = sessionStorage.getItem("fileStoreId");
-      const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
+      const documents = Array.isArray(latestApplication?.documents) ? latestApplication.documents : [];
 
       const newFileStoreId = localStorageID || signedDoucumentUploadedID;
       fileStoreIds.delete(newFileStoreId);
@@ -1486,13 +1500,13 @@ const SubmissionsCreate = ({ path }) => {
       sessionStorage.removeItem("fileStoreId");
       const reqBody = {
         application: {
-          ...applicationDetails,
+          ...latestApplication,
           additionalDetails: {
-            ...applicationDetails?.additionalDetails,
+            ...latestApplication?.additionalDetails,
             ...(action === SubmissionWorkflowAction.ESIGN ? { individualId: individualId } : {}), //  required in backend for evidence creation
           },
           documents: documentsFile ? [...documents, ...documentsFile] : documents,
-          workflow: { ...applicationDetails?.workflow, documents: [{}], action },
+          workflow: { ...latestApplication?.workflow, documents: [{}], action },
           tenantId,
         },
         tenantId,
