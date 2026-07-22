@@ -44,6 +44,8 @@ class HealthCheckSchedulerTest {
         when(configuration.getTreasuryHttpUrl()).thenReturn("https://etreasury.kerala.gov.in/");
         when(configuration.getIcopsTcpHost()).thenReturn("api-icops.keralapolice.gov.in");
         when(configuration.getIcopsTcpPort()).thenReturn(443);
+        when(configuration.getEmailTcpHost()).thenReturn("smtp.keralacourts.in");
+        when(configuration.getEmailTcpPort()).thenReturn(587);
 
         when(healthCheckService.checkTcp(anyString(), anyString(), anyInt(), anyInt()))
                 .thenReturn(ServiceHealthStatus.builder().lastStatus("UP").build());
@@ -52,25 +54,27 @@ class HealthCheckSchedulerTest {
     }
 
     @Test
-    void runOnStartup_checksAllFourConfiguredServicesAndPersistsResults() {
+    void runOnStartup_checksAllConfiguredServicesAndPersistsResults() {
         healthCheckScheduler.runOnStartup();
 
         verify(healthCheckService).checkTcp("ESIGN", "esignservice.cdac.in", 443, 5000);
         verify(healthCheckService).checkTcp("ICOPS", "api-icops.keralapolice.gov.in", 443, 5000);
+        verify(healthCheckService).checkTcp("EMAIL", "smtp.keralacourts.in", 587, 5000);
         verify(healthCheckService).checkHttp("SMS", "https://msdgweb.mgov.gov.in/esms/sendsmsrequestDLT", 5000);
         verify(healthCheckService).checkHttp("TREASURY", "https://etreasury.kerala.gov.in/", 5000);
-        verify(serviceHealthRepository, times(4)).insert(any(ServiceHealthStatus.class));
+        verify(serviceHealthRepository, times(5)).insert(any(ServiceHealthStatus.class));
     }
 
     @Test
-    void runScheduled_checksAllFourConfiguredServicesAndPersistsResults() {
+    void runScheduled_checksAllConfiguredServicesAndPersistsResults() {
         healthCheckScheduler.runScheduled();
 
         verify(healthCheckService).checkTcp("ESIGN", "esignservice.cdac.in", 443, 5000);
         verify(healthCheckService).checkTcp("ICOPS", "api-icops.keralapolice.gov.in", 443, 5000);
+        verify(healthCheckService).checkTcp("EMAIL", "smtp.keralacourts.in", 587, 5000);
         verify(healthCheckService).checkHttp("SMS", "https://msdgweb.mgov.gov.in/esms/sendsmsrequestDLT", 5000);
         verify(healthCheckService).checkHttp("TREASURY", "https://etreasury.kerala.gov.in/", 5000);
-        verify(serviceHealthRepository, times(4)).insert(any(ServiceHealthStatus.class));
+        verify(serviceHealthRepository, times(5)).insert(any(ServiceHealthStatus.class));
     }
 
     @Test
@@ -79,6 +83,6 @@ class HealthCheckSchedulerTest {
 
         assertThatCode(() -> healthCheckScheduler.runOnStartup()).doesNotThrowAnyException();
 
-        verify(serviceHealthRepository, times(4)).insert(any(ServiceHealthStatus.class));
+        verify(serviceHealthRepository, times(5)).insert(any(ServiceHealthStatus.class));
     }
 }

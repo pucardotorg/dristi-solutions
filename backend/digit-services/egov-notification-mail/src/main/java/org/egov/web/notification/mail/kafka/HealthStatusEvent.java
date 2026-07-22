@@ -1,25 +1,25 @@
-package org.egov.healthdashboard.web.models;
+package org.egov.web.notification.mail.kafka;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Mirrors the field names of health-dashboard's ServiceHealthStatus so the
+ * JSON payload can be read straight into that model on the consumer side.
+ */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ServiceHealthStatus {
-
-    @JsonProperty("id")
-    private Long id;
+public class HealthStatusEvent {
 
     @JsonProperty("serviceName")
     private String serviceName;
 
-    @JsonIgnore
+    @JsonProperty("serviceUrl")
     private String serviceUrl;
 
     @JsonProperty("lastStatus")
