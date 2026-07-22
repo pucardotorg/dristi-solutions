@@ -36,6 +36,11 @@ const SelectParty = ({
   const setFormError = useRef(null);
   const clearFormError = useRef(null);
 
+  const defaultPartyRef = useRef(null);
+  if (defaultPartyRef.current === null && party?.individualId) {
+    defaultPartyRef.current = party;
+  }
+
   const MultiSelectDropdown = window?.Digit?.ComponentRegistryService?.getComponent("MultiSelectDropdown");
 
   const targetRef = useRef(null);
@@ -296,7 +301,7 @@ const SelectParty = ({
               }));
               setPartyInPerson({});
               if (isLitigantJoined || isAdvocateJoined) {
-                setParty(selectPartyData?.userType?.value === "Litigant" && value?.value === "NO" ? party || {} : []);
+                setParty(selectPartyData?.userType?.value === "Litigant" && value?.value === "NO" ? defaultPartyRef.current || {} : []);
               } else {
                 setParty(selectPartyData?.userType?.value === "Litigant" && value?.value === "NO" ? {} : []);
               }

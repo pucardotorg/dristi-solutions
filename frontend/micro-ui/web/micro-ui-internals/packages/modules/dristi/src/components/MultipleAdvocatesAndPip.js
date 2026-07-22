@@ -428,7 +428,6 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     if (
       (userType === "ADVOCATE" &&
         selectedComplainantIndividual &&
-        !isAdvocateActingAsComplainant &&
         selectedComplainantIndividual?.Individual?.[0]?.userUuid !== userUuid &&
         advocateAndPipData?.multipleAdvocateNameDetails?.[0]?.advocateBarRegNumberWithName?.individualId !== individualId &&
         advocateAndPipData?.boxComplainant?.index === 0 &&
@@ -532,7 +531,6 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     userUuid,
     isPrimaryAdvocate,
     selectedComplainantIndividual,
-    isAdvocateActingAsComplainant,
   ]);
 
   const handleInputChange = async (index, field, value) => {
@@ -703,13 +701,12 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const disableRadio = useMemo(() => {
     return Boolean(
       (userType === "ADVOCATE" &&
-        !isAdvocateActingAsComplainant &&
         selectedComplainantIndividual?.Individual?.[0]?.userUuid !== userUuid &&
         advocateAndPipData?.boxComplainant?.index === 0 &&
         advocateAndPipData?.boxComplainant?.individualId) ||
         litigants?.find((litigant) => litigant?.individualId === advocateAndPipData?.boxComplainant?.individualId)?.poaHolder
     );
-  }, [userType, advocateAndPipData, litigants, isAdvocateActingAsComplainant, selectedComplainantIndividual, userUuid]);
+  }, [userType, advocateAndPipData, litigants, selectedComplainantIndividual, userUuid]);
 
   const isDeleteAllowed = useCallback(
     (i) => {
