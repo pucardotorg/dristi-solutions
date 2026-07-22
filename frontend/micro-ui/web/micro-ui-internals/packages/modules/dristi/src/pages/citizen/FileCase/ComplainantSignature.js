@@ -1339,11 +1339,11 @@ const ComplainantSignature = ({ path }) => {
               <button
                 style={{
                   ...styles.uploadButton,
-                  opacity: isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate ? 1 : 0.5,
-                  cursor: isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate ? "pointer" : "default",
+                  opacity: (isOwnerAdvocateSelf && isCurrentPersonAdvocate) || isMemberOnBehalfOfOwnerAdvocate ? 1 : 0.5,
+                  cursor: (isOwnerAdvocateSelf && isCurrentPersonAdvocate) || isMemberOnBehalfOfOwnerAdvocate ? "pointer" : "default",
                 }}
                 onClick={handleUploadFile}
-                disabled={!(isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate)}
+                disabled={!((isOwnerAdvocateSelf && isCurrentPersonAdvocate) || isMemberOnBehalfOfOwnerAdvocate)}
               >
                 <FileUploadIcon />
                 <span style={{ marginLeft: "8px" }}>{t("UPLOAD_SIGNED_PDF")}</span>
