@@ -38,4 +38,11 @@ public class Configuration {
 
     @Value("${icops.tcp.port}")
     private int icopsTcpPort;
+
+    // EMAIL (SMTP) - TCP
+    @Value("${email.tcp.host}")
+    private String emailTcpHost;
+
+    @Value("${email.tcp.port}")
+    private int emailTcpPort;
 }
