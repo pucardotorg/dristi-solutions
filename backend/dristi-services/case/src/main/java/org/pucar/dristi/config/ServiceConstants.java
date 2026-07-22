@@ -3,6 +3,8 @@ package org.pucar.dristi.config;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class ServiceConstants {
@@ -267,6 +269,81 @@ public class ServiceConstants {
     public static final String FILING = "FILING";
     public static final String LP = "LP";
     public static final String POA_JOIN_CASE = "poaJoinCase";
+
+    // Registration bulk evidence creation
+    public static final String CASE_OWNER_FILING_STATUS = "caseOwner";
+    public static final String TYPE_DEPOSITION = "TYPE DEPOSITION";
+    public static final String CASE_FILING = "CASE_FILING";
+
+    // JSON field names on caseDetails / additionalDetails
+    public static final String FORMDATA = "formdata";
+    public static final String DATA = "data";
+    public static final String DOCUMENT = "document";
+    public static final String UUID_KEY = "uuid";
+
+    // Evidence artifact types (VAKALATNAMA_DOC declared above)
+    public static final String BOUNCED_CHEQUE = "BOUNCED_CHEQUE";
+    public static final String PROOF_OF_DEPOSIT_OF_CHEQUE = "PROOF_OF_DEPOSIT_OF_CHEQUE";
+    public static final String RETURN_MEMO = "RETURN_MEMO";
+    public static final String DEBT_LIABILITY = "DEBT_LIABILITY";
+    public static final String DEMAND_NOTICE = "DEMAND_NOTICE";
+    public static final String PROOF_OF_ACK_OF_LEGAL_NOTICE = "PROOF_OF_ACK_OF_LEGAL_NOTICE";
+    public static final String PROOF_OF_DISPATCH_OF_LEGAL_NOTICE = "PROOF_OF_DISPATCH_OF_LEGAL_NOTICE";
+    public static final String PROOF_OF_REPLY_TO_LEGAL_NOTICE = "PROOF_OF_REPLY_TO_LEGAL_NOTICE";
+    public static final String SWORN_STATEMENT = "SWORN_STATEMENT";
+    public static final String AFFIDAVIT_UNDER_225 = "AFFIDAVIT_UNDER_225";
+    public static final String COMPLAINANT_PIP_AFFIDAVIT = "COMPLAINANT_PIP_AFFIDAVIT";
+
+    // e-filing upload keys
+    public static final String BOUNCED_CHEQUE_FILE_UPLOAD = "bouncedChequeFileUpload";
+    public static final String DEPOSIT_CHEQUE_FILE_UPLOAD = "depositChequeFileUpload";
+    public static final String RETURN_MEMO_FILE_UPLOAD = "returnMemoFileUpload";
+    public static final String DEBT_LIABILITY_FILE_UPLOAD = "debtLiabilityFileUpload";
+    public static final String LEGAL_DEMAND_NOTICE_FILE_UPLOAD = "legalDemandNoticeFileUpload";
+    public static final String PROOF_OF_ACKNOWLEDGMENT_FILE_UPLOAD = "proofOfAcknowledgmentFileUpload";
+    public static final String PROOF_OF_DISPATCH_FILE_UPLOAD = "proofOfDispatchFileUpload";
+    public static final String PROOF_OF_REPLY_FILE_UPLOAD = "proofOfReplyFileUpload";
+    public static final String SWORN_STATEMENT_KEY = "swornStatement";
+    public static final String INQUIRY_AFFIDAVIT_FILE_UPLOAD = "inquiryAffidavitFileUpload";
+    public static final String VAKALATNAMA_FILE_UPLOAD = "vakalatnamaFileUpload";
+    public static final String PIP_AFFIDAVIT_FILE_UPLOAD = "pipAffidavitFileUpload";
+
+    // caseDetails / additionalDetails section names
+    public static final String CHEQUE_DETAILS = "chequeDetails";
+    public static final String DEBT_LIABILITY_DETAILS = "debtLiabilityDetails";
+    public static final String DEMAND_NOTICE_DETAILS = "demandNoticeDetails";
+    public static final String PRAYER_SWORN_STATEMENT = "prayerSwornStatement";
+    public static final String RESPONDENT_DETAILS = "respondentDetails";
+
+    // e-filing upload key -> evidence artifactType
+    public static final Map<String, String> REGISTRATION_DOC_TYPE_MAPPING = Map.ofEntries(
+            Map.entry(BOUNCED_CHEQUE_FILE_UPLOAD, BOUNCED_CHEQUE),
+            Map.entry(DEPOSIT_CHEQUE_FILE_UPLOAD, PROOF_OF_DEPOSIT_OF_CHEQUE),
+            Map.entry(RETURN_MEMO_FILE_UPLOAD, RETURN_MEMO),
+            Map.entry(DEBT_LIABILITY_FILE_UPLOAD, DEBT_LIABILITY),
+            Map.entry(LEGAL_DEMAND_NOTICE_FILE_UPLOAD, DEMAND_NOTICE),
+            Map.entry(PROOF_OF_ACKNOWLEDGMENT_FILE_UPLOAD, PROOF_OF_ACK_OF_LEGAL_NOTICE),
+            Map.entry(PROOF_OF_DISPATCH_FILE_UPLOAD, PROOF_OF_DISPATCH_OF_LEGAL_NOTICE),
+            Map.entry(PROOF_OF_REPLY_FILE_UPLOAD, PROOF_OF_REPLY_TO_LEGAL_NOTICE),
+            Map.entry(SWORN_STATEMENT_KEY, SWORN_STATEMENT),
+            Map.entry(INQUIRY_AFFIDAVIT_FILE_UPLOAD, AFFIDAVIT_UNDER_225),
+            Map.entry(VAKALATNAMA_FILE_UPLOAD, VAKALATNAMA_DOC),
+            Map.entry(PIP_AFFIDAVIT_FILE_UPLOAD, COMPLAINANT_PIP_AFFIDAVIT)
+    );
+
+    // caseDetails section -> upload keys under formdata[].data
+    public static final Map<String, List<String>> CASE_DETAILS_EVIDENCE_SECTIONS = Map.of(
+            CHEQUE_DETAILS, List.of(BOUNCED_CHEQUE_FILE_UPLOAD, DEPOSIT_CHEQUE_FILE_UPLOAD, RETURN_MEMO_FILE_UPLOAD),
+            DEBT_LIABILITY_DETAILS, List.of(DEBT_LIABILITY_FILE_UPLOAD),
+            DEMAND_NOTICE_DETAILS, List.of(LEGAL_DEMAND_NOTICE_FILE_UPLOAD, PROOF_OF_ACKNOWLEDGMENT_FILE_UPLOAD, PROOF_OF_DISPATCH_FILE_UPLOAD, PROOF_OF_REPLY_FILE_UPLOAD)
+    );
+
+    // additionalDetails section -> upload keys under formdata[].data
+    public static final Map<String, List<String>> ADDITIONAL_DETAILS_EVIDENCE_SECTIONS = Map.of(
+            PRAYER_SWORN_STATEMENT, List.of(SWORN_STATEMENT_KEY),
+            RESPONDENT_DETAILS, List.of(INQUIRY_AFFIDAVIT_FILE_UPLOAD)
+    );
+
     private ServiceConstants() {
     }
 }

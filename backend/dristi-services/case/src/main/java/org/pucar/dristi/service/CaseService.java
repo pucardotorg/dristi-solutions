@@ -602,6 +602,8 @@ public class CaseService {
                 caseRequest.getCases().setCaseType(CMP);
                 updateCaseConversion(caseRequest);
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
+                // On successful registration, asynchronously create one evidence artifact per e-filed document.
+                producer.push(config.getRegisterEvidenceTopic(), caseRequest);
             }
             //todo: enhance for files delete
             removeInactiveDocuments(documentToDelete, caseRequest.getCases().getTenantId());
@@ -2645,6 +2647,172 @@ public class CaseService {
             evidenceUtil.createEvidence(evidenceRequest);
 
         }
+    }
+
+    /**
+     * Creates one evidence artifact for every complainant-side document e-filed for the case, triggered
+     * asynchronously when a case is registered (PENDING_REGISTRATION -> PENDING_RESPONSE via the REGISTER action).
+     * Each document failure is isolated so one bad document does not block the rest.
+     */
+    public void createRegistrationEvidences(CaseRequest caseRequest) {
+        CourtCase courtCase = caseRequest.getCases();
+        RequestInfo requestInfo = caseRequest.getRequestInfo();
+        try {
+            log.info("Method=createRegistrationEvidences, Result=IN_PROGRESS, CaseId={}", courtCase.getId());
+
+            String sourceId = resolveComplainantIndividualId(courtCase, requestInfo);
+            String asUser = resolveEfilingCreatorMainUser(courtCase);
+
+            List<RegistrationEvidenceDocument> documents = collectRegistrationDocuments(courtCase);
+
+            for (RegistrationEvidenceDocument evidenceDocument : documents) {
+                Document document = evidenceDocument.document();
+                try {
+                    if (evidenceValidator.validateEvidenceCreate(courtCase, requestInfo, Collections.singletonList(document))) {
+                        log.info("Evidence already exists for fileStore={}, skipping", document.getFileStore());
+                        continue;
+                    }
+                    evidenceUtil.createEvidence(buildRegistrationEvidenceRequest(courtCase, requestInfo, evidenceDocument, sourceId, asUser));
+                } catch (Exception e) {
+                    log.error("Error creating registration evidence for fileStore={}, artifactType={}", document.getFileStore(), evidenceDocument.artifactType(), e);
+                }
+            }
+            log.info("Method=createRegistrationEvidences, Result=SUCCESS, CaseId={}", courtCase.getId());
+        } catch (Exception e) {
+            log.error("Error in createRegistrationEvidences for CaseId={}", courtCase.getId(), e);
+        }
+    }
+
+    private String resolveComplainantIndividualId(CourtCase courtCase, RequestInfo requestInfo) {
+        try {
+            String createdBy = Optional.ofNullable(courtCase.getAuditdetails()).map(AuditDetails::getCreatedBy).orElse(null);
+            if (createdBy == null) {
+                return null;
+            }
+            List<Individual> individuals = individualService.getIndividuals(requestInfo, Collections.singletonList(createdBy));
+            if (individuals != null && !individuals.isEmpty()) {
+                return individuals.get(0).getIndividualId();
+            }
+        } catch (Exception e) {
+            log.error("Error resolving complainant individualId for registration evidence, CaseId={}", courtCase.getId(), e);
+        }
+        return null;
+    }
+
+    private String resolveEfilingCreatorMainUser(CourtCase courtCase) {
+        // If an advocate office (advocate or its jr. advocate/clerk) created the case, use the case-owner advocate's uuid.
+        if (courtCase.getRepresentatives() != null) {
+            for (AdvocateMapping representative : courtCase.getRepresentatives()) {
+                if (CASE_OWNER_FILING_STATUS.equalsIgnoreCase(representative.getAdvocateFilingStatus()) && representative.getAdditionalDetails() != null) {
+                    JsonNode uuidNode = objectMapper.convertValue(representative.getAdditionalDetails(), JsonNode.class).path(UUID_KEY);
+                    if (!uuidNode.isMissingNode() && !uuidNode.isNull()) {
+                        return uuidNode.asText();
+                    }
+                }
+            }
+        }
+        // else the complainant created the case: use the creator's uuid.
+        return Optional.ofNullable(courtCase.getAuditdetails()).map(AuditDetails::getCreatedBy).orElse(null);
+    }
+
+    private List<RegistrationEvidenceDocument> collectRegistrationDocuments(CourtCase courtCase) {
+        List<RegistrationEvidenceDocument> result = new ArrayList<>();
+
+        JsonNode caseDetails = courtCase.getCaseDetails() == null ? null : objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
+        collectFromFormdataSections(caseDetails, CASE_DETAILS_EVIDENCE_SECTIONS, result);
+
+        JsonNode additionalDetails = courtCase.getAdditionalDetails() == null ? null : objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+        collectFromFormdataSections(additionalDetails, ADDITIONAL_DETAILS_EVIDENCE_SECTIONS, result);
+
+        collectAdvocateBlockDocuments(courtCase, result);
+
+        return result;
+    }
+
+    private void collectFromFormdataSections(JsonNode root, Map<String, List<String>> sections, List<RegistrationEvidenceDocument> result) {
+        if (root == null || root.isMissingNode()) {
+            return;
+        }
+        for (Map.Entry<String, List<String>> section : sections.entrySet()) {
+            JsonNode formdata = root.path(section.getKey()).path(FORMDATA);
+            if (!formdata.isArray()) {
+                continue;
+            }
+            for (JsonNode form : formdata) {
+                JsonNode data = form.path(DATA);
+                for (String key : section.getValue()) {
+                    addJsonDocuments(data.path(key).path(DOCUMENT), key, result);
+                }
+            }
+        }
+    }
+
+    private void addJsonDocuments(JsonNode documentsNode, String key, List<RegistrationEvidenceDocument> result) {
+        String artifactType = REGISTRATION_DOC_TYPE_MAPPING.get(key);
+        if (artifactType == null || documentsNode == null || documentsNode.isMissingNode()) {
+            return;
+        }
+        if (documentsNode.isArray()) {
+            for (JsonNode docNode : documentsNode) {
+                addRegistrationDocument(objectMapper.convertValue(docNode, Document.class), artifactType, result);
+            }
+        } else if (documentsNode.isObject()) {
+            addRegistrationDocument(objectMapper.convertValue(documentsNode, Document.class), artifactType, result);
+        }
+    }
+
+    private void collectAdvocateBlockDocuments(CourtCase courtCase, List<RegistrationEvidenceDocument> result) {
+        if (courtCase.getAdvocateDetailBlock() == null) {
+            return;
+        }
+        for (AdvocateDetailBlock block : courtCase.getAdvocateDetailBlock()) {
+            if (block == null || block.getDocuments() == null) {
+                continue;
+            }
+            Documents documents = block.getDocuments();
+            List<Document> vakalatnama = documents.getVakalatnama();
+            List<Document> pipAffidavit = documents.getPipAffidavit();
+            // frontend parity: prefer vakalatnama, fall back to PIP affidavit
+            if (vakalatnama != null && !vakalatnama.isEmpty()) {
+                vakalatnama.forEach(document -> addRegistrationDocument(document, VAKALATNAMA_DOC, result));
+            } else if (pipAffidavit != null && !pipAffidavit.isEmpty()) {
+                pipAffidavit.forEach(document -> addRegistrationDocument(document, COMPLAINANT_PIP_AFFIDAVIT, result));
+            }
+        }
+    }
+
+    private void addRegistrationDocument(Document document, String artifactType, List<RegistrationEvidenceDocument> result) {
+        if (artifactType != null && document != null && document.getFileStore() != null) {
+            result.add(new RegistrationEvidenceDocument(document, artifactType));
+        }
+    }
+
+    private EvidenceRequest buildRegistrationEvidenceRequest(CourtCase courtCase, RequestInfo requestInfo, RegistrationEvidenceDocument evidenceDocument, String sourceId, String asUser) {
+        Document document = evidenceDocument.document();
+        org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
+
+        WorkflowObject workflowObject = new WorkflowObject();
+        workflowObject.setAction(TYPE_DEPOSITION);
+        workflowObject.setDocuments(Collections.singletonList(workflowDocument));
+
+        return EvidenceRequest.builder()
+                .requestInfo(requestInfo)
+                .artifact(Artifact.builder()
+                        .artifactType(evidenceDocument.artifactType())
+                        .sourceType(COMPLAINANT)
+                        .sourceID(sourceId)
+                        .asUser(asUser)
+                        .caseId(courtCase.getId().toString())
+                        .filingNumber(courtCase.getFilingNumber())
+                        .cnrNumber(courtCase.getCnrNumber())
+                        .tenantId(courtCase.getTenantId())
+                        .filingType(CASE_FILING)
+                        .comments(new ArrayList<>())
+                        .isEvidence(false)
+                        .file(document)
+                        .workflow(workflowObject)
+                        .build())
+                .build();
     }
 
     private Object modifyAdditionalDetails(RequestInfo requestInfo, CourtCase courtCase, RepresentingJoinCase representingJoinCase, JoinCaseRepresentative joinCaseRepresentative) {
