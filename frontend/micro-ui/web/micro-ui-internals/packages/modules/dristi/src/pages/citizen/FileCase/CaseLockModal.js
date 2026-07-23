@@ -53,7 +53,7 @@ function CaseLockModal({
   }, [caseDetails?.poaHolders, userInfo?.uuid]);
 
   const isAdvocateFlow = selectedAdvocateUuid && (isAdvocateInCase || !isLitigantInCase) && !isPoaHolderInCase;
-  debugger;
+
   const filingNumber = useMemo(() => {
     return caseDetails?.filingNumber;
   }, [caseDetails]);

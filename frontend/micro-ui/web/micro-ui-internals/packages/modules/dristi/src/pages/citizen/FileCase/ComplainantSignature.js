@@ -1001,6 +1001,11 @@ const ComplainantSignature = ({ path }) => {
                   assignee: advocate?.additionalDetails?.uuid,
                 });
               });
+              // An advocate who is also filing as a litigant on this case has their own
+              // litigant-assigned pending task in addition to the advocate-representative ones.
+              if (isOwnerAdvocateSelf && isCurrentPersonLitigant) {
+                promises.push(closePendingTask({ status: state, assignee: loggedInUserOnBehalfOfUuid }));
+              }
               await Promise.all(promises);
             }
           }
