@@ -655,6 +655,12 @@ const ComplainantSignature = ({ path }) => {
       placeholder = `${poaHolder?.name} - PoA holder for ${representedNames}`;
     } else {
       if (isOwnerAdvocateSelf) {
+        const advocateActingAsLitigant = litigants?.find((lit) => lit?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
+        if (advocateActingAsLitigant) {
+          placeholder = `${advocateActingAsLitigant?.additionalDetails?.fullName} - Complainant ${advocateActingAsLitigant?.additionalDetails?.currentPosition}`;
+          return getUniqueAcronym(placeholder);
+        }
+
         const advocate = caseDetails?.representatives?.find((advocate) => advocate?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
         const representingWithAllUnsigned = advocate?.representing?.find((rep) => {
           // match litigant using UUID
