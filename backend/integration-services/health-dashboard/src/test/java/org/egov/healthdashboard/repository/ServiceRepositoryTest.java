@@ -26,18 +26,18 @@ class ServiceRepositoryTest {
 
     @Test
     void resolveServiceId_returnsId_whenServiceExists() {
-        when(jdbcTemplate.queryForObject("SELECT id FROM eg_service WHERE service_name = ?", Long.class, "ESIGN"))
+        when(jdbcTemplate.queryForObject("SELECT id FROM eg_service_health WHERE service_name = ?", Long.class, "ESIGN"))
                 .thenReturn(1L);
 
         Long id = serviceRepository.resolveServiceId("ESIGN");
 
         assertThat(id).isEqualTo(1L);
-        verify(jdbcTemplate).queryForObject("SELECT id FROM eg_service WHERE service_name = ?", Long.class, "ESIGN");
+        verify(jdbcTemplate).queryForObject("SELECT id FROM eg_service_health WHERE service_name = ?", Long.class, "ESIGN");
     }
 
     @Test
     void resolveServiceId_propagatesException_whenServiceDoesNotExist() {
-        when(jdbcTemplate.queryForObject("SELECT id FROM eg_service WHERE service_name = ?", Long.class, "UNKNOWN"))
+        when(jdbcTemplate.queryForObject("SELECT id FROM eg_service_health WHERE service_name = ?", Long.class, "UNKNOWN"))
                 .thenThrow(new org.springframework.dao.EmptyResultDataAccessException(1));
 
         org.junit.jupiter.api.Assertions.assertThrows(
