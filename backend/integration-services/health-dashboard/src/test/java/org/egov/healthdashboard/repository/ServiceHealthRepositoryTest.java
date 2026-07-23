@@ -74,7 +74,7 @@ class ServiceHealthRepositoryTest {
         verify(jdbcTemplate).query(
                 eq("SELECT DISTINCT ON (s.id) h.id, s.service_name, s.service_url, h.last_status, " +
                         "h.last_updated_time, h.response_time_ms, h.message " +
-                        "FROM eg_service_health_status h JOIN eg_service s ON s.id = h.service_id " +
+                        "FROM eg_service_health_status h JOIN eg_service_health s ON s.id = h.service_id " +
                         "ORDER BY s.id, h.last_updated_time DESC NULLS LAST"),
                 any(RowMapper.class));
     }
@@ -114,7 +114,7 @@ class ServiceHealthRepositoryTest {
         verify(jdbcTemplate).query(
                 eq("SELECT h.id, s.service_name, s.service_url, h.last_status, h.last_updated_time, " +
                         "h.response_time_ms, h.message " +
-                        "FROM eg_service_health_status h JOIN eg_service s ON s.id = h.service_id " +
+                        "FROM eg_service_health_status h JOIN eg_service_health s ON s.id = h.service_id " +
                         "WHERE s.service_name = ? " +
                         "ORDER BY h.last_updated_time DESC NULLS LAST LIMIT 1"),
                 any(RowMapper.class), eq("ESIGN"));
