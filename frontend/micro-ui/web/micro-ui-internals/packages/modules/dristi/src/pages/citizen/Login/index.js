@@ -5,7 +5,13 @@ import { Route, Switch, useHistory, useLocation, useRouteMatch } from "react-rou
 import InfoModal from "../../../components/InfoModal";
 import { loginSteps } from "./config";
 import SelectMobileNumber from "./SelectMobileNumber";
+import MobileNumberStep from "./MobileNumberStep";
+import PasswordStep from "./PasswordStep";
 import SelectOtp from "./SelectOtp";
+import SetPassword from "./SetPassword";
+import SetPasswordReminderModal from "./SetPasswordReminderModal";
+
+const SET_PASSWORD_REMINDER_KEY = "dontRemindSetPassword";
 
 const TYPE_REGISTER = { type: "REGISTER" };
 const TYPE_LOGIN = { type: "LOGIN" };
@@ -65,6 +71,14 @@ const Login = ({ stateCode }) => {
   const [isUserRegistered, setIsUserRegistered] = useState(true);
   const [showUnregisteredModal, setShowUnregisteredModal] = useState(false);
   const [{ showOtpModal }, setState] = useState({ showOtpModal: false });
+  const [loginMode, setLoginMode] = useState("PASSWORD"); // "PASSWORD" | "OTP"
+  const [loginStep, setLoginStep] = useState("MOBILE"); // "MOBILE" | "PASSWORD" (only relevant when loginMode === "PASSWORD")
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState(null);
+  const [canSubmitPassword, setCanSubmitPassword] = useState(true);
+  const [isForgotPasswordFlow, setIsForgotPasswordFlow] = useState(false);
+  const [showSetPasswordReminder, setShowSetPasswordReminder] = useState(false);
+  const [showSetPasswordScreen, setShowSetPasswordScreen] = useState(false);
 
   useEffect(() => {
     let errorTimeout;
@@ -83,10 +97,10 @@ const Login = ({ stateCode }) => {
     };
   }, [error]);
 
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
+  // TODO: replace with the real field once the user-service response exposes whether a password is set.
+  const hasPasswordSet = (info) => Boolean(info?.additionalDetails?.hasPasswordSet);
+
+  const finishLogin = () => {
     localStorage.setItem("citizen.userRequestObject", user);
     Digit.UserService.setUser(user);
     if (params.isRememberMe) {
@@ -104,6 +118,26 @@ const Login = ({ stateCode }) => {
     } else {
       history.push(redirectPath);
     }
+  };
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    if (isForgotPasswordFlow) {
+      // User just verified OTP as part of "Forgot password" - take them straight to Set Password,
+      // no additional OTP needed since they're already verified.
+      setShowSetPasswordScreen(true);
+      return;
+    }
+
+    if (loginMode === "OTP" && !hasPasswordSet(user?.info) && localStorage.getItem(SET_PASSWORD_REMINDER_KEY) !== "true") {
+      setShowSetPasswordReminder(true);
+      return;
+    }
+
+    finishLogin();
   }, [user]);
 
   const stepItems = useMemo(() =>
@@ -165,6 +199,61 @@ const Login = ({ stateCode }) => {
       }
     };
   }, [otpCooldownTimer]);
+
+  const handlePasswordMobileChange = (event) => {
+    const { value } = event.target;
+    setParmas({ ...params, mobileNumber: value?.replace(/[^0-9]/g, "") });
+  };
+
+  const submitMobileNumber = () => {
+    setPasswordError(null);
+    setPassword("");
+    setLoginStep("PASSWORD");
+  };
+
+  const handlePasswordChange = (value) => {
+    setPassword(value);
+    setPasswordError(null);
+  };
+
+  const selectPassword = async () => {
+    setPasswordError(null);
+    setCanSubmitPassword(false);
+    try {
+      const requestData = {
+        username: params.mobileNumber,
+        password,
+        tenantId: stateCode,
+        userType: getUserType(),
+      };
+      const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
+
+      if (window?.globalConfigs?.getConfig("ENABLE_SINGLEINSTANCE")) {
+        info.tenantId = Digit.ULBService.getStateId();
+      }
+
+      setUser({ info, ...tokens });
+    } catch (err) {
+      setPasswordError(
+        err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_MOBILE_OR_PASSWORD")
+      );
+    } finally {
+      setCanSubmitPassword(true);
+    }
+  };
+
+  const backToMobileStep = () => {
+    setPasswordError(null);
+    setPassword("");
+    setLoginStep("MOBILE");
+  };
+
+  const switchToOtpLogin = (forgotPassword = false) => {
+    setPasswordError(null);
+    setPassword("");
+    setIsForgotPasswordFlow(forgotPassword);
+    setLoginMode("OTP");
+  };
 
   const selectMobileNumber = async (mobileNumber) => {
     setOtpError(false);
@@ -283,22 +372,92 @@ const Login = ({ stateCode }) => {
       return [null, err];
     }
   };
+  if (showSetPasswordScreen) {
+    return (
+      <div className="citizen-form-wrapper">
+        <SetPassword
+          t={t}
+          header="SET_PASSWORD"
+          subText="SET_PASSWORD_AFTER_FORGOT_MESSAGE"
+          onSubmit={async (newPassword) => {
+            await Digit.UserService.changePassword(
+              {
+                username: params.mobileNumber,
+                newPassword,
+                confirmPassword: newPassword,
+                otpReference: params.otp,
+                tenantId: stateCode,
+                type: getUserType()?.toUpperCase(),
+              },
+              stateCode
+            );
+            setShowSetPasswordScreen(false);
+            finishLogin();
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="citizen-form-wrapper">
+    <div className={loginMode === "PASSWORD" ? "login-v2" : "citizen-form-wrapper"}>
+      {showSetPasswordReminder && (
+        <SetPasswordReminderModal
+          t={t}
+          onSetPassword={() => {
+            setShowSetPasswordReminder(false);
+            history.push(`/${window?.contextPath}/citizen/dristi/home/password-settings`);
+          }}
+          onRemindLater={() => {
+            setShowSetPasswordReminder(false);
+            finishLogin();
+          }}
+          onDontRemindAgain={() => {
+            localStorage.setItem(SET_PASSWORD_REMINDER_KEY, "true");
+            setShowSetPasswordReminder(false);
+            finishLogin();
+          }}
+        />
+      )}
       <Switch>
         <React.Fragment>
           <Route path={`${path}`} exact>
-            <SelectMobileNumber
-              onSelect={selectMobileNumber}
-              config={stepItems[0]}
-              mobileNumber={params.mobileNumber || ""}
-              onMobileChange={handleMobileChange}
-              canSubmit={canSubmitNo && otpCooldown === 0}
-              isUserLoggedIn={isUserLoggedIn}
-              showRegisterLink={isUserRegistered && !location.state?.role}
-              cooldownTime={otpCooldown}
-              t={t}
-            />
+            {loginMode === "PASSWORD" ? (
+              loginStep === "MOBILE" ? (
+                <MobileNumberStep
+                  onSelect={submitMobileNumber}
+                  mobileNumber={params.mobileNumber || ""}
+                  onMobileChange={handlePasswordMobileChange}
+                  canSubmit={true}
+                  isUserLoggedIn={isUserLoggedIn}
+                  t={t}
+                />
+              ) : (
+                <PasswordStep
+                  mobileNumber={params.mobileNumber || ""}
+                  password={password}
+                  onPasswordChange={handlePasswordChange}
+                  onSelect={selectPassword}
+                  canSubmit={canSubmitPassword}
+                  error={passwordError}
+                  onBack={backToMobileStep}
+                  onSwitchToOtp={() => switchToOtpLogin(true)}
+                  t={t}
+                />
+              )
+            ) : (
+              <SelectMobileNumber
+                onSelect={selectMobileNumber}
+                config={stepItems[0]}
+                mobileNumber={params.mobileNumber || ""}
+                onMobileChange={handleMobileChange}
+                canSubmit={canSubmitNo && otpCooldown === 0}
+                isUserLoggedIn={isUserLoggedIn}
+                showRegisterLink={isUserRegistered && !location.state?.role}
+                cooldownTime={otpCooldown}
+                t={t}
+              />
+            )}
           </Route>
           {showOtpModal && (
             <SelectOtp

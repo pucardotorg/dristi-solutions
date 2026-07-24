@@ -21,6 +21,11 @@ const ProfileComponent = ({ userDetails, userOptions, handleUserDropdownSelectio
     setShowModal(false);
   };
 
+  const showPasswordSettings = () => {
+    history.push(`/${window?.contextPath}/citizen/dristi/home/password-settings`);
+    setShowModal(false);
+  };
+
   const toggleModal = () => {
     setShowModal(!showModal);
   };
@@ -46,6 +51,8 @@ const ProfileComponent = ({ userDetails, userOptions, handleUserDropdownSelectio
   const handleSelection = (option) => {
     if (option.name === "Logout") {
       onLogout();
+    } else if (option.name === "Password Settings") {
+      showPasswordSettings();
     } else {
       showProfilePage();
     }
@@ -88,6 +95,17 @@ const ProfileComponent = ({ userDetails, userOptions, handleUserDropdownSelectio
                 <EditProfileIcon />
               </span>
               {t("EDIT_PROFILE")}
+            </div>
+            <div className="password-settings" onClick={() => handleSelection({ name: "Password Settings" })}>
+              <span role="img" aria-label="password-settings" className="password-settings-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M17 9V7a5 5 0 0 0-10 0v2a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-7a3 3 0 0 0-3-3zM9 7a3 3 0 0 1 6 0v2H9V7zm5 8.72V17a1 1 0 0 1-2 0v-1.28a1.5 1.5 0 1 1 2 0z"
+                    fill="#505A5F"
+                  />
+                </svg>
+              </span>
+              {t("PASSWORD_SETTINGS")}
             </div>
             <div className="language-selection">
               <div className="language-select-icon">
