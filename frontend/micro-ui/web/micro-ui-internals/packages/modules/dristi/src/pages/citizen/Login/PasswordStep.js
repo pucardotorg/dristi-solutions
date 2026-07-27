@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import StateEmblemIcon from "../../../components/StateEmblemIcon";
+import ImageCaptcha from "../../../components/ImageCaptcha";
+import { verifyCaptcha } from "../../../Utils/captchaUtils";
 
 const BackIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -31,7 +33,23 @@ const formatMobile = (m) => (m || "").replace(/(\d{5})(\d{5})/, "$1 $2");
 
 const PasswordStep = ({ t, mobileNumber, password, onPasswordChange, onSelect, canSubmit, error, onBack, onSwitchToOtp }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [captchaInput, setCaptchaInput] = useState("");
+  const [captchaError, setCaptchaError] = useState(false);
+  const [captchaNonce, setCaptchaNonce] = useState(0);
   const isValid = password?.length >= 8;
+
+  const handleSubmit = () => {
+    if (!verifyCaptcha(captchaInput, captchaAnswer)) {
+      setCaptchaError(true);
+      setCaptchaInput("");
+      // Force a fresh challenge by remounting the widget.
+      setCaptchaNonce((n) => n + 1);
+      return;
+    }
+    setCaptchaError(false);
+    onSelect();
+  };
 
   return (
     <div className="login-v2-card">
@@ -83,7 +101,19 @@ const PasswordStep = ({ t, mobileNumber, password, onPasswordChange, onSelect, c
         )}
       </div>
 
-      <button className="login-v2-btn" onClick={onSelect} disabled={!isValid || !canSubmit}>
+      <ImageCaptcha
+        key={captchaNonce}
+        t={t}
+        value={captchaInput}
+        onChange={(val) => {
+          setCaptchaInput(val);
+          setCaptchaError(false);
+        }}
+        onAnswerChange={setCaptchaAnswer}
+        error={captchaError}
+      />
+
+      <button className="login-v2-btn" onClick={handleSubmit} disabled={!isValid || !canSubmit}>
         {t("CS_COMMON_SIGN_IN")}
       </button>
       <div className="login-v2-form-links">

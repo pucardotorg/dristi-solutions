@@ -212,6 +212,46 @@
     }
   }
 
+  .login-v2-captcha-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .login-v2-captcha-canvas {
+    width: 150px;
+    height: 48px;
+    border: 1px solid var(--neutral-7);
+    border-radius: var(--radius-md);
+    background: var(--surface-sunken);
+    user-select: none;
+  }
+
+  .login-v2-captcha-refresh {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    color: var(--muted-foreground);
+    background: none;
+    border: 1px solid var(--neutral-7);
+    cursor: pointer;
+    transition: background 0.13s, color 0.13s;
+
+    &:hover {
+      background: var(--muted);
+      color: var(--neutral-12);
+    }
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
   .login-v2-btn {
     display: inline-flex;
     align-items: center;
