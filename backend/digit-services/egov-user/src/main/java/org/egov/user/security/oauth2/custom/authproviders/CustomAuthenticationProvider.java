@@ -22,9 +22,11 @@ import org.egov.user.domain.exception.DuplicateUserNameException;
 import org.egov.user.domain.exception.UserNotFoundException;
 import org.egov.user.domain.model.SecureUser;
 import org.egov.user.domain.model.User;
+import org.egov.user.domain.model.enums.AuthMode;
 import org.egov.user.domain.model.enums.UserType;
 import org.egov.user.domain.service.UserService;
 import org.egov.user.domain.service.utils.EncryptionDecryptionUtil;
+import org.egov.user.security.oauth2.custom.AuthModeResolver;
 import org.egov.user.web.contract.auth.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,11 +62,8 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
     @Autowired
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
-    @Value("${citizen.login.password.otp.enabled}")
-    private boolean citizenLoginPasswordOtpEnabled;
-
-    @Value("${employee.login.password.otp.enabled}")
-    private boolean employeeLoginPasswordOtpEnabled;
+    @Autowired
+    private AuthModeResolver authModeResolver;
 
     @Value("${citizen.login.password.otp.fixed.value}")
     private String fixedOTPPassword;
@@ -147,16 +146,15 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         if (user.getType() != null && user.getType().equals(UserType.CITIZEN))
             isCitizen = true;
 
+        AuthMode authMode = resolveAuthMode(user.getType(), details);
+
         boolean isPasswordMatched;
-        if (isCitizen) {
-            if (fixedOTPEnabled && !fixedOTPPassword.equals("") && fixedOTPPassword.equals(password)) {
-                //for automation allow fixing otp validation to a fixed otp
-                isPasswordMatched = true;
-            } else {
-                isPasswordMatched = isPasswordMatch(citizenLoginPasswordOtpEnabled, password, user, authentication);
-            }
+        if (isCitizen && AuthMode.OTP.equals(authMode)
+                && fixedOTPEnabled && !fixedOTPPassword.equals("") && fixedOTPPassword.equals(password)) {
+            //for automation allow fixing otp validation to a fixed otp
+            isPasswordMatched = true;
         } else {
-            isPasswordMatched = isPasswordMatch(employeeLoginPasswordOtpEnabled, password, user, authentication);
+            isPasswordMatched = isPasswordMatch(authMode, password, user, authentication);
         }
 
         if (isPasswordMatched) {
@@ -182,11 +180,21 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
     }
 
-    private boolean isPasswordMatch(Boolean isOtpBased, String password, User user, Authentication authentication) {
+    /**
+     * The credential type is resolved by CustomTokenEndpoint from the authType request param and
+     * passed down in the authentication details. It is resolved again here as a fallback so any
+     * other caller building the token directly keeps the configured default behaviour.
+     */
+    private AuthMode resolveAuthMode(UserType userType, LinkedHashMap<String, String> details) {
+        AuthMode authMode = AuthMode.fromValue(details.get("authMode"));
+        return isNull(authMode) ? authModeResolver.resolve(userType, null) : authMode;
+    }
+
+    private boolean isPasswordMatch(AuthMode authMode, String password, User user, Authentication authentication) {
         BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder();
         final LinkedHashMap<String, String> details = (LinkedHashMap<String, String>) authentication.getDetails();
         String isCallInternal = details.get("isInternal");
-        if (isOtpBased) {
+        if (AuthMode.OTP.equals(authMode)) {
             if (null != isCallInternal && isCallInternal.equals("true")) {
                 log.debug("Skipping otp validation during login.........");
                 return true;

@@ -31,6 +31,7 @@ import org.egov.user.domain.model.LoggedInUserUpdatePasswordRequest;
 import org.egov.user.domain.model.NonLoggedInUserUpdatePasswordRequest;
 import org.egov.user.domain.model.User;
 import org.egov.user.domain.model.UserSearchCriteria;
+import org.egov.user.domain.model.enums.AuthMode;
 import org.egov.user.domain.model.enums.UserType;
 import org.egov.user.domain.service.utils.EncryptionDecryptionUtil;
 import org.egov.user.domain.service.utils.NotificationUtil;
@@ -48,6 +49,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.egov.user.security.oauth2.EgovTokenStore;
+import org.egov.user.security.oauth2.custom.AuthModeResolver;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -66,8 +68,7 @@ public class UserService {
     private OtpRepository otpRepository;
     private PasswordEncoder passwordEncoder;
     private int defaultPasswordExpiryInDays;
-    private boolean isCitizenLoginOtpBased;
-    private boolean isEmployeeLoginOtpBased;
+    private AuthModeResolver authModeResolver;
     private FileStoreRepository fileRepository;
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
     private EgovTokenStore tokenStore;
@@ -105,9 +106,8 @@ public class UserService {
 
     public UserService(UserRepository userRepository, OtpRepository otpRepository, FileStoreRepository fileRepository, UserUtils userUtils,
                        PasswordEncoder passwordEncoder, EncryptionDecryptionUtil encryptionDecryptionUtil, EgovTokenStore tokenStore,
+                       AuthModeResolver authModeResolver,
                        @Value("${default.password.expiry.in.days}") int defaultPasswordExpiryInDays,
-                       @Value("${citizen.login.password.otp.enabled}") boolean isCitizenLoginOtpBased,
-                       @Value("${employee.login.password.otp.enabled}") boolean isEmployeeLoginOtpBased,
                        @Value("${egov.user.pwd.pattern}") String pwdRegex,
                        @Value("${egov.user.pwd.pattern.max.length}") Integer pwdMaxLength,
                        @Value("${egov.user.pwd.pattern.min.length}") Integer pwdMinLength) {
@@ -115,8 +115,7 @@ public class UserService {
         this.otpRepository = otpRepository;
         this.passwordEncoder = passwordEncoder;
         this.defaultPasswordExpiryInDays = defaultPasswordExpiryInDays;
-        this.isCitizenLoginOtpBased = isCitizenLoginOtpBased;
-        this.isEmployeeLoginOtpBased = isEmployeeLoginOtpBased;
+        this.authModeResolver = authModeResolver;
         this.fileRepository = fileRepository;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.tokenStore = tokenStore;
@@ -267,11 +266,19 @@ public class UserService {
     private void validateAndEnrichCitizen(User user) {
     	
         log.info("Validating User........");
-        if (isCitizenLoginOtpBased && !StringUtils.isNumeric(user.getUsername()))
-            throw new UserNameNotValidException();
-        else if (isCitizenLoginOtpBased)
+        /*
+         * When OTP is one of the modes a citizen may log in with, the username doubles as the
+         * mobile number the OTP is delivered to, so it has to be numeric. When PASSWORD is one of
+         * the modes, any password supplied at registration has to satisfy the password policy -
+         * validatePassword is a no-op for a blank password, so an OTP-only registration still
+         * goes through when both modes are enabled.
+         */
+        if (authModeResolver.isModeAllowed(UserType.CITIZEN, AuthMode.OTP)) {
+            if (!StringUtils.isNumeric(user.getUsername()))
+                throw new UserNameNotValidException();
             user.setMobileNumber(user.getUsername());
-        if (!isCitizenLoginOtpBased)
+        }
+        if (authModeResolver.isModeAllowed(UserType.CITIZEN, AuthMode.PASSWORD))
             validatePassword(user.getPassword());
         user.setRoleToCitizen();
         String tenantId = userUtils.getStateLevelTenantForCitizen(user.getTenantId(),  user.getType());
@@ -435,10 +442,11 @@ public class UserService {
         final User user = getUniqueUser(updatePasswordRequest.getUserName(), updatePasswordRequest.getTenantId(),
                 updatePasswordRequest.getType());
 
-        if (user.getType().toString().equals(UserType.CITIZEN.toString()) && isCitizenLoginOtpBased)
+        /* A user can only maintain a password if password login is enabled for their user type */
+        if (!authModeResolver.isModeAllowed(user.getType(), AuthMode.PASSWORD)) {
+            log.info("{} change password flow is disabled", user.getType());
             throw new InvalidUpdatePasswordRequestException();
-        if (user.getType().toString().equals(UserType.EMPLOYEE.toString()) && isEmployeeLoginOtpBased)
-            throw new InvalidUpdatePasswordRequestException();
+        }
 
         validateExistingPassword(user, updatePasswordRequest.getExistingPassword());
         validatePassword(updatePasswordRequest.getNewPassword());
@@ -456,12 +464,9 @@ public class UserService {
         request.validate();
         // validateOtp(request.getOtpValidationRequest());
         User user = getUniqueUser(request.getUserName(), request.getTenantId(), request.getType());
-        if (user.getType().toString().equals(UserType.CITIZEN.toString()) && isCitizenLoginOtpBased) {
-            log.info("CITIZEN forgot password flow is disabled");
-            throw new InvalidUpdatePasswordRequestException();
-        }
-        if (user.getType().toString().equals(UserType.EMPLOYEE.toString()) && isEmployeeLoginOtpBased) {
-            log.info("EMPLOYEE forgot password flow is disabled");
+        /* A user can only maintain a password if password login is enabled for their user type */
+        if (!authModeResolver.isModeAllowed(user.getType(), AuthMode.PASSWORD)) {
+            log.info("{} forgot password flow is disabled", user.getType());
             throw new InvalidUpdatePasswordRequestException();
         }
         /* decrypt here */
