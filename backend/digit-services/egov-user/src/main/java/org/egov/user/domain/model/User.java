@@ -87,6 +87,11 @@ public class User {
     private boolean otpValidationMandatory;
     private boolean mobileValidationMandatory = true;
     private String alternateMobileNumber;
+    /**
+     * True once the user has either set a password or asked not to be prompted for one again.
+     * Nullable so that an update carrying no opinion leaves the stored value untouched.
+     */
+    private Boolean passwordPromptSuppressed;
 
     public User addAddressItem(Address addressItem) {
         if (this.addresses == null) {

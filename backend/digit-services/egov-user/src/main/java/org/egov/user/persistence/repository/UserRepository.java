@@ -197,6 +197,21 @@ public class UserRepository {
      * @param  
      * @return
      */
+    /**
+     * Suppresses the set-password prompt for a single user. Deliberately a narrow write rather
+     * than a full {@link #update} so that dismissing the prompt can never touch any other column.
+     *
+     * @param uuid uuid of the user whose prompt is being suppressed
+     */
+    public void suppressPasswordPrompt(String uuid) {
+        Map<String, Object> inputs = new HashMap<>();
+        inputs.put("uuid", uuid);
+        inputs.put("lastmodifieddate", new Date());
+
+        namedParameterJdbcTemplate.update("update eg_user set passwordpromptsuppressed=true, "
+                + "lastmodifieddate=:lastmodifieddate where uuid=:uuid", inputs);
+    }
+
     public void update(final User user, User oldUser, long userId, String uuid) {
 
 
@@ -300,6 +315,12 @@ public class UserRepository {
             updateuserInputs.put("PasswordExpiryDate", user.getPasswordExpiryDate());
         else
             updateuserInputs.put("PasswordExpiryDate", oldUser.getPasswordExpiryDate());
+
+        /* An update that carries no opinion on the prompt must not clear an existing suppression */
+        if (null != user.getPasswordPromptSuppressed())
+            updateuserInputs.put("PasswordPromptSuppressed", user.getPasswordPromptSuppressed());
+        else
+            updateuserInputs.put("PasswordPromptSuppressed", Boolean.TRUE.equals(oldUser.getPasswordPromptSuppressed()));
         updateuserInputs.put("Salutation", user.getSalutation());
         updateuserInputs.put("Signature", user.getSignature());
         updateuserInputs.put("Title", user.getTitle());
@@ -504,6 +525,7 @@ public class UserRepository {
         userInputs.put("emailid", entityUser.getEmailId());
         userInputs.put("active", entityUser.getActive());
         userInputs.put("name", entityUser.getName());
+        userInputs.put("passwordpromptsuppressed", Boolean.TRUE.equals(entityUser.getPasswordPromptSuppressed()));
 
         if (Gender.FEMALE.equals(entityUser.getGender())) {
             userInputs.put("gender", 1);

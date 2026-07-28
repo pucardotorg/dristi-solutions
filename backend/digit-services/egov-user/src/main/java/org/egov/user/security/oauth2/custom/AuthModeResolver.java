@@ -80,6 +80,19 @@ public class AuthModeResolver {
         return getAllowedModes(userType).contains(authMode);
     }
 
+    /**
+     * Whether the UI should prompt this user to set a password on login. Users who have already
+     * set one, or who asked not to be reminded again, carry a suppressed prompt. The prompt is
+     * also pointless where the deployment does not let this user type log in with a password.
+     *
+     * @param userType         type of the user logging in
+     * @param promptSuppressed stored suppression flag, may be null for a user created before the
+     *                         flag existed
+     */
+    public boolean isPasswordSetupPromptRequired(UserType userType, Boolean promptSuppressed) {
+        return isModeAllowed(userType, AuthMode.PASSWORD) && !Boolean.TRUE.equals(promptSuppressed);
+    }
+
     private AuthMode defaultMode(boolean isCitizen) {
         boolean otpBased = isCitizen ? citizenLoginPasswordOtpEnabled : employeeLoginPasswordOtpEnabled;
         return otpBased ? AuthMode.OTP : AuthMode.PASSWORD;

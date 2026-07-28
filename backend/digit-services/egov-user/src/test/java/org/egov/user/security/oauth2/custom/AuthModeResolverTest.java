@@ -81,6 +81,23 @@ public class AuthModeResolverTest {
     }
 
     @Test
+    public void test_should_require_password_setup_prompt_only_while_unsuppressed() {
+        AuthModeResolver resolver = resolverWith(true, false, "OTP,PASSWORD", "");
+
+        assertTrue(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, null));
+        assertTrue(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, false));
+        assertFalse(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, true));
+    }
+
+    @Test
+    public void test_should_not_require_password_setup_prompt_when_password_login_is_disabled() {
+        AuthModeResolver resolver = resolverWith(true, false, "OTP", "");
+
+        assertFalse(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, null));
+        assertFalse(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, false));
+    }
+
+    @Test
     public void test_should_fall_back_to_legacy_flag_when_allow_list_has_no_valid_entry() {
         AuthModeResolver resolver = resolverWith(false, true, "BIOMETRIC", "BIOMETRIC");
 

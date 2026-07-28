@@ -229,9 +229,15 @@ public class UserService {
         user = encryptionDecryptionUtil.encryptObject(user, "User", User.class);
         validateUserUniqueness(user);
         if (isEmpty(user.getPassword())) {
+            /*
+             * No password supplied, so a placeholder is generated and the user is left to be
+             * prompted to set a real one on login.
+             */
             user.setPassword(UUID.randomUUID().toString());
+            user.setPasswordPromptSuppressed(false);
         } else {
             validatePassword(user.getPassword());
+            user.setPasswordPromptSuppressed(true);
         }
         user.setPassword(encryptPwd(user.getPassword()));
         user.setDefaultPasswordExpiry(defaultPasswordExpiryInDays);
@@ -451,6 +457,7 @@ public class UserService {
         validateExistingPassword(user, updatePasswordRequest.getExistingPassword());
         validatePassword(updatePasswordRequest.getNewPassword());
         user.updatePassword(encryptPwd(updatePasswordRequest.getNewPassword()));
+        user.setPasswordPromptSuppressed(true);
         userRepository.update(user, user, user.getId() , user.getUuid());
         removeTokensByUser(user);
     }
@@ -476,11 +483,33 @@ public class UserService {
         validateOtp(user);
         validatePassword(request.getNewPassword());
         user.updatePassword(encryptPwd(request.getNewPassword()));
+        user.setPasswordPromptSuppressed(true);
         /* encrypt here */
         /* encrypted value is stored in DB*/
         user = encryptionDecryptionUtil.encryptObject(user, "User", User.class);
         userRepository.update(user, user,user.getId() , user.getUuid());
         removeTokensByUser(user);
+    }
+
+    /**
+     * Stops the set-password prompt from being shown to the logged-in user again, backing the
+     * "don't ask again" option on the prompt.
+     *
+     * The user is always resolved from the authenticated RequestInfo rather than from anything in
+     * the request body, so a caller cannot suppress the prompt on somebody else's behalf.
+     *
+     * @param requestInfo request info of the logged-in user
+     */
+    public void suppressPasswordPrompt(RequestInfo requestInfo) {
+        String uuid = isNull(requestInfo) || isNull(requestInfo.getUserInfo()) ? null
+                : requestInfo.getUserInfo().getUuid();
+
+        if (isEmpty(uuid)) {
+            log.error("Cannot suppress the password prompt, logged-in user is absent from the request");
+            throw new CustomException("INVALID_REQUEST", "Logged-in user information is mandatory");
+        }
+
+        userRepository.suppressPasswordPrompt(uuid);
     }
 
 
