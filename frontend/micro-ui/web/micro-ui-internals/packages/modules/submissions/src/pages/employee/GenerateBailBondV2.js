@@ -10,7 +10,7 @@ import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/d
 import SuccessBannerModal from "../../components/SuccessBannerModal";
 import { useHistory, useLocation } from "react-router-dom";
 import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
-import { combineMultipleFiles, getAuthorizedUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, getAuthorizedUuid, getNameByUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { submissionService } from "../../hooks/services";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "../../../../dristi/src/Utils/submissionWorkflow";
@@ -992,7 +992,7 @@ const GenerateBailBondV2 = () => {
           asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
           documents: [],
           additionalDetails: {
-            createdUserName: userInfo?.name,
+            createdUserName: getNameByUuid(userUuid, caseDetails) || userInfo?.name,
             isFormReset: clearAutoPopulatedData,
             formDisableCount: applicationDetails?.applicationDetails?.sureties?.length || 0,
           },
@@ -1049,7 +1049,7 @@ const GenerateBailBondV2 = () => {
             litigantMobileNumber: individualData ? individualData?.Individual?.[0]?.mobileNumber : bailBondDetails?.litigantMobileNumber,
             additionalDetails: {
               ...bailBondDetails.additionalDetails,
-              createdUserName: userInfo?.name,
+              createdUserName: getNameByUuid(userUuid, caseDetails) || userInfo?.name,
               isFormReset: bailBondDetails?.additionalDetails?.isFormReset || clearAutoPopulatedData,
             },
             workflow: { ...bailBondDetails.workflow, action, documents: [{}] },
