@@ -55,6 +55,9 @@ public class HealthCheckScheduler {
         checkAndStore(healthCheckService.checkTcp(
                 "ICOPS", config.getIcopsTcpHost(), config.getIcopsTcpPort(), timeout));
 
+        checkAndStore(healthCheckService.checkTcp(
+                "EMAIL", config.getEmailTcpHost(), config.getEmailTcpPort(), timeout));
+
         log.info("Health check cycle complete");
     }
 
