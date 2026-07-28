@@ -203,17 +203,18 @@ public class WarrantReissueService {
         // the previous hearing) and skip any warrant that already has a clone.
         Set<String> alreadyReissuedSourceIds = collectReissueSourceIds(activeWarrants);
 
-        // A composite scheduling order can itself author warrant(s): a WARRANT item published
-        // alongside the SCHEDULE_OF_HEARING_DATE item. Those warrants are created directly by
-        // order-management's PublishOrderWarrant for the new hearing, so auto-reissuing a
-        // previous-cycle warrant that covers the same party + address + delivery channel would
-        // duplicate them. Give the composite order priority: collect the (party|address|channel)
-        // combinations its warrant item(s) cover and skip any matching warrant below. We key off the
-        // ORDER's composition rather than searching for the warrant task, because the composite's
-        // warrant tasks are created in the order's postProcess - after the hearing.create event we
-        // are handling - so a task lookup would race; the order itself is already published with its
-        // warrant item by the time we get here.
-        Set<String> compositeWarrantCoverageKeys = collectCompositeWarrantCoverageKeys(requestInfo, newOrderId);
+        // The order that scheduled the new hearing can itself author warrant(s): either a composite
+        // order carrying a WARRANT item alongside its SCHEDULE_OF_HEARING_DATE item, or a standalone
+        // WARRANT order that also schedules the next hearing (nextHearingDate + its own warrant
+        // taskDetails). Those warrants are created directly by order-management's PublishOrderWarrant
+        // for the new hearing, so auto-reissuing a previous-cycle warrant that covers the same party +
+        // address + delivery channel would duplicate them. Give the scheduling order priority: collect
+        // the (party|address|channel) combinations its warrant(s) cover and skip any matching warrant
+        // below. We key off the ORDER's own definition rather than searching for the warrant task,
+        // because the scheduling order's warrant tasks are created in its postProcess - after the
+        // hearing.create event we are handling - so a task lookup would race; the order itself is
+        // already published with its warrant details by the time we get here.
+        Set<String> schedulingOrderWarrantCoverageKeys = collectSchedulingOrderWarrantCoverageKeys(requestInfo, newOrderId);
 
         // Scope to the single previous cycle by the order that CREATED each warrant, not by hearing
         // date: a calendar-day comparison drops the previous cycle whenever its warrants happen to be
@@ -234,8 +235,8 @@ public class WarrantReissueService {
                 continue;
             }
             String coverageKey = buildWarrantCoverageKey(warrant);
-            if (coverageKey != null && compositeWarrantCoverageKeys.contains(coverageKey)) {
-                log.info("Skipping warrant {} - composite scheduling order {} already authors a warrant for the same party/address/channel ({}); composite order takes priority",
+            if (coverageKey != null && schedulingOrderWarrantCoverageKeys.contains(coverageKey)) {
+                log.info("Skipping warrant {} - scheduling order {} already authors a warrant for the same party/address/channel ({}); scheduling order takes priority",
                         warrant.getTaskNumber(), newOrderId, coverageKey);
                 continue;
             }
@@ -853,57 +854,82 @@ public class WarrantReissueService {
     }
 
     /**
-     * When the order that scheduled the new hearing is a COMPOSITE order that also authors warrant(s),
-     * returns the set of {@code party|address|channel} combinations those warrant item(s) cover. The
-     * reissue flow skips any previous-cycle warrant matching one of these so the composite order's own
-     * freshly authored warrant is not duplicated by an auto-reissued clone. Returns an empty set when
-     * newOrderId is null, the order is not composite, carries no warrant item, or cannot be fetched -
-     * in every such case the reissue proceeds normally. Any failure is logged and swallowed so it
+     * Returns the set of {@code party|address|channel} combinations that the order which scheduled the
+     * new hearing already authors warrant(s) for. The reissue flow skips any previous-cycle warrant
+     * matching one of these so the scheduling order's own freshly authored warrant is not duplicated by
+     * an auto-reissued clone. Two shapes author warrants alongside the new hearing, handled
+     * symmetrically (mirroring order-management's ScheduledHearingSignValidator.createsHearing, which
+     * likewise treats a composite item and a standalone order the same way):
+     * <ul>
+     *   <li>a COMPOSITE order carrying a WARRANT item - warrant taskDetails on the item's orderSchema;</li>
+     *   <li>a standalone WARRANT order that also schedules the next hearing - warrant taskDetails on
+     *       the order's own additionalDetails.</li>
+     * </ul>
+     * Returns an empty set when newOrderId is null, the order authors no warrant, or cannot be fetched
+     * - in every such case the reissue proceeds normally. Any failure is logged and swallowed so it
      * never blocks the reissue flow.
      */
-    Set<String> collectCompositeWarrantCoverageKeys(RequestInfo requestInfo, String newOrderId) {
+    Set<String> collectSchedulingOrderWarrantCoverageKeys(RequestInfo requestInfo, String newOrderId) {
         Set<String> keys = new HashSet<>();
         if (newOrderId == null || newOrderId.isEmpty()) {
             return keys;
         }
         try {
             Order order = orderUtil.getOrderByOrderId(requestInfo, newOrderId);
-            if (order == null || !COMPOSITE.equalsIgnoreCase(order.getOrderCategory()) || order.getCompositeItems() == null) {
+            if (order == null) {
                 return keys;
             }
-            JsonNode items = objectMapper.readTree(objectMapper.writeValueAsString(order.getCompositeItems()));
-            for (JsonNode item : items) {
-                if (!WARRANT.equalsIgnoreCase(item.path("orderType").asText(""))) {
-                    continue;
+            if (COMPOSITE.equalsIgnoreCase(order.getOrderCategory())) {
+                if (order.getCompositeItems() == null) {
+                    return keys;
                 }
-                JsonNode taskDetailsNode = item.path("orderSchema").path("additionalDetails").path("taskDetails");
-                if (taskDetailsNode.isMissingNode() || taskDetailsNode.isNull()) {
-                    continue;
-                }
-                // taskDetails is carried as a JSON string holding an array of task-detail objects
-                String taskDetailsStr = taskDetailsNode.isTextual() ? taskDetailsNode.asText() : taskDetailsNode.toString();
-                if (taskDetailsStr == null || taskDetailsStr.isBlank()) {
-                    continue;
-                }
-                JsonNode taskDetailsArray = objectMapper.readTree(taskDetailsStr);
-                if (!taskDetailsArray.isArray()) {
-                    continue;
-                }
-                for (JsonNode taskDetail : taskDetailsArray) {
-                    String key = buildCoverageKey(taskDetail);
-                    if (key != null) {
-                        keys.add(key);
+                JsonNode items = objectMapper.readTree(objectMapper.writeValueAsString(order.getCompositeItems()));
+                for (JsonNode item : items) {
+                    if (!WARRANT.equalsIgnoreCase(item.path("orderType").asText(""))) {
+                        continue;
                     }
+                    addCoverageKeysFromTaskDetails(item.path("orderSchema").path("additionalDetails").path("taskDetails"), keys);
                 }
+            } else if (WARRANT.equalsIgnoreCase(order.getOrderType()) && order.getAdditionalDetails() != null) {
+                // A standalone WARRANT order that also carries the next hearing authors its warrant(s)
+                // on its own additionalDetails.taskDetails (no composite wrapper), so read them directly.
+                JsonNode additionalDetails = objectMapper.readTree(objectMapper.writeValueAsString(order.getAdditionalDetails()));
+                addCoverageKeysFromTaskDetails(additionalDetails.path("taskDetails"), keys);
             }
             if (!keys.isEmpty()) {
-                log.info("Composite scheduling order {} authors warrant(s) covering {} party/address/channel combination(s); matching warrants will not be reissued",
+                log.info("Scheduling order {} authors warrant(s) covering {} party/address/channel combination(s); matching warrants will not be reissued",
                         newOrderId, keys.size());
             }
         } catch (Exception e) {
-            log.error("Could not determine composite warrant coverage for order {}; proceeding without composite priority", newOrderId, e);
+            log.error("Could not determine warrant coverage for scheduling order {}; proceeding without coverage priority", newOrderId, e);
         }
         return keys;
+    }
+
+    /**
+     * Parses a warrant taskDetails node - carried as a JSON string holding an array of task-detail
+     * objects - and adds a {@code party|address|channel} coverage key for each element. Shared by the
+     * composite-item and standalone-WARRANT-order paths so both derive identical keys.
+     */
+    private void addCoverageKeysFromTaskDetails(JsonNode taskDetailsNode, Set<String> keys) throws Exception {
+        if (taskDetailsNode == null || taskDetailsNode.isMissingNode() || taskDetailsNode.isNull()) {
+            return;
+        }
+        // taskDetails is carried as a JSON string holding an array of task-detail objects
+        String taskDetailsStr = taskDetailsNode.isTextual() ? taskDetailsNode.asText() : taskDetailsNode.toString();
+        if (taskDetailsStr == null || taskDetailsStr.isBlank()) {
+            return;
+        }
+        JsonNode taskDetailsArray = objectMapper.readTree(taskDetailsStr);
+        if (!taskDetailsArray.isArray()) {
+            return;
+        }
+        for (JsonNode taskDetail : taskDetailsArray) {
+            String key = buildCoverageKey(taskDetail);
+            if (key != null) {
+                keys.add(key);
+            }
+        }
     }
 
     /** Coverage key for an existing warrant task, derived from its own taskDetails. */
