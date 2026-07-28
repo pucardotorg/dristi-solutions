@@ -89,6 +89,26 @@ class WarrantReissueServiceTest {
         return order;
     }
 
+    // A standalone WARRANT order (orderCategory INTERMEDIATE, orderType WARRANT) that also schedules
+    // the next hearing: it authors its warrant(s) on its own additionalDetails.taskDetails (the same
+    // JSON-string array shape a composite WARRANT item carries), with no composite wrapper.
+    private Order standaloneWarrantOrder() throws Exception {
+        String taskDetailsJsonString = "["
+                + warrantTaskDetail("POLICE", "Police") + ","
+                + warrantTaskDetail("RPAD", "RPAD")
+                + "]";
+        String escaped = objectMapper.writeValueAsString(taskDetailsJsonString);
+        String additionalDetailsJson = "{\"formdata\":{},\"taskDetails\":" + escaped + "}";
+
+        Order order = new Order();
+        order.setId(java.util.UUID.fromString(ORDER_ID));
+        order.setOrderCategory("INTERMEDIATE");
+        order.setOrderType("WARRANT");
+        order.setNextHearingDate(1784745000000L);
+        order.setAdditionalDetails(objectMapper.readValue(additionalDetailsJson, Object.class));
+        return order;
+    }
+
     @BeforeEach
     void setUp() {
         service = new WarrantReissueService(taskService, config, producer, objectMapper, userService,
@@ -96,10 +116,10 @@ class WarrantReissueServiceTest {
     }
 
     @Test
-    void collectCompositeWarrantCoverageKeys_extractsPartyAddressChannelKeysFromWarrantItem() throws Exception {
+    void collectSchedulingOrderWarrantCoverageKeys_extractsPartyAddressChannelKeysFromWarrantItem() throws Exception {
         when(orderUtil.getOrderByOrderId(any(RequestInfo.class), eq(ORDER_ID))).thenReturn(compositeOrderWithWarrant());
 
-        Set<String> keys = service.collectCompositeWarrantCoverageKeys(new RequestInfo(), ORDER_ID);
+        Set<String> keys = service.collectSchedulingOrderWarrantCoverageKeys(new RequestInfo(), ORDER_ID);
 
         assertEquals(2, keys.size(), "expected one key per delivery channel");
         assertTrue(keys.contains(POLICE_KEY), "should cover the POLICE warrant");
@@ -109,7 +129,7 @@ class WarrantReissueServiceTest {
     @Test
     void buildWarrantCoverageKey_matchesCompositeCoverageForSamePartyAddressChannel() throws Exception {
         when(orderUtil.getOrderByOrderId(any(RequestInfo.class), eq(ORDER_ID))).thenReturn(compositeOrderWithWarrant());
-        Set<String> coverage = service.collectCompositeWarrantCoverageKeys(new RequestInfo(), ORDER_ID);
+        Set<String> coverage = service.collectSchedulingOrderWarrantCoverageKeys(new RequestInfo(), ORDER_ID);
 
         // A previous-cycle warrant task for the same accused via POLICE produces an identical key,
         // so the reissue flow would skip it (composite order takes priority).
@@ -125,7 +145,7 @@ class WarrantReissueServiceTest {
     @Test
     void buildWarrantCoverageKey_doesNotMatchDifferentChannel() throws Exception {
         when(orderUtil.getOrderByOrderId(any(RequestInfo.class), eq(ORDER_ID))).thenReturn(compositeOrderWithWarrant());
-        Set<String> coverage = service.collectCompositeWarrantCoverageKeys(new RequestInfo(), ORDER_ID);
+        Set<String> coverage = service.collectSchedulingOrderWarrantCoverageKeys(new RequestInfo(), ORDER_ID);
 
         // Same party/address but a channel the composite warrant does not cover -> not skipped.
         Task emailWarrant = new Task();
@@ -138,18 +158,33 @@ class WarrantReissueServiceTest {
     }
 
     @Test
-    void collectCompositeWarrantCoverageKeys_returnsEmptyForNonCompositeOrder() {
+    void collectSchedulingOrderWarrantCoverageKeys_extractsKeysFromStandaloneWarrantOrder() throws Exception {
+        when(orderUtil.getOrderByOrderId(any(RequestInfo.class), eq(ORDER_ID))).thenReturn(standaloneWarrantOrder());
+
+        Set<String> keys = service.collectSchedulingOrderWarrantCoverageKeys(new RequestInfo(), ORDER_ID);
+
+        // A non-composite WARRANT order that also schedules the hearing must be covered exactly like a
+        // composite WARRANT item, so its own freshly authored warrants are not duplicated by a reissue.
+        assertEquals(2, keys.size(), "expected one key per delivery channel");
+        assertTrue(keys.contains(POLICE_KEY), "should cover the POLICE warrant");
+        assertTrue(keys.contains(RPAD_KEY), "should cover the RPAD warrant");
+    }
+
+    @Test
+    void collectSchedulingOrderWarrantCoverageKeys_returnsEmptyForIntermediateNonWarrantOrder() {
+        // An INTERMEDIATE order that is not a WARRANT order (and authors no warrant) yields no keys.
         Order intermediate = new Order();
         intermediate.setOrderCategory("INTERMEDIATE");
+        intermediate.setOrderType("SCHEDULE_OF_HEARING_DATE");
         when(orderUtil.getOrderByOrderId(any(RequestInfo.class), eq(ORDER_ID))).thenReturn(intermediate);
 
-        Set<String> keys = service.collectCompositeWarrantCoverageKeys(new RequestInfo(), ORDER_ID);
+        Set<String> keys = service.collectSchedulingOrderWarrantCoverageKeys(new RequestInfo(), ORDER_ID);
         assertTrue(keys.isEmpty());
     }
 
     @Test
-    void collectCompositeWarrantCoverageKeys_returnsEmptyForNullOrderId() {
-        Set<String> keys = service.collectCompositeWarrantCoverageKeys(new RequestInfo(), null);
+    void collectSchedulingOrderWarrantCoverageKeys_returnsEmptyForNullOrderId() {
+        Set<String> keys = service.collectSchedulingOrderWarrantCoverageKeys(new RequestInfo(), null);
         assertTrue(keys.isEmpty());
     }
 
