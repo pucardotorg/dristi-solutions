@@ -1,7 +1,5 @@
 package org.egov.healthdashboard.repository;
 
-import org.egov.healthdashboard.repository.ServiceHealthRepository;
-import org.egov.healthdashboard.repository.ServiceRepository;
 import org.egov.healthdashboard.web.models.ServiceHealthStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,7 +11,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
@@ -44,31 +41,29 @@ class ServiceHealthRepositoryTest {
     }
 
     @Test
-    void insert_resolvesServiceIdAndInsertsHealthStatus() {
+    void insert_resolvesServiceIdAndPersistsStatus() {
         ServiceHealthStatus status = ServiceHealthStatus.builder()
-                .serviceName("SMS")
+                .serviceName("ESIGN")
                 .lastStatus("UP")
                 .lastUpdatedTime(1000L)
                 .responseTimeMs(50L)
-                .message("HTTP 200")
+                .message("ok")
                 .build();
-        when(serviceRepository.resolveServiceId("SMS")).thenReturn(42L);
+        when(serviceRepository.resolveServiceId("ESIGN")).thenReturn(7L);
 
         serviceHealthRepository.insert(status);
 
-        verify(serviceRepository).resolveServiceId("SMS");
         verify(jdbcTemplate).update(
                 eq("INSERT INTO eg_service_health_status " +
                         "(service_id, last_status, last_updated_time, response_time_ms, message) " +
                         "VALUES (?, ?, ?, ?, ?)"),
-                eq(42L), eq("UP"), eq(1000L), eq(50L), eq("HTTP 200"));
+                eq(7L), eq("UP"), eq(1000L), eq(50L), eq("ok"));
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    void findAll_returnsListProducedByJdbcTemplate() {
+    void findAll_returnsResultsFromJdbcTemplate() {
         List<ServiceHealthStatus> expected = Collections.singletonList(
-                ServiceHealthStatus.builder().serviceName("ESIGN").build());
+                ServiceHealthStatus.builder().serviceName("ESIGN").lastStatus("UP").build());
         when(jdbcTemplate.query(anyString(), any(RowMapper.class))).thenReturn(expected);
 
         List<ServiceHealthStatus> result = serviceHealthRepository.findAll();
@@ -83,35 +78,49 @@ class ServiceHealthRepositoryTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    void findAll_rowMapperMapsResultSetColumnsToFields() throws SQLException {
-        when(jdbcTemplate.query(anyString(), any(RowMapper.class))).thenReturn(Collections.emptyList());
-        ArgumentCaptor<RowMapper<ServiceHealthStatus>> captor = ArgumentCaptor.forClass(RowMapper.class);
+    void findAll_rowMapperMapsAllColumns() throws Exception {
+        when(resultSet.getLong("id")).thenReturn(1L);
+        when(resultSet.getString("service_name")).thenReturn("ESIGN");
+        when(resultSet.getString("service_url")).thenReturn("https://esign.example.com");
+        when(resultSet.getString("last_status")).thenReturn("UP");
+        when(resultSet.getLong("last_updated_time")).thenReturn(1000L);
+        when(resultSet.getLong("response_time_ms")).thenReturn(50L);
+        when(resultSet.getString("message")).thenReturn("ok");
 
+        ArgumentCaptor<RowMapper> rowMapperCaptor = ArgumentCaptor.forClass(RowMapper.class);
+        when(jdbcTemplate.query(anyString(), rowMapperCaptor.capture())).thenReturn(Collections.emptyList());
         serviceHealthRepository.findAll();
 
-        verify(jdbcTemplate).query(anyString(), captor.capture());
-        stubResultSetRow();
+        ServiceHealthStatus mapped = (ServiceHealthStatus) rowMapperCaptor.getValue().mapRow(resultSet, 0);
 
-        ServiceHealthStatus mapped = captor.getValue().mapRow(resultSet, 0);
-
-        assertMappedRow(mapped);
+        assertThat(mapped.getId()).isEqualTo(1L);
+        assertThat(mapped.getServiceName()).isEqualTo("ESIGN");
+        assertThat(mapped.getServiceUrl()).isEqualTo("https://esign.example.com");
+        assertThat(mapped.getLastStatus()).isEqualTo("UP");
+        assertThat(mapped.getLastUpdatedTime()).isEqualTo(1000L);
+        assertThat(mapped.getResponseTimeMs()).isEqualTo(50L);
+        assertThat(mapped.getMessage()).isEqualTo("ok");
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    void findByServiceName_returnsFirstResult_whenFound() {
-        ServiceHealthStatus expected = ServiceHealthStatus.builder().serviceName("TREASURY").build();
-        when(jdbcTemplate.query(anyString(), any(RowMapper.class), eq("TREASURY")))
+    void findByServiceName_returnsFirstResult_whenPresent() {
+        ServiceHealthStatus expected = ServiceHealthStatus.builder().serviceName("ESIGN").lastStatus("UP").build();
+        when(jdbcTemplate.query(anyString(), any(RowMapper.class), eq("ESIGN")))
                 .thenReturn(Collections.singletonList(expected));
 
-        ServiceHealthStatus result = serviceHealthRepository.findByServiceName("TREASURY");
+        ServiceHealthStatus result = serviceHealthRepository.findByServiceName("ESIGN");
 
         assertThat(result).isEqualTo(expected);
+        verify(jdbcTemplate).query(
+                eq("SELECT h.id, s.service_name, s.service_url, h.last_status, h.last_updated_time, " +
+                        "h.response_time_ms, h.message " +
+                        "FROM eg_service_health_status h JOIN eg_service_health s ON s.id = h.service_id " +
+                        "WHERE s.service_name = ? " +
+                        "ORDER BY h.last_updated_time DESC NULLS LAST LIMIT 1"),
+                any(RowMapper.class), eq("ESIGN"));
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void findByServiceName_returnsNull_whenNoResults() {
         when(jdbcTemplate.query(anyString(), any(RowMapper.class), eq("UNKNOWN")))
                 .thenReturn(Collections.emptyList());
@@ -119,42 +128,5 @@ class ServiceHealthRepositoryTest {
         ServiceHealthStatus result = serviceHealthRepository.findByServiceName("UNKNOWN");
 
         assertThat(result).isNull();
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void findByServiceName_rowMapperMapsResultSetColumnsToFields() throws SQLException {
-        when(jdbcTemplate.query(anyString(), any(RowMapper.class), eq("ICOPS")))
-                .thenReturn(Collections.emptyList());
-        ArgumentCaptor<RowMapper<ServiceHealthStatus>> captor = ArgumentCaptor.forClass(RowMapper.class);
-
-        serviceHealthRepository.findByServiceName("ICOPS");
-
-        verify(jdbcTemplate).query(anyString(), captor.capture(), eq("ICOPS"));
-        stubResultSetRow();
-
-        ServiceHealthStatus mapped = captor.getValue().mapRow(resultSet, 0);
-
-        assertMappedRow(mapped);
-    }
-
-    private void stubResultSetRow() throws SQLException {
-        when(resultSet.getLong("id")).thenReturn(7L);
-        when(resultSet.getString("service_name")).thenReturn("ESIGN");
-        when(resultSet.getString("service_url")).thenReturn("tcp://esignservice.cdac.in:443");
-        when(resultSet.getString("last_status")).thenReturn("UP");
-        when(resultSet.getLong("last_updated_time")).thenReturn(123456789L);
-        when(resultSet.getLong("response_time_ms")).thenReturn(75L);
-        when(resultSet.getString("message")).thenReturn("TCP connection successful");
-    }
-
-    private void assertMappedRow(ServiceHealthStatus mapped) {
-        assertThat(mapped.getId()).isEqualTo(7L);
-        assertThat(mapped.getServiceName()).isEqualTo("ESIGN");
-        assertThat(mapped.getServiceUrl()).isEqualTo("tcp://esignservice.cdac.in:443");
-        assertThat(mapped.getLastStatus()).isEqualTo("UP");
-        assertThat(mapped.getLastUpdatedTime()).isEqualTo(123456789L);
-        assertThat(mapped.getResponseTimeMs()).isEqualTo(75L);
-        assertThat(mapped.getMessage()).isEqualTo("TCP connection successful");
     }
 }

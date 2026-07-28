@@ -9,7 +9,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,17 +26,23 @@ class ServiceRepositoryTest {
     }
 
     @Test
-    void resolveServiceId_returnsIdFromJdbcTemplate() {
-        when(jdbcTemplate.queryForObject(
-                eq("SELECT id FROM eg_service_health WHERE service_name = ?"),
-                eq(Long.class),
-                eq("ESIGN")))
+    void resolveServiceId_returnsId_whenServiceExists() {
+        when(jdbcTemplate.queryForObject("SELECT id FROM eg_service_health WHERE service_name = ?", Long.class, "ESIGN"))
                 .thenReturn(1L);
 
         Long id = serviceRepository.resolveServiceId("ESIGN");
 
         assertThat(id).isEqualTo(1L);
-        verify(jdbcTemplate).queryForObject(
-                "SELECT id FROM eg_service_health WHERE service_name = ?", Long.class, "ESIGN");
+        verify(jdbcTemplate).queryForObject("SELECT id FROM eg_service_health WHERE service_name = ?", Long.class, "ESIGN");
+    }
+
+    @Test
+    void resolveServiceId_propagatesException_whenServiceDoesNotExist() {
+        when(jdbcTemplate.queryForObject("SELECT id FROM eg_service_health WHERE service_name = ?", Long.class, "UNKNOWN"))
+                .thenThrow(new org.springframework.dao.EmptyResultDataAccessException(1));
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                org.springframework.dao.EmptyResultDataAccessException.class,
+                () -> serviceRepository.resolveServiceId("UNKNOWN"));
     }
 }
