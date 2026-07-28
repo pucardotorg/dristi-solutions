@@ -1,0 +1,679 @@
+openapi: 3.0.0
+
+info:
+  title: Evidence
+  description: |
+    API specs for uploading artifacts / marking as evidence, adding comments on artifacts,
+    and the digital-signature workflow used by the "sign documents" bulk flows
+    (fetch artifacts pending signature, then push back signed artifact data).
+    Chain of custody and other detailed evidence history are not modeled in this version.
+    Artifacts can be uploaded voluntarily or because of an order or hearing. They can be
+    marked as "EVIDENCE" by the judge anytime during the course of a case. This is modeled
+    as a workflow (see `workflow` on Artifact).
+  version: 1.0.0
+
+servers:
+  - url: /evidence-services
+    description: Evidence service base path
+
+tags:
+  - name: Evidence
+    description: APIs required to upload, update and search digital artifacts for evidence consideration
+  - name: Comments
+    description: APIs to add comments/discussion on an artifact
+  - name: Signatures
+    description: APIs used by the bulk e-sign flow to fetch artifacts pending signature and push back signed artifact data
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /v1/_create:
+    post:
+      tags: [Evidence]
+      summary: Upload artifacts that could potentially be accepted as evidence
+      description: |
+        API used to create a new artifact that could become evidence in a case.
+      requestBody:
+        description: Details for the artifact + RequestInfo meta data.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceRequest'
+        x-codegen-request-body-name: ArtifactRequest
+      responses:
+        '200':
+          description: ResponseInfo with artifact created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceResponse'
+        '400':
+          description: Artifact creation failed
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /v1/_update:
+    post:
+      tags: [Evidence]
+      summary: Update evidence request
+      description: |
+        API used to update an existing artifact (metadata, status/workflow transition, seal, etc.)
+      requestBody:
+        description: Details for the artifact to be updated + RequestInfo meta data.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceRequest'
+      responses:
+        '200':
+          description: ResponseInfo with artifact updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceResponse'
+        '400':
+          description: Artifact update failed
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /v1/_search:
+    post:
+      tags: [Evidence]
+      summary: Search for artifacts
+      description: |
+        API used to search artifacts using search criteria.
+      requestBody:
+        description: Search criteria for artifact + RequestInfo meta data.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceSearchRequest'
+      responses:
+        '200':
+          description: ResponseInfo with artifacts matching search criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceSearchResponse'
+        '400':
+          description: Artifacts search failed. Refer to the response body for specifics.
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /v1/addcomment:
+    post:
+      tags: [Comments]
+      summary: Add comment(s) on an artifact
+      description: |
+        API used to add comment(s) on an artifact. Note the path has no leading underscore
+        (`/v1/addcomment`, not `/v1/_addcomment`) as implemented by the controller.
+      requestBody:
+        description: Comments to be added + RequestInfo meta data.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceAddCommentRequest'
+        x-codegen-request-body-name: ArtifactRequest
+      responses:
+        '200':
+          description: ResponseInfo with comment(s) echoed back
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceAddCommentResponse'
+        '400':
+          description: Add comment failed. Refer to the response body for specifics.
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /v1/_getArtifactsToSign:
+    post:
+      tags: [Signatures]
+      summary: Get artifacts pending digital signature
+      description: |
+        API used by the bulk e-sign flow to resolve a list of artifact criteria
+        (by fileStoreId/artifactNumber/tenantId) into the request payloads
+        (`ArtifactToSign.request`) that must be sent to the e-sign provider.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtifactsToSignRequest'
+      responses:
+        '200':
+          description: List of artifacts to sign, with the e-sign request payload for each
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtifactsToSignResponse'
+        '400':
+          description: Request failed. Refer to the response body for specifics.
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /v1/_updateSignedArtifacts:
+    post:
+      tags: [Signatures]
+      summary: Push back signed artifact data and update the corresponding artifacts
+      description: |
+        API used after documents have been digitally signed (e.g. via the bulk e-sign flow).
+        Accepts the signed artifact payload per artifact and returns the updated artifacts.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSignedArtifactRequest'
+      responses:
+        '200':
+          description: Updated artifacts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateSignedArtifactResponse'
+        '400':
+          description: Request failed. Refer to the response body for specifics.
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    # --------------------------
+    # WRAPPER REQUESTS / RESPONSES
+    # --------------------------
+
+    EvidenceRequest:
+      type: object
+      description: >-
+        Note: neither `RequestInfo` nor `artifact` carry a Bean Validation @NotNull on the
+        Java DTO (EvidenceRequest.java) — they are not enforced as OpenAPI `required` here to
+        stay accurate to the code, but both are functionally required by EvidenceService.
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        artifact:
+          $ref: '#/components/schemas/Artifact'
+
+    EvidenceResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        artifact:
+          $ref: '#/components/schemas/Artifact'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+          # REVIEW: EvidenceResponse.java declares a `pagination` field, but
+          # ArtifactsApiController never sets it on the /_create or /_update responses
+          # (EvidenceResponse.builder().artifact(...).responseInfo(...) only). Kept here
+          # for schema fidelity; expect it to be null/absent in practice.
+
+    EvidenceSearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        tenantId:
+          type: string
+          description: Present on the DTO but not read by the controller/service for this endpoint's business logic today.
+        criteria:
+          $ref: '#/components/schemas/EvidenceSearchCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    EvidenceSearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        tenantId:
+          type: string
+        artifacts:
+          type: array
+          description: List of artifacts found as per the search criteria.
+          items:
+            $ref: '#/components/schemas/Artifact'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    EvidenceAddCommentRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        evidenceAddComment:
+          $ref: '#/components/schemas/EvidenceAddComment'
+
+    EvidenceAddCommentResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        evidenceAddComment:
+          $ref: '#/components/schemas/EvidenceAddComment'
+
+    ArtifactsToSignRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtifactsCriteria'
+
+    ArtifactsToSignResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        artifactList:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtifactToSign'
+
+    UpdateSignedArtifactRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        signedArtifacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignedArtifact'
+
+    UpdateSignedArtifactResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        artifacts:
+          type: array
+          description: The artifacts that were updated with the signed document.
+          items:
+            $ref: '#/components/schemas/Artifact'
+
+    # --------------------------
+    # CORE MODELS
+    # --------------------------
+
+    Artifact:
+      required: [tenantId, filingNumber, caseId]
+      type: object
+      description: Source - Artifact.java
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Autogenerated id of the artifact. Primary key.
+          readOnly: true
+        tenantId:
+          type: string
+          description: TenantId of the case based on the state.
+        artifactNumber:
+          type: string
+          description: Identification number assigned when an artifact is uploaded.
+          minLength: 2
+          maxLength: 64
+        evidenceNumber:
+          type: string
+          description: Formatted evidence number assigned after evidence is accepted by the deciding authority.
+          minLength: 2
+          maxLength: 64
+        filingNumber:
+          type: string
+          description: Filing number with which this evidence is associated.
+        externalRefNumber:
+          type: string
+          description: Reference to a physical artifact or other evidence collected during the course of an investigation.
+          minLength: 2
+          maxLength: 128
+        courtId:
+          type: string
+          description: Id of the court this artifact belongs to.
+        caseId:
+          type: string
+          description: Reference to the case UUID from the CourtCase entity.
+        application:
+          type: string
+          description: Application number with which this evidence is associated.
+        asUser:
+          type: string
+          description: Role/user context the request is being made as (e.g. COURT_ADMIN, ADVOCATE). Used for auth/visibility checks.
+        hearing:
+          type: string
+          description: Reference to the hearing where evidence could've been introduced.
+        order:
+          type: string
+          description: Reference to the order that led to uploading this artifact.
+        cnrNumber:
+          type: string
+        mediaType:
+          type: string
+          description: Represents the type of artifact, such as audio, video, document, etc.
+          example: AUDIO, VIDEO, DOC
+        artifactType:
+          type: string
+          description: Represents the legal classification of the artifact, such as sworn statement, affidavit, testimony, etc.
+          example: AFFIDAVIT, DEPOSITION, SWORN_STATEMENT, OTHER
+        sourceType:
+          type: string
+          description: Represents the legal classification of the source, such as COMPLAINANT, ACCUSED, COURT.
+        sourceID:
+          type: string
+          description: The individual ID of the person who provided this artifact.
+        sourceName:
+          type: string
+          description: Name of source when a formal sourceID is not available.
+          example: Mr. Sundar, Assistant DGP
+        applicableTo:
+          type: array
+          description: individualIds of the litigants for whom this evidence has been provided.
+          items:
+            type: string
+        createdDate:
+          type: integer
+          format: int64
+          description: Epoch millis. Date this artifact was created (may differ from upload/audit time).
+        publishedDate:
+          type: integer
+          format: int64
+          description: Epoch millis. Date the artifact/evidence was published.
+        isActive:
+          type: boolean
+          description: Soft-delete flag. True if record is active.
+          default: true
+        isEvidence:
+          type: boolean
+          description: True once this artifact has been accepted/marked as evidence.
+          default: false
+        status:
+          type: string
+          description: Current status of the artifact as pulled from the Workflow service.
+        filingType:
+          type: string
+          description: Master data for submission type.
+          example: caseFiling, application, direct
+        isVoid:
+          type: boolean
+          description: True when a judge marks a document submission void.
+          default: false
+        reason:
+          type: string
+          description: Reason for marking as void.
+        file:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Document'
+        seal:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Document'
+          # description: Sealed/signed version of `file`, populated once the artifact is digitally signed.
+        description:
+          type: string
+          description: Describes the artifact and its relevance to the case.
+        artifactDetails:
+          type: object
+          description: Each evidence type may have specific fields depending on case type.
+          additionalProperties: true
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        additionalDetails:
+          type: object
+          description: Extra information to store for a case.
+          additionalProperties: true
+        auditdetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
+          # NOTE: Java field JSON key is `auditdetails` (lowercase d), not `auditDetails`.
+        workflow:
+          $ref: '#/components/schemas/WorkflowObject'
+        shortenedUrl:
+          type: string
+          description: Shortened URL for sharing the artifact/file.
+        witnessMobileNumbers:
+          type: array
+          items:
+            type: string
+        witnessEmails:
+          type: array
+          items:
+            type: string
+        tag:
+          type: string
+        evidenceMarkedStatus:
+          type: string
+          description: Status of the "mark as evidence" sub-flow.
+        isEvidenceMarkedFlow:
+          type: boolean
+          default: false
+
+    Comment:
+      required: [tenantId, artifactId, individualId, comment]
+      type: object
+      description: Source - Comment.java
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        tenantId:
+          type: string
+        artifactId:
+          type: string
+          description: Artifact UUID that this comment relates to.
+        individualId:
+          type: string
+          description: Individual who is commenting. For representatives acting on behalf of a litigant, this is the litigant's individualId; the acting representative is captured in auditdetails.
+        comment:
+          type: string
+          minLength: 2
+          maxLength: 2048
+        isActive:
+          type: boolean
+          default: true
+        additionalDetails:
+          type: object
+          additionalProperties: true
+        auditdetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
+
+    EvidenceSearchCriteria:
+      type: object
+      description: >-
+        Source - EvidenceSearchCriteria.java. All fields optional; combined in a logical AND.
+        Some fields (userUuid, isCitizen, isCourtEmployee, isCourtEmployeeCanSign) are
+        @JsonIgnore on the Java class - they are populated server-side from auth context and
+        are never part of the wire payload, so they are intentionally omitted below.
+      properties:
+        id:
+          type: string
+        caseId:
+          type: string
+        applicationNumber:
+          type: string
+        filingNumber:
+          type: string
+        artifactType:
+          type: string
+        isVoid:
+          type: boolean
+        evidenceStatus:
+          type: boolean
+          # REVIEW: named "evidenceStatus" but typed Boolean on EvidenceSearchCriteria.java,
+          # not a status string as the 0.1.0 spec had it - verify intended semantics.
+        hearing:
+          type: string
+        order:
+          type: string
+        sourceId:
+          type: string
+          description: ID of the source (individual/organization) who provided the evidence.
+        sourceName:
+          type: string
+        status:
+          type: array
+          items:
+            type: string
+        artifactNumber:
+          type: string
+        evidenceNumber:
+          type: string
+        owner:
+          type: string
+          format: uuid
+          description: UUID of user.
+        tenantId:
+          type: string
+        filingType:
+          type: string
+        fileStoreId:
+          type: string
+        courtId:
+          type: string
+        sourceType:
+          type: string
+        fuzzySearch:
+          type: boolean
+          default: true
+        workflowStatus:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+          default: true
+        isHideBailCaseBundle:
+          type: boolean
+          default: false
+        asUser:
+          type: string
+
+    EvidenceAddComment:
+      required: [tenantId]
+      type: object
+      description: Source - EvidenceAddComment.java
+      properties:
+        artifactNumber:
+          type: string
+        comment:
+          type: array
+          description: Comments to add / that have been added, representing discussion between the parties of the case on this artifact.
+          items:
+            $ref: '#/components/schemas/Comment'
+        tenantId:
+          type: string
+
+    ArtifactsCriteria:
+      type: object
+      description: Source - ArtifactsCriteria.java. Used to resolve which artifacts need to be sent for signing.
+      properties:
+        fileStoreId:
+          type: string
+        placeholder:
+          type: string
+          # REVIEW: purpose of this field is not evident from the DTO alone (no usages found
+          # beyond a plain getter/setter) - verify against ArtifactsCriteria consumers in
+          # EvidenceService before relying on it.
+        tenantId:
+          type: string
+        artifactNumber:
+          type: string
+
+    ArtifactToSign:
+      type: object
+      description: Source - ArtifactToSign.java
+      properties:
+        artifactNumber:
+          type: string
+        request:
+          type: string
+          description: The e-sign provider request payload (e.g. XML/JSON string) generated for this artifact.
+
+    SignedArtifact:
+      required: [artifactNumber, signedArtifactData, signed]
+      type: object
+      description: Source - SignedArtifact.java
+      properties:
+        artifactNumber:
+          type: string
+        signedArtifactData:
+          type: string
+          description: The signed document content/reference (e.g. base64 or fileStore reference) returned by the e-sign provider.
+        isWitnessDeposition:
+          type: boolean
+          description: True if this signed artifact belongs to a witness deposition sub-flow.
+        signed:
+          type: boolean
+          description: Whether signing succeeded for this artifact.
+        tenantId:
+          type: string
+        errorMsg:
+          type: string
+          description: Populated when `signed` is false, describing why signing failed for this artifact.
+
+    Pagination:
+      type: object
+      description: Source - Pagination.java
+      properties:
+        limit:
+          type: number
+          format: double
+          default: 10
+          maximum: 100
+        offSet:
+          type: number
+          format: double
+          default: 0
+        totalCount:
+          type: number
+          format: double
+        sortBy:
+          type: string
+        order:
+          $ref: '#/components/schemas/SortOrder'
+
+    SortOrder:
+      type: string
+      description: Source - Order.java (enum)
+      enum: [asc, desc]
+
+    WorkflowObject:
+      type: object
+      description: >-
+        Source - WorkflowObject.java, which extends org.egov.common.contract.models.Workflow
+        (external DIGIT common-contract type) and adds `additionalDetails`.
+      allOf:
+        - $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Workflow'
+          # TODO: fields not fully expanded, verify base Workflow fields against
+          # org.egov.common.contract.models.Workflow (external library, not in this repo).
+        - type: object
+          properties:
+            additionalDetails:
+              type: object
+              additionalProperties: true

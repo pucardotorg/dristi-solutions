@@ -11,7 +11,7 @@ import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-dristi/s
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min.js";
 import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils/index.js";
 import { formatName } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils.js";
-import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils/index.js";
+import { getAuthorizedUuid, getNameByUuid } from "@egovernments/digit-ui-module-dristi/src/Utils/index.js";
 import { getComplainantsList } from "@egovernments/digit-ui-module-dristi/src/pages/employee/AdmittedCases/utils/partyUtils";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
@@ -103,10 +103,12 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
       );
   }, [caseDetails]);
 
-  const complainantsList = useMemo(
-    () => getComplainantsList(caseDetails, pipComplainants, pipAccuseds, authorizedUuid),
-    [caseDetails, pipComplainants, pipAccuseds, authorizedUuid]
-  );
+  const complainantsList = useMemo(() => getComplainantsList(caseDetails, pipComplainants, pipAccuseds, authorizedUuid), [
+    caseDetails,
+    pipComplainants,
+    pipAccuseds,
+    authorizedUuid,
+  ]);
 
   const handleAddParty = () => {
     const newConfig = addWitnessConfig(formConfigs.length + 1);
@@ -212,7 +214,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
                   witnessDetails: newWitnesses,
                   onBehalfOfName: complainantsList,
                   advocateIndividualId: individualId,
-                  owner: cleanString(userInfo?.name),
+                  owner: cleanString(getNameByUuid(userUuid, caseDetails) || userInfo?.name),
                   formdata: {
                     submissionType: {
                       code: "APPLICATION",

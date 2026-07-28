@@ -34,7 +34,13 @@ import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { getSuffixByBusinessCode } from "../../utils";
-import { combineMultipleFiles, DateUtils, getAuthorizedUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import {
+  combineMultipleFiles,
+  DateUtils,
+  getAuthorizedUuid,
+  getNameByUuid,
+  runComprehensiveSanitizer,
+} from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { getComplainantsList } from "@egovernments/digit-ui-module-dristi/src/pages/employee/AdmittedCases/utils/partyUtils";
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
@@ -1353,7 +1359,7 @@ const SubmissionsCreate = ({ path }) => {
                     : orderDetails?.orderDetails?.isResponseRequired?.code === true
                   : true,
               ...(hearingId && { hearingId }),
-              owner: cleanString(userInfo?.name),
+              owner: cleanString(getNameByUuid(userUuid, caseDetails) || userInfo?.name),
             },
             documents: _getFinalDocumentList(applicationDetails, documents),
             onBehalfOf: [formdata?.selectComplainant?.uuid],
@@ -1413,7 +1419,7 @@ const SubmissionsCreate = ({ path }) => {
                     : orderDetails?.orderDetails?.isResponseRequired?.code === true
                   : true,
               ...(hearingId && { hearingId }),
-              owner: cleanString(userInfo?.name),
+              owner: cleanString(getNameByUuid(userUuid, caseDetails) || userInfo?.name),
             },
             documents,
             onBehalfOf: [formdata?.selectComplainant?.uuid],
@@ -2075,6 +2081,7 @@ const SubmissionsCreate = ({ path }) => {
             cancelLabel={getReviewModalCancelButtonLabel(applicationDetails)}
             handleSubmit={handleReviewModalSubmit}
             handleCancel={handleCancelReviewModal}
+            caseDetails={caseDetails}
           />
         )}
         {showsignatureModal && (

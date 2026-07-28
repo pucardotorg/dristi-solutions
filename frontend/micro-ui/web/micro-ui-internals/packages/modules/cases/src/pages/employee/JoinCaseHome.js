@@ -23,6 +23,7 @@ import {
   cleanString,
   combineMultipleFiles,
   getAuthorizedUuid,
+  getNameByUuid,
   isLPRCase,
   removeInvalidNameParts,
 } from "@egovernments/digit-ui-module-dristi/src/Utils";
@@ -1258,7 +1259,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data,
             const taskNumber = res?.paymentTaskNumber;
             const taskSearchResponse = await getTaskDetails(taskNumber, tenantId);
             const taskDetails = taskSearchResponse?.list?.[0]?.taskDetails;
-            const ownerName = cleanString(userInfo?.name);
+            const ownerName = cleanString(getNameByUuid(userInfo?.uuid, caseDetails) || userInfo?.name);
 
             const documents =
               taskDetails?.individualDetails?.map((res, index) => {

@@ -1,0 +1,987 @@
+openapi: 3.0.0
+info:
+  title: Task Service API
+  description: |
+    This API provides functionality for managing tasks in the system.
+    A Task is created as part of an Order/case workflow (e.g. summons, notice,
+    bail, document submission, digitalized-document, e-sign, generic pending
+    task). It supports task creation, updates, existence checks, searching
+    (both generic and case/table scoped), document e-sign round-tripping,
+    bulk send/collection-update operations, and task-detail processing.
+
+    Corrected against the actual implementation of
+    `org.pucar.dristi.web.controllers.TaskApiController` and its request/response
+    models in `backend/dristi-services/task/src/main/java/org/pucar/dristi/web/models/`
+    as of 2026-07-25.
+  version: 1.0.0
+
+servers:
+  - url: /task/v1
+    description: Task Service API
+
+tags:
+  - name: Tasks
+    description: APIs related to task lifecycle management (create, update, exists, search)
+  - name: Task Documents
+    description: APIs related to task document upload and e-sign round-trip
+  - name: Case Tasks
+    description: APIs for task search scoped to a case/table (UI) view
+  - name: Bulk Operations
+    description: APIs for bulk task operations (bulk send, bulk pending-collection update)
+  - name: Task Details
+    description: APIs for processing/looking up task detail records
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /create:
+    post:
+      tags: [Tasks]
+      summary: Create a new task
+      description: Creates a new task. Response HTTP status is 200 (the controller returns HttpStatus.OK, not 201).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+            example:
+              RequestInfo:
+                apiId: Rainmaker
+                authToken: 9e737b13-14d2-45e7-8b96-09de66952e81
+                msgId: 1730970507148|en_IN
+              task:
+                tenantId: kl
+                orderId: 1bcb1c66-55b2-4d87-9c91-7f6d92d0b112
+                filingNumber: FIL-2026-00012
+                taskType: summons
+                status: CREATED
+      responses:
+        '200':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+  /exists:
+    post:
+      tags: [Tasks]
+      summary: Check whether task(s) exist
+      description: |
+        Checks whether a task matching the given criteria exists. Can be searched
+        by taskId, filingNumber, cnrNumber, or a referenceId+state combination
+        (referenceId and state must be supplied together).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskExistsRequest'
+      responses:
+        '200':
+          description: Task existence check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskExistsResponse'
+
+  /search:
+    post:
+      tags: [Tasks]
+      summary: Search tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskSearchRequest'
+            example:
+              RequestInfo:
+                apiId: Rainmaker
+                authToken: token-value
+                msgId: search|en_IN
+              criteria:
+                tenantId: kl
+                taskType: summons
+                status: CREATED
+              pagination:
+                limit: 10
+                offSet: 0
+      responses:
+        '200':
+          description: Tasks matching criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+
+  /update:
+    post:
+      tags: [Tasks]
+      summary: Update an existing task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+  /uploadDocument:
+    post:
+      tags: [Task Documents]
+      summary: Upload document(s) against a task
+      description: Attaches/updates documents on a task. Internally calls TaskService.uploadDocument.
+      parameters:
+        - name: override
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: When true, overrides/replaces existing document(s) instead of appending
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '200':
+          description: Document uploaded and task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+  /table/search:
+    post:
+      tags: [Case Tasks]
+      summary: Search tasks for a case/table (UI) view
+      description: |
+        Search returning the flattened `TaskCase` projection (used by table/list
+        views on a case), as opposed to the plain `Task` object returned by
+        `/search`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCaseSearchRequest'
+      responses:
+        '200':
+          description: Case-scoped tasks matching criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskCaseResponse'
+
+  /_getTasksToSign:
+    post:
+      tags: [Task Documents]
+      summary: Get tasks/documents pending e-sign
+      description: Returns the pending signature request payload for the given task/file-store criteria.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TasksToSignRequest'
+      responses:
+        '200':
+          description: List of tasks with their pending sign request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TasksToSignResponse'
+
+  /_updateSignedTasks:
+    post:
+      tags: [Task Documents]
+      summary: Update tasks with signed document data
+      description: Persists the signed document data returned by the e-sign provider back onto the task(s).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSignedTaskRequest'
+      responses:
+        '200':
+          description: Tasks updated with signed document data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateSignedTaskResponse'
+
+  /bulk-send:
+    post:
+      tags: [Bulk Operations]
+      summary: Bulk send tasks
+      description: Triggers a send action (e.g. notification/dispatch) for a batch of tasks and reports per-task success/failure.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkSendRequest'
+      responses:
+        '200':
+          description: Per-task bulk send results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkSendResponse'
+
+  /task-details:
+    post:
+      tags: [Task Details]
+      summary: Process task details
+      description: Processes/looks up a task-details record identified by taskNumber and uniqueId.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskDetailsRequest'
+      responses:
+        '200':
+          description: Task details processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskDetailsResponse'
+
+  /bulk-pending-collection-update:
+    post:
+      tags: [Bulk Operations]
+      summary: Bulk update isPendingCollection flag to false
+      description: Bulk-marks a batch of tasks' pending-collection flag as resolved, reporting per-task success/failure.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkPendingCollectionUpdateRequest'
+      responses:
+        '200':
+          description: Per-task bulk update results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkPendingCollectionUpdateResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    # ---------------------------------------------------------------------
+    # /create, /update
+    # ---------------------------------------------------------------------
+
+    TaskRequest:
+      type: object
+      description: Request wrapper for task create/update/uploadDocument
+      properties:
+        orderId:
+          type: string
+          format: uuid
+          description: |
+            Top-level orderId carried on the request envelope in addition to
+            task.orderId. Present on the DTO but not required by validation.
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        task:
+          $ref: '#/components/schemas/Task'
+
+    Task:
+      description: A task is created as part of an Order. It will always be linked to an order.
+      type: object
+      required: [tenantId, filingNumber, taskType, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Auto-generated primary key
+          readOnly: true
+        tenantId:
+          type: string
+          description: TenantId of the case
+        orderId:
+          type: string
+          format: uuid
+          description: The associated order
+        filingNumber:
+          type: string
+          description: The associated case's filing number. Required to create a task.
+        taskNumber:
+          type: string
+          description: System-generated human-readable task number
+        caseTitle:
+          type: string
+          description: Title of the associated case
+        courtId:
+          type: string
+          description: Court identifier
+        caseId:
+          type: string
+          description: Associated case id
+        cnrNumber:
+          type: string
+          description: CNR number of the associated case, helps in faster search
+        createdDate:
+          type: integer
+          format: int64
+          description: Epoch millis when the task was created
+        dateCloseBy:
+          type: integer
+          format: int64
+          description: Epoch millis by which the task needs to be closed
+        dateClosed:
+          type: integer
+          format: int64
+          nullable: true
+          description: Epoch millis when the task was actually closed
+        taskDescription:
+          type: string
+          description: Details of the specific task to be done
+        taskType:
+          type: string
+          description: |
+            Type of task; determines what schema in MDMS applies for taskDetails.
+            e.g. document.submission, summons, bail.cash, bail.surety, warrant, notice
+        taskDetails:
+          type: object
+          description: |
+            Fields specific to task type (summons, bail, warrant, etc), based on
+            schema defined in MDMS. May include delivery channel details (ePost,
+            NSTEP, iCoPs, etc).
+        amount:
+          $ref: '#/components/schemas/Amount'
+        status:
+          type: string
+          description: Workflow status
+        assignedTo:
+          type: array
+          description: Person(s) this task is assigned to
+          items:
+            $ref: '#/components/schemas/AssignedTo'
+        isActive:
+          type: boolean
+          description: Used to handle soft delete
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        additionalDetails:
+          type: object
+          description: Extra metadata
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
+        workflow:
+          $ref: '#/components/schemas/WorkflowObject'
+        referenceId:
+          type: string
+          description: Reference id for generic (non order-linked) task
+        state:
+          type: string
+          description: State to which a pending task needs to be created against
+        duedate:
+          type: integer
+          format: int64
+          description: Due date of pending task (epoch millis). Note lowercase JSON key "duedate".
+
+    TaskResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        task:
+          $ref: '#/components/schemas/Task'
+
+    # ---------------------------------------------------------------------
+    # /exists
+    # ---------------------------------------------------------------------
+
+    TaskExistsRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        task:
+          $ref: '#/components/schemas/TaskExists'
+
+    TaskExistsResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        task:
+          $ref: '#/components/schemas/TaskExists'
+
+    TaskExists:
+      type: object
+      description: |
+        Send in any one of taskId/filingNumber/cnrNumber, or the referenceId+state
+        combination (both required together, enforced by @CombineRequiredFields).
+        `exists` is populated by the server in the response.
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        filingNumber:
+          type: string
+        cnrNumber:
+          type: string
+        referenceId:
+          type: string
+          description: Must be supplied together with `state` (server-side combination validation)
+        state:
+          type: string
+          description: Must be supplied together with `referenceId` (server-side combination validation)
+        exists:
+          type: boolean
+
+    # ---------------------------------------------------------------------
+    # /search
+    # ---------------------------------------------------------------------
+
+    TaskSearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/TaskCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    TaskCriteria:
+      type: object
+      description: |
+        # REVIEW: no field is annotated @NotNull on TaskCriteria itself; only the
+        # combination of referenceId+state is enforced (@CombineRequiredFields).
+        # tenantId is not strictly required by validation, unlike the previous spec implied.
+      properties:
+        id:
+          type: string
+        cnrNumber:
+          type: string
+        tenantId:
+          type: string
+          example: kl
+        courtId:
+          type: string
+        orderId:
+          type: string
+          format: uuid
+        taskNumber:
+          type: string
+        status:
+          type: string
+        referenceId:
+          type: string
+        state:
+          type: string
+        filingNumber:
+          type: string
+        taskType:
+          type: string
+        userUuid:
+          type: string
+        partyType:
+          type: string
+        partyName:
+          type: string
+        partyUniqueId:
+          type: string
+
+    TaskListResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        TotalCount:
+          type: integer
+          format: int32
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ---------------------------------------------------------------------
+    # /table/search
+    # ---------------------------------------------------------------------
+
+    TaskCaseSearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/TaskCaseSearchCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    TaskCaseSearchCriteria:
+      type: object
+      properties:
+        completeStatus:
+          type: array
+          items:
+            type: string
+        orderType:
+          type: array
+          items:
+            type: string
+        applicationStatus:
+          type: string
+        searchText:
+          type: string
+        courtId:
+          type: string
+        noticeType:
+          type: string
+        deliveryChanel:
+          type: string
+          description: Note spelling as implemented in code ("deliveryChanel", not "deliveryChannel")
+        hearingDate:
+          type: integer
+          format: int64
+        isPendingCollection:
+          type: boolean
+
+    TaskCaseResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        TotalCount:
+          type: integer
+          format: int32
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskCase'
+
+    TaskCase:
+      description: |
+        Flattened case/table-view projection of a task, used by /table/search.
+        Distinct model from Task (e.g. assignedTo is a single object here, not a list;
+        workflow is the plain common-contract Workflow, not WorkflowObject).
+      type: object
+      required: [tenantId, orderId, createdDate, taskType, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        tenantId:
+          type: string
+        caseName:
+          type: string
+        orderType:
+          type: string
+        orderId:
+          type: string
+          format: uuid
+        filingNumber:
+          type: string
+        taskNumber:
+          type: string
+        cnrNumber:
+          type: string
+        cmpNumber:
+          type: string
+        courtCaseNumber:
+          type: string
+        courtId:
+          type: string
+        createdDate:
+          type: integer
+          format: int64
+          description: Epoch millis (serialized with pattern dd-MM-yyyy via @JsonFormat)
+        dateCloseBy:
+          type: integer
+          format: int64
+        dateClosed:
+          type: integer
+          format: int64
+        taskDescription:
+          type: string
+        taskType:
+          type: string
+        taskDetails:
+          type: object
+        amount:
+          $ref: '#/components/schemas/Amount'
+        status:
+          type: string
+        documentStatus:
+          type: string
+        assignedTo:
+          $ref: '#/components/schemas/AssignedTo'
+        isActive:
+          type: boolean
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        additionalDetails:
+          type: object
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+
+    # ---------------------------------------------------------------------
+    # /_getTasksToSign, /_updateSignedTasks
+    # ---------------------------------------------------------------------
+
+    TasksToSignRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/TasksCriteria'
+
+    TasksCriteria:
+      type: object
+      properties:
+        fileStoreId:
+          type: string
+        taskNumber:
+          type: string
+        placeholder:
+          type: string
+        tenantId:
+          type: string
+
+    TasksToSignResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        taskList:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskToSign'
+
+    TaskToSign:
+      type: object
+      properties:
+        taskNumber:
+          type: string
+        request:
+          type: string
+          description: Serialized sign-request payload for this task's document
+
+    UpdateSignedTaskRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        signedTasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignedTask'
+
+    SignedTask:
+      type: object
+      required: [taskNumber, signedTaskData, signed]
+      properties:
+        taskNumber:
+          type: string
+        signedTaskData:
+          type: string
+          description: The signed document payload/content
+        signed:
+          type: boolean
+        tenantId:
+          type: string
+        errorMsg:
+          type: string
+          description: Populated when signing failed for this task
+
+    UpdateSignedTaskResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+
+    # ---------------------------------------------------------------------
+    # /bulk-send
+    # ---------------------------------------------------------------------
+
+    BulkSendRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        bulkSendTasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkSend'
+
+    BulkSendResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        bulkSendTasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkSend'
+
+    BulkSend:
+      type: object
+      description: '# REVIEW: no @NotNull annotations present on this DTO in code; all fields optional per validation.'
+      properties:
+        tenantId:
+          type: string
+        taskNumber:
+          type: string
+        isSuccess:
+          type: boolean
+          default: true
+        errorMessage:
+          type: string
+
+    # ---------------------------------------------------------------------
+    # /task-details
+    # ---------------------------------------------------------------------
+
+    TaskDetailsRequest:
+      type: object
+      required: [RequestInfo, taskDetailsDTO]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        taskDetailsDTO:
+          $ref: '#/components/schemas/TaskDetailsDTO'
+
+    TaskDetailsDTO:
+      type: object
+      required: [id, tenantId, filingNumber, taskNumber, uniqueId]
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        filingNumber:
+          type: string
+        taskDetails:
+          type: object
+        taskNumber:
+          type: string
+        uniqueId:
+          type: string
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
+
+    TaskDetailsResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        taskDetailsDTO:
+          $ref: '#/components/schemas/TaskDetailsDTO'
+        message:
+          type: string
+
+    # ---------------------------------------------------------------------
+    # /bulk-pending-collection-update
+    # ---------------------------------------------------------------------
+
+    BulkPendingCollectionUpdateRequest:
+      type: object
+      required: [tasks]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkPendingCollectionUpdate'
+
+    BulkPendingCollectionUpdateResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkPendingCollectionUpdate'
+
+    BulkPendingCollectionUpdate:
+      type: object
+      required: [tenantId, taskNumber]
+      properties:
+        tenantId:
+          type: string
+        taskNumber:
+          type: string
+        isSuccess:
+          type: boolean
+          default: true
+        errorMessage:
+          type: string
+
+    # ---------------------------------------------------------------------
+    # Shared nested schemas
+    # ---------------------------------------------------------------------
+
+    AssignedTo:
+      type: object
+      description: |
+        Details of the person this task is assigned to. For example, in case of
+        document upload this could be a litigant or lawyer; for a summons task,
+        the person to whom the summons is issued.
+      properties:
+        individualId:
+          type: string
+          format: uuid
+          description: ID of the person if present in the system; name may be left blank in that case
+        name:
+          type: string
+          description: Name of the person if not in the system
+        uuid:
+          type: string
+          format: uuid
+          description: User uuid of the assignee (distinct from individualId)
+
+    Amount:
+      type: object
+      description: Amount in the form of fees or penalty
+      required: [amount, type, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        amount:
+          type: string
+          description: Amount to be paid (stored as string in code, not a numeric type)
+        type:
+          type: string
+          example: fees, fine, refund
+        paymentRefNumber:
+          type: string
+          description: Reference number for the payment made, e.g. GRN number from Treasury
+        additionalDetails:
+          type: object
+        status:
+          type: string
+          description: Status of payment
+
+    Document:
+      type: object
+      description: |
+        Local Document model for the task service (simplified; not the shared
+        DIGIT-Specs common-contract Document schema).
+      properties:
+        id:
+          type: string
+        documentType:
+          type: string
+        fileStore:
+          type: string
+        documentUid:
+          type: string
+        additionalDetails:
+          type: object
+        isActive:
+          type: boolean
+          default: true
+
+    Workflow:
+      type: object
+      description: |
+        Base workflow payload (org.egov.common.contract.models.Workflow), used as-is
+        on TaskCase.workflow.
+        # TODO: fields not fully expanded beyond what WorkflowUtil.java exercises
+        # (getAction/getComments/getAssignes/getDocuments); verify against the
+        # org.egov.common.contract.models.Workflow class in egov-models if more
+        # fields (e.g. verificationDocuments) are required.
+      properties:
+        action:
+          type: string
+          description: Workflow action to perform. # REVIEW - action values are task-type specific (per MDMS workflow config), not a fixed enum.
+        comments:
+          type: string
+        assignes:
+          type: array
+          items:
+            type: string
+            format: uuid
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+
+    WorkflowObject:
+      type: object
+      description: Workflow payload used on Task.workflow; extends Workflow with additionalDetails.
+      properties:
+        action:
+          type: string
+          description: Workflow action to perform. # REVIEW - action values are task-type specific (per MDMS workflow config), not a fixed enum.
+        comments:
+          type: string
+        assignes:
+          type: array
+          items:
+            type: string
+            format: uuid
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        additionalDetails:
+          type: object
+
+    Pagination:
+      type: object
+      description: |
+        Local Pagination model for the task service. Note field name "offSet"
+        (capital S), not "offset".
+      properties:
+        limit:
+          type: number
+          default: 10
+          maximum: 100
+        offSet:
+          type: number
+          default: 0
+        totalCount:
+          type: number
+        sortBy:
+          type: string
+        order:
+          type: string
+          enum: [asc, desc]
+          description: Sorting order
