@@ -430,6 +430,7 @@ const DocumentsV2 = ({
               ...tabConfig.apiDetails,
               requestBody: {
                 ...tabConfig.apiDetails.requestBody,
+                caseDetails,
                 criteria: {
                   caseId: caseId,
                   filingNumber: filingNumber,

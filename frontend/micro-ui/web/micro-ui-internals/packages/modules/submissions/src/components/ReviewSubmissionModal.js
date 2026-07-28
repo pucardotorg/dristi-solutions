@@ -6,7 +6,7 @@ import { Urls } from "../hooks/services/Urls";
 import { useQuery } from "react-query";
 import { convertToDateInputFormat, getUserInfoFromUuids } from "../utils/index";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
-import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { getAuthorizedUuid, getNameByUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 const getStyles = (key) => {
   const styles = {
@@ -93,6 +93,7 @@ function ReviewSubmissionModal({
   cancelLabel,
   handleSubmit,
   handleCancel,
+  caseDetails,
 }) {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
@@ -168,35 +169,40 @@ function ReviewSubmissionModal({
 
     let isMounted = true;
 
-    const fetchUsers = async () => {
-      try {
-        const result = await getUserInfoFromUuids(uuids); // [{ userUuid, name }]
+    const resolveNames = async () => {
+      const lookup = new Map(uuids.map((uuid) => [uuid, getNameByUuid(uuid, caseDetails)]));
+      const unresolvedUuids = uuids.filter((uuid) => !lookup.get(uuid));
 
-        // Build lookup map (O(1))
-        const lookup = new Map((result || []).map((user) => [user.userUuid, user.name]));
-
-        if (!isMounted) return;
-
-        setUserInfoMap({
-          senderUser: asUser ? { uuid: asUser, name: lookup.get(asUser) } : null,
-
-          createdByUser: createdBy ? { uuid: createdBy, name: lookup.get(createdBy) } : null,
-
-          onBehalfOfUser: onBehalfOfUuid ? { uuid: onBehalfOfUuid, name: lookup.get(onBehalfOfUuid) } : null,
-        });
-      } catch (error) {
-        console.error("Failed to fetch user info", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-        setShowToast({ label: t("ERROR_FETCHING_USER_INFO"), error: true, errorId });
+      if (unresolvedUuids.length > 0) {
+        try {
+          const userInfo = await getUserInfoFromUuids(unresolvedUuids);
+          userInfo?.forEach((user) => {
+            if (user?.userUuid) lookup.set(user.userUuid, user?.name || "");
+          });
+        } catch (error) {
+          console.error("Failed to fetch user info", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("ERROR_FETCHING_USER_INFO"), error: true, errorId });
+        }
       }
+
+      if (!isMounted) return;
+
+      setUserInfoMap({
+        senderUser: asUser ? { uuid: asUser, name: lookup.get(asUser) } : null,
+
+        createdByUser: createdBy ? { uuid: createdBy, name: lookup.get(createdBy) } : null,
+
+        onBehalfOfUser: onBehalfOfUuid ? { uuid: onBehalfOfUuid, name: lookup.get(onBehalfOfUuid) } : null,
+      });
     };
 
-    fetchUsers();
+    resolveNames();
 
     return () => {
       isMounted = false;
     };
-  }, [application]);
+  }, [application, caseDetails]);
 
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
