@@ -1,5 +1,6 @@
 package org.egov.healthdashboard.web.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,7 +19,7 @@ public class ServiceHealthStatus {
     @JsonProperty("serviceName")
     private String serviceName;
 
-    @JsonProperty("serviceUrl")
+    @JsonIgnore
     private String serviceUrl;
 
     @JsonProperty("lastStatus")

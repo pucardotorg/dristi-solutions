@@ -34,7 +34,13 @@ import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { getSuffixByBusinessCode } from "../../utils";
-import { combineMultipleFiles, DateUtils, getAuthorizedUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import {
+  combineMultipleFiles,
+  DateUtils,
+  getAuthorizedUuid,
+  getNameByUuid,
+  runComprehensiveSanitizer,
+} from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -79,6 +85,9 @@ const SubmissionsCreate = ({ path }) => {
     showModal,
   } = Digit.Hooks.useQueryParams();
   const [formdata, setFormdata] = useState({});
+  // Application object returned directly by create/update submit API. Used as a fallback
+  // source for the review flow so a lagging refetch cannot show/submit stale data.
+  const [submittedApplication, setSubmittedApplication] = useState(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showsignatureModal, setShowsignatureModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -327,19 +336,37 @@ const SubmissionsCreate = ({ path }) => {
   ]);
   const referenceId = useMemo(() => applicationData?.applicationList?.[0]?.referenceId, [applicationData]);
 
-  const applicationDetails = useMemo(
-    () =>
-      applicationNumber
-        ? applicationData?.applicationList?.[0]
-        : "DELAY_CONDONATION" === formdata?.applicationType?.type
-        ? delayCondonationData?.applicationList?.find(
-            (application) =>
-              !["REJECTED", "COMPLETED", "PENDINGPAYMENT", "PENDINGREVIEW"].includes(application?.status) &&
-              "DELAY_CONDONATION" === application?.applicationType
-          )
-        : undefined,
-    [applicationData?.applicationList, delayCondonationData?.applicationList, formdata?.applicationType?.type]
-  );
+  const applicationDetails = useMemo(() => {
+    const refetchedApplication = applicationNumber
+      ? applicationData?.applicationList?.[0]
+      : "DELAY_CONDONATION" === formdata?.applicationType?.type
+      ? delayCondonationData?.applicationList?.find(
+          (application) =>
+            !["REJECTED", "COMPLETED", "PENDINGPAYMENT", "PENDINGREVIEW"].includes(application?.status) &&
+            "DELAY_CONDONATION" === application?.applicationType
+        )
+      : undefined;
+
+    // Prefer the application returned directly by the create/update submit API over the
+    // refetched copy when the refetch has not caught up yet (backend read lag). We keep
+    // using the refetched copy once it is at least as fresh as the submit response, so
+    // downstream updates (e.g. after e-sign/payment) are not masked by a stale snapshot.
+    if (submittedApplication && applicationNumber && submittedApplication?.applicationNumber === applicationNumber) {
+      const submittedTime = submittedApplication?.auditDetails?.lastModifiedTime || 0;
+      const refetchedTime = refetchedApplication?.auditDetails?.lastModifiedTime || 0;
+      if (!refetchedApplication || submittedTime >= refetchedTime) {
+        return submittedApplication;
+      }
+    }
+
+    return refetchedApplication;
+  }, [
+    applicationData?.applicationList,
+    delayCondonationData?.applicationList,
+    formdata?.applicationType?.type,
+    submittedApplication,
+    applicationNumber,
+  ]);
 
   const submissionType = useMemo(() => {
     return formdata?.submissionType?.code;
@@ -1359,7 +1386,7 @@ const SubmissionsCreate = ({ path }) => {
                     : orderDetails?.orderDetails?.isResponseRequired?.code === true
                   : true,
               ...(hearingId && { hearingId }),
-              owner: cleanString(userInfo?.name),
+              owner: cleanString(getNameByUuid(userUuid, caseDetails) || userInfo?.name),
             },
             documents: _getFinalDocumentList(applicationDetails, documents),
             onBehalfOf: [formdata?.selectComplainant?.uuid],
@@ -1419,7 +1446,7 @@ const SubmissionsCreate = ({ path }) => {
                     : orderDetails?.orderDetails?.isResponseRequired?.code === true
                   : true,
               ...(hearingId && { hearingId }),
-              owner: cleanString(userInfo?.name),
+              owner: cleanString(getNameByUuid(userUuid, caseDetails) || userInfo?.name),
             },
             documents,
             onBehalfOf: [formdata?.selectComplainant?.uuid],
@@ -1599,10 +1626,13 @@ const SubmissionsCreate = ({ path }) => {
       const action = isEligibleForSubmission ? SubmissionWorkflowAction.SUBMIT : SubmissionWorkflowAction.SAVEDRAFT;
       if (applicationNumber) {
         const res = await submitSubmission({ update: true, action });
-        await applicationRefetch();
+        // Retain the authoritative submit response so the review flow does not depend on a
+        // possibly-stale refetch (guarded by lastModifiedTime in the applicationDetails memo).
+        setSubmittedApplication(res?.application);
         setShowReviewModal(true);
       } else {
         const res = await submitSubmission({ update: false, action });
+        setSubmittedApplication(res?.application);
         const newapplicationNumber = res?.application?.applicationNumber;
         if (newapplicationNumber) {
           if (action === SubmissionWorkflowAction.SUBMIT) {
@@ -1675,11 +1705,12 @@ const SubmissionsCreate = ({ path }) => {
       }
 
       if (applicationNumber) {
-        await submitSubmission({ update: true, action: SubmissionWorkflowAction.SAVEDRAFT });
-        await applicationRefetch();
+        const res = await submitSubmission({ update: true, action: SubmissionWorkflowAction.SAVEDRAFT });
+        setSubmittedApplication(res?.application);
         setShowToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
       } else {
         const res = await submitSubmission({ update: false, action: SubmissionWorkflowAction.SAVEDRAFT });
+        setSubmittedApplication(res?.application);
         const newapplicationNumber = res?.application?.applicationNumber;
         if (newapplicationNumber) {
           sessionStorage.setItem("DRAFT_SAVED_SUCCESSFULLY", "success");
@@ -2077,6 +2108,7 @@ const SubmissionsCreate = ({ path }) => {
             cancelLabel={getReviewModalCancelButtonLabel(applicationDetails)}
             handleSubmit={handleReviewModalSubmit}
             handleCancel={handleCancelReviewModal}
+            caseDetails={caseDetails}
           />
         )}
         {showsignatureModal && (

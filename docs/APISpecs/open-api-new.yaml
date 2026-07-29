@@ -1,0 +1,1456 @@
+openapi: "3.0.0"
+info:
+  title: All Public/Open APIs supported by the platform
+  description: |
+    This API specification defines the various APIs that are open to external world. Anyone can call these. These are unauthenticated APIs. These need to managed via rate limiting settings at the gateway level to limit access.
+    Corrected against OpenapiApiController as implemented today (org.pucar.dristi.web.controllers.OpenapiApiController in the `openapi` service module). The `openapi` module also
+    contains several other, unrelated controllers (DigitalizedDocumentController, LandingPageNoticeController, LockController, OfflinePaymentController, PaymentController,
+    TaskManagementController, WitnessDepositionController) that are out of scope for this document.
+  version: 1.0.0
+tags:
+  - name: Open APIs
+paths:
+  /openapi/v1/{tenantId}/case/cnr/{cnrNumber}:
+    get:
+      tags:
+        - Open APIs
+      summary: get case summary by cnr number
+      description: The API is used to get case summary details using the case CNR Number within a specific tenant. example - GET /openapi/v1/KL/case/cnr/KLKM520008652024
+      operationId: getCaseByCNR
+      parameters:
+        - name: tenantId
+          in: path
+          description: tenant ID
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-zA-Z]{2}$"
+            maxLength: 2
+            minLength: 2
+        - name: cnrNumber
+          in: path
+          description: the CNR number of the case in format SCDCECNNNNNNYYYY where SC=State Code, DC=District Code, EC=Establishment Code NNNNNN=Case Number and YYYY=Year, whose summary is requested
+          required: true
+          schema:
+            type: string
+            maxLength: 16
+            minLength: 16
+      responses:
+        '200':
+          description: ResponseInfo with case summary
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseSummaryResponse'
+        '400':
+          description: querying case summary failed
+          content:
+            'application/json':
+              schema:
+                $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
+
+  /openapi/v1/{tenantId}/case/{year}/{caseType}/{caseNumber}:
+    get:
+      tags:
+        - Open APIs
+      summary: get case summary by case number for a specific year
+      description: The API is used to get case summary details within a specific tenant. The parameters are year, type of the case and the case number. example - GET /openapi/v1/KL/case/2024/CMP/123
+      operationId: getCaseByCaseNumber
+      parameters:
+        - name: tenantId
+          in: path
+          description: tenant ID
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-zA-Z]{2}$"
+            maxLength: 2
+            minLength: 2
+        - name: year
+          in: path
+          description: if type= CMP, then year in which the case was registered. Can check based on registration date also. If type = CC/ST, then check against CourtCase.courtCaseNumber(year). The minimum year is set to 2024 as this is the year the system has gone live and the first case in the system is from 2024. No earlier cases exist.
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 2024
+        - name: caseType
+          in: path
+          description: >-
+            the type of the case CMP/CC/ST. # REVIEW: the Java @Schema(allowableValues = "") on this
+            path parameter is empty in code (no compile-time restriction), so this is left as a free
+            string rather than a hard enum.
+          required: true
+          schema:
+            type: string
+        - name: caseNumber
+          in: query
+          description: Number part of CMP/CC/ST case number in format <type>/<number>/<year>. # REVIEW - despite living in the {caseNumber} URL template segment, the controller binds this with @PathVariable(value = "caseNumber"), so it is documented here as a path parameter to match; also annotated @NotNull @Min(1) @Max(99999999) in code.
+          required: true
+          schema:
+            type: integer
+            format: int32
+            maximum: 99999999
+            minimum: 1
+      responses:
+        '200':
+          description: ResponseInfo with case summary
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseSummaryResponse'
+        '400':
+          description: querying case summary failed
+          content:
+            'application/json':
+              schema:
+                $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
+
+  /openapi/v1/{tenantId}/case/{year}/{caseType}:
+    get:
+      tags:
+        - Open APIs
+      summary: get a list of cases for a specific year based on specified case type
+      description: The API is used to get a list of cases (case number and title) within a specific tenant, year, and type of the case. The API supports pagination. example - GET /openapi/v1/KL/case/2024/CMP?offset=0&limit=10&sort=registrationDate,desc
+      operationId: getCaseListByCaseType
+      parameters:
+        - name: tenantId
+          in: path
+          description: tenant ID
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-zA-Z]{2}$"
+            maxLength: 2
+            minLength: 2
+        - name: year
+          in: path
+          description: if type= CMP, then year in which the case was registered. Can check based on registration date also. If type = CC/ST, then check against CourtCase.courtCaseNumber(year). The minimum year is set to 2024 as this is the year the system has gone live and the first case in the system is from 2024. No earlier cases exist.
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 2024
+        - name: caseType
+          in: path
+          description: >-
+            the type of the case CMP/CC/ST. # REVIEW: no compile-time enum restriction in code (empty
+            @Schema(allowableValues = "")).
+          required: true
+          schema:
+            type: string
+        - name: offset
+          in: query
+          description: Page number to retrieve (0-based index)
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          description: Sorting criteria in the format `field,asc` or `field,desc`
+          required: false
+          schema:
+            type: string
+            pattern: "^(registrationDate|filingDate),(asc|desc)$"
+            default: "registrationDate,desc"
+      responses:
+        '200':
+          description: ResponseInfo with case list
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseListResponse'
+        '400':
+          description: querying case list failed
+          content:
+            'application/json':
+              schema:
+                $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
+
+  /openapi/v1/{tenantId}/case/search:
+    get:
+      tags:
+        - Open APIs
+      summary: search cases by free text
+      description: Search cases by free text matched against CNR number, case number, filing number, CMP number etc, scoped to a courtId.
+      operationId: getCasesBySearchText
+      parameters:
+        - name: tenantId
+          in: path
+          description: tenant ID
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-zA-Z]{2}$"
+            maxLength: 2
+            minLength: 2
+        - name: searchText
+          in: query
+          description: Search text to match against CNR number, case number, filing number, CMP number etc.
+          required: true
+          schema:
+            type: string
+        - name: courtId
+          in: query
+          description: Court ID
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          description: Page number to retrieve (0-based index)
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: ResponseInfo with matching cases
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseSearchTextResponse'
+        '400':
+          description: search failed
+          content:
+            'application/json':
+              schema:
+                $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
+
+  /openapi/v1/hearings:
+    post:
+      tags:
+        - Open APIs
+      summary: get hearings for a display board
+      description: Returns hearings for a tenant within a date range, used to drive a court/landing-page hearings display board.
+      operationId: getHearingsForDisplayBoard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenAPiHearingRequest'
+      responses:
+        '200':
+          description: List of open hearings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenApiHearingsResponse'
+
+  /openapi/v1/{tenantId}/case:
+    post:
+      tags:
+        - Open APIs
+      summary: get case list for a landing page dashboard
+      description: Search and page through cases for a landing page dashboard using search/filter criteria and sort order.
+      operationId: getLandingPageCaseList
+      parameters:
+        - name: tenantId
+          in: path
+          description: tenant ID
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-zA-Z]{2}$"
+            maxLength: 2
+            minLength: 2
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LandingPageCaseListRequest'
+      responses:
+        '200':
+          description: Landing page case list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LandingPageCaseListResponse'
+
+  /openapi/v1/orders_tasks:
+    post:
+      tags:
+        - Open APIs
+      summary: get orders and/or payment tasks for a case details page
+      operationId: getOrdersAndPaymentTaskForCaseDetails
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenApiOrdersTaskIRequest'
+      responses:
+        '200':
+          description: Orders and payment tasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenApiOrderTaskResponse'
+
+  /openapi/v1/magistrate_name/{courtId}/{tenantId}:
+    get:
+      tags:
+        - Open APIs
+      summary: get the presiding judge/magistrate name for a court
+      operationId: getMagistrateName
+      parameters:
+        - name: courtId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Magistrate/judge name
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /openapi/v1/file/{tenantId}/{orderId}:
+    get:
+      tags:
+        - Open APIs
+      summary: download the generated order file for a given order id
+      description: Looks up the fileStoreId for the given orderId from the search index and streams the file.
+      operationId: getFile
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Binary file content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+
+  /openapi/v1/landing_page/file:
+    post:
+      tags:
+        - Open APIs
+      summary: download a file by fileStoreId for the landing page
+      operationId: getFiles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LandingPageFileRequest'
+      responses:
+        '200':
+          description: Binary file content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+
+  /openapi/v1/bail/search:
+    post:
+      tags:
+        - Open APIs
+      summary: search bail bond by party mobile number
+      operationId: searchBailByPartyMobile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenApiBailSearchRequest'
+      responses:
+        '200':
+          description: Bail bond details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenApiBailResponse'
+
+  /openapi/v1/updateBailBond:
+    post:
+      tags:
+        - Open APIs
+      summary: update a bail bond with a signed document
+      operationId: updateBailBond
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenApiUpdateBailBondRequest'
+      responses:
+        '200':
+          description: Updated bail bond details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenApiBailResponse'
+
+  /openapi/v1/{tenantId}/esign:
+    post:
+      tags:
+        - Open APIs
+      summary: eSign a document
+      operationId: eSignDocument
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-zA-Z]{2}$"
+            maxLength: 2
+            minLength: 2
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ESignParameter'
+      responses:
+        '200':
+          description: eSign response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ESignResponse'
+
+  /openapi/v1/getOrderDetails:
+    post:
+      tags:
+        - Open APIs
+      summary: get order details by reference/order/filing number
+      description: >-
+        # REVIEW: the controller returns the full order-shaped object directly (no ResponseInfo
+        wrapper) - the response type OrderDetailsSearchResponse.java has no responseInfo field
+        despite the "Response" suffix in its name.
+      operationId: getOrderDetails
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderDetailsSearch'
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetailsSearchResponse'
+
+  /openapi/v1/case/addAddress:
+    post:
+      tags:
+        - Open APIs
+      summary: add party addresses to a case
+      description: >-
+        Accessed before login, so an internal system RequestInfo is generated server-side and any
+        RequestInfo supplied in the request body is overwritten.
+      operationId: addAddress
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddAddressRequest'
+      responses:
+        '200':
+          description: Party addresses added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddAddressResponse'
+
+  /openapi/v1/file/upload:
+    post:
+      tags:
+        - Open APIs
+      summary: upload one or more files to the filestore
+      operationId: uploadFile
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [tenantId, file, module]
+              properties:
+                tenantId:
+                  type: string
+                file:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                module:
+                  type: string
+                tag:
+                  type: string
+      responses:
+        '201':
+          description: Files uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageResponse'
+
+components:
+  schemas:
+    CaseSummaryResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        caseSummary:
+          $ref: '#/components/schemas/CaseSummary'
+
+    CaseListResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        caseList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseListLineItem'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    CaseSummary:
+      type: object
+      description: this is a summary representation of CourtCase object. A limited set of fields, formatted appropriately are returned. Since the object already exists, there are no field level rules set for this summary object
+      required:
+        - cnrNumber
+        - filingNumber
+        - filingDate
+        - registrationNumber
+        - registrationDate
+        - caseType
+        - statutesAndSections
+        - subStage
+        - judgeName
+        - complainant
+        - respondent
+        - advocateComplainant
+        - advocateRespondent
+      properties:
+        cnrNumber:
+          type: string
+          maxLength: 16
+          minLength: 16
+          example: "KLKM521235562024"
+        filingNumber:
+          type: string
+          maxLength: 14
+          minLength: 14
+          example: "KL-000075-2024"
+        filingDate:
+          type: integer
+          format: int64
+          description: filing date in EPOCH time (milliseconds) format
+        registrationNumber:
+          type: string
+          description: CMP number. null is not available
+          example: "CMP/1/2024"
+          minLength: 10
+          maxLength: 18
+        registrationDate:
+          type: integer
+          format: int64
+          description: registration date in EPOCH time (milliseconds) format
+        nextHearingDate:
+          type: integer
+          format: int64
+          description: date of next scheduled hearing in EPOCH time (milliseconds) format
+        caseType:
+          type: string
+          description: fixed value based on case type (Java enum CaseSummary.CaseTypeEnum)
+          enum: ["Criminal Miscellaneous Petition", "Summary Trial"]
+        statutesAndSections:
+          type: array
+          description: >-
+            # REVIEW: the DTO field is typed `List<Object>` (generic) in code, not a strongly typed
+            list - the shape below is illustrative (as previously documented) but not enforced by the DTO.
+          items:
+            type: object
+            properties:
+              statute:
+                type: string
+                example: "NIA"
+              sections:
+                type: array
+                items:
+                  type: string
+                example: ["S138", "S142(1)(a)", "S145"]
+        status:
+          type: string
+          description: CMP case not yet admitted, response will be Pending. ST Case already admitted, response will be Pending or Disposed if case is closed or outcome has been reached. ST case already registered, but queried using CMP, response will be Disposed. If queried by CNR, then pending or disposed will depend on the case status. (Java enum CaseSummary.StatusEnum)
+          enum: ["Pending", "Disposed"]
+        subStage:
+          type: string
+          description: this will be returned as "<stage> - <sub stage>"
+          example: "Pre-Trail - Appearance"
+        judgeName:
+          type: string
+        complainant:
+          type: string
+        respondent:
+          type: string
+        advocateComplainant:
+          type: string
+        advocateRespondent:
+          type: string
+
+    CaseListLineItem:
+      type: object
+      required:
+        - caseNumber
+        - caseTitle
+      properties:
+        caseNumber:
+          type: string
+          example: "CMP/1/2024"
+        caseTitle:
+          type: string
+
+    CaseSearchTextResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseSearchTextItem'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    CaseSearchTextItem:
+      type: object
+      properties:
+        cmpNumber:
+          type: string
+        filingNumber:
+          type: string
+        courtCaseNumber:
+          type: string
+        cnrNumber:
+          type: string
+        caseTitle:
+          type: string
+
+    Pagination:
+      type: object
+      description: Pagination details
+      properties:
+        limit:
+          type: number
+          format: double
+          default: 10
+          maximum: 100
+        offSet:
+          type: number
+          format: double
+          default: 0
+        totalCount:
+          type: number
+          format: double
+        sortBy:
+          type: string
+        order:
+          type: string
+          enum: [asc, desc]
+
+    OpenAPiHearingRequest:
+      type: object
+      required: [tenantId, fromDate, toDate]
+      properties:
+        tenantId:
+          type: string
+        searchText:
+          type: string
+        fromDate:
+          type: integer
+          format: int64
+          description: epoch millis
+        toDate:
+          type: integer
+          format: int64
+          description: epoch millis
+        isHearingSerialNumberSorting:
+          type: boolean
+          default: false
+
+    OpenApiHearingsResponse:
+      type: object
+      properties:
+        openHearings:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenHearing'
+        totalCount:
+          type: integer
+          format: int32
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    OpenHearing:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        filingNumber:
+          type: string
+        caseTitle:
+          type: string
+        caseUuid:
+          type: string
+        hearingNumber:
+          type: string
+        caseNumber:
+          type: string
+        hearingUuid:
+          type: string
+        stage:
+          type: string
+        subStage:
+          type: string
+        courtId:
+          type: string
+        status:
+          type: string
+        fromDate:
+          type: integer
+          format: int64
+        toDate:
+          type: integer
+          format: int64
+        advocate:
+          $ref: '#/components/schemas/Advocate'
+        searchableFields:
+          type: array
+          items:
+            type: string
+        hearingType:
+          type: string
+        caseFilingDate:
+          type: integer
+          format: int64
+        serialNumber:
+          type: integer
+          format: int32
+        statusOrder:
+          type: integer
+          format: int32
+        hearingTypeOrder:
+          type: integer
+          format: int32
+        hearingDurationInMillis:
+          type: integer
+          format: int64
+
+    Advocate:
+      type: object
+      description: Denormalized advocate summary attached to an OpenHearing entry (not the full advocate registry record).
+      required: [tenantId]
+      properties:
+        accused:
+          type: array
+          items:
+            type: string
+        complainant:
+          type: array
+          items:
+            type: string
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          minLength: 2
+          maxLength: 128
+        applicationNumber:
+          type: string
+          minLength: 2
+          maxLength: 64
+        status:
+          type: string
+        barRegistrationNumber:
+          type: string
+          minLength: 2
+          maxLength: 64
+        advocateType:
+          type: string
+          minLength: 2
+          maxLength: 64
+        organisationID:
+          type: string
+          format: uuid
+        individualId:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+        workflow:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Workflow'
+        documents:
+          type: array
+          items:
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document'
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+        additionalDetails:
+          type: object
+          additionalProperties: true
+
+    LandingPageCaseListRequest:
+      type: object
+      properties:
+        searchCaseCriteria:
+          $ref: '#/components/schemas/SearchCaseCriteria'
+        filterCriteria:
+          $ref: '#/components/schemas/FilterCriteria'
+        offset:
+          type: integer
+          format: int32
+        limit:
+          type: integer
+          format: int32
+        sortOrder:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderBy'
+
+    SearchCaseCriteria:
+      type: object
+      properties:
+        searchType:
+          $ref: '#/components/schemas/SearchType'
+        filingNumberCriteria:
+          $ref: '#/components/schemas/FilingNumberCriteria'
+        caseNumberCriteria:
+          $ref: '#/components/schemas/CaseNumberCriteria'
+        cnrNumberCriteria:
+          $ref: '#/components/schemas/CnrNumberCriteria'
+        advocateCriteria:
+          $ref: '#/components/schemas/AdvocateCriteria'
+        litigantCriteria:
+          $ref: '#/components/schemas/LitigantCriteria'
+
+    SearchType:
+      type: string
+      enum: [filing_number, case_number, cnr_number, advocate, litigant, all]
+
+    FilingNumberCriteria:
+      type: object
+      properties:
+        courtName:
+          type: string
+        code:
+          type: string
+        caseNumber:
+          type: string
+        year:
+          type: string
+
+    CaseNumberCriteria:
+      type: object
+      properties:
+        courtName:
+          type: string
+        caseType:
+          type: string
+        caseNumber:
+          type: string
+        year:
+          type: string
+
+    CnrNumberCriteria:
+      type: object
+      properties:
+        cnrNumber:
+          type: string
+
+    AdvocateCriteria:
+      type: object
+      description: search-side advocate criteria used within SearchCaseCriteria (distinct from the Advocate entity schema)
+      properties:
+        advocateSearchType:
+          $ref: '#/components/schemas/AdvocateSearchType'
+        barCodeDetails:
+          $ref: '#/components/schemas/BarCodeDetails'
+        advocateName:
+          type: string
+
+    AdvocateSearchType:
+      type: string
+      enum: [barcode, advocate_name]
+
+    BarCodeDetails:
+      type: object
+      properties:
+        stateCode:
+          type: string
+        barCode:
+          type: string
+        year:
+          type: string
+
+    LitigantCriteria:
+      type: object
+      properties:
+        litigantName:
+          type: string
+
+    FilterCriteria:
+      type: object
+      properties:
+        courtName:
+          type: string
+        caseType:
+          type: string
+        hearingDateFrom:
+          type: string
+          format: date
+        hearingDateTo:
+          type: string
+          format: date
+        caseStatus:
+          type: string
+        yearOfFiling:
+          type: string
+        caseTitle:
+          type: string
+        caseSubStage:
+          type: string
+
+    OrderBy:
+      type: object
+      properties:
+        code:
+          type: string
+        order:
+          type: string
+          enum: [asc, desc]
+
+    LandingPageCaseListResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        totalCount:
+          type: integer
+          format: int32
+        nearingSlaCount:
+          type: integer
+          format: int32
+        statusMap:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LandingPageCase'
+
+    LandingPageCase:
+      type: object
+      properties:
+        caseTitle:
+          type: string
+        cmpNumber:
+          type: string
+        stNumber:
+          type: string
+        purpose:
+          type: string
+        nextHearingDate:
+          type: integer
+          format: int64
+        lastHearingDate:
+          type: integer
+          format: int64
+        filingDate:
+          type: integer
+          format: int64
+        registrationDate:
+          type: integer
+          format: int64
+        advocates:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyInfo'
+        litigants:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyInfo'
+        courtId:
+          type: string
+        filingNumber:
+          type: string
+        cnrNumber:
+          type: string
+        courtName:
+          type: string
+        caseStage:
+          type: string
+        caseStatus:
+          type: string
+        caseSubStage:
+          type: string
+        outcome:
+          type: string
+
+    PartyInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        entityType:
+          type: string
+
+    OpenApiOrdersTaskIRequest:
+      type: object
+      required: [filingNumber, tenantId]
+      properties:
+        forOrders:
+          type: boolean
+          default: false
+        forPaymentTask:
+          type: boolean
+          default: false
+        filingNumber:
+          type: string
+        tenantId:
+          type: string
+        courtId:
+          type: string
+        latestOrder:
+          type: boolean
+          default: false
+        offset:
+          type: integer
+          format: int32
+        limit:
+          type: integer
+          format: int32
+
+    OpenApiOrderTaskResponse:
+      type: object
+      properties:
+        paymentTasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentTask'
+        orderDetailsList:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderDetails'
+        totalCount:
+          type: integer
+          format: int32
+          default: 0
+
+    PaymentTask:
+      type: object
+      properties:
+        dueDate:
+          type: integer
+          format: int64
+        daysRemaining:
+          type: integer
+          format: int32
+        task:
+          type: string
+
+    OrderDetails:
+      type: object
+      description: A lightweight order line item (not the full order record - see OrderDetailsSearchResponse for that).
+      properties:
+        date:
+          type: integer
+          format: int64
+        businessOfTheDay:
+          type: string
+        orderId:
+          type: string
+
+    LandingPageFileRequest:
+      type: object
+      required: [fileStoreId, moduleName]
+      properties:
+        fileStoreId:
+          type: string
+        tenantId:
+          type: string
+        moduleName:
+          type: string
+
+    OrderDetailsSearch:
+      type: object
+      properties:
+        referenceId:
+          type: string
+        tenantId:
+          type: string
+        orderNumber:
+          type: string
+        filingNumber:
+          type: string
+        orderItemId:
+          type: string
+        mobileNumber:
+          type: string
+
+    OrderDetailsSearchResponse:
+      type: object
+      description: >-
+        Despite the "Response" suffix, this DTO has no responseInfo/wrapper field - it is the order
+        record itself, returned directly by the controller.
+      required: [tenantId, orderCategory, status, isActive]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        filingNumber:
+          type: string
+        courtId:
+          type: string
+        cnrNumber:
+          type: string
+        applicationNumber:
+          type: array
+          items:
+            type: string
+        hearingNumber:
+          type: string
+        hearingType:
+          type: string
+        scheduledHearingNumber:
+          type: string
+        orderNumber:
+          type: string
+          minLength: 2
+          maxLength: 256
+        linkedOrderNumber:
+          type: string
+          minLength: 2
+          maxLength: 256
+        createdDate:
+          type: integer
+          format: int64
+        issuedBy:
+          $ref: '#/components/schemas/IssuedBy'
+        orderType:
+          type: string
+        orderCategory:
+          type: string
+        status:
+          type: string
+        comments:
+          type: string
+        isActive:
+          type: boolean
+        statuteSection:
+          $ref: '#/components/schemas/StatuteSection'
+        documents:
+          type: array
+          items:
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document'
+        orderDetails:
+          type: object
+          additionalProperties: true
+        compositeItems:
+          type: object
+          additionalProperties: true
+        attendance:
+          type: object
+          additionalProperties: true
+        itemText:
+          type: string
+        purposeOfNextHearing:
+          type: string
+        nextHearingDate:
+          type: integer
+          format: int64
+        orderTitle:
+          type: string
+        additionalDetails:
+          type: object
+          additionalProperties: true
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+        partyDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyDetails'
+        caseTitle:
+          type: string
+        isPendingTaskCompleted:
+          type: boolean
+          default: false
+
+    IssuedBy:
+      type: object
+      description: details of issuer of order
+      properties:
+        benchID:
+          type: string
+        judgeID:
+          type: array
+          items:
+            type: string
+            format: uuid
+        courtID:
+          type: string
+
+    StatuteSection:
+      type: object
+      description: Holds the statute ID and the corresponding section & subsections applicable to the case.
+      required: [tenantId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          minLength: 2
+          maxLength: 64
+        statute:
+          type: string
+        sections:
+          type: array
+          items:
+            type: string
+        subsections:
+          type: array
+          items:
+            type: string
+        additionalDetails:
+          type: object
+          additionalProperties: true
+        auditdetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+        strSections:
+          type: string
+        strSubsections:
+          type: string
+
+    PartyDetails:
+      type: object
+      description: This field will contain list of people required and present for the hearing along with also the lawyers that represented the case for this hearing
+      properties:
+        uniqueId:
+          type: string
+        partyType:
+          type: string
+        partyName:
+          type: string
+        witnessDesignation:
+          type: string
+        emails:
+          type: array
+          items:
+            type: string
+        mobileNumbers:
+          type: array
+          items:
+            type: string
+        address:
+          type: array
+          items:
+            type: object
+            description: >-
+              # TODO: fields not fully expanded, verify against
+              org.pucar.dristi.web.models.cases.AddressDetails.java
+
+    OpenApiBailSearchRequest:
+      type: object
+      required: [tenantId, bailId, mobileNumber]
+      properties:
+        tenantId:
+          type: string
+        bailId:
+          type: string
+        mobileNumber:
+          type: string
+
+    OpenApiUpdateBailBondRequest:
+      type: object
+      required: [tenantId, bailId, mobileNumber, fileStoreId]
+      properties:
+        tenantId:
+          type: string
+        bailId:
+          type: string
+        mobileNumber:
+          type: string
+        fileStoreId:
+          type: string
+
+    OpenApiBailResponse:
+      type: object
+      required: [tenantId, caseId]
+      properties:
+        bailId:
+          type: string
+        tenantId:
+          type: string
+        caseId:
+          type: string
+        litigantSigned:
+          type: boolean
+        litigantName:
+          type: string
+        phoneNumber:
+          type: string
+        documents:
+          type: array
+          items:
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document'
+        sureties:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenApiSurety'
+        filingNumber:
+          type: string
+
+    OpenApiSurety:
+      type: object
+      description: >-
+        # TODO: fields not fully expanded, verify against
+        org.pucar.dristi.web.models.bailbond.OpenApiSurety.java
+
+    ESignParameter:
+      type: object
+      properties:
+        id:
+          type: string
+        consent:
+          type: string
+          description: user consent
+        authType:
+          type: string
+          description: "otp=1, fingerprint=2, iris=3"
+        fileStoreId:
+          type: string
+        signedFileStoreId:
+          type: string
+        tenantId:
+          type: string
+        pageModule:
+          type: string
+        signPlaceHolder:
+          type: string
+        filePath:
+          type: string
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+
+    ESignResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        ESignForm:
+          $ref: '#/components/schemas/ESignXmlForm'
+
+    ESignXmlForm:
+      type: object
+      description: >-
+        # TODO: fields not fully expanded, verify against
+        org.pucar.dristi.web.models.esign.ESignXmlForm.java
+
+    AddAddressRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
+        tenantId:
+          type: string
+        caseId:
+          type: string
+          format: uuid
+        filingNumber:
+          type: string
+        partyAddresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyAddressRequest'
+
+    AddAddressResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        partyAddressList:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyAddressRequest'
+
+    PartyAddressRequest:
+      type: object
+      description: >-
+        # TODO: fields not fully expanded, verify against
+        org.pucar.dristi.web.models.address.PartyAddressRequest.java
+
+    StorageResponse:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/File'
+
+    File:
+      type: object
+      description: >-
+        # TODO: fields not fully expanded, verify against
+        org.pucar.dristi.web.models.filestore.File.java

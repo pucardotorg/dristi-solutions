@@ -19,12 +19,8 @@ public class ServiceRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    /**
-     * eg_service rows are seeded once by the Flyway migration, so this is a
-     * read-only lookup, cached after the first hit per service name.
-     */
     public Long resolveServiceId(String serviceName) {
         return jdbcTemplate.queryForObject(
-                        "SELECT id FROM eg_service WHERE service_name = ?", Long.class, serviceName);
+                        "SELECT id FROM eg_service_health WHERE service_name = ?", Long.class, serviceName);
     }
 }

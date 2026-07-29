@@ -1,0 +1,493 @@
+openapi: 3.0.0
+
+info:
+  title: Bail Management Service
+  description: APIs for managing bail bonds and digital signing in DRISTI
+  version: 1.0.0
+
+servers:
+  - url: /bail-bond
+    description: Bail Bond Service Base Path (server.servlet.context-path=/bail-bond)
+
+tags:
+  - name: Bails
+  - name: Digital Signatures
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /v1/_create:
+    post:
+      tags: [Bails]
+      summary: Create bail bond
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BailRequest'
+            example:
+              RequestInfo:
+                apiId: Rainmaker
+                authToken: <AUTH_TOKEN>
+                msgId: 1730977593273|en_IN
+              bail:
+                tenantId: kl
+                caseId: 2f6fe4ae-352f-420d-b243-679191b4ba01
+                bailType: Personal
+                status: DRAFT
+                bailAmount: 50000
+                isActive: true
+      responses:
+        '200':
+          description: Bail created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BailResponse'
+
+  /v1/_update:
+    post:
+      tags: [Bails]
+      summary: Update bail bond
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BailRequest'
+      responses:
+        '200':
+          description: Bail updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BailResponse'
+
+  /v1/_search:
+    post:
+      tags: [Bails]
+      summary: Search bail bonds
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BailSearchRequest'
+      responses:
+        '200':
+          description: Bail search result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BailSearchResponse'
+
+  /v1/_getBailsToSign:
+    post:
+      tags: [Digital Signatures]
+      summary: Fetch bails pending digital signature
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BailsToSignRequest'
+      responses:
+        '200':
+          description: Bails ready for signing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BailsToSignResponse'
+
+  /v1/_updateSignedBails:
+    post:
+      tags: [Digital Signatures]
+      summary: Update digitally signed bails
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSignedBailRequest'
+      responses:
+        '200':
+          description: Signed bails updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateSignedBailResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    BailRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        bail:
+          $ref: '#/components/schemas/Bail'
+
+    BailResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        bails:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bail'
+
+    BailSearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          $ref: '#/components/schemas/BailSearchCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    BailSearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        bails:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bail'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    BailsToSignRequest:
+      type: object
+      description: Fetch bails pending digital signature, filtered by one or more criteria entries.
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/BailsCriteria'
+
+    BailsToSignResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        bailList:
+          type: array
+          items:
+            $ref: '#/components/schemas/BailToSign'
+
+    UpdateSignedBailRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        signedBails:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignedBail'
+
+    UpdateSignedBailResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        bails:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bail'
+
+    BailsCriteria:
+      type: object
+      description: Criteria entry identifying a single bail document to be fetched for signing
+      properties:
+        fileStoreId:
+          type: string
+        bailId:
+          type: string
+        placeholder:
+          type: string
+        tenantId:
+          type: string
+
+    BailToSign:
+      type: object
+      properties:
+        bailId:
+          type: string
+        request:
+          type: string
+          description: >-
+            # TODO: verify semantics against digit.service.BailService#createBailToSignRequest -
+            appears to hold a serialized/opaque signing request payload rather than a URL.
+
+    SignedBail:
+      type: object
+      required: [bailId, signedBailData, signed]
+      properties:
+        bailId:
+          type: string
+        signedBailData:
+          type: string
+        signed:
+          type: boolean
+        tenantId:
+          type: string
+        errorMsg:
+          type: string
+
+    BailSearchCriteria:
+      type: object
+      properties:
+        userUuid:
+          type: string
+        tenantId:
+          type: string
+        id:
+          type: string
+        litigantIndividualId:
+          type: string
+          description: Individual ID of the litigant.
+        bailId:
+          type: string
+          description: Formatted Bail ID.
+        courtId:
+          type: string
+          description: Establishment ID for the court.
+        filingNumber:
+          type: string
+          description: Filing number of the case.
+        cnrNumber:
+          type: string
+          description: CNR number of the case.
+        suretyMobileNumber:
+          type: string
+          description: Mobile number of the surety.
+        owner:
+          type: string
+          description: "TODO: remove this, this is temporary fix (#5016)"
+        status:
+          type: array
+          items:
+            type: string
+          description: Status of the bail.
+        bailType:
+          type: string
+          enum: [Personal, Surety]
+        caseType:
+          type: string
+          enum: [ST, CMP]
+        caseNumber:
+          type: string
+          description: Case number of the case.
+        fuzzySearch:
+          type: boolean
+          default: false
+          description: Whether to perform fuzzy search or not on bail id.
+        asUser:
+          type: string
+
+    Bail:
+      type: object
+      required: [tenantId, caseId]
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        caseId:
+          type: string
+        bailAmount:
+          type: number
+          format: double
+        bailType:
+          type: string
+          enum: [Personal, Surety]
+        startDate:
+          type: integer
+          format: int64
+          description: Start date of the bail in epoch time (milliseconds).
+        endDate:
+          type: integer
+          format: int64
+          description: End date of the bail in epoch time (milliseconds).
+        isActive:
+          type: boolean
+          default: true
+        litigantId:
+          type: string
+        litigantName:
+          type: string
+        litigantFatherName:
+          type: string
+        litigantSigned:
+          type: boolean
+        litigantMobileNumber:
+          type: string
+        sureties:
+          type: array
+          items:
+            $ref: '#/components/schemas/Surety'
+        shortenedURL:
+          type: string
+        status:
+          type: string
+          description: Workflow status of the bail.
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        additionalDetails:
+          type: object
+        workflow:
+          $ref: '#/components/schemas/WorkflowObject'
+        auditDetails:
+          $ref: '#/components/schemas/AuditDetails'
+        courtId:
+          type: string
+          description: Establishment ID for the court.
+        caseTitle:
+          type: string
+        cnrNumber:
+          type: string
+        filingNumber:
+          type: string
+        caseNumber:
+          type: string
+        asUser:
+          type: string
+        caseType:
+          type: string
+          enum: [ST, CMP]
+        bailId:
+          type: string
+          description: Id gen formatted bail id.
+
+    Surety:
+      type: object
+      required: [tenantId, index]
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        index:
+          type: integer
+          format: int32
+        name:
+          type: string
+        fatherName:
+          type: string
+        mobileNumber:
+          type: string
+        address:
+          type: object
+        email:
+          type: string
+        hasSigned:
+          type: boolean
+        isApproved:
+          type: boolean
+          description: Whether the surety is approved or not by Magistrate.
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        isActive:
+          type: boolean
+          default: true
+        additionalDetails:
+          type: object
+
+    Document:
+      type: object
+      description: This object holds list of documents attached during the transaction for a property
+      properties:
+        id:
+          type: string
+          maxLength: 64
+        documentType:
+          type: string
+        fileStore:
+          type: string
+        tenantId:
+          type: string
+        documentUid:
+          type: string
+          maxLength: 64
+        additionalDetails:
+          type: object
+        auditDetails:
+          $ref: '#/components/schemas/AuditDetails'
+        documentName:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+
+    WorkflowObject:
+      description: >-
+        Extends the common DIGIT Workflow contract with a bail-specific
+        additionalDetails object (digit.web.models.WorkflowObject extends
+        org.egov.common.contract.models.Workflow).
+      allOf:
+        - $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Workflow"
+        - type: object
+          properties:
+            additionalDetails:
+              type: object
+      # TODO: fields not fully expanded, verify base Workflow fields against org.egov.common.contract.models.Workflow
+
+    Pagination:
+      type: object
+      description: Pagination details
+      properties:
+        limit:
+          type: integer
+          format: int32
+          default: 10
+          maximum: 100
+        offSet:
+          type: integer
+          format: int32
+          default: 0
+        totalCount:
+          type: number
+        sortBy:
+          type: string
+        order:
+          type: string
+          description: Sorting order
+          enum: [asc, desc]
+
+    AuditDetails:
+      type: object
+      description: >-
+        Collection of audit related fields used by most models. NOTE: this service defines its
+        own local AuditDetails (digit.web.models.AuditDetails) rather than reusing the shared
+        DIGIT common-contract AuditDetails schema; createdBy/lastModifiedBy are plain strings here.
+      properties:
+        createdBy:
+          type: string
+        lastModifiedBy:
+          type: string
+        createdTime:
+          type: integer
+          format: int64
+        lastModifiedTime:
+          type: integer
+          format: int64
