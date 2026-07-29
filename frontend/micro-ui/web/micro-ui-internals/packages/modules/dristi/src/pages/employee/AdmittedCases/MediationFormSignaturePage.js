@@ -174,11 +174,11 @@ const MediationFormSignaturePage = () => {
   }, []);
 
   const isSelectedAdvocatePartyPresent = useMemo(() => {
-    if (!selectedAdvocateUuid) return false;
+    if (!selectedAdvocateUuid || selectedAdvocateUuid !== userInfo?.uuid) return false;
     return digitalizationServiceDetails?.mediationDetails?.partyDetails?.some((party) =>
       [party?.userUuid, party?.uniqueId, party?.poaUuid]?.includes(selectedAdvocateUuid)
     );
-  }, [digitalizationServiceDetails, selectedAdvocateUuid]);
+  }, [digitalizationServiceDetails, selectedAdvocateUuid, userInfo?.uuid]);
 
   const { data: mediationOrderData, isLoading: isOrdersLoading } = useSearchOrdersService(
     {
