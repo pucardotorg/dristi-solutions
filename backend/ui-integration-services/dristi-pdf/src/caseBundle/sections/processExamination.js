@@ -1,4 +1,6 @@
-const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
+const {
+  filterCaseBundleBySection,
+} = require("../utils/filterCaseBundleBySection");
 const { search_digitalizedDocuments } = require("../../api");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
@@ -10,23 +12,25 @@ async function processExamination(
   tenantId,
   requestInfo,
   TEMP_FILES_DIR,
-  indexCopy
+  indexCopy,
 ) {
-  logger.info(`[processExamination] Started | filingNumber: ${courtCase?.filingNumber}`);
+  logger.info(
+    `[processExamination] Started | filingNumber: ${courtCase?.filingNumber}`,
+  );
   const section = filterCaseBundleBySection(
     caseBundleMaster,
-    "digitalizedDocuments"
+    "digitalizedDocuments",
   );
   const sortedSection = [...section].sort(
-    (secA, secB) => secA.sorton - secB.sorton
+    (secA, secB) => secA.sorton - secB.sorton,
   );
 
   const sectionPosition = indexCopy.sections?.findIndex(
-    (s) => s.name === "digitalizedDocuments"
+    (s) => s.name === "digitalizedDocuments",
   );
   const dynamicSectionNumber = getDynamicSectionNumber(
     indexCopy,
-    sectionPosition
+    sectionPosition,
   );
 
   if (!sortedSection || sortedSection.length === 0) return;
@@ -39,7 +43,7 @@ async function processExamination(
       courtId: courtCase.courtId,
       tenantId,
       status: "COMPLETED",
-    }
+    },
   );
 
   const filteredDocuments = (type) => {
@@ -79,16 +83,16 @@ async function processExamination(
 
         if (section.docketpagerequired === "yes" && index === 0) {
           const complainant = courtCase.litigants?.find((litigant) =>
-            litigant.partyType?.includes("complainant.primary")
+            litigant?.partyType?.includes("complainant.primary"),
           );
 
           const docketComplainantName =
             complainant?.additionalDetails?.fullName || "";
 
           const docketAdvocate = courtCase.representatives?.find((adv) =>
-            adv.representing?.some(
-              (party) => party.individualId === complainant?.individualId
-            )
+            adv?.representing?.some(
+              (party) => party?.individualId === complainant?.individualId,
+            ),
           );
 
           const docketNameOfAdvocate =
@@ -109,14 +113,14 @@ async function processExamination(
               docketCounselFor,
               docketNameOfFiling: docketNameOfAdvocate || docketComplainantName,
               docketDateOfSubmission: new Date(
-                courtCase.registrationDate
+                courtCase.registrationDate,
               ).toLocaleDateString("en-IN"),
               documentPath,
             },
             courtCase,
             tenantId,
             requestInfo,
-            TEMP_FILES_DIR
+            TEMP_FILES_DIR,
           );
         }
 
@@ -127,13 +131,13 @@ async function processExamination(
           createPDF: false,
           content: "digitalizedDocuments",
         };
-      })
+      }),
     );
     allDocumentsLineItems.push(...digitizedDocumentsLineItems);
   }
 
   const digitalizedDocumentsIndexSection = indexCopy.sections?.find(
-    (section) => section.name === "digitalizedDocuments"
+    (section) => section.name === "digitalizedDocuments",
   );
 
   if (digitalizedDocumentsIndexSection) {
