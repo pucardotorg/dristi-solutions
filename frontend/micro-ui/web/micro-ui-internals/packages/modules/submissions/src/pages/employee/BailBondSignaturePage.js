@@ -12,7 +12,7 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
-import { getAllAssociatedPartyUuids } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { getAllAssociatedPartyUuids, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
@@ -36,6 +36,8 @@ const BailBondSignaturePage = () => {
   const [showToast, setShowToast] = useState(null);
   const [esignMobileNumber, setEsignMobileNumber] = useState("");
   const [loader, setLoader] = useState(false);
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const { data: bailBondOpenData, isLoading: isBailBondLoading } = useOpenApiSearchBailBond(
     {
@@ -53,6 +55,7 @@ const BailBondSignaturePage = () => {
       criteria: {
         bailId: bailbondId,
         filingNumber: filingNumber,
+        asUser: authorizedUuid,
       },
       tenantId,
     },
