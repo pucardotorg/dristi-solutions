@@ -33,16 +33,30 @@ const useEvidenceDetails = ({ url, params, body, config = {}, plainAccessRequest
       ...new Set(uniqueArtifacts?.filter((artifact) => artifact?.sourceType !== "COURT" && artifact?.sourceID).map((artifact) => artifact.sourceID)),
     ];
 
+    const individualIds = nonCourtSourceIDs.filter((sourceID) => sourceID?.startsWith("IND"));
+    const userUuids = nonCourtSourceIDs.filter((sourceID) => !sourceID?.startsWith("IND"));
+
     const individualNamesBySourceID = new Map();
-    if (nonCourtSourceIDs.length > 0) {
+    if (individualIds.length > 0) {
       const individualResponse = await DRISTIService.searchIndividualUser(
-        { Individual: { individualId: nonCourtSourceIDs } },
+        { Individual: { individualIds } },
         { tenantId: tenant, limit: 1000, offset: 0 }
       );
       individualResponse?.Individual?.forEach((individual) => {
         const individualName = getFullName(" ", individual?.name?.givenName, individual?.name?.otherNames, individual?.name?.familyName);
         const nameFromCase = getNameByUuid(individual?.userUuid, caseDetails);
         individualNamesBySourceID.set(individual?.individualId, nameFromCase || individualName || "");
+      });
+    }
+    if (userUuids.length > 0) {
+      const individualResponse = await DRISTIService.searchIndividualUser(
+        { Individual: { userUuid: userUuids } },
+        { tenantId: tenant, limit: 1000, offset: 0 }
+      );
+      individualResponse?.Individual?.forEach((individual) => {
+        const individualName = getFullName(" ", individual?.name?.givenName, individual?.name?.otherNames, individual?.name?.familyName);
+        const nameFromCase = getNameByUuid(individual?.userUuid, caseDetails);
+        individualNamesBySourceID.set(individual?.userUuid, nameFromCase || individualName || "");
       });
     }
 
