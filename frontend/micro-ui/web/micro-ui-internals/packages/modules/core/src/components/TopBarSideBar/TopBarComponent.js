@@ -302,7 +302,7 @@ const TopBarComponent = ({
         advocateName: `${userInfo?.name} (Self)`,
         uuid: userInfo?.uuid,
         isSelf: true,
-        allowCaseCreate: false,
+        allowCaseCreate: true,
       };
       if (officeMembersData?.members?.length > 0) {
         const seniorAdvocatesList = Array.isArray(officeMembersData?.members) ? extractedSeniorAdvocates(officeMembersData) || [] : [];
