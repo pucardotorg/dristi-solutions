@@ -282,6 +282,12 @@
     &:hover {
       text-decoration: underline;
     }
+
+    &:disabled {
+      color: var(--muted-foreground);
+      cursor: default;
+      text-decoration: none;
+    }
   }
 
   .login-v2-otp-row {
@@ -332,6 +338,133 @@
 
     span {
       margin: 0 8px;
+    }
+  }
+
+  .login-v2-icon-box {
+    width: 46px;
+    height: 46px;
+    border-radius: var(--radius-lg);
+    background: var(--brand-3);
+    color: var(--brand-11);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  .login-v2-meter {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .login-v2-meter-seg {
+    flex: 1;
+    height: 5px;
+    border-radius: 9999px;
+    background: var(--neutral-5);
+    transition: background 0.2s;
+  }
+
+  .login-v2-meter-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-top: 7px;
+    font-weight: 600;
+  }
+
+  .login-v2-req-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 14px 0 0;
+    padding: 12px 14px;
+    background: var(--muted);
+    border-radius: var(--radius-md);
+  }
+
+  .login-v2-req {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--muted-foreground);
+
+    .login-v2-req-tick {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      border-radius: 9999px;
+      border: 1.5px solid var(--neutral-8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: transparent;
+      transition: 0.15s;
+
+      svg {
+        width: 10px;
+        height: 10px;
+      }
+    }
+
+    &.login-v2-req-met {
+      color: var(--neutral-12);
+
+      .login-v2-req-tick {
+        background: var(--success-solid);
+        border-color: var(--success-solid);
+        color: #fff;
+      }
+    }
+
+    &.login-v2-req-fail {
+      color: var(--destructive);
+
+      .login-v2-req-tick {
+        background: var(--destructive);
+        border-color: var(--destructive);
+        color: #fff;
+      }
+    }
+  }
+
+  .login-v2-hint {
+    font-size: 12.5px;
+    color: var(--muted-foreground);
+    line-height: 1.45;
+    margin-top: 10px;
+  }
+
+  .login-v2-match-note {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    margin-top: 8px;
+    min-height: 16px;
+    font-weight: 500;
+
+    svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    &.login-v2-match-ok {
+      color: #2a7e3b;
+    }
+
+    &.login-v2-match-bad {
+      color: var(--destructive);
     }
   }
 }

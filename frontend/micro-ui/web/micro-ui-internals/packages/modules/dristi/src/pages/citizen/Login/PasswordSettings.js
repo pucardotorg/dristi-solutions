@@ -86,7 +86,16 @@ const PasswordSettings = () => {
         </Card>
       )}
       {step === STEP_SET_PASSWORD && (
-        <SetPassword t={t} header="PASSWORD_SETTINGS" isChangePassword onSubmit={handleSetPassword} onCancel={() => history.goBack()} />
+        <div className="login-v2">
+          <SetPassword
+            t={t}
+            header="CS_CHANGE_PASSWORD_HEADING"
+            subText="CS_CHANGE_PASSWORD_SUBTEXT"
+            submitLabel="CS_COMMON_SUBMIT"
+            onSubmit={handleSetPassword}
+            onCancel={() => history.goBack()}
+          />
+        </div>
       )}
       {showToast && (
         <CustomToast

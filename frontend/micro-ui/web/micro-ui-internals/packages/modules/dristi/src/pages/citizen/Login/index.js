@@ -7,6 +7,7 @@ import { loginSteps } from "./config";
 import SelectMobileNumber from "./SelectMobileNumber";
 import MobileNumberStep from "./MobileNumberStep";
 import PasswordStep from "./PasswordStep";
+import OtpStep from "./OtpStep";
 import SelectOtp from "./SelectOtp";
 import SetPassword from "./SetPassword";
 import SetPasswordReminderModal from "./SetPasswordReminderModal";
@@ -72,7 +73,7 @@ const Login = ({ stateCode }) => {
   const [showUnregisteredModal, setShowUnregisteredModal] = useState(false);
   const [{ showOtpModal }, setState] = useState({ showOtpModal: false });
   const [loginMode, setLoginMode] = useState("PASSWORD"); // "PASSWORD" | "OTP"
-  const [loginStep, setLoginStep] = useState("MOBILE"); // "MOBILE" | "PASSWORD" (only relevant when loginMode === "PASSWORD")
+  const [loginStep, setLoginStep] = useState("MOBILE"); // "MOBILE" | "PASSWORD" | "OTP" (only relevant when loginMode === "PASSWORD")
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState(null);
   const [canSubmitPassword, setCanSubmitPassword] = useState(true);
@@ -219,6 +220,9 @@ const Login = ({ stateCode }) => {
   const selectPassword = async () => {
     setPasswordError(null);
     setCanSubmitPassword(false);
+    // Ensure a password sign-in is never mistaken for a forgot-password flow (e.g. the user opened
+    // the OTP modal from the link, cancelled it, and then signed in with their password instead).
+    setIsForgotPasswordFlow(false);
     try {
       const requestData = {
         username: params.mobileNumber,
@@ -248,11 +252,43 @@ const Login = ({ stateCode }) => {
     setLoginStep("MOBILE");
   };
 
+  // Sends the login OTP to the mobile number already captured on the password screen and moves to
+  // the inline OTP verification screen. The mobile number is reused, so the user is never taken
+  // back to the mobile-number entry screen.
+  const requestLoginOtp = async () => {
+    setOtpError(false);
+    setCanSubmitNo(false);
+    setCanSubmitOtp(true);
+    setParmas((prev) => ({ ...prev, otp: "" }));
+    const data = {
+      mobileNumber: params.mobileNumber,
+      tenantId: stateCode,
+      userType: getUserType(),
+    };
+    const [, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
+    if (!err) {
+      startOtpCooldown();
+      setOtpError(false);
+      setLoginStep("OTP");
+    } else {
+      setCanSubmitNo(true);
+      setIsUserRegistered(false);
+      setShowUnregisteredModal(true);
+    }
+  };
+
   const switchToOtpLogin = (forgotPassword = false) => {
     setPasswordError(null);
     setPassword("");
     setIsForgotPasswordFlow(forgotPassword);
-    setLoginMode("OTP");
+    requestLoginOtp();
+  };
+
+  const backToPasswordStep = () => {
+    setOtpError(false);
+    setParmas((prev) => ({ ...prev, otp: "" }));
+    setIsForgotPasswordFlow(false);
+    setLoginStep("PASSWORD");
   };
 
   const selectMobileNumber = async (mobileNumber) => {
@@ -374,7 +410,7 @@ const Login = ({ stateCode }) => {
   };
   if (showSetPasswordScreen) {
     return (
-      <div className="citizen-form-wrapper">
+      <div className="login-v2">
         <SetPassword
           t={t}
           header="SET_PASSWORD"
@@ -430,6 +466,18 @@ const Login = ({ stateCode }) => {
                   onMobileChange={handlePasswordMobileChange}
                   canSubmit={true}
                   isUserLoggedIn={isUserLoggedIn}
+                  t={t}
+                />
+              ) : loginStep === "OTP" ? (
+                <OtpStep
+                  mobileNumber={params.mobileNumber || ""}
+                  otp={params.otp || ""}
+                  onOtpChange={handleOtpChange}
+                  onSelect={selectOtp}
+                  onResend={resendOtp}
+                  onBack={backToPasswordStep}
+                  canSubmit={canSubmitOtp}
+                  error={otpError}
                   t={t}
                 />
               ) : (
