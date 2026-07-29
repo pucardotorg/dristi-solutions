@@ -211,7 +211,7 @@ const ResultsTable = ({ tableContainerClass, config,data,isLoading,isFetching,fu
     if (isLoading || isFetching) return <div style={{ display: "flex", justifyContent: "center", width: "100%", padding: "40px 0" }}><Loader /></div>;
     if(!data) return <></>
     if(!showResultsTable) return <></>
-    if (searchResult?.length === 0) return <NoResultsFound/>
+    if (searchResult?.length === 0) return <NoResultsFound messageKey={additionalConfig?.resultsTable?.noResultsMessageKey} />
     return (
         <div style={{width : "100%"}}>
         <div className='global-search-results-table-wrapper'>

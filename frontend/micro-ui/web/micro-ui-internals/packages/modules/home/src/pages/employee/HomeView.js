@@ -268,28 +268,10 @@ const HomeView = () => {
 
     // Advocate logged in and selected their own entry
     if (advocateId && advocateId === selectedSeniorAdvocate?.id) {
-      const advocateRole = selectedSeniorAdvocate?.advocateRole;
-      if (advocateRole === "ADVOCATE") {
-        return {
-          searchKey: "filingNumber",
-          defaultFields: true,
-          casesFor: "ADVOCATE",
-          ...(courtId && !isScrutiny && { courtId }),
-        };
-      }
-      if (advocateRole === "POA_LITIGANT") {
-        return {
-          searchKey: "filingNumber",
-          defaultFields: true,
-          casesFor: "POA_LITIGANT",
-          ...(courtId && !isScrutiny && { courtId }),
-        };
-      }
-      // Fallback for advocate self-entry without a role (legacy)
       return {
         searchKey: "filingNumber",
         defaultFields: true,
-        advocateId,
+        casesFor: "ALL",
         ...(courtId && !isScrutiny && { courtId }),
       };
     }
@@ -307,8 +289,12 @@ const HomeView = () => {
         ? {
             searchKey: "filingNumber",
             defaultFields: true,
-            officeAdvocateId: selectedSeniorAdvocate?.id,
-            memberId: advocateId,
+            ...(advocateId === selectedSeniorAdvocate?.id
+              ? { advocateId }
+              : {
+                  officeAdvocateId: selectedSeniorAdvocate?.id,
+                  memberId: advocateId,
+                }),
             ...(courtId && !isScrutiny && { courtId }),
           }
         : individualId
@@ -398,7 +384,7 @@ const HomeView = () => {
   useEffect(() => {
     if (!selectedSeniorAdvocate?.id) return;
     initialCountFetchRef.current === true && refreshInboxAfterSelectedAdvocateChange();
-  }, [selectedSeniorAdvocate, refetchMemberData]);
+  }, [selectedSeniorAdvocate?.id, refetchMemberData]);
 
   const citizenId = useMemo(() => {
     if (userInfoType === "citizen" && !isSearchLoading) {
@@ -409,10 +395,7 @@ const HomeView = () => {
   const citizenCaseCriteria = useMemo(() => {
     if (!citizenId) return {};
     if (advocateId && advocateId === selectedSeniorAdvocate?.id) {
-      const advocateRole = selectedSeniorAdvocate?.advocateRole;
-      if (advocateRole === "ADVOCATE") return { casesFor: "ADVOCATE" };
-      if (advocateRole === "POA_LITIGANT") return { casesFor: "POA_LITIGANT" };
-      return { advocateId };
+      return { casesFor: "ALL" };
     }
     if (advocateId) {
       return { officeAdvocateId: selectedSeniorAdvocate?.id, memberId: advocateId };
@@ -606,6 +589,11 @@ const HomeView = () => {
     // },
   ];
 
+  const isClerkActingAsSelf = useMemo(() => userType === "ADVOCATE_CLERK" && selectedSeniorAdvocate?.isSelf === true, [
+    userType,
+    selectedSeniorAdvocate?.isSelf,
+  ]);
+
   const canJoinCase = useMemo(() => {
     if (userType === "ADVOCATE_CLERK") {
       // Clerk can join a case only when acting as Self (not on behalf of a senior advocate)
@@ -793,6 +781,7 @@ const HomeView = () => {
                       additionalConfig={{
                         resultsTable: {
                           onClickRow: onRowClick,
+                          ...(isClerkActingAsSelf && { noResultsMessageKey: "CLERK_HOME_NO_RESULTS_FOUND" }),
                         },
                       }}
                     />
