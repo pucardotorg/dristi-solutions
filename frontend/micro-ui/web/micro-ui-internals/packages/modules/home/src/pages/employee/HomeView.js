@@ -676,7 +676,12 @@ const HomeView = () => {
         setShowSelectAdvocateModal(true);
       }
     } else if (userType === "ADVOCATE_CLERK") {
-      setShowSelectAdvocateModal(true);
+      if (selectedSeniorAdvocate?.isSelf) {
+        // No need to show modal if clerk is filing the case for themselves (self).
+        history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
+      } else {
+        setShowSelectAdvocateModal(true);
+      }
     }
   };
 
