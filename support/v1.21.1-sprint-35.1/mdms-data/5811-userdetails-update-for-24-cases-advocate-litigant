@@ -1,0 +1,206 @@
+BEGIN;
+
+WITH mapping(filing_number, new_individual_id, user_uuid, old_individual_id) AS (
+    VALUES
+    ('KL-000546-2026',
+     'IND-2025-10-15-000240',
+     '95947d9a-41aa-4d61-b432-ac6328c582f7',
+     'IND-2026-02-02-000080')
+),
+old_individual AS (
+    SELECT
+        m.*,
+        i.useruuid
+    FROM mapping m
+    JOIN individual i
+      ON i.individualid = m.old_individual_id
+)
+
+--------------------------------------------------------------------------------
+-- 1. CASE LITIGANTS
+--------------------------------------------------------------------------------
+UPDATE dristi_case_litigants l
+SET
+    individualid = o.old_individual_id,
+    additionaldetails =
+        jsonb_set(
+            COALESCE(l.additionaldetails,'{}'::jsonb),
+            '{uuid}',
+            to_jsonb(o.useruuid)
+        )
+FROM dristi_cases c
+JOIN old_individual o
+  ON o.filing_number = c.filingnumber
+WHERE l.case_id = c.id
+  AND l.individualid = o.new_individual_id
+  AND l.isactive = true;
+
+--------------------------------------------------------------------------------
+-- 2. CASE REPRESENTING
+--------------------------------------------------------------------------------
+UPDATE dristi_case_representing r
+SET
+    individualid = o.old_individual_id,
+    additionaldetails =
+        jsonb_set(
+            COALESCE(r.additionaldetails,'{}'::jsonb),
+            '{uuid}',
+            to_jsonb(o.useruuid)
+        )
+FROM dristi_cases c
+JOIN old_individual o
+  ON o.filing_number = c.filingnumber
+WHERE r.case_id = c.id
+  AND r.individualid = o.new_individual_id
+  AND r.isactive = true;
+
+--------------------------------------------------------------------------------
+-- 3. CASE ADDITIONALDETAILS
+--------------------------------------------------------------------------------
+UPDATE dristi_cases c
+SET additionaldetails =
+jsonb_set(
+    jsonb_set(
+        c.additionaldetails,
+        '{complainantDetails,formdata}',
+        (
+            SELECT jsonb_agg(
+                CASE
+                    WHEN elem #>> '{data,complainantVerification,individualDetails,individualId}'
+                         = o.new_individual_id
+                    THEN jsonb_set(
+                            elem,
+                            '{data,complainantVerification,individualDetails,individualId}',
+                            to_jsonb(o.old_individual_id)
+                         )
+                    ELSE elem
+                END
+                ORDER BY ordinality
+            )
+            FROM jsonb_array_elements(
+                c.additionaldetails->'complainantDetails'->'formdata'
+            ) WITH ORDINALITY t(elem, ordinality)
+        )
+    ),
+    '{advocateDetails,formdata}',
+    (
+        SELECT jsonb_agg(
+            CASE
+                WHEN elem #>> '{data,multipleAdvocatesAndPip,boxComplainant,individualId}'
+                     = o.new_individual_id
+                THEN jsonb_set(
+                        elem,
+                        '{data,multipleAdvocatesAndPip,boxComplainant,individualId}',
+                        to_jsonb(o.old_individual_id)
+                     )
+                ELSE elem
+            END
+            ORDER BY ordinality
+        )
+        FROM jsonb_array_elements(
+            c.additionaldetails->'advocateDetails'->'formdata'
+        ) WITH ORDINALITY t(elem, ordinality)
+    )
+)
+FROM old_individual o
+WHERE c.filingnumber = o.filing_number;
+
+--------------------------------------------------------------------------------
+-- 4. HEARING ATTENDEES
+--------------------------------------------------------------------------------
+UPDATE dristi_hearing h
+SET attendees =
+(
+    SELECT jsonb_agg(
+        CASE
+            WHEN a->>'individualId' = o.new_individual_id
+            THEN jsonb_set(
+                    a,
+                    '{individualId}',
+                    to_jsonb(o.old_individual_id)
+                 )
+            ELSE a
+        END
+    )
+    FROM jsonb_array_elements(h.attendees) a
+)
+FROM old_individual o
+WHERE h.filingnumber @> jsonb_build_array(o.filing_number);
+
+--------------------------------------------------------------------------------
+-- 5. ORDER ATTENDEES
+--------------------------------------------------------------------------------
+UPDATE dristi_orders d
+SET additionaldetails =
+jsonb_set(
+    d.additionaldetails,
+    '{formdata,attendees}',
+    (
+        SELECT jsonb_agg(
+            CASE
+                WHEN a->>'individualId' = o.new_individual_id
+                THEN
+                    jsonb_set(
+                        jsonb_set(
+                            a,
+                            '{individualId}',
+                            to_jsonb(o.old_individual_id)
+                        ),
+                        '{value}',
+                        to_jsonb(o.old_individual_id)
+                    )
+                ELSE a
+            END
+        )
+        FROM jsonb_array_elements(
+            d.additionaldetails->'formdata'->'attendees'
+        ) a
+    )
+)
+FROM old_individual o
+WHERE d.filingnumber = o.filing_number
+AND EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(
+        d.additionaldetails->'formdata'->'attendees'
+    ) a
+    WHERE a->>'individualId' = o.new_individual_id
+);
+
+--------------------------------------------------------------------------------
+-- 6. ORDER namesOfPartiesRequired
+--------------------------------------------------------------------------------
+UPDATE dristi_orders d
+SET additionaldetails =
+jsonb_set(
+    d.additionaldetails,
+    '{formdata,namesOfPartiesRequired}',
+    (
+        SELECT jsonb_agg(
+            CASE
+                WHEN p->>'individualId' = o.new_individual_id
+                THEN
+                    jsonb_set(
+                        p,
+                        '{individualId}',
+                        to_jsonb(o.old_individual_id)
+                    )
+                ELSE p
+            END
+        )
+        FROM jsonb_array_elements(
+            d.additionaldetails->'formdata'->'namesOfPartiesRequired'
+        ) p
+    )
+)
+FROM old_individual o
+WHERE d.filingnumber = o.filing_number
+AND EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(
+        d.additionaldetails->'formdata'->'namesOfPartiesRequired'
+    ) p
+    WHERE p->>'individualId' = o.new_individual_id
+);
+
+COMMIT;
