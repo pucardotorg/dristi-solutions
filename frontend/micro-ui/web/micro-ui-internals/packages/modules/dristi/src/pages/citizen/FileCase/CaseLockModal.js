@@ -6,6 +6,7 @@ import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Modal from "../../../components/Modal";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import { userRolesEnum } from "../../../Utils/constants";
 
 const caseLockingMainDiv = {
   padding: "24px",
@@ -52,7 +53,10 @@ function CaseLockModal({
     return Boolean(caseDetails?.poaHolders?.some((poa) => poa?.additionalDetails?.uuid === userInfo?.uuid));
   }, [caseDetails?.poaHolders, userInfo?.uuid]);
 
-  const isAdvocateFlow = selectedAdvocateUuid && (isAdvocateInCase || !isLitigantInCase) && !isPoaHolderInCase;
+  const isClerkRepresentingAdvocate =
+    userInfo?.roles?.some((role) => role?.code === userRolesEnum.ADVOCATE_CLERK_ROLE) && selectedAdvocateUuid !== userInfo?.uuid;
+
+  const isAdvocateFlow = selectedAdvocateUuid && (isAdvocateInCase || !isLitigantInCase || isClerkRepresentingAdvocate) && !isPoaHolderInCase;
 
   const filingNumber = useMemo(() => {
     return caseDetails?.filingNumber;
