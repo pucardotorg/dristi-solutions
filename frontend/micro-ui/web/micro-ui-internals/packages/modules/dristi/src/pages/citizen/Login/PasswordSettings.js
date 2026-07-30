@@ -1,17 +1,18 @@
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Card, CardHeader, CardText, SubmitBar, BackButton } from "@egovernments/digit-ui-react-components";
-import SelectOtp from "./SelectOtp";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import OtpStep from "./OtpStep";
 import SetPassword from "./SetPassword";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
+const STEP_FORM = "FORM";
 const STEP_OTP = "OTP";
-const STEP_SET_PASSWORD = "SET_PASSWORD";
 
 /**
- * Password Settings screen, reached from the profile menu.
- * Since this is NOT immediately after an OTP login, OTP verification is required before saving a new password.
+ * Password Settings screen, reached from the profile menu. It reuses the exact "set a password"
+ * experience from the login flow: enter the new password, verify with a password-reset OTP, then
+ * save it via the no-login update endpoint.
  */
 const PasswordSettings = () => {
   const { t } = useTranslation();
@@ -21,90 +22,104 @@ const PasswordSettings = () => {
   const tenantId = window.localStorage.getItem("tenant-id");
   const mobileNumber = userInfo?.mobileNumber;
 
-  const [step, setStep] = useState(STEP_OTP);
+  const [step, setStep] = useState(STEP_FORM);
+  const [newPassword, setNewPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState(false);
+  const [canSubmitOtp, setCanSubmitOtp] = useState(true);
   const [showToast, setShowToast] = useState(null);
 
   const getUserType = () => Digit.UserService.getType();
+  const goHome = () => history.push(`/${window?.contextPath}/citizen/dristi/home`);
 
-  const sendOtp = async () => {
-    try {
-      await Digit.UserService.sendOtp(
-        { otp: { mobileNumber, userType: getUserType(), type: "passwordreset", tenantId } },
-        tenantId
-      );
-    } catch (err) {
-      setShowToast({ error: true, label: t("ES_SOMETHING_WRONG") });
-    }
+  const buildRequestInfo = () => ({
+    apiId: "Rainmaker",
+    msgId: `${Date.now()}|${Digit?.StoreData?.getCurrentLanguage?.() || "en_IN"}`,
+    ts: 0,
+    authToken: window.localStorage.getItem("token"),
+    userInfo,
+  });
+
+  const sendPasswordResetOtp = async () => {
+    await Digit.UserService.sendOtp(
+      { otp: { mobileNumber, tenantId, type: "passwordreset", userType: getUserType()?.toUpperCase() } },
+      tenantId
+    );
   };
 
-  React.useEffect(() => {
-    if (mobileNumber) {
-      sendOtp();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // The OTP itself is verified server-side when changePassword is called with it as otpReference,
-  // so we just carry it forward here rather than making a separate verify call.
-  const verifyOtpAndProceed = () => {
+  // Step 1: the user submitted a new password on the form - send the OTP and move to verification.
+  const startOtp = async (password) => {
+    setNewPassword(password);
     setOtpError(false);
-    setStep(STEP_SET_PASSWORD);
+    setCanSubmitOtp(true);
+    setOtp("");
+    await sendPasswordResetOtp();
+    setStep(STEP_OTP);
   };
 
-  const handleSetPassword = async (newPassword) => {
-    const requestData = {
-      username: mobileNumber,
-      newPassword,
-      confirmPassword: newPassword,
-      otpReference: otp,
-      tenantId,
-      type: getUserType()?.toUpperCase(),
-    };
-    await Digit.UserService.changePassword(requestData, tenantId);
-    setShowToast({ error: false, label: t("PASSWORD_UPDATED_SUCCESSFULLY") });
-    setTimeout(() => history.goBack(), 1500);
+  const resendOtp = async () => {
+    setOtpError(false);
+    setOtp("");
+    await sendPasswordResetOtp();
+  };
+
+  // Step 2: verify the OTP and persist the new password via the no-login update endpoint.
+  const submitNewPassword = async () => {
+    setOtpError(false);
+    setCanSubmitOtp(false);
+    try {
+      await axiosInstance.post(
+        "/user/password/nologin/_update",
+        {
+          RequestInfo: buildRequestInfo(),
+          otpReference: otp,
+          userName: mobileNumber,
+          newPassword,
+          tenantId,
+          type: getUserType()?.toUpperCase(),
+        },
+        { params: { tenantId } }
+      );
+      setShowToast({ error: false, label: t("PASSWORD_UPDATED_SUCCESSFULLY") });
+      setTimeout(goHome, 1500);
+    } catch (err) {
+      setCanSubmitOtp(true);
+      setOtpError(err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_OTP"));
+      setOtp("");
+    }
   };
 
   return (
-    <div className="password-settings-wrapper">
-      <div className="employeeBackbuttonAlign">
-        <BackButton variant="white" style={{ borderBottom: "none" }} onClick={() => history.goBack()} />
-      </div>
-      {step === STEP_OTP && (
-        <Card style={{ maxWidth: "480px", margin: "auto" }}>
-          <CardHeader>{t("PASSWORD_SETTINGS")}</CardHeader>
-          <CardText>
-            {`${t("CS_LOGIN_OTP_TEXT")} `}
-            <b>{`+91 - ${mobileNumber}`}</b>
-          </CardText>
-          <SelectOtp t={t} userType="employee" otp={otp} onOtpChange={setOtp} error={otpError} onResend={sendOtp} />
-          <div style={{ marginTop: "16px" }}>
-            <SubmitBar label={t("VERIFY")} onSubmit={verifyOtpAndProceed} disabled={otp?.length !== 6} />
-          </div>
-        </Card>
-      )}
-      {step === STEP_SET_PASSWORD && (
-        <div className="login-v2">
-          <SetPassword
-            t={t}
-            header="CS_CHANGE_PASSWORD_HEADING"
-            subText="CS_CHANGE_PASSWORD_SUBTEXT"
-            submitLabel="CS_COMMON_SUBMIT"
-            onSubmit={handleSetPassword}
-            onCancel={() => history.goBack()}
-          />
-        </div>
+    <div className="login-v2">
+      {step === STEP_OTP ? (
+        <OtpStep
+          mobileNumber={mobileNumber || ""}
+          otp={otp}
+          onOtpChange={setOtp}
+          onSelect={submitNewPassword}
+          onResend={resendOtp}
+          onBack={() => {
+            setOtpError(false);
+            setOtp("");
+            setStep(STEP_FORM);
+          }}
+          canSubmit={canSubmitOtp}
+          error={otpError}
+          t={t}
+        />
+      ) : (
+        <SetPassword
+          t={t}
+          header="CS_CHANGE_PASSWORD_HEADING"
+          subText="CS_CHANGE_PASSWORD_SUBTEXT"
+          submitLabel="CS_COMMON_SUBMIT"
+          onCancel={goHome}
+          backLabel="RETURN_TO_HOME"
+          onSubmit={startOtp}
+        />
       )}
       {showToast && (
-        <CustomToast
-          error={showToast.error}
-          label={showToast.label}
-          errorId={null}
-          onClose={() => setShowToast(null)}
-          duration={5000}
-        />
+        <CustomToast error={showToast.error} label={showToast.label} errorId={null} onClose={() => setShowToast(null)} duration={5000} />
       )}
     </div>
   );

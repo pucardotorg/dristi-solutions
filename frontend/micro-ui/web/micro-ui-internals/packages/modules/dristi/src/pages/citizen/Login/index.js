@@ -1,4 +1,5 @@
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Route, Switch, useHistory, useLocation, useRouteMatch } from "react-router-dom";
@@ -10,9 +11,6 @@ import PasswordStep from "./PasswordStep";
 import OtpStep from "./OtpStep";
 import SelectOtp from "./SelectOtp";
 import SetPassword from "./SetPassword";
-import SetPasswordReminderModal from "./SetPasswordReminderModal";
-
-const SET_PASSWORD_REMINDER_KEY = "dontRemindSetPassword";
 
 const TYPE_REGISTER = { type: "REGISTER" };
 const TYPE_LOGIN = { type: "LOGIN" };
@@ -77,9 +75,9 @@ const Login = ({ stateCode }) => {
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState(null);
   const [canSubmitPassword, setCanSubmitPassword] = useState(true);
-  const [isForgotPasswordFlow, setIsForgotPasswordFlow] = useState(false);
-  const [showSetPasswordReminder, setShowSetPasswordReminder] = useState(false);
   const [showSetPasswordScreen, setShowSetPasswordScreen] = useState(false);
+  const [setPwSubStep, setSetPwSubStep] = useState("FORM"); // "FORM" | "OTP" (within the set-password prompt)
+  const [newPasswordValue, setNewPasswordValue] = useState("");
 
   useEffect(() => {
     let errorTimeout;
@@ -97,9 +95,6 @@ const Login = ({ stateCode }) => {
       errorTimeout && clearTimeout(errorTimeout);
     };
   }, [error]);
-
-  // TODO: replace with the real field once the user-service response exposes whether a password is set.
-  const hasPasswordSet = (info) => Boolean(info?.additionalDetails?.hasPasswordSet);
 
   const finishLogin = () => {
     localStorage.setItem("citizen.userRequestObject", user);
@@ -126,15 +121,11 @@ const Login = ({ stateCode }) => {
       return;
     }
 
-    if (isForgotPasswordFlow) {
-      // User just verified OTP as part of "Forgot password" - take them straight to Set Password,
-      // no additional OTP needed since they're already verified.
+    // The auth response exposes `showPasswordSetupPrompt`: true means the user has no password yet
+    // and has not opted out, so we prompt them to set one before continuing to the home screen.
+    if (user?.info?.showPasswordSetupPrompt) {
+      setSetPwSubStep("FORM");
       setShowSetPasswordScreen(true);
-      return;
-    }
-
-    if (loginMode === "OTP" && !hasPasswordSet(user?.info) && localStorage.getItem(SET_PASSWORD_REMINDER_KEY) !== "true") {
-      setShowSetPasswordReminder(true);
       return;
     }
 
@@ -220,15 +211,13 @@ const Login = ({ stateCode }) => {
   const selectPassword = async () => {
     setPasswordError(null);
     setCanSubmitPassword(false);
-    // Ensure a password sign-in is never mistaken for a forgot-password flow (e.g. the user opened
-    // the OTP modal from the link, cancelled it, and then signed in with their password instead).
-    setIsForgotPasswordFlow(false);
     try {
       const requestData = {
         username: params.mobileNumber,
         password,
         tenantId: stateCode,
         userType: getUserType(),
+        authType: "PASSWORD",
       };
       const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
 
@@ -277,18 +266,91 @@ const Login = ({ stateCode }) => {
     }
   };
 
-  const switchToOtpLogin = (forgotPassword = false) => {
+  const switchToOtpLogin = () => {
     setPasswordError(null);
     setPassword("");
-    setIsForgotPasswordFlow(forgotPassword);
     requestLoginOtp();
   };
 
   const backToPasswordStep = () => {
     setOtpError(false);
     setParmas((prev) => ({ ...prev, otp: "" }));
-    setIsForgotPasswordFlow(false);
     setLoginStep("PASSWORD");
+  };
+
+  // Fires a password-reset OTP for the "set a password" prompt (a fresh OTP dedicated to the
+  // password change, separate from the login OTP), then moves to the OTP entry sub-step.
+  const startSetPasswordOtp = async (newPassword) => {
+    setNewPasswordValue(newPassword);
+    setOtpError(false);
+    setCanSubmitOtp(true);
+    setParmas((prev) => ({ ...prev, otp: "" }));
+    await Digit.UserService.sendOtp(
+      { otp: { mobileNumber: params.mobileNumber, tenantId: stateCode, type: "passwordreset", userType: getUserType()?.toUpperCase() } },
+      stateCode
+    );
+    setSetPwSubStep("OTP");
+  };
+
+  const resendSetPasswordOtp = async () => {
+    setOtpError(false);
+    setParmas((prev) => ({ ...prev, otp: "" }));
+    await Digit.UserService.sendOtp(
+      { otp: { mobileNumber: params.mobileNumber, tenantId: stateCode, type: "passwordreset", userType: getUserType()?.toUpperCase() } },
+      stateCode
+    );
+  };
+
+  const buildRequestInfo = (withAuth = false) => ({
+    apiId: "Rainmaker",
+    msgId: `${Date.now()}|${Digit?.StoreData?.getCurrentLanguage?.() || "en_IN"}`,
+    ts: 0,
+    ...(withAuth ? { authToken: user?.access_token, userInfo: user?.info } : {}),
+  });
+
+  // Verifies the password-reset OTP and sets the new password via the no-login update endpoint.
+  const submitNewPassword = async () => {
+    setOtpError(false);
+    setCanSubmitOtp(false);
+    try {
+      await axiosInstance.post(
+        "/user/password/nologin/_update",
+        {
+          // The API gateway still requires the session token from the just-completed OTP login,
+          // even though this endpoint does not itself require a password login.
+          RequestInfo: buildRequestInfo(true),
+          otpReference: params.otp,
+          userName: params.mobileNumber,
+          newPassword: newPasswordValue,
+          tenantId: stateCode,
+          type: getUserType()?.toUpperCase(),
+        },
+        { params: { tenantId: stateCode } }
+      );
+      setShowSetPasswordScreen(false);
+      finishLogin();
+    } catch (err) {
+      setCanSubmitOtp(true);
+      setOtpError(err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_OTP"));
+      setParmas((prev) => ({ ...prev, otp: "" }));
+    }
+  };
+
+  // "Remind me later" - no server call; the prompt will appear again on the next login.
+  const onRemindLater = () => {
+    setShowSetPasswordScreen(false);
+    finishLogin();
+  };
+
+  // "Don't remind me again" - suppress the prompt server-side so it never shows again for this user.
+  const onDontRemindAgain = async () => {
+    try {
+      await axiosInstance.post("/user/password/prompt/_suppress", { tenantId: stateCode, RequestInfo: buildRequestInfo(true) });
+    } catch (err) {
+      // Even if suppression fails we still let the user continue to the home screen.
+    }
+    setShowSetPasswordScreen(false);
+    finishLogin();
   };
 
   const selectMobileNumber = async (mobileNumber) => {
@@ -334,6 +396,7 @@ const Login = ({ stateCode }) => {
           password: otp,
           tenantId: stateCode,
           userType: getUserType(),
+          authType: "OTP",
         };
         const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
 
@@ -411,50 +474,39 @@ const Login = ({ stateCode }) => {
   if (showSetPasswordScreen) {
     return (
       <div className="login-v2">
-        <SetPassword
-          t={t}
-          header="SET_PASSWORD"
-          subText="SET_PASSWORD_AFTER_FORGOT_MESSAGE"
-          onSubmit={async (newPassword) => {
-            await Digit.UserService.changePassword(
-              {
-                username: params.mobileNumber,
-                newPassword,
-                confirmPassword: newPassword,
-                otpReference: params.otp,
-                tenantId: stateCode,
-                type: getUserType()?.toUpperCase(),
-              },
-              stateCode
-            );
-            setShowSetPasswordScreen(false);
-            finishLogin();
-          }}
-        />
+        {setPwSubStep === "OTP" ? (
+          <OtpStep
+            mobileNumber={params.mobileNumber || ""}
+            otp={params.otp || ""}
+            onOtpChange={handleOtpChange}
+            onSelect={submitNewPassword}
+            onResend={resendSetPasswordOtp}
+            onBack={() => {
+              setOtpError(false);
+              setParmas((prev) => ({ ...prev, otp: "" }));
+              setSetPwSubStep("FORM");
+            }}
+            canSubmit={canSubmitOtp}
+            error={otpError}
+            t={t}
+          />
+        ) : (
+          <SetPassword
+            t={t}
+            header="SET_PASSWORD"
+            subText="SET_PASSWORD_PROMPT_MESSAGE"
+            submitLabel="CS_SET_PASSWORD"
+            onSubmit={startSetPasswordOtp}
+            onRemindLater={onRemindLater}
+            onDontRemindAgain={onDontRemindAgain}
+          />
+        )}
       </div>
     );
   }
 
   return (
     <div className={loginMode === "PASSWORD" ? "login-v2" : "citizen-form-wrapper"}>
-      {showSetPasswordReminder && (
-        <SetPasswordReminderModal
-          t={t}
-          onSetPassword={() => {
-            setShowSetPasswordReminder(false);
-            history.push(`/${window?.contextPath}/citizen/dristi/home/password-settings`);
-          }}
-          onRemindLater={() => {
-            setShowSetPasswordReminder(false);
-            finishLogin();
-          }}
-          onDontRemindAgain={() => {
-            localStorage.setItem(SET_PASSWORD_REMINDER_KEY, "true");
-            setShowSetPasswordReminder(false);
-            finishLogin();
-          }}
-        />
-      )}
       <Switch>
         <React.Fragment>
           <Route path={`${path}`} exact>
@@ -489,7 +541,7 @@ const Login = ({ stateCode }) => {
                   canSubmit={canSubmitPassword}
                   error={passwordError}
                   onBack={backToMobileStep}
-                  onSwitchToOtp={() => switchToOtpLogin(true)}
+                  onSwitchToOtp={switchToOtpLogin}
                   t={t}
                 />
               )

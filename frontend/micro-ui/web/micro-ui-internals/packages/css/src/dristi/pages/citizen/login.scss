@@ -467,4 +467,32 @@
       color: var(--destructive);
     }
   }
+
+  .login-v2-check-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .login-v2-check-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13.5px;
+    color: var(--neutral-12);
+    cursor: pointer;
+
+    input[type="checkbox"] {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--brand-solid);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      color: var(--brand-11);
+    }
+  }
 }

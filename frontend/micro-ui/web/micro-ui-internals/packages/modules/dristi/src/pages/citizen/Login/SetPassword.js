@@ -87,7 +87,17 @@ const PasswordField = ({ t, id, label, placeholder, value, onChange, autoComplet
  * The caller is responsible for verifying the user beforehand (via OTP) and wiring
  * `onSubmit(newPassword)` to Digit.UserService.changePassword.
  */
-const SetPassword = ({ t, header = "SET_PASSWORD", subText, onSubmit, onCancel, onSkip, submitLabel = "CS_SAVE_PASSWORD" }) => {
+const SetPassword = ({
+  t,
+  header = "SET_PASSWORD",
+  subText,
+  onSubmit,
+  onCancel,
+  backLabel = "CS_COMMON_BACK",
+  onRemindLater,
+  onDontRemindAgain,
+  submitLabel = "CS_SAVE_PASSWORD",
+}) => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(null);
@@ -134,7 +144,7 @@ const SetPassword = ({ t, header = "SET_PASSWORD", subText, onSubmit, onCancel, 
       {onCancel && (
         <button className="login-v2-back-link" onClick={onCancel}>
           <BackIcon />
-          {t("CS_COMMON_BACK")}
+          {t(backLabel)}
         </button>
       )}
       <div className="login-v2-icon-box">
@@ -208,11 +218,21 @@ const SetPassword = ({ t, header = "SET_PASSWORD", subText, onSubmit, onCancel, 
       <button className="login-v2-btn" style={{ marginTop: "16px" }} onClick={handleSubmit} disabled={!canSubmit}>
         {t(submitLabel)}
       </button>
-      {onSkip && (
-        <div className="login-v2-form-links">
-          <button className="login-v2-link-btn" onClick={onSkip}>
-            {t("CS_SKIP_FOR_NOW")}
-          </button>
+
+      {(onRemindLater || onDontRemindAgain) && (
+        <div className="login-v2-check-options">
+          {onRemindLater && (
+            <label className="login-v2-check-option">
+              <input type="checkbox" checked={false} disabled={isSubmitting} onChange={onRemindLater} />
+              <span>{t("CS_REMIND_ME_LATER")}</span>
+            </label>
+          )}
+          {onDontRemindAgain && (
+            <label className="login-v2-check-option">
+              <input type="checkbox" checked={false} disabled={isSubmitting} onChange={onDontRemindAgain} />
+              <span>{t("CS_DONT_REMIND_AGAIN")}</span>
+            </label>
+          )}
         </div>
       )}
       {error && <CustomToast error={true} label={t(error)} errorId={null} onClose={() => setError(null)} duration={5000} />}
