@@ -22,10 +22,16 @@
   --radius-md: 0.5rem;
   --shadow-lg: 0 12px 22px -6px rgba(16, 24, 40, 0.14), 0 6px 10px -6px rgba(16, 24, 40, 0.1);
 
+  position: fixed;
+  inset: 0;
   width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
   padding: 40px 20px;
-  background: var(--surface-sunken);
-  background-image: radial-gradient(120% 90% at 100% 0%, rgba(224, 248, 243, 0.6), transparent 55%);
+  background: #fff;
   font-family: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
   box-sizing: border-box;
 
