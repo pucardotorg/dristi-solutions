@@ -1338,13 +1338,11 @@ const ComplainantSignature = ({ path }) => {
             {isSelectedEsign && (isMemberOnBehalfOfOwnerAdvocate || (isAdvocateClerk && !isClerkActingAsComplainant)) && (
               <p style={styles.signatureDescription}>{t("YOU_ARE_NOT_AUTHORIZED_TO_DO_ESIGN")}</p>
             )}
-            {isSelectedEsign &&
-              ((isMemberOnBehalfOfOwnerAdvocate && isClerkActingAsComplainant) ||
-                (!isMemberOnBehalfOfOwnerAdvocate && (!isAdvocateClerk || isClerkActingAsComplainant))) && (
-                <button style={styles.esignButton} onClick={handleEsignAction}>
-                  {t("CS_ESIGN")}
-                </button>
-              )}
+            {isSelectedEsign && !isMemberOnBehalfOfOwnerAdvocate && (!isAdvocateClerk || isClerkActingAsComplainant) && (
+              <button style={styles.esignButton} onClick={handleEsignAction}>
+                {t("CS_ESIGN")}
+              </button>
+            )}
 
             {isSelectedUploadDoc && (
               <button
