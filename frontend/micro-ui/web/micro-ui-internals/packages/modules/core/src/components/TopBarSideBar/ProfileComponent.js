@@ -97,15 +97,23 @@ const ProfileComponent = ({ userDetails, userOptions, handleUserDropdownSelectio
               {t("EDIT_PROFILE")}
             </div>
             <div className="password-settings" onClick={() => handleSelection({ name: "Password Settings" })}>
-              <span role="img" aria-label="password-settings" className="password-settings-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M17 9V7a5 5 0 0 0-10 0v2a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-7a3 3 0 0 0-3-3zM9 7a3 3 0 0 1 6 0v2H9V7zm5 8.72V17a1 1 0 0 1-2 0v-1.28a1.5 1.5 0 1 1 2 0z"
-                    fill="#505A5F"
-                  />
+              <div className="password-settings-main">
+                <span role="img" aria-label="password-settings" className="password-settings-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="7.5" cy="15.5" r="4.5" />
+                    <path d="m10.7 12.3 8.6-8.6M17 6l2.5 2.5M14.5 8.5 17 11" />
+                  </svg>
+                </span>
+                <div className="password-settings-text">
+                  <span className="password-settings-title">{t("PASSWORD_SETTINGS")}</span>
+                  <span className="password-settings-sub">{t("CHANGE_YOUR_PASSWORD")}</span>
+                </div>
+              </div>
+              <span className="password-settings-chevron">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m9 18 6-6-6-6" />
                 </svg>
               </span>
-              {t("PASSWORD_SETTINGS")}
             </div>
             <div className="language-selection">
               <div className="language-select-icon">
