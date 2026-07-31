@@ -11,6 +11,7 @@ import PasswordStep from "./PasswordStep";
 import OtpStep from "./OtpStep";
 import SelectOtp from "./SelectOtp";
 import SetPassword from "./SetPassword";
+import SetPasswordPromptModal from "./SetPasswordPromptModal";
 
 const TYPE_REGISTER = { type: "REGISTER" };
 const TYPE_LOGIN = { type: "LOGIN" };
@@ -124,7 +125,7 @@ const Login = ({ stateCode }) => {
     // The auth response exposes `showPasswordSetupPrompt`: true means the user has no password yet
     // and has not opted out, so we prompt them to set one before continuing to the home screen.
     if (user?.info?.showPasswordSetupPrompt) {
-      setSetPwSubStep("FORM");
+      setSetPwSubStep("PROMPT");
       setShowSetPasswordScreen(true);
       return;
     }
@@ -472,7 +473,14 @@ const Login = ({ stateCode }) => {
   if (showSetPasswordScreen) {
     return (
       <div className="login-v2">
-        {setPwSubStep === "OTP" ? (
+        {setPwSubStep === "PROMPT" ? (
+          <SetPasswordPromptModal
+            t={t}
+            onSetPassword={() => setSetPwSubStep("FORM")}
+            onRemindLater={onRemindLater}
+            onDontRemindAgain={onDontRemindAgain}
+          />
+        ) : setPwSubStep === "OTP" ? (
           <OtpStep
             mobileNumber={params.mobileNumber || ""}
             otp={params.otp || ""}
@@ -495,8 +503,7 @@ const Login = ({ stateCode }) => {
             subText="SET_PASSWORD_PROMPT_MESSAGE"
             submitLabel="CS_COMMON_CONTINUE"
             onSubmit={startSetPasswordOtp}
-            onRemindLater={onRemindLater}
-            onDontRemindAgain={onDontRemindAgain}
+            onSkip={onRemindLater}
           />
         )}
       </div>

@@ -31,7 +31,7 @@
   justify-content: center;
   overflow-y: auto;
   padding: 40px 20px;
-  background: #fff;
+  background: #eee;
   font-family: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
   box-sizing: border-box;
 
@@ -474,31 +474,64 @@
     }
   }
 
-  .login-v2-check-options {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 18px;
+  .login-v2-btn-outline {
+    background: #fff;
+    color: var(--neutral-12);
+    border: 1px solid var(--border);
+
+    &:hover:not(:disabled) {
+      background: var(--muted);
+    }
   }
 
-  .login-v2-check-option {
+  .login-v2-btn-ghost {
+    background: none;
+    color: var(--neutral-12);
+
+    &:hover:not(:disabled) {
+      background: var(--muted);
+    }
+  }
+
+  .login-v2-modal-overlay {
+    position: fixed;
+    inset: 0;
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 13.5px;
+    justify-content: center;
+    padding: 20px;
+    background: #eee;
+    z-index: 1000;
+  }
+
+  .login-v2-modal {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 26px;
+    box-sizing: border-box;
+  }
+
+  .login-v2-modal-title {
+    font-size: 17px;
+    font-weight: 600;
     color: var(--neutral-12);
-    cursor: pointer;
+    margin-bottom: 8px;
+  }
 
-    input[type="checkbox"] {
-      width: 17px;
-      height: 17px;
-      accent-color: var(--brand-solid);
-      cursor: pointer;
-      flex-shrink: 0;
-    }
+  .login-v2-modal-text {
+    font-size: 13.5px;
+    color: var(--muted-foreground);
+    line-height: 1.55;
+    margin-bottom: 20px;
+  }
 
-    &:hover {
-      color: var(--brand-11);
-    }
+  .login-v2-modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
   }
 }

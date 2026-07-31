@@ -94,8 +94,7 @@ const SetPassword = ({
   onSubmit,
   onCancel,
   backLabel = "CS_COMMON_BACK",
-  onRemindLater,
-  onDontRemindAgain,
+  onSkip,
   submitLabel = "CS_SAVE_PASSWORD",
 }) => {
   const [password, setPassword] = useState("");
@@ -219,20 +218,11 @@ const SetPassword = ({
         {t(submitLabel)}
       </button>
 
-      {(onRemindLater || onDontRemindAgain) && (
-        <div className="login-v2-check-options">
-          {onRemindLater && (
-            <label className="login-v2-check-option">
-              <input type="checkbox" checked={false} disabled={isSubmitting} onChange={onRemindLater} />
-              <span>{t("CS_REMIND_ME_LATER")}</span>
-            </label>
-          )}
-          {onDontRemindAgain && (
-            <label className="login-v2-check-option">
-              <input type="checkbox" checked={false} disabled={isSubmitting} onChange={onDontRemindAgain} />
-              <span>{t("CS_DONT_REMIND_AGAIN")}</span>
-            </label>
-          )}
+      {onSkip && (
+        <div className="login-v2-form-links">
+          <button className="login-v2-link-btn" onClick={onSkip} disabled={isSubmitting}>
+            {t("CS_SKIP_FOR_NOW")}
+          </button>
         </div>
       )}
       {error && <CustomToast error={true} label={t(error)} errorId={null} onClose={() => setError(null)} duration={5000} />}
