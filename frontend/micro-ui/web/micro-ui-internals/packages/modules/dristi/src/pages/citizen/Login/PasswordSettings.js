@@ -41,10 +41,7 @@ const PasswordSettings = () => {
   });
 
   const sendPasswordResetOtp = async () => {
-    await Digit.UserService.sendOtp(
-      { otp: { mobileNumber, tenantId, type: "passwordreset", userType: getUserType()?.toUpperCase() } },
-      tenantId
-    );
+    await Digit.UserService.sendOtp({ otp: { mobileNumber, tenantId, type: "passwordreset", userType: getUserType()?.toUpperCase() } }, tenantId);
   };
 
   // Step 1: the user submitted a new password on the form - send the OTP and move to verification.
@@ -112,15 +109,13 @@ const PasswordSettings = () => {
           t={t}
           header="CS_CHANGE_PASSWORD_HEADING"
           subText="CS_CHANGE_PASSWORD_SUBTEXT"
-          submitLabel="CS_COMMON_SUBMIT"
+          submitLabel="CS_COMMON_CONTINUE"
           onCancel={goHome}
           backLabel="RETURN_TO_HOME"
           onSubmit={startOtp}
         />
       )}
-      {showToast && (
-        <CustomToast error={showToast.error} label={showToast.label} errorId={null} onClose={() => setShowToast(null)} duration={5000} />
-      )}
+      {showToast && <CustomToast error={showToast.error} label={showToast.label} errorId={null} onClose={() => setShowToast(null)} duration={5000} />}
     </div>
   );
 };

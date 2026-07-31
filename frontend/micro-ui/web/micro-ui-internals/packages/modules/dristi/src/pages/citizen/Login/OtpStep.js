@@ -166,7 +166,7 @@ const OtpStep = ({ t, mobileNumber, otp, onOtpChange, onSelect, onResend, onBack
 
       <div className="login-v2-resend">
         <span>{t("CS_DIDNT_RECEIVE_OTP")}</span>
-        {secondsLeft > 0 && <span>{t("CS_REQUEST_NEW_OTP_IN", { seconds: secondsLeft })}</span>}
+        {secondsLeft > 0 && <span>{`${t("CS_REQUEST_NEW_OTP_IN")} ${secondsLeft} ${t("CS_SECONDS")}`}</span>}
         <button className="login-v2-link-btn" onClick={handleResend} disabled={secondsLeft > 0}>
           {t("CS_RESEND_OTP")}
         </button>

@@ -227,9 +227,7 @@ const Login = ({ stateCode }) => {
 
       setUser({ info, ...tokens });
     } catch (err) {
-      setPasswordError(
-        err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_MOBILE_OR_PASSWORD")
-      );
+      setPasswordError(err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_MOBILE_OR_PASSWORD"));
     } finally {
       setCanSubmitPassword(true);
     }
@@ -495,7 +493,7 @@ const Login = ({ stateCode }) => {
             t={t}
             header="SET_PASSWORD"
             subText="SET_PASSWORD_PROMPT_MESSAGE"
-            submitLabel="CS_SET_PASSWORD"
+            submitLabel="CS_COMMON_CONTINUE"
             onSubmit={startSetPasswordOtp}
             onRemindLater={onRemindLater}
             onDontRemindAgain={onDontRemindAgain}
