@@ -390,7 +390,7 @@
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 9px;
     margin: 14px 0 0;
     padding: 12px 14px;
     background: var(--muted);
@@ -400,25 +400,33 @@
   .login-v2-req {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     font-size: 12.5px;
     color: var(--muted-foreground);
 
     .login-v2-req-tick {
       width: 16px;
       height: 16px;
-      flex-shrink: 0;
-      border-radius: 9999px;
+      min-width: 16px;
+      max-width: 16px;
+      min-height: 16px;
+      max-height: 16px;
+      flex: 0 0 16px;
+      aspect-ratio: 1 / 1;
+      box-sizing: border-box;
+      border-radius: 50%;
       border: 1.5px solid var(--neutral-8);
       display: flex;
       align-items: center;
       justify-content: center;
       color: transparent;
       transition: 0.15s;
+      padding: 0;
 
       svg {
         width: 10px;
         height: 10px;
+        flex-shrink: 0;
       }
     }
 

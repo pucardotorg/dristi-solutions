@@ -3,6 +3,11 @@ export const PASSWORD_MAX_LENGTH = 64;
 
 // Common/compromised passwords blocklist (case-insensitive check).
 const COMMON_PASSWORD_BLOCKLIST = [
+  "courts",
+  "oncourts",
+  "on_courts",
+  "oncourts123",
+  "on_courts123",
   "oncourts",
   "on_courts",
   "oncourts@123",
@@ -80,7 +85,8 @@ export function validatePassword(password, extraIdentifiers = []) {
   return { isValid: true, errorKey: null };
 }
 
-// Returns a score from 0 (very weak) to 4 (very strong) purely to drive the strength meter UI.
+// Returns a score for the strength meter. 0 is reserved for empty/blocklisted passwords (shown by
+// the UI as "—" / "TOO_COMMON"); any real password scores between 1 (Weak) and 4 (Strong).
 export function getPasswordStrength(password, extraIdentifiers = []) {
   if (!password) return 0;
 
@@ -94,11 +100,13 @@ export function getPasswordStrength(password, extraIdentifiers = []) {
   const varietyCount = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].filter((pattern) => pattern.test(password)).length;
   if (varietyCount >= 2) score += 1;
 
-  return Math.min(score, 4);
+  return Math.max(1, Math.min(score, 4));
 }
 
+// Labels indexed by score (1-4). Index 0 is unused: empty shows "—" and blocklisted shows
+// "TOO_COMMON" in the UI, so there is no separate "very weak" level.
 export const PASSWORD_STRENGTH_LABELS = [
-  "PASSWORD_STRENGTH_VERY_WEAK",
+  "",
   "PASSWORD_STRENGTH_WEAK",
   "PASSWORD_STRENGTH_FAIR",
   "PASSWORD_STRENGTH_GOOD",

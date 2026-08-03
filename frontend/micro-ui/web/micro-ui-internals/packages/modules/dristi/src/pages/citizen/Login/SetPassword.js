@@ -51,6 +51,21 @@ const EyeIcon = ({ visible }) =>
 // Colours mirror the design tokens (destructive / warning / info / success) driving the strength meter.
 const STRENGTH_COLORS = ["#e5484d", "#e5484d", "#ffc53d", "#0090ff", "#46a758"];
 
+// Inline layout for the checklist tick so a stray global rule cannot make the <span> render inline
+// (which would ignore width/height and turn the circle into an oval). Colours stay in the CSS.
+const TICK_STYLE = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "16px",
+  height: "16px",
+  minWidth: "16px",
+  minHeight: "16px",
+  flex: "0 0 16px",
+  borderRadius: "50%",
+  boxSizing: "border-box",
+};
+
 const PasswordField = ({ t, id, label, placeholder, value, onChange, autoComplete, error }) => {
   const [isVisible, setIsVisible] = useState(false);
   return (
@@ -112,7 +127,8 @@ const SetPassword = ({
   const matchOk = Boolean(confirmPassword) && confirmPassword === password;
 
   const strength = useMemo(() => getPasswordStrength(password, blocklistIdentifiers), [password, blocklistIdentifiers]);
-  const strengthLabel = password ? t(PASSWORD_STRENGTH_LABELS[strength]) : "—";
+  // "TOO_COMMON" overrides the usual strength label whenever the password is blocklisted.
+  const strengthLabel = !password ? "—" : isCommon ? t("TOO_COMMON") : t(PASSWORD_STRENGTH_LABELS[strength]);
 
   const canSubmit = lengthOk && commonOk && matchOk && !isSubmitting;
 
@@ -180,20 +196,20 @@ const SetPassword = ({
         </span>
       </div>
 
-      <ul className="login-v2-req-list">
-        <li className={lengthReqClass}>
-          <span className="login-v2-req-tick">
+      <div className="login-v2-req-list">
+        <div className={lengthReqClass}>
+          <span className="login-v2-req-tick" style={TICK_STYLE}>
             <CheckIcon />
           </span>
-          {tooLong ? t("CS_PASSWORD_REQ_TOO_LONG") : t("CS_PASSWORD_REQ_LENGTH")}
-        </li>
-        <li className={commonReqClass}>
-          <span className="login-v2-req-tick">
+          <span style={{ marginLeft: "8px" }}>{tooLong ? t("CS_PASSWORD_REQ_TOO_LONG") : t("CS_PASSWORD_REQ_LENGTH")}</span>
+        </div>
+        <div className={commonReqClass}>
+          <span className="login-v2-req-tick" style={TICK_STYLE}>
             <CheckIcon />
           </span>
-          {isCommon ? t("CS_PASSWORD_REQ_COMMON_FAIL") : t("CS_PASSWORD_REQ_COMMON")}
-        </li>
-      </ul>
+          <span style={{ marginLeft: "8px" }}>{isCommon ? t("CS_PASSWORD_REQ_COMMON_FAIL") : t("CS_PASSWORD_REQ_COMMON")}</span>
+        </div>
+      </div>
       <p className="login-v2-hint">{t("CS_PASSWORD_HINT")}</p>
 
       <div style={{ marginTop: "16px" }}>
