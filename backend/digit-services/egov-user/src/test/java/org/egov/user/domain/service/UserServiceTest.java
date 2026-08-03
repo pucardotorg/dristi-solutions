@@ -35,6 +35,7 @@ import org.egov.user.domain.model.UserSearchCriteria;
 import org.egov.user.domain.model.enums.Gender;
 import org.egov.user.domain.model.enums.UserType;
 import org.egov.user.domain.service.utils.EncryptionDecryptionUtil;
+import org.egov.user.domain.service.utils.PasswordPolicyResolver;
 import org.egov.user.domain.service.utils.UserUtils;
 import org.egov.user.persistence.repository.FileStoreRepository;
 import org.egov.user.persistence.repository.OtpRepository;
@@ -86,6 +87,29 @@ public class UserServiceTest {
      * Builds a resolver with no explicit allow list configured, so the allowed modes fall back to
      * the single mode implied by the legacy *.login.password.otp.enabled flags.
      */
+    /**
+     * Builds the resolver with the strict legacy policy for both user types, so tests that predate
+     * the citizen specific policy keep asserting what they always did.
+     */
+    private PasswordPolicyResolver passwordPolicyResolver() {
+        return passwordPolicyResolver(pwdRegex, pwdMinLength, pwdMaxLength);
+    }
+
+    private PasswordPolicyResolver passwordPolicyResolver(String citizenPattern, Integer citizenMinLength,
+                                                          Integer citizenMaxLength) {
+        PasswordPolicyResolver resolver = new PasswordPolicyResolver();
+        ReflectionTestUtils.setField(resolver, "pattern", pwdRegex);
+        ReflectionTestUtils.setField(resolver, "minLength", pwdMinLength);
+        ReflectionTestUtils.setField(resolver, "maxLength", pwdMaxLength);
+        ReflectionTestUtils.setField(resolver, "patternMessage", "invalid password");
+        ReflectionTestUtils.setField(resolver, "citizenPattern", citizenPattern);
+        ReflectionTestUtils.setField(resolver, "citizenMinLength", citizenMinLength);
+        ReflectionTestUtils.setField(resolver, "citizenMaxLength", citizenMaxLength);
+        ReflectionTestUtils.setField(resolver, "citizenPatternMessage", "invalid password");
+        ReflectionTestUtils.invokeMethod(resolver, "init");
+        return resolver;
+    }
+
     private AuthModeResolver authModeResolver(boolean citizenOtpBased, boolean employeeOtpBased) {
         AuthModeResolver resolver = new AuthModeResolver();
         ReflectionTestUtils.setField(resolver, "citizenLoginPasswordOtpEnabled", citizenOtpBased);
@@ -111,7 +135,7 @@ public class UserServiceTest {
     public void before() {
         userService = new UserService(userRepository, otpRepository, fileRepository, userUtils, passwordEncoder, encryptionDecryptionUtil,
                 tokenStore, authModeResolver(isCitizenLoginOtpBased, isEmployeeLoginOtpBased),
-                DEFAULT_PASSWORD_EXPIRY_IN_DAYS, pwdRegex, pwdMaxLength, pwdMinLength);
+                passwordPolicyResolver(), DEFAULT_PASSWORD_EXPIRY_IN_DAYS);
         when(encryptionDecryptionUtil.encryptObject(any(), anyString(), any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(encryptionDecryptionUtil.decryptObject(any(), anyString(), any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
     }
@@ -187,7 +211,7 @@ public class UserServiceTest {
     public void test_should_not_create_citizenWithWrongUserName() {
         userService = new UserService(userRepository, otpRepository, fileRepository, userUtils, passwordEncoder,
                 encryptionDecryptionUtil, tokenStore, authModeResolver(true, false),
-                DEFAULT_PASSWORD_EXPIRY_IN_DAYS, pwdRegex, pwdMaxLength, pwdMinLength);
+                passwordPolicyResolver(), DEFAULT_PASSWORD_EXPIRY_IN_DAYS);
         org.egov.user.domain.model.User domainUser = User.builder().username("TestUser").name("Test").active(true)
                 .tenantId("default").mobileNumber("123456789").type(UserType.CITIZEN).build();
         assertThrows(UserNameNotValidException.class, () -> userService.createCitizen(domainUser, getValidRequestInfo()));
@@ -395,7 +419,7 @@ public class UserServiceTest {
     public void test_should_throwexception_incaseofloginotpenabledastrue_forcitizen_update_password_request() {
         userService = new UserService(userRepository, otpRepository, fileRepository, userUtils, passwordEncoder,
                 encryptionDecryptionUtil, tokenStore, authModeResolver(true, isEmployeeLoginOtpBased),
-                DEFAULT_PASSWORD_EXPIRY_IN_DAYS, pwdRegex, pwdMaxLength, pwdMinLength);
+                passwordPolicyResolver(), DEFAULT_PASSWORD_EXPIRY_IN_DAYS);
         User user = User.builder().username("xyz").tenantId("default").type(UserType.CITIZEN).build();
         when(userRepository.findAll(any(UserSearchCriteria.class))).thenReturn(Collections.singletonList(user));
         final LoggedInUserUpdatePasswordRequest updatePasswordRequest = LoggedInUserUpdatePasswordRequest.builder()
@@ -413,7 +437,7 @@ public class UserServiceTest {
     public void test_should_throwexception_incaseofloginotpenabledastrue_foremployee_update_password_request() {
         userService = new UserService(userRepository, otpRepository, fileRepository, userUtils, passwordEncoder,
                 encryptionDecryptionUtil, tokenStore, authModeResolver(false, true),
-                DEFAULT_PASSWORD_EXPIRY_IN_DAYS, pwdRegex, pwdMaxLength, pwdMinLength);
+                passwordPolicyResolver(), DEFAULT_PASSWORD_EXPIRY_IN_DAYS);
         User user = User.builder().username("xyz").tenantId("default").type(UserType.EMPLOYEE).build();
         when(userRepository.findAll(any(UserSearchCriteria.class))).thenReturn(Collections.singletonList(user));
         final LoggedInUserUpdatePasswordRequest updatePasswordRequest = LoggedInUserUpdatePasswordRequest.builder()
@@ -482,6 +506,7 @@ public class UserServiceTest {
                 .otpReference("123456")
                 .build();
         when(otpRepository.isOtpValidationComplete(any())).thenReturn(true);
+        when(otpRepository.validateOtp(any())).thenReturn(true);
         final User domainUser = User.builder().type(UserType.SYSTEM).id(1L).uuid("uuid").build();
         when(userRepository.findAll(any(UserSearchCriteria.class))).thenReturn(Collections.singletonList(domainUser));
         when(encryptionDecryptionUtil.encryptObject(domainUser, "User", User.class)).thenReturn(domainUser);
@@ -544,7 +569,7 @@ public class UserServiceTest {
         assertThrows(InvalidUpdatePasswordRequestException.class, () -> {
             userService = new UserService(userRepository, otpRepository, fileRepository, userUtils, passwordEncoder,
                     encryptionDecryptionUtil, tokenStore, authModeResolver(true, false),
-                    DEFAULT_PASSWORD_EXPIRY_IN_DAYS, pwdRegex, pwdMaxLength, pwdMinLength);
+                    passwordPolicyResolver(), DEFAULT_PASSWORD_EXPIRY_IN_DAYS);
             final NonLoggedInUserUpdatePasswordRequest request = NonLoggedInUserUpdatePasswordRequest.builder()
                     .otpReference("123456")
                     .userName("xyz")
@@ -566,7 +591,7 @@ public class UserServiceTest {
         assertThrows(InvalidNonLoggedInUserUpdatePasswordRequestException.class, () -> {
             userService = new UserService(userRepository, otpRepository, fileRepository, userUtils, passwordEncoder,
                     encryptionDecryptionUtil, tokenStore, authModeResolver(false, true),
-                    DEFAULT_PASSWORD_EXPIRY_IN_DAYS, pwdRegex, pwdMaxLength, pwdMinLength);
+                    passwordPolicyResolver(), DEFAULT_PASSWORD_EXPIRY_IN_DAYS);
             final NonLoggedInUserUpdatePasswordRequest request = NonLoggedInUserUpdatePasswordRequest.builder()
                     .userName("xyz")
                     .tenantId("default")
@@ -616,6 +641,7 @@ public class UserServiceTest {
         final OtpValidationRequest expectedRequest = OtpValidationRequest.builder().otpReference("otpReference")
                 .mobileNumber("mobileNumber").tenantId("tenant").build();
         when(otpRepository.isOtpValidationComplete(expectedRequest)).thenReturn(true);
+        when(otpRepository.validateOtp(any())).thenReturn(true);
         final User domainUser = User.builder().type(UserType.SYSTEM).id((long)123).build();
         when(userRepository.findAll(any(UserSearchCriteria.class))).thenReturn(Collections.singletonList(domainUser));
         when(encryptionDecryptionUtil.decryptObject(domainUser, "User", User.class, getValidRequestInfo())).thenReturn(domainUser);

@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
+import org.egov.tracer.model.ServiceCallException;
 import org.egov.user.domain.exception.AtleastOneRoleCodeException;
 import org.egov.user.domain.exception.DuplicateUserNameException;
 import org.egov.user.domain.exception.InvalidUpdatePasswordRequestException;
@@ -35,6 +36,7 @@ import org.egov.user.domain.model.enums.AuthMode;
 import org.egov.user.domain.model.enums.UserType;
 import org.egov.user.domain.service.utils.EncryptionDecryptionUtil;
 import org.egov.user.domain.service.utils.NotificationUtil;
+import org.egov.user.domain.service.utils.PasswordPolicyResolver;
 import org.egov.user.domain.service.utils.UserUtils;
 import org.egov.user.persistence.dto.FailedLoginAttempt;
 import org.egov.user.persistence.repository.FileStoreRepository;
@@ -69,6 +71,7 @@ public class UserService {
     private PasswordEncoder passwordEncoder;
     private int defaultPasswordExpiryInDays;
     private AuthModeResolver authModeResolver;
+    private PasswordPolicyResolver passwordPolicyResolver;
     private FileStoreRepository fileRepository;
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
     private EgovTokenStore tokenStore;
@@ -89,15 +92,6 @@ public class UserService {
     private Long maxInvalidLoginAttempts;
 
 
-    @Value("${egov.user.pwd.pattern}")
-    private String pwdRegex;
-
-    @Value("${egov.user.pwd.pattern.min.length}")
-    private Integer pwdMinLength;
-
-    @Value("${egov.user.pwd.pattern.max.length}")
-    private Integer pwdMaxLength;
-
     @Autowired
     private RestTemplate restTemplate;
 
@@ -106,11 +100,8 @@ public class UserService {
 
     public UserService(UserRepository userRepository, OtpRepository otpRepository, FileStoreRepository fileRepository, UserUtils userUtils,
                        PasswordEncoder passwordEncoder, EncryptionDecryptionUtil encryptionDecryptionUtil, EgovTokenStore tokenStore,
-                       AuthModeResolver authModeResolver,
-                       @Value("${default.password.expiry.in.days}") int defaultPasswordExpiryInDays,
-                       @Value("${egov.user.pwd.pattern}") String pwdRegex,
-                       @Value("${egov.user.pwd.pattern.max.length}") Integer pwdMaxLength,
-                       @Value("${egov.user.pwd.pattern.min.length}") Integer pwdMinLength) {
+                       AuthModeResolver authModeResolver, PasswordPolicyResolver passwordPolicyResolver,
+                       @Value("${default.password.expiry.in.days}") int defaultPasswordExpiryInDays) {
         this.userRepository = userRepository;
         this.otpRepository = otpRepository;
         this.passwordEncoder = passwordEncoder;
@@ -119,9 +110,7 @@ public class UserService {
         this.fileRepository = fileRepository;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.tokenStore = tokenStore;
-        this.pwdRegex = pwdRegex;
-        this.pwdMaxLength = pwdMaxLength;
-        this.pwdMinLength = pwdMinLength;
+        this.passwordPolicyResolver = passwordPolicyResolver;
         this.userUtils = userUtils;
 
     }
@@ -236,7 +225,7 @@ public class UserService {
             user.setPassword(UUID.randomUUID().toString());
             user.setPasswordPromptSuppressed(false);
         } else {
-            validatePassword(user.getPassword());
+            validatePassword(user.getType(), user.getPassword());
             user.setPasswordPromptSuppressed(true);
         }
         user.setPassword(encryptPwd(user.getPassword()));
@@ -285,7 +274,7 @@ public class UserService {
             user.setMobileNumber(user.getUsername());
         }
         if (authModeResolver.isModeAllowed(UserType.CITIZEN, AuthMode.PASSWORD))
-            validatePassword(user.getPassword());
+            validatePassword(UserType.CITIZEN, user.getPassword());
         user.setRoleToCitizen();
         String tenantId = userUtils.getStateLevelTenantForCitizen(user.getTenantId(),  user.getType());
         user.setTenantId(tenantId);
@@ -349,6 +338,22 @@ public class UserService {
      * @param user
      * @return
      */
+    /**
+     * Validates the OTP and reports the outcome as a plain boolean. egov-otp answers an invalid,
+     * expired or already consumed OTP with a 4xx, which arrives here as a ServiceCallException, so
+     * both shapes of failure are folded into a single false rather than escaping as a server error.
+     *
+     * @param user user carrying the OTP to validate in its otpReference
+     */
+    private boolean isOtpValid(User user) {
+        try {
+            return Boolean.TRUE.equals(validateOtp(user));
+        } catch (ServiceCallException e) {
+            log.error("OTP validation failed", e);
+            return false;
+        }
+    }
+
     public Boolean validateOtp(User user) {
         Otp otp = Otp.builder().otp(user.getOtpReference()).identity(user.getMobileNumber()).tenantId(user.getTenantId())
                 .userType(user.getType()).build();
@@ -372,7 +377,7 @@ public class UserService {
         user.setTenantId(userUtils.getStateLevelTenantForCitizen(user.getTenantId(), user.getType()));
         validateUserRoles(user);
         user.validateUserModification();
-        validatePassword(user.getPassword());
+        validatePassword(user.getType(), user.getPassword());
         user.setPassword(encryptPwd(user.getPassword()));
         /* encrypt */
         user = encryptionDecryptionUtil.encryptObject(user, "User", User.class);
@@ -416,7 +421,7 @@ public class UserService {
         User existingUser = getUserByUuid(user.getUuid());
         validateProfileUpdateIsDoneByTheSameLoggedInUser(user);
         user.nullifySensitiveFields();
-        validatePassword(user.getPassword());
+        validatePassword(existingUser.getType(), user.getPassword());
         userRepository.update(user, existingUser,requestInfo.getUserInfo().getId(), requestInfo.getUserInfo().getUuid() );
         User updatedUser = getUserByUuid(user.getUuid());
         
@@ -455,7 +460,7 @@ public class UserService {
         }
 
         validateExistingPassword(user, updatePasswordRequest.getExistingPassword());
-        validatePassword(updatePasswordRequest.getNewPassword());
+        validatePassword(user.getType(), updatePasswordRequest.getNewPassword());
         user.updatePassword(encryptPwd(updatePasswordRequest.getNewPassword()));
         user.setPasswordPromptSuppressed(true);
         userRepository.update(user, user, user.getId() , user.getUuid());
@@ -476,12 +481,20 @@ public class UserService {
             log.info("{} forgot password flow is disabled", user.getType());
             throw new InvalidUpdatePasswordRequestException();
         }
+        /*
+         * The password is checked before the OTP because a successful OTP validation consumes the
+         * OTP. Rejecting the password afterwards would leave the user having to request a fresh
+         * OTP just to retry with a compliant one.
+         */
+        validatePassword(user.getType(), request.getNewPassword());
+
         /* decrypt here */
         /* the reason for decryption here is the otp service requires decrypted username */
         user = encryptionDecryptionUtil.decryptObject(user, "User", User.class, requestInfo);
         user.setOtpReference(request.getOtpReference());
-        validateOtp(user);
-        validatePassword(request.getNewPassword());
+        if (!isOtpValid(user))
+            throw new CustomException("INVALID_OTP", "OTP validation failed, please provide a valid OTP");
+
         user.updatePassword(encryptPwd(request.getNewPassword()));
         user.setPasswordPromptSuppressed(true);
         /* encrypt here */
@@ -667,20 +680,15 @@ public class UserService {
     }
 
 
-    public void validatePassword(String password) {
-        Map<String, String> errorMap = new HashMap<>();
-        if (!StringUtils.isEmpty(password)) {
-            if (password.length() < pwdMinLength || password.length() > pwdMaxLength)
-                errorMap.put("INVALID_PWD_LENGTH", "Password must be of minimum: " + pwdMinLength + " and maximum: " + pwdMaxLength + " characters.");
-            Pattern p = Pattern.compile(pwdRegex);
-            Matcher m = p.matcher(password);
-            if (!m.find()) {
-                errorMap.put("INVALID_PWD_PATTERN", "Password MUST HAVE: Atleast one digit, one upper case, one lower case, one special character (@#$%) and MUST NOT contain any spaces");
-            }
-        }
-        if (!CollectionUtils.isEmpty(errorMap.keySet())) {
-            throw new CustomException(errorMap);
-        }
+    /**
+     * Validates a password against the policy configured for the given user type. Citizens can be
+     * held to a different policy from everybody else, see {@link PasswordPolicyResolver}.
+     *
+     * @param userType type of the user the password is being set for
+     * @param password raw password, a blank one is not checked
+     */
+    public void validatePassword(UserType userType, String password) {
+        passwordPolicyResolver.validate(userType, password);
     }
 
 
