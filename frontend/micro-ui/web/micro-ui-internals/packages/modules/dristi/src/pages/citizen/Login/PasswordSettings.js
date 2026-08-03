@@ -25,7 +25,7 @@ const PasswordSettings = () => {
 
   // Whether this user still has no password set (persisted from the login auth response). Drives
   // "Set a password" vs "Change your password" wording on this screen.
-  const passwordNotSet = window.localStorage.getItem("showPasswordSetupPrompt") === "true";
+  const passwordNotSet = userInfo?.showPasswordSetupPrompt === true;
 
   const [step, setStep] = useState(STEP_FORM);
   const [newPassword, setNewPassword] = useState("");

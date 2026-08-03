@@ -124,18 +124,12 @@ const Login = ({ stateCode }) => {
       return;
     }
 
-    // Persist whether this user still needs to set a password, so other screens (e.g. Password
-    // Settings from the profile menu) can show "Set password" vs "Change your password" wording.
+    // Persist whether this user still needs to set a password. The home screen reads this flag and
+    // surfaces the "set a password" prompt on top of itself; Password Settings uses it for wording.
     localStorage.setItem("showPasswordSetupPrompt", user?.info?.showPasswordSetupPrompt ? "true" : "false");
 
-    // The auth response exposes `showPasswordSetupPrompt`: true means the user has no password yet
-    // and has not opted out, so we prompt them to set one before continuing to the home screen.
-    if (user?.info?.showPasswordSetupPrompt) {
-      setSetPwSubStep("PROMPT");
-      setShowSetPasswordScreen(true);
-      return;
-    }
-
+    // Always continue to the home screen after a successful login; the set-password prompt (when
+    // applicable) is now shown over the home screen rather than blocking the login flow here.
     finishLogin();
   }, [user]);
 

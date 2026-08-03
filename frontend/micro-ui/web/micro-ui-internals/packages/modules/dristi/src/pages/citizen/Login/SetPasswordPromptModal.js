@@ -8,26 +8,27 @@ const RocketIcon = () => (
 );
 
 /**
- * Intermediate prompt shown after an OTP login when the user has no password yet.
- * It offers three choices before the actual Set Password form is rendered.
+ * Intermediate prompt shown (over the home screen after login) when the user has no password yet.
+ * It offers three choices before the actual Set Password flow. Styling is self-contained so it can
+ * render anywhere, not only inside the `.login-v2` scope.
  */
 const SetPasswordPromptModal = ({ t, onSetPassword, onRemindLater, onDontRemindAgain }) => {
   return (
-    <div className="login-v2-modal-overlay">
-      <div className="login-v2-modal">
-        <div className="login-v2-icon-box">
+    <div className="pw-prompt-overlay">
+      <div className="pw-prompt-modal">
+        <div className="pw-prompt-icon">
           <RocketIcon />
         </div>
-        <h3 className="login-v2-modal-title">{t("SET_PASSWORD_PROMPT_TITLE")}</h3>
-        <p className="login-v2-modal-text">{t("SET_PASSWORD_PROMPT_MODAL_MESSAGE")}</p>
-        <div className="login-v2-modal-actions">
-          <button className="login-v2-btn" onClick={onSetPassword}>
+        <h3 className="pw-prompt-title">{t("SET_PASSWORD_PROMPT_TITLE")}</h3>
+        <p className="pw-prompt-text">{t("SET_PASSWORD_PROMPT_MODAL_MESSAGE")}</p>
+        <div className="pw-prompt-actions">
+          <button className="pw-prompt-btn pw-prompt-btn-primary" onClick={onSetPassword}>
             {t("CS_SET_PASSWORD")}
           </button>
-          <button className="login-v2-btn login-v2-btn-outline" onClick={onRemindLater}>
+          <button className="pw-prompt-btn pw-prompt-btn-outline" onClick={onRemindLater}>
             {t("CS_REMIND_ME_LATER")}
           </button>
-          <button className="login-v2-btn login-v2-btn-ghost" onClick={onDontRemindAgain}>
+          <button className="pw-prompt-btn pw-prompt-btn-ghost" onClick={onDontRemindAgain}>
             {t("CS_DONT_REMIND_AGAIN")}
           </button>
         </div>

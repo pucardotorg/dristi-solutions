@@ -99,7 +99,16 @@ const ProfileComponent = ({ userDetails, userOptions, handleUserDropdownSelectio
             <div className="password-settings" onClick={() => handleSelection({ name: "Password Settings" })}>
               <div className="password-settings-main">
                 <span role="img" aria-label="password-settings" className="password-settings-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <circle cx="7.5" cy="15.5" r="4.5" />
                     <path d="m10.7 12.3 8.6-8.6M17 6l2.5 2.5M14.5 8.5 17 11" />
                   </svg>
@@ -112,7 +121,16 @@ const ProfileComponent = ({ userDetails, userOptions, handleUserDropdownSelectio
                 </div>
               </div>
               <span className="password-settings-chevron">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="m9 18 6-6-6-6" />
                 </svg>
               </span>
