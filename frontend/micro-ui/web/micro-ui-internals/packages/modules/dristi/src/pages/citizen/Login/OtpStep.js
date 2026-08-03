@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import StateEmblemIcon from "../../../components/StateEmblemIcon";
 import { maskEmail } from "../../../Utils";
 
 const OTP_LENGTH = 6;
@@ -130,9 +129,6 @@ const OtpStep = ({ t, mobileNumber, otp, onOtpChange, onSelect, onResend, onBack
         <BackIcon />
         {t("CS_COMMON_BACK")}
       </button>
-      <div className="login-v2-brand" style={{ marginBottom: "18px" }}>
-        <StateEmblemIcon className="login-v2-emblem" />
-      </div>
       <h2 className="login-v2-heading">{t("CS_VERIFY_MOBILE_HEADING")}</h2>
       <p className="login-v2-subtext">
         {t("CS_ENTER_OTP_SENT_TO")} {maskedMobile}

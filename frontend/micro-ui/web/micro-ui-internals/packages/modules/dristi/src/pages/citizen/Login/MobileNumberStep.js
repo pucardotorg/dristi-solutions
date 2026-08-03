@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
-import StateEmblemIcon from "../../../components/StateEmblemIcon";
 
 const AlertIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -16,7 +15,6 @@ const MobileNumberStep = ({ t, mobileNumber, onMobileChange, onSelect, canSubmit
   return (
     <div className="login-v2-card">
       <div className="login-v2-brand">
-        <StateEmblemIcon className="login-v2-emblem" />
         <div className="login-v2-org">
           24×7 <b>ONCOURTS</b>
         </div>
