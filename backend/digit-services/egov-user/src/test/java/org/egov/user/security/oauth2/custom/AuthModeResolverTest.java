@@ -81,20 +81,21 @@ public class AuthModeResolverTest {
     }
 
     @Test
-    public void test_should_require_password_setup_prompt_only_while_unsuppressed() {
+    public void test_should_require_password_setup_prompt_only_without_password_and_dismissal() {
         AuthModeResolver resolver = resolverWith(true, false, "OTP,PASSWORD", "");
 
-        assertTrue(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, null));
-        assertTrue(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, false));
-        assertFalse(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, true));
+        assertTrue(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, null, null));
+        assertTrue(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, false, false));
+        assertFalse(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, true, false));
+        assertFalse(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, false, true));
     }
 
     @Test
     public void test_should_not_require_password_setup_prompt_when_password_login_is_disabled() {
         AuthModeResolver resolver = resolverWith(true, false, "OTP", "");
 
-        assertFalse(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, null));
-        assertFalse(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, false));
+        assertFalse(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, null, null));
+        assertFalse(resolver.isPasswordSetupPromptRequired(UserType.CITIZEN, false, false));
     }
 
     @Test

@@ -88,10 +88,17 @@ public class User {
     private boolean mobileValidationMandatory = true;
     private String alternateMobileNumber;
     /**
-     * True once the user has either set a password or asked not to be prompted for one again.
+     * True once the user has a real password stored, as opposed to the generated placeholder a
+     * user is given when created without one. Drives which login screen the UI offers on _search.
      * Nullable so that an update carrying no opinion leaves the stored value untouched.
      */
-    private Boolean passwordPromptSuppressed;
+    private Boolean hasPassword;
+    /**
+     * True once the user chose "don't remind me again" on the set-password prompt. Independent of
+     * {@link #hasPassword}: a user may dismiss the prompt without ever setting a password.
+     * Nullable so that an update carrying no opinion leaves the stored value untouched.
+     */
+    private Boolean passwordPromptDismissed;
 
     public User addAddressItem(Address addressItem) {
         if (this.addresses == null) {

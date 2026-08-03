@@ -231,7 +231,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
                 .locale(user.getLocale()).active(user.getActive()).type(user.getType().name())
                 .roles(toAuthRole(user.getRoles())).tenantId(user.getTenantId())
                 .showPasswordSetupPrompt(authModeResolver.isPasswordSetupPromptRequired(user.getType(),
-                        user.getPasswordPromptSuppressed()))
+                        user.getHasPassword(), user.getPasswordPromptDismissed()))
                 .build();
 
         if(user.getPermanentAddress()!=null)

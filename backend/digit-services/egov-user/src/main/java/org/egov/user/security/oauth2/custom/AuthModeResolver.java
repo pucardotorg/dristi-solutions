@@ -81,16 +81,19 @@ public class AuthModeResolver {
     }
 
     /**
-     * Whether the UI should prompt this user to set a password on login. Users who have already
-     * set one, or who asked not to be reminded again, carry a suppressed prompt. The prompt is
-     * also pointless where the deployment does not let this user type log in with a password.
+     * Whether the UI should prompt this user to set a password on login. The prompt is shown only
+     * to a user who does not yet have a real password and has not asked to stop being reminded, and
+     * never where the deployment does not let this user type log in with a password.
      *
      * @param userType         type of the user logging in
-     * @param promptSuppressed stored suppression flag, may be null for a user created before the
-     *                         flag existed
+     * @param hasPassword      whether the user already has a real password, may be null for a user
+     *                         created before the flag existed
+     * @param promptDismissed  whether the user chose "don't remind me again", may be null likewise
      */
-    public boolean isPasswordSetupPromptRequired(UserType userType, Boolean promptSuppressed) {
-        return isModeAllowed(userType, AuthMode.PASSWORD) && !Boolean.TRUE.equals(promptSuppressed);
+    public boolean isPasswordSetupPromptRequired(UserType userType, Boolean hasPassword, Boolean promptDismissed) {
+        return isModeAllowed(userType, AuthMode.PASSWORD)
+                && !Boolean.TRUE.equals(hasPassword)
+                && !Boolean.TRUE.equals(promptDismissed);
     }
 
     private AuthMode defaultMode(boolean isCitizen) {

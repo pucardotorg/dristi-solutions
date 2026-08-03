@@ -217,16 +217,17 @@ public class UserService {
         /* encrypt here */
         user = encryptionDecryptionUtil.encryptObject(user, "User", User.class);
         validateUserUniqueness(user);
+        user.setPasswordPromptDismissed(false);
         if (isEmpty(user.getPassword())) {
             /*
-             * No password supplied, so a placeholder is generated and the user is left to be
-             * prompted to set a real one on login.
+             * No password supplied, so a placeholder is generated and the user is left without a
+             * real password, to be prompted to set one on login.
              */
             user.setPassword(UUID.randomUUID().toString());
-            user.setPasswordPromptSuppressed(false);
+            user.setHasPassword(false);
         } else {
             validatePassword(user.getType(), user.getPassword());
-            user.setPasswordPromptSuppressed(true);
+            user.setHasPassword(true);
         }
         user.setPassword(encryptPwd(user.getPassword()));
         user.setDefaultPasswordExpiry(defaultPasswordExpiryInDays);
@@ -462,7 +463,7 @@ public class UserService {
         validateExistingPassword(user, updatePasswordRequest.getExistingPassword());
         validatePassword(user.getType(), updatePasswordRequest.getNewPassword());
         user.updatePassword(encryptPwd(updatePasswordRequest.getNewPassword()));
-        user.setPasswordPromptSuppressed(true);
+        user.setHasPassword(true);
         userRepository.update(user, user, user.getId() , user.getUuid());
         removeTokensByUser(user);
     }
@@ -496,7 +497,7 @@ public class UserService {
             throw new CustomException("INVALID_OTP", "OTP validation failed, please provide a valid OTP");
 
         user.updatePassword(encryptPwd(request.getNewPassword()));
-        user.setPasswordPromptSuppressed(true);
+        user.setHasPassword(true);
         /* encrypt here */
         /* encrypted value is stored in DB*/
         user = encryptionDecryptionUtil.encryptObject(user, "User", User.class);

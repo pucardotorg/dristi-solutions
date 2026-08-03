@@ -224,7 +224,7 @@ public class CustomTokenEndpoint {
                 .roles(toAuthRole(user.getRoles()))
                 .tenantId(user.getTenantId())
                 .showPasswordSetupPrompt(authModeResolver.isPasswordSetupPromptRequired(user.getType(),
-                        user.getPasswordPromptSuppressed()))
+                        user.getHasPassword(), user.getPasswordPromptDismissed()))
                 .build();
 
         if (user.getPermanentAddress() != null) {

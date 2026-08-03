@@ -22,7 +22,7 @@ public class UserRowMapper implements RowMapper<User> {
                 .pan(rs.getString("pan")).aadhaarNumber(rs.getString("aadhaarnumber")).createdBy(rs.getLong("createdby")).createdDate(rs.getTimestamp("createddate"))
                 .guardian(rs.getString("guardian")).signature(rs.getString("signature"))
                 .accountLocked(rs.getBoolean("accountlocked")).photo(rs.getString("photo")).identificationMark(rs.getString("identificationmark")).uuid(rs.getString("uuid")).alternateMobileNumber(rs.getString("alternatemobilenumber"))
-                .passwordPromptSuppressed(rs.getBoolean("passwordpromptsuppressed")).build();
+                .hasPassword(rs.getBoolean("haspassword")).passwordPromptDismissed(rs.getBoolean("passwordpromptdismissed")).build();
 
         for (UserType type : UserType.values()) {
             if (type.toString().equals(rs.getString("type"))) {

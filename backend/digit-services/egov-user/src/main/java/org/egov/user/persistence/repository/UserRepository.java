@@ -198,17 +198,18 @@ public class UserRepository {
      * @return
      */
     /**
-     * Suppresses the set-password prompt for a single user. Deliberately a narrow write rather
-     * than a full {@link #update} so that dismissing the prompt can never touch any other column.
+     * Records that a single user dismissed the set-password prompt ("don't remind me again").
+     * Deliberately a narrow write rather than a full {@link #update} so that dismissing the prompt
+     * can never touch any other column, and in particular cannot flip {@code haspassword}.
      *
-     * @param uuid uuid of the user whose prompt is being suppressed
+     * @param uuid uuid of the user whose prompt is being dismissed
      */
     public void suppressPasswordPrompt(String uuid) {
         Map<String, Object> inputs = new HashMap<>();
         inputs.put("uuid", uuid);
         inputs.put("lastmodifieddate", new Date());
 
-        namedParameterJdbcTemplate.update("update eg_user set passwordpromptsuppressed=true, "
+        namedParameterJdbcTemplate.update("update eg_user set passwordpromptdismissed=true, "
                 + "lastmodifieddate=:lastmodifieddate where uuid=:uuid", inputs);
     }
 
@@ -316,11 +317,17 @@ public class UserRepository {
         else
             updateuserInputs.put("PasswordExpiryDate", oldUser.getPasswordExpiryDate());
 
-        /* An update that carries no opinion on the prompt must not clear an existing suppression */
-        if (null != user.getPasswordPromptSuppressed())
-            updateuserInputs.put("PasswordPromptSuppressed", user.getPasswordPromptSuppressed());
+        /* An update that carries no opinion on either prompt flag must preserve the stored value,
+         * otherwise an ordinary profile update would silently clear it and the prompt would return */
+        if (null != user.getHasPassword())
+            updateuserInputs.put("HasPassword", user.getHasPassword());
         else
-            updateuserInputs.put("PasswordPromptSuppressed", Boolean.TRUE.equals(oldUser.getPasswordPromptSuppressed()));
+            updateuserInputs.put("HasPassword", Boolean.TRUE.equals(oldUser.getHasPassword()));
+
+        if (null != user.getPasswordPromptDismissed())
+            updateuserInputs.put("PasswordPromptDismissed", user.getPasswordPromptDismissed());
+        else
+            updateuserInputs.put("PasswordPromptDismissed", Boolean.TRUE.equals(oldUser.getPasswordPromptDismissed()));
         updateuserInputs.put("Salutation", user.getSalutation());
         updateuserInputs.put("Signature", user.getSignature());
         updateuserInputs.put("Title", user.getTitle());
@@ -525,7 +532,8 @@ public class UserRepository {
         userInputs.put("emailid", entityUser.getEmailId());
         userInputs.put("active", entityUser.getActive());
         userInputs.put("name", entityUser.getName());
-        userInputs.put("passwordpromptsuppressed", Boolean.TRUE.equals(entityUser.getPasswordPromptSuppressed()));
+        userInputs.put("haspassword", Boolean.TRUE.equals(entityUser.getHasPassword()));
+        userInputs.put("passwordpromptdismissed", Boolean.TRUE.equals(entityUser.getPasswordPromptDismissed()));
 
         if (Gender.FEMALE.equals(entityUser.getGender())) {
             userInputs.put("gender", 1);
