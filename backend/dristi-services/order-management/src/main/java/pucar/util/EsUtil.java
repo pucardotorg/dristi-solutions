@@ -55,12 +55,12 @@ public class EsUtil {
                     manualIndex(uri, bulkRequestPayload);
                 } catch (Exception e) {
                     log.error("Error occurred while updating open hearing orderStatus in es");
-                    log.error("ERROR_FROM_ES: {}", e.getMessage());
+                    log.error("ERROR_FROM_ES", e);
                 }
             }
         } catch (Exception e) {
             log.error("Something went wrong while updating orderStatus of open hearing");
-            log.error("ERROR: {}", e.getMessage());
+            log.error("ERROR", e);
         }
 
 

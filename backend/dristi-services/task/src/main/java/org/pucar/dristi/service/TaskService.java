@@ -127,10 +127,10 @@ public class TaskService {
             return body.getTask();
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while creating task :: {}", e.toString());
+            log.error("Custom Exception occurred while creating task", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while creating task :: {}", e.toString());
+            log.error("Error occurred while creating task", e);
             throw new CustomException(CREATE_TASK_ERR, e.getMessage());
         }
     }
@@ -149,7 +149,7 @@ public class TaskService {
             Calculation calculation = objectMapper.convertValue(feeBreakDown, Calculation.class);
             etreasuryUtil.createDemand(body, consumerCode, calculation);
         } catch (Exception e) {
-            log.error("Error occurred while creating demand for payment :: {}", e.toString());
+            log.error("Error occurred while creating demand for payment", e);
             throw new CustomException("ERROR_CREATING_DEMAND_FOR_PAYMENT", e.getMessage());
         }
     }
@@ -184,7 +184,7 @@ public class TaskService {
                 body.getTask().getWorkflow().setAdditionalDetails(getAdditionalDetails(body.getTask()));
             }
         } catch (Exception e) {
-            log.error("Error occurred while updating assignedTo list :: {}", e.toString());
+            log.error("Error occurred while updating assignedTo list", e);
             throw new CustomException("ERROR_UPDATING_ASSIGNED_TO_LIST",e.getMessage());
         }
     }
@@ -204,10 +204,10 @@ public class TaskService {
             // Fetch tasks from database according to the given search criteria
             return taskRepository.getTasks(request.getCriteria(), request.getPagination());
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while searching task :: {}", e.toString());
+            log.error("Custom Exception occurred while searching task", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching task results :: {}", e.toString());
+            log.error("Error while fetching task results", e);
             throw new CustomException(SEARCH_TASK_ERR, e.getMessage());
         }
     }
@@ -298,10 +298,10 @@ public class TaskService {
             return body.getTask();
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while updating task :: {}", e.toString());
+            log.error("Custom Exception occurred while updating task", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while updating task :: {}", e.toString());
+            log.error("Error occurred while updating task", e);
             throw new CustomException(UPDATE_TASK_ERR, "Error occurred while updating task: " + e.getMessage());
         }
 
@@ -334,10 +334,10 @@ public class TaskService {
         try {
             return taskRepository.checkTaskExists(taskExistsRequest.getTask());
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while exist task check :: {}", e.toString());
+            log.error("Custom Exception occurred while exist task check", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching to exist task :: {}", e.toString());
+            log.error("Error while fetching to exist task", e);
             throw new CustomException(EXIST_TASK_ERR, e.getMessage());
         }
     }
@@ -440,10 +440,10 @@ public class TaskService {
             return taskRequest.getTask();
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while uploading document into task :: {}", e.toString());
+            log.error("Custom Exception occurred while uploading document into task", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while uploading document into task :: {}", e.toString());
+            log.error("Error occurred while uploading document into task", e);
             throw new CustomException(DOCUMENT_UPLOAD_QUERY_EXCEPTION, "Error occurred while uploading document into task: " + e.getMessage());
         }
     }
@@ -639,7 +639,7 @@ public class TaskService {
             }
         }
         catch (Exception e) {
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
     }
 
@@ -715,7 +715,7 @@ public class TaskService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
     }
 
@@ -966,7 +966,7 @@ public class TaskService {
             log.info("operation = updateTaskDetailsForJoinCase, result = SUCCESS, record = {}", record);
 
         } catch (Exception e) {
-            log.info("operation = checkAndScheduleHearingForOptOut, result = FAILURE, message = {}", e.getMessage());
+            log.error("operation = checkAndScheduleHearingForOptOut, result = FAILURE, message = {}", e.getMessage());
         }
 
     }
@@ -1054,7 +1054,7 @@ public class TaskService {
             log.info("Successfully updated geolocation details for case: {}", filingNumber);
 
         } catch (IllegalArgumentException e) {
-            log.info("Error updating geolocation details for case: {}", e.getMessage());
+            log.error("Error updating geolocation details for case: {}", e.getMessage());
             throw new CustomException(ERROR_FROM_CASE, e.getMessage());
         }
     }
@@ -1396,52 +1396,52 @@ public class TaskService {
             TaskDetailsDTO taskDetailsDTO = request.getTaskDetailsDTO();
             String taskNumber = taskDetailsDTO.getTaskNumber();
             String uniqueId = taskDetailsDTO.getUniqueId();
-            
+
             log.info("Processing task details for taskNumber: {} and uniqueId: {}", taskNumber, uniqueId);
-            
+
             // Search for the task using taskNumber
             TaskSearchRequest searchRequest = new TaskSearchRequest();
             searchRequest.setCriteria(TaskCriteria.builder()
                     .taskNumber(taskNumber)
                     .build());
             searchRequest.setRequestInfo(request.getRequestInfo());
-            
+
             List<Task> tasks = searchTask(searchRequest);
-            
+
             if (tasks == null || tasks.isEmpty()) {
                 log.error("No task found with taskNumber: {}", taskNumber);
-                throw new CustomException(TASK_NOT_FOUND, 
+                throw new CustomException(TASK_NOT_FOUND,
                         "No task found with taskNumber: " + taskNumber);
             }
-            
+
             Task task = tasks.get(0);
             Object taskDetails = task.getTaskDetails();
             taskDetailsDTO.setAuditDetails(task.getAuditDetails());
 
             taskDetailsDTO.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
             taskDetailsDTO.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
-            
+
             // Log the taskDetails
             log.info("Task details before update for task number : {} , {}", taskNumber, objectMapper.writeValueAsString(taskDetails));
-            
+
             // Create a request to push to Kafka topic
             TaskDetailsRequest kafkaRequest = TaskDetailsRequest.builder()
                     .requestInfo(request.getRequestInfo())
                     .taskDetailsDTO(taskDetailsDTO)
                     .build();
-            
+
             producer.push(config.getTaskUpdateUniqueIdTopic(), kafkaRequest);
 
             log.info("Task details after update for task number : {} , {}", taskNumber, objectMapper.writeValueAsString(taskDetailsDTO.getTaskDetails()));
-            
+
             return taskDetailsDTO;
-            
+
         } catch (CustomException e) {
             log.error("Custom exception while processing task details", e);
             throw e;
         } catch (Exception e) {
             log.error("Error processing task details", e);
-            throw new CustomException("TASK_DETAILS_PROCESSING_ERROR", 
+            throw new CustomException("TASK_DETAILS_PROCESSING_ERROR",
                     "Error processing task details: " + e.getMessage());
         }
     }

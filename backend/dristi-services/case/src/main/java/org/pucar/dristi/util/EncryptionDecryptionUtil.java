@@ -61,7 +61,7 @@ public class EncryptionDecryptionUtil {
             }
             return encryptedObject;
         } catch (CustomException e){
-            log.error(e.getCode(),e.getMessage());
+            log.error(e.getCode(), e);
             throw e;
         } catch (IOException | HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
             log.error("Error occurred while encrypting", e);
@@ -106,7 +106,7 @@ public class EncryptionDecryptionUtil {
             }
             return decryptedObject;
         } catch (CustomException e){
-            log.error(e.getCode(),e.getMessage());
+            log.error(e.getCode(), e);
             throw e;
         } catch (IOException | HttpClientErrorException | HttpServerErrorException | ResourceAccessException e) {
             log.error("Error occurred while decrypting", e);

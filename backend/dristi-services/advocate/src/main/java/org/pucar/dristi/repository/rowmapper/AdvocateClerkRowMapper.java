@@ -68,7 +68,7 @@ public class AdvocateClerkRowMapper implements ResultSetExtractor<List<AdvocateC
             throw e;
         }
         catch (Exception e){
-            log.error("Error occurred while processing clerk ResultSet :: {}", e.toString());
+            log.error("Error occurred while processing clerk ResultSet", e);
             throw new CustomException(ROW_MAPPER_EXCEPTION,"Exception occurred while processing clerk ResultSet: "+ e.getMessage());
         }
         return new ArrayList<>(advocateClerkApplicationMap.values());
@@ -90,7 +90,7 @@ public class AdvocateClerkRowMapper implements ResultSetExtractor<List<AdvocateC
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while adding document to application :: {}", e.toString());
+            log.error("Error occurred while adding document to application", e);
             throw new CustomException(ROW_MAPPER_EXCEPTION, "Exception occurred while adding document to application: " + e.getMessage());
         }
     }

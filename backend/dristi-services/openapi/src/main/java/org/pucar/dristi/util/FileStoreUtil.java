@@ -49,7 +49,7 @@ public class FileStoreUtil {
         try {
             return restTemplate.getForEntity(url, Resource.class);
         } catch (CustomException e) {
-            log.error("Error while fetching files from file store: {}", e.getMessage(), e);
+            log.error("Error while fetching files from file store", e);
             throw new CustomException("FILE_STORE_UTILITY_EXCEPTION", "Error occurred when fetching files from File Store");
         }
     }

@@ -228,7 +228,7 @@ public class AdvocateDetailBlockBuilder {
 
             courtCase.setAdvocateDetailBlock(blocks);
         } catch (Exception e) {
-            log.error("Error while building AdvocateDetailBlock: {}", e.toString());
+            log.error("Error while building AdvocateDetailBlock", e);
         }
     }
 

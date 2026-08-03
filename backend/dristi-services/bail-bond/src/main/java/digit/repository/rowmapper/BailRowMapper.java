@@ -183,7 +183,7 @@ public class BailRowMapper implements ResultSetExtractor<List<Bail>> {
                 }
             }
         } catch (Exception e) {
-            log.error("❌ Error occurred while processing Bail ResultSet: {}", e.getMessage(), e);
+            log.error("❌ Error occurred while processing Bail ResultSet", e);
             throw new CustomException("ROW_MAPPER_EXCEPTION", "Error in BailRowMapper: " + e.getMessage());
         }
 

@@ -85,7 +85,7 @@ public class TaskManagementQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building task search query :: {}", e.toString());
+            log.error("Error while building task search query", e);
             throw new CustomException("TASK_SEARCH_QUERY_EXCEPTION", "Exception occurred while building the task search query: " + e.getMessage());
         }
     }

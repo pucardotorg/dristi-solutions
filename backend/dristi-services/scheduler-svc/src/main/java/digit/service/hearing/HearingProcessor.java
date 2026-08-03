@@ -105,7 +105,7 @@ public class HearingProcessor {
             log.info("operation = processCreateHearingRequest, result = SUCCESS, hearingId={}", hearing.getHearingId());
 
         } catch (Exception e) {
-            log.error("operation = processCreateHearingRequest, result = FAILURE, error = {}", e.getMessage(), e);
+            log.error("operation = processCreateHearingRequest, result = FAILURE", e);
             log.error("error occurred while assigning start time and end time for hearing, hearingId={}", hearingRequest.getHearing().getHearingId());
         }
 

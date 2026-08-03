@@ -192,7 +192,7 @@ public class OrderRegistrationValidator {
 
         } catch (
                 Exception e) {
-            log.error("Validation exception for add item :: {}", e.toString());
+            log.error("Validation exception for add item", e);
             throw new CustomException(ORDER_UPDATE_EXCEPTION, "Validation exception for add item: " + e.getMessage());
         }
     }
@@ -307,7 +307,7 @@ public class OrderRegistrationValidator {
             }
             return listMap;
         } catch (Exception e) {
-            log.error("Error enriching composite order item id add item :: {}", e.toString());
+            log.error("Error enriching composite order item id add item", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in order enrichment service during add item: " + e.getMessage());
         }
     }

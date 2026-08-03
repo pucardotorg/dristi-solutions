@@ -263,7 +263,7 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
             }
         }
         catch (Exception e) {
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
     }
 

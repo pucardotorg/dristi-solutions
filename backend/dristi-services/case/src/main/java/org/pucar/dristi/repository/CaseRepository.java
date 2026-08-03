@@ -322,7 +322,7 @@ public class CaseRepository {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching case application list :: {}", e.toString());
+            log.error("Error while fetching case application list", e);
             throw new CustomException(SEARCH_CASE_ERR, "Exception while fetching case application list: " + e.getMessage());
         }
     }
@@ -733,7 +733,7 @@ public class CaseRepository {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while checking case exist :: {}", e.toString());
+            log.error("Error while checking case exist", e);
             throw new CustomException(SEARCH_CASE_ERR, "Custom exception while checking case exist : " + e.getMessage());
         }
     }
@@ -913,7 +913,7 @@ public class CaseRepository {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while searching cases by text :: {}", e.toString());
+            log.error("Error while searching cases by text", e);
             throw new CustomException(CASE_SUMMARY_SEARCH_QUERY_EXCEPTION, "Error occurred while searching cases by text");
         }
     }

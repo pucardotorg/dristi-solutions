@@ -121,7 +121,7 @@ public class CaseRepositoryV2 {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching case application list :: {}", e.toString());
+            log.error("Error while fetching case application list", e);
             throw new CustomException(SEARCH_CASE_ERR, "Exception while fetching case application list: " + e.getMessage());
         }
     }
@@ -160,7 +160,7 @@ public class CaseRepositoryV2 {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching case application list :: {}", e.toString());
+            log.error("Error while fetching case application list", e);
             throw new CustomException(SEARCH_CASE_ERR, "Exception while fetching case application list: " + e.getMessage());
         }
     }
@@ -197,7 +197,7 @@ public class CaseRepositoryV2 {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching case application list :: {}", e.toString());
+            log.error("Error while fetching case application list", e);
             throw new CustomException(SEARCH_CASE_ERR, "Exception while fetching case application list: " + e.getMessage());
         }
     }

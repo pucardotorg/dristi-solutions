@@ -68,13 +68,13 @@ public class Consumer {
         try {
             log.info("Received task management event on topic: {}", topic);
             TaskManagementRequest request = objectMapper.convertValue(data, TaskManagementRequest.class);
-            
+
             if (request.getTaskManagement() != null
                 && request.getTaskManagement().getWorkflow() != null
                 && COMPLETE_WITHOUT_PAYMENT.equalsIgnoreCase(request.getTaskManagement().getWorkflow().getAction())
                 && COMPLETED_WITHOUT_PAYMENT.equalsIgnoreCase(request.getTaskManagement().getStatus())) {
-                
-                log.info("Processing complete without payment for task: {}", 
+
+                log.info("Processing complete without payment for task: {}",
                     request.getTaskManagement().getTaskManagementNumber());
 
                 if (WARRANT.equalsIgnoreCase(request.getTaskManagement().getTaskType())) {
@@ -85,11 +85,11 @@ public class Consumer {
                 // Generate follow-up tasks
                 closePendingTask(request.getRequestInfo(), request.getTaskManagement());
                 taskCreationService.generateFollowUpTasks(request.getRequestInfo(), request.getTaskManagement());
-                
-                log.info("Successfully generated follow-up tasks for task: {}", 
+
+                log.info("Successfully generated follow-up tasks for task: {}",
                     request.getTaskManagement().getTaskManagementNumber());
             } else {
-                log.debug("Task management event does not match complete without payment criteria. Action: {}, Status: {}", 
+                log.debug("Task management event does not match complete without payment criteria. Action: {}, Status: {}",
                     request.getTaskManagement().getWorkflow() != null ? request.getTaskManagement().getWorkflow().getAction() : "null",
                     request.getTaskManagement().getStatus());
             }
@@ -113,7 +113,7 @@ public class Consumer {
             pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo).pendingTask(pendingTask).build());
             log.info("Successfully closed payment pending task for task number: {}", taskManagement.getTaskManagementNumber());
         } catch (CustomException e) {
-            log.error("Error closing payment pending task: {}", e.getMessage(), e);
+            log.error("Error closing payment pending task", e);
         }
     }
 
@@ -175,7 +175,7 @@ public class Consumer {
             producer.push(configuration.getUpdateTaskManagementTopic(), request);
             log.info("Upfront application processed successfully: {}", taskManagement.getTaskManagementNumber());
         } catch (Exception e) {
-            log.error("Error processing upfront application: {}", e.getMessage());
+            log.error("Error processing upfront application", e);
         }
     }
 

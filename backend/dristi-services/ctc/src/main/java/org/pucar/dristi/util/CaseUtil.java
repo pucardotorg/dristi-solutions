@@ -54,7 +54,7 @@ public class CaseUtil {
             response = restTemplate.postForObject(uri.toString(), request, Map.class);
             caseResponse = mapper.convertValue(response, CaseSummaryListResponse.class);
         } catch (Exception e) {
-            log.error("ERROR_WHILE_FETCHING_FROM_CASE :: {}", e.toString());
+            log.error("ERROR_WHILE_FETCHING_FROM_CASE", e);
         }
 
         if (caseResponse.getCaseList().isEmpty())

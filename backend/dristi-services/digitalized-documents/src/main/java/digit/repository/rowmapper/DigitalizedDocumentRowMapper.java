@@ -93,7 +93,7 @@ public class DigitalizedDocumentRowMapper implements ResultSetExtractor<List<Dig
                 return objectMapper.readValue(pGobject.getValue(), clazz);
             }
         } catch (IOException | java.sql.SQLException e) {
-            log.info("Failed to parse JSON field: " + fieldName, e);
+            log.error("Failed to parse JSON field: " + fieldName, e);
         }
         return null;
     }
