@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { Loader } from "@egovernments/digit-ui-react-components";
 import OtpStep from "./OtpStep";
 import SetPassword from "./SetPassword";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
@@ -32,6 +33,7 @@ const PasswordSettings = () => {
   const [otpError, setOtpError] = useState(false);
   const [canSubmitOtp, setCanSubmitOtp] = useState(true);
   const [showToast, setShowToast] = useState(null);
+  const [loader, setLoader] = useState(false); // full-screen overlay shown while a password API call is in flight
 
   const getUserType = () => Digit.UserService.getType();
   const goHome = () => history.push(`/${window?.contextPath}/citizen/dristi/home`);
@@ -54,20 +56,31 @@ const PasswordSettings = () => {
     setOtpError(false);
     setCanSubmitOtp(true);
     setOtp("");
-    await sendPasswordResetOtp();
-    setStep(STEP_OTP);
+    setLoader(true);
+    try {
+      await sendPasswordResetOtp();
+      setStep(STEP_OTP);
+    } finally {
+      setLoader(false);
+    }
   };
 
   const resendOtp = async () => {
     setOtpError(false);
     setOtp("");
-    await sendPasswordResetOtp();
+    setLoader(true);
+    try {
+      await sendPasswordResetOtp();
+    } finally {
+      setLoader(false);
+    }
   };
 
   // Step 2: verify the OTP and persist the new password via the no-login update endpoint.
   const submitNewPassword = async () => {
     setOtpError(false);
     setCanSubmitOtp(false);
+    setLoader(true);
     try {
       await axiosInstance.post(
         "/user/password/nologin/_update",
@@ -89,11 +102,32 @@ const PasswordSettings = () => {
       setCanSubmitOtp(true);
       setOtpError(err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_OTP"));
       setOtp("");
+    } finally {
+      setLoader(false);
     }
   };
 
   return (
     <div className="login-v2">
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "999999999999999999",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
       {step === STEP_OTP ? (
         <OtpStep
           mobileNumber={mobileNumber || ""}
@@ -119,6 +153,7 @@ const PasswordSettings = () => {
           onCancel={goHome}
           backLabel="RETURN_TO_HOME"
           onSubmit={startOtp}
+          blocklistIdentifiers={[mobileNumber, userInfo?.emailId]}
         />
       )}
       {showToast && <CustomToast error={showToast.error} label={showToast.label} errorId={null} onClose={() => setShowToast(null)} duration={5000} />}

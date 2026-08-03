@@ -1,5 +1,6 @@
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Route, Switch, useHistory, useLocation, useRouteMatch } from "react-router-dom";
@@ -79,6 +80,7 @@ const Login = ({ stateCode }) => {
   const [showSetPasswordScreen, setShowSetPasswordScreen] = useState(false);
   const [setPwSubStep, setSetPwSubStep] = useState("FORM"); // "FORM" | "OTP" (within the set-password prompt)
   const [newPasswordValue, setNewPasswordValue] = useState("");
+  const [loader, setLoader] = useState(false); // full-screen overlay shown while a login/password API call is in flight
 
   useEffect(() => {
     let errorTimeout;
@@ -216,6 +218,7 @@ const Login = ({ stateCode }) => {
   const selectPassword = async () => {
     setPasswordError(null);
     setCanSubmitPassword(false);
+    setLoader(true);
     try {
       const requestData = {
         username: params.mobileNumber,
@@ -235,6 +238,7 @@ const Login = ({ stateCode }) => {
       setPasswordError(err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_MOBILE_OR_PASSWORD"));
     } finally {
       setCanSubmitPassword(true);
+      setLoader(false);
     }
   };
 
@@ -251,6 +255,7 @@ const Login = ({ stateCode }) => {
     setOtpError(false);
     setCanSubmitNo(false);
     setCanSubmitOtp(true);
+    setLoader(true);
     setParmas((prev) => ({ ...prev, otp: "" }));
     const data = {
       mobileNumber: params.mobileNumber,
@@ -258,6 +263,7 @@ const Login = ({ stateCode }) => {
       userType: getUserType(),
     };
     const [, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
+    setLoader(false);
     if (!err) {
       startOtpCooldown();
       setOtpError(false);
@@ -288,20 +294,30 @@ const Login = ({ stateCode }) => {
     setOtpError(false);
     setCanSubmitOtp(true);
     setParmas((prev) => ({ ...prev, otp: "" }));
-    await Digit.UserService.sendOtp(
-      { otp: { mobileNumber: params.mobileNumber, tenantId: stateCode, type: "passwordreset", userType: getUserType()?.toUpperCase() } },
-      stateCode
-    );
-    setSetPwSubStep("OTP");
+    setLoader(true);
+    try {
+      await Digit.UserService.sendOtp(
+        { otp: { mobileNumber: params.mobileNumber, tenantId: stateCode, type: "passwordreset", userType: getUserType()?.toUpperCase() } },
+        stateCode
+      );
+      setSetPwSubStep("OTP");
+    } finally {
+      setLoader(false);
+    }
   };
 
   const resendSetPasswordOtp = async () => {
     setOtpError(false);
     setParmas((prev) => ({ ...prev, otp: "" }));
-    await Digit.UserService.sendOtp(
-      { otp: { mobileNumber: params.mobileNumber, tenantId: stateCode, type: "passwordreset", userType: getUserType()?.toUpperCase() } },
-      stateCode
-    );
+    setLoader(true);
+    try {
+      await Digit.UserService.sendOtp(
+        { otp: { mobileNumber: params.mobileNumber, tenantId: stateCode, type: "passwordreset", userType: getUserType()?.toUpperCase() } },
+        stateCode
+      );
+    } finally {
+      setLoader(false);
+    }
   };
 
   const buildRequestInfo = (withAuth = false) => ({
@@ -315,6 +331,7 @@ const Login = ({ stateCode }) => {
   const submitNewPassword = async () => {
     setOtpError(false);
     setCanSubmitOtp(false);
+    setLoader(true);
     try {
       await axiosInstance.post(
         "/user/password/nologin/_update",
@@ -338,6 +355,8 @@ const Login = ({ stateCode }) => {
       setCanSubmitOtp(true);
       setOtpError(err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_OTP"));
       setParmas((prev) => ({ ...prev, otp: "" }));
+    } finally {
+      setLoader(false);
     }
   };
 
@@ -349,10 +368,13 @@ const Login = ({ stateCode }) => {
 
   // "Don't remind me again" - suppress the prompt server-side so it never shows again for this user.
   const onDontRemindAgain = async () => {
+    setLoader(true);
     try {
       await axiosInstance.post("/user/password/prompt/_suppress", { tenantId: stateCode, RequestInfo: buildRequestInfo(true) });
     } catch (err) {
       // Even if suppression fails we still let the user continue to the home screen.
+    } finally {
+      setLoader(false);
     }
     setShowSetPasswordScreen(false);
     finishLogin();
@@ -394,6 +416,7 @@ const Login = ({ stateCode }) => {
 
       setOtpError(false);
       setCanSubmitOtp(false);
+      setLoader(true);
       const { mobileNumber, otp, name } = params;
       if (isUserRegistered) {
         const requestData = {
@@ -449,6 +472,8 @@ const Login = ({ stateCode }) => {
         ...prev,
         otp: "",
       }));
+    } finally {
+      setLoader(false);
     }
   };
 
@@ -461,10 +486,15 @@ const Login = ({ stateCode }) => {
       tenantId: stateCode,
       userType: getUserType(),
     };
-    if (!isUserRegistered) {
-      const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_REGISTER } });
-    } else if (isUserRegistered) {
-      const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
+    setLoader(true);
+    try {
+      if (!isUserRegistered) {
+        await sendOtp({ otp: { ...data, ...TYPE_REGISTER } });
+      } else if (isUserRegistered) {
+        await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
+      }
+    } finally {
+      setLoader(false);
     }
   };
 
@@ -476,9 +506,33 @@ const Login = ({ stateCode }) => {
       return [null, err];
     }
   };
+
+  // Full-screen overlay loader shown while a login/password API call is in flight. Rendered as a
+  // fixed, very-high-z-index element that sits on top of whatever screen is currently visible.
+  const loaderOverlay = loader ? (
+    <div
+      style={{
+        width: "100vw",
+        height: "100vh",
+        zIndex: "999999999999999999",
+        position: "fixed",
+        right: "0",
+        display: "flex",
+        top: "0",
+        background: "rgb(234 234 245 / 50%)",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+      className="submit-loader"
+    >
+      <Loader />
+    </div>
+  ) : null;
+
   if (showSetPasswordScreen) {
     return (
       <div className="login-v2">
+        {loaderOverlay}
         {setPwSubStep === "PROMPT" ? (
           <SetPasswordPromptModal
             t={t}
@@ -510,6 +564,7 @@ const Login = ({ stateCode }) => {
             submitLabel="CS_COMMON_CONTINUE"
             onSubmit={startSetPasswordOtp}
             onSkip={onRemindLater}
+            blocklistIdentifiers={[params.mobileNumber, user?.info?.emailId]}
           />
         )}
       </div>
@@ -518,6 +573,7 @@ const Login = ({ stateCode }) => {
 
   return (
     <div className={loginMode === "PASSWORD" ? "login-v2" : "citizen-form-wrapper"}>
+      {loaderOverlay}
       <Switch>
         <React.Fragment>
           <Route path={`${path}`} exact>

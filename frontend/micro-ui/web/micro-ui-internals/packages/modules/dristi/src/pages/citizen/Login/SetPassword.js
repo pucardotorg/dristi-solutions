@@ -96,21 +96,22 @@ const SetPassword = ({
   backLabel = "CS_COMMON_BACK",
   onSkip,
   submitLabel = "CS_SAVE_PASSWORD",
+  blocklistIdentifiers = [],
 }) => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const passwordValidation = useMemo(() => validatePassword(password), [password]);
+  const passwordValidation = useMemo(() => validatePassword(password, blocklistIdentifiers), [password, blocklistIdentifiers]);
 
-  const isCommon = isBlocklistedPassword(password);
+  const isCommon = isBlocklistedPassword(password, blocklistIdentifiers);
   const tooLong = password.length > PASSWORD_MAX_LENGTH;
   const lengthOk = password.length >= PASSWORD_MIN_LENGTH && password.length <= PASSWORD_MAX_LENGTH;
   const commonOk = password.length >= PASSWORD_MIN_LENGTH && !isCommon;
   const matchOk = Boolean(confirmPassword) && confirmPassword === password;
 
-  const strength = useMemo(() => getPasswordStrength(password), [password]);
+  const strength = useMemo(() => getPasswordStrength(password, blocklistIdentifiers), [password, blocklistIdentifiers]);
   const strengthLabel = password ? t(PASSWORD_STRENGTH_LABELS[strength]) : "—";
 
   const canSubmit = lengthOk && commonOk && matchOk && !isSubmitting;
