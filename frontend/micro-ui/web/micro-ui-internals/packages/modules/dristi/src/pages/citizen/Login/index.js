@@ -122,6 +122,10 @@ const Login = ({ stateCode }) => {
       return;
     }
 
+    // Persist whether this user still needs to set a password, so other screens (e.g. Password
+    // Settings from the profile menu) can show "Set password" vs "Change your password" wording.
+    localStorage.setItem("showPasswordSetupPrompt", user?.info?.showPasswordSetupPrompt ? "true" : "false");
+
     // The auth response exposes `showPasswordSetupPrompt`: true means the user has no password yet
     // and has not opted out, so we prompt them to set one before continuing to the home screen.
     if (user?.info?.showPasswordSetupPrompt) {
@@ -326,6 +330,8 @@ const Login = ({ stateCode }) => {
         },
         { params: { tenantId: stateCode } }
       );
+      // Password now exists, so future screens should read "Change your password".
+      localStorage.setItem("showPasswordSetupPrompt", "false");
       setShowSetPasswordScreen(false);
       finishLogin();
     } catch (err) {

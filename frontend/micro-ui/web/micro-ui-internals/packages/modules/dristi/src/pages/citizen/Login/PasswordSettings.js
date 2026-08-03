@@ -22,6 +22,10 @@ const PasswordSettings = () => {
   const tenantId = window.localStorage.getItem("tenant-id");
   const mobileNumber = userInfo?.mobileNumber;
 
+  // Whether this user still has no password set (persisted from the login auth response). Drives
+  // "Set a password" vs "Change your password" wording on this screen.
+  const passwordNotSet = window.localStorage.getItem("showPasswordSetupPrompt") === "true";
+
   const [step, setStep] = useState(STEP_FORM);
   const [newPassword, setNewPassword] = useState("");
   const [otp, setOtp] = useState("");
@@ -77,6 +81,8 @@ const PasswordSettings = () => {
         },
         { params: { tenantId } }
       );
+      // Password now exists, so subsequent screens should read "Change your password".
+      window.localStorage.setItem("showPasswordSetupPrompt", "false");
       setShowToast({ error: false, label: t("PASSWORD_UPDATED_SUCCESSFULLY") });
       setTimeout(goHome, 1500);
     } catch (err) {
@@ -107,8 +113,8 @@ const PasswordSettings = () => {
       ) : (
         <SetPassword
           t={t}
-          header="CS_CHANGE_PASSWORD_HEADING"
-          subText="CS_CHANGE_PASSWORD_SUBTEXT"
+          header={passwordNotSet ? "SET_PASSWORD" : "CS_CHANGE_PASSWORD_HEADING"}
+          subText={passwordNotSet ? "SET_PASSWORD_PROMPT_MESSAGE" : "CS_CHANGE_PASSWORD_SUBTEXT"}
           submitLabel="CS_COMMON_CONTINUE"
           onCancel={goHome}
           backLabel="RETURN_TO_HOME"
