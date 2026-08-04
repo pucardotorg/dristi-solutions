@@ -1,11 +1,18 @@
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Route, Switch, useHistory, useLocation, useRouteMatch } from "react-router-dom";
 import InfoModal from "../../../components/InfoModal";
 import { loginSteps } from "./config";
 import SelectMobileNumber from "./SelectMobileNumber";
+import MobileNumberStep from "./MobileNumberStep";
+import PasswordStep from "./PasswordStep";
+import OtpStep from "./OtpStep";
 import SelectOtp from "./SelectOtp";
+import SetPassword from "./SetPassword";
+import SetPasswordPromptModal from "./SetPasswordPromptModal";
 
 const TYPE_REGISTER = { type: "REGISTER" };
 const TYPE_LOGIN = { type: "LOGIN" };
@@ -65,6 +72,17 @@ const Login = ({ stateCode }) => {
   const [isUserRegistered, setIsUserRegistered] = useState(true);
   const [showUnregisteredModal, setShowUnregisteredModal] = useState(false);
   const [{ showOtpModal }, setState] = useState({ showOtpModal: false });
+  const [loginMode, setLoginMode] = useState("PASSWORD"); // "PASSWORD" | "OTP"
+  const [loginStep, setLoginStep] = useState("MOBILE"); // "MOBILE" | "PASSWORD" | "OTP" (only relevant when loginMode === "PASSWORD")
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState(null);
+  const [canSubmitPassword, setCanSubmitPassword] = useState(true);
+  const [showSetPasswordScreen, setShowSetPasswordScreen] = useState(false);
+  const [setPwSubStep, setSetPwSubStep] = useState("FORM"); // "FORM" | "OTP" (within the set-password prompt)
+  const [newPasswordValue, setNewPasswordValue] = useState("");
+  const [loader, setLoader] = useState(false); // full-screen overlay shown while a login/password API call is in flight
+  const [userEmail, setUserEmail] = useState(""); // captured during the mobile-number lookup, reused on the OTP screen
+  const [otpEntryStep, setOtpEntryStep] = useState("PASSWORD"); // which step the login OTP screen's Back button returns to
 
   useEffect(() => {
     let errorTimeout;
@@ -83,10 +101,7 @@ const Login = ({ stateCode }) => {
     };
   }, [error]);
 
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
+  const finishLogin = () => {
     localStorage.setItem("citizen.userRequestObject", user);
     Digit.UserService.setUser(user);
     if (params.isRememberMe) {
@@ -104,6 +119,20 @@ const Login = ({ stateCode }) => {
     } else {
       history.push(redirectPath);
     }
+  };
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    // Persist whether this user still needs to set a password. The home screen reads this flag and
+    // surfaces the "set a password" prompt on top of itself; Password Settings uses it for wording.
+    localStorage.setItem("showPasswordSetupPrompt", user?.info?.showPasswordSetupPrompt ? "true" : "false");
+
+    // Always continue to the home screen after a successful login; the set-password prompt (when
+    // applicable) is now shown over the home screen rather than blocking the login flow here.
+    finishLogin();
   }, [user]);
 
   const stepItems = useMemo(() =>
@@ -119,7 +148,9 @@ const Login = ({ stateCode }) => {
     )
   );
 
-  const getUserType = () => Digit.UserService.getType();
+  // This is the citizen login flow, so the user type is derived from the URL rather than from
+  // Digit.UserService.getType().
+  const userType = window.location.href.includes("/citizen") ? "citizen" : "employee";
 
   const handleOtpChange = (otp) => {
     setParmas({ ...params, otp });
@@ -166,6 +197,216 @@ const Login = ({ stateCode }) => {
     };
   }, [otpCooldownTimer]);
 
+  const handlePasswordMobileChange = (event) => {
+    const { value } = event.target;
+    setParmas({ ...params, mobileNumber: value?.replace(/[^0-9]/g, "") });
+  };
+
+  // After the user enters a mobile number, look them up to decide the next screen: users who
+  // already have a real password go to the password screen; users without one skip straight to OTP
+  // login. The lookup's e-mail is reused on the OTP screen so we don't call userSearch again there.
+  const submitMobileNumber = async () => {
+    //here
+    setPasswordError(null);
+    setPassword("");
+    setLoader(true);
+    let hasPassword = true; // default to the password screen if the lookup is inconclusive
+    try {
+      console.log("called");
+      const { user } = await Digit.UserService.userSearch(stateCode, { mobileNumber: params.mobileNumber }, {});
+      const userDetail = user?.[0];
+      setUserEmail(userDetail?.emailId || "");
+      hasPassword = Boolean(userDetail?.hasPassword);
+      // Persist whether this user has a real password set, for later screens to read.
+      localStorage.setItem("hasPassword", hasPassword ? true : false);
+    } catch (e) {
+      /* inconclusive lookup - fall back to the password screen */
+    }
+
+    if (hasPassword) {
+      setLoader(false);
+      setLoginStep("PASSWORD");
+    } else {
+      // No password set yet - skip the password screen and go straight to OTP login. The OTP
+      // screen's Back button should return to the mobile-number step (there is no password screen).
+      // requestLoginOtp keeps the loader on until the OTP is sent, then clears it.
+      setOtpEntryStep("MOBILE");
+      requestLoginOtp();
+    }
+  };
+
+  const handlePasswordChange = (value) => {
+    setPassword(value);
+    setPasswordError(null);
+  };
+
+  const selectPassword = async () => {
+    setPasswordError(null);
+    setCanSubmitPassword(false);
+    setLoader(true);
+    try {
+      const requestData = {
+        username: params.mobileNumber,
+        password,
+        tenantId: stateCode,
+        userType,
+        authType: "PASSWORD",
+      };
+      const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
+
+      if (window?.globalConfigs?.getConfig("ENABLE_SINGLEINSTANCE")) {
+        info.tenantId = Digit.ULBService.getStateId();
+      }
+
+      setUser({ info, ...tokens });
+    } catch (err) {
+      setPasswordError(err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_MOBILE_OR_PASSWORD"));
+    } finally {
+      setCanSubmitPassword(true);
+      setLoader(false);
+    }
+  };
+
+  const backToMobileStep = () => {
+    setPasswordError(null);
+    setPassword("");
+    setLoginStep("MOBILE");
+  };
+
+  // Sends the login OTP to the mobile number already captured on the password screen and moves to
+  // the inline OTP verification screen. The mobile number is reused, so the user is never taken
+  // back to the mobile-number entry screen.
+  const requestLoginOtp = async () => {
+    setOtpError(false);
+    setCanSubmitNo(false);
+    setCanSubmitOtp(true);
+    setLoader(true);
+    setParmas((prev) => ({ ...prev, otp: "" }));
+    const data = {
+      mobileNumber: params.mobileNumber,
+      tenantId: stateCode,
+      userType,
+    };
+    const [, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
+    setLoader(false);
+    if (!err) {
+      startOtpCooldown();
+      setOtpError(false);
+      setLoginStep("OTP");
+    } else {
+      setCanSubmitNo(true);
+      setIsUserRegistered(false);
+      setShowUnregisteredModal(true);
+    }
+  };
+
+  const switchToOtpLogin = () => {
+    setPasswordError(null);
+    setPassword("");
+    // Reached OTP from the password screen ("Forgot password"), so Back should return there.
+    setOtpEntryStep("PASSWORD");
+    requestLoginOtp();
+  };
+
+  const backToPasswordStep = () => {
+    setOtpError(false);
+    setParmas((prev) => ({ ...prev, otp: "" }));
+    setLoginStep(otpEntryStep);
+  };
+
+  // Fires a password-reset OTP for the "set a password" prompt (a fresh OTP dedicated to the
+  // password change, separate from the login OTP), then moves to the OTP entry sub-step.
+  const startSetPasswordOtp = async (newPassword) => {
+    setNewPasswordValue(newPassword);
+    setOtpError(false);
+    setCanSubmitOtp(true);
+    setParmas((prev) => ({ ...prev, otp: "" }));
+    setLoader(true);
+    try {
+      await Digit.UserService.sendOtp(
+        { otp: { mobileNumber: params.mobileNumber, tenantId: stateCode, type: "passwordreset", userType: userType.toUpperCase() } },
+        stateCode
+      );
+      setSetPwSubStep("OTP");
+    } finally {
+      setLoader(false);
+    }
+  };
+
+  const resendSetPasswordOtp = async () => {
+    setOtpError(false);
+    setParmas((prev) => ({ ...prev, otp: "" }));
+    setLoader(true);
+    try {
+      await Digit.UserService.sendOtp(
+        { otp: { mobileNumber: params.mobileNumber, tenantId: stateCode, type: "passwordreset", userType: userType.toUpperCase() } },
+        stateCode
+      );
+    } finally {
+      setLoader(false);
+    }
+  };
+
+  const buildRequestInfo = (withAuth = false) => ({
+    apiId: "Rainmaker",
+    msgId: `${Date.now()}|${Digit?.StoreData?.getCurrentLanguage?.() || "en_IN"}`,
+    ts: 0,
+    ...(withAuth ? { authToken: user?.access_token, userInfo: user?.info } : {}),
+  });
+
+  // Verifies the password-reset OTP and sets the new password via the no-login update endpoint.
+  const submitNewPassword = async () => {
+    setOtpError(false);
+    setCanSubmitOtp(false);
+    setLoader(true);
+    try {
+      await axiosInstance.post(
+        "/user/password/nologin/_update",
+        {
+          // The API gateway still requires the session token from the just-completed OTP login,
+          // even though this endpoint does not itself require a password login.
+          RequestInfo: buildRequestInfo(true),
+          otpReference: params.otp,
+          userName: params.mobileNumber,
+          newPassword: newPasswordValue,
+          tenantId: stateCode,
+          type: userType.toUpperCase(),
+        },
+        { params: { tenantId: stateCode } }
+      );
+      // Password now exists, so future screens should read "Change your password".
+      localStorage.setItem("showPasswordSetupPrompt", "false");
+      setShowSetPasswordScreen(false);
+      finishLogin();
+    } catch (err) {
+      setCanSubmitOtp(true);
+      setOtpError(err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_OTP"));
+      setParmas((prev) => ({ ...prev, otp: "" }));
+    } finally {
+      setLoader(false);
+    }
+  };
+
+  // "Remind me later" - no server call; the prompt will appear again on the next login.
+  const onRemindLater = () => {
+    setShowSetPasswordScreen(false);
+    finishLogin();
+  };
+
+  // "Don't remind me again" - suppress the prompt server-side so it never shows again for this user.
+  const onDontRemindAgain = async () => {
+    setLoader(true);
+    try {
+      await axiosInstance.post("/user/password/prompt/_suppress", { tenantId: stateCode, RequestInfo: buildRequestInfo(true) });
+    } catch (err) {
+      // Even if suppression fails we still let the user continue to the home screen.
+    } finally {
+      setLoader(false);
+    }
+    setShowSetPasswordScreen(false);
+    finishLogin();
+  };
+
   const selectMobileNumber = async (mobileNumber) => {
     setOtpError(false);
     setCanSubmitNo(false);
@@ -173,7 +414,7 @@ const Login = ({ stateCode }) => {
     const data = {
       ...mobileNumber,
       tenantId: stateCode,
-      userType: getUserType(),
+      userType,
     };
     const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
     if (!err) {
@@ -202,13 +443,15 @@ const Login = ({ stateCode }) => {
 
       setOtpError(false);
       setCanSubmitOtp(false);
+      setLoader(true);
       const { mobileNumber, otp, name } = params;
       if (isUserRegistered) {
         const requestData = {
           username: mobileNumber,
           password: otp,
           tenantId: stateCode,
-          userType: getUserType(),
+          userType,
+          authType: "OTP",
         };
         const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
 
@@ -256,6 +499,8 @@ const Login = ({ stateCode }) => {
         ...prev,
         otp: "",
       }));
+    } finally {
+      setLoader(false);
     }
   };
 
@@ -266,12 +511,17 @@ const Login = ({ stateCode }) => {
     const data = {
       mobileNumber,
       tenantId: stateCode,
-      userType: getUserType(),
+      userType,
     };
-    if (!isUserRegistered) {
-      const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_REGISTER } });
-    } else if (isUserRegistered) {
-      const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
+    setLoader(true);
+    try {
+      if (!isUserRegistered) {
+        await sendOtp({ otp: { ...data, ...TYPE_REGISTER } });
+      } else if (isUserRegistered) {
+        await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
+      }
+    } finally {
+      setLoader(false);
     }
   };
 
@@ -283,22 +533,126 @@ const Login = ({ stateCode }) => {
       return [null, err];
     }
   };
+
+  // Full-screen overlay loader shown while a login/password API call is in flight. Rendered as a
+  // fixed, very-high-z-index element that sits on top of whatever screen is currently visible.
+  const loaderOverlay = loader ? (
+    <div
+      style={{
+        width: "100vw",
+        height: "100vh",
+        zIndex: "999999999999999999",
+        position: "fixed",
+        right: "0",
+        display: "flex",
+        top: "0",
+        background: "rgb(234 234 245 / 50%)",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+      className="submit-loader"
+    >
+      <Loader />
+    </div>
+  ) : null;
+
+  if (showSetPasswordScreen) {
+    return (
+      <div className="login-v2">
+        {loaderOverlay}
+        {setPwSubStep === "PROMPT" ? (
+          <SetPasswordPromptModal
+            t={t}
+            onSetPassword={() => setSetPwSubStep("FORM")}
+            onRemindLater={onRemindLater}
+            onDontRemindAgain={onDontRemindAgain}
+          />
+        ) : setPwSubStep === "OTP" ? (
+          <OtpStep
+            mobileNumber={params.mobileNumber || ""}
+            otp={params.otp || ""}
+            onOtpChange={handleOtpChange}
+            onSelect={submitNewPassword}
+            onResend={resendSetPasswordOtp}
+            onBack={() => {
+              setOtpError(false);
+              setParmas((prev) => ({ ...prev, otp: "" }));
+              setSetPwSubStep("FORM");
+            }}
+            canSubmit={canSubmitOtp}
+            error={otpError}
+            t={t}
+          />
+        ) : (
+          <SetPassword
+            t={t}
+            header="SET_PASSWORD"
+            subText="SET_PASSWORD_PROMPT_MESSAGE"
+            submitLabel="CS_COMMON_CONTINUE"
+            onSubmit={startSetPasswordOtp}
+            onSkip={onRemindLater}
+            blocklistIdentifiers={[params.mobileNumber, user?.info?.emailId]}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="citizen-form-wrapper">
+    <div className={loginMode === "PASSWORD" ? "login-v2" : "citizen-form-wrapper"}>
+      {loaderOverlay}
       <Switch>
         <React.Fragment>
           <Route path={`${path}`} exact>
-            <SelectMobileNumber
-              onSelect={selectMobileNumber}
-              config={stepItems[0]}
-              mobileNumber={params.mobileNumber || ""}
-              onMobileChange={handleMobileChange}
-              canSubmit={canSubmitNo && otpCooldown === 0}
-              isUserLoggedIn={isUserLoggedIn}
-              showRegisterLink={isUserRegistered && !location.state?.role}
-              cooldownTime={otpCooldown}
-              t={t}
-            />
+            {loginMode === "PASSWORD" ? (
+              loginStep === "MOBILE" ? (
+                <MobileNumberStep
+                  onSelect={submitMobileNumber}
+                  mobileNumber={params.mobileNumber || ""}
+                  onMobileChange={handlePasswordMobileChange}
+                  canSubmit={true}
+                  isUserLoggedIn={isUserLoggedIn}
+                  t={t}
+                />
+              ) : loginStep === "OTP" ? (
+                <OtpStep
+                  mobileNumber={params.mobileNumber || ""}
+                  otp={params.otp || ""}
+                  onOtpChange={handleOtpChange}
+                  onSelect={selectOtp}
+                  onResend={resendOtp}
+                  onBack={backToPasswordStep}
+                  canSubmit={canSubmitOtp}
+                  error={otpError}
+                  email={userEmail}
+                  t={t}
+                />
+              ) : (
+                <PasswordStep
+                  mobileNumber={params.mobileNumber || ""}
+                  password={password}
+                  onPasswordChange={handlePasswordChange}
+                  onSelect={selectPassword}
+                  canSubmit={canSubmitPassword}
+                  error={passwordError}
+                  onBack={backToMobileStep}
+                  onSwitchToOtp={switchToOtpLogin}
+                  t={t}
+                />
+              )
+            ) : (
+              <SelectMobileNumber
+                onSelect={selectMobileNumber}
+                config={stepItems[0]}
+                mobileNumber={params.mobileNumber || ""}
+                onMobileChange={handleMobileChange}
+                canSubmit={canSubmitNo && otpCooldown === 0}
+                isUserLoggedIn={isUserLoggedIn}
+                showRegisterLink={isUserRegistered && !location.state?.role}
+                cooldownTime={otpCooldown}
+                t={t}
+              />
+            )}
           </Route>
           {showOtpModal && (
             <SelectOtp

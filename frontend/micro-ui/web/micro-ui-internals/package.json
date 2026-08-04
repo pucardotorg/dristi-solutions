@@ -37,7 +37,7 @@
     "dev:cases": "cd packages/modules/cases && yarn start",
     "dev:home": "cd packages/modules/home && yarn start",
     "dev:common": "cd packages/modules/common && yarn start",
-    "build": "run-p build:**",
+    "build": "run-s build:core build:common && run-p build:dristi build:submissions build:orders build:hearings build:cases build:home build:css",
     "build:dristi": "cd packages/modules/dristi && yarn build",
     "build:submissions": "cd packages/modules/submissions && yarn build",
     "build:orders": "cd packages/modules/orders && yarn build",
