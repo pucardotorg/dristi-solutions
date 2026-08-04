@@ -1,5 +1,7 @@
 package org.egov.persistence.repository;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.utils.MultiStateInstanceUtil;
@@ -18,21 +20,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static java.lang.String.format;
-
 @Service
 @Slf4j
 public class OtpEmailRepository {
 
 	private static final String LOCALIZATION_KEY_LOGIN_SUBJECT_EMAIL = "email.login.otp.sub";
-	private static final String LOCALIZATION_KEY_LOGIN_BODY_EMAIL = "email.login.otp.body";
 	private static final String LOCALIZATION_KEY_PWD_RESET_SUBJECT_EMAIL = "email.pwd.reset.otp.sub";
-	private static final String LOCALIZATION_KEY_PWD_RESET_BODY_EMAIL = "email.pwd.reset.otp.body";
 	private static final String PWD_RESET_SUBJECT_EMAIL = 	"Password Reset";
-	private static final String PWD_RESET_BODY_EMAIL = "Your OTP for recovering password is %s.";
 	private static final String LOGIN_SUBJECT_EMAIL = "OTP for 24X7 OnCourt Login";
 	private static final String LOGIN_OTP_TEMPLATE = "USER_LOGIN_OTP";
-	private static final String LOGIN_BODY_EMAIL = "Dear Citizen, Your Login OTP is %s.";
+	private static final String OTP_NUMBER_VARIABLE = "otpNumber";
     private CustomKafkaTemplate<String, EmailRequest> kafkaTemplate;
     private String emailTopic;
 
@@ -42,6 +39,9 @@ public class OtpEmailRepository {
 
 	@Autowired
 	private MultiStateInstanceUtil centralInstanceUtil;
+
+	@Autowired
+	private ObjectMapper objectMapper;
 
     @Autowired
     public OtpEmailRepository(CustomKafkaTemplate<String, EmailRequest> kafkaTemplate,
@@ -60,7 +60,7 @@ public class OtpEmailRepository {
 
 	private void sendEmail(String emailId, String otpNumber, OtpRequest otpRequest) {
 		Email email = Email.builder()
-			.body(getBody(otpNumber,otpRequest))
+			.body(getBody(otpNumber))
 			.subject(getSubject(otpRequest))
 			.isHTML(true)
 			.templateCode(LOGIN_OTP_TEMPLATE)
@@ -75,7 +75,7 @@ public class OtpEmailRepository {
 		String locale;
 		if(otpRequest.getRequestInfo() != null && otpRequest.getRequestInfo().getMsgId() != null && otpRequest.getRequestInfo().getMsgId().contains("|"))
 		{
-			locale = otpRequest.getRequestInfo().getMsgId().split("|")[1];
+			locale = otpRequest.getRequestInfo().getMsgId().split("\\|")[1];
 		}
 		else {
 			locale = "en_IN";
@@ -89,10 +89,8 @@ public class OtpEmailRepository {
 		Map<String, String> localisedMessages = localizationService.getLocalisedMessages(tenantId, locale, "egov-user");
 		if (localisedMessages.isEmpty()) {
 			log.info("Localization Service didn't return any Subject so using default...");
-			localisedMessages.put(LOCALIZATION_KEY_PWD_RESET_SUBJECT_EMAIL, "Password Reset");
-			localisedMessages.put(LOCALIZATION_KEY_PWD_RESET_BODY_EMAIL, "Your OTP for recovering password is %s.");
-			localisedMessages.put(LOCALIZATION_KEY_LOGIN_SUBJECT_EMAIL, "Login OTP");
-			localisedMessages.put(LOCALIZATION_KEY_LOGIN_BODY_EMAIL, "Dear Citizen, Your Login OTP is %s.");
+			localisedMessages.put(LOCALIZATION_KEY_PWD_RESET_SUBJECT_EMAIL, PWD_RESET_SUBJECT_EMAIL);
+			localisedMessages.put(LOCALIZATION_KEY_LOGIN_SUBJECT_EMAIL, LOGIN_SUBJECT_EMAIL);
 		}
 		return localisedMessages.get(localizationKey);
 	}
@@ -112,20 +110,19 @@ public class OtpEmailRepository {
 		return subject;
 	}
 
-	private String getBody(String otpNumber, OtpRequest otpRequest) {
-		String body;
-		if (otpRequest.getType() == OtpRequestType.PASSWORD_RESET){
-			body = getMessages(otpRequest, LOCALIZATION_KEY_PWD_RESET_BODY_EMAIL);
-			if(ObjectUtils.isEmpty(body))
-				body = PWD_RESET_BODY_EMAIL;
-			body = format(body, otpNumber);
+	/**
+	 * egov-notification-mail treats the body as the JSON variables for the handlebars template
+	 * resolved from the template code, not as the message itself. Anything that is not a JSON
+	 * object fails in MessageConstruction and the mail is never sent.
+	 */
+	private String getBody(String otpNumber) {
+		Map<String, String> variables = new HashMap<>();
+		variables.put(OTP_NUMBER_VARIABLE, otpNumber);
+		try {
+			return objectMapper.writeValueAsString(variables);
+		} catch (JsonProcessingException e) {
+			throw new IllegalStateException("Could not build the email body", e);
 		}
-		else {
-			Map<String, Object> otpBody = new HashMap<>();
-			otpBody.put("otpNumber", otpNumber);
-			return otpBody.toString();
-		}
-		return body;
 	}
 
 
