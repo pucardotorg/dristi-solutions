@@ -43,6 +43,9 @@ public class OtpEmailRepository {
 	@Autowired
 	private ObjectMapper objectMapper;
 
+	@Value("${egov.pwd.reset.email.template.code}")
+	private String pwdResetTemplateCode;
+
     @Autowired
     public OtpEmailRepository(CustomKafkaTemplate<String, EmailRequest> kafkaTemplate,
 							  @Value("${email.topic}") String emailTopic, LocalizationService localizationService) {
@@ -63,12 +66,22 @@ public class OtpEmailRepository {
 			.body(getBody(otpNumber))
 			.subject(getSubject(otpRequest))
 			.isHTML(true)
-			.templateCode(LOGIN_OTP_TEMPLATE)
+			.templateCode(getTemplateCode(otpRequest))
 			.emailTo(Collections.singleton(emailId))
 			.build();
 		EmailRequest emailRequest = EmailRequest.builder().requestInfo(RequestInfo.builder().build()).email(email).build();
 		String updatedTopic = centralInstanceUtil.getStateSpecificTopicName(otpRequest.getTenantId(), emailTopic);
 		kafkaTemplate.send(updatedTopic, emailRequest);
+	}
+
+	/**
+	 * The template code drives both the handlebars shell in MDMS and the wording in
+	 * localization, so a code has to exist in both before it can be configured here.
+	 */
+	private String getTemplateCode(OtpRequest otpRequest) {
+		if (otpRequest.getType() == OtpRequestType.PASSWORD_RESET)
+			return pwdResetTemplateCode;
+		return LOGIN_OTP_TEMPLATE;
 	}
 
 	private String getLocale(OtpRequest otpRequest){
