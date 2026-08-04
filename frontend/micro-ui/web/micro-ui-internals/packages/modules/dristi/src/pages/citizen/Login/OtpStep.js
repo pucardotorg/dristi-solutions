@@ -18,34 +18,10 @@ const AlertIcon = () => (
   </svg>
 );
 
-const OtpStep = ({ t, mobileNumber, otp, onOtpChange, onSelect, onResend, onBack, canSubmit, error }) => {
+const OtpStep = ({ t, mobileNumber, otp, onOtpChange, onSelect, onResend, onBack, canSubmit, error, email: emailProp }) => {
   const [digits, setDigits] = useState(Array(OTP_LENGTH).fill(""));
-  const [email, setEmail] = useState("");
   const [secondsLeft, setSecondsLeft] = useState(RESEND_COOLDOWN);
   const inputsRef = useRef([]);
-
-  const Digit = window.Digit || {};
-  const tenantId = Digit.ULBService?.getCurrentTenantId?.();
-
-  // Fetch the registered e-mail so the subtext can show where the OTP was sent, mirroring the design.
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const {
-          user: [userDetail],
-        } = await Digit.UserService.userSearch(tenantId, { mobileNumber }, {});
-        if (active && userDetail?.emailId) {
-          setEmail(userDetail.emailId);
-        }
-      } catch (e) {
-        /* email is optional in the subtext */
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [mobileNumber]);
 
   // Resend cooldown countdown.
   useEffect(() => {
@@ -132,7 +108,7 @@ const OtpStep = ({ t, mobileNumber, otp, onOtpChange, onSelect, onResend, onBack
       <h2 className="login-v2-heading">{t("CS_VERIFY_MOBILE_HEADING")}</h2>
       <p className="login-v2-subtext">
         {t("CS_ENTER_OTP_SENT_TO")} {maskedMobile}
-        {email ? ` ${t("CS_COMMON_AND")} ${maskEmail(email)}` : ""}
+        {emailProp ? ` ${t("CS_COMMON_AND")} ${maskEmail(emailProp)}` : ""}
       </p>
 
       <div className="login-v2-otp-row" onPaste={handlePaste}>

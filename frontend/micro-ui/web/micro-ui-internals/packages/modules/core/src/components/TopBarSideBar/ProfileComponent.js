@@ -116,7 +116,7 @@ const ProfileComponent = ({ userDetails, userOptions, handleUserDropdownSelectio
                 <div className="password-settings-text">
                   <span className="password-settings-title">{t("PASSWORD_SETTINGS")}</span>
                   <span className="password-settings-sub">
-                    {window.localStorage.getItem("showPasswordSetupPrompt") === "true" ? t("SET_PASSWORD") : t("CHANGE_YOUR_PASSWORD")}
+                    {window.localStorage.getItem("hasPassword") === "true" ? t("CHANGE_YOUR_PASSWORD") : t("SET_PASSWORD")}
                   </span>
                 </div>
               </div>

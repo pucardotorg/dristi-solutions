@@ -23,9 +23,9 @@ const PasswordSettings = () => {
   const tenantId = window.localStorage.getItem("tenant-id");
   const mobileNumber = userInfo?.mobileNumber;
 
-  // Whether this user still has no password set (persisted from the login auth response). Drives
+  // Whether this user still has no password set (persisted from the user search response). Drives
   // "Set a password" vs "Change your password" wording on this screen.
-  const passwordNotSet = userInfo?.showPasswordSetupPrompt === true;
+  const passwordExists = window.localStorage.getItem("hasPassword") === "true";
 
   const [step, setStep] = useState(STEP_FORM);
   const [newPassword, setNewPassword] = useState("");
@@ -35,7 +35,7 @@ const PasswordSettings = () => {
   const [showToast, setShowToast] = useState(null);
   const [loader, setLoader] = useState(false); // full-screen overlay shown while a password API call is in flight
 
-  const getUserType = () => Digit.UserService.getType();
+  const userType = window.location.href.includes("/citizen") ? "citizen" : "employee";
   const goHome = () => history.push(`/${window?.contextPath}/citizen/dristi/home`);
 
   const buildRequestInfo = () => ({
@@ -47,7 +47,7 @@ const PasswordSettings = () => {
   });
 
   const sendPasswordResetOtp = async () => {
-    await Digit.UserService.sendOtp({ otp: { mobileNumber, tenantId, type: "passwordreset", userType: getUserType()?.toUpperCase() } }, tenantId);
+    await Digit.UserService.sendOtp({ otp: { mobileNumber, tenantId, type: "passwordreset", userType: userType?.toUpperCase() } }, tenantId);
   };
 
   // Step 1: the user submitted a new password on the form - send the OTP and move to verification.
@@ -90,7 +90,7 @@ const PasswordSettings = () => {
           userName: mobileNumber,
           newPassword,
           tenantId,
-          type: getUserType()?.toUpperCase(),
+          type: userType?.toUpperCase(),
         },
         { params: { tenantId } }
       );
@@ -147,8 +147,8 @@ const PasswordSettings = () => {
       ) : (
         <SetPassword
           t={t}
-          header={passwordNotSet ? "SET_PASSWORD" : "CS_CHANGE_PASSWORD_HEADING"}
-          subText={passwordNotSet ? "SET_PASSWORD_PROMPT_MESSAGE" : "CS_CHANGE_PASSWORD_SUBTEXT"}
+          header={passwordExists ? "CS_CHANGE_PASSWORD_HEADING" : "SET_PASSWORD"}
+          subText={passwordExists ? "CS_CHANGE_PASSWORD_SUBTEXT" : "SET_PASSWORD_PROMPT_MESSAGE"}
           submitLabel="CS_COMMON_CONTINUE"
           onCancel={goHome}
           backLabel="RETURN_TO_HOME"

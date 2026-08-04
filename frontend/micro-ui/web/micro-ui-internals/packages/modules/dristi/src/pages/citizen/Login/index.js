@@ -81,6 +81,8 @@ const Login = ({ stateCode }) => {
   const [setPwSubStep, setSetPwSubStep] = useState("FORM"); // "FORM" | "OTP" (within the set-password prompt)
   const [newPasswordValue, setNewPasswordValue] = useState("");
   const [loader, setLoader] = useState(false); // full-screen overlay shown while a login/password API call is in flight
+  const [userEmail, setUserEmail] = useState(""); // captured during the mobile-number lookup, reused on the OTP screen
+  const [otpEntryStep, setOtpEntryStep] = useState("PASSWORD"); // which step the login OTP screen's Back button returns to
 
   useEffect(() => {
     let errorTimeout;
@@ -146,7 +148,9 @@ const Login = ({ stateCode }) => {
     )
   );
 
-  const getUserType = () => Digit.UserService.getType();
+  // This is the citizen login flow, so the user type is derived from the URL rather than from
+  // Digit.UserService.getType().
+  const userType = window.location.href.includes("/citizen") ? "citizen" : "employee";
 
   const handleOtpChange = (otp) => {
     setParmas({ ...params, otp });
@@ -198,10 +202,37 @@ const Login = ({ stateCode }) => {
     setParmas({ ...params, mobileNumber: value?.replace(/[^0-9]/g, "") });
   };
 
-  const submitMobileNumber = () => {
+  // After the user enters a mobile number, look them up to decide the next screen: users who
+  // already have a real password go to the password screen; users without one skip straight to OTP
+  // login. The lookup's e-mail is reused on the OTP screen so we don't call userSearch again there.
+  const submitMobileNumber = async () => {
+    //here
     setPasswordError(null);
     setPassword("");
-    setLoginStep("PASSWORD");
+    setLoader(true);
+    let hasPassword = true; // default to the password screen if the lookup is inconclusive
+    try {
+      console.log("called");
+      const { user } = await Digit.UserService.userSearch(stateCode, { mobileNumber: params.mobileNumber }, {});
+      const userDetail = user?.[0];
+      setUserEmail(userDetail?.emailId || "");
+      hasPassword = Boolean(userDetail?.hasPassword);
+      // Persist whether this user has a real password set, for later screens to read.
+      localStorage.setItem("hasPassword", hasPassword ? true : false);
+    } catch (e) {
+      /* inconclusive lookup - fall back to the password screen */
+    }
+
+    if (hasPassword) {
+      setLoader(false);
+      setLoginStep("PASSWORD");
+    } else {
+      // No password set yet - skip the password screen and go straight to OTP login. The OTP
+      // screen's Back button should return to the mobile-number step (there is no password screen).
+      // requestLoginOtp keeps the loader on until the OTP is sent, then clears it.
+      setOtpEntryStep("MOBILE");
+      requestLoginOtp();
+    }
   };
 
   const handlePasswordChange = (value) => {
@@ -218,7 +249,7 @@ const Login = ({ stateCode }) => {
         username: params.mobileNumber,
         password,
         tenantId: stateCode,
-        userType: getUserType(),
+        userType,
         authType: "PASSWORD",
       };
       const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
@@ -254,7 +285,7 @@ const Login = ({ stateCode }) => {
     const data = {
       mobileNumber: params.mobileNumber,
       tenantId: stateCode,
-      userType: getUserType(),
+      userType,
     };
     const [, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
     setLoader(false);
@@ -272,13 +303,15 @@ const Login = ({ stateCode }) => {
   const switchToOtpLogin = () => {
     setPasswordError(null);
     setPassword("");
+    // Reached OTP from the password screen ("Forgot password"), so Back should return there.
+    setOtpEntryStep("PASSWORD");
     requestLoginOtp();
   };
 
   const backToPasswordStep = () => {
     setOtpError(false);
     setParmas((prev) => ({ ...prev, otp: "" }));
-    setLoginStep("PASSWORD");
+    setLoginStep(otpEntryStep);
   };
 
   // Fires a password-reset OTP for the "set a password" prompt (a fresh OTP dedicated to the
@@ -291,7 +324,7 @@ const Login = ({ stateCode }) => {
     setLoader(true);
     try {
       await Digit.UserService.sendOtp(
-        { otp: { mobileNumber: params.mobileNumber, tenantId: stateCode, type: "passwordreset", userType: getUserType()?.toUpperCase() } },
+        { otp: { mobileNumber: params.mobileNumber, tenantId: stateCode, type: "passwordreset", userType: userType.toUpperCase() } },
         stateCode
       );
       setSetPwSubStep("OTP");
@@ -306,7 +339,7 @@ const Login = ({ stateCode }) => {
     setLoader(true);
     try {
       await Digit.UserService.sendOtp(
-        { otp: { mobileNumber: params.mobileNumber, tenantId: stateCode, type: "passwordreset", userType: getUserType()?.toUpperCase() } },
+        { otp: { mobileNumber: params.mobileNumber, tenantId: stateCode, type: "passwordreset", userType: userType.toUpperCase() } },
         stateCode
       );
     } finally {
@@ -337,7 +370,7 @@ const Login = ({ stateCode }) => {
           userName: params.mobileNumber,
           newPassword: newPasswordValue,
           tenantId: stateCode,
-          type: getUserType()?.toUpperCase(),
+          type: userType.toUpperCase(),
         },
         { params: { tenantId: stateCode } }
       );
@@ -381,7 +414,7 @@ const Login = ({ stateCode }) => {
     const data = {
       ...mobileNumber,
       tenantId: stateCode,
-      userType: getUserType(),
+      userType,
     };
     const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
     if (!err) {
@@ -417,7 +450,7 @@ const Login = ({ stateCode }) => {
           username: mobileNumber,
           password: otp,
           tenantId: stateCode,
-          userType: getUserType(),
+          userType,
           authType: "OTP",
         };
         const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
@@ -478,7 +511,7 @@ const Login = ({ stateCode }) => {
     const data = {
       mobileNumber,
       tenantId: stateCode,
-      userType: getUserType(),
+      userType,
     };
     setLoader(true);
     try {
@@ -591,6 +624,7 @@ const Login = ({ stateCode }) => {
                   onBack={backToPasswordStep}
                   canSubmit={canSubmitOtp}
                   error={otpError}
+                  email={userEmail}
                   t={t}
                 />
               ) : (
