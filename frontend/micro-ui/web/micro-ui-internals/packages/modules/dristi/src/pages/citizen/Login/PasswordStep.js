@@ -17,7 +17,7 @@ const PasswordStep = ({ t, mobileNumber, password, onPasswordChange, onSelect, c
       <Card>
         <CardHeader>{t("CS_ENTER_PASSWORD_HEADING")}</CardHeader>
         <CardText>{t("CS_ENTER_PASSWORD_SUBTEXT")}</CardText>
-        <CardText style={{ marginBottom: "16px" }}>
+        <CardText style={{ paddingBottom: "25px", textAlign: "left" }}>
           <b>{`+91 ${mobileNumber}`}</b>{" "}
           <span className="link" style={{ cursor: "pointer", marginLeft: "8px" }} onClick={onBack}>
             {t("CS_COMMON_CHANGE")}

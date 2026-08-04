@@ -648,3 +648,25 @@
     }
   }
 }
+
+/* Login password field eye-toggle. The password screen renders inside `.login-form .card`, whose
+   generic `button { width: 100%; margin-top: 32px }` rule (meant for the Sign In button) would
+   otherwise turn this icon toggle into a full-width block below the input. Force it back to an
+   icon overlaid inside the field, on the right. */
+.password-input-field-container {
+  position: relative;
+
+  button {
+    position: absolute !important;
+    top: 50% !important;
+    right: 10px !important;
+    transform: translateY(-50%) !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
