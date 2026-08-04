@@ -12,6 +12,12 @@ const AlertIcon = () => (
 const MobileNumberStep = ({ t, mobileNumber, onMobileChange, onSelect, canSubmit, isUserLoggedIn, error }) => {
   const isValid = mobileNumber?.length === 10 && mobileNumber.match(window?.Digit.Utils.getPattern("MobileNo"));
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && isValid && canSubmit) {
+      onSelect();
+    }
+  };
+
   return (
     <div className="login-v2-card">
       <div className="login-v2-brand">
@@ -37,6 +43,7 @@ const MobileNumberStep = ({ t, mobileNumber, onMobileChange, onSelect, canSubmit
             autoComplete="username"
             value={mobileNumber}
             onChange={onMobileChange}
+            onKeyDown={handleKeyDown}
           />
         </div>
         {error && (

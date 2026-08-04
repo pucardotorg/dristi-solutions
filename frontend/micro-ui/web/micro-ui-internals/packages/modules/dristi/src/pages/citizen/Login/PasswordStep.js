@@ -32,6 +32,12 @@ const PasswordStep = ({ t, mobileNumber, password, onPasswordChange, onSelect, c
   const [isVisible, setIsVisible] = useState(false);
   const isValid = password?.length >= 8;
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && isValid && canSubmit) {
+      onSelect();
+    }
+  };
+
   return (
     <div className="login-v2-card">
       <button className="login-v2-back-link" onClick={onBack}>
@@ -61,6 +67,7 @@ const PasswordStep = ({ t, mobileNumber, password, onPasswordChange, onSelect, c
             autoComplete="current-password"
             value={password}
             onChange={(e) => onPasswordChange(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
           <button
             type="button"
