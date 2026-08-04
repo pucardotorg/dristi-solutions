@@ -3,17 +3,13 @@ import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { Loader } from "@egovernments/digit-ui-react-components";
-import OtpStep from "./OtpStep";
+import SelectOtp from "./SelectOtp";
 import SetPassword from "./SetPassword";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
-const STEP_FORM = "FORM";
-const STEP_OTP = "OTP";
-
 /**
- * Password Settings screen, reached from the profile menu. It reuses the exact "set a password"
- * experience from the login flow: enter the new password, verify with a password-reset OTP, then
- * save it via the no-login update endpoint.
+ * Password Settings screen, reached from the profile menu. Enter the new password, verify with a
+ * password-reset OTP (shown as the old pop-up modal), then save it via the no-login update endpoint.
  */
 const PasswordSettings = () => {
   const { t } = useTranslation();
@@ -23,15 +19,15 @@ const PasswordSettings = () => {
   const tenantId = window.localStorage.getItem("tenant-id");
   const mobileNumber = userInfo?.mobileNumber;
 
-  // Whether this user still has no password set (persisted from the user search response). Drives
+  // Whether this user already has a real password (persisted from the user search at login). Drives
   // "Set a password" vs "Change your password" wording on this screen.
   const passwordExists = window.localStorage.getItem("hasPassword") === "true";
 
-  const [step, setStep] = useState(STEP_FORM);
   const [newPassword, setNewPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState(false);
   const [canSubmitOtp, setCanSubmitOtp] = useState(true);
+  const [showOtpModal, setShowOtpModal] = useState(false);
   const [showToast, setShowToast] = useState(null);
   const [loader, setLoader] = useState(false); // full-screen overlay shown while a password API call is in flight
 
@@ -50,7 +46,7 @@ const PasswordSettings = () => {
     await Digit.UserService.sendOtp({ otp: { mobileNumber, tenantId, type: "passwordreset", userType: userType?.toUpperCase() } }, tenantId);
   };
 
-  // Step 1: the user submitted a new password on the form - send the OTP and move to verification.
+  // Step 1: the user submitted a new password on the form - send the OTP and open the modal.
   const startOtp = async (password) => {
     setNewPassword(password);
     setOtpError(false);
@@ -59,7 +55,7 @@ const PasswordSettings = () => {
     setLoader(true);
     try {
       await sendPasswordResetOtp();
-      setStep(STEP_OTP);
+      setShowOtpModal(true);
     } finally {
       setLoader(false);
     }
@@ -95,7 +91,8 @@ const PasswordSettings = () => {
         { params: { tenantId } }
       );
       // Password now exists, so subsequent screens should read "Change your password".
-      window.localStorage.setItem("showPasswordSetupPrompt", "false");
+      window.localStorage.setItem("hasPassword", "true");
+      setShowOtpModal(false);
       setShowToast({ error: false, label: t("PASSWORD_UPDATED_SUCCESSFULLY") });
       setTimeout(goHome, 1500);
     } catch (err) {
@@ -108,43 +105,27 @@ const PasswordSettings = () => {
   };
 
   return (
-    <div className="login-v2">
-      {loader && (
-        <div
-          style={{
-            width: "100vw",
-            height: "100vh",
-            zIndex: "999999999999999999",
-            position: "fixed",
-            right: "0",
-            display: "flex",
-            top: "0",
-            background: "rgb(234 234 245 / 50%)",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          className="submit-loader"
-        >
-          <Loader />
-        </div>
-      )}
-      {step === STEP_OTP ? (
-        <OtpStep
-          mobileNumber={mobileNumber || ""}
-          otp={otp}
-          onOtpChange={setOtp}
-          onSelect={submitNewPassword}
-          onResend={resendOtp}
-          onBack={() => {
-            setOtpError(false);
-            setOtp("");
-            setStep(STEP_FORM);
-          }}
-          canSubmit={canSubmitOtp}
-          error={otpError}
-          t={t}
-        />
-      ) : (
+    <div className="user-registration">
+      <div className="citizen-form-wrapper">
+        {loader && (
+          <div
+            style={{
+              width: "100vw",
+              height: "100vh",
+              zIndex: "999999999999999999",
+              position: "fixed",
+              right: "0",
+              display: "flex",
+              top: "0",
+              background: "rgb(234 234 245 / 50%)",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            className="submit-loader"
+          >
+            <Loader />
+          </div>
+        )}
         <SetPassword
           t={t}
           header={passwordExists ? "CS_CHANGE_PASSWORD_HEADING" : "SET_PASSWORD"}
@@ -155,8 +136,29 @@ const PasswordSettings = () => {
           onSubmit={startOtp}
           blocklistIdentifiers={[mobileNumber, userInfo?.emailId]}
         />
-      )}
-      {showToast && <CustomToast error={showToast.error} label={showToast.label} errorId={null} onClose={() => setShowToast(null)} duration={5000} />}
+        {showOtpModal && (
+          <SelectOtp
+            cardText={t("CS_LOGIN_OTP_TEXT")}
+            mobileNumber={mobileNumber || ""}
+            onOtpChange={setOtp}
+            onResend={resendOtp}
+            onSelect={submitNewPassword}
+            otp={otp}
+            error={otpError}
+            canSubmit={canSubmitOtp}
+            params={{ otp }}
+            setParams={(p) => setOtp((p && p.otp) || "")}
+            setState={(updater) =>
+              setShowOtpModal((prev) => (typeof updater === "function" ? updater({ showOtpModal: prev }).showOtpModal : updater.showOtpModal))
+            }
+            t={t}
+            path=""
+          />
+        )}
+        {showToast && (
+          <CustomToast error={showToast.error} label={showToast.label} errorId={null} onClose={() => setShowToast(null)} duration={5000} />
+        )}
+      </div>
     </div>
   );
 };
