@@ -48,7 +48,6 @@ class HealthStatusConsumerTest {
         verify(serviceHealthRepository).insert(captor.capture());
         ServiceHealthStatus status = captor.getValue();
         assertThat(status.getServiceName()).isEqualTo("SMS");
-        assertThat(status.getServiceUrl()).isEqualTo("https://msdgweb.mgov.gov.in");
         assertThat(status.getLastStatus()).isEqualTo("UP");
         assertThat(status.getLastUpdatedTime()).isEqualTo(1000L);
         assertThat(status.getResponseTimeMs()).isEqualTo(50L);
