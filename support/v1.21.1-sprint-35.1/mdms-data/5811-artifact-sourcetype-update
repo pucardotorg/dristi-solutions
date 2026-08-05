@@ -1,0 +1,41 @@
+---
+SELECT
+    ea.filingnumber,
+    ea.artifactnumber,
+    ea.sourceid,
+    ea.sourcetype,
+    adv #>> '{advocateBarRegNumberWithName,individualId}' AS advocate_id,
+    f #>> '{data,multipleAdvocatesAndPip,boxComplainant,individualId}' AS complainant_id
+FROM dristi_evidence_artifact ea
+JOIN dristi_cases c
+    ON c.id = ea.caseid
+CROSS JOIN LATERAL jsonb_array_elements(
+    COALESCE(c.additionaldetails->'advocateDetails'->'formdata','[]'::jsonb)
+) f
+CROSS JOIN LATERAL jsonb_array_elements(
+    COALESCE(f->'data'->'multipleAdvocatesAndPip'->'multipleAdvocateNameDetails','[]'::jsonb)
+) adv
+WHERE ea.sourceid = adv #>> '{advocateBarRegNumberWithName,individualId}'
+  AND f #>> '{data,multipleAdvocatesAndPip,boxComplainant,individualId}' IS NOT NULL
+  AND LOWER(ea.sourcetype) = 'accused';
+---
+
+
+
+BEGIN;
+
+UPDATE dristi_evidence_artifact ea
+SET sourcetype = 'COMPLAINANT'
+FROM dristi_cases c
+CROSS JOIN LATERAL jsonb_array_elements(
+    COALESCE(c.additionaldetails->'advocateDetails'->'formdata','[]'::jsonb)
+) f
+CROSS JOIN LATERAL jsonb_array_elements(
+    COALESCE(f->'data'->'multipleAdvocatesAndPip'->'multipleAdvocateNameDetails','[]'::jsonb)
+) adv
+WHERE c.id = ea.caseid
+  AND ea.sourceid = adv #>> '{advocateBarRegNumberWithName,individualId}'
+  AND f #>> '{data,multipleAdvocatesAndPip,boxComplainant,individualId}' IS NOT NULL
+  AND LOWER(ea.sourcetype) = 'accused';
+
+  COMMIT;
