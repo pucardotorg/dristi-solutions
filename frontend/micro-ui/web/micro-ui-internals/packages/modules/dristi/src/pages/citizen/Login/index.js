@@ -354,6 +354,7 @@ const Login = ({ stateCode }) => {
       );
       // Password now exists, so future screens should read "Change your password".
       localStorage.setItem("showPasswordSetupPrompt", "false");
+      localStorage.setItem("hasPassword", "true");
       setShowSetPasswordScreen(false);
       finishLogin();
     } catch (err) {
