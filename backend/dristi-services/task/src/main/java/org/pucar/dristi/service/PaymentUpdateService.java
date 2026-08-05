@@ -157,7 +157,7 @@ public class PaymentUpdateService {
             }
 
         } catch (Exception e) {
-            log.error("Error updating workflow for task payment: {}", e.getMessage(), e);
+            log.error("Error updating workflow for task payment", e);
         }
     }
 

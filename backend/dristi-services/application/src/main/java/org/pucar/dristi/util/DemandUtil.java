@@ -54,12 +54,12 @@ public class DemandUtil {
             restTemplate.postForEntity(uri, demandRequest, Object.class);
             log.info("Demand created successfully for consumerCode: {}", consumerCode);
         } catch (Exception e) {
-            log.error("Error while creating demand for application: {}", e.getMessage(), e);
+            log.error("Error while creating demand for application", e);
             throw new CustomException(ERROR_WHILE_CREATING_DEMAND_FOR_CASE, "Error while creating demand: " + e.getMessage());
         }
     }
 
-    private DemandCreateRequest buildDemandRequest(RequestInfo requestInfo, String tenantId, String entityType, 
+    private DemandCreateRequest buildDemandRequest(RequestInfo requestInfo, String tenantId, String entityType,
                                                     String filingNumber, String consumerCode, Double totalAmount) {
         BreakDown breakDownItem = BreakDown.builder()
                 .type("Application Fee")
@@ -92,12 +92,12 @@ public class DemandUtil {
 
     private void validateParamsForDemandCreate(RequestInfo requestInfo, String tenantId, String entityType,
                                                String filingNumber, String consumerCode, Double totalAmount) {
-        
+
         boolean isRequestInvalid = Stream.of(tenantId, entityType, filingNumber, consumerCode)
                 .anyMatch(param -> param == null || param.isBlank()) ||
                 totalAmount == null || totalAmount < 0D ||
                 requestInfo == null;
-        
+
         if (isRequestInvalid) {
             throw new CustomException(VALIDATION_ERR, "Invalid parameters for demand creation");
         }

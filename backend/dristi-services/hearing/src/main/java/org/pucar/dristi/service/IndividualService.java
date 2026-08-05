@@ -67,7 +67,7 @@ public class IndividualService {
                 return Collections.emptyList();
             }
         } catch (Exception e) {
-            log.error("Error in search individual service :: {}", e.toString());
+            log.error("Error in search individual service", e);
             log.error("Individuals not found");
             return Collections.emptyList();
         }

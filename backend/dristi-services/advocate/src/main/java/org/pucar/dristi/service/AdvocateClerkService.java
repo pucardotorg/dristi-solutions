@@ -55,7 +55,7 @@ public class AdvocateClerkService {
         } catch(CustomException e){
             throw e;
         } catch (Exception e){
-            log.error("Error occurred while creating advocate clerk :: {}", e.toString());
+            log.error("Error occurred while creating advocate clerk", e);
             throw new CustomException(ADVOCATE_CLERK_CREATE_EXCEPTION,e.getMessage());
         }
     }
@@ -77,7 +77,7 @@ public class AdvocateClerkService {
             throw e;
         }
         catch (Exception e){
-            log.error(FETCH_SEARCH_RESULT_EXCEPTION, e.toString());
+            log.error(FETCH_SEARCH_RESULT_EXCEPTION, e);
             throw new CustomException(ADVOCATE_CLERK_SEARCH_EXCEPTION,e.getMessage());
         }
     }
@@ -106,7 +106,7 @@ public class AdvocateClerkService {
             throw e;
         }
         catch (Exception e){
-            log.error(FETCH_SEARCH_RESULT_EXCEPTION, e.toString());
+            log.error(FETCH_SEARCH_RESULT_EXCEPTION, e);
             throw new CustomException(ADVOCATE_CLERK_SEARCH_EXCEPTION,e.getMessage());
         }
     }
@@ -144,7 +144,7 @@ public class AdvocateClerkService {
             throw e;
         }
         catch (Exception e){
-            log.error(FETCH_SEARCH_RESULT_EXCEPTION, e.toString());
+            log.error(FETCH_SEARCH_RESULT_EXCEPTION, e);
             throw new CustomException(ADVOCATE_CLERK_SEARCH_EXCEPTION,e.getMessage());
         }
     }
@@ -173,7 +173,7 @@ public class AdvocateClerkService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while updating advocate clerk :: {}", e.toString());
+            log.error("Error occurred while updating advocate clerk", e);
             throw new CustomException(ADVOCATE_CLERK_UPDATE_EXCEPTION, "Error occurred while updating advocate clerk: " + e.getMessage());
         }
     }
@@ -182,7 +182,7 @@ public class AdvocateClerkService {
         try {
             return validator.validateApplicationExistence(clerk);
         } catch (Exception e) {
-            log.error("Error validating existing application :: {}", e.toString());
+            log.error("Error validating existing application", e);
             throw new CustomException(VALIDATION_EXCEPTION, "Error validating existing application: " + e.getMessage());
         }
     }

@@ -42,7 +42,7 @@ public class AmountRowMapper implements ResultSetExtractor<Map<UUID, Amount>> {
         } catch(CustomException e){
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while processing Task amount ResultSet :: {}", e.toString());
+            log.error("Error occurred while processing Task amount ResultSet", e);
             throw new CustomException(ROW_MAPPER_EXCEPTION, "Error occurred while processing Task amount ResultSet: " + e.getMessage());
         }
         return amountMap;

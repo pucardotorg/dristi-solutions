@@ -57,7 +57,7 @@ public class AdvocateClerkQueryBuilder {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while building advocate clerk search query :: {}", e.toString());
+            log.error("Error while building advocate clerk search query", e);
             throw new CustomException(ADVOCATE_CLERK_SEARCH_QUERY_EXCEPTION, ADVOCATE_CLERK_SEARCH_QUERY_BUILD_EXCEPTION + e.getMessage());
         }
     }
@@ -136,7 +136,7 @@ public class AdvocateClerkQueryBuilder {
             return query.toString();
         }
         catch (Exception e) {
-            log.error("Error while building advocate clerk search by status query :: {}", e.toString());
+            log.error("Error while building advocate clerk search by status query", e);
             throw new CustomException(ADVOCATE_CLERK_SEARCH_QUERY_EXCEPTION,ADVOCATE_CLERK_SEARCH_QUERY_BUILD_EXCEPTION+ e.getMessage());
         }
     }
@@ -169,7 +169,7 @@ public class AdvocateClerkQueryBuilder {
             return query.toString();
         }
         catch (Exception e) {
-            log.error("Error while building advocate clerk search by app num query :: {}",e.toString());
+            log.error("Error while building advocate clerk search by app num query", e);
             throw new CustomException(ADVOCATE_CLERK_SEARCH_QUERY_EXCEPTION,ADVOCATE_CLERK_SEARCH_QUERY_BUILD_EXCEPTION+ e.getMessage());
         }
     }
@@ -229,7 +229,7 @@ public class AdvocateClerkQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building clerk document search query :: {}",e.toString());
+            log.error("Error while building clerk document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION,"Exception occurred while building the clerk document query: "+ e.getMessage());
         }
     }

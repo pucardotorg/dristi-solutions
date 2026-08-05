@@ -134,7 +134,7 @@ public class PendingTaskUtil {
                 callAnalytics(new PendingTaskRequest(createInternalRequestInfo(), pendingTask));
             }
         } catch (Exception e) {
-            log.error("Error occurred while expiring pending tasks: {}", e.getMessage());
+            log.error("Error occurred while expiring pending tasks", e);
         }
     }
 }

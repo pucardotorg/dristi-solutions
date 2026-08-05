@@ -90,7 +90,7 @@ public class MdmsDataConfig {
             }
             return result;
         } catch (Exception e) {
-            log.error("Unable to create {} :: {}", label, e.getMessage(), e);
+            log.error("Unable to create {}", label, e);
             failures.add(label + " (" + e.getMessage() + ")");
             return new ArrayList<>();
         }

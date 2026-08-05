@@ -91,7 +91,7 @@ public class ApplicationService {
             producer.push(config.getApplicationCreateTopic(), body);
             return body.getApplication();
         } catch (Exception e) {
-            log.error("Error occurred while creating application {}", e.getMessage());
+            log.error("Error occurred while creating application", e);
             throw new CustomException(CREATE_APPLICATION_ERR, e.getMessage());
         }
     }
@@ -188,10 +188,10 @@ public class ApplicationService {
             return applicationRequest.getApplication();
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while updating application {}", e.getMessage());
+            log.error("Custom Exception occurred while updating application", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while updating application {}", e.getMessage());
+            log.error("Error occurred while updating application", e);
             throw new CustomException(UPDATE_APPLICATION_ERR, "Error occurred while updating application: " + e.getMessage());
         }
     }
@@ -310,7 +310,7 @@ public class ApplicationService {
                 return new ArrayList<>();
             return applicationList;
         } catch (Exception e) {
-            log.error("Error while fetching to search results {}", e.toString());
+            log.error("Error while fetching to search results", e);
             throw new CustomException(APPLICATION_SEARCH_ERR, e.getMessage());
         }
     }
@@ -319,10 +319,10 @@ public class ApplicationService {
         try {
             return applicationRepository.checkApplicationExists(applicationExistsRequest.getApplicationExists());
         } catch (CustomException e) {
-            log.error("Error while checking application exist {}", e.toString());
+            log.error("Error while checking application exist", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error while checking application exist {}", e.toString());
+            log.error("Error while checking application exist", e);
             throw new CustomException(APPLICATION_EXIST_EXCEPTION, e.getMessage());
         }
     }
@@ -354,10 +354,10 @@ public class ApplicationService {
                     .requestInfo(applicationAddCommentRequest.getRequestInfo()).build();
             producer.push(config.getApplicationUpdateCommentsTopic(), applicationRequest);
         } catch (CustomException e) {
-            log.error("Error while adding comments {}", e.toString());
+            log.error("Error while adding comments", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error while adding comments {}", e.toString());
+            log.error("Error while adding comments", e);
             throw new CustomException(COMMENT_ADD_ERR, e.getMessage());
         }
     }
@@ -371,29 +371,29 @@ public class ApplicationService {
             String filingNumber = application.getFilingNumber();
             String applicationNumber = application.getApplicationNumber();
             String applicationType = application.getApplicationType();
-            
+
             String suffix = getSuffixFromMdms(requestInfo, tenantId, entityType);
             if (suffix == null || suffix.isEmpty()) {
                 suffix = APPLICATION_FILING_SUFFIX;
             }
-            
+
             String consumerCode = applicationNumber + "_" + suffix;
 
             Double totalAmount = getApplicationAmountFromMdms(requestInfo, tenantId, applicationType);
             if (totalAmount == null) {
                 totalAmount = 20.0;
             }
-            
+
             if (totalAmount <= 0) {
-                log.info("Skipping demand creation for application {} with type {} as totalAmount is {}", 
+                log.info("Skipping demand creation for application {} with type {} as totalAmount is {}",
                         applicationNumber, applicationType, totalAmount);
                 return;
             }
-            
+
             demandUtil.createDemand(requestInfo, tenantId, entityType, filingNumber, consumerCode, totalAmount);
         } catch (Exception e) {
-            log.error("Error while creating demand for application: {}", e.getMessage(), e);
-            throw new CustomException(ERROR_WHILE_CREATING_DEMAND_FOR_CASE, 
+            log.error("Error while creating demand for application", e);
+            throw new CustomException(ERROR_WHILE_CREATING_DEMAND_FOR_CASE,
                                     "Error while creating demand: " + e.getMessage());
         }
     }
@@ -403,16 +403,16 @@ public class ApplicationService {
             Map<String, Map<String, JSONArray>> mdmsData =
                 mdmsUtil.fetchMdmsData(requestInfo, tenantId,
                         PAYMENT_MODULE, Collections.singletonList(PAYMENT_TYPE_MASTER));
-            
+
             if (mdmsData != null && mdmsData.containsKey(PAYMENT_MODULE)) {
                 JSONArray paymentTypes = mdmsData.get(PAYMENT_MODULE).get(PAYMENT_TYPE_MASTER);
-                
+
                 if (paymentTypes != null) {
 
                     for (Object paymentTypeObj : paymentTypes) {
                         JsonNode paymentTypeNode = objectMapper.valueToTree(paymentTypeObj);
                         JsonNode businessServices = paymentTypeNode.path(BUSINESS_SERVICE);
-                        
+
                         if (businessServices.isArray()) {
                             for (JsonNode businessService : businessServices) {
                                 String businessCode = businessService.path(BUSINESS_CODE).asText();
@@ -425,24 +425,24 @@ public class ApplicationService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error fetching suffix from MDMS: {}", e.getMessage(), e);
+            log.error("Error fetching suffix from MDMS", e);
         }
         return null;
     }
 
     private Double getApplicationAmountFromMdms(RequestInfo requestInfo, String tenantId, String applicationType) {
         try {
-            Map<String, Map<String, net.minidev.json.JSONArray>> mdmsData = 
+            Map<String, Map<String, net.minidev.json.JSONArray>> mdmsData =
                 mdmsUtil.fetchMdmsData(requestInfo, tenantId, APPLICATION_MODULE, Collections.singletonList(APPLICATION_TYPE_MASTER));
-            
+
             if (mdmsData != null && mdmsData.containsKey(APPLICATION_MODULE)) {
                 JSONArray applicationTypes = mdmsData.get(APPLICATION_MODULE).get(APPLICATION_TYPE_MASTER);
-                
+
                 if (applicationTypes != null) {
                     for (Object appTypeObj : applicationTypes) {
                         JsonNode appTypeNode = objectMapper.valueToTree(appTypeObj);
                         String type = appTypeNode.path("type").asText();
-                        
+
                         if (applicationType.equals(type)) {
                             JsonNode totalAmountNode = appTypeNode.path("totalAmount");
                             if (!totalAmountNode.isMissingNode() && !totalAmountNode.isNull()) {
@@ -453,7 +453,7 @@ public class ApplicationService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error fetching application amount from MDMS: {}", e.getMessage(), e);
+            log.error("Error fetching application amount from MDMS", e);
         }
         return null;
     }
@@ -463,17 +463,17 @@ public class ApplicationService {
         String applicationType = application.getApplicationType();
         UUID referenceId = application.getReferenceId();
         String orderRefNumber = extractOrderRefNumber(application.getAdditionalDetails());
-        
+
         if (orderRefNumber != null && referenceId != null) {
             return isResponseRequired ?
                     config.getAsyncOrderSubWithResponseBusinessServiceName() :
                     config.getAsyncOrderSubBusinessServiceName();
         }
-        
+
         if (REQUEST_FOR_BAIL.equalsIgnoreCase(applicationType)) {
             return config.getBailVoluntarySubBusinessServiceName();
         }
-        
+
         return config.getAsyncVoluntarySubBusinessServiceName();
     }
 
@@ -488,17 +488,17 @@ public class ApplicationService {
             if (formdataNode.isMissingNode() || formdataNode.isNull()) {
                 return null;
             }
-            
+
             JsonNode refOrderIdNode = formdataNode.path("refOrderId");
             if (refOrderIdNode.isMissingNode() || refOrderIdNode.isNull()) {
                 return null;
             }
-            
+
             String refOrderId = refOrderIdNode.asText();
             if (refOrderId.isEmpty()) {
                 return null;
             }
-            
+
             return processOrderNumber(refOrderId);
 
         } catch (IllegalArgumentException e) {
@@ -511,12 +511,12 @@ public class ApplicationService {
         if (orderItemId == null || orderItemId.isEmpty()) {
             return orderItemId;
         }
-        
+
         if (orderItemId.contains("_")) {
             String[] parts = orderItemId.split("_");
             return parts.length > 0 ? parts[parts.length - 1] : orderItemId;
         }
-        
+
         return orderItemId;
     }
 

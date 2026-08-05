@@ -85,7 +85,7 @@ public class PaymentUpdateService {
                 }
             }
         } catch (Exception e) {
-            log.error("KAFKA_PROCESS_ERROR: {}", e.getMessage(), e);
+            log.error("KAFKA_PROCESS_ERROR", e);
         }
     }
 
@@ -146,7 +146,7 @@ public class PaymentUpdateService {
                 try {
                     caseDetails = caseUtil.searchCaseDetails(createCaseSearchRequest(requestInfo, application));
                 } catch (Exception e) {
-                    log.error("Error fetching case details for application [{}]: {}", application.getApplicationNumber(), e.getMessage(), e);
+                    log.error("Error fetching case details for application [{}]", application.getApplicationNumber(), e);
                 }
 
                 try{
@@ -157,7 +157,7 @@ public class PaymentUpdateService {
                     smsNotificationUtil.callNotificationService(applicationRequest, state.getState(), applicationType, false);
                     log.info("SMS sent for application [{}]", application.getApplicationNumber());
                 } catch (Exception e) {
-                    log.error("Error while sending SMS for application [{}]: {}", application.getApplicationNumber(), e.getMessage(), e);
+                    log.error("Error while sending SMS for application [{}]", application.getApplicationNumber(), e);
                 }
                 producer.push(configuration.getApplicationUpdateStatusTopic(), applicationRequest);
 
@@ -167,7 +167,7 @@ public class PaymentUpdateService {
                 closePaymentPendingTask(requestInfo, application, paymentDetail.getBusinessService(), caseDetails);
             }
         } catch (Exception e) {
-            log.error("Error updating workflow for application payment: {}", e.getMessage(), e);
+            log.error("Error updating workflow for application payment", e);
         }
     }
 

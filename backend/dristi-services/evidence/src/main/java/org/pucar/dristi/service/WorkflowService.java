@@ -49,7 +49,7 @@ public class WorkflowService {
             } catch (CustomException e){
                 throw e;
             } catch (Exception e) {
-                log.error("Error updating workflow status: {}", e.toString());
+                log.error("Error updating workflow status", e);
                 throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,"Error updating workflow status: "+e.toString());
             }
     }
@@ -62,7 +62,7 @@ public class WorkflowService {
         } catch (CustomException e){
             throw e;
         } catch (Exception e) {
-            log.error("Error calling workflow: {}", e.toString());
+            log.error("Error calling workflow", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,e.toString());
         }
     }
@@ -96,7 +96,7 @@ public class WorkflowService {
         } catch (CustomException e){
             throw e;
         } catch (Exception e) {
-            log.error("Error getting process instance for Evidence: {}", e.toString());
+            log.error("Error getting process instance for Evidence", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.toString());
         }
     }
@@ -141,7 +141,7 @@ public class WorkflowService {
         } catch (CustomException e){
             throw e;
         } catch (Exception e) {
-            log.error("Error getting current workflow: {}", e.toString());
+            log.error("Error getting current workflow", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.toString());
         }
     }

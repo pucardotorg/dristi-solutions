@@ -106,7 +106,7 @@ public class CauseListEmailService {
 
             log.info("operation = sendCauseListEmail, result = SUCCESS, hearingDate = {}", hearingDate);
         } catch (Exception e) {
-            log.error("operation = sendCauseListEmail, result = FAILURE, hearingDate = {}, error = {}", hearingDate, e.getMessage(), e);
+            log.error("operation = sendCauseListEmail, result = FAILURE, hearingDate = {}", hearingDate, e);
             throw new CustomException(ServiceConstants.EMAIL_SEND_ERROR,
                     ServiceConstants.EMAIL_SEND_ERROR_MESSAGE + e.getMessage());
         }
