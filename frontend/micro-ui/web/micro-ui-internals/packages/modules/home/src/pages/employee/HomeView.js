@@ -23,6 +23,8 @@ import SelectAdvocateModal from "./SelectAdvocateModal";
 import { extractedSeniorAdvocates } from "../../utils";
 import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import SetPasswordPromptModal from "@egovernments/digit-ui-module-dristi/src/pages/citizen/Login/SetPasswordPromptModal";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -101,6 +103,41 @@ const HomeView = () => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [showToast, setShowToast] = useState(null);
+
+  // "Set a password" prompt shown over the home screen when a citizen logged in without a password
+  // (flag persisted at login). Shown once per session; the user's choice is remembered via sessionStorage.
+  const [showPwPrompt, setShowPwPrompt] = useState(
+    () => window.localStorage.getItem("showPasswordSetupPrompt") === "true" && window.sessionStorage.getItem("pwPromptHandled") !== "true"
+  );
+  const dismissPwPrompt = () => {
+    window.sessionStorage.setItem("pwPromptHandled", "true");
+    setShowPwPrompt(false);
+  };
+  const handlePwSetPassword = () => {
+    dismissPwPrompt();
+    history.push(`/${window?.contextPath}/citizen/dristi/home/password-settings`);
+  };
+  const handlePwRemindLater = () => {
+    dismissPwPrompt();
+  };
+  const handlePwDontRemind = async () => {
+    try {
+      await axiosInstance.post("/user/password/prompt/_suppress", {
+        tenantId,
+        RequestInfo: {
+          apiId: "Rainmaker",
+          msgId: `${Date.now()}|${window?.Digit?.StoreData?.getCurrentLanguage?.() || "en_IN"}`,
+          ts: 0,
+          authToken: window.localStorage.getItem("token"),
+          userInfo,
+        },
+      });
+    } catch (e) {
+      // Even if suppression fails, don't block the user - just dismiss the prompt.
+    }
+    window.localStorage.setItem("showPasswordSetupPrompt", "false");
+    dismissPwPrompt();
+  };
   const courtId = localStorage.getItem("courtId");
   const isLitigant = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role?.code)), [
     userInfo?.roles,
@@ -675,6 +712,14 @@ const HomeView = () => {
 
   return (
     <React.Fragment>
+      {showPwPrompt && userInfoType === "citizen" && (
+        <SetPasswordPromptModal
+          t={t}
+          onSetPassword={handlePwSetPassword}
+          onRemindLater={handlePwRemindLater}
+          onDontRemindAgain={handlePwDontRemind}
+        />
+      )}
       {!hideBreadcrumbForUnlinkedClerk && <ProjectBreadCrumb location={window.location} t={t} />}
       <div className="home-view-hearing-container">
         {individualId &&
