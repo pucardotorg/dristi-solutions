@@ -86,10 +86,10 @@ public class OrderRegistrationEnrichment {
             }
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while enriching order :: {}", e.toString());
+            log.error("Custom Exception occurred while enriching order", e);
             throw e;
         } catch (Exception e) {
-            log.error("Exception occurred while enriching order :: {}", e.toString());
+            log.error("Exception occurred while enriching order", e);
             throw e;
         }
     }
@@ -129,7 +129,7 @@ public class OrderRegistrationEnrichment {
                 });
             }
         } catch (Exception e) {
-            log.error("Error enriching order application upon update :: {}", e.toString());
+            log.error("Error enriching order application upon update", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in order enrichment service during order update process: " + e.getMessage());
         }
     }
@@ -192,7 +192,7 @@ public class OrderRegistrationEnrichment {
                 orderRequest.getOrder().setCompositeItems(arrayNode);
             }
         } catch (Exception e) {
-            log.error("Error enriching composite order item id add item :: {}", e.toString());
+            log.error("Error enriching composite order item id add item", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in order enrichment service during add item: " + e.getMessage());
         }
     }
@@ -237,7 +237,7 @@ public String processOrderText(String orderType, String orderSchema, RequestInfo
             return getText(orderSchema, paths, text, requestInfo, tenantId);
         }
     } catch (Exception e) {
-        log.error("Error enriching item text :: {}", e.toString());
+        log.error("Error enriching item text", e);
     }
 
     return null;

@@ -108,7 +108,7 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
             }
         }
         catch (Exception e){
-            log.error("Error occurred while processing order ResultSet :: {}", e.toString());
+            log.error("Error occurred while processing order ResultSet", e);
             throw new CustomException("ROW_MAPPER_EXCEPTION","Error occurred while processing order ResultSet: "+ e.getMessage());
         }
         return new ArrayList<>(orderMap.values());

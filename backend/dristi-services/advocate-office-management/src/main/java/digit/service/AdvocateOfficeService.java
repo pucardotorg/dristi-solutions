@@ -70,7 +70,7 @@ public class AdvocateOfficeService {
             log.info("Member added successfully with id: {}", request.getAddMember().getId());
             return request.getAddMember();
         } catch (CustomException e) {
-            log.error("Error while adding member: {}", e.getMessage());
+            log.error("Error while adding member", e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error while adding member", e);
@@ -91,7 +91,7 @@ public class AdvocateOfficeService {
             log.info("Leave office processed successfully for member: {}", request.getLeaveOffice().getMemberId());
             return request.getLeaveOffice();
         } catch (CustomException e) {
-            log.error("Error while processing leave office: {}", e.getMessage());
+            log.error("Error while processing leave office", e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error while processing leave office", e);
@@ -114,7 +114,7 @@ public class AdvocateOfficeService {
             return request.getUpdateMemberAccess();
 
         } catch (CustomException e) {
-            log.error("Error while updating member access: {}", e.getMessage());
+            log.error("Error while updating member access", e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error while updating member access", e);
@@ -133,7 +133,7 @@ public class AdvocateOfficeService {
             log.info("Found {} members", members.size());
             return members;
         } catch (CustomException e) {
-            log.error("Error while searching members: {}", e.getMessage());
+            log.error("Error while searching members", e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error while searching members", e);
@@ -149,7 +149,7 @@ public class AdvocateOfficeService {
             log.info("Found {} case members ", caseMemberSearchResponse.getTotalCount());
             return caseMemberSearchResponse;
         } catch (CustomException e) {
-            log.error("Error while searching case members: {}", e.getMessage());
+            log.error("Error while searching case members", e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error while searching case members", e);
@@ -163,7 +163,7 @@ public class AdvocateOfficeService {
             Object status = cacheUtil.findById(key);
             return status != null ? status.toString() : "NOT_FOUND";
         } catch (CustomException e) {
-            log.error("Error while checking member status: {}", e.getMessage());
+            log.error("Error while checking member status", e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error while checking member status", e);
@@ -182,7 +182,7 @@ public class AdvocateOfficeService {
             log.info("Case member processed successfully");
             return request.getProcessCaseMember();
         } catch (CustomException e) {
-            log.error("Error while processing case member: {}", e.getMessage());
+            log.error("Error while processing case member", e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error while processing case member", e);

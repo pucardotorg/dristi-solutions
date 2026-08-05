@@ -48,28 +48,71 @@ const COMMON_PASSWORD_BLOCKLIST = [
   "master123",
 ];
 
-// Identifiers unique to the signed-in user (their mobile number and email) must not be reusable as
-// a password. Sourced from the "user-info" object persisted in localStorage, plus any identifiers
-// passed explicitly by the caller (needed during the login set-password flow, where "user-info"
-// has not been persisted yet).
+// All order-preserving, whitespace-free combinations of a list of words, e.g.
+// ["amit", "kumar", "yadav"] -> ["amit", "kumar", "amitkumar", "yadav", "amityadav", "kumaryadav",
+// "amitkumaryadav"]. This is how a multi-word name is expanded: the password must not equal any of
+// these. Enumeration is bounded (2^n) - for an unusually long name we fall back to the individual
+// words plus the full concatenation to avoid a combinatorial blow-up.
+function wordCombinations(words) {
+  const combos = new Set();
+  if (words.length === 0) return combos;
+  if (words.length > 10) {
+    words.forEach((word) => combos.add(word));
+    combos.add(words.join(""));
+    return combos;
+  }
+  for (let mask = 1; mask < 1 << words.length; mask++) {
+    let combo = "";
+    for (let i = 0; i < words.length; i++) {
+      if (mask & (1 << i)) combo += words[i];
+    }
+    if (combo) combos.add(combo);
+  }
+  return combos;
+}
+
+// The set of exact (lower-cased, whitespace-removed) strings a password must not equal: the user's
+// mobile number, email, and every order-preserving combination of the words in their name. Sourced
+// from the "user-info" object persisted in localStorage, plus any identifiers passed explicitly by
+// the caller (needed during the login set-password flow, where "user-info" has not been persisted
+// yet). Combination logic is applied uniformly - single-word identifiers (mobile/email) simply map
+// to themselves.
 function getUserIdentifierBlocklist(extraIdentifiers = []) {
   const identifiers = [...extraIdentifiers];
   try {
     const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-    identifiers.push(userInfo?.mobileNumber, userInfo?.emailId);
+    identifiers.push(userInfo?.mobileNumber, userInfo?.emailId, userInfo?.name);
   } catch (e) {
     /* user-info may be absent (e.g. during login); explicit identifiers still apply */
   }
-  return identifiers.filter(Boolean).map((value) => String(value).trim().toLowerCase());
+  const blocklist = new Set();
+  identifiers
+    .filter(Boolean)
+    .forEach((value) => {
+      const words = String(value).toLowerCase().trim().split(/\s+/).filter(Boolean);
+      wordCombinations(words).forEach((combo) => blocklist.add(combo));
+    });
+  return blocklist;
+}
+
+// Whether the password matches a known common/compromised password (exact match against the list).
+export function isCommonPassword(password) {
+  if (!password) return false;
+  return COMMON_PASSWORD_BLOCKLIST.includes(password.trim().toLowerCase());
+}
+
+// Whether the password (ignoring whitespace, case-insensitive) exactly equals the user's mobile
+// number, email, or any combination of their name's words.
+export function matchesUserIdentifier(password, extraIdentifiers = []) {
+  if (!password) return false;
+  const normalized = password.toLowerCase().replace(/\s+/g, "");
+  if (!normalized) return false;
+  return getUserIdentifierBlocklist(extraIdentifiers).has(normalized);
 }
 
 export function isBlocklistedPassword(password, extraIdentifiers = []) {
   if (!password) return false;
-  const normalized = password.trim().toLowerCase();
-  if (COMMON_PASSWORD_BLOCKLIST.includes(normalized)) return true;
-  // Reject if the password contains the user's mobile/email, or is itself contained within them,
-  // so neither can be reused as (or embedded in) the password in either direction.
-  return getUserIdentifierBlocklist(extraIdentifiers).some((identifier) => normalized.includes(identifier) || identifier.includes(normalized));
+  return isCommonPassword(password) || matchesUserIdentifier(password, extraIdentifiers);
 }
 
 export function validatePassword(password, extraIdentifiers = []) {
@@ -85,12 +128,14 @@ export function validatePassword(password, extraIdentifiers = []) {
   return { isValid: true, errorKey: null };
 }
 
-// Returns a score for the strength meter. 0 is reserved for empty/blocklisted passwords (shown by
-// the UI as "—" / "TOO_COMMON"); any real password scores between 1 (Weak) and 4 (Strong).
-export function getPasswordStrength(password, extraIdentifiers = []) {
+// Returns a score for the strength meter. 0 is reserved for empty or common/compromised passwords
+// (shown by the UI as "—" / "TOO_COMMON"); any other password scores between 1 (Weak) and 4
+// (Strong). A password that merely contains a user identifier is NOT forced to 0 here - that case
+// is surfaced by its own checklist item instead of the strength label.
+export function getPasswordStrength(password) {
   if (!password) return 0;
 
-  if (isBlocklistedPassword(password, extraIdentifiers)) return 0;
+  if (isCommonPassword(password)) return 0;
 
   let score = 0;
   if (password.length >= PASSWORD_MIN_LENGTH) score += 1;

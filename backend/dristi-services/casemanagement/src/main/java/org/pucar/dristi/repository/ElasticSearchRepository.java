@@ -45,16 +45,16 @@ public class ElasticSearchRepository {
 
 			return restTemplate.postForEntity(uri, entity, String.class).getBody();
 		} catch (ResourceAccessException e) {
-			log.error("ES is DOWN: {}", e.getMessage(), e);
+			log.error("ES is DOWN", e);
 			throw new CustomException("ES_DOWN", e.getMessage());
 		} catch (HttpClientErrorException e) {
-			log.error("Client error occurred while querying the ES documents: {}", e.getMessage(), e);
+			log.error("Client error occurred while querying the ES documents", e);
 			throw new CustomException("CLIENT_ERROR", e.getMessage());
 		} catch (HttpServerErrorException e) {
-			log.error("Server error occurred while querying the ES documents: {}", e.getMessage(), e);
+			log.error("Server error occurred while querying the ES documents", e);
 			throw new CustomException("SERVER_ERROR", e.getMessage());
 		} catch (Exception e) {
-			log.error("Unexpected exception occurred while querying the ES documents: {}", e.getMessage(), e);
+			log.error("Unexpected exception occurred while querying the ES documents", e);
 			throw new CustomException("QUERY_EXEC_ERROR", "Error while executing query: " + e.getMessage());
 		}
 	}

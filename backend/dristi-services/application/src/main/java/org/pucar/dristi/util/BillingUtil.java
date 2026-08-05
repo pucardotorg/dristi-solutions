@@ -63,7 +63,7 @@ public class BillingUtil {
             return billExists;
 
         } catch (Exception e) {
-            log.error("Error searching for bill: {}", e.getMessage(), e);
+            log.error("Error searching for bill", e);
             throw new CustomException(ERROR_WHILE_SEARCHING_FOR_BILL,
                     String.format("Error occurred while searching for bill with consumerCode %s and service %s: %s",
                             consumerCode, service, e));

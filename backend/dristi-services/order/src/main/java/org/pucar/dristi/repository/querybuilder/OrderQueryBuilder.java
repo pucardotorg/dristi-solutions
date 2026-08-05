@@ -88,7 +88,7 @@ public class OrderQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building order exist query :: {}",e.toString());
+            log.error("Error while building order exist query", e);
             throw new CustomException(ORDER_EXISTS_EXCEPTION, "Error occurred while building the order exist query : " + e.getMessage());
         }
     }
@@ -124,7 +124,7 @@ public class OrderQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building order search query :: {}",e.toString());
+            log.error("Error while building order search query", e);
             throw new CustomException(ORDER_SEARCH_EXCEPTION, "Error occurred while building the order search query: " + e.getMessage());
         }
     }
@@ -183,7 +183,7 @@ public class OrderQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building document search query :: {}",e.toString());
+            log.error("Error while building document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Error occurred while building the query: " + e.getMessage());
         }
     }
@@ -203,7 +203,7 @@ public class OrderQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building statute search query :: {}",e.toString());
+            log.error("Error while building statute search query", e);
             throw new CustomException(STATUTE_SEARCH_QUERY_EXCEPTION, "Error occurred while building the query: " + e.getMessage());
         }
     }

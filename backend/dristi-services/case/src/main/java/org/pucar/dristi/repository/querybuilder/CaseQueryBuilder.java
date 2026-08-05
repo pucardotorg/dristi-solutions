@@ -121,7 +121,7 @@ public class CaseQueryBuilder {
             }
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building case meta query :: {}", e.toString());
+            log.error("Error while building case meta query", e);
             throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the case meta query: " + e.getMessage());
         }
     }
@@ -150,7 +150,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building case summary search query :: {}", e.toString());
+            log.error("Error while building case summary search query", e);
             throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the case summary search query: " + e.getMessage());
         }
     }
@@ -179,7 +179,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building case details search query :: {}", e.toString());
+            log.error("Error while building case details search query", e);
             throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the case details search query: " + e.getMessage());
         }
     }
@@ -233,7 +233,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building case summary search query :: {}", e.toString());
+            log.error("Error while building case summary search query", e);
             throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the case summary search query: " + e.getMessage());
         }
     }
@@ -450,7 +450,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building case search query :: {}", e.toString());
+            log.error("Error while building case search query", e);
             throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the case search query: " + e.getMessage());
         }
     }
@@ -599,7 +599,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building litigant search query :: {}", e.toString());
+            log.error("Error while building litigant search query", e);
             throw new CustomException(LITIGANT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the litigant query: " + e.getMessage());
         }
     }
@@ -618,7 +618,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building statute section search query :: {}", e.toString());
+            log.error("Error while building statute section search query", e);
             throw new CustomException(STATUTE_SECTION_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the statue section query: " + e.getMessage());
         }
     }
@@ -639,7 +639,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building representatives search query :: {}", e.toString());
+            log.error("Error while building representatives search query", e);
             throw new CustomException(REPRESENTATIVES_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representative search query: " + e.getMessage());
         }
     }
@@ -660,7 +660,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building poa holder search query :: {}", e.toString());
+            log.error("Error while building poa holder search query", e);
             throw new CustomException(POA_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the poa holder search query: " + e.getMessage());
         }
     }
@@ -681,7 +681,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building representing search query :: {}", e.toString());
+            log.error("Error while building representing search query", e);
             throw new CustomException(REPRESENTING_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representing search query: " + e.getMessage());
         }
     }
@@ -716,7 +716,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building advocate office case member search query :: {}", e.toString());
+            log.error("Error while building advocate office case member search query", e);
             throw new CustomException("ADVOCATE_OFFICE_CASE_MEMBER_SEARCH_QUERY_EXCEPTION", "Exception occurred while building the advocate office case member search query: " + e.getMessage());
         }
     }
@@ -737,7 +737,7 @@ public class CaseQueryBuilder {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while building document search query :: {}", e.toString());
+            log.error("Error while building document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the document query: " + e.getMessage());
         }
     }
@@ -756,7 +756,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building linked case search query :: {}", e.toString());
+            log.error("Error while building linked case search query", e);
             throw new CustomException(LINKED_CASE_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the linked case search query: " + e.getMessage());
         }
     }
@@ -777,7 +777,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building litigant search query :: {}", e.toString());
+            log.error("Error while building litigant search query", e);
             throw new CustomException(LITIGANT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the litigant query: " + e.getMessage());
         }
     }
@@ -796,7 +796,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building statute section search query :: {}", e.toString());
+            log.error("Error while building statute section search query", e);
             throw new CustomException(STATUTE_SECTION_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the statue section query: " + e.getMessage());
         }
     }
@@ -818,7 +818,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building representatives search query :: {}", e.toString());
+            log.error("Error while building representatives search query", e);
             throw new CustomException(REPRESENTATIVES_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representative search query: " + e.getMessage());
         }
     }
@@ -854,7 +854,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building representatives search query with advocate join :: {}", e.toString());
+            log.error("Error while building representatives search query with advocate join", e);
             throw new CustomException(REPRESENTATIVES_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representative search query with advocate join: " + e.getMessage());
         }
     }
@@ -875,7 +875,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building poa holder search query :: {}", e.toString());
+            log.error("Error while building poa holder search query", e);
             throw new CustomException(POA_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the poa holder search query: " + e.getMessage());
         }
     }
@@ -896,7 +896,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building representing search query :: {}", e.toString());
+            log.error("Error while building representing search query", e);
             throw new CustomException(REPRESENTING_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representing search query: " + e.getMessage());
         }
     }
@@ -915,7 +915,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building linked case document search query :: {}", e.toString());
+            log.error("Error while building linked case document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the linked case document search query: " + e.getMessage());
         }
     }
@@ -934,7 +934,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building litigant document search query :: {}", e.toString());
+            log.error("Error while building litigant document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the litigant document search query: " + e.getMessage());
         }
     }
@@ -953,7 +953,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building representative document search query :: {}", e.toString());
+            log.error("Error while building representative document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representative document search query: " + e.getMessage());
         }
     }
@@ -972,7 +972,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building poa holder document search query :: {}", e.toString());
+            log.error("Error while building poa holder document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the poa holder document search query: " + e.getMessage());
         }
     }
@@ -991,7 +991,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building representing document search query :: {}", e.toString());
+            log.error("Error while building representing document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representing document search query: " + e.getMessage());
         }
     }

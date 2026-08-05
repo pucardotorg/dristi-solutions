@@ -339,7 +339,7 @@ public class CaseConsumer {
         try {
             artifactList = inboxUtil.getInboxEntities(inboxRequest, ARTIFACT_INDEX_BUSINESS_OBJECT_KEY, Artifact.class);
         } catch (Exception ex) {
-            log.error("Error while getting artifacts: {}, for filingNumber: {}", ex.getMessage(), caseReferenceNumberUpdateRequest.getFilingNumber(), ex);
+            log.error("Error while getting artifacts, for filingNumber: {}", caseReferenceNumberUpdateRequest.getFilingNumber(), ex);
         }
 
         if (artifactList != null && !artifactList.isEmpty()) {
@@ -355,7 +355,7 @@ public class CaseConsumer {
                 esUtil.updateArtifactCaseNumbers(artifactList);
             }
             catch (Exception ex) {
-                log.error("Error while updating artifacts: {}, for filingNumber: {}", ex.getMessage(), caseReferenceNumberUpdateRequest.getFilingNumber(), ex);
+                log.error("Error while updating artifacts, for filingNumber: {}", caseReferenceNumberUpdateRequest.getFilingNumber(), ex);
             }
 
         }
@@ -380,7 +380,7 @@ public class CaseConsumer {
                 esUtil.updateBailCaseNumbers(updates);
             }
             catch (Exception ex) {
-                log.error("Error while updating bail: {}, for filingNumber: {}", ex.getMessage(), caseReferenceNumberUpdateRequest.getFilingNumber(), ex);
+                log.error("Error while updating bail, for filingNumber: {}", caseReferenceNumberUpdateRequest.getFilingNumber(), ex);
             }
         }
 

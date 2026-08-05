@@ -41,7 +41,7 @@ const PasswordInput = ({
       {label && <CardLabel>{t(label)}</CardLabel>}
       <div className="password-input-field-container" style={{ position: "relative", display: "flex", alignItems: "center" }}>
         <input
-          className="password-input-field field desktop-w-full"
+          className="password-input-field"
           type={isVisible ? "text" : "password"}
           name={name}
           value={value || ""}
@@ -50,7 +50,16 @@ const PasswordInput = ({
           autoComplete={autoComplete}
           disabled={disabled}
           onChange={(e) => onChange(e.target.value)}
-          style={{ width: "100%", paddingRight: "40px" }}
+          style={{
+            width: "100%",
+            height: "40px",
+            padding: "0 42px 0 10px",
+            border: "1px solid #d6d5d4",
+            backgroundColor: "#fff",
+            fontSize: "16px",
+            lineHeight: "40px",
+            boxSizing: "border-box",
+          }}
         />
         <button
           type="button"
@@ -59,11 +68,14 @@ const PasswordInput = ({
           style={{
             position: "absolute",
             right: "10px",
+            top: "50%",
+            transform: "translateY(-50%)",
             background: "none",
             border: "none",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
+            padding: 0,
           }}
         >
           <EyeIcon visible={isVisible} />
