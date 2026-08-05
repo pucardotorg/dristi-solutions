@@ -48,7 +48,7 @@ public class WorkflowService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error updating workflow: {}", e.getMessage());
+            log.error("Error updating workflow", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
 
@@ -64,7 +64,7 @@ public class WorkflowService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error calling workflow: {}", e.getMessage());
+            log.error("Error calling workflow", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.toString());
         }
     }

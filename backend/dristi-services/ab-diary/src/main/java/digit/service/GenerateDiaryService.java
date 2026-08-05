@@ -66,7 +66,7 @@ public class GenerateDiaryService {
                 diaryService.generateDiary(generateRequest);
             });
         } catch (Exception ex) {
-            log.error("Error generating diary :: {}", ex.getMessage());
+            log.error("Error generating diary", ex);
         }
 
         log.info("Cron job completed for generating diary");

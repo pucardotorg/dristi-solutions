@@ -266,7 +266,7 @@ public class HearingService {
 
             log.info("operation=abating, result=SUCCESS");
         } catch (Exception e) {
-            log.error("operation=abating, result=FAILURE, message={}", e.getMessage(), e);
+            log.error("operation=abating, result=FAILURE", e);
             throw new CustomException("ABATING_HEARING_ERROR", "Error while abating hearing for the given date range");
         }
     }
@@ -301,7 +301,7 @@ public class HearingService {
 
             log.info("operation=updateHearingsToAbated, result=SUCCESS");
         } catch (Exception e) {
-            log.error("operation=updateHearingsToAbated, result=FAILURE, message={}", e.getMessage(), e);
+            log.error("operation=updateHearingsToAbated, result=FAILURE", e);
             throw new CustomException("UPDATE_HEARING_ERROR", "Error while updating abated hearings");
         }
     }

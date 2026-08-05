@@ -231,7 +231,7 @@ public class DiaryService {
             byteArrayResource = pdfServiceUtil.generatePdfFromPdfService(caseDiaryRequest, caseDiary.getTenantId(), pdfTemplateKey);
             log.info("operation = generateCauseListPdf, result = SUCCESS");
         } catch (Exception e) {
-            log.error("Error occurred while generating pdf: {}", e.getMessage());
+            log.error("Error occurred while generating pdf", e);
         }
         return byteArrayResource;
     }

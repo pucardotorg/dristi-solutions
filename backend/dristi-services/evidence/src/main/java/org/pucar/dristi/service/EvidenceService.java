@@ -461,7 +461,7 @@ public class EvidenceService {
             }
             return filingType;
         } catch (Exception e){
-            log.error("Error fetching filing type from mdms: {}", e.toString());
+            log.error("Error fetching filing type from mdms", e);
             throw new CustomException("MDMS_FETCH_ERR", "Error fetching filing type from mdms: " + e.toString());
         }
     }
@@ -672,10 +672,10 @@ public class EvidenceService {
 
             producer.push(config.getEvidenceUpdateCommentsTopic(), evidenceRequest);
         } catch (CustomException e) {
-            log.error("Custom exception while adding comments {}", e.toString());
+            log.error("Custom exception while adding comments", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error while adding comments {}", e.toString());
+            log.error("Error while adding comments", e);
             throw new CustomException(COMMENT_ADD_ERR, e.getMessage());
         }
     }
@@ -729,7 +729,7 @@ public class EvidenceService {
         }
         catch (Exception e) {
             // Log the exception and continue the execution without throwing
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
     }
 
@@ -1169,7 +1169,7 @@ public class EvidenceService {
                             .caseDiaryList(caseDiaryEntries)
                             .build());
                 } catch (Exception ex) {
-                    log.error("Error occurred while creating bulk case diary entries: {}", ex.getMessage(), ex);
+                    log.error("Error occurred while creating bulk case diary entries", ex);
                 }
             }
         }
@@ -1334,11 +1334,11 @@ public class EvidenceService {
                 esUtil.manualIndex(uri, request);
             } catch (Exception e) {
                 log.error("Error occurred while updating open Artifact in es");
-                log.error("ERROR_FROM_ES: {}", e.getMessage());
+                log.error("ERROR_FROM_ES", e);
             }
     } catch (Exception e) {
             log.error("Something went wrong while updating status of open Artifact with artifactNumber {}", evidenceRequest.getArtifact().getArtifactNumber());
-            log.error("ERROR: {}", e.getMessage());
+            log.error("ERROR", e);
         }
 
     }

@@ -121,7 +121,7 @@ public class HearingService {
         try {
             openHearingList = inboxUtil.getInboxEntities(inboxRequest, OPEN_HEARING_INDEX_BUSINESS_OBJECT_KEY, OpenHearing.class);
         } catch (Exception ex) {
-            log.error("Error while getting open hearings: {}, for hearingId: {}", ex.getMessage(),openHearing.getHearingUuid(), ex);
+            log.error("Error while getting open hearings, for hearingId: {}", openHearing.getHearingUuid(), ex);
         }
         if(openHearingList != null && !openHearingList.isEmpty()) {
             if(openHearingList.get(0).getSerialNumber() > 0) {

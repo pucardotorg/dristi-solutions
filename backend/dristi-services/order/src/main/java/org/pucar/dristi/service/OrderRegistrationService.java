@@ -90,7 +90,7 @@ public class OrderRegistrationService {
             log.error("Custom Exception occurred while creating order");
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while creating order :: {}", e.toString());
+            log.error("Error occurred while creating order", e);
             throw new CustomException(ORDER_CREATE_EXCEPTION, e.getMessage());
         }
     }
@@ -106,7 +106,7 @@ public class OrderRegistrationService {
             return orderList;
 
         } catch (Exception e) {
-            log.error("Error while fetching to search results :: {}", e.toString());
+            log.error("Error while fetching to search results", e);
             throw new CustomException(ORDER_SEARCH_EXCEPTION, e.getMessage());
         }
     }
@@ -139,7 +139,7 @@ public class OrderRegistrationService {
             return body.getOrder();
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while updating order :: {}", e.toString());
+            log.error("Custom Exception occurred while updating order", e);
             throw e;
         } catch (Exception e) {
             log.error("Error occurred while updating order");
@@ -203,7 +203,7 @@ public class OrderRegistrationService {
             return body.getOrder();
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while adding item/order :: {}", e.toString());
+            log.error("Custom Exception occurred while adding item/order", e);
             throw e;
         } catch (Exception e) {
             log.error("Error occurred while adding item/order");
@@ -229,7 +229,7 @@ public class OrderRegistrationService {
             return order;
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while removing item/order :: {}", e.toString());
+            log.error("Custom Exception occurred while removing item/order", e);
             throw e;
         } catch (Exception e) {
             log.error("Error occurred while removing item/order");
@@ -393,7 +393,7 @@ public class OrderRegistrationService {
             }
         } catch (Exception e) {
             // Log the exception and continue the execution without throwing
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
     }
 
@@ -415,10 +415,10 @@ public class OrderRegistrationService {
         try {
             return orderRepository.checkOrderExists(orderExistsRequest.getOrder());
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while searching :: {}", e.toString());
+            log.error("Custom Exception occurred while searching", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching to search order results :: {}", e.toString());
+            log.error("Error while fetching to search order results", e);
             throw new CustomException(ORDER_EXISTS_EXCEPTION, e.getMessage());
         }
     }
@@ -518,9 +518,9 @@ public class OrderRegistrationService {
             OrderDetailsDTO orderDetailsDTO = request.getOrderDetailsDTO();
             String orderNumber = orderDetailsDTO.getOrderNumber();
             String uniqueId = orderDetailsDTO.getUniqueId();
-            
+
             log.info("Processing order details for orderNumber: {} and uniqueId: {}", orderNumber, uniqueId);
-            
+
             // Search for the order using orderNumber
             OrderSearchRequest searchRequest = new OrderSearchRequest();
             OrderCriteria criteria = new OrderCriteria();
@@ -528,45 +528,45 @@ public class OrderRegistrationService {
             searchRequest.setCriteria(criteria);
 
             searchRequest.setRequestInfo(request.getRequestInfo());
-            
+
             List<Order> orders = searchOrder(searchRequest);
-            
+
             if (orders == null || orders.isEmpty()) {
                 log.error("No order found with orderNumber: {}", orderNumber);
-                throw new CustomException("ORDER_NOT_FOUND", 
+                throw new CustomException("ORDER_NOT_FOUND",
                         "No order found with orderNumber: " + orderNumber);
             }
-            
+
             Order order = orders.get(0);
             orderDetailsDTO.setAuditDetails(order.getAuditDetails());
 
             orderDetailsDTO.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
             orderDetailsDTO.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
-            
+
             // Log the order details
-            log.info("Order details before update for order number: {}, additionalDetails: {}, compositeItems: {}", 
-                    orderNumber, 
+            log.info("Order details before update for order number: {}, additionalDetails: {}, compositeItems: {}",
+                    orderNumber,
                     order.getAdditionalDetails() != null ? objectMapper.writeValueAsString(orderDetailsDTO.getAdditionalDetails()) : "null",
                     order.getCompositeItems() != null ? objectMapper.writeValueAsString(orderDetailsDTO.getCompositeItems()) : "null");
-            
+
             // Create a request to push to Kafka topic
             OrderDetailsRequest kafkaRequest = OrderDetailsRequest.builder()
                     .requestInfo(request.getRequestInfo())
                     .orderDetailsDTO(orderDetailsDTO)
                     .build();
-            
+
             producer.push(config.getOrderUpdateUniqueIdTopic(), kafkaRequest);
 
             log.info("Order details after update for order number: {}, additionalDetails: {}, compositeItems: {}", orderNumber, orderDetailsDTO.getAdditionalDetails(), orderDetailsDTO.getCompositeItems());
-            
+
             return orderDetailsDTO;
-            
+
         } catch (CustomException e) {
             log.error("Custom exception while processing order details", e);
             throw e;
         } catch (Exception e) {
             log.error("Error processing order details", e);
-            throw new CustomException("ORDER_DETAILS_PROCESSING_ERROR", 
+            throw new CustomException("ORDER_DETAILS_PROCESSING_ERROR",
                     "Error processing order details: " + e.getMessage());
         }
     }

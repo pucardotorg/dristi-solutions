@@ -76,7 +76,7 @@ public class AdvocateService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while creating advocate :: {}", e.toString());
+            log.error("Error occurred while creating advocate", e);
             throw new CustomException(ADVOCATE_CREATE_EXCEPTION, e.getMessage());
         }
     }
@@ -101,7 +101,7 @@ public class AdvocateService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching to search results : {}", e.toString());
+            log.error("Error while fetching to search results", e);
             throw new CustomException(ADVOCATE_SEARCH_EXCEPTION, e.getMessage());
         }
     }
@@ -136,7 +136,7 @@ public class AdvocateService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching to search results :: {}", e.toString());
+            log.error("Error while fetching to search results", e);
             throw new CustomException(ADVOCATE_SEARCH_EXCEPTION, e.getMessage());
         }
     }
@@ -161,10 +161,10 @@ public class AdvocateService {
             return applications;
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while searching :: {}", e.toString());
+            log.error("Custom Exception occurred while searching", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching to search results :: {}", e.toString());
+            log.error("Error while fetching to search results", e);
             throw new CustomException(ADVOCATE_SEARCH_EXCEPTION, e.getMessage());
         }
     }
@@ -196,10 +196,10 @@ public class AdvocateService {
             return advocateRequest.getAdvocate();
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while updating advocate :: {}", e.toString());
+            log.error("Custom Exception occurred while updating advocate", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while updating advocate :: {}", e.toString());
+            log.error("Error occurred while updating advocate", e);
             throw new CustomException(ADVOCATE_UPDATE_EXCEPTION, "Error occurred while updating advocate: " + e.getMessage());
         }
 
@@ -227,7 +227,7 @@ public class AdvocateService {
             }
         } catch (Exception e) {
             // Log the exception and continue the execution without throwing
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
     }
 
@@ -244,7 +244,7 @@ public class AdvocateService {
         }
         catch (Exception e) {
             // Log the exception and continue the execution without throwing
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
 
         return mobileNumber;
@@ -266,7 +266,7 @@ public class AdvocateService {
             }
             return existingAdvocate;
         } catch (Exception e) {
-            log.error("Error validating existing application :: {}", e.toString());
+            log.error("Error validating existing application", e);
             throw new CustomException(VALIDATION_EXCEPTION, "Error validating existing application: " + e.getMessage());
         }
     }

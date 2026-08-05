@@ -264,10 +264,10 @@ public class ReScheduleHearingService {
             return hearingService.updateBulk(ScheduleHearingRequest.builder().hearing(hearings).requestInfo(request.getRequestInfo()).build(), defaultSlots, hearingTypeMap);
             // one edge case is here , for opt out if that date or in that duration suggested days are there then what need to done
         } catch (CustomException e) {
-            log.error(e.getMessage());
+            log.error("Error updating bulk reschdule request", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error updating bulk reschdule request: {}", e.getMessage());
+            log.error("Error updating bulk reschdule request", e);
             throw new CustomException("BULK_RESCHEDULE_ERR", "Error occurred while updating bulk reschedule request");
         }
     }
