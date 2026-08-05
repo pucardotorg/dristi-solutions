@@ -7,9 +7,11 @@ import lombok.Getter;
 import lombok.ToString;
 
 import org.egov.user.domain.exception.InvalidNonLoggedInUserUpdatePasswordRequestException;
+import org.egov.user.domain.model.enums.PasswordUpdateVerificationMode;
 import org.egov.user.domain.model.enums.UserType;
 
 import static java.util.Objects.isNull;
+import static org.egov.user.domain.model.enums.PasswordUpdateVerificationMode.OTP;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 @AllArgsConstructor
@@ -23,6 +25,19 @@ public class NonLoggedInUserUpdatePasswordRequest {
     private String newPassword;
     private String tenantId;
     private UserType type;
+    private PasswordUpdateVerificationMode verificationMode;
+
+    /**
+     * The mode the request is to be verified with, treating an unspecified mode as OTP so that
+     * callers written before the field existed keep the stricter behaviour.
+     */
+    public PasswordUpdateVerificationMode getVerificationMode() {
+        return isNull(verificationMode) ? OTP : verificationMode;
+    }
+
+    public boolean isOtpVerified() {
+        return getVerificationMode() == OTP;
+    }
 
     public void validate() {
         if (isModelInvalid()) {
@@ -38,8 +53,12 @@ public class NonLoggedInUserUpdatePasswordRequest {
                 .build();
     }
 
+    /**
+     * An OTP is only expected when the request is being verified by OTP, a token verified request
+     * carries no otpReference at all.
+     */
     public boolean isOtpReferenceAbsent() {
-        return isEmpty(otpReference);
+        return isOtpVerified() && isEmpty(otpReference);
     }
 
     public boolean isUsernameAbsent() {
