@@ -521,7 +521,7 @@ public class IndexerUtils {
                 }
             } catch (Exception e) {
                 // Log the exception and continue the execution without throwing
-                log.error("Error occurred while sending notification: {}", e.toString());
+                log.error("Error occurred while sending notification", e);
             }
         }
 
@@ -791,7 +791,7 @@ public class IndexerUtils {
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
             return caseDetails.get(0).path("courtId").textValue();
         } catch (Exception e) {
-            log.error("Error occurred while getting court id: {}", e.toString());
+            log.error("Error occurred while getting court id", e);
         }
         return null;
 

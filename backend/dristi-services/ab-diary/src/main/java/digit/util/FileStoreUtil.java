@@ -76,7 +76,7 @@ public class FileStoreUtil {
 
             return extractDocumentFromResponse(responseEntity);
         } catch (Exception e) {
-            log.error("Error while saving document to file store: {}", e.getMessage(), e);
+            log.error("Error while saving document to file store", e);
             throw new CustomException(FILE_STORE_UTILITY_EXCEPTION, "Error occurred when getting saving document in File Store");
         }
     }
@@ -119,7 +119,7 @@ public class FileStoreUtil {
             ResponseEntity<Object> responseEntity = restTemplate.postForEntity(url, requestEntity, Object.class);
             log.info("Files deleted from filestore: {}, status: {}", fileStoreIds, responseEntity.getStatusCode());
         } catch (CustomException e) {
-            log.error("Error while deleting files from file store: {}", e.getMessage(), e);
+            log.error("Error while deleting files from file store", e);
             throw new CustomException("FILE_STORE_UTILITY_EXCEPTION", "Error occurred when deleting files in File Store");
         }
     }

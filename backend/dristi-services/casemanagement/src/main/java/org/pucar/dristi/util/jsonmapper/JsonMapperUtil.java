@@ -28,7 +28,7 @@ public class JsonMapperUtil {
 		try {
 			return mapper.readValue(jsonObject.toString(), clazz);
 		} catch (Exception e) {
-			log.error("Error mapping JSON to {}: {}", clazz.getSimpleName(), e.getMessage(), e);
+			log.error("Error mapping JSON to {}", clazz.getSimpleName(), e);
 			throw new CustomException("JSON_MAPPING_ERROR", e.getMessage());
 		}
 	}

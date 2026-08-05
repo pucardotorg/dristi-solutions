@@ -60,7 +60,7 @@ public class WorkflowService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error updating workflow status: {}", e.getMessage());
+            log.error("Error updating workflow status", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, "Error updating workflow status: " + e.getMessage());
         }
     }
@@ -75,7 +75,7 @@ public class WorkflowService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error calling workflow: {}", e.getMessage());
+            log.error("Error calling workflow", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
     }
@@ -100,7 +100,7 @@ public class WorkflowService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error getting process instance for Application: {}", e.getMessage());
+            log.error("Error getting process instance for Application", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
     }
@@ -142,7 +142,7 @@ public class WorkflowService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error getting business service: {}", e.getMessage());
+            log.error("Error getting business service", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
     }
@@ -167,7 +167,7 @@ public class WorkflowService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error getting current workflow: {}", e.getMessage());
+            log.error("Error getting current workflow", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
     }

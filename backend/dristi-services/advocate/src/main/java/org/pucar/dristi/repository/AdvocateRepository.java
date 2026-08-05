@@ -51,7 +51,7 @@ public class AdvocateRepository {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error(FETCH_ADVOCATE_EXCEPTION, e.toString());
+            log.error(FETCH_ADVOCATE_EXCEPTION, e);
             throw new CustomException(ADVOCATE_SEARCH_EXCEPTION, FETCH_ADVOCATE_EXCEPTION + e.getMessage());
         }
     }
@@ -72,7 +72,7 @@ public class AdvocateRepository {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error(FETCH_ADVOCATE_EXCEPTION, e.toString());
+            log.error(FETCH_ADVOCATE_EXCEPTION, e);
             throw new CustomException(ADVOCATE_SEARCH_EXCEPTION, FETCH_ADVOCATE_EXCEPTION + e.getMessage());
         }
     }
@@ -88,7 +88,7 @@ public class AdvocateRepository {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error(FETCH_ADVOCATE_EXCEPTION, e.toString());
+            log.error(FETCH_ADVOCATE_EXCEPTION, e);
             throw new CustomException(ADVOCATE_SEARCH_EXCEPTION, FETCH_ADVOCATE_EXCEPTION + e.getMessage());
         }
     }

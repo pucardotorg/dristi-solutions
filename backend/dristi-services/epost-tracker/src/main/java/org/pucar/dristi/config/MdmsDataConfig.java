@@ -57,7 +57,7 @@ public class MdmsDataConfig {
                 postalHubMap.put(postalHub.getPostHubName(),postalHub.getPinCodes());
             }
         } catch (Exception e) {
-            log.error("Unable to create postal hub and pin code map :: {}",e.getMessage());
+            log.error("Unable to create postal hub and pin code map", e);
         }
 
     }
@@ -75,7 +75,7 @@ public class MdmsDataConfig {
                 postalHubUserNameMap.put(postalHubAndUserName.getUserName(),postalHubAndUserName.getPostHubName());
             }
         } catch (Exception e) {
-            log.error("Unable to create postal hub and user name map :: {}",e.getMessage());
+            log.error("Unable to create postal hub and user name map", e);
         }
     }
 }

@@ -37,7 +37,7 @@ public class ApplicationUtil {
             applicationList = responseNode.get("applicationList");
             log.info("ApplicationUtil getApplications response: {}", response);
         } catch (Exception e) {
-            log.error("ApplicationUtil getApplications error: {}", e.getMessage());
+            log.error("ApplicationUtil getApplications error", e);
         }
 
         return applicationList;

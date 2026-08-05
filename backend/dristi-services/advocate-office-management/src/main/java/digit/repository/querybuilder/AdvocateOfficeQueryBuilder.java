@@ -97,7 +97,7 @@ public class AdvocateOfficeQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building member search query :: {}", e.toString());
+            log.error("Error while building member search query", e);
             throw new CustomException(MEMBER_SEARCH_QUERY_EXCEPTION, MEMBER_SEARCH_QUERY_EXCEPTION_MESSAGE + e.getMessage());
         }
     }

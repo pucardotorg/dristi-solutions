@@ -90,7 +90,7 @@ public class OptOutProcessor {
 
         } catch (Exception e) {
             log.error("KAFKA_PROCESS_ERROR:", e);
-            log.info("operation = checkAndScheduleHearingForOptOut, result = FAILURE, message = {}", e.getMessage());
+            log.error("operation = checkAndScheduleHearingForOptOut, result = FAILURE, message = {}", e.getMessage());
 
         }
     }
@@ -148,8 +148,8 @@ public class OptOutProcessor {
             producer.push(configuration.getScheduleHearingUpdateTopic(), scheduleHearingRequest);
             log.info("operation = unblockJudgeCalendarForSuggestedDays, result = SUCCESS");
         } catch (Exception e) {
-            log.error("Error unblocking calendar: {}", e.getMessage());
-            log.info("operation = unblockJudgeCalendarForSuggestedDays, result = FAILURE, message = {}", e.getMessage());
+            log.error("Error unblocking calendar", e);
+            log.error("operation = unblockJudgeCalendarForSuggestedDays, result = FAILURE, message = {}", e.getMessage());
         }
     }
 
