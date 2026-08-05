@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -33,6 +34,7 @@ import org.egov.user.domain.model.Role;
 import org.egov.user.domain.model.User;
 import org.egov.user.domain.model.UserSearchCriteria;
 import org.egov.user.domain.model.enums.Gender;
+import org.egov.user.domain.model.enums.PasswordUpdateVerificationMode;
 import org.egov.user.domain.model.enums.UserType;
 import org.egov.user.domain.service.utils.EncryptionDecryptionUtil;
 import org.egov.user.domain.service.utils.PasswordPolicyResolver;
@@ -651,6 +653,39 @@ public class UserServiceTest {
         verify(userRepository).update(domainUser, domainUser,domainUser.getId(), domainUser.getUuid() );
     }
 
+    @Test
+    public void test_should_update_password_without_otp_when_the_logged_in_user_owns_the_account() {
+        final NonLoggedInUserUpdatePasswordRequest request = NonLoggedInUserUpdatePasswordRequest.builder()
+                .userName("xyz").tenantId("default").type(UserType.SYSTEM).newPassword("nEwP@ssw0rd")
+                .verificationMode(PasswordUpdateVerificationMode.TOKEN).build();
+        final User domainUser = User.builder().type(UserType.SYSTEM).id(123L).uuid("user-uuid").build();
+        when(userRepository.findAll(any(UserSearchCriteria.class))).thenReturn(Collections.singletonList(domainUser));
+        when(encryptionDecryptionUtil.decryptObject(any(), anyString(), any(), any(RequestInfo.class)))
+                .thenReturn(domainUser);
+        when(encryptionDecryptionUtil.encryptObject(domainUser, "User", User.class)).thenReturn(domainUser);
+
+        userService.updatePasswordForNonLoggedInUser(request, requestInfoOfUser("user-uuid"));
+
+        verify(userRepository).update(domainUser, domainUser, domainUser.getId(), domainUser.getUuid());
+        verify(otpRepository, never()).validateOtp(any());
+    }
+
+    @Test
+    public void test_should_throw_exception_when_the_logged_in_user_does_not_own_the_account_being_updated() {
+        final NonLoggedInUserUpdatePasswordRequest request = NonLoggedInUserUpdatePasswordRequest.builder()
+                .userName("xyz").tenantId("default").type(UserType.SYSTEM).newPassword("nEwP@ssw0rd")
+                .verificationMode(PasswordUpdateVerificationMode.TOKEN).build();
+        final User domainUser = User.builder().type(UserType.SYSTEM).id(123L).uuid("user-uuid").build();
+        when(userRepository.findAll(any(UserSearchCriteria.class))).thenReturn(Collections.singletonList(domainUser));
+        when(encryptionDecryptionUtil.decryptObject(any(), anyString(), any(), any(RequestInfo.class)))
+                .thenReturn(domainUser);
+
+        assertThrows(UserProfileUpdateDeniedException.class,
+                () -> userService.updatePasswordForNonLoggedInUser(request, requestInfoOfUser("somebody-else")));
+
+        verify(userRepository, never()).update(any(), any(), anyLong(), anyString());
+    }
+
     private org.egov.user.domain.model.User validDomainUser(boolean otpValidationMandatory) {
         return User.builder().username("supandi_rocks").name("Supandi").gender(Gender.MALE).type(UserType.CITIZEN)
                 .active(Boolean.TRUE).mobileNumber("9988776655").tenantId("tenantId").otpReference("12312")
@@ -666,6 +701,12 @@ public class UserServiceTest {
     private RequestInfo getValidRequestInfo() {
         List<org.egov.common.contract.request.Role> roles = Collections.singletonList(org.egov.common.contract.request.Role.builder().code("roleCode1").build());
         org.egov.common.contract.request.User userInfo = org.egov.common.contract.request.User.builder().roles(roles).id((long)123).build();
+        return RequestInfo.builder().userInfo(userInfo).build();
+    }
+
+    private RequestInfo requestInfoOfUser(String uuid) {
+        org.egov.common.contract.request.User userInfo = org.egov.common.contract.request.User.builder().id((long) 123)
+                .uuid(uuid).build();
         return RequestInfo.builder().userInfo(userInfo).build();
     }
 

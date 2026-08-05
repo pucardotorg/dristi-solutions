@@ -492,9 +492,7 @@ public class UserService {
         /* decrypt here */
         /* the reason for decryption here is the otp service requires decrypted username */
         user = encryptionDecryptionUtil.decryptObject(user, "User", User.class, requestInfo);
-        user.setOtpReference(request.getOtpReference());
-        if (!isOtpValid(user))
-            throw new CustomException("INVALID_OTP", "OTP validation failed, please provide a valid OTP");
+        verifyRequestOwnership(request, user, requestInfo);
 
         user.updatePassword(encryptPwd(request.getNewPassword()));
         user.setHasPassword(true);
@@ -503,6 +501,55 @@ public class UserService {
         user = encryptionDecryptionUtil.encryptObject(user, "User", User.class);
         userRepository.update(user, user,user.getId() , user.getUuid());
         removeTokensByUser(user);
+    }
+
+    /**
+     * Establishes that whoever sent the no-login password update is entitled to change this user's
+     * password, in whichever of the two ways the request asked to be verified.
+     *
+     * OTP   - possession of an OTP issued to the mobile number held on the stored user. The identity
+     *         is taken from the user record rather than the request, so an OTP delivered to one
+     *         number can never be spent on another user's account.
+     * TOKEN - the caller is already logged in and is that same user. Nothing about the target comes
+     *         from the token, the two identities are simply required to match.
+     *
+     * @param request the update request, carrying the verification mode
+     * @param user    the decrypted user whose password is being changed
+     * @param requestInfo request info, whose userInfo is populated by the gateway from the auth token
+     */
+    private void verifyRequestOwnership(NonLoggedInUserUpdatePasswordRequest request, User user,
+                                        RequestInfo requestInfo) {
+        if (request.isOtpVerified()) {
+            user.setOtpReference(request.getOtpReference());
+            if (!isOtpValid(user))
+                throw new CustomException("INVALID_OTP", "OTP validation failed, please provide a valid OTP");
+            return;
+        }
+
+        validateUpdateIsDoneByTheSameLoggedInUser(user, requestInfo);
+    }
+
+    /**
+     * Rejects a token verified password update unless the logged-in user is the user being updated,
+     * so that a valid session can only ever change its own password.
+     *
+     * @param user        the user whose password is being changed
+     * @param requestInfo request info of the logged-in user
+     */
+    private void validateUpdateIsDoneByTheSameLoggedInUser(User user, RequestInfo requestInfo) {
+        String loggedInUserUuid = isNull(requestInfo) || isNull(requestInfo.getUserInfo()) ? null
+                : requestInfo.getUserInfo().getUuid();
+
+        if (isEmpty(loggedInUserUuid)) {
+            log.error("Cannot update the password, logged-in user is absent from the request");
+            throw new CustomException("INVALID_REQUEST", "Logged-in user information is mandatory");
+        }
+
+        if (!loggedInUserUuid.equals(user.getUuid())) {
+            log.error("Password update denied, logged-in user {} does not own the account being updated",
+                    loggedInUserUuid);
+            throw new UserProfileUpdateDeniedException();
+        }
     }
 
     /**
