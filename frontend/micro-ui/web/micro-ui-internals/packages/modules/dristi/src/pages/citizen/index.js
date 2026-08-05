@@ -312,6 +312,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
               location.pathname.includes("/response") ||
               location.pathname.includes("/registration") ||
               location.pathname.includes("/advocate-profile-update") ||
+              location.pathname.includes("/home/login") ||
               location.pathname.endsWith("/home")
                 ? `user-registration`
                 : ""
