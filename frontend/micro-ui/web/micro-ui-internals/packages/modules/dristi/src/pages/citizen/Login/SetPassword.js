@@ -7,7 +7,8 @@ import {
   PASSWORD_MIN_LENGTH,
   PASSWORD_STRENGTH_LABELS,
   getPasswordStrength,
-  isBlocklistedPassword,
+  isCommonPassword,
+  matchesUserIdentifier,
   validatePassword,
 } from "../../../Utils/passwordUtils";
 
@@ -81,17 +82,23 @@ const SetPassword = ({
 
   const passwordValidation = useMemo(() => validatePassword(password, blocklistIdentifiers), [password, blocklistIdentifiers]);
 
-  const isCommon = isBlocklistedPassword(password, blocklistIdentifiers);
+  const isCommon = isCommonPassword(password);
+  const hasIdentifier = matchesUserIdentifier(password, blocklistIdentifiers);
   const tooLong = password.length > PASSWORD_MAX_LENGTH;
   const lengthOk = password.length >= PASSWORD_MIN_LENGTH && password.length <= PASSWORD_MAX_LENGTH;
   const commonOk = password.length >= PASSWORD_MIN_LENGTH && !isCommon;
+  const identifierOk = password.length >= PASSWORD_MIN_LENGTH && !hasIdentifier;
   const matchOk = Boolean(confirmPassword) && confirmPassword === password;
+  // When the password contains the user's name/email/number, only the dedicated 3rd item turns red;
+  // the generic "common" item is not also flagged.
+  const commonFail = isCommon && !hasIdentifier;
 
-  const strength = useMemo(() => getPasswordStrength(password, blocklistIdentifiers), [password, blocklistIdentifiers]);
-  // "TOO_COMMON" overrides the usual strength label whenever the password is blocklisted.
-  const strengthLabel = !password ? "—" : isCommon ? t("TOO_COMMON") : t(PASSWORD_STRENGTH_LABELS[strength]);
+  const strength = useMemo(() => getPasswordStrength(password), [password]);
+  // "TOO_COMMON" is shown only for an actual common password; a name/email/number match is surfaced
+  // by its own checklist item, not here.
+  const strengthLabel = !password ? "—" : commonFail ? t("TOO_COMMON") : t(PASSWORD_STRENGTH_LABELS[strength]);
 
-  const canSubmit = lengthOk && commonOk && matchOk && !isSubmitting;
+  const canSubmit = lengthOk && commonOk && identifierOk && matchOk && !isSubmitting;
 
   const handleSubmit = async () => {
     if (!passwordValidation.isValid) {
@@ -163,7 +170,7 @@ const SetPassword = ({
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginTop: "7px" }}>
           <span style={{ color: "#77787b" }}>{t("CS_PASSWORD_STRENGTH")}</span>
-          <span style={{ fontWeight: 600, color: !password ? "#77787b" : isCommon ? "#c1232a" : STRENGTH_COLORS[strength] }}>{strengthLabel}</span>
+          <span style={{ fontWeight: 600, color: !password ? "#77787b" : commonFail ? "#c1232a" : STRENGTH_COLORS[strength] }}>{strengthLabel}</span>
         </div>
 
         <div
@@ -178,7 +185,8 @@ const SetPassword = ({
           }}
         >
           {reqRow(lengthOk, tooLong, tooLong ? t("CS_PASSWORD_REQ_TOO_LONG") : t("CS_PASSWORD_REQ_LENGTH"))}
-          {reqRow(commonOk, isCommon, isCommon ? t("CS_PASSWORD_REQ_COMMON_FAIL") : t("CS_PASSWORD_REQ_COMMON"))}
+          {reqRow(commonOk, commonFail, commonFail ? t("CS_PASSWORD_REQ_COMMON_FAIL") : t("CS_PASSWORD_REQ_COMMON"))}
+          {reqRow(identifierOk, hasIdentifier, t("NO_USER_NAME_EMAIL_OR_NUMBER"))}
         </div>
         <p style={{ fontSize: "12.5px", color: "#77787b", lineHeight: 1.45, marginTop: "10px" }}>{t("CS_PASSWORD_HINT")}</p>
 

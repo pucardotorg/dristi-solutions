@@ -134,7 +134,7 @@ const PasswordSettings = () => {
           onCancel={goHome}
           backLabel="RETURN_TO_HOME"
           onSubmit={startOtp}
-          blocklistIdentifiers={[mobileNumber, userInfo?.emailId]}
+          blocklistIdentifiers={[mobileNumber, userInfo?.emailId, userInfo?.name]}
         />
         {showOtpModal && (
           <SelectOtp
