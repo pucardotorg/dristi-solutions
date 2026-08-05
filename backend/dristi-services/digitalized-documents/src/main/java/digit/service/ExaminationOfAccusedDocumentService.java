@@ -101,7 +101,7 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
                 callNotificationServiceForSMS(request);
                 callNotificationServiceForSMSToAccusedAdvocate(request);
             } catch (Exception e) {
-                log.error("Error occurred while trying to send SMS: {}", e.getMessage());
+                log.error("Error occurred while trying to send SMS", e);
             }
 
             updateWorkflowAdditionalDetails(request);
@@ -262,10 +262,10 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
             // Get RequestInfo from current context or create a new one
             RequestInfo requestInfo = RequestInfo.builder()
                     .build();
-            
+
             // Get individual details using individualId
             List<Individual> individuals = individualUtil.getIndividuals(requestInfo, List.of(uuid), tenantId);
-            
+
             if (!individuals.isEmpty()) {
                 Individual individual = individuals.get(0);
                 return individual.getMobileNumber();

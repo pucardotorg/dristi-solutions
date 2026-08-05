@@ -69,11 +69,11 @@ public class TemplateConfigurationRepository {
             return templateConfigurationList;
         }
         catch (CustomException e){
-            log.error("Custom Exception while fetching template list :: {}",e.toString());
+            log.error("Custom Exception while fetching template list", e);
             throw e;
         }
         catch (Exception e){
-            log.error("Error while fetching template list :: {}",e.toString());
+            log.error("Error while fetching template list", e);
             throw new CustomException(TEMPLATE_SEARCH_EXCEPTION,"Error while fetching template list: "+e.getMessage());
         }
     }

@@ -62,7 +62,7 @@ public class CtcApplicationRepository {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching ctc application list :: {}", e.toString());
+            log.error("Error while fetching ctc application list", e);
             throw new CustomException("SEARCH_CTC_ERR", "Exception while fetching ctc application list: " + e.getMessage());
         }
     }

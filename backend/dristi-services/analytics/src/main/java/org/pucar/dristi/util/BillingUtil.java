@@ -177,7 +177,7 @@ public class BillingUtil {
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
             return caseDetails.get(0).get("courtId").textValue();
         } catch (Exception e) {
-            log.error("Error occurred while getting court id: {}", e.toString());
+            log.error("Error occurred while getting court id", e);
         }
         return null;
 
@@ -206,7 +206,7 @@ public class BillingUtil {
             DemandResponse demandResponse = objectMapper.convertValue(response, DemandResponse.class);
             return demandResponse.getDemands();
         } catch (ServiceCallException e) {
-            log.error("Error while fetching demand by consumer code: {}", e.toString());
+            log.error("Error while fetching demand by consumer code", e);
             throw new CustomException(DEMAND_SERVICE_EXCEPTION, DEMAND_SERVICE_CONSUMER_CODE_EXCEPTION_MESSAGE);
         }
     }

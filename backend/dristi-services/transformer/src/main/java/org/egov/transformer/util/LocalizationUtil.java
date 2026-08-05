@@ -55,7 +55,7 @@ public class LocalizationUtil {
             codes = JsonPath.read(result, LOCALIZATION_CODES_JSONPATH);
             messages = JsonPath.read(result, LOCALIZATION_MSGS_JSONPATH);
         } catch (Exception e) {
-            log.error("Exception while fetching from localization: " + e);
+            log.error("Exception while fetching from localization", e);
         }
         if (null != result) {
             for (int i = 0; i < codes.size(); i++) {

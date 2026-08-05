@@ -145,7 +145,7 @@ public class SecondaryStageProcessor {
                 log.info("Delay condonation not required (code='{}') for filingNumber: {}", delayCondonationTypeCode, filingNumber);
             }
         } catch (com.jayway.jsonpath.PathNotFoundException e) {
-            log.info("Delay condonation type path not found in case details for filingNumber: {}, skipping", filingNumber);
+            log.error("Delay condonation type path not found in case details for filingNumber: {}, skipping", filingNumber);
         } catch (Exception e) {
             log.error("Error processing case registration secondary stage for filingNumber: {}", filingNumber, e);
         }

@@ -43,10 +43,10 @@ public class FileStoreUtil {
             ResponseEntity<String> responseEntity= restTemplate.getForEntity(uri.toString(), String.class);
             fileExists = responseEntity.getStatusCode().equals(HttpStatus.OK);
         }catch (Exception e){
-        		log.error("Document {} is not found in the Filestore for tenantId {} ! An exception occurred!", 
-        			  fileStoreId, 
-        			  tenantId, 
-        			  e);
+            log.error("Document {} is not found in the Filestore for tenantId {} ! An exception occurred!",
+                    fileStoreId,
+                    tenantId,
+                    e);
         }
         return fileExists;
     }
@@ -68,7 +68,7 @@ public class FileStoreUtil {
             ResponseEntity<Object> responseEntity = restTemplate.postForEntity(url, requestEntity, Object.class);
             log.info("Files deleted from filestore: {}, status: {}", fileStoreIds, responseEntity.getStatusCode());
         } catch (CustomException e) {
-            log.error("Error while deleting files from file store: {}", e.getMessage(), e);
+            log.error("Error while deleting files from file store", e);
             throw new CustomException("FILE_STORE_UTILITY_EXCEPTION", "Error occurred when deleting files in File Store");
         }
     }

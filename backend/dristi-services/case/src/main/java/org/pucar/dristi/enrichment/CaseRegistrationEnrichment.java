@@ -202,7 +202,7 @@ public class CaseRegistrationEnrichment {
             enrichAdvocateOffices(caseRequest, auditDetails);
 
         } catch (Exception e) {
-            log.error("Error enriching case application :: {}", e.toString());
+            log.error("Error enriching case application", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, e.getMessage());
         }
     }
@@ -386,7 +386,7 @@ public class CaseRegistrationEnrichment {
             enrichDocument(caseRequest, existingCourtCaseList);
 
         } catch (Exception e) {
-            log.error("Error enriching case application upon update :: {}", e.toString());
+            log.error("Error enriching case application upon update", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service during case update process: " + e.getMessage());
         }
     }
@@ -430,7 +430,7 @@ public class CaseRegistrationEnrichment {
             courtCaseNumber = courtCaseNumber + "/" + year;
             caseRequest.getCases().setCourtCaseNumber(courtCaseNumber);
         } catch (Exception e) {
-            log.error("Error enriching case number and court case number: {}", e.toString());
+            log.error("Error enriching case number and court case number", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching case number and court case number: " + e.getMessage());
         }
     }
@@ -489,7 +489,7 @@ public class CaseRegistrationEnrichment {
             List<String> cnrNumberIdList = idgenUtil.getIdList(caseRequest.getRequestInfo(), tenantId, idName, idFormat, 1, true);
             caseRequest.getCases().setCnrNumber(cnrNumberIdList.get(0));
         } catch (Exception e) {
-            log.error("Error enriching cnr number: {}", e.toString());
+            log.error("Error enriching cnr number", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching cnr number: " + e.getMessage());
         }
     }
@@ -502,7 +502,7 @@ public class CaseRegistrationEnrichment {
             List<String> cmpNumberIdList = idgenUtil.getIdList(caseRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
             caseRequest.getCases().setCmpNumber(cmpNumberIdList.get(0));
         } catch (Exception e) {
-            log.error("Error enriching cnr number: {}", e.toString());
+            log.error("Error enriching cnr number", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching cnr number: " + e.getMessage());
         }
     }
@@ -514,7 +514,7 @@ public class CaseRegistrationEnrichment {
                 caseRequest.getCases().setAccessCode(accessCode);
             }
         } catch (Exception e) {
-            log.error("Error enriching access code: {}", e.toString());
+            log.error("Error enriching access code", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching access code: " + e.getMessage());
         }
     }
@@ -523,7 +523,7 @@ public class CaseRegistrationEnrichment {
         try {
             caseRequest.getCases().setRegistrationDate(caseUtil.getCurrentTimeMil());
         } catch (Exception e) {
-            log.error("Error enriching registration date: {}", e.toString());
+            log.error("Error enriching registration date", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching registration date: " + e.getMessage());
         }
     }
@@ -725,7 +725,7 @@ public class CaseRegistrationEnrichment {
             caseRequest.getCases().getDocuments().add(paymentReceiptDocument);
             return paymentReceiptDocument;
         } catch (Exception e) {
-            log.error("Error enriching payment receipt: {}", e.toString());
+            log.error("Error enriching payment receipt", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching payment receipt: " + e.getMessage());
         }
     }
@@ -747,7 +747,7 @@ public class CaseRegistrationEnrichment {
             lprNumber = lprNumber + "/" + year;
             caseRequest.getCases().setLprNumber(lprNumber);
         } catch (Exception e) {
-            log.error("Error enriching lpr number: {}", e.toString());
+            log.error("Error enriching lpr number", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching lpr number: " + e.getMessage());
         }
     }

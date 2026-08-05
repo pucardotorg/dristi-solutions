@@ -521,7 +521,7 @@ public class CaseRegistrationValidator {
             }
             log.info("operation=validateWitnessRequest, status=SUCCESS, filingNumber: {}", body.getCaseFilingNumber());
         } catch (Exception e) {
-            log.error("operation=validateWitnessRequest, status=FAILURE, filingNumber: {}, error: {}", body.getCaseFilingNumber(), e.getMessage());
+            log.error("operation=validateWitnessRequest, status=FAILURE, filingNumber: {}", body.getCaseFilingNumber(), e);
             throw new CustomException(ERROR_VALIDATING_WITNESS, "Error while validating witness request: " + body.getCaseFilingNumber() + ", error: " + e.getMessage());
         }
     }
@@ -530,19 +530,19 @@ public class CaseRegistrationValidator {
         if(witnessDetails == null || witnessDetails.isEmpty()) {
             throw new CustomException(ERROR_VALIDATING_WITNESS, "Witness details cannot be empty");
         }
-        
+
         Set<String> mobileNumberSet = new HashSet<>();
         for(WitnessDetails witnessDetail : witnessDetails) {
             List<String> mobileNumbers = extractMobileNumbers(witnessDetail);
             for(String mobileNumber : mobileNumbers) {
                 if(!mobileNumberSet.add(mobileNumber)) {
-                    throw new CustomException(ERROR_VALIDATING_WITNESS, 
+                    throw new CustomException(ERROR_VALIDATING_WITNESS,
                         "Duplicate mobile number found: " + mobileNumber + ". All witnesses must have different mobile numbers.");
                 }
             }
         }
     }
-    
+
     private List<String> extractMobileNumbers(WitnessDetails witnessDetail) {
         if(witnessDetail.getPhoneNumbers() == null || witnessDetail.getPhoneNumbers().getMobileNumber() == null) {
             return Collections.emptyList();

@@ -32,10 +32,10 @@ public class TemplateConfigurationEnrichment {
             templateConfigurationRequest.getTemplateConfiguration().getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
             templateConfigurationRequest.getTemplateConfiguration().getAuditDetails().setLastModifiedBy(templateConfigurationRequest.getRequestInfo().getUserInfo().getUuid());
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while enriching template :: {}", e.toString());
+            log.error("Custom Exception occurred while enriching template", e);
             throw e;
         } catch (Exception e) {
-            log.error("Exception occurred while enriching template :: {}", e.toString());
+            log.error("Exception occurred while enriching template", e);
             throw e;
         }
     }

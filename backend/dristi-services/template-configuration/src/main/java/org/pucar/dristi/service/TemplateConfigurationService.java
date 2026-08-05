@@ -45,7 +45,7 @@ public class TemplateConfigurationService {
             log.error("Custom Exception occurred while creating template");
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while creating template :: {}", e.toString());
+            log.error("Error occurred while creating template", e);
             throw new CustomException(TEMPLATE_CREATE_EXCEPTION, e.getMessage());
         }
     }
@@ -59,7 +59,7 @@ public class TemplateConfigurationService {
             return templateConfigurations;
 
         } catch (Exception e) {
-            log.error("Error while fetching to search results :: {}", e.toString());
+            log.error("Error while fetching to search results", e);
             throw new CustomException(TEMPLATE_SEARCH_EXCEPTION, e.getMessage());
         }
     }
@@ -84,7 +84,7 @@ public class TemplateConfigurationService {
             return body.getTemplateConfiguration();
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while updating template :: {}", e.toString());
+            log.error("Custom Exception occurred while updating template", e);
             throw e;
         } catch (Exception e) {
             log.error("Error occurred while updating template");

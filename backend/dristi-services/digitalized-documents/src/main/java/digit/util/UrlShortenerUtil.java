@@ -41,7 +41,7 @@ public class UrlShortenerUtil {
             }
             return res;
         } catch (Exception e){
-            log.error("Error occurred while calling url shortening service: {}", e.getMessage());
+            log.error("Error occurred while calling url shortening service", e);
             return url;
         }
     }
@@ -61,7 +61,7 @@ public class UrlShortenerUtil {
             // Return shortened version
             return getShortenedUrl(longUrl, documentNumber);
         } catch (CustomException e) {
-            log.error(URL_SHORTENING_ERROR_CODE + "{}", e.getMessage());
+            log.error(URL_SHORTENING_ERROR_CODE, e);
             throw new CustomException(URL_SHORTENING_ERROR_CODE, URL_SHORTENING_ERROR_MESSAGE + e.getMessage());
         }
     }

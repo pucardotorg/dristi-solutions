@@ -271,7 +271,7 @@ public class BailService {
     }
 
 
-  
+
     private String getEmailCode(String action){
         if(action.equalsIgnoreCase(INITIATE_E_SIGN)){
             return BAIL_BOND_INITIATED_EMAIL;
@@ -517,7 +517,7 @@ public class BailService {
             return decryptedBailList;
 
         } catch (Exception e) {
-            log.error("Error while fetching to search results {}", e.toString());
+            log.error("Error while fetching to search results", e);
             throw new CustomException("BAIL_SEARCH_ERR", e.getMessage());
         }
     }

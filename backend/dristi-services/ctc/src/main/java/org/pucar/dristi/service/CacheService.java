@@ -44,7 +44,7 @@ public class CacheService {
                 log.info("Saved CTC application in Redis cache: {}", application.getCtcApplicationNumber());
             }
         } catch (Exception e) {
-            log.error("Error saving CTC application to Redis cache: {}", e.getMessage());
+            log.error("Error saving CTC application to Redis cache", e);
         }
     }
 
@@ -57,7 +57,7 @@ public class CacheService {
             }
             return null;
         } catch (JsonProcessingException e) {
-            log.error("Error reading CTC application from Redis cache: {}", e.getMessage());
+            log.error("Error reading CTC application from Redis cache", e);
             return null;
         }
     }

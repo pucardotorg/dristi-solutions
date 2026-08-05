@@ -91,7 +91,7 @@ public class DigitalizedDocumentService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error processing create digitalized document: {}", e.getMessage());
+            log.error("Error processing create digitalized document", e);
             throw new CustomException(CREATE_DIGITALIZED_DOCUMENT_FAILED, "Error while creating digitalized document : " + e.getMessage());
         }
     }
@@ -111,7 +111,7 @@ public class DigitalizedDocumentService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error processing update digitalized document: {}", e.getMessage());
+            log.error("Error processing update digitalized document", e);
             throw new CustomException(UPDATE_DIGITALIZED_DOCUMENT_FAILED, "Error while updating digitalized document : " + e.getMessage());
         }
     }
@@ -129,7 +129,7 @@ public class DigitalizedDocumentService {
             return documents;
 
         } catch (Exception e) {
-            log.error("Error searching digitalized documents: {}", e.getMessage());
+            log.error("Error searching digitalized documents", e);
             throw new CustomException("DIGITALIZED_DOCUMENT_SEARCH_FAILED", "Error searching digitalized documents: " + e.getMessage());
         }
     }

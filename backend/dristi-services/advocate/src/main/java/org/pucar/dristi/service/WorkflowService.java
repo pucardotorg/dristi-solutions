@@ -56,7 +56,7 @@ public class WorkflowService {
             throw e;
         }
         catch (Exception e) {
-            log.error("Error updating workflow status :: {}", e.toString());
+            log.error("Error updating workflow status", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,"Error updating workflow status: "+ e);
         }
     }
@@ -70,7 +70,7 @@ public class WorkflowService {
         } catch(CustomException e){
             throw e;
         } catch (Exception e) {
-            log.error("Error calling workflow :: {}", e.toString());
+            log.error("Error calling workflow", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,e.toString());
         }
     }
@@ -92,7 +92,7 @@ public class WorkflowService {
         } catch(CustomException e){
             throw e;
         } catch (Exception e) {
-            log.error("Error updating workflow status :: {}", e.toString());
+            log.error("Error updating workflow status", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,e.toString());
         }
     }
@@ -125,7 +125,7 @@ public class WorkflowService {
         } catch(CustomException e){
             throw e;
         } catch (Exception e) {
-            log.error("Error getting process instance for ADVOCATE: {}", e.toString());
+            log.error("Error getting process instance for ADVOCATE", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,e.toString());
         }
     }
@@ -158,7 +158,7 @@ public class WorkflowService {
         } catch(CustomException e){
             throw e;
         } catch (Exception e) {
-            log.error("Error getting process instance for ADVOCATE :: {}", e.toString());
+            log.error("Error getting process instance for ADVOCATE", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.toString());
         }
     }
@@ -174,7 +174,7 @@ public class WorkflowService {
         } catch(CustomException e){
             throw e;
         } catch (Exception e) {
-            log.error("Error getting current workflow for tenant ID {} and business ID {}: {}", tenantId, businessId, e.toString());
+            log.error("Error getting current workflow for tenant ID {} and business ID {}", tenantId, businessId, e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
     }
@@ -194,4 +194,4 @@ public class WorkflowService {
         return Workflow.builder().action(processInstance.getState().getState()).comments(processInstance.getComment()).build();
     }
 }
- 
+

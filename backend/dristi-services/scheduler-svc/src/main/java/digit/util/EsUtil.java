@@ -64,12 +64,12 @@ public class EsUtil {
                     manualIndex(uri, bulkRequestPayload);
                 } catch (Exception e) {
                     log.error("Error occurred while updating open hearing serialNumber in es");
-                    log.error("ERROR_FROM_ES: {}", e.getMessage());
+                    log.error("ERROR_FROM_ES", e);
                 }
             }
         } catch (Exception e) {
             log.error("Something went wrong while updating serialNumber of open hearing");
-            log.error("ERROR: {}", e.getMessage());
+            log.error("ERROR", e);
         }
 
 
@@ -124,7 +124,7 @@ public class EsUtil {
             cacheService.setList(causeListKey, hearingKeys);
             log.info("Updated redis cache for {} hearings under key: {}", hearingKeys.size(), causeListKey);
         } catch (Exception e) {
-            log.error("Error while updating redis cache for open hearings:: {}", e.getMessage());
+            log.error("Error while updating redis cache for open hearings", e);
         }
     }
 
