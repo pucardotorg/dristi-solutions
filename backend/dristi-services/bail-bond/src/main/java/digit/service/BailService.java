@@ -133,7 +133,8 @@ public class BailService {
                     .build();
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
             String stage = caseUtil.getStage(caseDetails);
-            if(APPEARANCE.equalsIgnoreCase(stage)){
+            // Removing the condition on case stage as per ticket number 5953
+//            if(APPEARANCE.equalsIgnoreCase(stage)){
                 // Notify Sureties
                 if (smsTopics.contains(BAIL_BOND_INITIATED_SURETY)) {
                     bail.getSureties().stream()
@@ -149,7 +150,7 @@ public class BailService {
                         notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_LITIGANT, litigantMobile);
                     }
                 }
-            }
+//            }
 
         } catch (Exception e) {
             log.error("Error sending notification for bailRequest: {}", bailRequest, e);
