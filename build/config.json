@@ -208,6 +208,14 @@
         "language": "go",
         "version": "1.13"
     },
+    "health-dashboard": {
+        "service_group": "core-services",
+        "db_source_path": "backend/integration-services/health-dashboard/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile.v2",
+        "service_source_path": "backend/integration-services/health-dashboard",
+        "language": "java",
+        "version": "17"
+    },
     "hearing": {
         "service_group": "core-services",
         "db_source_path": "backend/dristi-services/hearing/src/main/resources/db",
@@ -245,14 +253,6 @@
         "db_source_path": "",
         "dockerfile_path": "build/maven/Dockerfile.v2",
         "service_source_path": "backend/integration-services/kerala-sms",
-        "language": "java",
-        "version": "17"
-    },
-    "health-dashboard": {
-        "service_group": "core-services",
-        "db_source_path": "backend/integration-services/health-dashboard/src/main/resources/db",
-        "dockerfile_path": "build/maven/Dockerfile.v2",
-        "service_source_path": "backend/integration-services/health-dashboard",
         "language": "java",
         "version": "17"
     },

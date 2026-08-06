@@ -1,6 +1,7 @@
 package org.egov.healthdashboard.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.egov.healthdashboard.consumer.HealthStatusConsumer;
 import org.egov.healthdashboard.repository.ServiceHealthRepository;
 import org.egov.healthdashboard.web.models.ServiceHealthStatus;
 import org.junit.jupiter.api.BeforeEach;
