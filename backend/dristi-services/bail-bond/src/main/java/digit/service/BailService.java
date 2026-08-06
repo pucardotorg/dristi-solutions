@@ -133,21 +133,19 @@ public class BailService {
                     .build();
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
             String stage = caseUtil.getStage(caseDetails);
-            if(APPEARANCE.equalsIgnoreCase(stage)){
-                // Notify Sureties
-                if (smsTopics.contains(BAIL_BOND_INITIATED_SURETY)) {
-                    bail.getSureties().stream()
-                            .map(Surety::getMobileNumber)
-                            .filter(StringUtils::isNotBlank)
-                            .forEach(mobile -> notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_SURETY, mobile));
-                }
+            // Notify Sureties
+            if (smsTopics.contains(BAIL_BOND_INITIATED_SURETY)) {
+                bail.getSureties().stream()
+                        .map(Surety::getMobileNumber)
+                        .filter(StringUtils::isNotBlank)
+                        .forEach(mobile -> notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_SURETY, mobile));
+            }
 
-                // Notify Litigant
-                if (smsTopics.contains(BAIL_BOND_INITIATED_LITIGANT)) {
-                    String litigantMobile = bail.getLitigantMobileNumber();
-                    if (StringUtils.isNotBlank(litigantMobile)) {
-                        notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_LITIGANT, litigantMobile);
-                    }
+            // Notify Litigant
+            if (smsTopics.contains(BAIL_BOND_INITIATED_LITIGANT)) {
+                String litigantMobile = bail.getLitigantMobileNumber();
+                if (StringUtils.isNotBlank(litigantMobile)) {
+                    notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_LITIGANT, litigantMobile);
                 }
             }
 
