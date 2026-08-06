@@ -292,12 +292,33 @@ const HomeView = () => {
     if (userInfoType === "citizen" && !userType) return null;
     if ((userType === "ADVOCATE" && !advocateId) || (userType === "ADVOCATE_CLERK" && !advClerkId)) return null;
     if (((userType === "ADVOCATE" && advocateId) || (userType === "ADVOCATE_CLERK" && advClerkId)) && !selectedSeniorAdvocate?.id) return null;
+
+    // Advocate Clerk acting as Self -> fetch all cases
+    if (advClerkId && selectedSeniorAdvocate?.isSelf) {
+      return {
+        searchKey: "filingNumber",
+        defaultFields: true,
+        casesFor: "ALL",
+        ...(courtId && !isScrutiny && { courtId }),
+      };
+    }
+
+    // Advocate logged in and selected their own entry
+    if (advocateId && advocateId === selectedSeniorAdvocate?.id) {
+      return {
+        searchKey: "filingNumber",
+        defaultFields: true,
+        casesFor: "ALL",
+        ...(courtId && !isScrutiny && { courtId }),
+      };
+    }
+
     return {
       ...(advClerkId
         ? {
             searchKey: "filingNumber",
             defaultFields: true,
-            officeAdvocateId: selectedSeniorAdvocate?.id, // TODO: handle for jr adv and senr adv
+            officeAdvocateId: selectedSeniorAdvocate?.id,
             memberId: advClerkId,
             ...(courtId && !isScrutiny && { courtId }),
           }
@@ -408,52 +429,34 @@ const HomeView = () => {
     } else return null;
   }, [userInfoType, advocateId, individualId, isSearchLoading]);
 
-  const casefetchCriteriaForCitizen = useMemo(() => {
-    if (!citizenId) return false;
-    if (citizenId) {
-      if (!userType) return false;
-      if (userType === "LITIGANT") {
-        if (individualId) return true;
-        return false;
-      }
-      if ((userType === "ADVOCATE" && !advocateId) || (userType === "ADVOCATE_CLERK" && !advClerkId)) return false;
-      if ((userType === "ADVOCATE" && advocateId) || (userType === "ADVOCATE_CLERK" && advClerkId)) {
-        if (selectedSeniorAdvocate?.id) {
-          return true;
-        }
-      }
-      return false;
+  const citizenCaseCriteria = useMemo(() => {
+    if (!citizenId) return {};
+    if (advocateId && advocateId === selectedSeniorAdvocate?.id) {
+      return { casesFor: "ALL" };
     }
-    return false;
-  }, [citizenId, userType, advocateId, advClerkId, selectedSeniorAdvocate?.id, individualId]);
+    if (advocateId) {
+      return { officeAdvocateId: selectedSeniorAdvocate?.id, memberId: advocateId };
+    }
+    if (advClerkId) {
+      if (selectedSeniorAdvocate?.isSelf) return { memberId: advClerkId, casesFor: "ALL" };
+      return { officeAdvocateId: selectedSeniorAdvocate?.id, memberId: advClerkId };
+    }
+    return { litigantId: individualId };
+  }, [citizenId, advocateId, advClerkId, individualId, selectedSeniorAdvocate]);
 
   const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseListService(
     {
       criteria: {
-        ...(citizenId
-          ? advocateId
-            ? advocateId === selectedSeniorAdvocate?.id
-              ? { advocateId }
-              : {
-                  officeAdvocateId: selectedSeniorAdvocate?.id,
-                  memberId: advocateId,
-                }
-            : advClerkId
-            ? {
-                officeAdvocateId: selectedSeniorAdvocate?.id,
-                memberId: advClerkId,
-              }
-            : { litigantId: individualId }
-          : {}),
+        ...citizenCaseCriteria,
         pagination: { offSet: 0, limit: 1 },
         tenantId,
       },
       tenantId,
     },
     {},
-    `dristi-${casefetchCriteriaForCitizen}`,
+    `dristi-${JSON.stringify(citizenCaseCriteria)}-${selectedSeniorAdvocate?.id || ""}`,
     "",
-    Boolean(casefetchCriteriaForCitizen),
+    Boolean(citizenCaseCriteria),
     true,
     6 * 1000
   );
@@ -623,18 +626,22 @@ const HomeView = () => {
     // },
   ];
 
+  const isClerkActingAsSelf = useMemo(() => userType === "ADVOCATE_CLERK" && selectedSeniorAdvocate?.isSelf === true, [
+    userType,
+    selectedSeniorAdvocate?.isSelf,
+  ]);
+
   const canJoinCase = useMemo(() => {
-    // iF user is advocate clerk then do not allow to join case(only for sprint 1st half, in 2nd half it is allowed)
     if (userType === "ADVOCATE_CLERK") {
-      return false;
+      // Clerk can join a case only when acting as Self (not on behalf of a senior advocate)
+      return selectedSeniorAdvocate?.isSelf === true;
     } else if (userType === "ADVOCATE" && advocateId === selectedSeniorAdvocate?.id) {
-      //TODO: if adv is working as assistant for a senior adv, then not allowed to join case for this sprint
       return true;
     } else if (isLitigant) {
       return true;
     }
     return false;
-  }, [userType, advocateId, selectedSeniorAdvocate?.id, isLitigant]);
+  }, [userType, advocateId, selectedSeniorAdvocate?.id, selectedSeniorAdvocate?.isSelf, isLitigant]);
 
   const canFileCase = useMemo(() => {
     if (userType === "ADVOCATE" || userType === "ADVOCATE_CLERK") {
@@ -706,7 +713,12 @@ const HomeView = () => {
         setShowSelectAdvocateModal(true);
       }
     } else if (userType === "ADVOCATE_CLERK") {
-      setShowSelectAdvocateModal(true);
+      if (selectedSeniorAdvocate?.isSelf) {
+        // No need to show modal if clerk is filing the case for themselves (self).
+        history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
+      } else {
+        setShowSelectAdvocateModal(true);
+      }
     }
   };
 
@@ -784,7 +796,9 @@ const HomeView = () => {
                   {individualId && userType && userInfoType === "citizen" && (
                     <div className="button-field" style={{ width: "fit-content" }}>
                       <React.Fragment>
-                        {canJoinCase && <JoinCaseHome refreshInbox={refreshInbox} />}
+                        {canJoinCase && (
+                          <JoinCaseHome refreshInbox={refreshInbox} isClerkSelf={userType === "ADVOCATE_CLERK" && selectedSeniorAdvocate?.isSelf} />
+                        )}
                         {canFileCase && (
                           <Button
                             className={"tertiary-button-selector"}
@@ -817,6 +831,7 @@ const HomeView = () => {
                       additionalConfig={{
                         resultsTable: {
                           onClickRow: onRowClick,
+                          ...(isClerkActingAsSelf && { noResultsMessageKey: "CLERK_HOME_NO_RESULTS_FOUND" }),
                         },
                       }}
                     />

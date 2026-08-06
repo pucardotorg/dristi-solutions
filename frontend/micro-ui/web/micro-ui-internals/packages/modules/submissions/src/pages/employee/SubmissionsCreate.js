@@ -41,6 +41,7 @@ import {
   getNameByUuid,
   runComprehensiveSanitizer,
 } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { getComplainantsList } from "@egovernments/digit-ui-module-dristi/src/pages/employee/AdmittedCases/utils/partyUtils";
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -247,40 +248,12 @@ const SubmissionsCreate = ({ path }) => {
       );
   }, [caseDetails]);
 
-  const complainantsList = useMemo(() => {
-    const loggedinUserUuid = authorizedUuid;
-    // If logged in person is an advocate
-    const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
-    const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
-    const accusedLoggedIn = pipAccuseds?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
-
-    if (isAdvocateLoggedIn) {
-      return isAdvocateLoggedIn?.representing?.map((r) => {
-        return {
-          code: r?.additionalDetails?.fullName,
-          name: r?.additionalDetails?.fullName,
-          uuid: r?.additionalDetails?.uuid,
-        };
-      });
-    } else if (isPipLoggedIn) {
-      return [
-        {
-          code: isPipLoggedIn?.additionalDetails?.fullName,
-          name: isPipLoggedIn?.additionalDetails?.fullName,
-          uuid: isPipLoggedIn?.additionalDetails?.uuid,
-        },
-      ];
-    } else if (accusedLoggedIn) {
-      return [
-        {
-          code: accusedLoggedIn?.additionalDetails?.fullName,
-          name: accusedLoggedIn?.additionalDetails?.fullName,
-          uuid: accusedLoggedIn?.additionalDetails?.uuid,
-        },
-      ];
-    }
-    return [];
-  }, [caseDetails, pipComplainants, pipAccuseds, authorizedUuid]);
+  const complainantsList = useMemo(() => getComplainantsList(caseDetails, pipComplainants, pipAccuseds, authorizedUuid), [
+    caseDetails,
+    pipComplainants,
+    pipAccuseds,
+    authorizedUuid,
+  ]);
 
   const {
     data: applicationData,

@@ -165,6 +165,21 @@ const MediationFormSignaturePage = () => {
     return poaParties?.find((p) => p?.poaUuid === userInfo?.uuid) || null;
   }, [userInfo, digitalizationServiceDetails]);
 
+  const selectedAdvocateUuid = useMemo(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem("selectedAdvocate"))?.uuid || null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const isSelectedAdvocatePartyPresent = useMemo(() => {
+    if (!selectedAdvocateUuid || selectedAdvocateUuid !== userInfo?.uuid) return false;
+    return digitalizationServiceDetails?.mediationDetails?.partyDetails?.some((party) =>
+      [party?.userUuid, party?.uniqueId, party?.poaUuid]?.includes(selectedAdvocateUuid)
+    );
+  }, [digitalizationServiceDetails, selectedAdvocateUuid, userInfo?.uuid]);
+
   const { data: mediationOrderData, isLoading: isOrdersLoading } = useSearchOrdersService(
     {
       tenantId,
@@ -676,6 +691,7 @@ const MediationFormSignaturePage = () => {
                         !digitalizationServiceDetails?.mediationDetails?.partyDetails?.some((party) =>
                           [party?.userUuid, party?.uniqueId, party?.poaUuid]?.includes(userInfo?.uuid)
                         )) ||
+                      (selectedAdvocateUuid && !isSelectedAdvocatePartyPresent) ||
                       loader
                     }
                   />

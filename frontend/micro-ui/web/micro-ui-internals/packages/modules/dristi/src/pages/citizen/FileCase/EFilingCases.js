@@ -739,6 +739,12 @@ function EFilingCases({ path }) {
     });
   }, [caseDetails, errorCaseDetails, isCaseReAssigned]);
 
+  const isDelayCondonationForCourierServiceRef = useRef(null);
+  if (isCaseReAssigned && judgeObj && isDelayCondonationForCourierServiceRef.current === null) {
+    isDelayCondonationForCourierServiceRef.current = isDelayCondonation;
+  }
+  const isDelayCondonationForCourierService = isCaseReAssigned && judgeObj ? isDelayCondonationForCourierServiceRef.current : isDelayCondonation;
+
   useEffect(() => {
     const data =
       caseDetails?.additionalDetails?.[selected]?.formdata ||
@@ -1404,7 +1410,7 @@ function EFilingCases({ path }) {
               if (selected === "processCourierService") {
                 if (judgeObj && Object.keys(judgeObj).length > 0 && body?.key === "multipleAccusedProcessCourier") {
                   body.isDisableAllFields = true;
-                  body.isDelayCondonation = isDelayCondonation;
+                  body.isDelayCondonation = isDelayCondonationForCourierService;
                 }
               }
 

@@ -11,6 +11,7 @@ import SuccessBannerModal from "../../components/SuccessBannerModal";
 import { useHistory, useLocation } from "react-router-dom";
 import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
 import { combineMultipleFiles, getAuthorizedUuid, getNameByUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { getComplainantsList } from "@egovernments/digit-ui-module-dristi/src/pages/employee/AdmittedCases/utils/partyUtils";
 import { submissionService } from "../../hooks/services";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "../../../../dristi/src/Utils/submissionWorkflow";
@@ -238,40 +239,12 @@ const GenerateBailBondV2 = () => {
       );
   }, [caseDetails]);
 
-  const complainantsList = useMemo(() => {
-    const loggedinUserUuid = authorizedUuid;
-    // If logged in person is an advocate
-    const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
-    const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
-    const accusedLoggedIn = pipAccuseds?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
-
-    if (isAdvocateLoggedIn) {
-      return isAdvocateLoggedIn?.representing?.map((r) => {
-        return {
-          code: r?.additionalDetails?.fullName,
-          name: r?.additionalDetails?.fullName,
-          uuid: r?.additionalDetails?.uuid,
-        };
-      });
-    } else if (isPipLoggedIn) {
-      return [
-        {
-          code: isPipLoggedIn?.additionalDetails?.fullName,
-          name: isPipLoggedIn?.additionalDetails?.fullName,
-          uuid: isPipLoggedIn?.additionalDetails?.uuid,
-        },
-      ];
-    } else if (accusedLoggedIn) {
-      return [
-        {
-          code: accusedLoggedIn?.additionalDetails?.fullName,
-          name: accusedLoggedIn?.additionalDetails?.fullName,
-          uuid: accusedLoggedIn?.additionalDetails?.uuid,
-        },
-      ];
-    }
-    return [];
-  }, [authorizedUuid, caseDetails?.representatives, pipComplainants, pipAccuseds]);
+  const complainantsList = useMemo(() => getComplainantsList(caseDetails, pipComplainants, pipAccuseds, authorizedUuid), [
+    caseDetails,
+    pipComplainants,
+    pipAccuseds,
+    authorizedUuid,
+  ]);
 
   const pendingTasks = useMemo(() => {
     if (complainantsList?.length === 1 || (!pendingTaskrefId && !pendingTaskId)) {
@@ -289,9 +262,7 @@ const GenerateBailBondV2 = () => {
     const tasks = Array.isArray(pendingTasksResponse?.data) ? pendingTasksResponse.data : [];
     if (!Array.isArray(complainantsList) || complainantsList.length === 0 || tasks.length === 0) return null;
     const match = complainantsList.find((complainant) =>
-      tasks.some((task) =>
-        task?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field.value === complainant?.uuid)
-      )
+      tasks.some((task) => task?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field.value === complainant?.uuid))
     );
     return match?.uuid || null;
   }, [complainantsList, pendingTasksResponse]);
