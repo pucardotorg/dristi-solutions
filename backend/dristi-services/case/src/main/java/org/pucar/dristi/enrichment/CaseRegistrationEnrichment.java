@@ -563,33 +563,38 @@ public class CaseRegistrationEnrichment {
 
     private void enrichCitizenUserId(List<Role> roles, CaseSearchRequest searchRequest) {
         RequestInfo requestInfo = searchRequest.getRequestInfo();
-        String individualId = individualService.getIndividualId(requestInfo);
+        List<CaseCriteria> criteriaList = searchRequest.getCriteria();
+        if (criteriaList == null || criteriaList.isEmpty()) return;
 
         boolean isAdvocate = roles.stream()
                 .anyMatch(role -> ADVOCATE_ROLE.equals(role.getCode()));
-        boolean isClerk = roles.stream()
-                .anyMatch(role -> ADVOCATE_CLERK_ROLE.equals(role.getCode()));
 
-        if (isAdvocate) {
-            List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
-            if (!advocates.isEmpty()) {
-                String advocateId = advocates.get(0).getId().toString();
-                for (CaseCriteria element : searchRequest.getCriteria()) {
-                    element.setAdvocateId(advocateId);
+        String individualId = individualService.getIndividualId(requestInfo);
+        for (CaseCriteria c : criteriaList) {
+
+            CasesFor casesFor = c.getCasesFor();
+
+            if (casesFor != null && CasesFor.ALL.toString().equalsIgnoreCase(casesFor.toString())) {
+                if (isAdvocate) {
+                    List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
+                    if (!advocates.isEmpty()) {
+                        String advocateId = advocates.get(0).getId().toString();
+                        c.setAdvocateId(advocateId);
+                    }
+                }
+                c.setLitigantId(individualId);
+                c.setPoaHolderIndividualId(individualId);
+
+            } else if (casesFor != null && CasesFor.POA_LITIGANT.toString().equalsIgnoreCase(casesFor.toString())) {
+                c.setLitigantId(individualId);
+                c.setPoaHolderIndividualId(individualId);
+            } else if (casesFor != null && CasesFor.ADVOCATE.toString().equalsIgnoreCase(casesFor.toString())) {
+                List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
+                if (!advocates.isEmpty()) {
+                    String advocateId = advocates.get(0).getId().toString();
+                    c.setAdvocateId(advocateId);
                 }
             }
-        } else if (isClerk) {
-            for (CaseCriteria element : searchRequest.getCriteria()) {
-                element.setIsClerk(true);
-            }
-        } else {
-            for (CaseCriteria element : searchRequest.getCriteria()) {
-                element.setLitigantId(individualId);
-            }
-        }
-
-        for (CaseCriteria element : searchRequest.getCriteria()) {
-            element.setPoaHolderIndividualId(individualId);
         }
     }
 
@@ -601,7 +606,7 @@ public class CaseRegistrationEnrichment {
 
         switch (type.toLowerCase()) {
             case "employee" -> enrichEmployeeUserId(roles, caseSearchRequest.getCriteria(), requestInfo);
-            case "citizen" -> enrichCitizenUserId(roles, caseSearchRequest.getCriteria(),requestInfo);
+            case "citizen" -> enrichCitizenUserId(roles, caseSearchRequest.getCriteria(), requestInfo);
             case "system" -> log.info("System User is searching for cases");
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
         }
@@ -627,22 +632,28 @@ public class CaseRegistrationEnrichment {
 
         boolean isAdvocate = roles.stream()
                 .anyMatch(role -> ADVOCATE_ROLE.equals(role.getCode()));
-        boolean isClerk = roles.stream()
-                .anyMatch(role -> ADVOCATE_CLERK_ROLE.equals(role.getCode()));
 
-        if (isAdvocate) {
+        if (criteria.getCasesFor() != null && CasesFor.ALL.toString().equalsIgnoreCase(criteria.getCasesFor().toString())) {
+            if (isAdvocate) {
+                List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
+                if (!advocates.isEmpty()) {
+                    String advocateId = advocates.get(0).getId().toString();
+                    criteria.setAdvocateId(advocateId);
+                }
+            }
+            criteria.setLitigantId(individualId);
+            criteria.setPoaHolderIndividualId(individualId);
+
+        } else if (criteria.getCasesFor() != null && CasesFor.POA_LITIGANT.toString().equalsIgnoreCase(criteria.getCasesFor().toString())) {
+            criteria.setLitigantId(individualId);
+            criteria.setPoaHolderIndividualId(individualId);
+        } else if (criteria.getCasesFor() != null && CasesFor.ADVOCATE.toString().equalsIgnoreCase(criteria.getCasesFor().toString())) {
             List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
             if (!advocates.isEmpty()) {
                 String advocateId = advocates.get(0).getId().toString();
                 criteria.setAdvocateId(advocateId);
             }
-        } else if (isClerk) {
-            criteria.setIsClerk(true);
-        } else {
-            criteria.setLitigantId(individualId);
         }
-
-        criteria.setPoaHolderIndividualId(individualId);
     }
 
     public void enrichCaseSearchRequest(CaseSummaryListRequest caseListRequest) {
@@ -679,39 +690,31 @@ public class CaseRegistrationEnrichment {
 
         boolean isAdvocate = roles.stream()
                 .anyMatch(role -> ADVOCATE_ROLE.equals(role.getCode()));
-        boolean isClerk = roles.stream()
-                .anyMatch(role -> ADVOCATE_CLERK_ROLE.equals(role.getCode()));
 
-        if (isAdvocate) {
-            if (criteria.getOfficeAdvocateId() != null) {
-                // If officeAdvocateId is provided, validation will happen in query
-                // using member_user_uuid against userUuid
-                Boolean isMemberActiveInCase = criteria.getIsMemberActiveInCase();
-                criteria.setIsMemberActiveInCase(isMemberActiveInCase != null && isMemberActiveInCase);
-            } else {
-                // If no officeAdvocateId, use advocateId for regular advocate search
+        if (criteria.getCasesFor() != null && CasesFor.ALL.toString().equalsIgnoreCase(criteria.getCasesFor().toString())) {
+            if (isAdvocate) {
                 List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
                 if (!advocates.isEmpty()) {
                     String advocateId = advocates.get(0).getId().toString();
                     criteria.setAdvocateId(advocateId);
                 }
             }
-        } else if (isClerk) {
-            if (criteria.getOfficeAdvocateId() == null) {
-                // For clerks, officeAdvocateId is mandatory
-                throw new CustomException("CLERK_ACCESS_DENIED", "Clerk must provide officeAdvocateId");
-            }
-            // Validation will happen in query using member_user_uuid against userUuid
-            Boolean isMemberActiveInCase = criteria.getIsMemberActiveInCase();
-            criteria.setIsMemberActiveInCase(isMemberActiveInCase != null && isMemberActiveInCase);
-        } else {
             criteria.setLitigantId(individualId);
-        }
+            criteria.setPoaHolderIndividualId(individualId);
 
-        criteria.setPoaHolderIndividualId(individualId);
+        } else if (criteria.getCasesFor() != null && CasesFor.POA_LITIGANT.toString().equalsIgnoreCase(criteria.getCasesFor().toString())) {
+            criteria.setLitigantId(individualId);
+            criteria.setPoaHolderIndividualId(individualId);
+        } else if (criteria.getCasesFor() != null && CasesFor.ADVOCATE.toString().equalsIgnoreCase(criteria.getCasesFor().toString())) {
+            List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
+            if (!advocates.isEmpty()) {
+                String advocateId = advocates.get(0).getId().toString();
+                criteria.setAdvocateId(advocateId);
+            }
+        }
     }
 
-    public Document enrichCasePaymentReceipt(CaseRequest caseRequest, String id, String consumerCode){
+    public Document enrichCasePaymentReceipt(CaseRequest caseRequest, String id, String consumerCode) {
         try {
             log.info("Enriching payment receipt for case with id: {}", id);
             JsonNode paymentReceipt = etreasuryUtil.getPaymentReceipt(caseRequest.getRequestInfo(), id);
