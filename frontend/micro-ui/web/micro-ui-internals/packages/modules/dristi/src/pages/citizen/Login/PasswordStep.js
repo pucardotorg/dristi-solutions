@@ -34,7 +34,7 @@ const PasswordStep = ({ t, mobileNumber, password, onPasswordChange, onSelect, c
         {error && <CardLabelError>{error}</CardLabelError>}
         <SubmitBar label={t("CS_COMMON_SIGN_IN")} onSubmit={onSelect} disabled={!isValid || !canSubmit} />
         <div style={{ marginTop: "12px", textAlign: "center" }}>
-          <span className="link" style={{ cursor: "pointer" }} onClick={onSwitchToOtp}>
+          <span className="link" style={{ cursor: "pointer", textDecoration: "underline" }} onClick={onSwitchToOtp}>
             {t("CS_FORGOT_PASSWORD_LOGIN_WITH_OTP")}
           </span>
         </div>
