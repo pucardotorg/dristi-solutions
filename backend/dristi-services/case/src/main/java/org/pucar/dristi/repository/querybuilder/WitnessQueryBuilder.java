@@ -81,7 +81,7 @@ public class WitnessQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building witness search query :: {}",e.toString());
+            log.error("Error while building witness search query", e);
             throw new CustomException(WITNESS_SEARCH_QUERY_EXCEPTION,"Exception occurred while building the witness search query: "+ e.getMessage());
         }
     }

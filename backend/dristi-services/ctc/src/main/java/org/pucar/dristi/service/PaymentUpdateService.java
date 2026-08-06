@@ -169,7 +169,7 @@ public class PaymentUpdateService {
                 ctcApplication.setPaymentReceipt(paymentReceipt);
             }
         } catch (Exception e) {
-            log.error("Error while generating payment receipt: {}", e.getMessage());
+            log.error("Error while generating payment receipt", e);
         }
 
         CtcApplicationRequest ctcApplicationRequest = CtcApplicationRequest.builder().requestInfo(requestInfo)
@@ -192,7 +192,7 @@ public class PaymentUpdateService {
             document.setDocumentUid(document.getId());
             return document;
         } catch (Exception e) {
-            log.error("Error fetching payment receipt: {}", e.getMessage());
+            log.error("Error fetching payment receipt", e);
             return null;
         }
     }

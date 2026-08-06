@@ -629,6 +629,7 @@ const MainHomeScreen = () => {
             moduleSearchCriteria: {
               tenantId,
               courtId: currentCourtId,
+              status: "PENDING",
               ...extraCriteria?.CS_HOME_ISSUE_CTC_COPY,
             },
             tenantId,

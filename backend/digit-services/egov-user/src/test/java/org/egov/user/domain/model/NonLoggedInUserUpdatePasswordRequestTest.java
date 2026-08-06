@@ -1,6 +1,7 @@
 package org.egov.user.domain.model;
 
 import org.egov.user.domain.exception.InvalidNonLoggedInUserUpdatePasswordRequestException;
+import org.egov.user.domain.model.enums.PasswordUpdateVerificationMode;
 import org.egov.user.domain.model.enums.UserType;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +26,36 @@ public class NonLoggedInUserUpdatePasswordRequestTest {
         assertFalse(request.isUsernameAbsent());
         assertFalse(request.isNewPasswordAbsent());
         assertFalse(request.isOtpReferenceAbsent());
+    }
+
+    @Test
+    public void test_should_not_require_an_otp_when_the_request_is_verified_by_token() {
+        final NonLoggedInUserUpdatePasswordRequest request = NonLoggedInUserUpdatePasswordRequest.builder()
+                .newPassword("newPassword")
+                .userName("userName")
+                .tenantId("ap.public")
+                .type(UserType.CITIZEN)
+                .verificationMode(PasswordUpdateVerificationMode.TOKEN)
+                .build();
+
+        request.validate();
+
+        assertFalse(request.isOtpVerified());
+        assertFalse(request.isOtpReferenceAbsent());
+    }
+
+    @Test
+    public void test_should_default_to_otp_verification_when_no_mode_is_given() {
+        final NonLoggedInUserUpdatePasswordRequest request = NonLoggedInUserUpdatePasswordRequest.builder()
+                .newPassword("newPassword")
+                .userName("userName")
+                .tenantId("ap.public")
+                .type(UserType.CITIZEN)
+                .build();
+
+        assertEquals(PasswordUpdateVerificationMode.OTP, request.getVerificationMode());
+        assertTrue(request.isOtpReferenceAbsent());
+        assertThrows(InvalidNonLoggedInUserUpdatePasswordRequestException.class, request::validate);
     }
 
     @Test

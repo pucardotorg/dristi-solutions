@@ -113,4 +113,10 @@ public class InboxConstants {
 
     public static final String CACHE_KEY_PREFIX = "DRISTI:COURT:";
 
+    public static final String BILLING_BUSINESS_SERVICE = "billing";
+
+    public static final String ADVOCATE_REGISTRATION_BUSINESS_SERVICE = "user-registration-advocate";
+
+    public static final String ADVOCATE_CLERK_REGISTRATION_BUSINESS_SERVICE = "user-registration-advocate-clerk";
+
 }

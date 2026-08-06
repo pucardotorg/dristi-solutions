@@ -124,7 +124,7 @@ public class CaseOverallStatusUtil {
                 populateHearingPriorityMap(filingNumber, tenantId, hearingType, priorityMap);
             }
         } catch (Exception e) {
-            log.error("Error processing order while processing priority map: {} for filing number: {}", e.getMessage(), filingNumber, e);
+            log.error("Error processing order while processing priority map for filing number: {}", filingNumber, e);
         }
         try {
 
@@ -152,7 +152,7 @@ public class CaseOverallStatusUtil {
                         boolean canPublishCaseOverallStatus = i == compositeItems.length() - 1;
                         caseOverallStatus = processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), COMPOSITE, canPublishCaseOverallStatus, isHearingFound, priorityMap, collectedSecondaryStages, caseObject);
                     } catch (Exception e) {
-                        log.error("Error processing composite item: {} for filing number: {}", e.getMessage(), filingNumber, e);
+                        log.error("Error processing composite item for filing number: {}", filingNumber, e);
                     }
                 }
                 // Batch-start all collected secondary stages in one ES write + one Kafka publish
@@ -181,11 +181,11 @@ public class CaseOverallStatusUtil {
                 log.info("ended stage '{}', started restored stage '{}' for filingNumber: {}", "Long Pending Register", newStage, filingNumber);
             }
         } catch (JSONException e) {
-            log.error("Error processing JSON structure in composite items: {}, for filing number: {}", e.getMessage(), filingNumber, e);
+            log.error("Error processing JSON structure in composite items, for filing number: {}", filingNumber, e);
         } catch (PathNotFoundException e) {
-            log.error("Required JSON path not found in composite items: {} for filing number: {}", e.getMessage(), filingNumber, e);
+            log.error("Required JSON path not found in composite items for filing number: {}", filingNumber, e);
         } catch (Exception e) {
-            log.error("Unexpected error while processing composite items: {} for filing number: {}", e.getMessage(), filingNumber, e);
+            log.error("Unexpected error while processing composite items for filing number: {}", filingNumber, e);
         }
         return orderObject;
     }

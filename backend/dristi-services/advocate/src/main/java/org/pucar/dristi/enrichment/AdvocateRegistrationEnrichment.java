@@ -58,7 +58,7 @@ public class AdvocateRegistrationEnrichment {
             throw e;
         }
         catch (Exception e) {
-            log.error("Error enriching advocate application :: {}", e.toString());
+            log.error("Error enriching advocate application", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error advocate in enrichment service: " + e.getMessage());
         }
 
@@ -76,7 +76,7 @@ public class AdvocateRegistrationEnrichment {
             advocate.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
             advocate.getAuditDetails().setLastModifiedBy(advocateRequest.getRequestInfo().getUserInfo().getUuid());
         } catch (Exception e) {
-            log.error("Error enriching advocate application upon update :: {}", e.toString());
+            log.error("Error enriching advocate application upon update", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in advocate enrichment service during advocate update process: " + e.getMessage());
         }
     }

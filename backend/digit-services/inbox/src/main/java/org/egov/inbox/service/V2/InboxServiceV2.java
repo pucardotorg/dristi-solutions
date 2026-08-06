@@ -454,32 +454,50 @@ public class InboxServiceV2 {
 
     private void populateActionCategoryDataForOtherIndexes(SearchRequest searchRequest, Criteria criteria, String moduleName, Consumer<Criteria> setter) {
 
-        ProcessInstanceSearchCriteria processInstanceSearchCriteria = null;
-
-        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+        Integer totalCount = 0;
 
         if (moduleName != null && moduleName.equalsIgnoreCase(config.getBillingServiceModuleName())) {
-            processInstanceSearchCriteria = ProcessInstanceSearchCriteria.builder()
-                    .tenantId(searchRequest.getIndexSearchCriteria().getTenantId())
-                    .moduleName(moduleName)
-                    .businessService(Collections.singletonList("billing"))
-                    .build();
-
+            HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
             moduleSearchCriteria.put("billStatus", "ACTIVE");
             moduleSearchCriteria.put("tenantId", searchRequest.getIndexSearchCriteria().getTenantId());
             moduleSearchCriteria.put("sortOrder", "DESC");
+
+            InboxRequest inboxRequest = buildInboxRequestForModule(searchRequest, moduleName, BILLING_BUSINESS_SERVICE, moduleSearchCriteria);
+            totalCount = getIndexResponse(inboxRequest).getTotalCount();
         }
 
         if (moduleName != null && moduleName.equalsIgnoreCase(config.getAdvocateModuleName())) {
-            processInstanceSearchCriteria = ProcessInstanceSearchCriteria.builder()
-                    .tenantId(searchRequest.getIndexSearchCriteria().getTenantId())
-                    .moduleName(moduleName)
-                    .businessService(Collections.singletonList("user-registration-advocate"))
-                    .build();
-
-            moduleSearchCriteria.put("isActive", false);
-            moduleSearchCriteria.put("tenantId", searchRequest.getIndexSearchCriteria().getTenantId());
+            /*
+              Pending user registrations span advocates and advocate clerks, which are indexed separately and
+              are driven by different inbox query configurations. Hence the count is the sum of both searches.
+             */
+            totalCount = getPendingRegistrationCount(searchRequest, config.getAdvocateModuleName(), ADVOCATE_REGISTRATION_BUSINESS_SERVICE)
+                    + getPendingRegistrationCount(searchRequest, config.getAdvocateClerkModuleName(), ADVOCATE_CLERK_REGISTRATION_BUSINESS_SERVICE);
         }
+
+        if (criteria.getIsOnlyCountRequired()) {
+            criteria.setCount(totalCount);
+            setter.accept(criteria);
+        }
+    }
+
+    private Integer getPendingRegistrationCount(SearchRequest searchRequest, String moduleName, String businessService) {
+
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+        moduleSearchCriteria.put("isActive", false);
+        moduleSearchCriteria.put("tenantId", searchRequest.getIndexSearchCriteria().getTenantId());
+
+        InboxRequest inboxRequest = buildInboxRequestForModule(searchRequest, moduleName, businessService, moduleSearchCriteria);
+        return getInboxResponse(inboxRequest).getTotalCount();
+    }
+
+    private InboxRequest buildInboxRequestForModule(SearchRequest searchRequest, String moduleName, String businessService, HashMap<String, Object> moduleSearchCriteria) {
+
+        ProcessInstanceSearchCriteria processInstanceSearchCriteria = ProcessInstanceSearchCriteria.builder()
+                .tenantId(searchRequest.getIndexSearchCriteria().getTenantId())
+                .moduleName(moduleName)
+                .businessService(Collections.singletonList(businessService))
+                .build();
 
         InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
                 .tenantId(searchRequest.getIndexSearchCriteria().getTenantId())
@@ -489,23 +507,10 @@ public class InboxServiceV2 {
                 .moduleSearchCriteria(moduleSearchCriteria)
                 .build();
 
-        InboxRequest inboxRequest = InboxRequest.builder()
+        return InboxRequest.builder()
                 .RequestInfo(searchRequest.getRequestInfo())
                 .inbox(inboxSearchCriteria)
                 .build();
-        InboxResponse inboxResponse = getIndexResponse(inboxRequest);
-
-        if (moduleName != null && moduleName.equalsIgnoreCase(config.getAdvocateModuleName())) {
-            inboxResponse = getInboxResponse(inboxRequest);
-        }
-        if (moduleName != null && moduleName.equalsIgnoreCase(config.getBillingServiceModuleName())) {
-            inboxResponse = getIndexResponse(inboxRequest);
-        }
-
-        if (criteria.getIsOnlyCountRequired()) {
-            criteria.setCount(inboxResponse.getTotalCount());
-            setter.accept(criteria);
-        }
     }
 
     private void populateActionCategoryData(SearchRequest searchRequest,

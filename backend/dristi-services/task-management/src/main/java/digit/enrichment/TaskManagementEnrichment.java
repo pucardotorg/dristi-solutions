@@ -124,7 +124,7 @@ public class TaskManagementEnrichment {
             }
 
         } catch (CustomException e) {
-            log.error("Error while enriching warrant up front data : {}", e.getMessage());
+            log.error("Error while enriching warrant up front data", e);
         }
     }
 

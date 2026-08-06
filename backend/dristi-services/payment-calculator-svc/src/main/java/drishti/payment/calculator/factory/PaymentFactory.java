@@ -23,7 +23,7 @@ public class PaymentFactory {
             return (Payment) context.getBean(klass);
 
         } catch (Exception e) {
-            log.error("Error occurred while fetching object for class" + e.getMessage());
+            log.error("Error occurred while fetching object for class", e);
             return null;
         }
 

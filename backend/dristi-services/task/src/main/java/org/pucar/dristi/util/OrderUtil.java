@@ -60,7 +60,7 @@ public class OrderUtil {
             response = restTemplate.postForObject(uri.toString(), orderExistsRequest, Map.class);
             orderExistsResponse = mapper.convertValue(response, OrderExistsResponse.class);
         } catch (Exception e) {
-            log.error("ERROR_WHILE_FETCHING_FROM_ORDER:: {}", e.toString());
+            log.error("ERROR_WHILE_FETCHING_FROM_ORDER", e);
         }
 
         if (orderExistsResponse.getOrder() == null || orderExistsResponse.getOrder().isEmpty())

@@ -87,6 +87,50 @@
   }
 }
 
+.password-settings {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+
+  .password-settings-main {
+    display: flex;
+    align-items: center;
+  }
+
+  .password-settings-icon {
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    color: #505a5f;
+  }
+
+  .password-settings-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+  }
+
+  .password-settings-title {
+    font-size: 14px;
+    font-weight: 400;
+    color: #0b0c0c;
+  }
+
+  .password-settings-sub {
+    font-size: 12px;
+    color: #77787b;
+    margin-top: 2px;
+  }
+
+  .password-settings-chevron {
+    display: flex;
+    align-items: center;
+    color: #77787b;
+    margin-left: 12px;
+  }
+}
+
 .logout-icon-text {
   display: flex;
   align-items: center;
