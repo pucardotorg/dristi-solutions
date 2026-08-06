@@ -6377,7 +6377,7 @@ public class CaseService {
         JsonNode condonationFiles = data.get("condonationFileUpload");
 
         boolean isCodeNo = delayType != null
-                && "NO".equals(delayType.get("code").asText());
+                && "NO".equals(delayType.path("code").asText(""));
 
         boolean hasFile = condonationFiles != null
                 && condonationFiles.has("document")
