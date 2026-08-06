@@ -133,21 +133,24 @@ public class BailService {
                     .build();
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
             String stage = caseUtil.getStage(caseDetails);
-            // Notify Sureties
-            if (smsTopics.contains(BAIL_BOND_INITIATED_SURETY)) {
-                bail.getSureties().stream()
-                        .map(Surety::getMobileNumber)
-                        .filter(StringUtils::isNotBlank)
-                        .forEach(mobile -> notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_SURETY, mobile));
-            }
-
-            // Notify Litigant
-            if (smsTopics.contains(BAIL_BOND_INITIATED_LITIGANT)) {
-                String litigantMobile = bail.getLitigantMobileNumber();
-                if (StringUtils.isNotBlank(litigantMobile)) {
-                    notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_LITIGANT, litigantMobile);
+            // Removing the condition on case stage as per ticket number 5953
+//            if(APPEARANCE.equalsIgnoreCase(stage)){
+                // Notify Sureties
+                if (smsTopics.contains(BAIL_BOND_INITIATED_SURETY)) {
+                    bail.getSureties().stream()
+                            .map(Surety::getMobileNumber)
+                            .filter(StringUtils::isNotBlank)
+                            .forEach(mobile -> notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_SURETY, mobile));
                 }
-            }
+
+                // Notify Litigant
+                if (smsTopics.contains(BAIL_BOND_INITIATED_LITIGANT)) {
+                    String litigantMobile = bail.getLitigantMobileNumber();
+                    if (StringUtils.isNotBlank(litigantMobile)) {
+                        notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_LITIGANT, litigantMobile);
+                    }
+                }
+//            }
 
         } catch (Exception e) {
             log.error("Error sending notification for bailRequest: {}", bailRequest, e);
