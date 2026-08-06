@@ -1351,17 +1351,21 @@ public class CaseService {
 
     private String extractProfileEditorName(String profileEditorId, CourtCase cases) {
         List<AdvocateMapping> advocateMappings = cases.getRepresentatives();
-        for (AdvocateMapping advocateMapping : advocateMappings) {
-            JsonNode additionalDetails = objectMapper.convertValue(advocateMapping.getAdditionalDetails(), JsonNode.class);
-            if (additionalDetails.get("uuid").asText().equals(profileEditorId)) {
-                return additionalDetails.get("advocateName").asText();
+        if (advocateMappings != null) {
+            for (AdvocateMapping advocateMapping : advocateMappings) {
+                JsonNode additionalDetails = objectMapper.convertValue(advocateMapping.getAdditionalDetails(), JsonNode.class);
+                if (additionalDetails != null && additionalDetails.path("uuid").asText().equals(profileEditorId)) {
+                    return additionalDetails.path("advocateName").asText();
+                }
             }
         }
         List<Party> litigants = cases.getLitigants();
-        for (Party litigant : litigants) {
-            JsonNode additionalDetails = objectMapper.convertValue(litigant.getAdditionalDetails(), JsonNode.class);
-            if (additionalDetails.get("uuid").asText().equals(profileEditorId)) {
-                return additionalDetails.get("fullName").asText();
+        if (litigants != null) {
+            for (Party litigant : litigants) {
+                JsonNode additionalDetails = objectMapper.convertValue(litigant.getAdditionalDetails(), JsonNode.class);
+                if (additionalDetails != null && additionalDetails.path("uuid").asText().equals(profileEditorId)) {
+                    return additionalDetails.path("fullName").asText();
+                }
             }
         }
         return null;
@@ -6230,7 +6234,12 @@ public class CaseService {
                 .calculationCriteria(Collections.singletonList(calculationCriteria))
                 .build();
 
-        return paymentCalculaterUtil.callPaymentCalculator(calculationRequest);
+        CalculationRes response = paymentCalculaterUtil.callPaymentCalculator(calculationRequest);
+        if (response == null || response.getCalculation() == null || response.getCalculation().isEmpty()) {
+            throw new CustomException("EMPTY_CALCULATION_RESPONSE",
+                    "Payment calculator returned no calculation for filingNumber: " + courtCase.getFilingNumber());
+        }
+        return response;
     }
 
 
@@ -6312,12 +6321,15 @@ public class CaseService {
 
     private String updateAndGetConsumerCode(CaseRequest body) {
         JsonNode additionalDetails = objectMapper.convertValue(body.getCases().getAdditionalDetails(), JsonNode.class);
+        if (additionalDetails == null || !additionalDetails.isObject()) {
+            additionalDetails = objectMapper.createObjectNode();
+        }
         String baseConsumerCode = body.getCases().getFilingNumber() + "_CASE_FILING";
 
         String newConsumerCode;
         int nextSuffix = 1;
 
-        if (additionalDetails != null && additionalDetails.has("lastSubmissionConsumerCode")) {
+        if (additionalDetails.has("lastSubmissionConsumerCode")) {
             String lastConsumerCode = getLastSubmissionConsumerCode(body);
             if (lastConsumerCode != null && lastConsumerCode.startsWith(baseConsumerCode)) {
                 nextSuffix = getNextSuffix(lastConsumerCode, baseConsumerCode);
@@ -6355,8 +6367,8 @@ public class CaseService {
             return false;
         }
 
-        JsonNode delayFormData = caseDetails.get("delayApplications").get("formdata").get(0);
-        if (delayFormData == null || delayFormData.get("data") == null) {
+        JsonNode delayFormData = caseDetails.path("delayApplications").path("formdata").path(0);
+        if (delayFormData.path("data").isMissingNode() || delayFormData.path("data").isNull()) {
             return false;
         }
 

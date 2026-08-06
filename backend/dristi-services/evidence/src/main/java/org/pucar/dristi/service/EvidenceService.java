@@ -112,7 +112,7 @@ public class EvidenceService {
                 }
             }
             // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
-            if (artifactType != null && artifactType.equals(DEPOSITION) || body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION) || WITNESS_DEPOSITION.equalsIgnoreCase(artifactType)) {
+            if ((artifactType != null && artifactType.equals(DEPOSITION)) || (body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION)) || WITNESS_DEPOSITION.equalsIgnoreCase(artifactType)) {
                 workflowService.updateWorkflowStatus(body, filingType);
                 producer.push(config.getEvidenceCreateTopic(), body);
             } else {
