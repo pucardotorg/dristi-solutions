@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS eg_service_health  (
+CREATE TABLE IF NOT EXISTS eg_service_health (
     id           BIGSERIAL PRIMARY KEY,
     service_name VARCHAR(100) NOT NULL,
     service_url  VARCHAR(500)
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS eg_service_health_status (
 CREATE INDEX IF NOT EXISTS idx_eg_service_health_status_service_id
     ON eg_service_health_status (service_id);
 
-INSERT INTO eg_service_health  (service_name, service_url) VALUES
+INSERT INTO eg_service_health (service_name, service_url) VALUES
     ('ESIGN', 'tcp://esignservice.cdac.in:443'),
     ('SMS', 'https://msdgweb.mgov.gov.in/esms/sendsmsrequestDLT'),
     ('TREASURY', 'https://etreasury.kerala.gov.in/'),

@@ -1,6 +1,7 @@
 package org.egov.healthdashboard.service;
 
 import com.sun.net.httpserver.HttpServer;
+import org.egov.healthdashboard.service.HealthCheckService;
 import org.egov.healthdashboard.web.models.ServiceHealthStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
