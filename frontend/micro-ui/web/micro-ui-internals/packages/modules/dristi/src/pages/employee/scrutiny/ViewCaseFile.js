@@ -711,8 +711,6 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     },
   ];
 
-  console.log("inViewCase", inViewCase);
-
   if (caseDetails?.status !== "UNDER_SCRUTINY" && isScrutiny && !inViewCase) {
     history.push(homePath);
   }
