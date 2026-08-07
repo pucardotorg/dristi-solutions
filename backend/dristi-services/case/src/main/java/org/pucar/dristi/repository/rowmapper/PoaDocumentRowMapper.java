@@ -64,7 +64,7 @@ public class PoaDocumentRowMapper implements ResultSetExtractor<Map<UUID,List<Do
             throw e;
         }
         catch (Exception e){
-            log.error("Error occurred while processing document ResultSet :: {}", e.toString());
+            log.error("Error occurred while processing document ResultSet", e);
             throw new CustomException("ROW_MAPPER_EXCEPTION","Exception occurred while processing document ResultSet: "+ e.getMessage());
         }
         return documentMap;

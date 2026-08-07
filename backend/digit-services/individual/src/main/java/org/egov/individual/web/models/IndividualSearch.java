@@ -40,6 +40,10 @@ public class IndividualSearch   {
     @JsonProperty("individualId")
     private String individualId = null;
 
+    @JsonProperty("individualIds")
+    @Exclude
+    private List<String> individualIds = null;
+
     @JsonProperty("clientReferenceId")
     private List<String> clientReferenceId = null;
 

@@ -67,7 +67,6 @@ public class ServiceHealthRepository {
             return ServiceHealthStatus.builder()
                     .id(rs.getLong("id"))
                     .serviceName(rs.getString("service_name"))
-                    .serviceUrl(rs.getString("service_url"))
                     .lastStatus(rs.getString("last_status"))
                     .lastUpdatedTime(rs.getLong("last_updated_time"))
                     .responseTimeMs(rs.getLong("response_time_ms"))

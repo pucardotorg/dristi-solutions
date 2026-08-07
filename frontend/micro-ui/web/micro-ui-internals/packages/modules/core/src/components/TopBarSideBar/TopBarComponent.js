@@ -90,7 +90,7 @@ const AdvocateProfileDropdown = React.memo(({ t, options = [], selected, onSelec
       {open && options.length > 0 && (
         <div className="advocate-profile-dropdown__menu">
           {options.map((option) => (
-            <button key={option.id} type="button" className="advocate-profile-dropdown__item" onClick={() => handleSelect(option)}>
+            <button key={`${option.id}`} type="button" className="advocate-profile-dropdown__item" onClick={() => handleSelect(option)}>
               <AdvocateProfileUserIcon />
               <span>{t(option.advocateName)}</span>
             </button>
@@ -292,14 +292,22 @@ const TopBarComponent = ({
       const selfDetails = [{ id: advocateId, value: advocateId, advocateName: userInfo?.name, uuid: userInfo?.uuid, allowCaseCreate: true }];
       if (officeMembersData?.members?.length > 0) {
         const seniorAdvocatesList = Array.isArray(officeMembersData?.members) ? extractedSeniorAdvocates(officeMembersData) || [] : [];
-        const totalList = [...selfDetails, ...seniorAdvocatesList];
-        return [...(totalList || [])].sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName));
+        const sortedOthers = [...seniorAdvocatesList].sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName));
+        return [...selfDetails, ...sortedOthers];
       } else return selfDetails;
     } else if (userType === "ADVOCATE_CLERK" && advClerkId) {
+      const selfEntry = {
+        id: advClerkId,
+        value: advClerkId,
+        advocateName: `${userInfo?.name} (Self)`,
+        uuid: userInfo?.uuid,
+        isSelf: true,
+        allowCaseCreate: true,
+      };
       if (officeMembersData?.members?.length > 0) {
         const seniorAdvocatesList = Array.isArray(officeMembersData?.members) ? extractedSeniorAdvocates(officeMembersData) || [] : [];
-        return [...(seniorAdvocatesList || [])].sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName));
-      } else return [];
+        return [selfEntry, ...[...seniorAdvocatesList].sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName))];
+      } else return [selfEntry];
     }
     return [];
   }, [advocateId, advClerkId, officeMembersData, isLoadingMembers, userType, userInfo?.name, userInfo?.uuid]);
@@ -364,7 +372,7 @@ const TopBarComponent = ({
       if (seniorAdvocates?.filter((o) => o?.id === storedAdvocate?.id)?.length) return storedAdvocate;
     }
 
-    // if an Advocate logs in -> select himself initially.
+    // if an Advocate logs in -> select himself initially
     if (advocateId) {
       return seniorAdvocates.find((o) => o?.id === advocateId) || null;
     }

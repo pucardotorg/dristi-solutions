@@ -398,12 +398,12 @@ public class HearingService {
                     updateStatusInCache(openHearing);
                 } catch (Exception e) {
                     log.error("Error occurred while updating open hearing status in es");
-                    log.error("ERROR_FROM_ES: {}", e.getMessage());
+                    log.error("ERROR_FROM_ES", e);
                 }
             }
         } catch (Exception e) {
             log.error("Something went wrong while updating status of open hearing with hearing number {}", hearingRequest.getHearing().getHearingId());
-            log.error("ERROR: {}", e.getMessage());
+            log.error("ERROR", e);
         }
 
 
@@ -1042,7 +1042,7 @@ public class HearingService {
             }
         } catch (Exception e) {
             // Log the exception and continue the execution without throwing
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
     }
 
@@ -1327,7 +1327,7 @@ public class HearingService {
             producer.push(config.getBulkRescheduleTopic(), request);
             return updatedBulkHearings;
         } catch (Exception e) {
-            log.error("operation=updateBulkHearing, status=FAILURE, message={}", e.getMessage());
+            log.error("operation=updateBulkHearing, status=FAILURE", e);
             throw new CustomException(HEARING_UPDATE_EXCEPTION, "Error occurred while updating hearing in bulk: " + e.getMessage());
         }
     }
@@ -1401,7 +1401,7 @@ public class HearingService {
             }
             log.info("operation=updateCaseReferenceHearing, status=SUCCESS, filingNumber={}", body.get("filingNumber").toString());
         } catch (Exception e) {
-            log.info("operation=updateCaseReferenceHearing, status=FAILURE, filingNumber={}", body.get("filingNumber").toString());
+            log.error("operation=updateCaseReferenceHearing, status=FAILURE, filingNumber={}", body.get("filingNumber").toString());
             throw new CustomException("Error updating case reference number: {}", e.getMessage());
         }
     }
@@ -1437,7 +1437,7 @@ public class HearingService {
             }
             log.info("operation=updateCaseReferenceHearingAfterLpr, status=SUCCESS");
         } catch (Exception e) {
-            log.info("operation=updateCaseReferenceHearingAfterLpr, status=FAILURE, filingNumber={}", caseRequest.getCases().getFilingNumber());
+            log.error("operation=updateCaseReferenceHearingAfterLpr, status=FAILURE, filingNumber={}", caseRequest.getCases().getFilingNumber());
             throw new CustomException("Error updating case reference number: {}", e.getMessage());
         }
     }
@@ -1458,7 +1458,7 @@ public class HearingService {
             return averages;
 
         } catch (Exception e) {
-            log.error("operation=getAvgNoOfDaysToHearingForEachCase, status=FAILURE, message={}", e.getMessage());
+            log.error("operation=getAvgNoOfDaysToHearingForEachCase, status=FAILURE", e);
             throw new CustomException("Error occurred while getting avg no of days to hearing for each case: ", e.getMessage());
         }
     }

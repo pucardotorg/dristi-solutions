@@ -29,8 +29,8 @@ import {
   getAllAssociatedPartyUuids,
   getAuthorizedUuid,
   getDate,
+  getNameByUuid,
   isLPRCase,
-  removeInvalidNameParts,
 } from "../../../Utils";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import VoidSubmissionBody from "./VoidSubmissionBody";
@@ -85,6 +85,7 @@ import { getEmployeeCrumbs, getAdvocateName, getAdvocateNameFromHearingData } fr
 
 // Import party filter utilities
 import { getPipComplainants, getPipAccuseds, getComplainantsList } from "./utils/partyFilterUtils";
+import { mergePartiesByUuid } from "./utils/partyUtils";
 
 // Import modal config utilities
 import { getDcaConfirmModalConfig, getVoidModalConfig } from "./utils/modalConfigUtils";
@@ -542,7 +543,7 @@ const AdmittedCaseV2 = () => {
       cnrNumber,
       title: caseDetails?.caseTitle || "",
       stage: caseDetails?.stage,
-      parties: [...finalLitigantsData, ...finalRepresentativesData, ...unJoinedLitigant, ...witnesses],
+      parties: mergePartiesByUuid([...finalLitigantsData, ...finalRepresentativesData, ...unJoinedLitigant, ...witnesses]),
       case: caseDetails,
       statue: statue,
     }),
@@ -1027,16 +1028,16 @@ const AdmittedCaseV2 = () => {
 
       const evidence = response?.artifacts?.[0];
 
-      const individualResponse = await DRISTIService.searchIndividualUser(
-        {
-          Individual: {
-            individualId: evidence?.sourceID,
-          },
-        },
-        { tenantId, limit: 1000, offset: 0 }
-      );
-      const individualData = individualResponse?.Individual?.[0];
-      const fullName = getFullName(" ", individualData?.name?.givenName, individualData?.name?.otherNames, individualData?.name?.familyName);
+      let fullName = "";
+      if (evidence?.sourceID) {
+        const individualResponse = await DRISTIService.searchIndividualUser(
+          { Individual: { individualId: evidence?.sourceID } },
+          { tenantId, limit: 1, offset: 0 }
+        );
+        const individualData = individualResponse?.Individual?.[0];
+        const individualName = getFullName(" ", individualData?.name?.givenName, individualData?.name?.otherNames, individualData?.name?.familyName);
+        fullName = getNameByUuid(individualData?.userUuid, caseDetails) || individualName;
+      }
       if (evidence) {
         setArtifact({ ...evidence, sender: fullName });
         setShowMakeAsEvidenceModal(true);

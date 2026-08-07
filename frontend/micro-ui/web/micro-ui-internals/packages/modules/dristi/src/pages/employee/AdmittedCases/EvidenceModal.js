@@ -21,6 +21,7 @@ import {
   getAllAssociatedPartyUuids,
   getAuthorizedUuid,
   getDate,
+  getNameByUuid,
   getOrderActionName,
   getOrderTypes,
   isLPRCase,
@@ -31,9 +32,9 @@ import useSearchEvidenceService from "../../../../../submissions/src/hooks/submi
 import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
 import DOMPurify from "dompurify";
-import { getUserInfoFromUuids } from "../../../../../submissions/src/utils";
 import { CloseBtn } from "../../../components/ModalComponents";
 import CustomToast from "../../../components/CustomToast";
+import { getUserInfoFromUuids } from "../../../../../submissions/src/utils";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -72,10 +73,11 @@ const EvidenceModal = ({
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const userInfo = Digit.UserService.getUser()?.info;
-  const user = Digit.UserService.getUser()?.info?.name;
+  const user = getNameByUuid(userInfo?.uuid, caseData?.case) || userInfo?.name;
   const isLitigent = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role?.code)), [
     userInfo?.roles,
   ]);
+  console.log("caseData", caseData);
   const isJudge = useMemo(() => userInfo?.roles?.some((role) => ["JUDGE_ROLE"].includes(role?.code)), [userInfo?.roles]);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
@@ -162,34 +164,42 @@ const EvidenceModal = ({
 
     let isMounted = true;
 
-    const fetchUsers = async () => {
-      try {
-        const result = await getUserInfoFromUuids(uuids);
+    const resolveNames = async () => {
+      const lookup = new Map(uuids.map((uuid) => [uuid, getNameByUuid(uuid, caseData?.case)]));
+      const unresolvedUuids = uuids.filter((uuid) => !lookup.get(uuid));
 
-        const lookup = new Map((result || []).map((user) => [user.userUuid, user.name]));
-
-        if (!isMounted) return;
-
-        setUserInfoMap({
-          senderUser: senderUuid
-            ? { uuid: senderUuid, name: lookup.get(senderUuid) }
-            : createdBy
-            ? { uuid: createdBy, name: lookup.get(createdBy) }
-            : null,
-          createdByUser: createdBy ? { uuid: createdBy, name: lookup.get(createdBy) } : null,
-          onBehalfOfUser: onBehalfOfUuid ? { uuid: onBehalfOfUuid, name: lookup.get(onBehalfOfUuid) } : null,
-        });
-      } catch (error) {
-        console.error("Failed to fetch user info", error);
+      if (unresolvedUuids.length > 0) {
+        try {
+          const userInfo = await getUserInfoFromUuids(unresolvedUuids);
+          userInfo?.forEach((user) => {
+            if (user?.userUuid) lookup.set(user.userUuid, user?.name || "");
+          });
+        } catch (error) {
+          console.error("Failed to fetch user info", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("ERROR_FETCHING_USER_INFO"), error: true, errorId });
+        }
       }
+
+      if (!isMounted) return;
+
+      setUserInfoMap({
+        senderUser: senderUuid
+          ? { uuid: senderUuid, name: lookup.get(senderUuid) }
+          : createdBy
+          ? { uuid: createdBy, name: lookup.get(createdBy) }
+          : null,
+        createdByUser: createdBy ? { uuid: createdBy, name: lookup.get(createdBy) } : null,
+        onBehalfOfUser: onBehalfOfUuid ? { uuid: onBehalfOfUuid, name: lookup.get(onBehalfOfUuid) } : null,
+      });
     };
 
-    fetchUsers();
+    resolveNames();
 
     return () => {
       isMounted = false;
     };
-  }, [documentSubmission, artifact]);
+  }, [documentSubmission, artifact, caseData]);
 
   const senderName = useMemo(() => {
     if (documentSubmission?.[0]?.artifactList?.sourceType === "COURT") {
@@ -839,6 +849,10 @@ const EvidenceModal = ({
       };
 
       if (generateOrder) {
+        if (!refApplicationId) {
+          setToast({ label: t("SOMETHING_WENT_WRONG_REFRESH_AND_TRY_AGAIN"), error: true });
+          return;
+        }
         const reqbody = {
           order: {
             createdDate: null,

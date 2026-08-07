@@ -9,6 +9,7 @@ import org.egov.user.domain.model.User;
 import org.egov.user.domain.model.enums.UserType;
 import org.egov.user.domain.service.UserService;
 import org.egov.user.domain.service.utils.EncryptionDecryptionUtil;
+import org.egov.user.security.oauth2.custom.AuthModeResolver;
 import org.egov.user.security.oauth2.custom.CustomAuthenticationManager;
 import org.egov.user.web.contract.auth.Role;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,9 @@ public class CustomTokenEndpoint {
     @Autowired
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
+    @Autowired
+    private AuthModeResolver authModeResolver;
+
     @Value("${access.token.validity.in.minutes}")
     private int accessTokenValidityMinutes;
 
@@ -75,14 +79,15 @@ public class CustomTokenEndpoint {
             @RequestParam(value = "tenantId", required = false) String tenantId,
             @RequestParam(value = "userType", required = false) String userType,
             @RequestParam(value = "refresh_token", required = false) String refreshToken,
-            @RequestParam(value = "isInternal", required = false) String isInternal) {
+            @RequestParam(value = "isInternal", required = false) String isInternal,
+            @RequestParam(value = "authType", required = false) String authType) {
 
         Authentication authenticated;
 
         String existingRefreshToken = null;
 
         if ("password".equals(grantType)) {
-            authenticated = authenticatePassword(username, password, tenantId, userType, isInternal);
+            authenticated = authenticatePassword(username, password, tenantId, userType, isInternal, authType);
         } else if ("refresh_token".equals(grantType)) {
             // Remove old access token associated with this refresh token (mirrors old Spring OAuth2 behavior)
             tokenStore.removeAccessTokenUsingRefreshToken(refreshToken);
@@ -97,11 +102,21 @@ public class CustomTokenEndpoint {
     }
 
     private Authentication authenticatePassword(String username, String password,
-                                                String tenantId, String userType, String isInternal) {
+                                                String tenantId, String userType, String isInternal,
+                                                String authType) {
         LinkedHashMap<String, String> details = new LinkedHashMap<>();
         if (tenantId != null) details.put("tenantId", tenantId);
         if (userType != null) details.put("userType", userType);
         if (isInternal != null) details.put("isInternal", isInternal);
+
+        // Resolve the credential type here so a bad or disallowed authType surfaces as a clear
+        // error. CustomAuthenticationManager swallows provider level AuthenticationExceptions
+        // and replaces them with a generic failure message.
+        UserType resolvedUserType = UserType.fromValue(userType);
+        if (resolvedUserType != null)
+            details.put("authMode", authModeResolver.resolve(resolvedUserType, authType).name());
+        // An unknown userType is left for CustomAuthenticationProvider to reject, keeping the
+        // existing "User Type is mandatory and has to be a valid type" error intact.
 
         UsernamePasswordAuthenticationToken token =
                 new UsernamePasswordAuthenticationToken(username, password);
@@ -208,6 +223,8 @@ public class CustomTokenEndpoint {
                 .type(user.getType().name())
                 .roles(toAuthRole(user.getRoles()))
                 .tenantId(user.getTenantId())
+                .showPasswordSetupPrompt(authModeResolver.isPasswordSetupPromptRequired(user.getType(),
+                        user.getHasPassword(), user.getPasswordPromptDismissed()))
                 .build();
 
         if (user.getPermanentAddress() != null) {

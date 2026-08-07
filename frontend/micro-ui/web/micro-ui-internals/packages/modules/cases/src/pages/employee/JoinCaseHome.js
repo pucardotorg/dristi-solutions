@@ -23,6 +23,7 @@ import {
   cleanString,
   combineMultipleFiles,
   getAuthorizedUuid,
+  getNameByUuid,
   isLPRCase,
   removeInvalidNameParts,
 } from "@egovernments/digit-ui-module-dristi/src/Utils";
@@ -39,7 +40,7 @@ const Heading = (props) => {
   );
 };
 
-const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data }) => {
+const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data, isClerkSelf = false }) => {
   const { t } = useTranslation();
   const todayDate = new Date().getTime();
 
@@ -290,6 +291,15 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     setIndividualId(individualData?.Individual?.[0]?.individualId);
     setIndividual(individualData?.Individual?.[0]);
 
+    // Clerk joining as Self acts as a Litigant (same flow as litigant — can join as complainant or respondent)
+    if (isClerkSelf) {
+      setSelectPartyData((selectPartyData) => ({
+        ...selectPartyData,
+        userType: { label: t(JoinHomeLocalisation.LITIGANT_OPT), value: "Litigant" },
+      }));
+      return;
+    }
+
     const advocateResponse = await DRISTIService.searchIndividualAdvocate(
       {
         criteria: [
@@ -302,22 +312,39 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       {}
     );
 
-    if (advocateResponse?.advocates[0]?.responseList?.length > 0) {
+    const isAdvocate = advocateResponse?.advocates[0]?.responseList?.length > 0;
+    const isLitigantInCase = caseDetails?.litigants?.some((litigant) => litigant?.individualId === individualData?.Individual?.[0]?.individualId);
+    const isRepresentativeInCase =
+      isAdvocate && caseDetails?.representatives?.some((rep) => rep?.advocateId === advocateResponse?.advocates[0]?.responseList?.[0]?.id);
+    const isPoaHolderInCase = caseDetails?.poaHolders?.some((poa) => poa?.additionalDetails?.uuid === userInfo?.uuid);
+
+    if (isAdvocate) {
+      // Always store the advocate data when the user is an advocate so switching userType works
       setBarRegNumber(advocateResponse?.advocates[0]?.responseList?.[0]?.barRegistrationNumber);
       setAdvocateId(advocateResponse?.advocates[0]?.responseList?.[0]?.id);
       setAdvocateData(advocateResponse?.advocates[0]?.responseList?.[0]);
-      setSelectPartyData((selectPartyData) => ({
-        ...selectPartyData,
-        userType: { label: t(JoinHomeLocalisation.ADVOCATE_OPT), value: "Advocate" },
-      }));
       setAdvocateDetailForm(advocateResponse?.advocates[0]?.responseList[0]);
+
+      if ((isLitigantInCase || isPoaHolderInCase) && !isRepresentativeInCase) {
+        // Advocate is only a litigant/POA holder in this case — default to Litigant, but can still switch to Advocate
+        setSelectPartyData((selectPartyData) => ({
+          ...selectPartyData,
+          userType: { label: t(JoinHomeLocalisation.LITIGANT_OPT), value: "Litigant" },
+        }));
+      } else {
+        // Advocate is a representative (or neither a litigant/POA holder nor a rep) — default to Advocate
+        setSelectPartyData((selectPartyData) => ({
+          ...selectPartyData,
+          userType: { label: t(JoinHomeLocalisation.ADVOCATE_OPT), value: "Advocate" },
+        }));
+      }
     } else {
       setSelectPartyData((selectPartyData) => ({
         ...selectPartyData,
         userType: { label: t(JoinHomeLocalisation.LITIGANT_OPT), value: "Litigant" },
       }));
     }
-  }, [t, tenantId, userInfo?.uuid]);
+  }, [t, tenantId, userInfo?.uuid, caseDetails?.litigants, caseDetails?.representatives, caseDetails?.poaHolders, isClerkSelf]);
 
   useEffect(() => {
     if (show === true) {
@@ -608,6 +635,23 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       }
     }
   }, [caseDetails, t, userInfo.name, userInfo?.uuid, selectPartyData?.userType, individual]);
+
+  // When an advocate (who is also a litigant) switches to Advocate mode,
+  // pre-fill partyInvolve based on their litigant partyType.
+  useEffect(() => {
+    if (caseDetails?.cnrNumber && individual && selectPartyData?.userType?.value === "Advocate") {
+      const litigant = caseDetails?.litigants?.find((item) => item.individualId === individual?.individualId);
+      if (litigant !== undefined && !selectPartyData?.partyInvolve?.value) {
+        setSelectPartyData((prev) => ({
+          ...prev,
+          partyInvolve: {
+            label: litigant?.partyType?.includes("respondent") ? t("RESPONDENTS_TEXT") : t("COMPLAINANTS_TEXT"),
+            value: litigant?.partyType?.includes("respondent") ? "RESPONDENTS" : "COMPLAINANTS",
+          },
+        }));
+      }
+    }
+  }, [caseDetails, individual, selectPartyData?.userType?.value, selectPartyData?.partyInvolve?.value, t]);
 
   const registerLitigants = useCallback(
     async (data) => {
@@ -1215,7 +1259,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             const taskNumber = res?.paymentTaskNumber;
             const taskSearchResponse = await getTaskDetails(taskNumber, tenantId);
             const taskDetails = taskSearchResponse?.list?.[0]?.taskDetails;
-            const ownerName = cleanString(userInfo?.name);
+            const ownerName = cleanString(getNameByUuid(userInfo?.uuid, caseDetails) || userInfo?.name);
 
             const documents =
               taskDetails?.individualDetails?.map((res, index) => {
@@ -1440,8 +1484,16 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           setPartyInPerson={setPartyInPerson}
           isLitigantJoined={isLitigantJoined}
           isAdvocateJoined={isAdvocateJoined}
+          onUserTypeChange={() => {
+            setIsLitigantJoined(false);
+            setIsAdvocateJoined(false);
+          }}
           searchLitigantInRepresentives={searchLitigantInRepresentives}
           advocateId={advocateData?.id}
+          loggedInIndividualId={individualId}
+          litigantPartyType={caseDetails?.litigants?.find((l) => l?.individualId === individualId)?.partyType}
+          isClerkSelf={isClerkSelf}
+          hasAdvocateData={Boolean(advocateData?.id)}
         />
       ),
     },

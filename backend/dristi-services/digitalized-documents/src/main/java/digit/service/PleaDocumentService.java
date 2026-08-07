@@ -99,7 +99,7 @@ public class PleaDocumentService implements DocumentTypeService {
                 callNotificationServiceForSMS(request);
                 callNotificationServiceForSMSToAccusedAdvocate(request);
             } catch (Exception e) {
-                log.error("Error occurred while trying to send SMS: {}", e.getMessage());
+                log.error("Error occurred while trying to send SMS", e);
             }
 
             updateWorkflowAdditionalDetails(request);

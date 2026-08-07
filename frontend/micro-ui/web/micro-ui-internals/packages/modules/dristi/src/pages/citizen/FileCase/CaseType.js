@@ -70,6 +70,10 @@ function CaseType({ t }) {
     const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
     const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
     const roles = userInfo?.roles;
+    const isClerkActingAsSelf = useMemo(
+      () => roles?.some((role) => role?.code === "ADVOCATE_CLERK_ROLE") && selectedAdvocateUuid === userInfo?.uuid,
+      [roles, selectedAdvocateUuid, userInfo?.uuid]
+    );
     const { data: individualData, isLoading, refetch, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
       {
         Individual: {
@@ -193,16 +197,17 @@ function CaseType({ t }) {
                   },
                 ],
                 litigants: [],
-                representatives: selectedAdvocateId
-                  ? [
-                      {
-                        advocateId: selectedAdvocateId,
-                        tenantId,
-                        representing: [],
-                        advocateFilingStatus: "caseOwner",
-                      },
-                    ]
-                  : [],
+                representatives:
+                  selectedAdvocateId && !isClerkActingAsSelf
+                    ? [
+                        {
+                          advocateId: selectedAdvocateId,
+                          tenantId,
+                          representing: [],
+                          advocateFilingStatus: "caseOwner",
+                        },
+                      ]
+                    : [],
                 documents: [],
                 workflow: {
                   action: "SAVE_DRAFT",
@@ -220,7 +225,7 @@ function CaseType({ t }) {
                 additionalDetails: {
                   payerMobileNo: individualData?.Individual?.[0]?.mobileNumber,
                   payerName: `${givenName} ${familyName}`,
-                  ...(!selectedAdvocateId && {
+                  ...((!selectedAdvocateId || isClerkActingAsSelf) && {
                     complainantDetails: {
                       formdata: [
                         {

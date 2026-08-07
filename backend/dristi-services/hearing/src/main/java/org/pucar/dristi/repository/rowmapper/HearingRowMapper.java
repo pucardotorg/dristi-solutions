@@ -93,7 +93,7 @@ public class HearingRowMapper implements ResultSetExtractor<List<Hearing>> {
             }
         }
         catch (Exception e){
-            log.error("Error occurred while processing Hearing ResultSet: {}", e.getMessage());
+            log.error("Error occurred while processing Hearing ResultSet", e);
             throw new CustomException(ROW_MAPPER_EXCEPTION,"Error occurred while processing Hearing ResultSet: "+ e.getMessage());
         }
         return new ArrayList<>(hearingMap.values());

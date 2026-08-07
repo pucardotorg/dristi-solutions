@@ -68,7 +68,7 @@ public class LitigantRowMapper implements ResultSetExtractor<Map<UUID, List<Part
         } catch(CustomException e){
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while processing Case ResultSet :: {}", e.toString());
+            log.error("Error occurred while processing Case ResultSet", e);
             throw new CustomException("ROW_MAPPER_EXCEPTION", "Exception occurred while processing Case ResultSet: " + e.getMessage());
         }
         return partyMap;

@@ -375,7 +375,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while creating case :: {}", e.toString());
+            log.error("Error occurred while creating case", e);
             throw new CustomException(CREATE_CASE_ERR, e.getMessage());
         }
     }
@@ -426,7 +426,7 @@ public class CaseService {
                                 try {
                                     advocateDetailBlockBuilder.buildAndSet(courtCase);
                                 } catch (Exception e) {
-                                    log.error("Error building AdvocateDetailBlock in CaseService.searchCases: {}", e.toString());
+                                    log.error("Error building AdvocateDetailBlock in CaseService.searchCases", e);
                                 }
                             });
                 });
@@ -436,7 +436,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching to search results :: {}", e.toString());
+            log.error("Error while fetching to search results", e);
             throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
         }
     }
@@ -489,7 +489,7 @@ public class CaseService {
             }
             return result;
         } catch (Exception e) {
-            log.error("Error while fetching case meta :: {}", e.toString());
+            log.error("Error while fetching case meta", e);
             throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
         }
     }
@@ -716,7 +716,7 @@ public class CaseService {
 
         } catch (Exception e) {
             log.error("Method=updateCase,Result=FAILURE, CaseId={}", caseRequest.getCases().getId());
-            log.error("Error occurred while updating case :: {}", e.toString());
+            log.error("Error occurred while updating case", e);
             throw new CustomException(UPDATE_CASE_ERR, "Exception occurred while updating case: " + e.getMessage());
         }
 
@@ -751,7 +751,7 @@ public class CaseService {
                     if ((COMPLAINANT_ID_PROOF.equals(docType) || ADVOCATE_ID_PROOF.equals(docType))
                             && isMissingInUpdate) {
                         entry.getValue().setIsActive(false);
-                        return false; 
+                        return false;
                     }
                     return isMissingInUpdate;
                 })
@@ -1132,7 +1132,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while editing case :: {}", e.toString());
+            log.error("Error occurred while editing case", e);
             throw new CustomException(EDIT_CASE_ERR, "Exception occurred while editing case: " + e.getMessage());
         }
 
@@ -1192,7 +1192,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while editing profile :: {}", e.toString());
+            log.error("Error occurred while editing profile", e);
             throw new CustomException(EDIT_CASE_ERR, "Exception occurred while editing profile: " + e.getMessage());
         }
 
@@ -1256,7 +1256,7 @@ public class CaseService {
             }
         } catch (Exception e) {
             // Log the exception and continue the execution without throwing
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
     }
 
@@ -1333,7 +1333,7 @@ public class CaseService {
             }
         } catch (Exception e) {
             // Log the exception and continue the execution without throwing
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
 
         return mobileNumber;
@@ -1351,17 +1351,21 @@ public class CaseService {
 
     private String extractProfileEditorName(String profileEditorId, CourtCase cases) {
         List<AdvocateMapping> advocateMappings = cases.getRepresentatives();
-        for (AdvocateMapping advocateMapping : advocateMappings) {
-            JsonNode additionalDetails = objectMapper.convertValue(advocateMapping.getAdditionalDetails(), JsonNode.class);
-            if (additionalDetails.get("uuid").asText().equals(profileEditorId)) {
-                return additionalDetails.get("advocateName").asText();
+        if (advocateMappings != null) {
+            for (AdvocateMapping advocateMapping : advocateMappings) {
+                JsonNode additionalDetails = objectMapper.convertValue(advocateMapping.getAdditionalDetails(), JsonNode.class);
+                if (additionalDetails != null && additionalDetails.path("uuid").asText().equals(profileEditorId)) {
+                    return additionalDetails.path("advocateName").asText();
+                }
             }
         }
         List<Party> litigants = cases.getLitigants();
-        for (Party litigant : litigants) {
-            JsonNode additionalDetails = objectMapper.convertValue(litigant.getAdditionalDetails(), JsonNode.class);
-            if (additionalDetails.get("uuid").asText().equals(profileEditorId)) {
-                return additionalDetails.get("fullName").asText();
+        if (litigants != null) {
+            for (Party litigant : litigants) {
+                JsonNode additionalDetails = objectMapper.convertValue(litigant.getAdditionalDetails(), JsonNode.class);
+                if (additionalDetails != null && additionalDetails.path("uuid").asText().equals(profileEditorId)) {
+                    return additionalDetails.path("fullName").asText();
+                }
             }
         }
         return null;
@@ -1379,7 +1383,7 @@ public class CaseService {
             }
         } catch (Exception e) {
             // Log the exception and continue the execution without throwing
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
 
         return mobileNumber;
@@ -1411,7 +1415,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching to exist case :: {}", e.toString());
+            log.error("Error while fetching to exist case", e);
             throw new CustomException(CASE_EXIST_ERR, e.getMessage());
         }
     }
@@ -1488,7 +1492,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while adding witness to the case :: {}", e.toString());
+            log.error("Error occurred while adding witness to the case", e);
             throw new CustomException(ADD_WITNESS_TO_CASE_ERR, "Exception occurred while adding witness to case: " + e.getMessage());
         }
 
@@ -1593,7 +1597,7 @@ public class CaseService {
             caseObj = encryptionDecryptionUtil.encryptObject(caseObj, config.getCourtCaseEncrypt(), CourtCase.class);
             courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             joinCaseRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
-            log.info("EnrichRepresentative,Pushing additional details :: {}", joinCaseRequest.getAdditionalDetails());
+            log.error("EnrichRepresentative,Pushing additional details :: {}", joinCaseRequest.getAdditionalDetails());
             producer.push(config.getAdditionalJoinCaseTopic(), joinCaseRequest);
 
             courtCase.setAdditionalDetails(joinCaseRequest.getAdditionalDetails());
@@ -1740,7 +1744,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Invalid request for joining a case :: {}", e.toString());
+            log.error("Invalid request for joining a case", e);
             throw new CustomException(JOIN_CASE_ERR, JOIN_CASE_INVALID_REQUEST);
         }
     }
@@ -1829,7 +1833,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Invalid join case request :: {}", e.toString());
+            log.error("Invalid join case request", e);
             throw new CustomException(JOIN_CASE_ERR, JOIN_CASE_INVALID_REQUEST);
         }
         joinCaseV2Response.setIsVerified(true);
@@ -2149,7 +2153,7 @@ public class CaseService {
             courtCase.setAdvocateDetailBlock(blocks);
 
         } catch (Exception e) {
-            log.error("Error modifying advocateDetailBlock for pip: {}", e.getMessage(), e);
+            log.error("Error modifying advocateDetailBlock for pip", e);
         }
     }
 
@@ -2885,7 +2889,7 @@ public class CaseService {
             // persist changed blocks back
             courtCase.setAdvocateDetailBlock(blocks);
         } catch (Exception e) {
-            log.error("Error modifying advocateDetailBlock: {}", e.getMessage(), e);
+            log.error("Error modifying advocateDetailBlock", e);
         }
 
         // Return existing additionalDetails unchanged for compatibility
@@ -2916,7 +2920,7 @@ public class CaseService {
                                 isAdvocateDetailsNamesExtracted.set(true);
                             }
                         } catch (JsonProcessingException e) {
-                            log.error("Error occurred while creating task for pip :: {}", e.toString());
+                            log.error("Error occurred while creating task for pip", e);
                             throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
                         }
                         taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
@@ -2947,7 +2951,7 @@ public class CaseService {
                             isAdvocateDetailsNamesExtracted.set(true);
                         }
                     } catch (JsonProcessingException e) {
-                        log.error("Error occurred while creating task for advocate :: {}", e.toString());
+                        log.error("Error occurred while creating task for advocate", e);
                         throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
                     }
                     taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
@@ -2988,7 +2992,7 @@ public class CaseService {
 
             producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
         } catch (Exception e) {
-            log.error("Error occurred while creating task for join case request :: {}", e.toString());
+            log.error("Error occurred while creating task for join case request", e);
             throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
         }
 
@@ -3646,7 +3650,7 @@ public class CaseService {
                     .build();
             hearings = hearingUtil.fetchHearingDetails(hearingSearchRequest);
         } catch (Exception e) {
-            log.error("Error occurred while fetching hearings for court: {}", e.getMessage());
+            log.error("Error occurred while fetching hearings for court", e);
         }
         return hearings;
     }
@@ -3895,7 +3899,7 @@ public class CaseService {
             return taskUtil.callCreateTask(taskRequest);
 
         } catch (Exception e) {
-            log.error("Error occurred while creating task for join case request :: {}", e.toString());
+            log.error("Error occurred while creating task for join case request", e);
             throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
         }
     }
@@ -3922,7 +3926,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Failed to verify the given litigants and representatives to be added to the case :: {}", e.toString());
+            log.error("Failed to verify the given litigants and representatives to be added to the case", e);
             throw new CustomException(JOIN_CASE_ERR, JOIN_CASE_CODE_INVALID_REQUEST);
         }
     }
@@ -4221,7 +4225,7 @@ public class CaseService {
 
             courtCase.setAdvocateDetailBlock(blocks);
         } catch (Exception e) {
-            log.error("Error modifying advocateDetailBlock in modifyAdvocateDetails: {}", e.getMessage(), e);
+            log.error("Error modifying advocateDetailBlock in modifyAdvocateDetails", e);
         }
 
         return courtCase.getAdditionalDetails();
@@ -4309,7 +4313,7 @@ public class CaseService {
                 return null;
             }
         } catch (JsonProcessingException e) {
-            log.error("Error occurred while searching case in redis cache :: {}", e.toString());
+            log.error("Error occurred while searching case in redis cache", e);
             throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
         }
     }
@@ -4549,7 +4553,7 @@ public class CaseService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error occurred while sending SMS for new witness addition :: {}", e.toString());
+            log.error("Error occurred while sending SMS for new witness addition", e);
         }
 
     }
@@ -4580,7 +4584,7 @@ public class CaseService {
                 notificationService.sendNotification(caseRequest.getRequestInfo(), smsTemplateData, NEW_WITNESS_ADDED_SMS_FOR_OTHERS, number);
             }
         } catch (Exception e) {
-            log.error("Error occurred while sending SMS for others as witness added :: {}", e.toString());
+            log.error("Error occurred while sending SMS for others as witness added", e);
         }
     }
 
@@ -4879,10 +4883,10 @@ public class CaseService {
                 log.info("operation=updateJoinCaseRejected, status=SUCCESS, taskRequest: {}", taskRequest);
             }
         } catch (CustomException e) {
-            log.error("CustomException occurred: {}", e.getMessage(), e);
+            log.error("CustomException occurred", e);
             throw new CustomException("REJECT_REQUEST_ERROR", e.getMessage());
         } catch (Exception e) {
-            log.error("Unexpected error in updateJoinCaseRejected: {}", e.getMessage(), e);
+            log.error("Unexpected error in updateJoinCaseRejected", e);
             throw new CustomException("REJECT_REQUEST_ERROR", "An unexpected error occurred");
         }
 
@@ -4937,10 +4941,10 @@ public class CaseService {
 
             }
         } catch (CustomException e) {
-            log.error("CustomException occurred: {}", e.getMessage(), e);
+            log.error("CustomException occurred", e);
             throw new CustomException("APPROVAL_REQUEST_ERROR", e.getMessage());
         } catch (Exception e) {
-            log.error("Unexpected error in updateJoinCaseRejected: {}", e.getMessage(), e);
+            log.error("Unexpected error in updateJoinCaseRejected", e);
             throw new CustomException("APPROVAL_REQUEST_ERROR", "An unexpected error occurred");
         }
 
@@ -4973,7 +4977,7 @@ public class CaseService {
                 notificationService.sendNotification(requestInfo, smsTemplateData, NEW_USER_JOIN, phoneNumber);
             }
         } catch (Exception e) {
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
 
 
@@ -5038,7 +5042,7 @@ public class CaseService {
                 notificationService.sendNotification(requestInfo, smsTemplateData, NEW_USER_JOIN, phoneNumber);
             }
         } catch (Exception e) {
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
 
 
@@ -5223,10 +5227,10 @@ public class CaseService {
             producer.push(config.getPoaJoinCaseKafkaTopic(), encrptedCourtCase);
 
         } catch (CustomException e) {
-            log.error("CustomException occurred: {}", e.getMessage(), e);
+            log.error("CustomException occurred", e);
             throw new CustomException("updateCourtCaseObjectPOA", e.getMessage());
         } catch (Exception e) {
-            log.error("Unexpected error in updateCourtCaseObjectPOA: {}", e.getMessage(), e);
+            log.error("Unexpected error in updateCourtCaseObjectPOA", e);
             throw new CustomException("updateCourtCaseObjectPOA", "An unexpected error occurred");
         }
 
@@ -5544,10 +5548,10 @@ public class CaseService {
                 }
             }
         } catch (CustomException e) {
-            log.error("CustomException occurred: {}", e.getMessage(), e);
+            log.error("CustomException occurred", e);
             throw new CustomException("updateCourtCaseObject", e.getMessage());
         } catch (Exception e) {
-            log.error("Unexpected error in updateCourtCaseObject: {}", e.getMessage(), e);
+            log.error("Unexpected error in updateCourtCaseObject", e);
             throw new CustomException("updateCourtCaseObject", "An unexpected error occurred");
         }
 
@@ -6210,7 +6214,7 @@ public class CaseService {
             log.info("operation=compareCalculationAndCreateDemand, status=SUCCESS, caseId: {}", body.getCases().getId());
             return calculation;
         } catch (Exception e) {
-            log.error("operation=compareCalculationAndCreateDemand, status=ERROR, caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
+            log.error("operation=compareCalculationAndCreateDemand, status=ERROR, caseId: {}", body.getCases().getId(), e);
             throw new CustomException("ERROR_CALCULATION_CASE", "Error while resubmitting case with id: " + body.getCases().getId() + ", error: " + e.getMessage());
         }
     }
@@ -6230,7 +6234,12 @@ public class CaseService {
                 .calculationCriteria(Collections.singletonList(calculationCriteria))
                 .build();
 
-        return paymentCalculaterUtil.callPaymentCalculator(calculationRequest);
+        CalculationRes response = paymentCalculaterUtil.callPaymentCalculator(calculationRequest);
+        if (response == null || response.getCalculation() == null || response.getCalculation().isEmpty()) {
+            throw new CustomException("EMPTY_CALCULATION_RESPONSE",
+                    "Payment calculator returned no calculation for filingNumber: " + courtCase.getFilingNumber());
+        }
+        return response;
     }
 
 
@@ -6296,7 +6305,7 @@ public class CaseService {
 
             etreasuryUtil.createDemand(demandCreateRequest);
         } catch (Exception e) {
-            log.error("Error while creating demand for caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
+            log.error("Error while creating demand for caseId: {}", body.getCases().getId(), e);
             throw new CustomException("ERROR_CREATING_DEMAND", "Error while creating demand for caseId: " + body.getCases().getId() + ", error: " + e.getMessage());
         }
     }
@@ -6312,12 +6321,15 @@ public class CaseService {
 
     private String updateAndGetConsumerCode(CaseRequest body) {
         JsonNode additionalDetails = objectMapper.convertValue(body.getCases().getAdditionalDetails(), JsonNode.class);
+        if (additionalDetails == null || !additionalDetails.isObject()) {
+            additionalDetails = objectMapper.createObjectNode();
+        }
         String baseConsumerCode = body.getCases().getFilingNumber() + "_CASE_FILING";
 
         String newConsumerCode;
         int nextSuffix = 1;
 
-        if (additionalDetails != null && additionalDetails.has("lastSubmissionConsumerCode")) {
+        if (additionalDetails.has("lastSubmissionConsumerCode")) {
             String lastConsumerCode = getLastSubmissionConsumerCode(body);
             if (lastConsumerCode != null && lastConsumerCode.startsWith(baseConsumerCode)) {
                 nextSuffix = getNextSuffix(lastConsumerCode, baseConsumerCode);
@@ -6355,8 +6367,8 @@ public class CaseService {
             return false;
         }
 
-        JsonNode delayFormData = caseDetails.get("delayApplications").get("formdata").get(0);
-        if (delayFormData == null || delayFormData.get("data") == null) {
+        JsonNode delayFormData = caseDetails.path("delayApplications").path("formdata").path(0);
+        if (delayFormData.path("data").isMissingNode() || delayFormData.path("data").isNull()) {
             return false;
         }
 
@@ -6365,7 +6377,7 @@ public class CaseService {
         JsonNode condonationFiles = data.get("condonationFileUpload");
 
         boolean isCodeNo = delayType != null
-                && "NO".equals(delayType.get("code").asText());
+                && "NO".equals(delayType.path("code").asText(""));
 
         boolean hasFile = condonationFiles != null
                 && condonationFiles.has("document")
@@ -6396,7 +6408,7 @@ public class CaseService {
                 try {
                     totalAmount += Double.parseDouble(amountNode.asText());
                 } catch (NumberFormatException e) {
-                    log.error("Error parsing chequeAmount for caseId: {}, error: {}", caseId, e.getMessage());
+                    log.error("Error parsing chequeAmount for caseId: {}", caseId, e);
                 }
             }
         }
@@ -6429,7 +6441,7 @@ public class CaseService {
             log.info("operation=addWitnessToCase, status=SUCCESS, filingNumber: {}", body.getCaseFilingNumber());
             return WitnessDetailsResponse.builder().witnessDetails(body.getWitnessDetails()).build();
         } catch (Exception e) {
-            log.error("operation=addWitnessToCase, status=FAILURE, filingNumber: {}, error: {}", body.getCaseFilingNumber(), e.getMessage());
+            log.error("operation=addWitnessToCase, status=FAILURE, filingNumber: {}", body.getCaseFilingNumber(), e);
             throw new CustomException(ERROR_ADDING_WITNESS, "Error while adding witness to case: " + body.getCaseFilingNumber() + ", error: " + e.getMessage());
         }
     }
@@ -6717,7 +6729,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while adding address :: {}", e.toString());
+            log.error("Error occurred while adding address", e);
             throw new CustomException(EDIT_CASE_ERR, "Exception occurred while adding address : " + e.getMessage());
         }
 
@@ -6807,32 +6819,32 @@ public class CaseService {
 
     public void updateCaseConversion(CaseRequest caseRequest) {
         log.info("Starting case conversion update.");
-        
+
         try {
             CourtCase courtCase = caseRequest.getCases();
             String filingNumber = courtCase.getFilingNumber();
             String caseType = courtCase.getCaseType();
 
             CaseConversionDetails caseConversionDetails = buildCaseConversionDetails(courtCase, caseType);
-            
+
             CaseConversionRequest caseConversionRequest = CaseConversionRequest.builder()
                     .requestInfo(caseRequest.getRequestInfo())
                     .caseConversionDetails(caseConversionDetails)
                     .build();
-            
+
             producer.push(config.getCaseConversionTopic(), caseConversionRequest);
-            
+
             log.info("Case conversion pushed to Kafka | filingNumber: {} | convertedFrom: {} | convertedTo: {} | preCaseNumber: {} | postCaseNumber: {}",
                     filingNumber, caseConversionDetails.getConvertedFrom(), caseConversionDetails.getConvertedTo(),
                     caseConversionDetails.getPreCaseNumber(), caseConversionDetails.getPostCaseNumber());
-            
+
         } catch (Exception e) {
-            log.error("Error during case conversion | filingNumber: {} | error: {}", 
-                    caseRequest != null && caseRequest.getCases() != null ? caseRequest.getCases().getFilingNumber() : "unknown", 
+            log.error("Error during case conversion | filingNumber: {} | error: {}",
+                    caseRequest != null && caseRequest.getCases() != null ? caseRequest.getCases().getFilingNumber() : "unknown",
                     e.getMessage());
         }
     }
-    
+
     private CaseConversionDetails buildCaseConversionDetails(CourtCase courtCase, String caseType) {
         CaseConversionDetails caseConversionDetails = CaseConversionDetails.builder()
                 .caseId(courtCase.getId().toString())
@@ -6840,9 +6852,9 @@ public class CaseService {
                 .cnrNumber(courtCase.getCnrNumber())
                 .tenantId(courtCase.getTenantId())
                 .build();
-        
+
         Long dateOfConversion = dateUtil.getEpochFromLocalDate(LocalDate.now());
-        
+
         if (CMP.equalsIgnoreCase(caseType) && courtCase.getCmpNumber() != null) {
             caseConversionDetails.setConvertedFrom(FILING);
             caseConversionDetails.setConvertedTo(CMP);
@@ -6868,7 +6880,7 @@ public class CaseService {
             caseConversionDetails.setPostCaseNumber(courtCase.getCourtCaseNumber());
             caseConversionDetails.setDateOfConversion(dateOfConversion);
         }
-        
+
         return caseConversionDetails;
     }
 

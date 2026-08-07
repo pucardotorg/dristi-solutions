@@ -207,6 +207,7 @@ export const getTabConfig = ({
           ...tabConfig.apiDetails,
           requestBody: {
             ...tabConfig.apiDetails.requestBody,
+            caseDetails: caseRelatedData.case,
             criteria: {
               caseId: caseDetails?.id,
               filingNumber: caseDetails?.filingNumber,
@@ -275,6 +276,7 @@ export const getTabConfig = ({
           ...tabConfig.apiDetails,
           requestBody: {
             ...tabConfig.apiDetails.requestBody,
+            caseDetails: caseRelatedData.case,
             criteria: {
               filingNumber: filingNumber,
               tenantId: tenantId,

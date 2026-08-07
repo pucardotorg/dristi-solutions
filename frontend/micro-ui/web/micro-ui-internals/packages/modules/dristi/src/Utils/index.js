@@ -106,6 +106,25 @@ export const removeInvalidNameParts = (name) => {
     .join(" ");
 };
 
+export const getNameByUuid = (uuid, caseDetails) => {
+  if (!uuid) return null;
+  const litigant = caseDetails?.litigants?.find((lit) => lit?.additionalDetails?.uuid === uuid);
+  if (litigant) return litigant?.additionalDetails?.fullName || null;
+
+  const poaHolder = caseDetails?.poaHolders?.find((poa) => poa?.additionalDetails?.uuid === uuid);
+  if (poaHolder) return poaHolder?.name || null;
+
+  const representative = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === uuid);
+  if (representative) return representative?.additionalDetails?.advocateName || null;
+
+  for (const office of caseDetails?.advocateOffices || []) {
+    const member = [...(office?.advocates || []), ...(office?.clerks || [])]?.find((m) => m?.memberUserUuid === uuid);
+    if (member) return member?.memberName || null;
+  }
+
+  return null;
+};
+
 export const modifiedEvidenceNumber = (value, filingNumber = null) => {
   if (value && typeof value === "string") {
     if (filingNumber && typeof filingNumber === "string" && value.startsWith(filingNumber)) {

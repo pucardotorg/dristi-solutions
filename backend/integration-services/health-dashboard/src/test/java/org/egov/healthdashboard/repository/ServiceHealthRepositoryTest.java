@@ -81,7 +81,6 @@ class ServiceHealthRepositoryTest {
     void findAll_rowMapperMapsAllColumns() throws Exception {
         when(resultSet.getLong("id")).thenReturn(1L);
         when(resultSet.getString("service_name")).thenReturn("ESIGN");
-        when(resultSet.getString("service_url")).thenReturn("https://esign.example.com");
         when(resultSet.getString("last_status")).thenReturn("UP");
         when(resultSet.getLong("last_updated_time")).thenReturn(1000L);
         when(resultSet.getLong("response_time_ms")).thenReturn(50L);
@@ -95,7 +94,6 @@ class ServiceHealthRepositoryTest {
 
         assertThat(mapped.getId()).isEqualTo(1L);
         assertThat(mapped.getServiceName()).isEqualTo("ESIGN");
-        assertThat(mapped.getServiceUrl()).isEqualTo("https://esign.example.com");
         assertThat(mapped.getLastStatus()).isEqualTo("UP");
         assertThat(mapped.getLastUpdatedTime()).isEqualTo(1000L);
         assertThat(mapped.getResponseTimeMs()).isEqualTo(50L);

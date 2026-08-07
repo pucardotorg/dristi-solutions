@@ -49,7 +49,7 @@ public class IndividualUtil {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error in search individual service :: {}", e);
+            log.error("Error in search individual service", e);
             throw new CustomException(INDIVIDUAL_SERVICE_EXCEPTION, "Error in search individual service" + e.getMessage());
         }
     }
@@ -79,7 +79,7 @@ public class IndividualUtil {
             }
             return individual;
         } catch (CustomException e) {
-            log.error("Custom Exception occurred in individual Utility :: {}", e.toString());
+            log.error("Custom Exception occurred in individual Utility", e);
             throw e;
         } catch (Exception e) {
             throw new CustomException(INDIVIDUAL_UTILITY_EXCEPTION, "Exception in individual utility service: " + e.getMessage());

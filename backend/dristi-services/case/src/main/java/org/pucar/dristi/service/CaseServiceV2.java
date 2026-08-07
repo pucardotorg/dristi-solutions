@@ -72,7 +72,7 @@ public class CaseServiceV2 {
                     try {
                        advocateDetailBlockBuilder.buildAndSet(decryptedCachedCase);
                     } catch (Exception e) {
-                        log.error("Error building AdvocateDetailBlock for cached case: {}", e.toString());
+                        log.error("Error building AdvocateDetailBlock for cached case", e);
                     }
                    return decryptedCachedCase;
                 } else {
@@ -94,7 +94,7 @@ public class CaseServiceV2 {
             try {
                 advocateDetailBlockBuilder.buildAndSet(decryptedCourtCases);
             } catch (Exception e) {
-                log.error("Error building AdvocateDetailBlock in CaseServiceV2.searchCases: {}", e.toString());
+                log.error("Error building AdvocateDetailBlock in CaseServiceV2.searchCases", e);
             }
 
             return decryptedCourtCases;
@@ -102,7 +102,7 @@ public class CaseServiceV2 {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching to search results :: {}", e.toString());
+            log.error("Error while fetching to search results", e);
             throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
         }
     }
@@ -125,16 +125,26 @@ public class CaseServiceV2 {
         }
 
         if (criteria.getAdvocateId() != null && !criteria.getAdvocateId().isEmpty()) {
+
             boolean isAdvocatePresent = courtCase.getRepresentatives() != null &&
                     courtCase.getRepresentatives().stream()
                             .anyMatch(rep -> criteria.getAdvocateId().equals(rep.getAdvocateId()));
 
-            boolean isAdvocateOfficeMember = courtCase.getAdvocateOffices()
-                    .stream()
-                    .flatMap(advocateOffice -> advocateOffice.getAdvocates().stream())
-                    .anyMatch(member -> criteria.getAdvocateId().equals(member.getMemberId()));
+            boolean isAdvocateOfficeMember = courtCase.getAdvocateOffices() != null &&
+                    courtCase.getAdvocateOffices().stream()
+                            .flatMap(advocateOffice -> advocateOffice.getAdvocates().stream())
+                            .anyMatch(member -> criteria.getAdvocateId().equals(member.getMemberId()));
 
-            if(!isPoaPresent && !isAdvocatePresent && !isAdvocateOfficeMember){
+            boolean isLitigantPresent = courtCase.getLitigants() != null &&
+                    courtCase.getLitigants().stream()
+                            .anyMatch(l ->
+                                    criteria.getPoaHolderIndividualId().equals(l.getIndividualId()));
+
+            if (!isPoaPresent
+                    && !isAdvocatePresent
+                    && !isAdvocateOfficeMember
+                    && !isLitigantPresent) {
+
                 log.debug("Advocate is not part of the case for caseId {}", criteria.getCaseId());
                 throw new CustomException(SEARCH_CASE_ERR, "Advocate is not part of the case");
             }
@@ -181,7 +191,7 @@ public class CaseServiceV2 {
             if ("CLERK_ACCESS_DENIED".equals(e.getCode()) ||
                 "CLERK_MEMBER_NOT_FOUND".equals(e.getCode()) ||
                 "CLERK_NOT_MEMBER".equals(e.getCode())) {
-                log.info("Clerk access denied: {}", e.getMessage());
+                log.error("Clerk access denied: {}", e.getMessage());
                 return new ArrayList<>();
             }
             throw e;
@@ -214,7 +224,7 @@ public class CaseServiceV2 {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching to case summary search :: {}", e.toString());
+            log.error("Error while fetching to case summary search", e);
             throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
         }
     }
@@ -230,7 +240,7 @@ public class CaseServiceV2 {
                 return null;
             }
         } catch (JsonProcessingException e) {
-            log.error("Error occurred while searching case in redis cache :: {}", e.toString());
+            log.error("Error occurred while searching case in redis cache", e);
             throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
         }
     }

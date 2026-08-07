@@ -76,10 +76,10 @@ public class EvidenceEnrichment {
             }
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while Enriching evidence: {}", e.toString());
+            log.error("Custom Exception occurred while Enriching evidence", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error enriching evidence application: {}", e.toString());
+            log.error("Error enriching evidence application", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in evidence enrichment service: " + e.toString());
         }
     }
@@ -160,7 +160,7 @@ public class EvidenceEnrichment {
             evidenceRequest.getArtifact().setEvidenceNumber(evidenceRequest.getArtifact().getFilingNumber()+"-"+evidenceNumberList.get(0));
             evidenceRequest.getArtifact().setIsEvidence(true);
         } catch (Exception e) {
-            log.error("Error enriching evidence number upon update: {}", e.toString());
+            log.error("Error enriching evidence number upon update", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Failed to generate evidence number for " + evidenceRequest.getArtifact().getId() + ": " + e.toString());
         }
     }
@@ -169,7 +169,7 @@ public class EvidenceEnrichment {
             evidenceRequest.getArtifact().setIsActive(false);
         }
         catch (Exception e) {
-            log.error("Error enriching isActive status upon update: {}", e.toString());
+            log.error("Error enriching isActive status upon update", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in enrichment service during isActive status update process: " + e.toString());
         }
     }
@@ -190,7 +190,7 @@ public class EvidenceEnrichment {
                 evidenceRequest.getArtifact().setSeal(seal);
             }
         } catch (Exception e) {
-            log.error("Error enriching evidence application upon update: {}", e.toString());
+            log.error("Error enriching evidence application upon update", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in enrichment service during  update process: " + e.toString());
         }
     }
@@ -200,7 +200,7 @@ public class EvidenceEnrichment {
             comment.setId(UUID.randomUUID());
             comment.setAuditdetails(auditDetails);
         } catch (Exception e) {
-            log.error("Error enriching comment upon create: {}", e.toString());
+            log.error("Error enriching comment upon create", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error enriching comment upon create: " + e.getMessage());
         }
     }
@@ -231,7 +231,7 @@ public class EvidenceEnrichment {
             body.getArtifact().setTag(tags.get(0));
             log.info("Tag generated id: {} is {}", body.getArtifact().getId(), body.getArtifact().getTag());
         } catch (CustomException e) {
-            log.error("Error generating tag for {}: {}", body.getArtifact().getId(), e.getMessage());
+            log.error("Error generating tag for {}", body.getArtifact().getId(), e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Failed to generate tag for " + body.getArtifact().getId() + ": " + e.getMessage());
         }
     }
@@ -241,7 +241,7 @@ public class EvidenceEnrichment {
         sequenceName = sequenceName.replace("[TENANT_ID]", getTenantId(body.getArtifact().getFilingNumber()).toLowerCase());
         Integer nextVal = evidenceRepository.getNextValForSequence(sequenceName);
         log.debug("Retrieved sequence value {} for sequence {}", nextVal, sequenceName);
-        
+
         // Set the generated tag with sequence value to the artifact
         String generatedTag = body.getArtifact().getTag() + nextVal;
         log.info("Generated pseudo tag: {} for artifact: {}", generatedTag, body.getArtifact().getId());

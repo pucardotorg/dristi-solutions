@@ -155,37 +155,57 @@ export const getPipAccuseds = (caseDetails) => {
     );
 };
 
+// All roles a single user holds on a case (dual-role aware).
+export const getUserCaseRoles = (caseDetails, userUuid) => {
+  const litigants = caseDetails?.litigants || [];
+  const reps = caseDetails?.representatives || [];
+  const asLitigant = litigants.filter((l) => l?.additionalDetails?.uuid === userUuid);
+  const myReps = reps.filter((r) => r?.additionalDetails?.uuid === userUuid);
+  const isRepresentedIndId = (indId) => reps.some((r) => r?.representing?.some((p) => p?.individualId === indId));
+  return {
+    asLitigant,
+    representing: myReps.flatMap((r) => r?.representing || []),
+    isComplainant: asLitigant.some((l) => l?.partyType?.includes("complainant")),
+    isRespondent: asLitigant.some((l) => l?.partyType?.includes("respondent")),
+    isAdvocate: myReps.length > 0,
+    isPOA: (caseDetails?.poaHolders || []).some((p) => p?.additionalDetails?.uuid === userUuid),
+    isPIPFor: asLitigant.filter((l) => !isRepresentedIndId(l?.individualId)),
+  };
+};
+
 /**
  * Builds the complainants list for bail bond / citizen actions.
  */
 export const getComplainantsList = (caseDetails, pipComplainants, pipAccuseds, authorizedUuid) => {
-  const loggedinUserUuid = authorizedUuid;
-  const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
-  const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
-  const accusedLoggedIn = pipAccuseds?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
+  const seen = new Set();
+  const out = [];
+  const push = (p) => {
+    const uuid = p?.additionalDetails?.uuid;
+    if (uuid && !seen.has(uuid)) {
+      seen.add(uuid);
+      out.push({ code: p?.additionalDetails?.fullName, name: p?.additionalDetails?.fullName, uuid });
+    }
+  };
+  // 1) parties this user represents as an advocate (may be multiple mappings)
+  (caseDetails?.representatives || [])
+    .filter((rep) => rep?.additionalDetails?.uuid === authorizedUuid)
+    .forEach((rep) => (rep?.representing || []).forEach(push));
+  // 2) the user themselves when they are a PIP complainant / accused
+  [...(pipComplainants || []), ...(pipAccuseds || [])].filter((p) => p?.additionalDetails?.uuid === authorizedUuid).forEach(push);
+  return out;
+};
 
-  if (isAdvocateLoggedIn) {
-    return isAdvocateLoggedIn?.representing?.map((r) => ({
-      code: r?.additionalDetails?.fullName,
-      name: r?.additionalDetails?.fullName,
-      uuid: r?.additionalDetails?.uuid,
-    }));
-  } else if (isPipLoggedIn) {
-    return [
-      {
-        code: isPipLoggedIn?.additionalDetails?.fullName,
-        name: isPipLoggedIn?.additionalDetails?.fullName,
-        uuid: isPipLoggedIn?.additionalDetails?.uuid,
-      },
-    ];
-  } else if (accusedLoggedIn) {
-    return [
-      {
-        code: accusedLoggedIn?.additionalDetails?.fullName,
-        name: accusedLoggedIn?.additionalDetails?.fullName,
-        uuid: accusedLoggedIn?.additionalDetails?.uuid,
-      },
-    ];
-  }
-  return [];
+export const mergePartiesByUuid = (parties) => {
+  const byUuid = new Map();
+  const passthrough = [];
+  (parties || []).forEach((p) => {
+    const uuid = p?.partyUuid || p?.additionalDetails?.uuid;
+    if (!uuid) return passthrough.push(p);
+    if (!byUuid.has(uuid)) byUuid.set(uuid, { ...p });
+    else {
+      const ex = byUuid.get(uuid);
+      ex.partyType = [ex.partyType, p.partyType].filter(Boolean).join(", ");
+    }
+  });
+  return [...byUuid.values(), ...passthrough];
 };

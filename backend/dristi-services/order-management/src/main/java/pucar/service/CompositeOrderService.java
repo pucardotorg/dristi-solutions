@@ -122,7 +122,6 @@ public class CompositeOrderService implements OrderProcessor {
 
         List<Order> itemListFormCompositeItem = getItemListFormCompositeItem(order);
         for (Order compositeOrderItem : itemListFormCompositeItem) {
-            // here call post
             orderStrategyExecutor.afterPublish(OrderRequest.builder()
                     .order(compositeOrderItem)
                     .requestInfo(requestInfo)

@@ -1,5 +1,5 @@
 import { DRISTIService } from "../../../services";
-import { cleanString, combineMultipleFiles, documentsTypeMapping, getAuthorizedUuid } from "../../../Utils";
+import { cleanString, combineMultipleFiles, documentsTypeMapping, getAuthorizedUuid, getNameByUuid } from "../../../Utils";
 import { SubmissionWorkflowAction } from "../../../Utils/submissionWorkflow";
 import { efilingDocumentKeyAndTypeMapping } from "../FileCase/Config/efilingDocumentKeyAndTypeMapping";
 import { formatName, onDocumentUpload, sendDocumentForOcr } from "../FileCase/EfilingValidationUtils";
@@ -672,7 +672,7 @@ export const updateProfileData = async ({
         onBehalOfName: null,
         partyType: sourceType?.toLowerCase(),
         isResponseRequired: true,
-        owner: cleanString(userInfo?.name),
+        owner: cleanString(getNameByUuid(userUuid, caseDetails) || userInfo?.name),
       },
       documents: docList,
       onBehalfOf: [onBehalfOfUuid],

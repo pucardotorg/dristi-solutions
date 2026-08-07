@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
+import org.egov.tracer.model.ServiceCallException;
 import org.egov.user.domain.exception.AtleastOneRoleCodeException;
 import org.egov.user.domain.exception.DuplicateUserNameException;
 import org.egov.user.domain.exception.InvalidUpdatePasswordRequestException;
@@ -31,9 +32,11 @@ import org.egov.user.domain.model.LoggedInUserUpdatePasswordRequest;
 import org.egov.user.domain.model.NonLoggedInUserUpdatePasswordRequest;
 import org.egov.user.domain.model.User;
 import org.egov.user.domain.model.UserSearchCriteria;
+import org.egov.user.domain.model.enums.AuthMode;
 import org.egov.user.domain.model.enums.UserType;
 import org.egov.user.domain.service.utils.EncryptionDecryptionUtil;
 import org.egov.user.domain.service.utils.NotificationUtil;
+import org.egov.user.domain.service.utils.PasswordPolicyResolver;
 import org.egov.user.domain.service.utils.UserUtils;
 import org.egov.user.persistence.dto.FailedLoginAttempt;
 import org.egov.user.persistence.repository.FileStoreRepository;
@@ -48,6 +51,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.egov.user.security.oauth2.EgovTokenStore;
+import org.egov.user.security.oauth2.custom.AuthModeResolver;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -66,8 +70,8 @@ public class UserService {
     private OtpRepository otpRepository;
     private PasswordEncoder passwordEncoder;
     private int defaultPasswordExpiryInDays;
-    private boolean isCitizenLoginOtpBased;
-    private boolean isEmployeeLoginOtpBased;
+    private AuthModeResolver authModeResolver;
+    private PasswordPolicyResolver passwordPolicyResolver;
     private FileStoreRepository fileRepository;
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
     private EgovTokenStore tokenStore;
@@ -88,15 +92,6 @@ public class UserService {
     private Long maxInvalidLoginAttempts;
 
 
-    @Value("${egov.user.pwd.pattern}")
-    private String pwdRegex;
-
-    @Value("${egov.user.pwd.pattern.min.length}")
-    private Integer pwdMinLength;
-
-    @Value("${egov.user.pwd.pattern.max.length}")
-    private Integer pwdMaxLength;
-
     @Autowired
     private RestTemplate restTemplate;
 
@@ -105,24 +100,17 @@ public class UserService {
 
     public UserService(UserRepository userRepository, OtpRepository otpRepository, FileStoreRepository fileRepository, UserUtils userUtils,
                        PasswordEncoder passwordEncoder, EncryptionDecryptionUtil encryptionDecryptionUtil, EgovTokenStore tokenStore,
-                       @Value("${default.password.expiry.in.days}") int defaultPasswordExpiryInDays,
-                       @Value("${citizen.login.password.otp.enabled}") boolean isCitizenLoginOtpBased,
-                       @Value("${employee.login.password.otp.enabled}") boolean isEmployeeLoginOtpBased,
-                       @Value("${egov.user.pwd.pattern}") String pwdRegex,
-                       @Value("${egov.user.pwd.pattern.max.length}") Integer pwdMaxLength,
-                       @Value("${egov.user.pwd.pattern.min.length}") Integer pwdMinLength) {
+                       AuthModeResolver authModeResolver, PasswordPolicyResolver passwordPolicyResolver,
+                       @Value("${default.password.expiry.in.days}") int defaultPasswordExpiryInDays) {
         this.userRepository = userRepository;
         this.otpRepository = otpRepository;
         this.passwordEncoder = passwordEncoder;
         this.defaultPasswordExpiryInDays = defaultPasswordExpiryInDays;
-        this.isCitizenLoginOtpBased = isCitizenLoginOtpBased;
-        this.isEmployeeLoginOtpBased = isEmployeeLoginOtpBased;
+        this.authModeResolver = authModeResolver;
         this.fileRepository = fileRepository;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.tokenStore = tokenStore;
-        this.pwdRegex = pwdRegex;
-        this.pwdMaxLength = pwdMaxLength;
-        this.pwdMinLength = pwdMinLength;
+        this.passwordPolicyResolver = passwordPolicyResolver;
         this.userUtils = userUtils;
 
     }
@@ -229,10 +217,17 @@ public class UserService {
         /* encrypt here */
         user = encryptionDecryptionUtil.encryptObject(user, "User", User.class);
         validateUserUniqueness(user);
+        user.setPasswordPromptDismissed(false);
         if (isEmpty(user.getPassword())) {
+            /*
+             * No password supplied, so a placeholder is generated and the user is left without a
+             * real password, to be prompted to set one on login.
+             */
             user.setPassword(UUID.randomUUID().toString());
+            user.setHasPassword(false);
         } else {
-            validatePassword(user.getPassword());
+            validatePassword(user.getType(), user.getPassword());
+            user.setHasPassword(true);
         }
         user.setPassword(encryptPwd(user.getPassword()));
         user.setDefaultPasswordExpiry(defaultPasswordExpiryInDays);
@@ -267,12 +262,20 @@ public class UserService {
     private void validateAndEnrichCitizen(User user) {
     	
         log.info("Validating User........");
-        if (isCitizenLoginOtpBased && !StringUtils.isNumeric(user.getUsername()))
-            throw new UserNameNotValidException();
-        else if (isCitizenLoginOtpBased)
+        /*
+         * When OTP is one of the modes a citizen may log in with, the username doubles as the
+         * mobile number the OTP is delivered to, so it has to be numeric. When PASSWORD is one of
+         * the modes, any password supplied at registration has to satisfy the password policy -
+         * validatePassword is a no-op for a blank password, so an OTP-only registration still
+         * goes through when both modes are enabled.
+         */
+        if (authModeResolver.isModeAllowed(UserType.CITIZEN, AuthMode.OTP)) {
+            if (!StringUtils.isNumeric(user.getUsername()))
+                throw new UserNameNotValidException();
             user.setMobileNumber(user.getUsername());
-        if (!isCitizenLoginOtpBased)
-            validatePassword(user.getPassword());
+        }
+        if (authModeResolver.isModeAllowed(UserType.CITIZEN, AuthMode.PASSWORD))
+            validatePassword(UserType.CITIZEN, user.getPassword());
         user.setRoleToCitizen();
         String tenantId = userUtils.getStateLevelTenantForCitizen(user.getTenantId(),  user.getType());
         user.setTenantId(tenantId);
@@ -336,6 +339,22 @@ public class UserService {
      * @param user
      * @return
      */
+    /**
+     * Validates the OTP and reports the outcome as a plain boolean. egov-otp answers an invalid,
+     * expired or already consumed OTP with a 4xx, which arrives here as a ServiceCallException, so
+     * both shapes of failure are folded into a single false rather than escaping as a server error.
+     *
+     * @param user user carrying the OTP to validate in its otpReference
+     */
+    private boolean isOtpValid(User user) {
+        try {
+            return Boolean.TRUE.equals(validateOtp(user));
+        } catch (ServiceCallException e) {
+            log.error("OTP validation failed", e);
+            return false;
+        }
+    }
+
     public Boolean validateOtp(User user) {
         Otp otp = Otp.builder().otp(user.getOtpReference()).identity(user.getMobileNumber()).tenantId(user.getTenantId())
                 .userType(user.getType()).build();
@@ -359,7 +378,7 @@ public class UserService {
         user.setTenantId(userUtils.getStateLevelTenantForCitizen(user.getTenantId(), user.getType()));
         validateUserRoles(user);
         user.validateUserModification();
-        validatePassword(user.getPassword());
+        validatePassword(user.getType(), user.getPassword());
         user.setPassword(encryptPwd(user.getPassword()));
         /* encrypt */
         user = encryptionDecryptionUtil.encryptObject(user, "User", User.class);
@@ -403,7 +422,7 @@ public class UserService {
         User existingUser = getUserByUuid(user.getUuid());
         validateProfileUpdateIsDoneByTheSameLoggedInUser(user);
         user.nullifySensitiveFields();
-        validatePassword(user.getPassword());
+        validatePassword(existingUser.getType(), user.getPassword());
         userRepository.update(user, existingUser,requestInfo.getUserInfo().getId(), requestInfo.getUserInfo().getUuid() );
         User updatedUser = getUserByUuid(user.getUuid());
         
@@ -435,14 +454,16 @@ public class UserService {
         final User user = getUniqueUser(updatePasswordRequest.getUserName(), updatePasswordRequest.getTenantId(),
                 updatePasswordRequest.getType());
 
-        if (user.getType().toString().equals(UserType.CITIZEN.toString()) && isCitizenLoginOtpBased)
+        /* A user can only maintain a password if password login is enabled for their user type */
+        if (!authModeResolver.isModeAllowed(user.getType(), AuthMode.PASSWORD)) {
+            log.info("{} change password flow is disabled", user.getType());
             throw new InvalidUpdatePasswordRequestException();
-        if (user.getType().toString().equals(UserType.EMPLOYEE.toString()) && isEmployeeLoginOtpBased)
-            throw new InvalidUpdatePasswordRequestException();
+        }
 
         validateExistingPassword(user, updatePasswordRequest.getExistingPassword());
-        validatePassword(updatePasswordRequest.getNewPassword());
+        validatePassword(user.getType(), updatePasswordRequest.getNewPassword());
         user.updatePassword(encryptPwd(updatePasswordRequest.getNewPassword()));
+        user.setHasPassword(true);
         userRepository.update(user, user, user.getId() , user.getUuid());
         removeTokensByUser(user);
     }
@@ -456,26 +477,100 @@ public class UserService {
         request.validate();
         // validateOtp(request.getOtpValidationRequest());
         User user = getUniqueUser(request.getUserName(), request.getTenantId(), request.getType());
-        if (user.getType().toString().equals(UserType.CITIZEN.toString()) && isCitizenLoginOtpBased) {
-            log.info("CITIZEN forgot password flow is disabled");
+        /* A user can only maintain a password if password login is enabled for their user type */
+        if (!authModeResolver.isModeAllowed(user.getType(), AuthMode.PASSWORD)) {
+            log.info("{} forgot password flow is disabled", user.getType());
             throw new InvalidUpdatePasswordRequestException();
         }
-        if (user.getType().toString().equals(UserType.EMPLOYEE.toString()) && isEmployeeLoginOtpBased) {
-            log.info("EMPLOYEE forgot password flow is disabled");
-            throw new InvalidUpdatePasswordRequestException();
-        }
+        /*
+         * The password is checked before the OTP because a successful OTP validation consumes the
+         * OTP. Rejecting the password afterwards would leave the user having to request a fresh
+         * OTP just to retry with a compliant one.
+         */
+        validatePassword(user.getType(), request.getNewPassword());
+
         /* decrypt here */
         /* the reason for decryption here is the otp service requires decrypted username */
         user = encryptionDecryptionUtil.decryptObject(user, "User", User.class, requestInfo);
-        user.setOtpReference(request.getOtpReference());
-        validateOtp(user);
-        validatePassword(request.getNewPassword());
+        verifyRequestOwnership(request, user, requestInfo);
+
         user.updatePassword(encryptPwd(request.getNewPassword()));
+        user.setHasPassword(true);
         /* encrypt here */
         /* encrypted value is stored in DB*/
         user = encryptionDecryptionUtil.encryptObject(user, "User", User.class);
         userRepository.update(user, user,user.getId() , user.getUuid());
         removeTokensByUser(user);
+    }
+
+    /**
+     * Establishes that whoever sent the no-login password update is entitled to change this user's
+     * password, in whichever of the two ways the request asked to be verified.
+     *
+     * OTP   - possession of an OTP issued to the mobile number held on the stored user. The identity
+     *         is taken from the user record rather than the request, so an OTP delivered to one
+     *         number can never be spent on another user's account.
+     * TOKEN - the caller is already logged in and is that same user. Nothing about the target comes
+     *         from the token, the two identities are simply required to match.
+     *
+     * @param request the update request, carrying the verification mode
+     * @param user    the decrypted user whose password is being changed
+     * @param requestInfo request info, whose userInfo is populated by the gateway from the auth token
+     */
+    private void verifyRequestOwnership(NonLoggedInUserUpdatePasswordRequest request, User user,
+                                        RequestInfo requestInfo) {
+        if (request.isOtpVerified()) {
+            user.setOtpReference(request.getOtpReference());
+            if (!isOtpValid(user))
+                throw new CustomException("INVALID_OTP", "OTP validation failed, please provide a valid OTP");
+            return;
+        }
+
+        validateUpdateIsDoneByTheSameLoggedInUser(user, requestInfo);
+    }
+
+    /**
+     * Rejects a token verified password update unless the logged-in user is the user being updated,
+     * so that a valid session can only ever change its own password.
+     *
+     * @param user        the user whose password is being changed
+     * @param requestInfo request info of the logged-in user
+     */
+    private void validateUpdateIsDoneByTheSameLoggedInUser(User user, RequestInfo requestInfo) {
+        String loggedInUserUuid = isNull(requestInfo) || isNull(requestInfo.getUserInfo()) ? null
+                : requestInfo.getUserInfo().getUuid();
+
+        if (isEmpty(loggedInUserUuid)) {
+            log.error("Cannot update the password, logged-in user is absent from the request");
+            throw new CustomException("INVALID_REQUEST", "Logged-in user information is mandatory");
+        }
+
+        if (!loggedInUserUuid.equals(user.getUuid())) {
+            log.error("Password update denied, logged-in user {} does not own the account being updated",
+                    loggedInUserUuid);
+            throw new UserProfileUpdateDeniedException();
+        }
+    }
+
+    /**
+     * Stops the set-password prompt from being shown to the logged-in user again, backing the
+     * "don't ask again" option on the prompt.
+     *
+     * The user is always resolved from the authenticated RequestInfo rather than from anything in
+     * the request body, so a caller cannot suppress the prompt on somebody else's behalf.
+     *
+     * @param requestInfo request info of the logged-in user
+     */
+    public void suppressPasswordPrompt(RequestInfo requestInfo) {
+        String uuid = isNull(requestInfo) || isNull(requestInfo.getUserInfo()) ? null
+                : requestInfo.getUserInfo().getUuid();
+
+        if (isEmpty(uuid)) {
+            log.error("Cannot suppress the password prompt, logged-in user is absent from the request");
+            throw new CustomException("INVALID_REQUEST", "Logged-in user information is mandatory");
+        }
+
+        userRepository.suppressPasswordPrompt(uuid);
     }
 
 
@@ -633,20 +728,15 @@ public class UserService {
     }
 
 
-    public void validatePassword(String password) {
-        Map<String, String> errorMap = new HashMap<>();
-        if (!StringUtils.isEmpty(password)) {
-            if (password.length() < pwdMinLength || password.length() > pwdMaxLength)
-                errorMap.put("INVALID_PWD_LENGTH", "Password must be of minimum: " + pwdMinLength + " and maximum: " + pwdMaxLength + " characters.");
-            Pattern p = Pattern.compile(pwdRegex);
-            Matcher m = p.matcher(password);
-            if (!m.find()) {
-                errorMap.put("INVALID_PWD_PATTERN", "Password MUST HAVE: Atleast one digit, one upper case, one lower case, one special character (@#$%) and MUST NOT contain any spaces");
-            }
-        }
-        if (!CollectionUtils.isEmpty(errorMap.keySet())) {
-            throw new CustomException(errorMap);
-        }
+    /**
+     * Validates a password against the policy configured for the given user type. Citizens can be
+     * held to a different policy from everybody else, see {@link PasswordPolicyResolver}.
+     *
+     * @param userType type of the user the password is being set for
+     * @param password raw password, a blank one is not checked
+     */
+    public void validatePassword(UserType userType, String password) {
+        passwordPolicyResolver.validate(userType, password);
     }
 
 

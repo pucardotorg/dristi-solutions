@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.user.config.UserServiceConstants;
+import org.egov.user.domain.model.enums.PasswordUpdateVerificationMode;
 import org.egov.user.domain.model.enums.UserType;
 
 import jakarta.validation.constraints.Pattern;
@@ -35,8 +36,12 @@ public class NonLoggedInUserUpdatePasswordRequest {
     private String tenantId;
     private UserType type;
 
+    /* how the caller proves the account is theirs, defaults to OTP when the caller does not say */
+    private PasswordUpdateVerificationMode verificationMode;
+
     public org.egov.user.domain.model.NonLoggedInUserUpdatePasswordRequest toDomain() {
         return org.egov.user.domain.model.NonLoggedInUserUpdatePasswordRequest.builder().otpReference(otpReference)
-                .userName(userName).newPassword(newPassword).type(type).tenantId(tenantId).build();
+                .userName(userName).newPassword(newPassword).type(type).tenantId(tenantId)
+                .verificationMode(verificationMode).build();
     }
 }
