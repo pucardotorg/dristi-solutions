@@ -1,7 +1,9 @@
 package com.example.gateway.config;
 
+import org.apache.commons.logging.Log;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.env.EnvironmentPostProcessor;
+import org.springframework.boot.logging.DeferredLogFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
@@ -48,6 +50,16 @@ public class RoutesPropertySourceEnvironmentPostProcessor implements Environment
     private static final String OVERRIDES_PROPERTY_SOURCE_NAME = "gatewayRouteOverrides";
 
     private final ResourceLoader resourceLoader = new DefaultResourceLoader();
+    private final Log log;
+
+    /**
+     * Constructor invoked by {@code EnvironmentPostProcessorApplicationListener}, which
+     * supplies a {@link DeferredLogFactory} so this processor can log before the logging
+     * system is initialized.
+     */
+    public RoutesPropertySourceEnvironmentPostProcessor(DeferredLogFactory logFactory) {
+        this.log = logFactory.getLog(RoutesPropertySourceEnvironmentPostProcessor.class);
+    }
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
@@ -55,14 +67,17 @@ public class RoutesPropertySourceEnvironmentPostProcessor implements Environment
         environment.getPropertySources().addFirst(new MapPropertySource(
                 OVERRIDES_PROPERTY_SOURCE_NAME,
                 Collections.singletonMap(DISCOVERY_LOCATOR_ENABLED_PROPERTY, "false")));
+        log.info("Gateway discovery locator forced off (" + DISCOVERY_LOCATOR_ENABLED_PROPERTY + "=false)");
 
         String location = environment.getProperty(ROUTES_LOCATION_PROPERTY);
         if (location == null || location.isBlank()) {
+            log.warn("No " + ROUTES_LOCATION_PROPERTY + " set; generated routes not loaded");
             return;
         }
 
         Resource resource = resourceLoader.getResource(location.trim());
         if (!resource.exists()) {
+            log.warn("Routes file not found at " + location + "; generated routes not loaded");
             return;
         }
 
@@ -74,15 +89,20 @@ public class RoutesPropertySourceEnvironmentPostProcessor implements Environment
         }
 
         Properties remapped = new Properties();
+        int remappedRouteKeys = 0;
         for (String name : source.stringPropertyNames()) {
-            String key = name.startsWith(OLD_PREFIX)
-                    ? NEW_PREFIX + name.substring(OLD_PREFIX.length())
-                    : name;
+            String key = name;
+            if (name.startsWith(OLD_PREFIX)) {
+                key = NEW_PREFIX + name.substring(OLD_PREFIX.length());
+                remappedRouteKeys++;
+            }
             remapped.setProperty(key, source.getProperty(name));
         }
 
         environment.getPropertySources()
                 .addLast(new PropertiesPropertySource(ROUTES_PROPERTY_SOURCE_NAME, remapped));
+        log.info("Loaded " + source.size() + " route properties from " + location
+                + " (" + remappedRouteKeys + " remapped to " + NEW_PREFIX + ")");
     }
 
     @Override
