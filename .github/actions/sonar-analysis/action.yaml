@@ -35,7 +35,7 @@ runs:
   steps:
 
     - name: Checkout Repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         repository: ${{ inputs.repo }}
         ref: ${{ inputs.branch }}
@@ -74,7 +74,7 @@ runs:
 
     - name: Set up JDK 17
       if: ${{ env.language == 'java' }}
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: ${{ env.version }}
         distribution: 'temurin'
