@@ -695,22 +695,6 @@ const GenerateOrdersV2 = () => {
                     },
                   };
                 }
-                if (field?.populators?.inputs?.some((input) => input?.name === "respondingParty")) {
-                  return {
-                    ...field,
-                    populators: {
-                      ...field?.populators,
-                      inputs: field?.populators?.inputs.map((input) =>
-                        input.name === "respondingParty"
-                          ? {
-                              ...input,
-                              options: [...complainants, ...respondents],
-                            }
-                          : input
-                      ),
-                    },
-                  };
-                }
                 return field;
               }),
             };
