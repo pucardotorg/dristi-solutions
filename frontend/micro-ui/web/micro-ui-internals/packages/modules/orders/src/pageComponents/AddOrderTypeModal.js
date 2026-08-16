@@ -130,58 +130,6 @@ const AddOrderTypeModal = ({
       }
     }
 
-    if (currentOrderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(currentOrderType)) {
-      if (formData?.submissionDeadline && formData?.responseInfo?.responseDeadline) {
-        if (new Date(formData?.submissionDeadline).getTime() >= new Date(formData?.responseInfo?.responseDeadline).getTime()) {
-          setValue("responseInfo", {
-            ...formData.responseInfo,
-            responseDeadline: "",
-          });
-          setFormErrors?.current?.[index]?.("responseDeadline", { message: t("PROPOSED_DATE_CAN_NOT_BE_BEFORE_SUBMISSION_DEADLINE") });
-        } else if (Object.keys(formState?.errors).includes("responseDeadline")) {
-          setValue("responseInfo", formData?.responseInfo);
-          clearFormErrors?.current?.[index]?.("responseDeadline");
-        }
-      }
-      if (formData?.responseInfo?.isResponseRequired && Object.keys(formState?.errors).includes("isResponseRequired")) {
-        clearFormErrors?.current?.[index]?.("isResponseRequired");
-      } else if (
-        formState?.submitCount &&
-        !formData?.responseInfo?.isResponseRequired &&
-        !Object.keys(formState?.errors).includes("isResponseRequired")
-      ) {
-        setFormErrors?.current?.[index]?.("isResponseRequired", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-      }
-      if (
-        formData?.responseInfo?.responseDeadline &&
-        new Date(formData?.submissionDeadline).getTime() < new Date(formData?.responseInfo?.responseDeadline).getTime() &&
-        Object.keys(formState?.errors).includes("responseDeadline")
-      ) {
-        clearFormErrors?.current?.[index]?.("responseDeadline");
-      } else if (formData?.responseInfo?.isResponseRequired?.code === false && Object.keys(formState?.errors).includes("responseDeadline")) {
-        clearFormErrors?.current?.[index]?.("responseDeadline");
-      } else if (
-        formState?.submitCount &&
-        !formData?.responseInfo?.responseDeadline &&
-        formData?.responseInfo?.isResponseRequired?.code === true &&
-        !Object.keys(formState?.errors).includes("responseDeadline")
-      ) {
-        setFormErrors?.current?.[index]?.("responseDeadline", { message: t("PROPOSED_DATE_CAN_NOT_BE_BEFORE_SUBMISSION_DEADLINE") });
-      }
-      if (formData?.responseInfo?.respondingParty?.length > 0 && Object.keys(formState?.errors).includes("respondingParty")) {
-        clearFormErrors?.current?.[index]?.("respondingParty");
-      } else if (formData?.responseInfo?.isResponseRequired?.code === false && Object.keys(formState?.errors).includes("respondingParty")) {
-        clearFormErrors?.current?.[index]?.("respondingParty");
-      } else if (
-        formState?.submitCount &&
-        (!formData?.responseInfo?.respondingParty || formData?.responseInfo?.respondingParty?.length === 0) &&
-        formData?.responseInfo?.isResponseRequired?.code === true &&
-        !Object.keys(formState?.errors).includes("respondingParty")
-      ) {
-        setFormErrors?.current?.[index]?.("respondingParty", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-      }
-    }
-
     if (currentOrderType && ["WARRANT"].includes(currentOrderType)) {
       if (
         formData?.warrantSubType?.templateType === "SPECIFIC" &&
