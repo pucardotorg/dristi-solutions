@@ -257,4 +257,60 @@ export const formatName = (value, capitalize = true) => {
   return cleanedValue;
 };
 
+const DAYS_IN_A_WEEK = 7;
+// Citizens get a third section: tasks overdue by more than 45 days are pulled out of
+// "Due This Week" so that long forgotten tasks stop crowding the actionable ones.
+const LONG_PENDING_DAY_LIMIT = 45;
+
+/**
+ * Employee home screen keeps the original two sections - tasks due within a week
+ * (overdue ones included) and everything else.
+ */
+export const getEmployeePendingTaskSections = (openTasks = []) => [
+  {
+    key: "dueThisWeek",
+    accordionHeader: "COMPLETE_THIS_WEEK",
+    isHighlighted: true,
+    isAccordionOpen: true,
+    tasks: openTasks?.filter((task) => task?.dayCount < DAYS_IN_A_WEEK),
+  },
+  {
+    key: "allOtherTasks",
+    accordionHeader: "ALL_OTHER_TASKS",
+    tasks: openTasks?.filter((task) => task?.dayCount >= DAYS_IN_A_WEEK),
+  },
+];
+
+/**
+ * Citizen home screen splits the same tasks three ways. `dayCount` is the number of days left
+ * till the task's due date (derived from stateSla) and turns negative once the task is overdue.
+ */
+export const getCitizenPendingTaskSections = (openTasks = []) => {
+  const dueThisWeekTasks = [];
+  const upcomingTasks = [];
+  const longPendingTasks = [];
+
+  openTasks?.forEach((task) => {
+    if (task?.dayCount <= -LONG_PENDING_DAY_LIMIT) longPendingTasks.push(task);
+    else if (task?.dayCount < DAYS_IN_A_WEEK) dueThisWeekTasks.push(task);
+    else upcomingTasks.push(task);
+  });
+
+  return [
+    { key: "dueThisWeek", accordionHeader: "DUE_THIS_WEEK", isHighlighted: true, isAccordionOpen: true, tasks: dueThisWeekTasks },
+    { key: "upcoming", accordionHeader: "UPCOMING_TASKS", tasks: upcomingTasks },
+    { key: "longPending", accordionHeader: "LONG_PENDING_TASKS", tasks: longPendingTasks },
+  ];
+};
+
+/**
+ * Returns the home screen task sections in render order for the logged in user type.
+ */
+export const getPendingTaskSections = (pendingTasks = [], isCitizen = false) => {
+  const openTasks = pendingTasks?.filter((task) => !task?.isCompleted) || [];
+  return isCitizen ? getCitizenPendingTaskSections(openTasks) : getEmployeePendingTaskSections(openTasks);
+};
+
+export const getDefaultPendingTaskAccordionHeader = (isCitizen) => (isCitizen ? "DUE_THIS_WEEK" : "COMPLETE_THIS_WEEK");
+
 export default {};
