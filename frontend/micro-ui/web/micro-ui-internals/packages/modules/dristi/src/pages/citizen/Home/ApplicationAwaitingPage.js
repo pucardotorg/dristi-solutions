@@ -4,10 +4,16 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { WaitIcon } from "../../../icons/svgIndex";
 import { userTypeOptions } from "../registration/config";
+import SetPasswordPromptModal from "../Login/SetPasswordPromptModal";
+import useSetPasswordPrompt from "../../../hooks/useSetPasswordPrompt";
 
 function ApplicationAwaitingPage({ individualId }) {
   const { t } = useTranslation();
   const history = useHistory();
+
+  // An advocate / advocate clerk is created but still awaits approval, so this is the screen they
+  // land on right after registration - the "set a password" prompt is surfaced over it.
+  const { showPasswordPrompt, onSetPassword, onRemindLater, onDontRemindAgain } = useSetPasswordPrompt();
   const urlParams = new URLSearchParams(window.location.search);
   const applicationNo = urlParams.get("applicationNo");
   const type = urlParams.get("type") || "advocate";
@@ -68,6 +74,9 @@ function ApplicationAwaitingPage({ individualId }) {
   }
   return (
     <Card className="response-main">
+      {showPasswordPrompt && (
+        <SetPasswordPromptModal t={t} onSetPassword={onSetPassword} onRemindLater={onRemindLater} onDontRemindAgain={onDontRemindAgain} />
+      )}
       <div style={{ maxHeight: "40vh" }}>
         <WaitIcon />
       </div>
