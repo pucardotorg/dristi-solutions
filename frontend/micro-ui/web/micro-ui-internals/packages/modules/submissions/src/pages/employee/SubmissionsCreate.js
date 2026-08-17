@@ -34,7 +34,14 @@ import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { getSuffixByBusinessCode } from "../../utils";
-import { combineMultipleFiles, DateUtils, getAuthorizedUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import {
+  combineMultipleFiles,
+  DateUtils,
+  getAuthorizedUuid,
+  getNameByUuid,
+  runComprehensiveSanitizer,
+} from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { getComplainantsList } from "@egovernments/digit-ui-module-dristi/src/pages/employee/AdmittedCases/utils/partyUtils";
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -79,6 +86,9 @@ const SubmissionsCreate = ({ path }) => {
     showModal,
   } = Digit.Hooks.useQueryParams();
   const [formdata, setFormdata] = useState({});
+  // Application object returned directly by create/update submit API. Used as a fallback
+  // source for the review flow so a lagging refetch cannot show/submit stale data.
+  const [submittedApplication, setSubmittedApplication] = useState(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showsignatureModal, setShowsignatureModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -92,6 +102,8 @@ const SubmissionsCreate = ({ path }) => {
   const [applicationPdfFileStoreId, setApplicationPdfFileStoreId] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState();
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
+  const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
+  const [paymentResolved, setPaymentResolved] = useState(false);
   const scenario = "applicationSubmission";
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
@@ -236,40 +248,12 @@ const SubmissionsCreate = ({ path }) => {
       );
   }, [caseDetails]);
 
-  const complainantsList = useMemo(() => {
-    const loggedinUserUuid = authorizedUuid;
-    // If logged in person is an advocate
-    const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
-    const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
-    const accusedLoggedIn = pipAccuseds?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
-
-    if (isAdvocateLoggedIn) {
-      return isAdvocateLoggedIn?.representing?.map((r) => {
-        return {
-          code: r?.additionalDetails?.fullName,
-          name: r?.additionalDetails?.fullName,
-          uuid: r?.additionalDetails?.uuid,
-        };
-      });
-    } else if (isPipLoggedIn) {
-      return [
-        {
-          code: isPipLoggedIn?.additionalDetails?.fullName,
-          name: isPipLoggedIn?.additionalDetails?.fullName,
-          uuid: isPipLoggedIn?.additionalDetails?.uuid,
-        },
-      ];
-    } else if (accusedLoggedIn) {
-      return [
-        {
-          code: accusedLoggedIn?.additionalDetails?.fullName,
-          name: accusedLoggedIn?.additionalDetails?.fullName,
-          uuid: accusedLoggedIn?.additionalDetails?.uuid,
-        },
-      ];
-    }
-    return [];
-  }, [caseDetails, pipComplainants, pipAccuseds, authorizedUuid]);
+  const complainantsList = useMemo(() => getComplainantsList(caseDetails, pipComplainants, pipAccuseds, authorizedUuid), [
+    caseDetails,
+    pipComplainants,
+    pipAccuseds,
+    authorizedUuid,
+  ]);
 
   const {
     data: applicationData,
@@ -325,19 +309,37 @@ const SubmissionsCreate = ({ path }) => {
   ]);
   const referenceId = useMemo(() => applicationData?.applicationList?.[0]?.referenceId, [applicationData]);
 
-  const applicationDetails = useMemo(
-    () =>
-      applicationNumber
-        ? applicationData?.applicationList?.[0]
-        : "DELAY_CONDONATION" === formdata?.applicationType?.type
-        ? delayCondonationData?.applicationList?.find(
-            (application) =>
-              !["REJECTED", "COMPLETED", "PENDINGPAYMENT", "PENDINGREVIEW"].includes(application?.status) &&
-              "DELAY_CONDONATION" === application?.applicationType
-          )
-        : undefined,
-    [applicationData?.applicationList, delayCondonationData?.applicationList, formdata?.applicationType?.type]
-  );
+  const applicationDetails = useMemo(() => {
+    const refetchedApplication = applicationNumber
+      ? applicationData?.applicationList?.[0]
+      : "DELAY_CONDONATION" === formdata?.applicationType?.type
+      ? delayCondonationData?.applicationList?.find(
+          (application) =>
+            !["REJECTED", "COMPLETED", "PENDINGPAYMENT", "PENDINGREVIEW"].includes(application?.status) &&
+            "DELAY_CONDONATION" === application?.applicationType
+        )
+      : undefined;
+
+    // Prefer the application returned directly by the create/update submit API over the
+    // refetched copy when the refetch has not caught up yet (backend read lag). We keep
+    // using the refetched copy once it is at least as fresh as the submit response, so
+    // downstream updates (e.g. after e-sign/payment) are not masked by a stale snapshot.
+    if (submittedApplication && applicationNumber && submittedApplication?.applicationNumber === applicationNumber) {
+      const submittedTime = submittedApplication?.auditDetails?.lastModifiedTime || 0;
+      const refetchedTime = refetchedApplication?.auditDetails?.lastModifiedTime || 0;
+      if (!refetchedApplication || submittedTime >= refetchedTime) {
+        return submittedApplication;
+      }
+    }
+
+    return refetchedApplication;
+  }, [
+    applicationData?.applicationList,
+    delayCondonationData?.applicationList,
+    formdata?.applicationType?.type,
+    submittedApplication,
+    applicationNumber,
+  ]);
 
   const submissionType = useMemo(() => {
     return formdata?.submissionType?.code;
@@ -1357,7 +1359,7 @@ const SubmissionsCreate = ({ path }) => {
                     : orderDetails?.orderDetails?.isResponseRequired?.code === true
                   : true,
               ...(hearingId && { hearingId }),
-              owner: cleanString(userInfo?.name),
+              owner: cleanString(getNameByUuid(userUuid, caseDetails) || userInfo?.name),
             },
             documents: _getFinalDocumentList(applicationDetails, documents),
             onBehalfOf: [formdata?.selectComplainant?.uuid],
@@ -1417,7 +1419,7 @@ const SubmissionsCreate = ({ path }) => {
                     : orderDetails?.orderDetails?.isResponseRequired?.code === true
                   : true,
               ...(hearingId && { hearingId }),
-              owner: cleanString(userInfo?.name),
+              owner: cleanString(getNameByUuid(userUuid, caseDetails) || userInfo?.name),
             },
             documents,
             onBehalfOf: [formdata?.selectComplainant?.uuid],
@@ -1597,10 +1599,13 @@ const SubmissionsCreate = ({ path }) => {
       const action = isEligibleForSubmission ? SubmissionWorkflowAction.SUBMIT : SubmissionWorkflowAction.SAVEDRAFT;
       if (applicationNumber) {
         const res = await submitSubmission({ update: true, action });
-        await applicationRefetch();
+        // Retain the authoritative submit response so the review flow does not depend on a
+        // possibly-stale refetch (guarded by lastModifiedTime in the applicationDetails memo).
+        setSubmittedApplication(res?.application);
         setShowReviewModal(true);
       } else {
         const res = await submitSubmission({ update: false, action });
+        setSubmittedApplication(res?.application);
         const newapplicationNumber = res?.application?.applicationNumber;
         if (newapplicationNumber) {
           if (action === SubmissionWorkflowAction.SUBMIT) {
@@ -1673,11 +1678,12 @@ const SubmissionsCreate = ({ path }) => {
       }
 
       if (applicationNumber) {
-        await submitSubmission({ update: true, action: SubmissionWorkflowAction.SAVEDRAFT });
-        await applicationRefetch();
+        const res = await submitSubmission({ update: true, action: SubmissionWorkflowAction.SAVEDRAFT });
+        setSubmittedApplication(res?.application);
         setShowToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
       } else {
         const res = await submitSubmission({ update: false, action: SubmissionWorkflowAction.SAVEDRAFT });
+        setSubmittedApplication(res?.application);
         const newapplicationNumber = res?.application?.applicationNumber;
         if (newapplicationNumber) {
           sessionStorage.setItem("DRAFT_SAVED_SUCCESSFULLY", "success");
@@ -1951,18 +1957,27 @@ const SubmissionsCreate = ({ path }) => {
   });
 
   const handleMakePayment = async (totalAmount) => {
+    isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+    setPaymentResolved(false);
     try {
       const bill = await fetchBill(applicationDetails?.applicationNumber + `_${suffix}`, tenantId, entityType);
       if (bill?.Bill?.length) {
         const billPaymentStatus = await openPaymentPortal(bill, bill?.Bill?.totalAmount);
         setPaymentStatus(billPaymentStatus);
         await applicationRefetch();
-        if (billPaymentStatus === true) {
+        if (billPaymentStatus === "VERIFICATION_PENDING") {
+          setIsPostPaymentVerificationPending(true);
+          return;
+        }
+        if (billPaymentStatus === "PAID") {
+          isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+          setPaymentResolved(true);
           setMakePaymentLabel(false);
           setShowPaymentModal(false);
           setShowSuccessModal(true);
-          await createPendingTask({ name: t("MAKE_PAYMENT_SUBMISSION"), status: "MAKE_PAYMENT_SUBMISSION", isCompleted: true });
         } else {
+          isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+          setPaymentResolved(true);
           setMakePaymentLabel(true);
           setShowPaymentModal(false);
           setShowSuccessModal(true);
@@ -1970,6 +1985,8 @@ const SubmissionsCreate = ({ path }) => {
       }
     } catch (error) {
       console.error(error);
+      isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+      setPaymentResolved(true);
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_PROCESSING_PAYMENT"), error: true, errorId });
     }
@@ -2064,6 +2081,7 @@ const SubmissionsCreate = ({ path }) => {
             cancelLabel={getReviewModalCancelButtonLabel(applicationDetails)}
             handleSubmit={handleReviewModalSubmit}
             handleCancel={handleCancelReviewModal}
+            caseDetails={caseDetails}
           />
         )}
         {showsignatureModal && (
@@ -2085,10 +2103,12 @@ const SubmissionsCreate = ({ path }) => {
             handleSkipPayment={handleSkipPayment}
             handleMakePayment={handleMakePayment}
             tenantId={tenantId}
-            consumerCode={applicationDetails?.applicationNumber}
+            consumerCode={applicationDetails?.applicationNumber ? applicationDetails.applicationNumber + "_" + suffix : ""}
             paymentLoader={paymentLoader}
             entityType={entityType}
             totalAmount={_getApplicationAmount(applicationTypeAmount, applicationType)}
+            isPostPaymentVerificationPending={isPostPaymentVerificationPending}
+            paymentResolved={paymentResolved}
           />
         )}
         {showSuccessModal && (

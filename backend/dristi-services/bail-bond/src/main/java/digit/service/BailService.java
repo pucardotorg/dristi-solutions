@@ -133,7 +133,8 @@ public class BailService {
                     .build();
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
             String stage = caseUtil.getStage(caseDetails);
-            if(APPEARANCE.equalsIgnoreCase(stage)){
+            // Removing the condition on case stage as per ticket number 5953
+//            if(APPEARANCE.equalsIgnoreCase(stage)){
                 // Notify Sureties
                 if (smsTopics.contains(BAIL_BOND_INITIATED_SURETY)) {
                     bail.getSureties().stream()
@@ -149,7 +150,7 @@ public class BailService {
                         notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_LITIGANT, litigantMobile);
                     }
                 }
-            }
+//            }
 
         } catch (Exception e) {
             log.error("Error sending notification for bailRequest: {}", bailRequest, e);
@@ -271,7 +272,7 @@ public class BailService {
     }
 
 
-  
+
     private String getEmailCode(String action){
         if(action.equalsIgnoreCase(INITIATE_E_SIGN)){
             return BAIL_BOND_INITIATED_EMAIL;
@@ -517,7 +518,7 @@ public class BailService {
             return decryptedBailList;
 
         } catch (Exception e) {
-            log.error("Error while fetching to search results {}", e.toString());
+            log.error("Error while fetching to search results", e);
             throw new CustomException("BAIL_SEARCH_ERR", e.getMessage());
         }
     }
@@ -576,12 +577,53 @@ public class BailService {
             }
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
-                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
+                double cx = coordinate.getX();
+                double cy = coordinate.getY();
+                double pageWidth = coordinate.getPageWidth();
+                double pageHeight = coordinate.getPageHeight();
+                int sigWidth = configuration.getEsignSignatureWidth();
+                int sigHeight = configuration.getEsignSignatureHeight();
+                if (pageWidth > 0) {
+                    double overflow = cx + sigWidth - pageWidth;
+                    if (overflow > 0) {
+                        int phase1MaxReduction = sigWidth - configuration.getEsignSignaturePreferredWidthThreshold();
+                        int phase1Reduction = (int) Math.min(overflow, phase1MaxReduction);
+                        sigWidth -= phase1Reduction;
+                        overflow -= phase1Reduction;
+                        if (overflow > 0) {
+                            int widthBudget = sigWidth - configuration.getEsignSignatureMinWidth();
+                            int maxOffset = configuration.getEsignSignatureMaxLeftOffset();
+                            int half = (int) (overflow / 2);
+                            int wReduce, offset;
+                            if (half <= widthBudget && half <= maxOffset) {
+                                wReduce = (int) overflow / 2;
+                                offset = (int) overflow - wReduce;
+                            } else if (half > widthBudget) {
+                                wReduce = widthBudget;
+                                offset = (int) Math.min(overflow - wReduce, maxOffset);
+                            } else {
+                                offset = maxOffset;
+                                wReduce = (int) Math.min(overflow - offset, widthBudget);
+                            }
+                            sigWidth -= wReduce;
+                            cx = Math.max(cx - offset, 0);
+                        }
+                    }
+                    double remainingOverflow = cx + sigWidth - pageWidth;
+                    if (remainingOverflow > 0) {
+                        cx = Math.max(cx - remainingOverflow, 0);
+                    }
+                }
+                if (pageHeight > 0) {
+                    cy = Math.min(cy, pageHeight - sigHeight);
+                    cy = Math.max(cy, 0);
+                }
+                String coord = (int) Math.floor(cx) + "," + (int) Math.floor(cy);
                 String txnId = UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
                 ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of(configuration.getZoneId()));
 
-                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
+                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo, sigWidth);
                 String bailId = bailsCriteriaMap.get(coordinate.getFileStoreId()).getBailId();
                 bail.setBailId(bailId);
                 bail.setRequest(xmlRequest);
@@ -595,7 +637,7 @@ public class BailService {
         return bailToSign;
     }
 
-    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
+    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber, int effectiveWidth) {
         log.info("generating request, result= IN_PROGRESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
         Map<String, Object> requestData = new LinkedHashMap<>();
 
@@ -622,7 +664,7 @@ public class BailService {
         Map<String, Object> pdf = new LinkedHashMap<>();
         pdf.put(PAGE, pageNumber);
         pdf.put(CO_ORDINATES, coordination);
-        pdf.put(SIZE, configuration.getEsignSignatureWidth() + "," + configuration.getEsignSignatureHeight());
+        pdf.put(SIZE, effectiveWidth + "," + configuration.getEsignSignatureHeight());
         pdf.put(DATE_FORMAT, ESIGN_DATE_FORMAT);
         requestData.put(PDF, pdf);
 

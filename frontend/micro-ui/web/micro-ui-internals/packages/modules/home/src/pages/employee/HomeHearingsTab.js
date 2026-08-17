@@ -8,7 +8,7 @@ import { CheckBox } from "@egovernments/digit-ui-react-components";
 import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 import useGetHearingLink from "@egovernments/digit-ui-module-hearings/src/hooks/hearings/useGetHearingLink";
-import useInboxSearch from "../../hooks/useInboxSearch";
+import useGetHearingCauseList from "../../hooks/useGetHearingCauseList";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { ConferenceIcon, DocumentSignedIcon, DocumentNotSignedIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
@@ -29,7 +29,7 @@ const HomeHearingsTab = ({
   const history = useHistory();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(30);
-  const { data: tableData, loading, error, fetchInbox } = useInboxSearch({ limit: rowsPerPage, offset: page * rowsPerPage });
+  const { data: tableData, loading, error, fetchCauseList } = useGetHearingCauseList({ limit: rowsPerPage, offset: page * rowsPerPage });
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
@@ -57,17 +57,17 @@ const HomeHearingsTab = ({
     setFilters(cleared);
     setPage(0);
     setRowsPerPage(30);
-    fetchInbox(cleared, setHearingCount);
-  }, [fetchInbox, setHearingCount]);
+    fetchCauseList(cleared, setHearingCount);
+  }, [fetchCauseList, setHearingCount]);
 
   const handleSearch = useCallback(() => {
     setPage(0);
     setRowsPerPage(30);
-    fetchInbox(filters, setHearingCount);
-  }, [fetchInbox, filters, setHearingCount]);
+    fetchCauseList(filters, setHearingCount);
+  }, [fetchCauseList, filters, setHearingCount]);
 
   useEffect(() => {
-    fetchInbox(filters, setHearingCount);
+    fetchCauseList(filters, setHearingCount);
   }, [page, rowsPerPage]);
 
   useEffect(() => {
@@ -161,7 +161,7 @@ const HomeHearingsTab = ({
                     hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
                       setTimeout(() => {
                         setLoader(false);
-                        if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                        if (res?.hearing?.status === "IN_PROGRESS") fetchCauseList(filters, setHearingCount);
                       }, 100);
                     });
                   } else {
@@ -182,7 +182,7 @@ const HomeHearingsTab = ({
           } else {
             setTimeout(() => {
               setLoader(false);
-              fetchInbox(filters, setHearingCount);
+              fetchCauseList(filters, setHearingCount);
             }, 100);
           }
         }
@@ -214,12 +214,12 @@ const HomeHearingsTab = ({
                     hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
                       setTimeout(() => {
                         setLoader(false);
-                        if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                        if (res?.hearing?.status === "IN_PROGRESS") fetchCauseList(filters, setHearingCount);
                       }, 100);
                     });
                   } else {
                     setLoader(false);
-                    fetchInbox(filters, setHearingCount);
+                    fetchCauseList(filters, setHearingCount);
                     setShowToast({ error: true, label: t("HEARING_STATUS_ALREADY_CHANGED") });
                   }
                 } else {
@@ -324,13 +324,13 @@ const HomeHearingsTab = ({
                           //   { homeFilteredData: filters }
                           // );
                           setTimeout(() => {
-                            if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                            if (res?.hearing?.status === "IN_PROGRESS") fetchCauseList(filters, setHearingCount);
                             setLoader(false);
                           }, 100);
                         });
                       } else {
                         setLoader(false);
-                        fetchInbox(filters, setHearingCount);
+                        fetchCauseList(filters, setHearingCount);
                         setShowToast({ error: true, label: t("HEARING_ALREADY_STARTED") });
                       }
                     } else {
@@ -420,12 +420,12 @@ const HomeHearingsTab = ({
                           .then((res) => {
                             setTimeout(() => {
                               setLoader(false);
-                              if (res?.hearing?.status === "PASSED_OVER") fetchInbox(filters, setHearingCount);
+                              if (res?.hearing?.status === "PASSED_OVER") fetchCauseList(filters, setHearingCount);
                             }, 100);
                           });
                       } else {
                         setLoader(false);
-                        fetchInbox(filters, setHearingCount);
+                        fetchCauseList(filters, setHearingCount);
                         setShowToast({ error: true, label: t("HEARING_STATUS_ALREADY_CHANGED") });
                       }
                     } else {
@@ -460,7 +460,7 @@ const HomeHearingsTab = ({
                       setTimeout(() => {
                         setLoader(false);
                         if (res?.hearing?.status === "PASSED_OVER") {
-                          fetchInbox(filters, setHearingCount);
+                          fetchCauseList(filters, setHearingCount);
                         }
                       }, 100);
                     })
@@ -649,6 +649,73 @@ const HomeHearingsTab = ({
 
   const { data: hearingLink } = useGetHearingLink();
 
+  const renderPagination = () => (
+    <div className="pagination-info">
+      <span style={{ color: "#505a5f" }}>Rows per page:</span>
+      <select
+        value={rowsPerPage}
+        onChange={(e) => {
+          setRowsPerPage(Number(e.target.value));
+          setPage(0);
+        }}
+      >
+        {[10, 20, 30, 40, 50].map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <span style={{ color: "#505a5f" }}>
+          {hearingCount === 0 ? "0 of 0" : `${page * rowsPerPage + 1}–${Math.min((page + 1) * rowsPerPage, hearingCount)} of ${hearingCount}`}
+        </span>
+
+        {page > 0 && (
+          <button
+            style={{
+              background: "transparent",
+              border: "none",
+              fontSize: "16px",
+              cursor: "pointer",
+              padding: 0,
+              margin: 0,
+              display: "flex",
+              alignItems: "center",
+            }}
+            onClick={() => setPage((prev) => prev - 1)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#505a5f" class="cp" width="18px" height="18px">
+              <path d="M0 0h24v24H0z" fill="none"></path>
+              <path d="M11.67 3.87L9.9 2.1 0 12l9.9 9.9 1.77-1.77L3.54 12z"></path>
+            </svg>
+          </button>
+        )}
+
+        {(page + 1) * rowsPerPage < hearingCount && (
+          <button
+            style={{
+              background: "transparent",
+              border: "none",
+              fontSize: "16px",
+              cursor: "pointer",
+              padding: 0,
+              margin: 0,
+              display: "flex",
+              alignItems: "center",
+            }}
+            onClick={() => setPage((prev) => prev + 1)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#505a5f" width="18px" height="18px">
+              <path d="M0 0h24v24H0z" fill="none" />
+              <path d="M5.88 4.12 13.76 12l-7.88 7.88L8 22l10-10L8 2z" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
   if (isEpostUser) {
     history.push(homePath);
   }
@@ -756,7 +823,7 @@ const HomeHearingsTab = ({
                 if (!loading) {
                   setPage(0);
                   setRowsPerPage(10);
-                  fetchInbox(filters, setHearingCount);
+                  fetchCauseList(filters, setHearingCount);
                 }
               }}
             >
@@ -775,7 +842,7 @@ const HomeHearingsTab = ({
                   if (e.key === "Enter" && !loading) {
                     setPage(0);
                     setRowsPerPage(10);
-                    fetchInbox(filters, setHearingCount);
+                    fetchCauseList(filters, setHearingCount);
                   }
                 }}
               />
@@ -821,6 +888,7 @@ const HomeHearingsTab = ({
         </div>
       </div>
       <div className="main-table-card">
+        <div className="table-pagination table-pagination-top">{renderPagination()}</div>
         <div className="table-scroll">
           <table className="main-table">
             <thead>
@@ -852,72 +920,7 @@ const HomeHearingsTab = ({
               )}
             </tbody>
           </table>
-          <div className="table-pagination">
-            <div className="pagination-info">
-              <span style={{ color: "#505a5f" }}>Rows per page:</span>
-              <select
-                value={rowsPerPage}
-                onChange={(e) => {
-                  setRowsPerPage(Number(e.target.value));
-                  setPage(0);
-                }}
-              >
-                {[10, 20, 30, 40, 50].map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <span style={{ color: "#505a5f" }}>
-                  {hearingCount === 0 ? "0 of 0" : `${page * rowsPerPage + 1}–${Math.min((page + 1) * rowsPerPage, hearingCount)} of ${hearingCount}`}
-                </span>
-
-                {page > 0 && (
-                  <button
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      fontSize: "16px",
-                      cursor: "pointer",
-                      padding: 0,
-                      margin: 0,
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                    onClick={() => setPage((prev) => prev - 1)}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#505a5f" class="cp" width="18px" height="18px">
-                      <path d="M0 0h24v24H0z" fill="none"></path>
-                      <path d="M11.67 3.87L9.9 2.1 0 12l9.9 9.9 1.77-1.77L3.54 12z"></path>
-                    </svg>
-                  </button>
-                )}
-
-                {(page + 1) * rowsPerPage < hearingCount && (
-                  <button
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      fontSize: "16px",
-                      cursor: "pointer",
-                      padding: 0,
-                      margin: 0,
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                    onClick={() => setPage((prev) => prev + 1)}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#505a5f" width="18px" height="18px">
-                      <path d="M0 0h24v24H0z" fill="none" />
-                      <path d="M5.88 4.12 13.76 12l-7.88 7.88L8 22l10-10L8 2z" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+          <div className="table-pagination">{renderPagination()}</div>
         </div>
       </div>
       {showEndHearingModal.openEndHearingModal && (
@@ -965,7 +968,7 @@ const HomeHearingsTab = ({
                     } else {
                       setLoader(false);
                       setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-                      fetchInbox(filters, setHearingCount);
+                      fetchCauseList(filters, setHearingCount);
                       setShowToast({ error: true, label: t("HEARING_STATUS_ALREADY_CHANGED") });
                     }
                   } else {
@@ -1018,12 +1021,13 @@ const HomeHearingsTab = ({
                           setTimeout(() => {
                             setLoader(false);
                             setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-                            if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED") fetchInbox(filters, setHearingCount);
+                            if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED")
+                              fetchCauseList(filters, setHearingCount);
                           }, 100);
                         });
                     } else {
                       setLoader(false);
-                      fetchInbox(filters, setHearingCount);
+                      fetchCauseList(filters, setHearingCount);
                       setShowToast({ error: true, label: t("HEARING_STATUS_ALREADY_CHANGED") });
                       setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
                     }

@@ -165,6 +165,21 @@ const MediationFormSignaturePage = () => {
     return poaParties?.find((p) => p?.poaUuid === userInfo?.uuid) || null;
   }, [userInfo, digitalizationServiceDetails]);
 
+  const selectedAdvocateUuid = useMemo(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem("selectedAdvocate"))?.uuid || null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const isSelectedAdvocatePartyPresent = useMemo(() => {
+    if (!selectedAdvocateUuid || selectedAdvocateUuid !== userInfo?.uuid) return false;
+    return digitalizationServiceDetails?.mediationDetails?.partyDetails?.some((party) =>
+      [party?.userUuid, party?.uniqueId, party?.poaUuid]?.includes(selectedAdvocateUuid)
+    );
+  }, [digitalizationServiceDetails, selectedAdvocateUuid, userInfo?.uuid]);
+
   const { data: mediationOrderData, isLoading: isOrdersLoading } = useSearchOrdersService(
     {
       tenantId,
@@ -617,7 +632,7 @@ const MediationFormSignaturePage = () => {
                       color: "#007E7E",
                     }}
                     onButtonClick={() => {
-                      const name = `${digitalizationServiceDetails?.mediationDetails?.mediationId}_mediation`;
+                      const name = `${documentNumber}_mediation`;
                       downloadPdf(tenantId, signatureDocumentId || mediationFileStoreId, name);
                     }}
                   />
@@ -676,6 +691,7 @@ const MediationFormSignaturePage = () => {
                         !digitalizationServiceDetails?.mediationDetails?.partyDetails?.some((party) =>
                           [party?.userUuid, party?.uniqueId, party?.poaUuid]?.includes(userInfo?.uuid)
                         )) ||
+                      (selectedAdvocateUuid && !isSelectedAdvocatePartyPresent) ||
                       loader
                     }
                   />
@@ -739,7 +755,7 @@ const MediationFormSignaturePage = () => {
           isParentLoading={uploadLoader}
           fileUploadError={fileUploadError}
           setFileUploadError={setFileUploadError}
-          downloadedFileName={`${digitalizationServiceDetails?.mediationDetails?.mediationId}_mediation`}
+          downloadedFileName={`${documentNumber}_mediation`}
         />
       )}
       {showSkipConfirmModal && (

@@ -117,11 +117,11 @@ public class OrderRepository {
             return orderList;
         }
         catch (CustomException e){
-            log.error("Custom Exception while fetching order list :: {}",e.toString());
+            log.error("Custom Exception while fetching order list", e);
             throw e;
         }
         catch (Exception e){
-            log.error("Error while fetching order list :: {}",e.toString());
+            log.error("Error while fetching order list", e);
             throw new CustomException(ORDER_SEARCH_EXCEPTION,"Error while fetching order list: "+e.getMessage());
         }
     }
@@ -143,7 +143,7 @@ public class OrderRepository {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while checking order exist :: {}",e.toString());
+            log.error("Error while checking order exist", e);
             throw new CustomException(ORDER_EXISTS_EXCEPTION, "Custom exception while checking order exist : " + e.getMessage());
         }
     }

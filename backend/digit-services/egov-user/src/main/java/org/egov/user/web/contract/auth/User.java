@@ -25,4 +25,10 @@ public class User implements Serializable {
     private boolean active;
     private String tenantId;
     private String permanentCity;
+    /**
+     * Tells the UI whether to show the "set a password" prompt after login. False once the user
+     * has set a password or chosen not to be asked again, and wherever the deployment does not
+     * allow this user type to log in with a password.
+     */
+    private boolean showPasswordSetupPrompt;
 }

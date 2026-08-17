@@ -108,6 +108,9 @@ public class Order {
 	@Valid
 	private Workflow workflow = null;
 
+	@JsonProperty("partyUniqueIds")
+	private List<String> partyUniqueIds = null;
+
 
 	public Order addApplicationIdsItem(String applicationNumbersItem) {
 		this.applicationNumber.add(applicationNumbersItem);

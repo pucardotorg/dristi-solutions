@@ -39,11 +39,51 @@ public class AuthSekRepository {
         return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
     }
 
+    public List<AuthSek> getAgedPendingAuthSeks(long thresholdTime) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getAgedPendingAuthSeksQuery(thresholdTime, preparedStmtList);
+        log.debug("Final aged pending query: {}", query);
+        return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
+    }
+
+    public List<AuthSek> getAuthSekByDepartmentId(String departmentId) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getAuthSekByDepartmentIdQuery(departmentId, preparedStmtList);
+        log.debug("Final by-departmentId query: {}", query);
+        return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
+    }
+
+    public List<AuthSek> getAuthSekByBillId(String billId) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getAuthSekByBillIdQuery(billId, preparedStmtList);
+        log.debug("Final by-billId query: {}", query);
+        return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
+    }
+
+    public List<AuthSek> getAuthSekByServiceNumber(String serviceNumber) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getAuthSekByServiceNumberQuery(serviceNumber, preparedStmtList);
+        log.debug("Final by-serviceNumber query: {}", query);
+        return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
+    }
+
     public void updateAuthSekStatus(String authToken, String paymentStatus, String completionSource, Long verificationTimestamp, String processedStatus) {
         String updateQuery = "UPDATE auth_sek_session_data SET payment_status = ?, completion_source = ?, verification_timestamp = ?, processed_status = ? WHERE auth_token = ?";
         int updated = jdbcTemplate.update(updateQuery, paymentStatus, completionSource, verificationTimestamp, processedStatus, authToken);
         if(updated != 1) {
             throw new RuntimeException("Failed to update auth_sek_session_data for auth_token: " + authToken);
+        }
+    }
+
+    /**
+     * Records that V3 reconciliation saw treasury status=P (bank-reported "Pending") for this row.
+     * The row stays PENDING so the next cron cycle re-checks it; only the retry counter advances.
+     */
+    public void updatePendingRetryCount(String authToken, int retryCount) {
+        String updateQuery = "UPDATE auth_sek_session_data SET retry_count = ? WHERE auth_token = ?";
+        int updated = jdbcTemplate.update(updateQuery, retryCount, authToken);
+        if(updated != 1) {
+            throw new RuntimeException("Failed to update retry_count on auth_sek_session_data for auth_token: " + authToken);
         }
     }
 

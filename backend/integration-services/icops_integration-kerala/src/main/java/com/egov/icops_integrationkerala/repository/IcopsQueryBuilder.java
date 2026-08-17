@@ -32,6 +32,18 @@ public class IcopsQueryBuilder {
         }
     }
 
+    public String getIcopsTrackerByTaskNumber(String taskNumber, List<Object> preparedStmtList) {
+        if (taskNumber == null || taskNumber.trim().isEmpty()) {
+            throw new IllegalArgumentException("taskNumber must not be null or blank");
+        }
+        StringBuilder query = new StringBuilder(BASE_APPLICATION_QUERY);
+        query.append(FROM_TABLES);
+        addClauseIfRequired(query, preparedStmtList);
+        query.append(" task_number = ? ");
+        preparedStmtList.add(taskNumber);
+        return query.toString();
+    }
+
     public String getUpdateResponseBlobQuery() {
         return "UPDATE dristi_kerala_icops SET response_blob = ?::jsonb WHERE process_number = ?";
     }

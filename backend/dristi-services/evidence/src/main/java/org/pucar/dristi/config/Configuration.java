@@ -287,6 +287,15 @@ public class Configuration {
 	@Value("${dristi.esign.signature.height:50}")
 	private int esignSignatureHeight;
 
+	@Value("${dristi.esign.signature.max.left.offset:70}")
+	private int esignSignatureMaxLeftOffset;
+
+	@Value("${dristi.esign.signature.min.width:155}")
+	private int esignSignatureMinWidth;
+
+	@Value("${dristi.esign.signature.preferred.width.threshold:190}")
+	private int esignSignaturePreferredWidthThreshold;
+
 	//FileStore Service
 	@Value("${egov.filestore.host}")
 	private String fileStoreHost;

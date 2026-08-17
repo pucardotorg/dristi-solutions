@@ -31,6 +31,7 @@ on:
           - dev
           - qa
           - demo
+          - sdc-uat
       service_group:
         required: true
         description: "Service group in kubernetes cluster (eg: egov)"
@@ -54,6 +55,7 @@ jobs:
           echo "Deployed \`docker.io/venkatramireddyb/${{ inputs.service }}:${{ inputs.tag }}\` to **${{ inputs.deployment_env }}** environment at **$IST_TIME**." >> $GITHUB_STEP_SUMMARY
 
       - name: Deploy to Kubernetes
+        if: inputs.deployment_env != 'sdc-uat'
         uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
         with:
           environment: ${{ inputs.deployment_env }}
@@ -64,3 +66,12 @@ jobs:
           env_file: ${{ vars.HELMFILE_ENV }}
           checkout_ref: ${{ vars.DEVOPS_BRANCH }}
           sops_keys_txt: ${{ secrets.SOPS_KEYS_TXT }}
+
+      - name: Deploy to SDC UAT
+        if: inputs.deployment_env == 'sdc-uat'
+        run: |
+          curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.GHUB_TOKEN }}" \
+          https://api.github.com/repos/pucardotorg/pucar-Devops/actions/workflows/update-image-tag.yaml/dispatches \
+          -d '{"ref":"pucar-stg", "inputs": {"service_name": "${{ inputs.service }}", "service_tag": "${{ inputs.tag }}"}}'

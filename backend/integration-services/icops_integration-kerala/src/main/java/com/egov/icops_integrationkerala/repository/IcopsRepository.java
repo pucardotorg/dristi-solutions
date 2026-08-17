@@ -38,6 +38,13 @@ public class IcopsRepository {
         return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
     }
 
+    public List<IcopsTracker> getIcopsTrackerByTaskNumber(String taskNumber) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getIcopsTrackerByTaskNumber(taskNumber, preparedStmtList);
+        log.info("Final query: " + query);
+        return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
+    }
+
     public void updateResponseBlob(String processNumber, Object responseBlob) {
         String query = queryBuilder.getUpdateResponseBlobQuery();
         try {

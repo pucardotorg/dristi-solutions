@@ -23,6 +23,7 @@ import org.egov.individual.validators.MobileNumberValidator;
 import org.egov.individual.validators.NonExistentEntityValidator;
 import org.egov.individual.validators.NullIdValidator;
 import org.egov.individual.validators.RowVersionValidator;
+import org.egov.individual.validators.SystemUserValidator;
 import org.egov.individual.validators.UniqueEntityValidator;
 import org.egov.individual.validators.UniqueSubEntityValidator;
 import org.egov.individual.web.models.Individual;
@@ -86,7 +87,8 @@ public class IndividualService {
             validator.getClass().equals(AddressTypeValidator.class)
                     || validator.getClass().equals(UniqueSubEntityValidator.class)
                     || validator.getClass().equals(MobileNumberValidator.class)
-                    || validator.getClass().equals(AadharNumberValidatorForCreate.class);
+                    || validator.getClass().equals(AadharNumberValidatorForCreate.class)
+                    || validator.getClass().equals(SystemUserValidator.class);
 
     private final Predicate<Validator<IndividualBulkRequest, Individual>> isApplicableForDelete = validator ->
             validator.getClass().equals(NullIdValidator.class)

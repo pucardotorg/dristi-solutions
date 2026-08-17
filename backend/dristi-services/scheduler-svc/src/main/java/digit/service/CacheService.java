@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -45,6 +46,72 @@ public class CacheService {
             redisTemplate.delete(key);
         } catch (Exception e) {
             log.error("Error deleting cache for key: {}", key, e);
+        }
+    }
+
+    public void hset(String key, String field, Object value) {
+        if (redisTemplate == null) return;
+        try {
+            redisTemplate.opsForHash().put(key, field, value);
+        } catch (Exception e) {
+            log.error("Error setting hash field for key: {}, field: {}", key, field, e);
+        }
+    }
+
+    public void hmset(String key, Map<String, Object> map) {
+        if (redisTemplate == null) return;
+        try {
+            redisTemplate.opsForHash().putAll(key, map);
+            redisTemplate.expire(key, configuration.getRedisTimeout(), TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.error("Error setting hash for key: {}", key, e);
+        }
+    }
+
+    public Object hget(String key, String field) {
+        if (redisTemplate == null) return null;
+        try {
+            return redisTemplate.opsForHash().get(key, field);
+        } catch (Exception e) {
+            log.error("Error getting hash field for key: {}, field: {}", key, field, e);
+            return null;
+        }
+    }
+
+    public Map<String, Object> hgetAll(String key) {
+        if (redisTemplate == null) return Collections.emptyMap();
+        try {
+            Map<Object, Object> raw = redisTemplate.opsForHash().entries(key);
+            Map<String, Object> result = new LinkedHashMap<>();
+            raw.forEach((k, v) -> result.put(String.valueOf(k), v));
+            return result;
+        } catch (Exception e) {
+            log.error("Error getting all hash fields for key: {}", key, e);
+            return Collections.emptyMap();
+        }
+    }
+
+    public void setList(String key, List<String> values) {
+        if (redisTemplate == null) return;
+        try {
+            redisTemplate.delete(key);
+            if (!values.isEmpty()) {
+                redisTemplate.opsForList().rightPushAll(key, values.toArray());
+                redisTemplate.expire(key, configuration.getRedisTimeout(), TimeUnit.MINUTES);
+            }
+        } catch (Exception e) {
+            log.error("Error setting list cache for key: {}", key, e);
+        }
+    }
+
+    public List<Object> lrange(String key, long start, long end) {
+        if (redisTemplate == null) return Collections.emptyList();
+        try {
+            List<Object> result = redisTemplate.opsForList().range(key, start, end);
+            return result != null ? result : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error reading list for key: {}", key, e);
+            return Collections.emptyList();
         }
     }
 }

@@ -106,6 +106,25 @@ export const removeInvalidNameParts = (name) => {
     .join(" ");
 };
 
+export const getNameByUuid = (uuid, caseDetails) => {
+  if (!uuid) return null;
+  const litigant = caseDetails?.litigants?.find((lit) => lit?.additionalDetails?.uuid === uuid);
+  if (litigant) return litigant?.additionalDetails?.fullName || null;
+
+  const poaHolder = caseDetails?.poaHolders?.find((poa) => poa?.additionalDetails?.uuid === uuid);
+  if (poaHolder) return poaHolder?.name || null;
+
+  const representative = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === uuid);
+  if (representative) return representative?.additionalDetails?.advocateName || null;
+
+  for (const office of caseDetails?.advocateOffices || []) {
+    const member = [...(office?.advocates || []), ...(office?.clerks || [])]?.find((m) => m?.memberUserUuid === uuid);
+    if (member) return member?.memberName || null;
+  }
+
+  return null;
+};
+
 export const modifiedEvidenceNumber = (value, filingNumber = null) => {
   if (value && typeof value === "string") {
     if (filingNumber && typeof filingNumber === "string" && value.startsWith(filingNumber)) {
@@ -294,6 +313,59 @@ export const combineMultipleFiles = async (pdfFilesArray, finalFileName = "combi
     console.error("Error:", error);
     throw new DocumentUploadError(`Document upload failed: ${error.message}`, documentsTypeMapping[key]);
   }
+};
+
+export const downloadCombinedDocuments = async (documents, fileName = "combined-document.pdf") => {
+  const validDocs = documents?.filter((d) => d?.fileStore);
+  if (!validDocs?.length) return;
+  const combinedFiles = await combineMultipleFiles(validDocs, fileName);
+  if (combinedFiles?.[0]) {
+    const url = URL.createObjectURL(combinedFiles[0]);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+};
+
+export const downloadCaseSummaryPdf = async ({ tenantId, filingNumber, cnrNumber, courtId, fileName = "case-summary.pdf" }) => {
+  const token = localStorage.getItem("token");
+  const userInfo = Digit.UserService.getUser()?.info;
+  const response = await axiosInstance.post(
+    "/egov-pdf/case-summary",
+    {
+      RequestInfo: {
+        authToken: token,
+        userInfo,
+        msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+        apiId: "Dristi",
+      },
+    },
+    {
+      params: {
+        tenantId,
+        filingNumber,
+        ...(cnrNumber && { cnrNumber }),
+        ...(courtId && { courtId }),
+      },
+      responseType: "blob",
+      headers: {
+        "auth-token": `${token}`,
+      },
+    }
+  );
+  const blob = new Blob([response.data], { type: response.data.type || "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 };
 
 export const cleanString = (input) => {

@@ -276,6 +276,23 @@ async function applicationProfileEdit(
       courtCase || {},
     );
 
+    // Resolve the litigant(s) the filing advocate actually represents, so the
+    // signature reads "Advocate for <real client>" rather than the party being
+    // edited (these differ when, e.g., a complainant's advocate edits the accused).
+    const filingAdvocate =
+      courtCase?.representatives?.find(
+        (rep) => rep?.additionalDetails?.uuid === application?.asUser,
+      ) || {};
+    const advocateRepresentingName =
+      filingAdvocate?.representing?.find(
+        (litigant) => litigant?.individualId === uniqueId,
+      )?.additionalDetails?.fullName ||
+      filingAdvocate?.representing
+        ?.map((litigant) => litigant?.additionalDetails?.fullName)
+        ?.filter(Boolean)
+        ?.join(", ") ||
+      partyName;
+
     const data = {
       Data: [
         {
@@ -290,6 +307,7 @@ async function applicationProfileEdit(
           date: formattedToday,
           partyName: partyName,
           advocateName,
+          advocateRepresentingName,
           reasonForEditing: reasonForChange,
           advocateSignature: "Advocate Signature",
           day: day + ordinalSuffix,

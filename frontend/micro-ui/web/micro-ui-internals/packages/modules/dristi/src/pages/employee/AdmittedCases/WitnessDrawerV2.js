@@ -28,18 +28,14 @@ import CustomToast from "../../../components/CustomToast";
 
 const formatAddress = (addr) => {
   if (!addr) return "";
-  // const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "" } = addr;
 
-  const { locality = "", city = "", district = "", state = "", pincode = "" } = addr;
-
-  return `${locality}, ${city}, ${district}, ${state}, ${pincode}`.trim();
+  return [addr.locality, addr.city, addr.district, addr.state, addr.pincode].filter(Boolean).join(", ");
 };
 
 const formatAddressFromIndividualData = (addr) => {
   if (!addr) return "";
-  const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "" } = addr;
 
-  return `${addressLine1}, ${addressLine2}, ${buildingName}, ${street}, ${city}, ${pincode}`.trim();
+  return [addr.addressLine1, addr.addressLine2, addr.buildingName, addr.street, addr.city, addr.pincode].filter(Boolean).join(", ");
 };
 
 const WitnessDrawerV2 = ({
@@ -1163,7 +1159,8 @@ const WitnessDrawerV2 = ({
     }
   };
 
-  if (isFilingTypeLoading || isEvidenceLoading || caseApiLoading) {
+  const isDataLoading = isFilingTypeLoading || isEvidenceLoading || caseApiLoading;
+  if (isDataLoading) {
     return <Loader />;
   }
 
@@ -1354,7 +1351,7 @@ const WitnessDrawerV2 = ({
               <div className="drawer-footer" style={{ display: "flex", justifyContent: "end", flexDirection: "row", gap: "16px" }}>
                 <Button
                   label={t("SAVE_DRAFT")}
-                  isDisabled={!IsSelectedWitness}
+                  isDisabled={!IsSelectedWitness || isDataLoading}
                   onButtonClick={() => handleSaveDraft()}
                   style={{
                     width: "130px",
@@ -1366,7 +1363,7 @@ const WitnessDrawerV2 = ({
                 />
                 <Button
                   label={t("SUBMIT_BUTTON")}
-                  isDisabled={!IsSelectedWitness || witnessDepositionText?.length === 0}
+                  isDisabled={!IsSelectedWitness || witnessDepositionText?.length === 0 || isDataLoading}
                   className={"order-drawer-save-btn"}
                   onButtonClick={() => handleSaveDraft(true)}
                   style={{

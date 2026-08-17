@@ -50,7 +50,7 @@ public class UrlShortenerUtil {
             // Return shortened version
             return getShortenedUrl(longUrl, bailBondId);
         } catch (CustomException e) {
-            log.error(URL_SHORTENING_ERROR_CODE + "{}", e.getMessage());
+            log.error(URL_SHORTENING_ERROR_CODE, e);
             throw new CustomException(URL_SHORTENING_ERROR_CODE, URL_SHORTENING_ERROR_MESSAGE + e.getMessage());
         }
     }

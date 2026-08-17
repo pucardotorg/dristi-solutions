@@ -6,6 +6,15 @@ import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Modal from "../../../components/Modal";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import { userRolesEnum } from "../../../Utils/constants";
+
+const dayInMillisecond = 24 * 3600 * 1000;
+
+// Signing the complaint is expected to be done right away, so both tasks are due the next day.
+const stateSla = {
+  PENDING_E_SIGN: 1 * dayInMillisecond,
+  PENDING_UPLOAD_SIGNATURE: 1 * dayInMillisecond,
+};
 
 const caseLockingMainDiv = {
   padding: "24px",
@@ -38,6 +47,24 @@ function CaseLockModal({
   const [showToast, setShowToast] = useState(null);
   const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
   const { uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
+  const userInfo = Digit?.UserService?.getUser()?.info;
+
+  const isAdvocateInCase = useMemo(() => {
+    return Boolean(caseDetails?.representatives?.some((rep) => rep?.additionalDetails?.uuid === userInfo?.uuid));
+  }, [caseDetails?.representatives, userInfo?.uuid]);
+
+  const isLitigantInCase = useMemo(() => {
+    return Boolean(caseDetails?.litigants?.some((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid));
+  }, [caseDetails?.litigants, userInfo?.uuid]);
+
+  const isPoaHolderInCase = useMemo(() => {
+    return Boolean(caseDetails?.poaHolders?.some((poa) => poa?.additionalDetails?.uuid === userInfo?.uuid));
+  }, [caseDetails?.poaHolders, userInfo?.uuid]);
+
+  const isClerkRepresentingAdvocate =
+    userInfo?.roles?.some((role) => role?.code === userRolesEnum.ADVOCATE_CLERK_ROLE) && selectedAdvocateUuid !== userInfo?.uuid;
+
+  const isAdvocateFlow = selectedAdvocateUuid && (isAdvocateInCase || !isLitigantInCase || isClerkRepresentingAdvocate) && !isPoaHolderInCase;
 
   const filingNumber = useMemo(() => {
     return caseDetails?.filingNumber;
@@ -74,6 +101,7 @@ function CaseLockModal({
     try {
       const taskName = isCaseReassigned ? t("PENDING_RE_E_SIGN_FOR_CASE") : t("PENDING_E_SIGN_FOR_CASE");
       const taskStatus = isCaseReassigned ? "PENDING_RE_E-SIGN" : "PENDING_E-SIGN";
+      const todayDate = new Date().getTime();
 
       const promises = [...(litigants || []), ...(caseDetails?.representatives || []), ...(caseDetails?.poaHolders || [])]?.map((party) => {
         if (!party?.poaHolder) {
@@ -81,6 +109,7 @@ function CaseLockModal({
             name: taskName,
             status: taskStatus,
             assignee: party?.additionalDetails?.uuid,
+            stateSla: todayDate + stateSla.PENDING_E_SIGN,
           });
         } else {
           return null;
@@ -98,7 +127,7 @@ function CaseLockModal({
   const handleCancelOnSubmit = async () => {
     setShowCaseLockingModal(false);
 
-    if (selectedAdvocateUuid) {
+    if (isAdvocateFlow) {
       const assignees = Array.isArray(caseDetails?.representatives)
         ? caseDetails?.representatives?.map((advocate) => ({
             uuid: advocate?.additionalDetails?.uuid,
@@ -119,6 +148,7 @@ function CaseLockModal({
           name: taskName,
           status: taskStatus,
           assignees: [...assignees],
+          stateSla: new Date().getTime() + stateSla.PENDING_UPLOAD_SIGNATURE,
         });
         history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}&caseId=${caseId}`);
       } catch (error) {
@@ -140,26 +170,24 @@ function CaseLockModal({
             }}
           />
         }
-        actionSaveLabel={selectedAdvocateUuid ? t("CS_ESIGN") : t("CONFIRM_AND_SIGN")}
+        actionSaveLabel={isAdvocateFlow ? t("CS_ESIGN") : t("CONFIRM_AND_SIGN")}
         actionSaveOnSubmit={handleSaveOnSubmit}
-        actionCancelLabel={selectedAdvocateUuid ? t("UPLOAD_SIGNED_COPY") : t("DOWNLOAD_CS_BACK")}
+        actionCancelLabel={isAdvocateFlow ? t("UPLOAD_SIGNED_COPY") : t("DOWNLOAD_CS_BACK")}
         actionCancelOnSubmit={handleCancelOnSubmit}
         formId="modal-action"
-        headerBarMain={
-          <Heading style={{ marginLeft: "47px" }} label={selectedAdvocateUuid ? t("SUBMIT_CASE_CONFIRMATION") : t("CONFIRM_CASE_DETAILS")} />
-        }
+        headerBarMain={<Heading style={{ marginLeft: "47px" }} label={isAdvocateFlow ? t("SUBMIT_CASE_CONFIRMATION") : t("CONFIRM_CASE_DETAILS")} />}
         popmoduleClassName={"case-lock-confirm-modal"}
         style={{ width: "50%", height: "40px" }}
         // textStyle={{ margin: "0px", color: "" }}
         // popupStyles={{ maxWidth: "60%" }}
         popUpStyleMain={{ zIndex: "1000" }}
         isDisabled={!submitConfirmed}
-        isBackButtonDisabled={!submitConfirmed && selectedAdvocateUuid}
+        isBackButtonDisabled={!submitConfirmed && isAdvocateFlow}
         actionCancelStyle={{ width: "50%", height: "40px" }}
       >
         <div className="case-locking-main-div" style={caseLockingMainDiv}>
           <div>
-            {selectedAdvocateUuid ? (
+            {isAdvocateFlow ? (
               <React.Fragment>
                 <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
                   {t("CONFIRM_HOW_COMPLAINT_WILL_BE_SIGNED")}

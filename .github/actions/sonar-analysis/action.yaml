@@ -35,7 +35,7 @@ runs:
   steps:
 
     - name: Checkout Repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         repository: ${{ inputs.repo }}
         ref: ${{ inputs.branch }}
@@ -69,12 +69,16 @@ runs:
         SONAR_TOKEN: ${{ inputs.sonar_token }}
       shell: bash
       run: |
-        npx sonar-scanner -Dsonar.projectKey=PUCAR_${{ inputs.service_name }} -Dsonar.organization=pucar -Dsonar.host.url=${{ inputs.sonar_url }} -Dsonar.token=${{ inputs.sonar_token }} -Dsonar.sources=./${{ env.sonar_sources }} -Dsonar.exclusions="node_modules/**,dist/**"
+        exclusions="node_modules/**,dist/**"
+        if [ -n "${{ env.extra_sonar_exclusions }}" ]; then
+          exclusions="$exclusions,${{ env.extra_sonar_exclusions }}"
+        fi
+        npx sonar-scanner -Dsonar.projectKey=PUCAR_${{ inputs.service_name }} -Dsonar.organization=pucar -Dsonar.host.url=${{ inputs.sonar_url }} -Dsonar.token=${{ inputs.sonar_token }} -Dsonar.sources=./${{ env.sonar_sources }} -Dsonar.exclusions="$exclusions"
       working-directory: ${{ env.service_source_path }}
 
     - name: Set up JDK 17
       if: ${{ env.language == 'java' }}
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: ${{ env.version }}
         distribution: 'temurin'

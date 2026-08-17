@@ -6,7 +6,7 @@ import { buildUploadModalConfig, SIGNATURE_UPLOAD_CONFIG } from "../utils/fileCo
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { Loader } from "@egovernments/digit-ui-react-components";
 
-const AuthenticatedLink = ({ t, uri, displayFilename = false, pdf = false }) => {
+const AuthenticatedLink = ({ t, uri, displayFilename = false, pdf = false, name = "downloadedFile" }) => {
   const handleClick = (e) => {
     e.preventDefault();
 
@@ -26,7 +26,7 @@ const AuthenticatedLink = ({ t, uri, displayFilename = false, pdf = false }) => 
           const blobUrl = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = blobUrl;
-          link.download = `downloadedFile.${extension}`;
+          link.download = `${name}.${extension}`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -103,6 +103,7 @@ function UploadModal({
   uploadGuidelines = null,
   fileStoreId,
   isParentLoading = false,
+  downloadedFileName,
 }) {
   const [errors, setErrors] = useState({});
   const combineAndSelectRef = useRef(null);
@@ -262,7 +263,7 @@ function UploadModal({
               {t("CLICK_HERE")}
             </span>
           ) : (
-            <AuthenticatedLink uri={uri} t={t} displayFilename={"CLICK_HERE"} pdf={true} />
+            <AuthenticatedLink uri={uri} t={t} displayFilename={"CLICK_HERE"} pdf={true} name={downloadedFileName} />
           )}
         </div>
       )}

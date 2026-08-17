@@ -283,6 +283,14 @@ const ComplainantSignature = ({ path }) => {
     [roles, loggedInUserOnBehalfOfUuid, userInfo]
   );
 
+  // True when a clerk is in this case as their own complainant or as a POA holder (not acting on behalf of a senior advocate).
+  const isClerkActingAsComplainant = useMemo(() => {
+    if (!isAdvocateClerk) return false;
+    const isLitigantInCase = Boolean(caseDetails?.litigants?.some((lit) => lit?.additionalDetails?.uuid === userInfo?.uuid));
+    const isPoaHolderInCase = Boolean(caseDetails?.poaHolders?.some((poa) => poa?.additionalDetails?.uuid === userInfo?.uuid));
+    return isLitigantInCase || isPoaHolderInCase;
+  }, [isAdvocateClerk, caseDetails?.litigants, caseDetails?.poaHolders, userInfo?.uuid]);
+
   const DocumentFileStoreId = useMemo(() => {
     return caseDetails?.additionalDetails?.signedCaseDocument;
   }, [caseDetails]);
@@ -380,9 +388,25 @@ const ComplainantSignature = ({ path }) => {
     return caseDetails?.poaHolders?.some((poa) => poa?.hasSigned && poa?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
   }, [caseDetails, loggedInUserOnBehalfOfUuid]);
 
+  const isCurrentUserSigned = useMemo(() => isCurrentLitigantSigned || isCurrentAdvocateSigned || isCurrentPoaSigned, [
+    isCurrentLitigantSigned,
+    isCurrentAdvocateSigned,
+    isCurrentPoaSigned,
+  ]);
+
   const isCurrentLitigantContainPoa = useMemo(
     () => litigants?.some((lit) => lit?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid && lit?.poaHolder),
     [litigants, loggedInUserOnBehalfOfUuid]
+  );
+
+  const isCurrentPersonLitigant = useMemo(() => litigants?.some((lit) => lit?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid), [
+    litigants,
+    loggedInUserOnBehalfOfUuid,
+  ]);
+
+  const isCurrentPersonAdvocate = useMemo(
+    () => caseDetails?.representatives?.some((advocate) => advocate?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid),
+    [caseDetails, loggedInUserOnBehalfOfUuid]
   );
 
   const isCurrentPersonPoa = useMemo(
@@ -523,7 +547,7 @@ const ComplainantSignature = ({ path }) => {
         tenantId
       ).then(async (res) => {
         if ([complainantWorkflowState.CASE_REASSIGNED, complainantWorkflowState.DRAFT_IN_PROGRESS].includes(res?.cases?.[0]?.status)) {
-          if ((isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) && isSelectedUploadDoc) {
+          if (((isOwnerAdvocateSelf && !isCurrentLitigantContainPoa) || isMemberOnBehalfOfOwnerAdvocate) && isSelectedUploadDoc) {
             await closePendingTask({
               status: state,
               assignee: loggedInUserOnBehalfOfUuid,
@@ -531,35 +555,13 @@ const ComplainantSignature = ({ path }) => {
             });
           }
           if (isSelectedEsign) {
-            const promises = [
-              ...(Array.isArray(caseDetails?.litigants)
-                ? litigants?.map(async (litigant) => {
-                    if (!litigant?.poaHolder) {
-                      return closePendingTask({
-                        status: state,
-                        assignee: litigant?.additionalDetails?.uuid,
-                      });
-                    }
-                  })
-                : []),
-              ...(Array.isArray(caseDetails?.representatives)
-                ? caseDetails?.representatives?.map(async (advocate) => {
-                    return closePendingTask({
-                      status: state,
-                      assignee: advocate?.additionalDetails?.uuid,
-                    });
-                  })
-                : []),
-              ...(Array.isArray(caseDetails?.poaHolders)
-                ? caseDetails?.poaHolders?.map(async (poaHolder) => {
-                    return closePendingTask({
-                      status: state,
-                      assignee: poaHolder?.additionalDetails?.uuid,
-                    });
-                  })
-                : []),
-            ];
-            await Promise.all(promises);
+            const assignees = new Set();
+            (litigants || []).forEach((l) => {
+              if (!l?.poaHolder && l?.additionalDetails?.uuid) assignees.add(l.additionalDetails.uuid);
+            });
+            (caseDetails?.representatives || []).forEach((a) => a?.additionalDetails?.uuid && assignees.add(a.additionalDetails.uuid));
+            (caseDetails?.poaHolders || []).forEach((p) => p?.additionalDetails?.uuid && assignees.add(p.additionalDetails.uuid));
+            await Promise.all([...assignees].map((assignee) => closePendingTask({ status: state, assignee })));
           }
           history.replace(
             `/${window?.contextPath}/${userInfoType}/dristi/home/file-case/case?caseId=${res?.cases?.[0]?.id}&selected=complainantDetails`
@@ -653,6 +655,12 @@ const ComplainantSignature = ({ path }) => {
       placeholder = `${poaHolder?.name} - PoA holder for ${representedNames}`;
     } else {
       if (isOwnerAdvocateSelf) {
+        const advocateActingAsLitigant = litigants?.find((lit) => lit?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
+        if (advocateActingAsLitigant) {
+          placeholder = `${advocateActingAsLitigant?.additionalDetails?.fullName} - Complainant ${advocateActingAsLitigant?.additionalDetails?.currentPosition}`;
+          return getUniqueAcronym(placeholder);
+        }
+
         const advocate = caseDetails?.representatives?.find((advocate) => advocate?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
         const representingWithAllUnsigned = advocate?.representing?.find((rep) => {
           // match litigant using UUID
@@ -949,7 +957,7 @@ const ComplainantSignature = ({ path }) => {
     if (!mockESignEnabled && (!signatureDocumentId || signatureDocumentId === caseDetails?.additionalDetails?.signedCaseDocument)) {
       setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
       setLoader(false);
-      return;
+      return false;
     }
     try {
       await DRISTIService.caseUpdateService(
@@ -993,6 +1001,11 @@ const ComplainantSignature = ({ path }) => {
                   assignee: advocate?.additionalDetails?.uuid,
                 });
               });
+              // An advocate who is also filing as a litigant on this case has their own
+              // litigant-assigned pending task in addition to the advocate-representative ones.
+              if (isOwnerAdvocateSelf && isCurrentPersonLitigant) {
+                promises.push(closePendingTask({ status: state, assignee: loggedInUserOnBehalfOfUuid }));
+              }
               await Promise.all(promises);
             }
           }
@@ -1078,6 +1091,7 @@ const ComplainantSignature = ({ path }) => {
           taggedError.originalError = error;
           throw taggedError;
         });
+      return true;
     } catch (error) {
       console.error("E-sign process failed:", error);
       if (!error?.isPendingTaskError) {
@@ -1087,6 +1101,7 @@ const ComplainantSignature = ({ path }) => {
       }
       setEsignSuccess(false);
       setLoader(false);
+      return false;
     }
   };
 
@@ -1099,9 +1114,7 @@ const ComplainantSignature = ({ path }) => {
         CaseWorkflowState.PENDING_SIGN,
       ]?.includes(caseDetails?.status) &&
       (isEsignSuccess ||
-        isCurrentAdvocateSigned ||
-        isCurrentLitigantSigned ||
-        isCurrentPoaSigned ||
+        isCurrentUserSigned ||
         (![CaseWorkflowState?.PENDING_RE_SIGN, CaseWorkflowState.PENDING_SIGN]?.includes(caseDetails?.status) && isCurrentLitigantContainPoa) ||
         uploadDoc ||
         (isSelectedEsign && isMemberOnBehalfOfOwnerAdvocate)) && // If junior adv/clerk is on this screen.
@@ -1129,10 +1142,17 @@ const ComplainantSignature = ({ path }) => {
       const ifRemountCheck = isLitigant ? !updatedOnceRef.current : !updatedOnceRef.current && isTopbarMounted;
 
       if (!isLoading && isEsignSuccess && caseDetails?.filingNumber && ifRemountCheck) {
-        await updateCase(state).then(async () => {
+        try {
+          await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId });
+        } catch (err) {
+          console.error("Failed to release case lock before eSign update", err);
+        }
+
+        const updateSucceeded = await updateCase(state);
+        if (updateSucceeded) {
           await refetchCaseData();
-          setEsignSuccess(false);
-        });
+        }
+        setEsignSuccess(false);
       }
     };
 
@@ -1142,14 +1162,10 @@ const ComplainantSignature = ({ path }) => {
 
   useEffect(() => {
     if (!caseDetails?.filingNumber || isLoading) return;
-    const handleCaseUnlocking = async () => {
-      await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
-    };
 
     const isSignSuccess = sessionStorage.getItem("isSignSuccess");
     const storedESignObj = sessionStorage.getItem("signStatus");
     const parsedESignObj = JSON.parse(storedESignObj);
-    const esignProcess = sessionStorage.getItem("esignProcess");
 
     if (isSignSuccess) {
       const matchedSignStatus = parsedESignObj?.find((obj) => obj.name === name && obj.isSigned === true);
@@ -1159,22 +1175,22 @@ const ComplainantSignature = ({ path }) => {
         setEsignSuccess(true);
       }
     }
-    if (esignProcess && caseDetails?.filingNumber) {
-      handleCaseUnlocking();
-    }
 
-    if (!isLitigant) {
+    if (!isLitigant && !isClerkActingAsComplainant) {
       setTimeout(() => {
         clearStorage();
       }, 3000);
     } else {
       clearStorage();
     }
-  }, [caseDetails, tenantId, isLoading, isLitigant]);
+  }, [caseDetails, tenantId, isLoading, isLitigant, isClerkActingAsComplainant]);
 
   const isRightPannelEnable = useMemo(() => {
-    if (isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) {
-      return !(isCurrentAdvocateSigned || isOtherAdvocateSigned || isCurrentPoaSigned || isEsignSuccess || uploadDoc);
+    if (
+      (isOwnerAdvocateSelf && (!isCurrentLitigantContainPoa || isCurrentPersonAdvocate || isCurrentPersonLitigant)) ||
+      isMemberOnBehalfOfOwnerAdvocate
+    ) {
+      return !(isCurrentAdvocateSigned || isCurrentLitigantSigned || isOtherAdvocateSigned || isCurrentPoaSigned || isEsignSuccess || uploadDoc);
     }
     return !(isCurrentLitigantSigned || isCurrentPoaSigned || (isCurrentLitigantContainPoa && !isCurrentPersonPoa) || isEsignSuccess);
   }, [
@@ -1188,6 +1204,8 @@ const ComplainantSignature = ({ path }) => {
     isCurrentPoaSigned,
     isCurrentLitigantContainPoa,
     isCurrentPersonPoa,
+    isCurrentPersonAdvocate,
+    isCurrentPersonLitigant,
   ]);
 
   if (isLoading || isCaseDataFetching) {
@@ -1241,7 +1259,9 @@ const ComplainantSignature = ({ path }) => {
                 {litigant?.additionalDetails?.fullName}
                 {litigant?.hasSigned ||
                 litigant?.poaHolder?.hasSigned ||
-                (litigant?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid && (isEsignSuccess || uploadDoc)) ? (
+                (litigant?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid &&
+                  !isCurrentLitigantContainPoa &&
+                  (isEsignSuccess || uploadDoc)) ? (
                   <span style={{ ...styles.signedLabel, alignItems: "right" }}>{t("SIGNED")}</span>
                 ) : (
                   <span style={{ ...styles.unSignedLabel, alignItems: "right" }}>{t("PENDING")}</span>
@@ -1315,10 +1335,10 @@ const ComplainantSignature = ({ path }) => {
             {isSelectedUploadDoc && !(isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) && (
               <p style={styles.signatureDescription}>{t("ONLY_ADVOCATES_AND_ASSOCIATED_MEMBERS_CAN_UPLOAD_SIGNED_COPY")}</p>
             )}
-            {isSelectedEsign && (isMemberOnBehalfOfOwnerAdvocate || isAdvocateClerk) && (
+            {isSelectedEsign && (isMemberOnBehalfOfOwnerAdvocate || (isAdvocateClerk && !isClerkActingAsComplainant)) && (
               <p style={styles.signatureDescription}>{t("YOU_ARE_NOT_AUTHORIZED_TO_DO_ESIGN")}</p>
             )}
-            {isSelectedEsign && !isMemberOnBehalfOfOwnerAdvocate && !isAdvocateClerk && (
+            {isSelectedEsign && !isMemberOnBehalfOfOwnerAdvocate && (!isAdvocateClerk || isClerkActingAsComplainant) && (
               <button style={styles.esignButton} onClick={handleEsignAction}>
                 {t("CS_ESIGN")}
               </button>
@@ -1328,11 +1348,11 @@ const ComplainantSignature = ({ path }) => {
               <button
                 style={{
                   ...styles.uploadButton,
-                  opacity: isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate ? 1 : 0.5,
-                  cursor: isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate ? "pointer" : "default",
+                  opacity: (isOwnerAdvocateSelf && isCurrentPersonAdvocate) || isMemberOnBehalfOfOwnerAdvocate ? 1 : 0.5,
+                  cursor: (isOwnerAdvocateSelf && isCurrentPersonAdvocate) || isMemberOnBehalfOfOwnerAdvocate ? "pointer" : "default",
                 }}
                 onClick={handleUploadFile}
-                disabled={!(isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate)}
+                disabled={!((isOwnerAdvocateSelf && isCurrentPersonAdvocate) || isMemberOnBehalfOfOwnerAdvocate)}
               >
                 <FileUploadIcon />
                 <span style={{ marginLeft: "8px" }}>{t("UPLOAD_SIGNED_PDF")}</span>

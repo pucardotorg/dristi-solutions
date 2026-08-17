@@ -10,7 +10,7 @@ import AddSignatureComponent from "../../components/AddSignatureComponent";
 import useDocumentUpload from "../../hooks/orders/useDocumentUpload";
 import CustomStepperSuccess from "../../components/CustomStepperSuccess";
 import UpdateDeliveryStatusComponent from "../../components/UpdateDeliveryStatusComponent";
-import { ordersService, taskService, processManagementService } from "../../hooks/services";
+import { taskService, processManagementService } from "../../hooks/services";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import qs from "qs";
 import { Urls } from "../../hooks/services/Urls";
@@ -20,8 +20,8 @@ import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
 import ReviewNoticeModal from "../../components/ReviewNoticeModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
-import { DateUtils, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS } from "../../utils/constants";
+import { DateUtils, isLPRCase, getDisplayCaseNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS, TASK_TYPES, getNonDeliveryReasonLabel } from "../../utils/constants";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { UploadModal } from "@egovernments/digit-ui-module-common";
@@ -76,7 +76,7 @@ export const getJudgeDefaultConfig = (courtId) => {
   });
 };
 
-function getAction(selectedDelievery, orderType) {
+function getAction(selectedDelievery, taskType) {
   const key = selectedDelievery?.key;
 
   if (key === "OTHER") {
@@ -84,12 +84,10 @@ function getAction(selectedDelievery, orderType) {
   }
 
   if (key === "DELIVERED") {
-    return orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
-      ? "DELIVERED"
-      : "SERVED";
+    return taskType === TASK_TYPES.WARRANT || taskType === TASK_TYPES.PROCLAMATION || taskType === TASK_TYPES.ATTACHMENT ? "DELIVERED" : "SERVED";
   }
 
-  return orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
+  return taskType === TASK_TYPES.WARRANT || taskType === TASK_TYPES.PROCLAMATION || taskType === TASK_TYPES.ATTACHMENT
     ? "NOT_DELIVERED"
     : "NOT_SERVED";
 }
@@ -162,7 +160,7 @@ const createUpdatedConfig = (baseConfig, formValues) => ({
   },
 });
 
-const ReviewSummonsNoticeAndWarrant = () => {
+const ReviewSummonsNoticeAndWarrant = ({ refetchCounts }) => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
@@ -214,10 +212,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [signatureId, setSignatureId] = useState("");
   const [deliveryChannel, setDeliveryChannel] = useState("");
   const [reload, setReload] = useState(false);
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
   // const [taskDetails, setTaskDetails] = useState({});
   const [tasksData, setTasksData] = useState(null);
   const [remarks, setRemarks] = useState("");
   const [selectedDelievery, setSelectedDelievery] = useState({});
+  const [selectedReason, setSelectedReason] = useState({});
+  const [reasonText, setReasonText] = useState("");
   const [showToast, setShowToast] = useState(null);
   const [bulkSignList, setBulkSignList] = useState([]);
   const [bulkSendList, setBulkSendList] = useState([]);
@@ -244,6 +245,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+
+  const taskType = useMemo(() => {
+    return rowData?.taskType;
+  }, [rowData]);
 
   const [tabData, setTabData] = useState(
     isJudge
@@ -537,76 +542,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     handleBulkSendSubmit();
   }, [bulkSendList, t, handleBulkSendSubmit]);
 
-  const handleUpdateStatus = useCallback(async () => {
-    const { data: tasksData } = await refetch();
-    if (tasksData) {
-      try {
-        const task = tasksData?.list?.[0];
-        const reqBody = {
-          task: {
-            ...task,
-            ...(typeof task?.taskDetails === "string" && { taskDetails: JSON.parse(task?.taskDetails) }),
-            taskDetails: {
-              ...(typeof task?.taskDetails === "string" ? JSON.parse(task?.taskDetails) : task?.taskDetails),
-              deliveryChannels: {
-                ...task?.taskDetails?.deliveryChannels,
-                statusChangeDate: updateStatusDate
-                  ? updateStatusDate
-                  : convertToDateInputFormat(rowData?.taskDetails?.deliveryChannels?.statusChangeDate),
-              },
-              remarks: {
-                remark: remarks,
-              },
-            },
-            workflow: {
-              ...tasksData?.list?.[0]?.workflow,
-              action: getAction(selectedDelievery, orderType),
-              documents: [{}],
-            },
-          },
-        };
-        await taskService.updateTask(reqBody, { tenantId }).then(async (res) => {
-          if (
-            res?.task &&
-            selectedDelievery?.key === "NOT_DELIVERED" &&
-            !(orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT)
-          ) {
-            let action = "";
-            if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
-              action = "NEW_PROCESS";
-            } else {
-              action = orderType === ORDER_TYPES.SUMMONS ? "NEW_SUMMON" : "NEW_NOTICE";
-            }
-
-            await taskService.updateTask(
-              {
-                task: {
-                  ...res.task,
-                  workflow: {
-                    ...res.task?.workflow,
-                    action: action,
-                  },
-                },
-              },
-              { tenantId }
-            );
-          }
-        });
-        setShowActionModal(false);
-        // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
-        isInitialLoadRef.current = true;
-        setReload(!reload);
-        setTimeout(() => {
-          isInitialLoadRef.current = false;
-        }, 1000);
-      } catch (error) {
-        console.error("Error updating task data:", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-        setShowToast({ label: t("HOME_SCREEN_UPDATE_FAILED"), error: true, errorId });
-      }
-    }
-  }, [dayInMillisecond, orderData, orderType, refetch, reload, selectedDelievery, tasksData, tenantId, todayDate]);
-
   useEffect(() => {
     // Set default values when component mounts
     setDefaultValues(defaultSearchValues);
@@ -627,10 +562,49 @@ const ReviewSummonsNoticeAndWarrant = () => {
       sessionStorage.removeItem("ESignSummons");
       sessionStorage.removeItem("delieveryChannel");
       sessionStorage.removeItem("homeActiveTab");
+      return;
+    }
+
+    const returnStateRaw = sessionStorage.getItem("ReviewSummonsReturnState");
+    if (returnStateRaw) {
+      try {
+        const returnState = JSON.parse(returnStateRaw);
+        if (typeof returnState?.activeTabIndex === "number") {
+          setActiveTabIndex(returnState.activeTabIndex);
+          setTabData((prev) => prev?.map((i, c) => ({ ...i, active: c === returnState.activeTabIndex })));
+        }
+        if (returnState?.rowData) {
+          // Mirror handleRowClick exactly so reopening after "View Case" behaves the same as clicking the row
+          const original = returnState.rowData;
+          if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER", "WARRANT_REISSUED_WITH_NEW_WARRANT"].includes(original?.status)) {
+            setRowData(original);
+            setshowNoticeModal(true);
+          } else {
+            setRemarks("");
+            setSelectedDelievery({});
+            setRowData(original);
+            const lastSignedTN = typeof window !== "undefined" ? sessionStorage.getItem("LastSignedTaskNumber") : null;
+            const isLastSigned = lastSignedTN && original?.taskNumber && original.taskNumber === lastSignedTN;
+            setActionModalType(isLastSigned ? "SIGNED" : original?.documentStatus);
+            setShowActionModal(true);
+            setStep(typeof returnState?.step === "number" ? returnState.step : 0);
+            setIsSigned(isLastSigned ? true : original?.documentStatus === "SIGN_PENDING" ? false : true);
+            setDeliveryChannel(handleTaskDetails(original?.taskDetails)?.deliveryChannels?.channelName);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to restore ReviewSummonsReturnState:", e);
+      }
     }
   }, []);
 
-  const [activeTabIndex, setActiveTabIndex] = useState(0);
+  // Once the restored modal (or notice modal) is actually open, the saved return state has served its purpose
+  useEffect(() => {
+    if (showActionModal || showNoticeModal) {
+      sessionStorage.removeItem("ReviewSummonsReturnState");
+      sessionStorage.removeItem("homeActiveTab");
+    }
+  }, [showActionModal, showNoticeModal]);
 
   const handleClose = useCallback(() => {
     sessionStorage.removeItem("SignedFileStoreID");
@@ -721,11 +695,29 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
   };
 
+  const viewCaseLink = useMemo(() => {
+    if (userType !== "employee" || !tasksData?.list[0]?.caseId) return null;
+    return `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${tasksData?.list[0]?.caseId}&filingNumber=${tasksData?.list[0]?.filingNumber}&tab=Overview&fromHome=true`;
+  }, [userType, tasksData]);
+
+  const onViewCaseClick = useCallback(() => {
+    sessionStorage.setItem("homeActiveTab", "CS_HOME_PROCESS");
+    sessionStorage.setItem(
+      "ReviewSummonsReturnState",
+      JSON.stringify({
+        rowData,
+        activeTabIndex,
+        step,
+      })
+    );
+  }, [rowData, activeTabIndex, step]);
+
   const infos = useMemo(() => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
+        { key: "CASE_NUMBER", value: getDisplayCaseNumber(rowData), viewCaseLink, onViewCaseClick },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData, taskType) },
         {
           key: "NEXT_HEARING_DATE",
           value: caseDetails?.caseDetails?.hearingDate ? DateUtils.getFormattedDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
@@ -736,7 +728,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "E_PROCESS_ID", value: rowData?.taskNumber },
       ];
     }
-  }, [rowData?.taskDetails, rowData?.taskNumber, nextHearingDate, orderDetails, compositeItem, orderType]);
+  }, [rowData, nextHearingDate, orderDetails, compositeItem, orderType, taskType, viewCaseLink, onViewCaseClick]);
 
   const reverseToDDMMYYYY = (dateStr) => {
     if (!dateStr) return "N/A";
@@ -757,7 +749,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData, taskType) },
         { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
         { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
         { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
@@ -768,13 +760,18 @@ const ReviewSummonsNoticeAndWarrant = () => {
         },
       ];
     }
-  }, [rowData?.taskDetails, rowData?.createdDate, nextHearingDate, orderDetails, compositeItem, orderType]);
+  }, [rowData?.taskDetails, rowData?.createdDate, nextHearingDate, orderDetails, compositeItem, orderType, taskType]);
 
   const ReviewInfo = useMemo(() => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
+      const nonDeliveryReasonLabel = getNonDeliveryReasonLabel(
+        rowData?.taskType,
+        caseDetails?.deliveryChannels?.notDeliveredReason,
+        caseDetails?.deliveryChannels?.notDeliveredReasonText
+      );
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData, taskType) },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         {
           key: "NEXT_HEARING_DATE",
@@ -784,10 +781,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
         { key: "STATUS", value: rowData?.status },
         { key: "STATUS_UPDATED_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
+        // Show the recorded reason for non-delivery only when one exists (RPAD summons/warrant marked NOT_DELIVERED).
+        // Reuses the same REASON_FOR_NON_DELIVERY localization key as the update-status modal.
+        ...(nonDeliveryReasonLabel ? [{ key: "REASON_FOR_NON_DELIVERY", value: nonDeliveryReasonLabel }] : []),
         { key: "REMARKS", value: caseDetails?.remarks?.remark ? caseDetails?.remarks?.remark : "N/A" },
       ];
     }
-  }, [rowData?.taskDetails, rowData?.status, nextHearingDate, orderDetails, compositeItem, orderType]);
+  }, [rowData?.taskDetails, rowData?.status, rowData?.taskType, nextHearingDate, orderDetails, compositeItem, orderType, taskType]);
 
   const links = useMemo(() => {
     return [{ text: "View order", link: "" }];
@@ -798,7 +798,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       return rowData?.documents?.map((document) => {
         return { ...document, fileName: `${t(rowData?.taskType)} ${t("DOCUMENT_TEXT")}` };
       });
-  }, [rowData, orderType]);
+  }, [rowData]);
 
   // Detect if a signed document already exists for the selected row
   const hasSignedDoc = useMemo(() => {
@@ -825,40 +825,119 @@ const ReviewSummonsNoticeAndWarrant = () => {
     ];
   }, [rowData, isIcops]);
 
+  const handleUpdateStatus = useCallback(async () => {
+    const { data: tasksData } = await refetch();
+    if (tasksData) {
+      try {
+        const task = tasksData?.list?.[0];
+        const reqBody = {
+          task: {
+            ...task,
+            ...(typeof task?.taskDetails === "string" && { taskDetails: JSON.parse(task?.taskDetails) }),
+            taskDetails: {
+              ...(typeof task?.taskDetails === "string" ? JSON.parse(task?.taskDetails) : task?.taskDetails),
+              deliveryChannels: {
+                ...task?.taskDetails?.deliveryChannels,
+                statusChangeDate: updateStatusDate
+                  ? updateStatusDate
+                  : convertToDateInputFormat(rowData?.taskDetails?.deliveryChannels?.statusChangeDate),
+                ...(selectedDelievery?.key === "NOT_DELIVERED" &&
+                  rowData?.taskDetails?.deliveryChannels?.channelCode === "RPAD" &&
+                  selectedReason?.key && {
+                    notDeliveredReason: selectedReason.key,
+                    notDeliveredReasonText: reasonText,
+                  }),
+              },
+              remarks: {
+                remark: remarks,
+              },
+            },
+            workflow: {
+              ...tasksData?.list?.[0]?.workflow,
+              action: getAction(selectedDelievery, taskType),
+              documents: [{}],
+            },
+          },
+        };
+        await taskService.updateTask(reqBody, { tenantId }).then(async (res) => {
+          if (
+            res?.task &&
+            selectedDelievery?.key === "NOT_DELIVERED" &&
+            !(taskType === TASK_TYPES.WARRANT || taskType === TASK_TYPES.PROCLAMATION || taskType === TASK_TYPES.ATTACHMENT)
+          ) {
+            let action = "";
+            if (taskType === TASK_TYPES.MISCELLANEOUS_PROCESS) {
+              action = "NEW_PROCESS";
+            } else {
+              action = taskType === TASK_TYPES.SUMMONS ? "NEW_SUMMON" : "NEW_NOTICE";
+            }
+
+            await taskService.updateTask(
+              {
+                task: {
+                  ...res.task,
+                  workflow: {
+                    ...res.task?.workflow,
+                    action: action,
+                  },
+                },
+              },
+              { tenantId }
+            );
+          }
+        });
+        setShowActionModal(false);
+        // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
+        isInitialLoadRef.current = true;
+        setReload(!reload);
+        setTimeout(() => {
+          isInitialLoadRef.current = false;
+        }, 1000);
+      } catch (error) {
+        console.error("Error updating task data:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("HOME_SCREEN_UPDATE_FAILED"), error: true, errorId });
+      } finally {
+        setSelectedReason({});
+        setReasonText("");
+      }
+    }
+  }, [dayInMillisecond, orderData, taskType, refetch, reload, selectedDelievery, selectedReason, reasonText, tasksData, tenantId, todayDate]);
+
   const successMessage = useMemo(() => {
     let msg = "";
     const isViaPolice = rowData?.taskDetails?.deliveryChannels?.channelCode === CHANNEL_IDS.POLICE;
     if (documents && !isViaPolice) {
-      if (orderType === ORDER_TYPES.NOTICE) {
+      if (taskType === TASK_TYPES.NOTICE) {
         msg = t("SUCCESSFULLY_SIGNED_NOTICE");
-      } else if (orderType === ORDER_TYPES.WARRANT) {
+      } else if (taskType === TASK_TYPES.WARRANT) {
         msg = t("SUCCESSFULLY_SIGNED_WARRANT");
-      } else if (orderType === ORDER_TYPES.PROCLAMATION) {
+      } else if (taskType === TASK_TYPES.PROCLAMATION) {
         msg = t("SUCCESSFULLY_SIGNED_PROCLAMATION");
-      } else if (orderType === ORDER_TYPES.ATTACHMENT) {
+      } else if (taskType === TASK_TYPES.ATTACHMENT) {
         msg = t("SUCCESSFULLY_SIGNED_ATTACHMENT");
-      } else if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
+      } else if (taskType === TASK_TYPES.MISCELLANEOUS_PROCESS) {
         msg = t("SUCCESSFULLY_SIGNED_MISCELLANEOUS_PROCESS");
       } else {
         msg = t("SUCCESSFULLY_SIGNED_SUMMON");
       }
     } else {
-      if (orderType === ORDER_TYPES.NOTICE) {
+      if (taskType === TASK_TYPES.NOTICE) {
         msg = t("SENT_NOTICE_VIA");
-      } else if (orderType === ORDER_TYPES.WARRANT) {
+      } else if (taskType === TASK_TYPES.WARRANT) {
         msg = t("SENT_WARRANT_VIA");
-      } else if (orderType === ORDER_TYPES.PROCLAMATION) {
+      } else if (taskType === TASK_TYPES.PROCLAMATION) {
         msg = t("SENT_PROCLAMATION_VIA");
-      } else if (orderType === ORDER_TYPES.ATTACHMENT) {
+      } else if (taskType === TASK_TYPES.ATTACHMENT) {
         msg = t("SENT_ATTACHMENT_VIA");
-      } else if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
+      } else if (taskType === TASK_TYPES.MISCELLANEOUS_PROCESS) {
         msg = t("SENT_MISCELLANEOUS_PROCESS_VIA");
       } else {
         msg = t("SENT_SUMMONS_VIA");
       }
     }
     return `${msg}${!documents || isViaPolice ? " " + deliveryChannel : ""}`;
-  }, [documents, orderType, deliveryChannel]);
+  }, [documents, deliveryChannel, taskType, rowData]);
 
   const handleSubmitEsign = useCallback(async () => {
     // Set flag to prevent onFormValueChange from clearing sessionStorage during this operation
@@ -940,6 +1019,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         }));
         setIsSigned(true);
         setActionModalType("SIGNED");
+        if (currentConfig?.label === "PENDING_SIGN" && refetchCounts) setTimeout(() => refetchCounts(), 1000);
       }
 
       if (rowData?.taskDetails?.deliveryChannels?.channelCode === CHANNEL_IDS.POLICE) {
@@ -989,7 +1069,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         isInitialLoadRef.current = false;
       }, 1000);
     }
-  }, [rowData, signatureId, tenantId]);
+  }, [rowData, signatureId, tenantId, mockESignEnabled, isJudge, courtId, activeTabIndex, refetch, t, refetchCounts]);
 
   const handleBulkSign = useCallback(() => {
     const selectedItems = bulkSignList?.filter((item) => item?.isSelected) || [];
@@ -1347,6 +1427,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
           }, 1000);
           // Reset the count and police tasks when modal closes
           setShowBulkSignSuccessModal(true);
+
+          const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
+          if (currentConfig?.label === "PENDING_SIGN" && refetchCounts) setTimeout(() => refetchCounts(), 1000);
         } catch (e) {
           console.error("Error preparing bulk send after bulk sign:", e);
           const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
@@ -1370,7 +1453,19 @@ const ReviewSummonsNoticeAndWarrant = () => {
       ?.filter((item) => item?.isSelected)
       ?.every((item) => item?.taskDetails?.deliveryChannels?.channelCode === CHANNEL_IDS.POLICE);
     setAllSelectedPolice(isPolice ? true : false);
-  }, [bulkSignList, tenantId, t, setShowToast, setIsBulkLoading, fetchResponseFromXmlRequest, callBulkSendApi]);
+  }, [
+    bulkSignList,
+    tenantId,
+    t,
+    setShowToast,
+    setIsBulkLoading,
+    fetchResponseFromXmlRequest,
+    callBulkSendApi,
+    isJudge,
+    courtId,
+    activeTabIndex,
+    refetchCounts,
+  ]);
 
   const handleBulkDownload = useCallback(async () => {
     try {
@@ -1772,6 +1867,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const handleCloseActionModal = useCallback(() => {
     setShowActionModal(false);
+    setSelectedReason({});
+    setReasonText("");
     if (taskNumber) history.replace(`/${window?.contextPath}/employee/orders/Summons&Notice`);
   }, [history, taskNumber]);
 
@@ -1829,6 +1926,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
           remarks={remarks}
           setRemarks={setRemarks}
           setUpdateStatusDate={setUpdateStatusDate}
+          selectedReason={selectedReason}
+          setSelectedReason={setSelectedReason}
+          reasonText={reasonText}
+          setReasonText={setReasonText}
         />
       ),
       actionSaveOnSubmit: handleUpdateStatus,
@@ -1836,7 +1937,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
       isDisabled: isDisabled,
       hideSubmit: isTypist,
     };
-  }, [handleCloseActionModal, handleDownload, handleUpdateStatus, sentInfos, isDisabled, links, orderType, rowData, selectedDelievery, t]);
+  }, [
+    handleCloseActionModal,
+    handleDownload,
+    handleUpdateStatus,
+    sentInfos,
+    isDisabled,
+    links,
+    orderType,
+    rowData,
+    selectedDelievery,
+    selectedReason,
+    reasonText,
+    t,
+  ]);
 
   useEffect(() => {
     // if (rowData?.id) getTaskDocuments();
@@ -1852,7 +1966,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [rowData]);
 
   const handleRowClick = (props) => {
-    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER"].includes(props?.original?.status)) {
+    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER", "WARRANT_REISSUED_WITH_NEW_WARRANT"].includes(props?.original?.status)) {
       setRowData(props?.original);
       setshowNoticeModal(true);
       return;

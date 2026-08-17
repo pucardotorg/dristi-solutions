@@ -158,6 +158,9 @@ public class Configuration {
 	@Value("${case.kafka.edit.topic}")
 	private String caseEditTopic;
 
+	@Value("${egov.case.register.evidence.topic}")
+	private String registerEvidenceTopic;
+
 	@Value("${witness.kafka.create.topic}")
 	private String witnessCreateTopic;
 

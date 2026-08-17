@@ -20,13 +20,26 @@ const SelectParty = ({
   setPartyInPerson,
   isLitigantJoined,
   isAdvocateJoined,
+  onUserTypeChange,
   searchLitigantInRepresentives,
   advocateId,
+  loggedInIndividualId,
+  litigantPartyType,
+  isClerkSelf = false,
+  hasAdvocateData = false,
 }) => {
   const { t } = useTranslation();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const isAdvocate = isClerkSelf ? false : userInfo?.roles?.some((role) => role.code === "ADVOCATE_ROLE");
+  // Lock partyInvolve if the user is already a litigant in this case (regardless of current userType tab) or already joined as advocate
+  const isPartyJoining = Boolean(litigantPartyType) || isLitigantJoined || isAdvocateJoined;
   const setFormError = useRef(null);
   const clearFormError = useRef(null);
+
+  const defaultPartyRef = useRef(null);
+  if (defaultPartyRef.current === null && party?.individualId) {
+    defaultPartyRef.current = party;
+  }
 
   const MultiSelectDropdown = window?.Digit?.ComponentRegistryService?.getComponent("MultiSelectDropdown");
 
@@ -111,7 +124,7 @@ const SelectParty = ({
         ? (pipAccusedIds.has(party?.individualId) && !party?.advocateId) || party?.advocateId
         : true
     );
-  }, [selectPartyData?.userType, party, caseDetails, searchLitigantInRepresentives, t, selectPartyData?.partyInvolve?.value]);
+  }, [selectPartyData?.userType, party, caseDetails, searchLitigantInRepresentives, t, selectPartyData?.partyInvolve?.value, pipAccusedIds]);
 
   const caseInfo = useMemo(() => {
     if (caseDetails?.caseCategory) {
@@ -182,17 +195,19 @@ const SelectParty = ({
   }, [uploadErrorMessage]);
 
   const getDisableParty = (party) => {
+    const isPoaAvailable = party?.isPoaAvailable?.code === "YES";
+    const isCurrentUserParty = party?.uuid === userInfo?.uuid;
+    const isCurrentUserPoa = party?.poaVerification?.individualDetails?.userUuid === userInfo?.uuid;
+
     if (party?.advocateRepresentingLength > 0) {
-      if (party?.isPoaAvailable?.code === "NO" && party?.uuid === userInfo?.uuid) {
-        return true;
-      } else if (party?.isPoaAvailable?.code === "YES" && party?.poaVerification?.individualDetails?.userUuid === userInfo?.uuid) {
-        return true;
-      } else {
-        return false;
-      }
-    } else {
-      return true;
+      return (!isPoaAvailable && isCurrentUserParty) || (isPoaAvailable && isCurrentUserPoa);
     }
+
+    if (isAdvocate && isPoaAvailable && !isCurrentUserPoa) {
+      return false;
+    }
+
+    return true;
   };
 
   return (
@@ -212,13 +227,31 @@ const SelectParty = ({
         <CardLabel className="case-input-label">{`${t("JOINING_THIS_CASE_AS")}`}</CardLabel>
         <RadioButtons
           selectedOption={selectPartyData?.userType}
-          disabled={true}
+          onSelect={(value) => {
+            if (value?.value !== selectPartyData?.userType?.value) {
+              onUserTypeChange?.();
+            }
+            setSelectPartyData((selectPartyData) => ({
+              ...selectPartyData,
+              userType: value,
+              partyInvolve: {},
+              isReplaceAdvocate: {},
+              affidavit: {},
+              advocateToReplaceList: [],
+              approver: { label: "", value: "" },
+              reasonForReplacement: "",
+              isPoaRightsClaiming: { label: "", value: "" },
+            }));
+            setPartyInPerson({});
+            setParty(value?.value === "Litigant" ? {} : []);
+          }}
+          disabled={!isAdvocate || !hasAdvocateData}
           optionsKey={"label"}
           options={[
             { label: t("ADVOCATE_OPT"), value: "Advocate" },
             { label: t("LITIGANT_OPT"), value: "Litigant" },
           ]}
-          additionalWrapperClass={"radio-disabled"}
+          additionalWrapperClass={(!isAdvocate || !hasAdvocateData) && "radio-disabled"}
         />
       </LabelFieldPair>
       <LabelFieldPair className="case-label-field-pair">
@@ -246,8 +279,8 @@ const SelectParty = ({
             { label: t("COMPLAINANTS_TEXT"), value: "COMPLAINANTS" },
             { label: t("RESPONDENTS_TEXT"), value: "RESPONDENTS" },
           ]}
-          disabled={isAdvocateJoined || isLitigantJoined}
-          additionalWrapperClass={(isAdvocateJoined || isLitigantJoined) && "radio-disabled"}
+          disabled={isPartyJoining}
+          additionalWrapperClass={isPartyJoining && "radio-disabled"}
         />
       </LabelFieldPair>
 
@@ -268,7 +301,7 @@ const SelectParty = ({
               }));
               setPartyInPerson({});
               if (isLitigantJoined || isAdvocateJoined) {
-                setParty(selectPartyData?.userType?.value === "Litigant" && value?.value === "NO" ? party || {} : []);
+                setParty(selectPartyData?.userType?.value === "Litigant" && value?.value === "NO" ? defaultPartyRef.current || {} : []);
               } else {
                 setParty(selectPartyData?.userType?.value === "Litigant" && value?.value === "NO" ? {} : []);
               }
@@ -378,6 +411,7 @@ const SelectParty = ({
             selectPartyData?.isReplaceAdvocate?.value && (
               <MultiSelectDropdown
                 options={parties
+                  ?.filter((party) => party?.individualId !== loggedInIndividualId)
                   ?.filter((party) => {
                     if (selectPartyData?.partyInvolve?.value === "COMPLAINANTS") {
                       return party?.partyType?.includes("complainant");

@@ -57,6 +57,25 @@ public class UserService {
 
     }
 
+    public RequestInfo createInternalMicroserviceRequestInfo() {
+        RequestInfo requestInfo = new RequestInfo();
+        Role role = Role.builder()
+                .name(INTERNALMICROSERVICEROLE_NAME)
+                .code(INTERNALMICROSERVICEROLE_CODE)
+                .tenantId(configuration.getTenantId())
+                .build();
+        User user = User.builder()
+                .id(0L)
+                .uuid(internalMicroserviceRoleUuid)
+                .type(INTERNALMICROSERVICEUSER_TYPE)
+                .tenantId(configuration.getTenantId())
+                .roles(Collections.singletonList(role))
+                .build();
+        requestInfo.setUserInfo(user);
+        requestInfo.setMsgId(DEFAULT_MESSAGE_ID);
+        return requestInfo;
+    }
+
     private void createInternalMicroserviceUser(RequestInfo requestInfo){
         Map<String, Object> userCreateRequest = new HashMap<>();
         //Creating role with INTERNAL_MICROSERVICE_ROLE

@@ -43,7 +43,7 @@ public class CombineValidator implements ConstraintValidator<CombineRequiredFiel
 
         } catch (Exception e) {
 
-            log.info("Something went wrong at validation");
+            log.error("Something went wrong at validation");
             return false;
         }
     }

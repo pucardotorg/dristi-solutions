@@ -1411,6 +1411,16 @@
     scrollbar-width: thin;
     scrollbar-color: #c5c5c5 #f9fafb;
   }
+  /* Tabs rendered directly (Review Applications, Scrutinise Cases) have no
+     scroll wrapper of their own, so long tables scroll the whole page and the
+     sidebar scrolls out of view. Direct-child selector keeps the nested
+     .bulk-esign-order-view in the Sign views from becoming a second scroll area. */
+  > .bulk-esign-order-view {
+    max-height: calc(100vh - 84px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #c5c5c5 #f9fafb;
+  }
   .inbox-search-wrapper {
     .inbox-search-component-wrapper {
       .sections-parent {
@@ -2400,6 +2410,11 @@
       font-size: 14px;
     }
   }
+}
+
+.table-pagination.table-pagination-top {
+  padding: 8px 8px;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .pending-envelope-submission-modal {

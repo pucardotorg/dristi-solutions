@@ -127,10 +127,10 @@ public class TaskService {
             return body.getTask();
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while creating task :: {}", e.toString());
+            log.error("Custom Exception occurred while creating task", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while creating task :: {}", e.toString());
+            log.error("Error occurred while creating task", e);
             throw new CustomException(CREATE_TASK_ERR, e.getMessage());
         }
     }
@@ -149,7 +149,7 @@ public class TaskService {
             Calculation calculation = objectMapper.convertValue(feeBreakDown, Calculation.class);
             etreasuryUtil.createDemand(body, consumerCode, calculation);
         } catch (Exception e) {
-            log.error("Error occurred while creating demand for payment :: {}", e.toString());
+            log.error("Error occurred while creating demand for payment", e);
             throw new CustomException("ERROR_CREATING_DEMAND_FOR_PAYMENT", e.getMessage());
         }
     }
@@ -184,7 +184,7 @@ public class TaskService {
                 body.getTask().getWorkflow().setAdditionalDetails(getAdditionalDetails(body.getTask()));
             }
         } catch (Exception e) {
-            log.error("Error occurred while updating assignedTo list :: {}", e.toString());
+            log.error("Error occurred while updating assignedTo list", e);
             throw new CustomException("ERROR_UPDATING_ASSIGNED_TO_LIST",e.getMessage());
         }
     }
@@ -204,10 +204,10 @@ public class TaskService {
             // Fetch tasks from database according to the given search criteria
             return taskRepository.getTasks(request.getCriteria(), request.getPagination());
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while searching task :: {}", e.toString());
+            log.error("Custom Exception occurred while searching task", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching task results :: {}", e.toString());
+            log.error("Error while fetching task results", e);
             throw new CustomException(SEARCH_TASK_ERR, e.getMessage());
         }
     }
@@ -298,10 +298,10 @@ public class TaskService {
             return body.getTask();
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while updating task :: {}", e.toString());
+            log.error("Custom Exception occurred while updating task", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while updating task :: {}", e.toString());
+            log.error("Error occurred while updating task", e);
             throw new CustomException(UPDATE_TASK_ERR, "Error occurred while updating task: " + e.getMessage());
         }
 
@@ -334,10 +334,10 @@ public class TaskService {
         try {
             return taskRepository.checkTaskExists(taskExistsRequest.getTask());
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while exist task check :: {}", e.toString());
+            log.error("Custom Exception occurred while exist task check", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching to exist task :: {}", e.toString());
+            log.error("Error while fetching to exist task", e);
             throw new CustomException(EXIST_TASK_ERR, e.getMessage());
         }
     }
@@ -401,13 +401,38 @@ public class TaskService {
     }
 
     public Task uploadDocument(TaskRequest body) {
+        return uploadDocument(body, false);
+    }
+
+    /**
+     * Uploads a document onto an existing task.
+     *
+     * <p>In the default (append) mode the incoming document(s) are simply added to the task; this is
+     * the normal generate -> sign -> send flow where each stage accumulates a new document.
+     *
+     * <p>When {@code override} is true the incoming document REPLACES the task's existing
+     * generated/signed/sent documents: every currently-active document is soft-deleted
+     * (isActive=false, id retained so the persister's ON CONFLICT(id) updates the existing row) and
+     * only the newly uploaded document stays active. This is used by the warrant-reissue regeneration
+     * so a reissued warrant carries only its freshly generated GENERATE_TASK_DOCUMENT and not the
+     * stale generated/signed copies from the previous cycle. The standard
+     * {@link TaskRegistrationEnrichment#enrichCaseApplicationUponUpdate} strips id-bearing documents
+     * from the payload and so cannot deactivate already-persisted documents, which is why the override
+     * path does its own enrichment instead.
+     */
+    public Task uploadDocument(TaskRequest body, boolean override) {
         try {
+            List<Document> incomingDocuments = body.getTask().getDocuments();
             Task task = validator.validateApplicationUploadDocumentExistence(body.getTask(), body.getRequestInfo());
             log.info("Task validateApplicationUploadDocumentExistence response :: {}", task);
 
             // Enrich application upon update
            TaskRequest taskRequest = TaskRequest.builder().requestInfo(body.getRequestInfo()).task(task).build();
-            enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
+            if (override) {
+                overrideTaskDocuments(taskRequest, incomingDocuments);
+            } else {
+                enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
+            }
             enrichmentUtil.enrichIsPendingCollectionUponUpdate(taskRequest, body);
 
             producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -415,12 +440,60 @@ public class TaskService {
             return taskRequest.getTask();
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while uploading document into task :: {}", e.toString());
+            log.error("Custom Exception occurred while uploading document into task", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while uploading document into task :: {}", e.toString());
+            log.error("Error occurred while uploading document into task", e);
             throw new CustomException(DOCUMENT_UPLOAD_QUERY_EXCEPTION, "Error occurred while uploading document into task: " + e.getMessage());
         }
+    }
+
+    /**
+     * Replaces a task's documents during warrant-reissue regeneration: deactivates every currently
+     * persisted active document (retaining its id so the persister updates the existing row to
+     * isActive=false, dropping it out of the isActive=true search) and keeps only the freshly uploaded
+     * document(s) active. Mirrors the audit/UUID enrichment normally done in
+     * {@link TaskRegistrationEnrichment#enrichCaseApplicationUponUpdate} but without its
+     * remove-already-persisted-documents step, which would otherwise discard the soft-deleted docs.
+     */
+    private void overrideTaskDocuments(TaskRequest taskRequest, List<Document> incomingDocuments) {
+        Task task = taskRequest.getTask();
+        task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+        task.getAuditDetails().setLastModifiedBy(taskRequest.getRequestInfo().getUserInfo().getUuid());
+
+        List<Document> mergedDocuments = new ArrayList<>();
+        for (Document existing : fetchExistingDocuments(task)) {
+            existing.setIsActive(false);
+            mergedDocuments.add(existing);
+        }
+        if (incomingDocuments != null) {
+            for (Document incoming : incomingDocuments) {
+                if (incoming.getId() == null) {
+                    incoming.setId(UUID.randomUUID().toString());
+                    incoming.setDocumentUid(incoming.getId());
+                }
+                if (incoming.getIsActive() == null) {
+                    incoming.setIsActive(true);
+                }
+                mergedDocuments.add(incoming);
+            }
+        }
+        task.setDocuments(mergedDocuments);
+    }
+
+    /** Reads the task's currently persisted active documents (the validator overwrites the task's own list with the incoming docs, so they are re-read here). */
+    private List<Document> fetchExistingDocuments(Task task) {
+        TaskCriteria criteria = TaskCriteria.builder()
+                .id(task.getId() != null ? String.valueOf(task.getId()) : null)
+                .taskNumber(task.getTaskNumber())
+                .cnrNumber(task.getCnrNumber())
+                .tenantId(task.getTenantId())
+                .build();
+        List<Task> tasks = taskRepository.getTasks(criteria, null);
+        if (tasks == null || tasks.isEmpty() || tasks.get(0).getDocuments() == null) {
+            return Collections.emptyList();
+        }
+        return tasks.get(0).getDocuments();
     }
 
     public void closeEnvelopePendingTaskOfRpad(TaskRequest taskRequest) {
@@ -566,7 +639,7 @@ public class TaskService {
             }
         }
         catch (Exception e) {
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
     }
 
@@ -642,7 +715,7 @@ public class TaskService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
     }
 
@@ -893,7 +966,7 @@ public class TaskService {
             log.info("operation = updateTaskDetailsForJoinCase, result = SUCCESS, record = {}", record);
 
         } catch (Exception e) {
-            log.info("operation = checkAndScheduleHearingForOptOut, result = FAILURE, message = {}", e.getMessage());
+            log.error("operation = checkAndScheduleHearingForOptOut, result = FAILURE, message = {}", e.getMessage());
         }
 
     }
@@ -981,7 +1054,7 @@ public class TaskService {
             log.info("Successfully updated geolocation details for case: {}", filingNumber);
 
         } catch (IllegalArgumentException e) {
-            log.info("Error updating geolocation details for case: {}", e.getMessage());
+            log.error("Error updating geolocation details for case: {}", e.getMessage());
             throw new CustomException(ERROR_FROM_CASE, e.getMessage());
         }
     }
@@ -1073,12 +1146,53 @@ public class TaskService {
             }
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
-                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
+                double cx = coordinate.getX();
+                double cy = coordinate.getY();
+                double pageWidth = coordinate.getPageWidth();
+                double pageHeight = coordinate.getPageHeight();
+                int sigWidth = config.getEsignSignatureWidth();
+                int sigHeight = config.getEsignSignatureHeight();
+                if (pageWidth > 0) {
+                    double overflow = cx + sigWidth - pageWidth;
+                    if (overflow > 0) {
+                        int phase1MaxReduction = sigWidth - config.getEsignSignaturePreferredWidthThreshold();
+                        int phase1Reduction = (int) Math.min(overflow, phase1MaxReduction);
+                        sigWidth -= phase1Reduction;
+                        overflow -= phase1Reduction;
+                        if (overflow > 0) {
+                            int widthBudget = sigWidth - config.getEsignSignatureMinWidth();
+                            int maxOffset = config.getEsignSignatureMaxLeftOffset();
+                            int half = (int) (overflow / 2);
+                            int wReduce, offset;
+                            if (half <= widthBudget && half <= maxOffset) {
+                                wReduce = (int) overflow / 2;
+                                offset = (int) overflow - wReduce;
+                            } else if (half > widthBudget) {
+                                wReduce = widthBudget;
+                                offset = (int) Math.min(overflow - wReduce, maxOffset);
+                            } else {
+                                offset = maxOffset;
+                                wReduce = (int) Math.min(overflow - offset, widthBudget);
+                            }
+                            sigWidth -= wReduce;
+                            cx = Math.max(cx - offset, 0);
+                        }
+                    }
+                    double remainingOverflow = cx + sigWidth - pageWidth;
+                    if (remainingOverflow > 0) {
+                        cx = Math.max(cx - remainingOverflow, 0);
+                    }
+                }
+                if (pageHeight > 0) {
+                    cy = Math.min(cy, pageHeight - sigHeight);
+                    cy = Math.max(cy, 0);
+                }
+                String coord = (int) Math.floor(cx) + "," + (int) Math.floor(cy);
                 String txnId = UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
                 ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of(config.getZoneId()));
 
-                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
+                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo, sigWidth);
                 TasksCriteria mapped = tasksCriteriaMap.get(coordinate.getFileStoreId());
                 if (mapped == null) {
                     throw new CustomException(COORDINATES_ERROR, "No matching criteria for fileStoreId: " + coordinate.getFileStoreId());
@@ -1097,7 +1211,7 @@ public class TaskService {
         return tasksToSigns;
     }
 
-    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
+    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber, int effectiveWidth) {
         log.info("generating request, result= IN_PROGRESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
         Map<String, Object> requestData = new LinkedHashMap<>();
 
@@ -1124,7 +1238,7 @@ public class TaskService {
         Map<String, Object> pdf = new LinkedHashMap<>();
         pdf.put(PAGE, pageNumber);
         pdf.put(CO_ORDINATES, coordination);
-        pdf.put(SIZE, config.getEsignSignatureWidth() + "," + config.getEsignSignatureHeight());
+        pdf.put(SIZE, effectiveWidth + "," + config.getEsignSignatureHeight());
         pdf.put(DATE_FORMAT, ESIGN_DATE_FORMAT);
         requestData.put(PDF, pdf);
 

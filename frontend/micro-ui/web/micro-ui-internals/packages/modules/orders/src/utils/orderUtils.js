@@ -10,6 +10,23 @@ export const prepareUpdatedOrderData = (currentOrder, orderFormData, compOrderIn
   let updatedCompositeItems = null;
   let updatedCurrentOrder = { ...currentOrder };
 
+  // The "is response required" radio is no longer shown for mandatory submissions, but the value is
+  // still read from the form data while publishing the order (order-management reads
+  // additionalDetails.formdata.responseInfo.isResponseRequired.code), so keep it stamped as "No".
+  // The empty respondingParty/responseDeadline keep the shape identical to what the radio used to
+  // save (via its clearFields) when the judge answered "No".
+  const updatedOrderFormData =
+    orderFormData?.orderType?.code === "MANDATORY_SUBMISSIONS_RESPONSES"
+      ? {
+          ...orderFormData,
+          responseInfo: {
+            isResponseRequired: { code: false, name: "ES_COMMON_NO" },
+            respondingParty: [],
+            responseDeadline: "",
+          },
+        }
+      : orderFormData;
+
   if (updatedCurrentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
     updatedCompositeItems = updatedCurrentOrder?.compositeItems?.map((compItem, compIndex) => {
       if (compIndex === compOrderIndex) {
@@ -20,7 +37,7 @@ export const prepareUpdatedOrderData = (currentOrder, orderFormData, compOrderIn
             ...(compItem?.orderSchema || {}),
             additionalDetails: {
               ...(compItem?.orderSchema?.additionalDetails || {}),
-              formdata: orderFormData,
+              formdata: updatedOrderFormData,
             },
           },
         };
@@ -43,7 +60,7 @@ export const prepareUpdatedOrderData = (currentOrder, orderFormData, compOrderIn
     orderType: updatedCurrentOrder?.orderCategory !== "COMPOSITE" ? orderFormData?.orderType?.code : null,
     compositeItems: updatedCurrentOrder?.orderCategory !== "COMPOSITE" ? null : updatedCompositeItems,
     additionalDetails:
-      updatedCurrentOrder?.orderCategory !== "COMPOSITE" ? { ...updatedCurrentOrder?.additionalDetails, formdata: orderFormData } : null,
+      updatedCurrentOrder?.orderCategory !== "COMPOSITE" ? { ...updatedCurrentOrder?.additionalDetails, formdata: updatedOrderFormData } : null,
     orderDetails: updatedCurrentOrder?.orderCategory !== "COMPOSITE" ? updatedCurrentOrder?.orderDetails : null,
   };
 };
@@ -255,19 +272,6 @@ export const getParties = (type, orderSchema, allParties) => {
 export const checkValidation = (t, formData, index, setFormErrors, setShowToast) => {
   let hasError = false;
   const currentOrderType = formData?.orderType?.code || "";
-  if (currentOrderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
-    if (!formData?.responseInfo?.responseDeadline && formData?.responseInfo?.isResponseRequired?.code === true) {
-      setFormErrors?.current?.[index]?.("responseDeadline", { message: t("PROPOSED_DATE_CAN_NOT_BE_BEFORE_SUBMISSION_DEADLINE") });
-      hasError = true;
-    }
-    if (
-      (!formData?.responseInfo?.respondingParty || formData?.responseInfo?.respondingParty?.length === 0) &&
-      formData?.responseInfo?.isResponseRequired?.code === true
-    ) {
-      setFormErrors?.current?.[index]?.("respondingParty", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-      hasError = true;
-    }
-  }
 
   if (currentOrderType === "ACCEPT_BAIL") {
     const bt = formData?.bailType;
@@ -915,6 +919,7 @@ export const createTaskPayload = async (orderType, orderDetails, { caseDetails, 
           caseTitle: caseDetails?.caseTitle,
           year: new Date(caseDetails).getFullYear(),
           hearingDate: new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime(),
+          originalHearingDate: new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime(),
           judgeName: judgeName,
           courtName: courtDetails?.name,
           courtAddress: courtDetails?.address,
@@ -957,6 +962,7 @@ export const createTaskPayload = async (orderType, orderDetails, { caseDetails, 
           caseTitle: caseDetails?.caseTitle,
           year: new Date(caseDetails).getFullYear(),
           hearingDate: new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime(),
+          originalHearingDate: new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime(),
           judgeName: judgeName,
           courtName: courtDetails?.name,
           courtAddress: courtDetails?.address,
@@ -1000,6 +1006,7 @@ export const createTaskPayload = async (orderType, orderDetails, { caseDetails, 
           caseTitle: caseDetails?.caseTitle,
           year: new Date(caseDetails).getFullYear(),
           hearingDate: new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime(),
+          originalHearingDate: new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime(),
           judgeName: judgeName,
           courtName: courtDetails?.name,
           courtAddress: courtDetails?.address,
@@ -1040,6 +1047,7 @@ export const createTaskPayload = async (orderType, orderDetails, { caseDetails, 
           title: caseDetails?.caseTitle,
           year: new Date(caseDetails).getFullYear(),
           hearingDate: new Date(orderData?.additionalDetails?.formdata?.date || "").getTime(),
+          originalHearingDate: new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime(),
           judgeName: "",
           courtName: courtDetails?.name,
           courtAddress: courtDetails?.address,
@@ -1054,6 +1062,7 @@ export const createTaskPayload = async (orderType, orderDetails, { caseDetails, 
         title: caseDetails?.caseTitle,
         year: new Date(caseDetails).getFullYear(),
         hearingDate: hearingDate,
+        originalHearingDate: hearingDate,
         judgeName: "",
         courtName: courtDetails?.name,
         courtAddress: courtDetails?.address,

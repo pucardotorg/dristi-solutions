@@ -1,3 +1,4 @@
+import { downloadCombinedDocuments } from "../../../../Utils";
 import { removeInvalidNameParts } from "./partyUtils";
 
 // Helper function to configure tab-specific settings based on tab label
@@ -206,6 +207,7 @@ export const getTabConfig = ({
           ...tabConfig.apiDetails,
           requestBody: {
             ...tabConfig.apiDetails.requestBody,
+            caseDetails: caseRelatedData.case,
             criteria: {
               caseId: caseDetails?.id,
               filingNumber: caseDetails?.filingNumber,
@@ -274,6 +276,7 @@ export const getTabConfig = ({
           ...tabConfig.apiDetails,
           requestBody: {
             ...tabConfig.apiDetails.requestBody,
+            caseDetails: caseRelatedData.case,
             criteria: {
               filingNumber: filingNumber,
               tenantId: tenantId,
@@ -336,6 +339,13 @@ export const getTabConfig = ({
                     return {
                       ...column,
                       clickFunc: handleApplicationDeleteFunc,
+                      downloadFunc: (row) => {
+                        const docs = row?.documents?.filter((d) => d?.fileStore);
+                        if (docs?.length) {
+                          const name = `${row?.applicationNumber || ""}_Submission.pdf`;
+                          downloadCombinedDocuments(docs, name);
+                        }
+                      },
                     };
                   case "OWNER":
                     return {

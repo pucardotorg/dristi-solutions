@@ -46,11 +46,15 @@ public class PdfEmbedder {
         log.info("Method=findLocationToSign ,Result=Inprogress ,placeholder={}", signaturePlace);
 
         Coordinate coordinate = new Coordinate();
+        int lastPage = reader.getNumberOfPages();
         Rectangle cropBox = reader.getCropBox(1);
         coordinate.setX(cropBox.getLeft());
         coordinate.setY(cropBox.getBottom());
         coordinate.setFound(false);
-        coordinate.setPageNumber(reader.getNumberOfPages());
+        coordinate.setPageNumber(lastPage);
+        Rectangle defaultPageSize = reader.getPageSizeWithRotation(lastPage);
+        coordinate.setPageWidth(defaultPageSize.getWidth());
+        coordinate.setPageHeight(defaultPageSize.getHeight());
 
         if (signaturePlace == null || signaturePlace.isBlank()) {
             return coordinate;
@@ -82,6 +86,9 @@ public class PdfEmbedder {
                     coordinate.setY(y + configuration.getESignYCoordinateOffset());
                     coordinate.setFound(true);
                     coordinate.setPageNumber(i);
+                    Rectangle foundPageSize = reader.getPageSizeWithRotation(i);
+                    coordinate.setPageWidth(foundPageSize.getWidth());
+                    coordinate.setPageHeight(foundPageSize.getHeight());
                     log.info("Method=findLocationToSign,Result=Success,Coordinate found for placeholder={}", signaturePlace);
                     return coordinate;
 

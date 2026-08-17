@@ -106,7 +106,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
             String targetPartyCategory = entry.getKey(); // "complainant", "respondent", "court"
             List<Map<String, String>> partyDetails = entry.getValue();
             log.info("Generating pending tasks for party category: {} with {} party details", targetPartyCategory, partyDetails.size());
-            
+
             if (!partyDetails.isEmpty()) {
                 // Extract party types for logging
                 Set<String> partyTypes = new HashSet<>();
@@ -116,7 +116,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
                         partyTypes.add(actualPartyType);
                     }
                 }
-                
+
                 log.info("Generating pending tasks for party category: {} with party types: {}", targetPartyCategory, partyTypes);
                 generatePendingTasks(orderRequest, courtCase, targetPartyCategory, litigantAdvocateMapping, order, partyDetails, requestInfo);
                 log.info("Generated pending tasks for party category: {} with party types: {}", targetPartyCategory, partyTypes);
@@ -277,7 +277,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
 
                 callNotificationService(orderRequest,PAYMENT_LINK_SMS, smsTemplateData, uniqueAssignee);
             } catch (Exception e) {
-                log.error("Error occurred while sending notification to user: {}", e.toString());
+                log.error("Error occurred while sending notification to user", e);
             }
 
         } catch (Exception e) {
@@ -366,7 +366,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
             }
         }
         catch (Exception e) {
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
     }
 

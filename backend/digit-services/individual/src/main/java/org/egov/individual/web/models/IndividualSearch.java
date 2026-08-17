@@ -42,6 +42,10 @@ public class IndividualSearch   {
     @Builder.Default
     private String individualId = null;
 
+    @JsonProperty("individualIds")
+    @Exclude
+    private List<String> individualIds = null;
+
     @JsonProperty("clientReferenceId")
     @Builder.Default
     private List<String> clientReferenceId = null;

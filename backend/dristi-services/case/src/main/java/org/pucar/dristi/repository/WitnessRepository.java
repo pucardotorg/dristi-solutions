@@ -54,7 +54,7 @@ public class WitnessRepository {
             throw e;
         }
         catch (Exception e){
-            log.error("Error while fetching witness application list :: {}", e.toString());
+            log.error("Error while fetching witness application list", e);
             throw new CustomException(SEARCH_WITNESS_ERR,"Exception while fetching witness application list: "+e.getMessage());
         }
     }

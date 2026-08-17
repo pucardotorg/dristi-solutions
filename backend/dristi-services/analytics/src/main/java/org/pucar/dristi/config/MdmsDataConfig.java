@@ -74,7 +74,7 @@ public class MdmsDataConfig {
                 pendingTaskTypeMap.get(workflowModule).add(pendingTaskType);
             }
         } catch (Exception e) {
-            log.error("Unable to create pending task map :: {}",e.getMessage());
+            log.error("Unable to create pending task map", e);
         }
     }
 
@@ -94,7 +94,7 @@ public class MdmsDataConfig {
                 caseOverallStatusTypeMap.get(workflowModule).add(caseOverallStatusType);
             }
         } catch (Exception e) {
-            log.error("Unable to create case-overall-status map :: {}",e.getMessage());
+            log.error("Unable to create case-overall-status map", e);
         }
     }
 
@@ -111,7 +111,7 @@ public class MdmsDataConfig {
                 caseOutcomeTypeMap.put(orderType,caseOutcomeType);
             }
         } catch (Exception e) {
-            log.error("Unable to create case outcome map :: {}",e.getMessage());
+            log.error("Unable to create case outcome map", e);
         }
     }
 
@@ -128,7 +128,7 @@ public class MdmsDataConfig {
                 assigneeToOfficeMembersTypeMap.put(workflowModule, assigneeToOfficeMembersType);
             }
         } catch (Exception e) {
-            log.error("Unable to create assignee to office members map :: {}",e.getMessage());
+            log.error("Unable to create assignee to office members map", e);
         }
     }
 
@@ -137,9 +137,9 @@ public class MdmsDataConfig {
         try {
             JSONArray secondaryStageArray = mdmsUtil.fetchMdmsData(requestInfo, configuration.getStateLevelTenantId(), configuration.getMdmsCaseSecondaryStageModuleName(), List.of(configuration.getMdmsCaseSecondaryStageMasterName()))
                     .get(configuration.getMdmsCaseSecondaryStageModuleName()).get(configuration.getMdmsCaseSecondaryStageMasterName());
-            
+
             orderTypeToSubstageMap = new HashMap<>();
-            
+
             for (Object o : secondaryStageArray) {
                 if (o instanceof Map) {
                     Map<String, Object> stageMap = (Map<String, Object>) o;
@@ -148,34 +148,34 @@ public class MdmsDataConfig {
                         Map<String, Object> dataMap = (Map<String, Object>) data;
                         Object orderType = dataMap.get("orderType");
                         Object substage = dataMap.get("substage");
-                        
+
                         if (orderType instanceof String && substage instanceof String) {
                             orderTypeToSubstageMap.put((String) orderType, (String) substage);
                         }
                     }
                 }
             }
-            
+
             if (!orderTypeToSubstageMap.isEmpty()) {
-                log.info("Successfully loaded {} orderType to substage mappings from MDMS: {}", 
+                log.info("Successfully loaded {} orderType to substage mappings from MDMS: {}",
                          orderTypeToSubstageMap.size(), orderTypeToSubstageMap);
             } else {
                 log.warn("No orderType to substage mappings found in MDMS, using defaults");
                 // Load default values as fallback
                 orderTypeToSubstageMap = Map.of(
                     "NOTICE", "Notice",
-                    "SUMMONS", "Summons", 
+                    "SUMMONS", "Summons",
                     "WARRANT", "Warrant",
                     "ATTACHMENT", "Proclamation & Attachment"
                 );
                 log.info("Using default orderType to substage mappings: {}", orderTypeToSubstageMap);
             }
         } catch (Exception e) {
-            log.error("Unable to load orderType to substage mappings from MDMS, using defaults :: {}", e.getMessage());
+            log.error("Unable to load orderType to substage mappings from MDMS, using defaults", e);
             // Load default values as fallback
             orderTypeToSubstageMap = Map.of(
                 "NOTICE", "Notice",
-                "SUMMONS", "Summons", 
+                "SUMMONS", "Summons",
                 "WARRANT", "Warrant",
                 "ATTACHMENT", "Proclamation & Attachment"
             );

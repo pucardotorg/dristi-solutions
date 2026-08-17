@@ -5,9 +5,13 @@ package org.egov.web.notification.sms.service.impl;
  */
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.egov.web.notification.sms.config.Producer;
 import org.egov.web.notification.sms.config.SMSProperties;
+import org.egov.web.notification.sms.models.HealthStatusEvent;
 import org.egov.web.notification.sms.models.Sms;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -41,9 +45,15 @@ public class CdacSmsClient {
     
     private  final WebClient webClient;
 
+    private final Producer producer;
+
+    @Value("${kafka.topics.health.status}")
+    private String healthStatusTopic;
+
     @Autowired
-    public CdacSmsClient(WebClient webClient) {
+    public CdacSmsClient(WebClient webClient, Producer producer) {
         this.webClient = webClient;
+        this.producer = producer;
     }
 
 
@@ -165,6 +175,7 @@ public class CdacSmsClient {
             log.info("Request Url: {}", smsProviderURL);
 
             try {
+                long start = System.currentTimeMillis();
                 // Non-blocking WebClient usage: return a Mono<String>
                 return webClient.post()
                     .uri(smsProviderURL)
@@ -172,8 +183,14 @@ public class CdacSmsClient {
                     .body(BodyInserters.fromFormData(requestBodyMap))
                     .retrieve()
                     .bodyToMono(String.class)
-                    .doOnNext(body -> log.info(body))
-                    .doOnError(e -> log.error(e.getMessage(), e));
+                    .doOnNext(body -> {
+                        log.info(body);
+                        pushHealthStatus(smsProviderURL, "UP", System.currentTimeMillis() - start, body);
+                    })
+                    .doOnError(e -> {
+                        log.error(e.getMessage(), e);
+                        pushHealthStatus(smsProviderURL, "DOWN", System.currentTimeMillis() - start, e.getMessage());
+                    });
             } catch (Exception e) {
                 e.printStackTrace();
                 log.error(e.getMessage(), e);
@@ -187,6 +204,22 @@ public class CdacSmsClient {
         }
 
         return Mono.just(responseString);
+    }
+
+    private void pushHealthStatus(String serviceUrl, String status, long elapsedMs, String message) {
+        try {
+            HealthStatusEvent event = HealthStatusEvent.builder()
+                    .serviceName("SMS")
+                    .serviceUrl(serviceUrl)
+                    .lastStatus(status)
+                    .lastUpdatedTime(System.currentTimeMillis())
+                    .responseTimeMs(elapsedMs)
+                    .message(message)
+                    .build();
+            producer.push(healthStatusTopic, event);
+        } catch (Exception e) {
+            log.error("Failed to push SMS health status to kafka: {}", e.getMessage(), e);
+        }
     }
 
     protected String hashGenerator(String userName, String senderId, String content, String secureKey) {

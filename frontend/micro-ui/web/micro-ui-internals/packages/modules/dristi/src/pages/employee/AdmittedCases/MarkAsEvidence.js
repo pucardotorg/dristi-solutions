@@ -4,14 +4,15 @@ import { Dropdown, Loader, TextInput, LabelFieldPair, CardLabel } from "@egovern
 import { DRISTIService } from "../../../services";
 import SuccessBannerModal from "../../../../../submissions/src/components/SuccessBannerModal";
 import { MarkAsEvidenceAction } from "../../../Utils/submissionWorkflow";
-import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { Urls } from "../../../hooks";
 import { useHistory } from "react-router-dom";
 import { InfoCard } from "@egovernments/digit-ui-components";
-import { getAuthorizedUuid, isLPRCase, sanitizeData } from "../../../Utils";
+import { getAuthorizedUuid, getNameByUuid, isLPRCase, sanitizeData } from "../../../Utils";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
+import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 
 // Helper functions for button labels and actions
 const getButtonLabels = (isJudge, evidenceDetails, currentDiaryEntry = false, t) => {
@@ -114,6 +115,7 @@ const MarkAsEvidence = ({
   paginatedData,
   evidenceDetailsObj,
   setDocumentCounter = (e) => {},
+  refetchCounts,
 }) => {
   const [loader, setLoader] = useState(false); // Loader state for API calls
   const [stepper, setStepper] = useState(0);
@@ -124,7 +126,6 @@ const MarkAsEvidence = ({
   const isJudge = useMemo(() => roles?.some((role) => role.code === "JUDGE_ROLE"), [roles]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [evidenceDetails, setEvidenceDetails] = useState(evidenceDetailsObj || {});
-  const [caseDetails, setCaseDetails] = useState({});
   const [businessOfDay, setBusinessOfDay] = useState("");
   const [evidenceNumber, setEvidenceNumber] = useState("");
   const [evidenceNumberError, setEvidenceNumberError] = useState("");
@@ -159,6 +160,22 @@ const MarkAsEvidence = ({
     const sessionData = JSON.parse(sessionStorage.getItem("markAsEvidenceSelectedItem"));
     return sessionData?.artifactNumber || evidenceDetailsObj?.artifactNumber;
   }, [evidenceDetailsObj?.artifactNumber]);
+  const { data: caseData } = useSearchCaseService(
+    {
+      criteria: [
+        {
+          filingNumber: filingNumber,
+          ...(courtId && userType === "employee" && { courtId }),
+        },
+      ],
+      tenantId,
+    },
+    {},
+    `markAsEvidence-${filingNumber}`,
+    filingNumber,
+    Boolean(filingNumber)
+  );
+  const caseDetails = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0] || {}, [caseData]);
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
   const [isSigned, setIsSigned] = useState(false);
 
@@ -396,7 +413,7 @@ const MarkAsEvidence = ({
         setOwnerName(response?.artifacts?.[0]?.owner);
       } else if (response?.artifacts?.[0]?.sourceID) {
         // If owner name is missing, get it from individual details
-        getIndividualDetails(response?.artifacts?.[0]?.sourceID);
+        getIndividualDetails(response?.artifacts?.[0]?.sourceID, response?.artifacts?.[0]);
       }
     } catch (error) {
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
@@ -409,122 +426,96 @@ const MarkAsEvidence = ({
       setLoader(false);
     }
   };
-  const getCaseDetails = async () => {
-    try {
-      setLoader(true);
-      const response = await DRISTIService.searchCaseService(
-        {
-          criteria: [
-            {
-              filingNumber: filingNumber,
-              ...(courtId && userType === "employee" && { courtId }),
-            },
-          ],
-          tenantId,
-        },
-        {}
-      );
-      // Check if tag ends with a number
-      const hasNumberSuffix = (tag) => {
-        if (!tag || !tag.trim()) return false;
-        return /\d+$/.test(tag);
-      };
-      const witnessList = response?.criteria[0]?.responseList[0]?.witnessDetails?.map((witness) => {
-        const data = witness || {};
-        return data?.witnessTag && hasNumberSuffix(data?.witnessTag)
-          ? {
-              witnessTag: data.witnessTag || "",
-              firstName: data.firstName || "",
-              lastName: data.lastName || "",
-              middleName: data.middleName || "",
-              fullName: getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null), //here
-              code: data.witnessTag,
-              displayName:
-                data?.witnessTag + " (" + getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null) + ")",
-            }
-          : null;
-      });
-      const LitigantList = (response?.criteria?.[0]?.responseList?.[0]?.litigants || [])?.map((litigant) => {
-        const data = litigant?.additionalDetails?.tag || null;
-        return data && hasNumberSuffix(data)
-          ? {
-              witnessTag: data || "",
-              fullName: litigant?.additionalDetails?.fullName,
-              code: data,
-              displayName: data + " (" + litigant?.additionalDetails?.fullName + ")",
-            }
-          : null;
-      });
-      const advList = (response?.criteria?.[0]?.responseList?.[0]?.representatives || [])?.map((adv) => {
-        const data = adv?.additionalDetails?.tag || null;
-        return data && hasNumberSuffix(data)
-          ? {
-              witnessTag: data || "",
-              fullName: adv?.additionalDetails?.advocateName,
-              code: data,
-              displayName: data + " (" + adv?.additionalDetails?.advocateName + ")",
-            }
-          : null;
-      });
-      const poaList = (response?.criteria?.[0]?.responseList?.[0]?.poaHolders || [])?.map((poa) => {
-        const data = poa?.additionalDetails?.tag || null;
-        return data && hasNumberSuffix(data)
-          ? {
-              witnessTag: data || "",
-              fullName: poa?.name,
-              code: data,
-              displayName: data + " (" + poa?.name + ")",
-            }
-          : null;
-      });
-      const combined = [...(witnessList || []), ...(LitigantList || []), ...(advList || []), ...(poaList || [])];
-      const sessionData = JSON.parse(sessionStorage.getItem("markAsEvidenceSelectedItem"));
+  useEffect(() => {
+    if (!caseDetails?.filingNumber) return;
 
-      const evidenceTag = evidenceDetails?.tag || sessionData?.tag;
-      const isDeletedDraft = evidenceDetails?.evidenceMarkedStatus === "DELETED_DRAFT" || sessionData?.evidenceMarkedStatus === "DELETED_DRAFT";
+    // Check if tag ends with a number
+    const hasNumberSuffix = (tag) => {
+      if (!tag || !tag.trim()) return false;
+      return /\d+$/.test(tag);
+    };
+    const witnessList = caseDetails?.witnessDetails?.map((witness) => {
+      const data = witness || {};
+      return data?.witnessTag && hasNumberSuffix(data?.witnessTag)
+        ? {
+            witnessTag: data.witnessTag || "",
+            firstName: data.firstName || "",
+            lastName: data.lastName || "",
+            middleName: data.middleName || "",
+            fullName: getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null), //here
+            code: data.witnessTag,
+            displayName:
+              data?.witnessTag + " (" + getFormattedName(data?.firstName, data?.middleName, data?.lastName, data?.witnessDesignation, null) + ")",
+          }
+        : null;
+    });
+    const LitigantList = (caseDetails?.litigants || [])?.map((litigant) => {
+      const data = litigant?.additionalDetails?.tag || null;
+      return data && hasNumberSuffix(data)
+        ? {
+            witnessTag: data || "",
+            fullName: litigant?.additionalDetails?.fullName,
+            code: data,
+            displayName: data + " (" + litigant?.additionalDetails?.fullName + ")",
+          }
+        : null;
+    });
+    const advList = (caseDetails?.representatives || [])?.map((adv) => {
+      const data = adv?.additionalDetails?.tag || null;
+      return data && hasNumberSuffix(data)
+        ? {
+            witnessTag: data || "",
+            fullName: adv?.additionalDetails?.advocateName,
+            code: data,
+            displayName: data + " (" + adv?.additionalDetails?.advocateName + ")",
+          }
+        : null;
+    });
+    const poaList = (caseDetails?.poaHolders || [])?.map((poa) => {
+      const data = poa?.additionalDetails?.tag || null;
+      return data && hasNumberSuffix(data)
+        ? {
+            witnessTag: data || "",
+            fullName: poa?.name,
+            code: data,
+            displayName: data + " (" + poa?.name + ")",
+          }
+        : null;
+    });
+    const combined = [...(witnessList || []), ...(LitigantList || []), ...(advList || []), ...(poaList || [])];
+    const sessionData = JSON.parse(sessionStorage.getItem("markAsEvidenceSelectedItem"));
 
-      if (evidenceTag && !isDeletedDraft) {
-        setWitnessTag(combined?.find((user) => user?.code === evidenceTag));
-      } else {
-        setWitnessTag(null);
-      }
-      if (evidenceDetails?.isEvidence && !evidenceDetails?.additionalDetails?.botd) {
-        getAdiaryEntries(response?.criteria[0]?.responseList[0]?.cmpNumber || filingNumber);
-      }
-      setWitnessTagValues(combined?.filter(Boolean));
-      setCaseDetails(response?.criteria[0]?.responseList[0]);
-    } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-      setShowToast({
-        label: t("ERROR_FETCHING_CASE_DETAILS"),
-        error: true,
-        errorId,
-      });
-    } finally {
-      setLoader(false);
+    const evidenceTag = evidenceDetails?.tag || sessionData?.tag;
+    const isDeletedDraft = evidenceDetails?.evidenceMarkedStatus === "DELETED_DRAFT" || sessionData?.evidenceMarkedStatus === "DELETED_DRAFT";
+
+    if (evidenceTag && !isDeletedDraft) {
+      setWitnessTag(combined?.find((user) => user?.code === evidenceTag));
+    } else {
+      setWitnessTag(null);
     }
-  };
-  const getIndividualDetails = async (sourceId) => {
+    if (evidenceDetails?.isEvidence && !evidenceDetails?.additionalDetails?.botd) {
+      getAdiaryEntries(caseDetails?.cmpNumber || filingNumber);
+    }
+    setWitnessTagValues(combined?.filter(Boolean));
+  }, [caseDetails, evidenceDetails]);
+  const getIndividualDetails = async (sourceId, evidenceForBackfill) => {
     try {
       setLoader(true);
       const individualResponse = await DRISTIService.searchIndividualUser(
-        {
-          Individual: {
-            individualId: sourceId,
-          },
-        },
-        { tenantId, limit: 1000, offset: 0 }
+        { Individual: { individualId: sourceId } },
+        { tenantId, limit: 1, offset: 0 }
       );
       const individualData = individualResponse?.Individual?.[0];
-      const fullName = getFullName(" ", individualData?.name?.givenName, individualData?.name?.otherNames, individualData?.name?.familyName);
+      const individualName = getFullName(" ", individualData?.name?.givenName, individualData?.name?.otherNames, individualData?.name?.familyName);
+      const fullName = getNameByUuid(individualData?.userUuid, caseDetails) || individualName;
       setOwnerName(fullName);
 
-      // Store owner name in additionalDetails to avoid repeated API calls
-      if (fullName && evidenceDetails?.id) {
+      // Store owner name in additionalDetails to avoid repeated lookups
+      if (fullName && evidenceForBackfill?.id) {
         const updatedEvidenceDetails = {
-          ...evidenceDetails,
+          ...evidenceForBackfill,
           additionalDetails: {
-            ...(evidenceDetails?.additionalDetails || {}),
+            ...(evidenceForBackfill?.additionalDetails || {}),
             ownerName: fullName,
           },
         };
@@ -567,6 +558,7 @@ const MarkAsEvidence = ({
     }
   };
   useEffect(() => {
+    if (!caseDetails?.filingNumber) return;
     if (!evidenceDetailsObj && !sessionStorage.getItem("markAsEvidenceSelectedItem")) {
       getEvidenceDetails();
     } else if (sessionStorage.getItem("markAsEvidenceSelectedItem")) {
@@ -610,7 +602,7 @@ const MarkAsEvidence = ({
         } else if (evidenceDetailsObj?.owner) {
           setOwnerName(evidenceDetailsObj.owner);
         } else if (evidenceDetailsObj?.sourceID) {
-          getIndividualDetails(evidenceDetailsObj.sourceID);
+          getIndividualDetails(evidenceDetailsObj.sourceID, evidenceDetailsObj);
         }
 
         // Set stepper based on evidence status
@@ -629,11 +621,7 @@ const MarkAsEvidence = ({
         setBusinessOfDay(evidenceDetailsObj?.additionalDetails?.botd || null);
       }
     }
-    // Get case details if filing number is available
-    if (filingNumber) {
-      getCaseDetails();
-    }
-  }, [filingNumber, courtId, userType, tenantId, artifactNumber, evidenceDetailsObj, t]);
+  }, [filingNumber, courtId, userType, tenantId, artifactNumber, evidenceDetailsObj, t, caseDetails]);
   useEffect(() => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
   }, [checkSignStatus, name, formData, uploadModalConfig, setIsSigned]);
@@ -1204,6 +1192,7 @@ const MarkAsEvidence = ({
             clearEvidenceSessionData();
             setShowMakeAsEvidenceModal(false);
             setDocumentCounter((prevCount) => prevCount + 1);
+            if (refetchCounts && typeof refetchCounts === "function") setTimeout(() => refetchCounts(), 1000);
           }}
           message={"MARK_AS_EVIDENCE_SUCCESS"}
         />

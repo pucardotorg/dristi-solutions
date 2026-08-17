@@ -85,7 +85,7 @@ public class InPortalSurveyService {
             return Eligibility.builder().isEligible(isEligible).build();
 
         } catch (CustomException e) {
-            log.error("operation=checkEligibility, status=FAILED, userUuid={}, reason={}", userUuid, e.getMessage());
+            log.error("operation=checkEligibility, status=FAILED, userUuid={}, reason=", userUuid, e);
             throw new CustomException(ELIGIBILITY_CHECK_EXCEPTION, e.getMessage());
         }
     }
@@ -121,7 +121,7 @@ public class InPortalSurveyService {
 
 
         } catch (CustomException e) {
-            log.error("operation=createRemindMeLater, status=FAILED, reason={}", e.getMessage());
+            log.error("operation=createRemindMeLater, status=FAILED, reason=", e);
             throw new CustomException(REMIND_ME_LATER_EXCEPTION, e.getMessage());
         }
     }
@@ -159,7 +159,7 @@ public class InPortalSurveyService {
             return request.getFeedBack();
 
         } catch (CustomException e) {
-            log.error("operation=createFeedBack, status=FAILED, reason={}", e.getMessage());
+            log.error("operation=createFeedBack, status=FAILED, reason=", e);
             throw new CustomException(FEED_BACK_EXCEPTION, e.getMessage());
         }
 

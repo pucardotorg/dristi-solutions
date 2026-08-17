@@ -91,6 +91,7 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "HEARING_ACCEPTOR",
       "USER_REGISTER",
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
@@ -98,6 +99,15 @@ export const userTypeOptions = [
       "BAIL_BOND_CREATOR",
       "BAIL_BOND_VIEWER",
       "BAIL_BOND_EDITOR",
+      "PLEA_SIGNER",
+      "PLEA_EDITOR",
+      "MEDIATION_SIGNER",
+      "MEDIATION_EDITOR",
+      "EXAMINATION_SIGNER",
+      "EXAMINATION_EDITOR",
+      "PLEA_VIEWER",
+      "MEDIATION_VIEWER",
+      "EXAMINATION_VIEWER",
     ],
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
@@ -305,7 +315,7 @@ const SelectEmail = ({
   if (
     individualId &&
     (userType === "LITIGANT" ? !isLitigantPartialRegistered : true) &&
-    (userType !== "LITIGANT" ? !isApprovalPending && !isRejected : true) &&
+    (userType !== "LITIGANT" ? !isApprovalPending && !isRejected && searchResult?.length !== 0 : true) &&
     !isProfile
   ) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);

@@ -1,7 +1,7 @@
 import { TextInput, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory, Link } from "react-router-dom/cjs/react-router-dom.min";
 import CommentComponent from "../../../components/CommentComponent";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import ConfirmSubmissionAction from "../../../components/ConfirmSubmissionAction";
@@ -17,9 +17,11 @@ import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import {
   cleanString,
+  downloadCombinedDocuments,
   getAllAssociatedPartyUuids,
   getAuthorizedUuid,
   getDate,
+  getNameByUuid,
   getOrderActionName,
   getOrderTypes,
   isLPRCase,
@@ -30,9 +32,9 @@ import useSearchEvidenceService from "../../../../../submissions/src/hooks/submi
 import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
 import DOMPurify from "dompurify";
-import { getUserInfoFromUuids } from "../../../../../submissions/src/utils";
 import { CloseBtn } from "../../../components/ModalComponents";
 import CustomToast from "../../../components/CustomToast";
+import { getUserInfoFromUuids } from "../../../../../submissions/src/utils";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -71,10 +73,11 @@ const EvidenceModal = ({
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const userInfo = Digit.UserService.getUser()?.info;
-  const user = Digit.UserService.getUser()?.info?.name;
+  const user = getNameByUuid(userInfo?.uuid, caseData?.case) || userInfo?.name;
   const isLitigent = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role?.code)), [
     userInfo?.roles,
   ]);
+  console.log("caseData", caseData);
   const isJudge = useMemo(() => userInfo?.roles?.some((role) => ["JUDGE_ROLE"].includes(role?.code)), [userInfo?.roles]);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
@@ -161,34 +164,42 @@ const EvidenceModal = ({
 
     let isMounted = true;
 
-    const fetchUsers = async () => {
-      try {
-        const result = await getUserInfoFromUuids(uuids);
+    const resolveNames = async () => {
+      const lookup = new Map(uuids.map((uuid) => [uuid, getNameByUuid(uuid, caseData?.case)]));
+      const unresolvedUuids = uuids.filter((uuid) => !lookup.get(uuid));
 
-        const lookup = new Map((result || []).map((user) => [user.userUuid, user.name]));
-
-        if (!isMounted) return;
-
-        setUserInfoMap({
-          senderUser: senderUuid
-            ? { uuid: senderUuid, name: lookup.get(senderUuid) }
-            : createdBy
-            ? { uuid: createdBy, name: lookup.get(createdBy) }
-            : null,
-          createdByUser: createdBy ? { uuid: createdBy, name: lookup.get(createdBy) } : null,
-          onBehalfOfUser: onBehalfOfUuid ? { uuid: onBehalfOfUuid, name: lookup.get(onBehalfOfUuid) } : null,
-        });
-      } catch (error) {
-        console.error("Failed to fetch user info", error);
+      if (unresolvedUuids.length > 0) {
+        try {
+          const userInfo = await getUserInfoFromUuids(unresolvedUuids);
+          userInfo?.forEach((user) => {
+            if (user?.userUuid) lookup.set(user.userUuid, user?.name || "");
+          });
+        } catch (error) {
+          console.error("Failed to fetch user info", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("ERROR_FETCHING_USER_INFO"), error: true, errorId });
+        }
       }
+
+      if (!isMounted) return;
+
+      setUserInfoMap({
+        senderUser: senderUuid
+          ? { uuid: senderUuid, name: lookup.get(senderUuid) }
+          : createdBy
+          ? { uuid: createdBy, name: lookup.get(createdBy) }
+          : null,
+        createdByUser: createdBy ? { uuid: createdBy, name: lookup.get(createdBy) } : null,
+        onBehalfOfUser: onBehalfOfUuid ? { uuid: onBehalfOfUuid, name: lookup.get(onBehalfOfUuid) } : null,
+      });
     };
 
-    fetchUsers();
+    resolveNames();
 
     return () => {
       isMounted = false;
     };
-  }, [documentSubmission, artifact]);
+  }, [documentSubmission, artifact, caseData]);
 
   const senderName = useMemo(() => {
     if (documentSubmission?.[0]?.artifactList?.sourceType === "COURT") {
@@ -274,23 +285,7 @@ const EvidenceModal = ({
       if (userType === "employee") {
         const applicationType = documentSubmission?.[0]?.applicationList?.applicationType;
         label = applicationType === "CORRECTION_IN_COMPLAINANT_DETAILS" ? t("REVIEW_CHANGES") : t("Approve");
-      } else {
-        const asUser = documentSubmission?.[0]?.applicationList?.asUser || documentSubmission?.[0]?.artifactList?.asUser;
-        const allPartiesIncludingMembers = getAllAssociatedPartyUuids(caseData?.case, asUser);
-        if (allPartiesIncludingMembers?.includes(userInfo?.uuid)) {
-          label = t("DOWNLOAD_SUBMISSION");
-        } else if (isLitigent && [...(allAdvocates?.[userInfo?.uuid] || []), userInfo?.uuid]?.includes(createdBy)) {
-          label = t("DOWNLOAD_SUBMISSION");
-        } else if (!isLitigent) {
-          // For All advocates and clerks, show the download submisison button.
-          label = t("DOWNLOAD_SUBMISSION");
-        } else if (
-          (respondingUuids?.includes(userInfo?.uuid) || !documentSubmission?.[0]?.details?.referenceId) &&
-          [SubmissionWorkflowState.PENDINGRESPONSE, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus)
-        ) {
-          label = t("ADD_COMMENT");
-        }
-      }
+      } else return null;
     } else {
       if (
         documentSubmission?.[0]?.artifactList?.isEvidence ||
@@ -303,7 +298,7 @@ const EvidenceModal = ({
       }
     }
     return label;
-  }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType, caseData]);
+  }, [documentSubmission, modalType, t, userType]);
 
   const actionCancelLabel = useMemo(() => {
     if (
@@ -433,9 +428,6 @@ const EvidenceModal = ({
       }
       if (showConfirmationModal?.type === "accept") {
         message = "SUCCESSFULLY_ACCEPTED_APPLICATION_MESSAGE";
-      }
-      if (actionSaveLabel === t("ADD_COMMENT")) {
-        message = "SUCCESSFULLY_RESPONDED_APPLICATION_MESSAGE";
       } else {
         message = "";
       }
@@ -516,28 +508,6 @@ const EvidenceModal = ({
         }
       );
     }
-  };
-
-  const handleRespondApplication = async () => {
-    await mutation.mutate(
-      {
-        url: Urls.dristi.submissionsUpdate,
-        params: {},
-        body: {
-          application: {
-            ...respondApplicationPayload,
-            comment: comments,
-          },
-        },
-        config: {
-          enable: true,
-        },
-      },
-      {
-        onSuccess,
-        onError,
-      }
-    );
   };
 
   const handleDeleteApplication = async () => {
@@ -879,6 +849,10 @@ const EvidenceModal = ({
       };
 
       if (generateOrder) {
+        if (!refApplicationId) {
+          setToast({ label: t("SOMETHING_WENT_WRONG_REFRESH_AND_TRY_AGAIN"), error: true });
+          return;
+        }
         const reqbody = {
           order: {
             createdDate: null,
@@ -1012,13 +986,6 @@ const EvidenceModal = ({
   }, [documentSubmission]);
 
   const actionSaveOnSubmit = async () => {
-    if (actionSaveLabel === t("DOWNLOAD_SUBMISSION") && signedSubmission?.applicationContent?.fileStoreId) {
-      const name = `${caseData?.courtCaseNumber || caseData?.cmpNumber || caseData?.filingNumber || "Case"}_${
-        signedSubmission?.applicationList?.applicationNumber || ""
-      }_Application`;
-      downloadPdf(tenantId, signedSubmission?.applicationContent?.fileStoreId, name);
-      return;
-    }
     setIsActionLoading(true);
     try {
       if (userType === "employee") {
@@ -1044,28 +1011,6 @@ const EvidenceModal = ({
           }
         }
       } else {
-        if (actionSaveLabel === t("ADD_COMMENT")) {
-          try {
-          } catch (error) {}
-          await handleRespondApplication();
-          try {
-            DRISTIService.customApiService(Urls.dristi.pendingTask, {
-              pendingTask: {
-                entityType: "application-order-submission-feedback",
-                status: "RESPOND_TO_PRODUCTION_DOCUMENTS",
-                referenceId: `MANUAL_${signedSubmission?.applicationList?.applicationNumber}`,
-                cnrNumber,
-                filingNumber,
-                caseId,
-                caseTitle: caseData?.title,
-                isCompleted: true,
-                tenantId,
-              },
-            });
-          } catch (error) {
-            console.error("error :>> ", error);
-          }
-        }
         counterUpdate();
         setShow(false);
         counterUpdate();
@@ -1102,7 +1047,41 @@ const EvidenceModal = ({
       setIsActionLoading(false);
     }
   };
+  const downloadSubmissionLabel = useMemo(() => {
+    if (modalType === "Submissions") {
+      if (signedSubmission?.applicationContent?.fileStoreId || allCombineDocs?.length > 0) {
+        return t("DOWNLOAD_SUBMISSION");
+      }
+    }
+    return false;
+  }, [modalType, signedSubmission, t, allCombineDocs]);
+
   const actionCustomLabelSubmit = async () => {
+    if (downloadSubmissionLabel) {
+      if (signedSubmission?.applicationContent?.fileStoreId) {
+        const name = `${caseData?.case?.courtCaseNumber || caseData?.case?.cmpNumber || caseData?.case?.filingNumber || "Case"}_${
+          signedSubmission?.applicationList?.applicationNumber || ""
+        }_Application`;
+        downloadPdf(tenantId, signedSubmission?.applicationContent?.fileStoreId, name);
+        return;
+      }
+      if (allCombineDocs?.length > 0) {
+        setIsActionLoading(true);
+        try {
+          const name = `${caseData?.case?.courtCaseNumber || caseData?.case?.cmpNumber || caseData?.case?.filingNumber || "Case"}_${
+            documentSubmission?.[0]?.applicationList?.applicationNumber || ""
+          }_Application.pdf`;
+          await downloadCombinedDocuments(allCombineDocs, name);
+        } catch (error) {
+          console.error("Error combining documents:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setToast({ label: t("ERROR_COMBINING_DOCUMENTS"), error: true, errorId });
+        } finally {
+          setIsActionLoading(false);
+        }
+        return;
+      }
+    }
     setIsActionLoading(true);
     try {
       if (userType === "employee") {
@@ -1283,6 +1262,16 @@ const EvidenceModal = ({
           textStyle={{
             color: "#fff",
           }}
+          footerChildren={
+            downloadSubmissionLabel ? (
+              <div
+                onClick={actionCustomLabelSubmit}
+                style={{ fontWeight: 700, fontSize: "16px", lineHeight: "18.75px", color: "#007E7E", cursor: "pointer" }}
+              >
+                {t("DOWNLOAD_SUBMISSION")}
+              </div>
+            ) : null
+          }
           // actionCancelTextStyle={
           //   customLabelShow
           //     ? {
@@ -1352,6 +1341,27 @@ const EvidenceModal = ({
                   </div>
                 )}
                 <div className="application-info-new" style={{ display: "flex", flexDirection: "column" }}>
+                  <div className="info-row">
+                    <div className="info-key">
+                      <h3>{t("CASE_NUMBER")}</h3>
+                    </div>
+                    <div className="info-value" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <h3>{caseData?.case?.courtCaseNumber || caseData?.case?.cmpNumber || caseData?.case?.filingNumber}</h3>
+                      {userType === "employee" && documentSubmission?.[0]?.applicationList?.applicationNumber && (
+                        <Link
+                          to={`/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview&fromHome=true`}
+                          style={{
+                            color: "rgb(0, 126, 126)",
+                            fontWeight: "700",
+                            fontSize: "14px",
+                            textDecoration: "underline",
+                          }}
+                        >
+                          ({t("VIEW_CASE")})
+                        </Link>
+                      )}
+                    </div>
+                  </div>
                   <div className="info-row">
                     <div className="info-key">
                       <h3>{t("APPLICATION_TYPE")}</h3>

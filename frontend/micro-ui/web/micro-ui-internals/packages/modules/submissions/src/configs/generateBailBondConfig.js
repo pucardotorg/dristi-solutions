@@ -26,16 +26,6 @@ export const bailBondConfig = [
         populators: {
           name: "litigantFatherName",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-            pattern: {
-              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              masterName: "commonUiConfig",
-              moduleName: "patternValidation",
-              patternType: "userName",
-            },
-            minLength: 1,
-            patternType: "Name",
-          },
         },
       },
       {

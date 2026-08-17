@@ -33,7 +33,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-function BulkESignView() {
+function BulkESignView({ refetchCounts }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
   const history = useHistory();
@@ -346,6 +346,7 @@ function BulkESignView() {
 
         setSignedList(signedList);
         setShowBulkSignSuccessModal(true);
+        if (refetchCounts && typeof refetchCounts === "function") setTimeout(() => refetchCounts(), 1000);
       });
     } catch (e) {
       const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];

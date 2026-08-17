@@ -77,4 +77,7 @@ public class OpenHearing {
 
     @JsonProperty("hearingDurationInMillis")
     private Long hearingDurationInMillis = null;
+
+    @JsonProperty("orderStatus")
+    private OrderStatus orderStatus = null;
 }

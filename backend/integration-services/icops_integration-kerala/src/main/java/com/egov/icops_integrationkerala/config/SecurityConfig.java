@@ -40,7 +40,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/v1/integrations/iCops/_getAuthToken", "/v1/integrations/iCops/_sendRequest", "/v1/integrations/iCops/_getLocationBasedJurisdiction", "/health", "/info").permitAll()
+                                .requestMatchers("/v1/integrations/iCops/_getAuthToken", "/v1/integrations/iCops/_sendRequest", "/v1/integrations/iCops/_getLocationBasedJurisdiction", "/v1/integrations/iCops/_rescheduleProcess", "/health", "/info").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

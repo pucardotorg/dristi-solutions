@@ -27,7 +27,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-function BulkBailBondSignView({ setShowToast = () => {} }) {
+function BulkBailBondSignView({ setShowToast = () => {}, refetchCounts }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
   const userInfo = Digit.UserService.getUser()?.info;
@@ -217,6 +217,7 @@ function BulkBailBondSignView({ setShowToast = () => {} }) {
               setShowBulkSignSuccessModal(true);
               setSuccessCount(response?.bails?.length);
               setShowToast({ error: false, label: t("BAIL_BULK_SIGN_SUCCESS_MSG") });
+              if (refetchCounts && typeof refetchCounts === "function") setTimeout(() => refetchCounts(), 1000);
             });
           });
         }
@@ -307,6 +308,7 @@ function BulkBailBondSignView({ setShowToast = () => {} }) {
           setShowBulkSignModal={setShowBulkSignModal}
           bailBondPaginationData={bailBondPaginationData}
           setCounter={setCounter}
+          refetchCounts={refetchCounts}
         />
       )}
       {showBulkSignSuccessModal && (

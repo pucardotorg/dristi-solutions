@@ -9,6 +9,7 @@ import org.egov.user.domain.model.User;
 import org.egov.user.domain.model.enums.UserType;
 import org.egov.user.domain.service.UserService;
 import org.egov.user.domain.service.utils.EncryptionDecryptionUtil;
+import org.egov.user.security.oauth2.custom.AuthModeResolver;
 import org.egov.user.security.oauth2.custom.CustomAuthenticationManager;
 import org.egov.user.web.contract.auth.Role;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,9 @@ public class CustomTokenEndpoint {
     @Autowired
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
+    @Autowired
+    private AuthModeResolver authModeResolver;
+
     @Value("${access.token.validity.in.minutes}")
     private int accessTokenValidityMinutes;
 
@@ -75,14 +79,15 @@ public class CustomTokenEndpoint {
             @RequestParam(value = "tenantId", required = false) String tenantId,
             @RequestParam(value = "userType", required = false) String userType,
             @RequestParam(value = "refresh_token", required = false) String refreshToken,
-            @RequestParam(value = "isInternal", required = false) String isInternal) {
+            @RequestParam(value = "isInternal", required = false) String isInternal,
+            @RequestParam(value = "authType", required = false) String authType) {
 
         Authentication authenticated;
 
         String existingRefreshToken = null;
 
         if ("password".equals(grantType)) {
-            authenticated = authenticatePassword(username, password, tenantId, userType, isInternal);
+            authenticated = authenticatePassword(username, password, tenantId, userType, isInternal, authType);
         } else if ("refresh_token".equals(grantType)) {
             // Remove old access token associated with this refresh token (mirrors old Spring OAuth2 behavior)
             tokenStore.removeAccessTokenUsingRefreshToken(refreshToken);
@@ -97,11 +102,21 @@ public class CustomTokenEndpoint {
     }
 
     private Authentication authenticatePassword(String username, String password,
-                                                String tenantId, String userType, String isInternal) {
+                                                String tenantId, String userType, String isInternal,
+                                                String authType) {
         LinkedHashMap<String, String> details = new LinkedHashMap<>();
         if (tenantId != null) details.put("tenantId", tenantId);
         if (userType != null) details.put("userType", userType);
         if (isInternal != null) details.put("isInternal", isInternal);
+
+        // Resolve the credential type here so a bad or disallowed authType surfaces as a clear
+        // error. CustomAuthenticationManager swallows provider level AuthenticationExceptions
+        // and replaces them with a generic failure message.
+        UserType resolvedUserType = UserType.fromValue(userType);
+        if (resolvedUserType != null)
+            details.put("authMode", authModeResolver.resolve(resolvedUserType, authType).name());
+        // An unknown userType is left for CustomAuthenticationProvider to reject, keeping the
+        // existing "User Type is mandatory and has to be a valid type" error intact.
 
         UsernamePasswordAuthenticationToken token =
                 new UsernamePasswordAuthenticationToken(username, password);
@@ -208,6 +223,8 @@ public class CustomTokenEndpoint {
                 .type(user.getType().name())
                 .roles(toAuthRole(user.getRoles()))
                 .tenantId(user.getTenantId())
+                .showPasswordSetupPrompt(authModeResolver.isPasswordSetupPromptRequired(user.getType(),
+                        user.getHasPassword(), user.getPasswordPromptDismissed()))
                 .build();
 
         if (user.getPermanentAddress() != null) {
@@ -223,10 +240,49 @@ public class CustomTokenEndpoint {
         return domainRoles.stream().map(Role::new).collect(Collectors.toSet());
     }
 
-    private Map<String, Object> issueTokenResponse(Authentication authentication, String scope, 
+    private Map<String, Object> issueTokenResponse(Authentication authentication, String scope,
                                                      String existingRefreshToken) {
+        SecureUser secureUser = (SecureUser) authentication.getPrincipal();
+
+        // Reuse the active token for this user+tenantId if one still exists in Redis,
+        // restoring the pre-Java17-migration behaviour (same token until expiry).
+        String activeToken = (existingRefreshToken == null)
+                ? tokenStore.getActiveAccessToken(secureUser.getUsername(), secureUser.getTenantId())
+                : null;
+
+        if (activeToken != null) {
+            // existingRefreshToken is always null here (refresh_token flow skips this path);
+            // generate a new refresh token to pair with the reused access token.
+            String refreshTokenToReturn = UUID.randomUUID().toString();
+            long accessExpirySeconds = (long) accessTokenValidityMinutes * 60;
+            long refreshExpirySeconds = (long) refreshTokenValidityMinutes * 60;
+
+            // Persist the new refresh token and its mapping to the reused access token so a
+            // subsequent refresh_token grant can resolve it (mirrors the normal-issue path below).
+            tokenStore.storeRefreshToken(refreshTokenToReturn, authentication, refreshExpirySeconds);
+            tokenStore.storeAccessTokenToRefreshTokenMapping(activeToken, refreshTokenToReturn);
+
+            Map<String, Object> responseInfo = new LinkedHashMap<>();
+            responseInfo.put("api_id", "");
+            responseInfo.put("ver", "");
+            responseInfo.put("ts", "");
+            responseInfo.put("res_msg_id", "");
+            responseInfo.put("msg_id", "");
+            responseInfo.put("status", "Access Token generated successfully");
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("access_token", activeToken);
+            response.put("token_type", "bearer");
+            response.put("refresh_token", refreshTokenToReturn);
+            response.put("expires_in", accessExpirySeconds);
+            response.put("scope", scope);
+            response.put("ResponseInfo", responseInfo);
+            response.put("UserRequest", secureUser.getUser());
+            return response;
+        }
+
         String accessToken = UUID.randomUUID().toString();
-        
+
         // Reuse existing refresh token if configured (matches old setReuseRefreshToken(true))
         String refreshTokenToReturn;
         if (reuseRefreshToken && existingRefreshToken != null) {
@@ -252,8 +308,6 @@ public class CustomTokenEndpoint {
         
         // Store mapping between access token and refresh token (for invalidation on next refresh)
         tokenStore.storeAccessTokenToRefreshTokenMapping(accessToken, refreshTokenToReturn);
-
-        SecureUser secureUser = (SecureUser) authentication.getPrincipal();
 
         Map<String, Object> responseInfo = new LinkedHashMap<>();
         responseInfo.put("api_id", "");

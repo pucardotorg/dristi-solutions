@@ -98,6 +98,9 @@ public class ServiceConstants {
     public static final String GENERIC = "GENERIC";
     public static final String SUCCESS = "SUCCESS";
 
+    public static final String WARRANT_REISSUE = "WARRANT_REISSUE";
+    public static final String WARRANT_REISSUE_ICOPS = "WARRANT_REISSUE_ICOPS";
+
     public static final String ICOPS_EXCEPTION = "ICOPS_EXCEPTION";
 
     public static final String E_POST = "EPOST";

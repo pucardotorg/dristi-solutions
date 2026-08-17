@@ -27,6 +27,7 @@ import pucar.web.models.hearing.*;
 import pucar.web.models.inbox.InboxRequest;
 import pucar.web.models.inbox.OpenHearing;
 
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -504,6 +505,7 @@ public class HearingUtil {
         }
         log.info("Update open hearing index with orderStatus SIGNED");
         esUtil.updateOpenHearingOrderStatus(openHearingList);
+        updateOrderStatusInCache(openHearingList);
     }
 
     public void updateOpenHearingOrderStatusForDraftOrder(Order order) {
@@ -516,6 +518,7 @@ public class HearingUtil {
         }
         log.info("Updated open hearing index with orderStatus DRAFT");
         esUtil.updateOpenHearingOrderStatus(openHearingList);
+        updateOrderStatusInCache(openHearingList);
     }
 
     public void updateOpenHearingOrderStatusForDeletedOrder(Order order) {
@@ -528,6 +531,7 @@ public class HearingUtil {
         }
         log.info("Updated open hearing index with orderStatus NOT_CREATED");
         esUtil.updateOpenHearingOrderStatus(openHearingList);
+        updateOrderStatusInCache(openHearingList);
     }
 
     public void updateOpenHearingOrderStatusForPendingSignOrder(Order order) {
@@ -540,5 +544,35 @@ public class HearingUtil {
         }
         log.info("Updated open hearing index with orderStatus PENDING_SIGN");
         esUtil.updateOpenHearingOrderStatus(openHearingList);
+        updateOrderStatusInCache(openHearingList);
+    }
+
+    /**
+     * Keeps the cause-list Redis hash in sync with the orderStatus we just wrote to ES.
+     * Only updates an already-warmed hash (scheduler-svc owns creation); otherwise ES stays
+     * the source of truth. The key is derived from the hearing's own date (fromDate), courtId
+     * and hearingNumber to match how hearing-service/scheduler-svc build it.
+     */
+    private void updateOrderStatusInCache(List<OpenHearing> openHearingList) {
+        try {
+            if (openHearingList == null || openHearingList.isEmpty()) {
+                return;
+            }
+            OpenHearing openHearing = openHearingList.get(0);
+            if (openHearing.getOrderStatus() == null || openHearing.getHearingNumber() == null
+                    || openHearing.getCourtId() == null || openHearing.getFromDate() == null) {
+                log.info("Skipping cause-list cache orderStatus update, missing key fields for hearing {}",
+                        openHearing.getHearingNumber());
+                return;
+            }
+            String date = dateUtil.getLocalDateFromEpoch(openHearing.getFromDate())
+                    .format(DateTimeFormatter.ofPattern(DATE_FORMAT_REDIS));
+            String hearingKey = CACHE_KEY_PREFIX + openHearing.getCourtId() + ":" + date
+                    + CACHE_HEARING_PREFIX + openHearing.getHearingNumber();
+            cacheUtil.updateHashFieldIfPresent(hearingKey, CACHE_FIELD_ORDER_STATUS,
+                    openHearing.getOrderStatus().toString());
+        } catch (Exception e) {
+            log.error("Failed to update orderStatus in cause-list cache", e);
+        }
     }
 }
