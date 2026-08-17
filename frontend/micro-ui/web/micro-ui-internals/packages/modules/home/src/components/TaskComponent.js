@@ -16,7 +16,7 @@ import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
 import AdvocateReplacementComponent from "./AdvocateReplacementComponent";
-import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } from "../utils";
+import { createOrUpdateTask, filterValidAddresses, getPendingTaskSections, getSuffixByBusinessCode } from "../utils";
 import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
@@ -951,23 +951,11 @@ const TasksComponent = ({
     };
   }, [responseDoc, isResponseApiCalled, t, submitResponse, responsePendingTask, history, getCaseDetailsUrl]);
 
-  const { pendingTaskDataInWeek, allOtherPendingTask } = useMemo(
-    () => ({
-      pendingTaskDataInWeek:
-        [
-          ...pendingTasks
-            .filter((data) => data?.dayCount < 7 && !data?.isCompleted)
-            .map((data) => data)
-            .sort((data) => data?.dayCount),
-        ] || [],
-      allOtherPendingTask:
-        pendingTasks
-          .filter((data) => data?.dayCount >= 7 && !data?.isCompleted)
-          .map((data) => data)
-          .sort((data) => data?.dayCount) || [],
-    }),
-    [pendingTasks]
-  );
+  // Citizens see three sections (Due This Week / Upcoming / Long Pending), employees keep the
+  // original two (Complete This Week / All Other Tasks).
+  const pendingTaskSections = useMemo(() => getPendingTaskSections(pendingTasks, isCitizen), [pendingTasks, isCitizen]);
+
+  const allPendingTasks = useMemo(() => pendingTaskSections?.flatMap((section) => section?.tasks || []), [pendingTaskSections]);
 
   const taskIncludesPendingTasks = useMemo(() => pendingTasks?.filter((task) => taskIncludes?.includes(task?.actionName)), [
     pendingTasks,
@@ -1312,7 +1300,7 @@ const TasksComponent = ({
       <div className="task-section">
         <PendingTaskAccordion
           pendingTasks={pendingTasks}
-          allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+          allPendingTasks={allPendingTasks}
           accordionHeader={"ALL_OTHER_TASKS"}
           t={t}
           totalCount={pendingTasks?.length}
@@ -1391,7 +1379,7 @@ const TasksComponent = ({
                     <div className="task-section">
                       <PendingTaskAccordion
                         pendingTasks={taskIncludesPendingTasks}
-                        allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                        allPendingTasks={allPendingTasks}
                         accordionHeader={"Take_Action"}
                         t={t}
                         isHighlighted={true}
@@ -1406,36 +1394,24 @@ const TasksComponent = ({
                     </div>
                   ) : (
                     <React.Fragment>
-                      <div className="task-section">
-                        <PendingTaskAccordion
-                          pendingTasks={pendingTaskDataInWeek}
-                          allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
-                          accordionHeader={"COMPLETE_THIS_WEEK"}
-                          t={t}
-                          totalCount={pendingTaskDataInWeek?.length}
-                          isHighlighted={true}
-                          isAccordionOpen={true}
-                          setShowSubmitResponseModal={setShowSubmitResponseModal}
-                          setResponsePendingTask={setResponsePendingTask}
-                          setPendingTaskActionModals={setPendingTaskActionModals}
-                          setShowCourierServiceModal={setShowCourierServiceModal}
-                          setCourierServicePendingTask={setCourierServicePendingTask}
-                        />
-                      </div>
-                      <div className="task-section">
-                        <PendingTaskAccordion
-                          pendingTasks={allOtherPendingTask}
-                          allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
-                          accordionHeader={"ALL_OTHER_TASKS"}
-                          t={t}
-                          totalCount={allOtherPendingTask?.length}
-                          setShowSubmitResponseModal={setShowSubmitResponseModal}
-                          setResponsePendingTask={setResponsePendingTask}
-                          setPendingTaskActionModals={setPendingTaskActionModals}
-                          setShowCourierServiceModal={setShowCourierServiceModal}
-                          setCourierServicePendingTask={setCourierServicePendingTask}
-                        />
-                      </div>
+                      {pendingTaskSections?.map((section) => (
+                        <div className="task-section" key={section?.key}>
+                          <PendingTaskAccordion
+                            pendingTasks={section?.tasks}
+                            allPendingTasks={allPendingTasks}
+                            accordionHeader={section?.accordionHeader}
+                            t={t}
+                            totalCount={section?.tasks?.length}
+                            isHighlighted={section?.isHighlighted}
+                            isAccordionOpen={section?.isAccordionOpen}
+                            setShowSubmitResponseModal={setShowSubmitResponseModal}
+                            setResponsePendingTask={setResponsePendingTask}
+                            setPendingTaskActionModals={setPendingTaskActionModals}
+                            setShowCourierServiceModal={setShowCourierServiceModal}
+                            setCourierServicePendingTask={setCourierServicePendingTask}
+                          />
+                        </div>
+                      ))}
                     </React.Fragment>
                   )}
                   <div className="task-section"></div>
@@ -1478,11 +1454,11 @@ const TasksComponent = ({
                 <div>
                   <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none", maxWidth: "100%" }}>
                     <PendingTaskAccordion
-                      pendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
-                      allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                      pendingTasks={allPendingTasks}
+                      allPendingTasks={allPendingTasks}
                       accordionHeader={"ALL_OTHER_TASKS"}
                       t={t}
-                      totalCount={allOtherPendingTask?.length}
+                      totalCount={allPendingTasks?.length}
                       setShowSubmitResponseModal={setShowSubmitResponseModal}
                       setResponsePendingTask={setResponsePendingTask}
                       setPendingTaskActionModals={setPendingTaskActionModals}
