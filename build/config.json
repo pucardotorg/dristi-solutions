@@ -343,7 +343,8 @@
         "service_source_path": "frontend/sbi-webpage",
         "language": "nodejs",
         "version": "20",
-        "sonar_sources": ""
+        "sonar_sources": "",
+        "extra_sonar_exclusions": "public/*.jsp"
     },
     "scheduler": {
         "service_group": "core-services",
