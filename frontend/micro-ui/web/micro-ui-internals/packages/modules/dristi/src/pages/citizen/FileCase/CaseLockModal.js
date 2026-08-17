@@ -8,6 +8,14 @@ import Modal from "../../../components/Modal";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
 import { userRolesEnum } from "../../../Utils/constants";
 
+const dayInMillisecond = 24 * 3600 * 1000;
+
+// Signing the complaint is expected to be done right away, so both tasks are due the next day.
+const stateSla = {
+  PENDING_E_SIGN: 1 * dayInMillisecond,
+  PENDING_UPLOAD_SIGNATURE: 1 * dayInMillisecond,
+};
+
 const caseLockingMainDiv = {
   padding: "24px",
   display: "flex",
@@ -93,6 +101,7 @@ function CaseLockModal({
     try {
       const taskName = isCaseReassigned ? t("PENDING_RE_E_SIGN_FOR_CASE") : t("PENDING_E_SIGN_FOR_CASE");
       const taskStatus = isCaseReassigned ? "PENDING_RE_E-SIGN" : "PENDING_E-SIGN";
+      const todayDate = new Date().getTime();
 
       const promises = [...(litigants || []), ...(caseDetails?.representatives || []), ...(caseDetails?.poaHolders || [])]?.map((party) => {
         if (!party?.poaHolder) {
@@ -100,6 +109,7 @@ function CaseLockModal({
             name: taskName,
             status: taskStatus,
             assignee: party?.additionalDetails?.uuid,
+            stateSla: todayDate + stateSla.PENDING_E_SIGN,
           });
         } else {
           return null;
@@ -138,6 +148,7 @@ function CaseLockModal({
           name: taskName,
           status: taskStatus,
           assignees: [...assignees],
+          stateSla: new Date().getTime() + stateSla.PENDING_UPLOAD_SIGNATURE,
         });
         history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}&caseId=${caseId}`);
       } catch (error) {
