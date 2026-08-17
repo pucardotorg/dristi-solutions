@@ -90,6 +90,7 @@ public class SmsNotificationService {
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
         smsDetails.put("mobileNumber", mobileNumber);
         smsDetails.put("hearingType",smsTemplateData.getHearingType());
+        smsDetails.put("link", smsTemplateData.getLink());
 
         return smsDetails;
     }
@@ -123,7 +124,8 @@ public class SmsNotificationService {
      */
     public String buildMessage(Map<String, String> userDetailsForSMS, String message) {
         message = message.replace("{{courtCaseNumber}}", Optional.ofNullable(userDetailsForSMS.get("courtCaseNumber")).orElse(userDetailsForSMS.get("cmpNumber")))
-                .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""));
+                .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""))
+                .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""));
         return message;
     }
 

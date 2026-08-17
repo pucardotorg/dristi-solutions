@@ -137,7 +137,8 @@ public class SmsNotificationService {
                 .replace("{{orderType}}", Optional.ofNullable(userDetailsForSMS.get("orderType")).orElse(""))
                 .replace("{{partyType}}", Optional.ofNullable(userDetailsForSMS.get("partyType")).orElse(""))
                 .replace("{{days}}", Optional.ofNullable(userDetailsForSMS.get("days")).orElse(""))
-                .replace("{{submissionDueDate}}", Optional.ofNullable(userDetailsForSMS.get("submissionDueDate")).orElse(""));
+                .replace("{{submissionDueDate}}", Optional.ofNullable(userDetailsForSMS.get("submissionDueDate")).orElse(""))
+                .replace("{{shortenedUrl}}", Optional.ofNullable(userDetailsForSMS.get("shortenedUrl")).orElse(""));
 
         return message;
     }

@@ -693,6 +693,7 @@ public class CauseListService {
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
                     .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "")
                     .hearingDate(hearingDate)
+                    .link(getHearingLink())
                     .tenantId(requestInfo.getUserInfo().getTenantId()).build();
 
             for (String number : phoneNumbers) {
@@ -701,6 +702,40 @@ public class CauseListService {
         } catch (Exception e) {
             // Log the exception and continue the execution without throwing
             log.error("Error occurred while sending notification", e);
+        }
+    }
+
+    // Fetches the court's virtual hearing (VC) link from MDMS (Hearing.HearingLink[0].shortenedUrl),
+    // used to populate the {{link}} variable in the cause list hearing reminder SMS.
+    private String getHearingLink() {
+        try {
+            Map<String, Map<String, JSONArray>> mdmsResponse = mdmsUtil.fetchMdmsData(
+                    createInternalRequestInfo(),
+                    config.getEgovStateTenantId(),
+                    HEARING_MODULE_NAME,
+                    Collections.singletonList(HEARING_LINK_MASTER_NAME));
+
+            if (mdmsResponse == null || mdmsResponse.get(HEARING_MODULE_NAME) == null) {
+                log.error("MDMS response is null or missing hearing module while fetching hearing link");
+                return "";
+            }
+            JSONArray hearingLinkArray = mdmsResponse.get(HEARING_MODULE_NAME).get(HEARING_LINK_MASTER_NAME);
+            if (hearingLinkArray == null || hearingLinkArray.isEmpty()) {
+                log.error("Hearing link array is null or empty");
+                return "";
+            }
+            Object first = hearingLinkArray.get(0);
+            if (first instanceof Map) {
+                Object shortenedUrl = ((Map<?, ?>) first).get("shortenedUrl");
+                if (shortenedUrl != null) {
+                    return shortenedUrl.toString();
+                }
+            }
+            log.error("No shortened URL found in hearing link array");
+            return "";
+        } catch (Exception e) {
+            log.error("Error fetching hearing link from MDMS", e);
+            return "";
         }
     }
 
