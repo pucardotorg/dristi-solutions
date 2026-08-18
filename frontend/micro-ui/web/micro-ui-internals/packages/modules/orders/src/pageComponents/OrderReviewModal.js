@@ -1,12 +1,12 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "react-query";
 import Modal from "../../../dristi/src/components/Modal";
 import { Urls } from "../hooks/services/Urls";
-import { Toast, TextInput } from "@egovernments/digit-ui-react-components";
-import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { OrderWorkflowAction } from "../utils/orderWorkflow";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { ORDER_CATEGORIES } from "../utils/constants";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const onDocumentUpload = async (fileData, filename) => {
   try {
@@ -25,40 +25,20 @@ function OrderReviewModal({
   setShowsignatureModal,
   showActions = true,
   setOrderPdfFileStoreID,
-  setBusinessOfTheDay,
-  currentDiaryEntry,
-  handleUpdateBusinessOfDayEntry,
   handleReviewGoBack,
-  businessOfDay,
   updateOrder,
   setShowBulkModal,
   courtId,
   saveSignLater,
 }) {
-  const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const [showErrorToast, setShowErrorToast] = useState(null);
-  const [isDisabled, setIsDisabled] = useState();
+  const [showToast, setShowToast] = useState(null);
   const orderFileStore = order?.documents?.find((doc) => doc?.documentType === "SIGNED")?.fileStore;
-  // const [businessDay, setBusinessDay] = useState(businessOfDay);
   const [isUpdateLoading, setUpdateLoading] = useState(false);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const accessToken = window.localStorage.getItem("token");
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   const { data: { file: orderPreviewPdf, fileName: orderPreviewFileName } = {}, isFetching: isLoading } = useQuery({
     queryKey: ["orderPreviewPdf", tenantId, order?.id, order?.cnrNumber],
@@ -92,21 +72,11 @@ function OrderReviewModal({
     },
     onError: (error) => {
       console.error("Failed to fetch order preview PDF:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_FETCHING_ORDER_PREVIEW_PDF"), error: true, errorId });
     },
     enabled: !!order?.id && !!order?.cnrNumber,
   });
-
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
 
   useEffect(() => {
     if (order?.filesData) {
@@ -124,7 +94,6 @@ function OrderReviewModal({
       if (numberOfFiles > 0) {
         onDocumentUpload(order?.filesData[0][1]?.file, order?.filesData[0][0]).then((document) => {
           setFileName(order?.filesData[0][0]);
-          setFileStoreID(document.file?.files?.[0]?.fileStoreId);
         });
       }
     }
@@ -160,7 +129,7 @@ function OrderReviewModal({
         )}
       </div>
     );
-  }, [orderPreviewPdf, fileName, isLoading, t]);
+  }, [orderPreviewPdf, orderFileStore, tenantId, fileName, isLoading, t]);
 
   const handleDocumentUpload = async (onSuccess) => {
     try {
@@ -172,13 +141,16 @@ function OrderReviewModal({
         await onSuccess(fileStoreId);
       }
     } catch (e) {
-      setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+      const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_UPLOADING_DOCUMENT"), error: true, errorId });
       console.error("Failed to upload document:", e);
       setUpdateLoading(false);
     }
   };
 
   const handleAddSignature = () => {
+    setShowsignatureModal(true);
+    setShowReviewModal(false);
     if (showActions) {
       handleDocumentUpload((fileStoreId) => {
         setOrderPdfFileStoreID(fileStoreId);
@@ -195,7 +167,7 @@ function OrderReviewModal({
         let hearingNumber = "";
         const todayDate = new Date().toISOString().split("T")[0];
 
-        if (order?.orderCategory === "INTERMEDIATE" && order?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+        if (order?.orderCategory === ORDER_CATEGORIES.INTERMEDIATE && order?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
           const hearingDate = order?.additionalDetails?.formdata?.newHearingDate;
           if (hearingDate === todayDate) {
             hearingNumber = order?.additionalDetails?.refHearingId;
@@ -223,8 +195,9 @@ function OrderReviewModal({
             setUpdateLoading(false);
           })
           .catch((e) => {
-            setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
-            console.error("Failed to save draft:", e);
+            const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+            setShowToast({ label: t("ERROR_UPDATING_ORDER"), error: true, errorId });
+            console.error("Failed to update order:", e);
             setUpdateLoading(false);
           });
       }
@@ -250,45 +223,17 @@ function OrderReviewModal({
         className={"review-order-modal"}
       >
         <div className="review-order-body-main">
-          {/* <div className="review-order-modal-list-div">
-            <div className="review-order-type-side-stepper">
-              <h1> {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)} </h1>
-            </div>
-          </div> */}
           <div className="review-order-modal-document-div" style={{ padding: 0, overflow: "auto" }}>
             {showDocument}
-            {/* <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <TextInput
-                className="field desktop-w-full"
-                onChange={(e) => {
-                  setBusinessDay(e.target.value);
-                  setBusinessOfTheDay(e.target.value);
-                }}
-                disable={isDisabled}
-                defaultValue={currentDiaryEntry?.businessOfDay || businessDay}
-                style={{ minWidth: "500px" }}
-                textInputStyle={{ maxWidth: "100%" }}
-                maxlength={1024}
-              />
-              {currentDiaryEntry && (
-                <Button
-                  label={t("SAVE")}
-                  variation={"primary"}
-                  style={{ padding: 15, boxShadow: "none" }}
-                  onButtonClick={handleUpdateBusinessOfDayEntry}
-                />
-              )}
-            </div> */}
           </div>
         </div>
-        {showErrorToast && (
-          <Toast
-            error={showErrorToast?.error}
-            label={showErrorToast?.label}
-            isDleteBtn={true}
-            onClose={closeToast}
-            style={{ left: "calc(100% - 540px)", top: "92%" }}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
           />
         )}
       </Modal>

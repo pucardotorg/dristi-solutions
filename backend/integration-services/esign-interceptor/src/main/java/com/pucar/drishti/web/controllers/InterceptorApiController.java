@@ -75,8 +75,7 @@ public class InterceptorApiController {
             result = "success";
             log.info("successfully sign doc");
         } catch (Exception e) {
-            log.error("Error Occured While signing the doc");
-
+            log.error("Error signing doc for espId={}, tenantId={}", espId, tenantId, e);
         }
 
         log.info("generating uri to redirect");

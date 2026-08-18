@@ -16,6 +16,12 @@ public class Document {
     @JsonProperty("documentType")
     private String documentType = null;
 
+    @JsonProperty("fileName")
+    private String fileName = null;
+
+    @JsonProperty("documentName")
+    private String documentName = null;
+
     @JsonProperty("fileStore")
     private String fileStore = null;
 

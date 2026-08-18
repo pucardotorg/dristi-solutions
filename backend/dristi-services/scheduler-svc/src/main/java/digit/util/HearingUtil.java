@@ -48,7 +48,7 @@ public class HearingUtil {
         } catch (Exception e) {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
             if (Boolean.TRUE.equals(isRetryRequired)) {
-                log.info("Retrying callHearing after delay for hearingId: {}", hearingRequest.getHearings().get(0).getHearingId());
+                log.error("Retrying callHearing after delay for hearingId: {}", hearingRequest.getHearings().get(0).getHearingId());
 
                 RetryHearingRequest retryPayload = new RetryHearingRequest(hearingRequest, Boolean.FALSE);
                 producer.push(configuration.getRetryHearingUpdateTimeTopic(), retryPayload);

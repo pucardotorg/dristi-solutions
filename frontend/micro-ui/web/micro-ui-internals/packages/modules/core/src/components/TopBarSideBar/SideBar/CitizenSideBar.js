@@ -9,18 +9,21 @@ import StaticCitizenSideBar from "./StaticCitizenSideBar";
 
 const Profile = ({ info, stateName, t }) => {
   const [profilePic, setProfilePic] = React.useState(null);
-  React.useEffect(async () => {
-    const tenant = Digit.ULBService.getCurrentTenantId();
-    const uuid = info?.uuid;
-    if (uuid) {
-      const usersResponse = await Digit.UserService.userSearch(tenant, { uuid: [uuid] }, {});
+  React.useEffect(() => {
+    async function fetchProfilePic() {
+      const tenant = Digit.ULBService.getCurrentTenantId();
+      const uuid = info?.uuid;
+      if (uuid) {
+        const usersResponse = await Digit.UserService.userSearch(tenant, { uuid: [uuid] }, {});
 
-      if (usersResponse && usersResponse.user && usersResponse.user.length) {
-        const userDetails = usersResponse.user[0];
-        const thumbs = userDetails?.photo?.split(",");
-        setProfilePic(thumbs?.at(0));
+        if (usersResponse && usersResponse.user && usersResponse.user.length) {
+          const userDetails = usersResponse.user[0];
+          const thumbs = userDetails?.photo?.split(",");
+          setProfilePic(thumbs?.at(0));
+        }
       }
     }
+    fetchProfilePic();
   }, [profilePic !== null]);
 
   const CustomEmployeeTopBar = Digit.ComponentRegistryService?.getComponent("CustomEmployeeTopBar");

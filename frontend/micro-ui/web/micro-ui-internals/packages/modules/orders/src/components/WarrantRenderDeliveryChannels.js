@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Button, Dropdown } from "@egovernments/digit-ui-react-components";
-import _ from "lodash";
+import { Dropdown } from "@egovernments/digit-ui-react-components";
+import uniq from "lodash/uniq";
 import { useTranslation } from "react-i18next";
 import GetPoliceStationModal from "./GetPoliceStationModal";
 import { formatAddress } from "../utils";
@@ -65,7 +65,7 @@ const WarrantRenderDeliveryChannels = ({
       }
     });
 
-    setEnabledAddresses((prev) => _.uniq([...prev, ...autoSelected]));
+    setEnabledAddresses((prev) => uniq([...prev, ...autoSelected]));
   }, [partyDetails, deliveryChannels]);
 
   const handlePoliceStationSelect = (station, address, fromModal = false) => {
@@ -107,7 +107,7 @@ const WarrantRenderDeliveryChannels = ({
   const handleAddressToggle = (address, isChecked) => {
     const id = address?.id;
     if (isChecked) {
-      setEnabledAddresses((prev) => _.uniq([...prev, id]));
+      setEnabledAddresses((prev) => uniq([...prev, id]));
       const viaPoliceChannel = addressMap?.[id]?.channels?.find((ch) => ch.type === "Via Police");
 
       const alreadyExists = partyDetails?.some((detail) => detail.type === "Via Police" && compareAddressValues(detail.value, address));

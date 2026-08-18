@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
-import { Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
 import { userTypeOptions } from "../registration/config";
 import { ManageOfficeDeleteIcon, ManageOfficeCloseIcon, ManageOfficeLeaveIcon, ProvideCaseAccessArrowIcon } from "../../../icons/svgIndex";
+import CustomToast from "../../../components/CustomToast";
 
 const ManageOffice = () => {
   const { t } = useTranslation();
@@ -91,17 +92,9 @@ const ManageOffice = () => {
   const [mobileNumber, setMobileNumber] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
   const [isSearching, setIsSearching] = useState(false);
-  const [isAddingMember, setIsAddingMember] = useState(false);
   const [searchResult, setSearchResult] = useState(null);
   const [searchError, setSearchError] = useState(null);
-  const [toast, setToast] = useState(null);
-
-  // Auto-close toast after 5 seconds
-  useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => setToast(null), 5000);
-    return () => clearTimeout(timer);
-  }, [toast]);
+  const [showToast, setShowToast] = useState(null);
 
   // "Advocates I'm working for" tab: fetch by memberId + tenantId (logged-in user as member)
   const {
@@ -239,9 +232,7 @@ const ManageOffice = () => {
           setSearchResult(null);
         } else if (!clerkData && !advocateData) {
           // Validation: only Advocates or Clerks can be added as members
-          setSearchError(
-            t("ONLY_ADVOCATE_OR_CLERK_ALLOWED")
-          );
+          setSearchError(t("ONLY_ADVOCATE_OR_CLERK_ALLOWED"));
           setSearchResult(null);
         } else {
           setSearchResult({
@@ -267,7 +258,7 @@ const ManageOffice = () => {
 
   const handleConfirmAddMember = async () => {
     if (!searchResult || !officeAdvocateUserUuid) {
-      setToast({ label: t("ADVOCATE_ID_NOT_FOUND"), type: "error" });
+      setShowToast({ label: t("ADVOCATE_ID_NOT_FOUND"), error: true });
       return;
     }
 
@@ -286,7 +277,7 @@ const ManageOffice = () => {
         : null;
 
     if (!memberId) {
-      setToast({ label: t("MEMBER_ID_NOT_FOUND"), type: "error" });
+      setShowToast({ label: t("MEMBER_ID_NOT_FOUND"), error: true });
       return;
     }
 
@@ -320,16 +311,15 @@ const ManageOffice = () => {
   }, [officeMembers]);
 
   // Data and loading per tab: My Advocates/Clerks vs Advocates I'm working for
-  const displayMembers = useMemo(
-    () => (activeTab === "advocatesWorkingFor" ? advocatesWorkingForMembers : filteredMembers),
-    [activeTab, advocatesWorkingForMembers, filteredMembers]
-  );
+  const displayMembers = useMemo(() => (activeTab === "advocatesWorkingFor" ? advocatesWorkingForMembers : filteredMembers), [
+    activeTab,
+    advocatesWorkingForMembers,
+    filteredMembers,
+  ]);
 
   // Show loader both on initial load and on refetch when switching tabs
   const isLoadingDisplay =
-    activeTab === "advocatesWorkingFor"
-      ? isLoadingAdvocatesWorkingFor || isFetchingAdvocatesWorkingFor
-      : isLoadingMembers || isFetchingMembers;
+    activeTab === "advocatesWorkingFor" ? isLoadingAdvocatesWorkingFor || isFetchingAdvocatesWorkingFor : isLoadingMembers || isFetchingMembers;
 
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
@@ -363,7 +353,7 @@ const ManageOffice = () => {
 
   const handleConfirmRemoveMember = async () => {
     if (!memberToRemove || !officeAdvocateUserUuid) {
-      setToast({ label: t("REMOVE_MEMBER_ERROR"), type: "error" });
+      setShowToast({ label: t("REMOVE_MEMBER_ERROR"), error: true });
       return;
     }
     const isLeavingOfficeTab = activeTab === "advocatesWorkingFor";
@@ -396,16 +386,15 @@ const ManageOffice = () => {
       if (response) {
         refetchMembers();
         if (isLeavingOfficeTab && refetchAdvocatesWorkingFor) refetchAdvocatesWorkingFor();
-        setToast({
-          label: isLeavingOfficeTab
-            ? t("LEFT_OFFICE_SUCCESSFULLY")
-            : t("MEMBER_REMOVED_SUCCESS"),
-          type: "success",
+        setShowToast({
+          label: isLeavingOfficeTab ? t("LEFT_OFFICE_SUCCESSFULLY") : t("MEMBER_REMOVED_SUCCESS"),
+          error: false,
         });
       }
     } catch (error) {
       console.error("Error removing member:", error);
-      setToast({ label: t("REMOVE_MEMBER_ERROR"), type: "error" });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("REMOVE_MEMBER_ERROR"), error: true, errorId });
     } finally {
       setIsRemovingMember(false);
       setShowRemoveMemberModal(false);
@@ -416,7 +405,6 @@ const ManageOffice = () => {
   return (
     <div className="manage-office-page">
       <h1 className="manage-office-title">{t("MANAGE_OFFICE")}</h1>
-
       <div className="manage-office-tabs-wrapper">
         <div className="manage-office-tabs">
           {tabs?.map((tab) => (
@@ -430,7 +418,6 @@ const ManageOffice = () => {
           ))}
         </div>
       </div>
-
       <div className="manage-office-card">
         {/* Top row: only "Add New Member" on My Advocates/Clerks; no search row on Advocates I'm working for */}
         {activeTab === "myAdvocatesClerks" && (
@@ -493,16 +480,14 @@ const ManageOffice = () => {
                 {activeTab !== "advocatesWorkingFor" && (
                   <span>
                     {member?.memberType === "ADVOCATE_CLERK"
-                    ? ((l) => l.charAt(0).toUpperCase() + l.slice(1).toLowerCase())(t("CLERK"))
-                    : member?.memberType === "ADVOCATE"
-                    ? t("ASSISTANT_ADVOCATE")
-                    : member?.memberType}
+                      ? ((l) => l.charAt(0).toUpperCase() + l.slice(1).toLowerCase())(t("CLERK"))
+                      : member?.memberType === "ADVOCATE"
+                      ? t("ASSISTANT_ADVOCATE")
+                      : member?.memberType}
                   </span>
                 )}
                 <span>
-                  <span className="manage-office-access-pill">
-                    {member?.accessType === "ALL_CASES" ? t("ALL_CASES") : t("SPECIFIC_CASES")}
-                  </span>
+                  <span className="manage-office-access-pill">{member?.accessType === "ALL_CASES" ? t("ALL_CASES") : t("SPECIFIC_CASES")}</span>
                 </span>
                 <span className={`manage-office-actions${activeTab === "advocatesWorkingFor" ? " manage-office-actions--compact" : ""}`}>
                   {activeTab === "myAdvocatesClerks" && (
@@ -565,13 +550,9 @@ const ManageOffice = () => {
           </div>
         )}
       </div>
-
       {showAddMemberModal && (
         <div className="manage-office-modal-overlay" onClick={handleCloseModal}>
-          <div
-            className={`manage-office-modal ${searchResult ? "manage-office-modal--compact" : ""}`}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className={`manage-office-modal ${searchResult ? "manage-office-modal--compact" : ""}`} onClick={(e) => e.stopPropagation()}>
             <div className="manage-office-modal__header">
               <h2 className="manage-office-modal__title">{t("ADD_MEMBER")}</h2>
               <button onClick={handleCloseModal} className="manage-office-modal__close">
@@ -579,7 +560,7 @@ const ManageOffice = () => {
               </button>
             </div>
 
-            {isSearching || isAddingMember ? (
+            {isSearching ? (
               <div className="manage-office-modal-loader">
                 <Loader />
               </div>
@@ -663,15 +644,12 @@ const ManageOffice = () => {
           </div>
         </div>
       )}
-
       {/* Remove Member Confirmation Modal */}
       {showRemoveMemberModal && (
         <div className="manage-office-modal-overlay" onClick={handleCloseRemoveModal}>
           <div className="manage-office-modal" onClick={(e) => e.stopPropagation()}>
             <div className="manage-office-modal__header">
-              <h2 className="manage-office-modal__title">
-                {activeTab === "advocatesWorkingFor" ? t("LEAVE_OFFICE") : t("REMOVE_MEMBER")}
-              </h2>
+              <h2 className="manage-office-modal__title">{activeTab === "advocatesWorkingFor" ? t("LEAVE_OFFICE") : t("REMOVE_MEMBER")}</h2>
               <button onClick={handleCloseRemoveModal} className="manage-office-modal__close">
                 <ManageOfficeCloseIcon />
               </button>
@@ -684,9 +662,7 @@ const ManageOffice = () => {
             ) : (
               <React.Fragment>
                 <p className="manage-office-remove-text">
-                  {activeTab === "advocatesWorkingFor"
-                    ? t("CONFIRM_LEAVE_ADVOCATE_OFFICE")
-                    : t("CONFIRM_REMOVE_MEMBER_MESSAGE")}
+                  {activeTab === "advocatesWorkingFor" ? t("CONFIRM_LEAVE_ADVOCATE_OFFICE") : t("CONFIRM_REMOVE_MEMBER_MESSAGE")}
                 </p>
                 <div className="manage-office-modal__footer">
                   <button onClick={handleCloseRemoveModal} className="manage-office-btn manage-office-btn--secondary">
@@ -701,9 +677,16 @@ const ManageOffice = () => {
           </div>
         </div>
       )}
-
       {/* Toast Notification: auto-close after 5s, close button to dismiss manually */}
-      {toast && <Toast label={toast?.label} onClose={() => setToast(null)} error={toast?.type === "error"} isDleteBtn={true} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 };

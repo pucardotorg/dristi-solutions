@@ -1,0 +1,3006 @@
+openapi: 3.0.0
+
+info:
+  title: Case and Witness Registry
+  description: >
+    APIs for managing court cases, witnesses, join-case flows, advocate/office
+    case membership and related entities. Regenerated against the actual
+    CaseApiController implementation (org.pucar.dristi.web.controllers.CaseApiController)
+    and the request/response DTOs it references, as of 2026-07-25.
+  version: 3.0.0
+
+servers:
+  - url: /case
+
+tags:
+  - name: Case
+  - name: JoinCase
+  - name: Witness
+  - name: Address
+  - name: Profile
+  - name: AdvocateOffice
+  - name: OpenApi
+  - name: Utilities
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  # -------------------------------------------------------------------------
+  # CASE CRUD / LIFECYCLE
+  # -------------------------------------------------------------------------
+
+  /v1/_create:
+    post:
+      tags: [Case]
+      summary: Create a new case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseRequest'
+      responses:
+        '200':
+          description: Case created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
+
+  /v1/_update:
+    post:
+      tags: [Case]
+      summary: Update case (goes through workflow transition)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseRequest'
+      responses:
+        '200':
+          description: Case updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
+
+  /v2/_update:
+    post:
+      tags: [Case]
+      summary: Update case attributes without triggering a workflow transition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseRequest'
+      responses:
+        '200':
+          description: Case updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
+
+  /v1/admin/edit_case:
+    post:
+      tags: [Case]
+      summary: Admin edit of a small set of case fields
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseRequest'
+      responses:
+        '200':
+          description: Case edited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
+
+  /v1/_updateLPRDetails:
+    post:
+      tags: [Case]
+      summary: Update Long Pending Referral (LPR) details on a case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseRequest'
+      responses:
+        '200':
+          description: Case updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
+
+  /v1/_exists:
+    post:
+      tags: [Case]
+      summary: Check whether one or more cases exist, by tenantId/caseId/cnrNumber/filingNumber
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseExistsRequest'
+      responses:
+        '200':
+          description: Exists response, one entry per input criteria item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseExistsResponse'
+
+  /v1/_search:
+    post:
+      tags: [Case]
+      summary: Search cases (v1). NOTE - response echoes back the input criteria list, not enriched case objects.
+      description: >
+        The service call (caseService.searchCases) has a void-ish contract in the current
+        controller implementation - it is invoked for its side effects (e.g. populating
+        criteria[].responseList) and the controller then returns the same criteria list
+        it received on the request, now populated by the service. See CaseCriteria.responseList.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseSearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseListResponse'
+
+  /v1/_count:
+    post:
+      tags: [Case]
+      summary: Get count of cases matching search criteria
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseSearchRequest'
+      responses:
+        '200':
+          description: Matching case count
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+
+  /v1/_generatePdf:
+    post:
+      tags: [Utilities]
+      summary: Generate case PDF for the searched case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseSearchRequest'
+      responses:
+        '200':
+          description: PDF generation triggered; returns the case wrapped like a normal CaseResponse
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
+
+  /v1/casemeta/_search:
+    post:
+      tags: [Case]
+      summary: Lightweight, scalar-only case metadata lookup by filingNumbers
+      description: >
+        Resolves one or more filingNumbers to their scalar case metadata sourced directly
+        from the dristi_cases table (single table, no joins, no Redis cache, no enc-service
+        decryption). Intended for internal callers needing identifiers without the cost of
+        a full /v1/_search.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseMetaRequest'
+      responses:
+        '200':
+          description: Case metadata list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseMetaResponse'
+
+  /v2/search/details:
+    post:
+      tags: [Case]
+      summary: Get full case details (v2) for a single case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseSearchRequestV2'
+      responses:
+        '200':
+          description: Case details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseSearchResponseV2'
+
+  /v2/search/list:
+    post:
+      tags: [Case]
+      summary: Search for a paginated list of case summaries (v2)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseSummaryListRequest'
+      responses:
+        '200':
+          description: Paginated list of case summaries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseSummaryListResponse'
+
+  /v2/search/summary:
+    post:
+      tags: [Case]
+      summary: Search cases by CNR/case/CMP number text, returns lightweight case summaries (v2)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseSummarySearchRequest'
+      responses:
+        '200':
+          description: Matching case summaries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseSummarySearchResponse'
+
+  /v1/search/_summary:
+    post:
+      tags: [Case]
+      summary: Search cases, returning only public-safe fields (unauthenticated-caller-friendly)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseSummaryRequest'
+      responses:
+        '200':
+          description: Case summaries with pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseSummaryResponse'
+
+  /v1/search/caseSearchText:
+    post:
+      tags: [Case]
+      summary: Search cases by free text against CNR, case number, filing number, CMP number etc.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseSearchTextRequest'
+      responses:
+        '200':
+          description: Matching case identifiers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseSearchTextResponse'
+
+  # -------------------------------------------------------------------------
+  # OPEN API (external, unauthenticated-flavoured, RequestInfo not required in body)
+  # -------------------------------------------------------------------------
+
+  /v1/search/cnrNumber:
+    post:
+      tags: [OpenApi]
+      summary: Look up a case summary by CNR number (external/open API)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenApiCaseSummaryRequest'
+      responses:
+        '200':
+          description: Case summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenApiCaseSummaryResponse'
+
+  /v1/search/caseNumber:
+    post:
+      tags: [OpenApi]
+      summary: Look up a case summary by case number (external/open API)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenApiCaseSummaryRequest'
+      responses:
+        '200':
+          description: Case summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenApiCaseSummaryResponse'
+
+  /v1/search/caseType:
+    post:
+      tags: [OpenApi]
+      summary: List cases of a given case type/year (external/open API)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenApiCaseSummaryRequest'
+      responses:
+        '200':
+          description: List of matching cases (lightweight line items)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenApiCaseListResponse'
+
+  # -------------------------------------------------------------------------
+  # JOIN CASE
+  # -------------------------------------------------------------------------
+
+  /v1/_verify:
+    post:
+      tags: [JoinCase]
+      summary: Verify a join-case request (v1, legacy)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinCaseRequest'
+      responses:
+        '200':
+          description: Verification result; echoes back the join case request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinCaseResponse'
+
+  /v1/joincase/_joincase:
+    post:
+      tags: [JoinCase]
+      summary: Litigants, representatives or POA holders join an existing case (v2 flow)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinCaseV2Request'
+      responses:
+        '200':
+          description: Join case processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinCaseV2Response'
+
+  /v2/joincase/_verifycode:
+    post:
+      tags: [JoinCase]
+      summary: Verify that the access code supplied to join a case matches the case's code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseCodeRequest'
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseCodeResponse'
+
+  /enrich/access-code:
+    post:
+      tags: [JoinCase]
+      summary: Enrich/generate access codes for a list of filing numbers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessCodeGenerateRequest'
+      responses:
+        '200':
+          description: Map of filingNumber to a boolean flag (whether access code enrichment succeeded)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessCodeGenerateResponse'
+
+  # -------------------------------------------------------------------------
+  # WITNESS
+  # -------------------------------------------------------------------------
+
+  /v1/add/witness:
+    post:
+      tags: [Witness]
+      deprecated: true
+      summary: (Deprecated) Add a witness to a case by filing number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddWitnessRequest'
+      responses:
+        '200':
+          description: Witness add acknowledged; echoes back the request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddWitnessResponse'
+
+  /v2/add/witness:
+    post:
+      tags: [Witness]
+      summary: Add one or more rich witness-detail records to a case (v2)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WitnessDetailsRequest'
+      responses:
+        '200':
+          description: Witness details added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WitnessDetailsResponse'
+
+  /witness/v1/_create:
+    post:
+      tags: [Witness]
+      summary: Register a witness against a case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WitnessRequest'
+      responses:
+        '200':
+          description: Witness created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WitnessResponse'
+
+  /witness/v1/_update:
+    post:
+      tags: [Witness]
+      summary: Update (or soft-delete via isActive) a witness
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WitnessRequest'
+      responses:
+        '200':
+          description: Witness updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WitnessResponse'
+
+  /witness/v1/_search:
+    post:
+      tags: [Witness]
+      summary: Search for witnesses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WitnessSearchRequest'
+      responses:
+        '200':
+          description: Matching witnesses (empty array if none)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WitnessResponse'
+
+  # -------------------------------------------------------------------------
+  # ADDRESS
+  # -------------------------------------------------------------------------
+
+  /v1/address/_add:
+    post:
+      tags: [Address]
+      summary: Add or update addresses for one or more parties in a case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddAddressRequest'
+      responses:
+        '200':
+          description: Addresses added/updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddAddressResponse'
+
+  # -------------------------------------------------------------------------
+  # PROFILE (litigant / respondent profile edit requests)
+  # -------------------------------------------------------------------------
+
+  /v2/profilerequest/create:
+    post:
+      tags: [Profile]
+      summary: Create a litigant/respondent profile edit request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProfileRequest'
+      responses:
+        '200':
+          description: Case with pending profile edit request recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
+
+  /v2/profilerequest/process:
+    post:
+      tags: [Profile]
+      summary: Approve or reject a pending profile edit request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessProfileRequest'
+      responses:
+        '200':
+          description: Case updated as a result of processing the profile request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
+
+  # -------------------------------------------------------------------------
+  # ADVOCATE / ADVOCATE-OFFICE
+  # -------------------------------------------------------------------------
+
+  /v1/advocate/_cases:
+    post:
+      tags: [AdvocateOffice]
+      summary: Get the list of cases (caseId + filingNumber) an advocate is associated with
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateCasesRequest'
+      responses:
+        '200':
+          description: Cases for the advocate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateCasesResponse'
+
+  /v1/member/_advocates:
+    post:
+      tags: [AdvocateOffice]
+      summary: Get the office-advocate UUIDs a given office member (clerk/associate advocate) belongs under, for a case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberAdvocatesRequest'
+      responses:
+        '200':
+          description: List of advocate UUIDs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberAdvocatesResponse'
+
+  /v1/_searchCaseMember:
+    post:
+      tags: [AdvocateOffice]
+      summary: Search cases assigned/unassigned to an advocate-office member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseMemberSearchRequest'
+      responses:
+        '200':
+          description: Matching cases with pagination and total count
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseMemberSearchResponse'
+
+  /v1/_processCaseMember:
+    post:
+      tags: [AdvocateOffice]
+      summary: Assign or remove case access for an advocate-office member (clerk/associate advocate)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessCaseMemberRequest'
+      responses:
+        '200':
+          description: Processed case member details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessCaseMemberResponse'
+
+  # -------------------------------------------------------------------------
+  # UTILITIES
+  # -------------------------------------------------------------------------
+
+  /v1/_runCronJob:
+    post:
+      tags: [Utilities]
+      summary: Manually trigger the case-reassignment notification cron job
+      description: No request body. Returns an empty 200 response (no response body is written by the controller).
+      responses:
+        '200':
+          description: Cron job triggered
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    # =========================================================================
+    # COMMON / SHARED
+    # =========================================================================
+
+    Pagination:
+      description: Local Pagination model (org.pucar.dristi.web.models.Pagination) - NOT the DIGIT-OSS common-contract Pagination, field names differ (offSet not offset).
+      type: object
+      properties:
+        limit:
+          type: integer
+          format: int32
+          default: 10
+          maximum: 100
+        offSet:
+          type: integer
+          format: int32
+          default: 0
+        totalCount:
+          type: number
+          format: double
+        sortBy:
+          type: string
+        order:
+          $ref: '#/components/schemas/Order'
+
+    Order:
+      type: string
+      enum: [asc, desc]
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+        documentType:
+          type: string
+        fileName:
+          type: string
+        documentName:
+          type: string
+        fileStore:
+          type: string
+        toDelete:
+          type: boolean
+          default: false
+        documentUid:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+        additionalDetails:
+          type: object
+
+    Address:
+      description: org.pucar.dristi.web.models.Address - used by /v1/address/_add (PartyAddressRequest.addresses)
+      type: object
+      properties:
+        id:
+          type: string
+        doorNo:
+          type: string
+        street:
+          type: string
+        landmark:
+          type: string
+        city:
+          type: string
+        pincode:
+          type: string
+        locality:
+          type: string
+        district:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+        typeOfAddress:
+          $ref: '#/components/schemas/AddressType'
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+
+    AddressType:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        code:
+          type: string
+        isActive:
+          type: boolean
+
+    Coordinates:
+      type: object
+      properties:
+        latitude:
+          type: string
+        longitude:
+          type: string
+
+    NatureOfDisposal:
+      type: string
+      enum: [CONTESTED, UNCONTESTED]
+
+    LifecycleStatus:
+      type: string
+      enum: [ACTIVE, LPR]
+
+    MemberType:
+      type: string
+      enum: [ADVOCATE, ADVOCATE_CLERK]
+
+    ActionType:
+      type: string
+      enum: [ACCEPT, REJECT]
+
+    CaseMappingFilterStatus:
+      type: string
+      enum: [ALL_CASES, ASSIGNED_CASES, UNASSIGNED_CASES]
+
+    # =========================================================================
+    # CASE - CORE DOMAIN MODEL
+    # =========================================================================
+
+    CourtCase:
+      description: org.pucar.dristi.web.models.CourtCase
+      type: object
+      required:
+        - tenantId
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        resolutionMechanism:
+          type: string
+          example: COURT, ADR.MEDIATION, ADR.CONCILIATION, ODR.ARBITRATION
+        caseTitle:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+        caseDescription:
+          type: string
+        filingNumber:
+          type: string
+          example: KL-000001-2024
+        advocateCount:
+          type: integer
+          format: int32
+        courtCaseNumber:
+          type: string
+          example: CC/023443/2024 OR ST/1/2024
+        caseNumber:
+          type: string
+        caseType:
+          type: string
+        cnrNumber:
+          type: string
+          example: PBJL01-123556-2024
+        cmpNumber:
+          type: string
+          example: CMP/1/2024
+        accessCode:
+          type: string
+          description: Case access code enabling anyone to join & access the case details.
+        outcome:
+          type: string
+        natureOfDisposal:
+          $ref: '#/components/schemas/NatureOfDisposal'
+        pendingAdvocateRequests:
+          type: array
+          items:
+            $ref: '#/components/schemas/PendingAdvocateRequest'
+        courtId:
+          type: string
+          example: KLKM52
+        benchId:
+          type: string
+        linkedCases:
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkedCase'
+        filingDate:
+          type: integer
+          format: int64
+          description: Epoch millis. Date the case entered the judicial system.
+        registrationDate:
+          type: integer
+          format: int64
+        judgementDate:
+          type: integer
+          format: int64
+        caseDetails:
+          type: object
+          description: Case-type specific details, structure varies by caseCategory.
+        caseCategory:
+          type: string
+          example: CIVIL, CRIMINAL
+        judgeId:
+          type: string
+        stage:
+          type: string
+        natureOfPleading:
+          type: string
+          example: Original Suit, Complaint, Interim Application, First Appeal, Second Appeal, Review, Revision, Reference
+        statutesAndSections:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatuteSection'
+        litigants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Party'
+        representatives:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateMapping'
+        advocateOffices:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateOffice'
+        status:
+          type: string
+          description: Current status of the case, pulled from the Workflow service.
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        remarks:
+          type: string
+        workflow:
+          $ref: '#/components/schemas/WorkflowObject'
+        additionalDetails:
+          type: object
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+        advocateStatus:
+          type: string
+        poaHolders:
+          type: array
+          items:
+            $ref: '#/components/schemas/POAHolder'
+        witnessDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/WitnessDetails'
+        advocateDetailBlock:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateDetailBlock'
+        lprNumber:
+          type: string
+        lifecycleStatus:
+          allOf:
+            - $ref: '#/components/schemas/LifecycleStatus'
+          default: ACTIVE
+        courtCaseNumberBackup:
+          type: string
+        secondaryStage:
+          type: array
+          items:
+            type: string
+
+    PendingAdvocateRequest:
+      type: object
+      properties:
+        advocateId:
+          type: string
+        status:
+          type: string
+          description: PENDING or PARTIALLY JOINED (free string in code, historically enum-like)
+        taskReferenceNoList:
+          type: array
+          items:
+            type: string
+        individualDetails:
+          $ref: '#/components/schemas/IndividualDetails'
+
+    IndividualDetails:
+      type: object
+      required: [individualId, advocateIdProof]
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        middleName:
+          type: string
+        individualId:
+          type: string
+        advocateIdProof:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateIdProof'
+
+    AdvocateIdProof:
+      type: object
+      required: [name, fileName, fileStore]
+      properties:
+        name:
+          type: string
+        fileName:
+          type: string
+        fileStore:
+          type: string
+        documentName:
+          type: string
+
+    LinkedCase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        relationshipType:
+          type: string
+          example: PARENT, CHILD, PRIOR_APPEAL
+        caseNumber:
+          type: string
+        referenceUri:
+          type: string
+        isActive:
+          type: boolean
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        additionalDetails:
+          type: object
+        auditdetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+
+    StatuteSection:
+      description: org.pucar.dristi.web.models.StatuteSection
+      type: object
+      required: [tenantId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        statute:
+          type: string
+        sections:
+          type: array
+          items:
+            type: string
+        subsections:
+          type: array
+          items:
+            type: string
+        additionalDetails:
+          type: object
+        auditdetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+        strSections:
+          type: string
+          description: Sections flattened to a single comma-separated string.
+        strSubsections:
+          type: string
+          description: Subsections flattened to a single comma-separated string.
+
+    Party:
+      description: org.pucar.dristi.web.models.Party
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        caseId:
+          type: string
+        partyCategory:
+          type: string
+          example: INDIVIDUAL, ORGANISATION
+        organisationID:
+          type: string
+        individualId:
+          type: string
+        partyType:
+          type: string
+          example: complainant.primary, complainant.additional, respondent.primary
+        isActive:
+          type: boolean
+          default: true
+        isResponseRequired:
+          type: boolean
+          default: false
+        isPartyInPerson:
+          type: boolean
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+        additionalDetails:
+          type: object
+        hasSigned:
+          type: boolean
+          default: false
+
+    AdvocateMapping:
+      description: org.pucar.dristi.web.models.AdvocateMapping - representative entry in CourtCase.representatives
+      type: object
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        advocateId:
+          type: string
+        caseId:
+          type: string
+        representing:
+          type: array
+          items:
+            $ref: '#/components/schemas/Party'
+        isActive:
+          type: boolean
+          default: true
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+        additionalDetails:
+          type: object
+        advocate:
+          $ref: '#/components/schemas/Advocate'
+        hasSigned:
+          type: boolean
+          default: false
+        advocateFilingStatus:
+          type: string
+
+    Advocate:
+      description: org.pucar.dristi.web.models.Advocate
+      type: object
+      required: [tenantId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        applicationNumber:
+          type: string
+        status:
+          type: string
+        barRegistrationNumber:
+          type: string
+        advocateType:
+          type: string
+        organisationID:
+          type: string
+          format: uuid
+        individualId:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+        workflow:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Workflow'
+        accused:
+          type: array
+          items:
+            type: string
+        complainant:
+          type: array
+          items:
+            type: string
+        individualIds:
+          type: array
+          items:
+            type: string
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        advocateUuid:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        middleName:
+          type: string
+        lastName:
+          type: string
+        mobileNumber:
+          type: string
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+        additionalDetails:
+          type: object
+
+    AdvocateOffice:
+      type: object
+      properties:
+        officeAdvocateId:
+          type: string
+        officeAdvocateName:
+          type: string
+        officeAdvocateUserUuid:
+          type: string
+        advocates:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateOfficeMember'
+        clerks:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateOfficeMember'
+
+    AdvocateOfficeMember:
+      type: object
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        caseId:
+          type: string
+        memberId:
+          type: string
+        memberUserUuid:
+          type: string
+        memberName:
+          type: string
+        memberType:
+          $ref: '#/components/schemas/MemberType'
+        isActive:
+          type: boolean
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+
+    WorkflowObject:
+      description: org.pucar.dristi.web.models.WorkflowObject - extends the DIGIT-OSS common-contract Workflow with an additionalDetails field.
+      allOf:
+        - $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Workflow'
+        - type: object
+          properties:
+            additionalDetails:
+              type: object
+
+    POAHolder:
+      type: object
+      required: [tenantId, caseId, poaType, isActive, representingLitigants]
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        caseId:
+          type: string
+        individualId:
+          type: string
+        poaType:
+          type: string
+        name:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+        additionalDetails:
+          type: object
+        hasSigned:
+          type: boolean
+          default: false
+        representingLitigants:
+          type: array
+          items:
+            $ref: '#/components/schemas/PoaParty'
+
+    PoaParty:
+      type: object
+      required: [individualId]
+      properties:
+        id:
+          type: string
+        individualId:
+          type: string
+        caseId:
+          type: string
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        isActive:
+          type: boolean
+          default: true
+
+    WitnessDetails:
+      description: org.pucar.dristi.web.models.v2.WitnessDetails - used both in CourtCase.witnessDetails and the /v2/add/witness flow
+      type: object
+      properties:
+        uniqueId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        middleName:
+          type: string
+        emails:
+          $ref: '#/components/schemas/Emails'
+        phonenumbers:
+          $ref: '#/components/schemas/PhoneNumbers'
+        addressDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/WitnessAddress'
+        witnessDesignation:
+          type: string
+        witnessAge:
+          type: string
+        witnessAdditionalDetails:
+          type: object
+        dateOfService:
+          type: string
+        witnessTag:
+          type: string
+        ownerType:
+          type: string
+        createdTime:
+          type: integer
+          format: int64
+        uiData:
+          type: object
+          additionalProperties: true
+
+    Emails:
+      type: object
+      properties:
+        emailId:
+          type: array
+          items:
+            type: string
+        textfieldValue:
+          type: string
+
+    PhoneNumbers:
+      type: object
+      properties:
+        mobileNumber:
+          type: array
+          items:
+            type: string
+        textfieldValue:
+          type: string
+
+    WitnessAddress:
+      type: object
+      properties:
+        addressDetails:
+          $ref: '#/components/schemas/WitnessAddressDetails'
+        id:
+          type: string
+
+    WitnessAddressDetails:
+      description: org.pucar.dristi.web.models.v2.AddressDetails (named WitnessAddressDetails here to disambiguate from the v1 Address model used by /v1/address/_add)
+      type: object
+      properties:
+        city:
+          type: string
+        state:
+          type: string
+        pincode:
+          type: string
+        district:
+          type: string
+        locality:
+          type: string
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        typeOfAddress:
+          $ref: '#/components/schemas/AddressType'
+
+    AdvocateDetailBlock:
+      description: org.pucar.dristi.web.models.advocateDetails.AdvocateDetailBlock
+      type: object
+      properties:
+        complainant:
+          $ref: '#/components/schemas/Complainant'
+        isComplainantPip:
+          $ref: '#/components/schemas/PipStatus'
+        uiFlags:
+          $ref: '#/components/schemas/UiFlags'
+        documents:
+          $ref: '#/components/schemas/AdvocateDetailDocuments'
+        advocates:
+          type: array
+          items:
+            $ref: '#/components/schemas/Advocate'
+        advocateCount:
+          type: integer
+          format: int32
+        displayIndex:
+          type: integer
+          format: int32
+        isEnabled:
+          type: boolean
+        isFormCompleted:
+          type: boolean
+
+    Complainant:
+      description: org.pucar.dristi.web.models.advocateDetails.Complainant
+      type: object
+      properties:
+        index:
+          type: integer
+          format: int32
+        individualId:
+          type: string
+        caseId:
+          type: string
+        partyType:
+          type: string
+        organisationID:
+          type: string
+        isActive:
+          type: boolean
+        isPartyInPerson:
+          type: boolean
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        additionalDetails:
+          type: object
+        firstName:
+          type: string
+        middleName:
+          type: string
+        lastName:
+          type: string
+        mobileNumber:
+          type: string
+        fullName:
+          type: string
+
+    PipStatus:
+      type: object
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+        isEnabled:
+          type: boolean
+
+    UiFlags:
+      type: object
+      properties:
+        showAffidavit:
+          type: boolean
+        showVakalatNamaUpload:
+          type: boolean
+
+    AdvocateDetailDocuments:
+      description: org.pucar.dristi.web.models.advocateDetails.Documents
+      type: object
+      properties:
+        vakalatnama:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        pipAffidavit:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+
+    # =========================================================================
+    # CASE - CREATE / UPDATE / EDIT wrappers
+    # =========================================================================
+
+    CaseRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        cases:
+          $ref: '#/components/schemas/CourtCase'
+
+    CaseResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourtCase'
+          description: Always a single-element array in the current controller implementation.
+
+    # =========================================================================
+    # CASE - EXISTS
+    # =========================================================================
+
+    CaseExistsRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseExists'
+
+    CaseExistsResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseExists'
+
+    CaseExists:
+      type: object
+      properties:
+        caseId:
+          type: string
+        courtCaseNumber:
+          type: string
+        cnrNumber:
+          type: string
+        filingNumber:
+          type: string
+        exists:
+          type: boolean
+          description: Response parameter filled in on the search result using the input criteria.
+
+    # =========================================================================
+    # CASE - SEARCH (v1)
+    # =========================================================================
+
+    CaseSearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseCriteria'
+        flow:
+          type: string
+          description: 'REVIEW: purpose/allowed values not evident from the DTO alone, appears to steer search behaviour in CaseService.'
+
+    CaseCriteria:
+      description: org.pucar.dristi.web.models.CaseCriteria - both an input criteria object and (via responseList) a carrier for the search results, since caseService.searchCases() mutates the request criteria in place.
+      type: object
+      properties:
+        caseId:
+          type: string
+        defaultFields:
+          type: boolean
+          default: false
+        cnrNumber:
+          type: string
+        filingNumber:
+          type: string
+        outcome:
+          type: array
+          items:
+            type: string
+        courtCaseNumber:
+          type: string
+        caseSearchText:
+          type: string
+        filingFromDate:
+          type: integer
+          format: int64
+        filingToDate:
+          type: integer
+          format: int64
+        registrationFromDate:
+          type: integer
+          format: int64
+        registrationToDate:
+          type: integer
+          format: int64
+        judgeId:
+          type: string
+        stage:
+          type: array
+          items:
+            type: string
+        litigantId:
+          type: string
+        advocateId:
+          type: string
+        courtId:
+          type: string
+        status:
+          type: array
+          items:
+            type: string
+        poaHolderIndividualId:
+          type: string
+        responseList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourtCase'
+          description: Populated by the service with the cases matching this criteria item.
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        isClerk:
+          type: boolean
+        secondaryStage:
+          type: array
+          items:
+            type: string
+
+    CaseListResponse:
+      description: org.pucar.dristi.web.models.CaseListResponse - the actual response type of POST /v1/_search (note - despite the name, it echoes criteria, it does not carry a `cases` array).
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # =========================================================================
+    # CASE - META
+    # =========================================================================
+
+    CaseMetaRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        tenantId:
+          type: string
+        filingNumbers:
+          type: array
+          items:
+            type: string
+      required: [filingNumbers]
+
+    CaseMetaResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseMeta'
+
+    CaseMeta:
+      description: Lightweight, scalar-only projection of a CourtCase (see CaseMetaRequest description).
+      type: object
+      properties:
+        caseId:
+          type: string
+        tenantId:
+          type: string
+        filingNumber:
+          type: string
+        courtId:
+          type: string
+        courtCaseNumber:
+          type: string
+        cmpNumber:
+          type: string
+        lprNumber:
+          type: string
+        cnrNumber:
+          type: string
+        lifecycleStatus:
+          $ref: '#/components/schemas/LifecycleStatus'
+        caseTitle:
+          type: string
+        status:
+          type: string
+        stage:
+          type: string
+        filingDate:
+          type: integer
+          format: int64
+        registrationDate:
+          type: integer
+          format: int64
+
+    # =========================================================================
+    # CASE - SEARCH (v2 details)
+    # =========================================================================
+
+    CaseSearchRequestV2:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/CaseSearchCriteriaV2'
+
+    CaseSearchCriteriaV2:
+      type: object
+      properties:
+        courtId:
+          type: string
+        caseId:
+          type: string
+        filingNumber:
+          type: string
+        advocateId:
+          type: string
+        litigantId:
+          type: string
+        poaHolderIndividualId:
+          type: string
+        judgeId:
+          type: string
+        isClerk:
+          type: boolean
+        secondaryStage:
+          type: array
+          items:
+            type: string
+
+    CaseSearchResponseV2:
+      description: org.pucar.dristi.web.models.v2.CaseSearchResponse - response of POST /v2/search/details. Returns a single CourtCase (not an array).
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        cases:
+          $ref: '#/components/schemas/CourtCase'
+
+    # =========================================================================
+    # CASE - SEARCH (v2 list / summary)
+    # =========================================================================
+
+    CaseSummaryListRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/CaseSummaryListCriteria'
+
+    CaseSummaryListCriteria:
+      type: object
+      properties:
+        caseId:
+          type: string
+        cnrNumber:
+          type: string
+        filingNumber:
+          type: string
+        outcome:
+          type: array
+          items:
+            type: string
+        courtCaseNumber:
+          type: string
+        caseSearchText:
+          type: string
+        searchByCnrAndCaseNumber:
+          type: string
+        filingFromDate:
+          type: integer
+          format: int64
+        filingToDate:
+          type: integer
+          format: int64
+        registrationFromDate:
+          type: integer
+          format: int64
+        registrationToDate:
+          type: integer
+          format: int64
+        judgeId:
+          type: string
+        stage:
+          type: array
+          items:
+            type: string
+        litigantId:
+          type: string
+        advocateId:
+          type: string
+        courtId:
+          type: string
+        status:
+          type: array
+          items:
+            type: string
+        poaHolderIndividualId:
+          type: string
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        lifecycleStatus:
+          $ref: '#/components/schemas/LifecycleStatus'
+        officeAdvocateId:
+          type: string
+        memberId:
+          type: string
+        isMemberActiveInCase:
+          type: boolean
+        secondaryStage:
+          type: array
+          items:
+            type: string
+
+    CaseSummaryListResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        caseList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseSummaryList'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    CaseSummaryList:
+      type: object
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        createdTime:
+          type: integer
+          format: int64
+        caseTitle:
+          type: string
+        filingDate:
+          type: integer
+          format: int64
+        caseType:
+          type: string
+        caseNumber:
+          type: string
+        filingNumber:
+          type: string
+        outcome:
+          type: string
+        natureOfDisposal:
+          $ref: '#/components/schemas/NatureOfDisposal'
+        stage:
+          type: string
+        secondaryStage:
+          type: array
+          items:
+            type: string
+        cmpNumber:
+          type: string
+        courtId:
+          type: string
+        status:
+          type: string
+        courtCaseNumber:
+          type: string
+        cnrNumber:
+          type: string
+        lastModifiedTime:
+          type: integer
+          format: int64
+        pendingAdvocateRequests:
+          type: array
+          items:
+            $ref: '#/components/schemas/PendingAdvocateRequest'
+        advocateStatus:
+          type: string
+        lprNumber:
+          type: string
+        lifecycleStatus:
+          allOf:
+            - $ref: '#/components/schemas/LifecycleStatus'
+          default: ACTIVE
+
+    CaseSummarySearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/CaseSummarySearchCriteria'
+
+    CaseSummarySearchCriteria:
+      type: object
+      properties:
+        searchNumber:
+          type: string
+          description: CNR, court case number or CMP number to search by.
+        courtId:
+          type: string
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    CaseSummarySearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        caseSummaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseSummarySearch'
+
+    CaseSummarySearch:
+      description: org.pucar.dristi.web.models.v2.CaseSummarySearch
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        resolutionMechanism:
+          type: string
+        caseTitle:
+          type: string
+        createdTime:
+          type: integer
+          format: int64
+        caseDescription:
+          type: string
+        filingNumber:
+          type: string
+        advocateCount:
+          type: integer
+          format: int32
+        courtCaseNumber:
+          type: string
+        caseNumber:
+          type: string
+        caseType:
+          type: string
+        cnrNumber:
+          type: string
+        cmpNumber:
+          type: string
+        outcome:
+          type: string
+        natureOfDisposal:
+          $ref: '#/components/schemas/NatureOfDisposal'
+        courtId:
+          type: string
+        benchId:
+          type: string
+        filingDate:
+          type: integer
+          format: int64
+        registrationDate:
+          type: integer
+          format: int64
+        judgementDate:
+          type: integer
+          format: int64
+        caseCategory:
+          type: string
+        judgeId:
+          type: string
+        stage:
+          type: string
+        natureOfPleading:
+          type: string
+        secondaryStage:
+          type: array
+          items:
+            type: string
+        statutesAndSection:
+          $ref: '#/components/schemas/StatuteSectionV2'
+        litigants:
+          type: array
+          items:
+            $ref: '#/components/schemas/LitigantV2'
+        representatives:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepresentativeV2'
+        status:
+          type: string
+        remarks:
+          type: string
+        createdBy:
+          type: string
+        additionalDetails:
+          type: object
+        advocateStatus:
+          type: string
+        poaHolders:
+          type: array
+          items:
+            $ref: '#/components/schemas/POAHolderV2'
+
+    StatuteSectionV2:
+      type: object
+      properties:
+        section:
+          type: string
+        subsection:
+          type: string
+
+    LitigantV2:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        individualId:
+          type: string
+        partyType:
+          type: string
+        isPartyInPerson:
+          type: boolean
+        isResponseSubmitted:
+          type: boolean
+
+    RepresentativeV2:
+      type: object
+      properties:
+        id:
+          type: string
+        advocateId:
+          type: string
+        additionalDetails:
+          type: object
+        representing:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepresentingV2'
+
+    RepresentingV2:
+      type: object
+      properties:
+        individualId:
+          type: string
+        partyType:
+          type: string
+
+    POAHolderV2:
+      type: object
+      properties:
+        individualId:
+          type: string
+        additionalDetails:
+          type: object
+        representingLitigants:
+          type: array
+          items:
+            $ref: '#/components/schemas/PoaPartyV2'
+
+    PoaPartyV2:
+      type: object
+      properties:
+        individualId:
+          type: string
+
+    # =========================================================================
+    # JOIN CASE (v1 legacy)
+    # =========================================================================
+
+    JoinCaseRequest:
+      type: object
+      required: [accessCode, caseFilingNumber]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        accessCode:
+          type: string
+        caseFilingNumber:
+          type: string
+        representative:
+          $ref: '#/components/schemas/Representative'
+        litigant:
+          type: array
+          items:
+            $ref: '#/components/schemas/Party'
+        isLitigantPIP:
+          type: boolean
+          default: false
+        consumerCode:
+          type: string
+        additionalDetails:
+          type: object
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+
+    JoinCaseResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        joinCaseRequest:
+          $ref: '#/components/schemas/JoinCaseRequest'
+          description: 'REVIEW: the controller does not set isVerified on the response type here; it echoes back the (mutated) JoinCaseRequest instead.'
+
+    Representative:
+      description: org.pucar.dristi.web.models.Representative - used inside JoinCaseRequest (v1 legacy join)
+      type: object
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        advocateId:
+          type: string
+        caseId:
+          type: string
+        representing:
+          type: array
+          items:
+            $ref: '#/components/schemas/Representing'
+        isActive:
+          type: boolean
+          default: true
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+        additionalDetails:
+          type: object
+        hasSigned:
+          type: boolean
+          default: false
+
+    Representing:
+      description: org.pucar.dristi.web.models.Representing - extends Party with isAdvocateReplacing
+      allOf:
+        - $ref: '#/components/schemas/Party'
+        - type: object
+          properties:
+            isAdvocateReplacing:
+              type: boolean
+              default: false
+
+    # =========================================================================
+    # JOIN CASE (v2)
+    # =========================================================================
+
+    JoinCaseV2Request:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        joinCaseData:
+          $ref: '#/components/schemas/JoinCaseDataV2'
+
+    JoinCaseDataV2:
+      type: object
+      required: [accessCode, tenantId, filingNumber]
+      properties:
+        accessCode:
+          type: string
+        tenantId:
+          type: string
+        filingNumber:
+          type: string
+        representative:
+          $ref: '#/components/schemas/JoinCaseRepresentative'
+        litigant:
+          type: array
+          items:
+            $ref: '#/components/schemas/JoinCaseLitigant'
+        poa:
+          $ref: '#/components/schemas/JoinCasePOA'
+        additionalDetails:
+          type: object
+
+    JoinCaseLitigant:
+      description: org.pucar.dristi.web.models.JoinCaseLitigant - extends Party
+      allOf:
+        - $ref: '#/components/schemas/Party'
+        - type: object
+          properties:
+            isPip:
+              type: boolean
+              default: false
+            uniqueId:
+              type: string
+              description: individualId for a complainant, or uuid of the respondent in additionalDetails.
+
+    JoinCaseRepresentative:
+      type: object
+      properties:
+        isJudgeApproving:
+          type: boolean
+          default: false
+        isReplacing:
+          type: boolean
+          default: false
+        advocateId:
+          type: string
+        reason:
+          type: string
+        reasonDocument:
+          $ref: '#/components/schemas/ReasonDocument'
+        representing:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepresentingJoinCase'
+
+    RepresentingJoinCase:
+      type: object
+      properties:
+        uniqueId:
+          type: string
+        individualId:
+          type: string
+        isAlreadyPip:
+          type: boolean
+          default: false
+        isVakalathnamaAlreadyPresent:
+          type: boolean
+          default: false
+        noOfAdvocates:
+          type: integer
+          format: int32
+          default: 0
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        replaceAdvocates:
+          type: array
+          items:
+            type: string
+
+    ReasonDocument:
+      type: object
+      required: [fileStore]
+      properties:
+        fileStore:
+          type: string
+
+    JoinCasePOA:
+      type: object
+      properties:
+        individualId:
+          type: string
+        poaRepresenting:
+          type: array
+          items:
+            $ref: '#/components/schemas/POARepresentingJoinCase'
+
+    POARepresentingJoinCase:
+      type: object
+      properties:
+        uniqueId:
+          type: string
+        individualId:
+          type: string
+        isRevoking:
+          type: boolean
+          default: false
+        existingPoaIndividualId:
+          type: string
+        poaAuthDocument:
+          $ref: '#/components/schemas/Document'
+
+    JoinCaseV2Response:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        isVerified:
+          type: boolean
+          default: false
+        paymentTaskNumber:
+          type: string
+          description: Task number for payment; null if payment is not required.
+
+    # =========================================================================
+    # JOIN CASE - ACCESS CODE
+    # =========================================================================
+
+    CaseCodeRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        code:
+          $ref: '#/components/schemas/CaseCodeCriteria'
+
+    CaseCodeCriteria:
+      type: object
+      required: [tenantId, code, filingNumber]
+      properties:
+        tenantId:
+          type: string
+        code:
+          type: string
+          description: Access code that needs verification.
+        filingNumber:
+          type: string
+
+    CaseCodeResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        isValid:
+          type: boolean
+          description: True if the code matches. False if the code is incorrect or the case doesn't exist.
+
+    AccessCodeGenerateRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        filingNumberList:
+          type: array
+          items:
+            type: string
+
+    AccessCodeGenerateResponse:
+      description: Controller returns a raw Map<String, AtomicBoolean> (filingNumber -> success flag), not wrapped in a ResponseInfo envelope.
+      type: object
+      additionalProperties:
+        type: boolean
+
+    # =========================================================================
+    # WITNESS (v1)
+    # =========================================================================
+
+    AddWitnessRequest:
+      description: org.pucar.dristi.web.models.AddWitnessRequest - backs the deprecated POST /v1/add/witness
+      type: object
+      required: [caseFilingNumber]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        caseFilingNumber:
+          type: string
+        additionalDetails:
+          type: object
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+
+    AddWitnessResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        addWitnessRequest:
+          $ref: '#/components/schemas/AddWitnessRequest'
+
+    WitnessRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        witness:
+          $ref: '#/components/schemas/Witness'
+
+    WitnessResponse:
+      description: 'REVIEW: org.pucar.dristi.web.models.WitnessResponse declares its response-info field with @JsonProperty("RequestInfo") (likely a bug in the source), so the serialized JSON key is "RequestInfo" even though the field holds a ResponseInfo value.'
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        witnesses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Witness'
+
+    WitnessSearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        searchCriteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/WitnessSearchCriteria'
+
+    WitnessSearchCriteria:
+      type: object
+      properties:
+        caseId:
+          type: string
+        individualId:
+          type: string
+        includeInactive:
+          type: boolean
+          default: false
+
+    Witness:
+      type: object
+      required: [caseId, individualId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        caseId:
+          type: string
+        filingNumber:
+          type: string
+        cnrNumber:
+          type: string
+        witnessIdentifier:
+          type: string
+        individualId:
+          type: string
+        remarks:
+          type: string
+          minLength: 10
+          maxLength: 5000
+        isActive:
+          type: boolean
+          default: true
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+        additionalDetails:
+          type: object
+
+    # =========================================================================
+    # WITNESS (v2)
+    # =========================================================================
+
+    WitnessDetailsRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        caseFilingNumber:
+          type: string
+        tenantId:
+          type: string
+        witnessDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/WitnessDetails'
+
+    WitnessDetailsResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        witnessDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/WitnessDetails'
+
+    # =========================================================================
+    # CASE SUMMARY (public-safe fields)
+    # =========================================================================
+
+    CaseSummaryRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        criteria:
+          $ref: '#/components/schemas/CaseSearchCriteria'
+
+    CaseSearchCriteria:
+      description: >
+        org.pucar.dristi.web.models.CaseSearchCriteria - only used as CaseSummaryRequest.criteria.
+        Custom @OneOf validation requires exactly one of caseId, filingNumber or cnrNumber to be provided.
+      type: object
+      required: [tenantId]
+      properties:
+        tenantId:
+          type: string
+        caseId:
+          type: array
+          items:
+            type: string
+        filingNumber:
+          type: array
+          items:
+            type: string
+        cnrNumber:
+          type: array
+          items:
+            type: string
+
+    CaseSummaryResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    CaseSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        caseTitle:
+          type: string
+        filingDate:
+          type: integer
+          format: int64
+        statutesAndSections:
+          type: string
+          example: "NIA 138, 142(1)(a), 145; CrPC 100, 402(a)"
+        stage:
+          type: string
+        outcome:
+          type: string
+        natureOfDisposal:
+          $ref: '#/components/schemas/NatureOfDisposal'
+        litigants:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartySummary'
+        representatives:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepresentativeSummary'
+        judge:
+          $ref: '#/components/schemas/Judge'
+        courtId:
+          type: string
+        registrationDate:
+          type: integer
+          format: int64
+        registrationNumber:
+          type: string
+
+    PartySummary:
+      type: object
+      properties:
+        partyCategory:
+          type: string
+        partyType:
+          type: string
+        individualId:
+          type: string
+        individualName:
+          type: string
+        organisationId:
+          type: string
+        isPartyInPerson:
+          type: boolean
+
+    RepresentativeSummary:
+      type: object
+      properties:
+        partyId:
+          type: string
+        advocateId:
+          type: string
+        advocateType:
+          type: string
+
+    Judge:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        designation:
+          type: string
+
+    # =========================================================================
+    # OPEN API (external)
+    # =========================================================================
+
+    OpenApiCaseSummaryRequest:
+      description: No RequestInfo field - this endpoint family does not require the standard DIGIT request envelope.
+      type: object
+      required: [tenantId]
+      properties:
+        tenantId:
+          type: string
+        cnrNumber:
+          type: string
+        caseType:
+          type: string
+        year:
+          type: integer
+          format: int32
+        startYear:
+          type: integer
+          format: int64
+        endYear:
+          type: integer
+          format: int64
+        caseNumber:
+          type: integer
+          format: int32
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    OpenApiCaseSummaryResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        caseSummary:
+          $ref: '#/components/schemas/OpenApiCaseSummary'
+
+    OpenApiCaseSummary:
+      type: object
+      properties:
+        cnrNumber:
+          type: string
+          minLength: 16
+          maxLength: 16
+        filingNumber:
+          type: string
+          minLength: 14
+          maxLength: 14
+        filingDate:
+          type: integer
+          format: int64
+        registrationNumber:
+          type: string
+          minLength: 10
+          maxLength: 18
+        registrationDate:
+          type: integer
+          format: int64
+        nextHearingDate:
+          type: integer
+          format: int64
+        caseType:
+          type: string
+          enum: [CMP, ST]
+          description: "CMP = Criminal Miscellaneous Petition, ST = Summary Trial"
+        statutesAndSections:
+          type: array
+          items:
+            type: object
+        status:
+          type: string
+          enum: [Pending, Disposed]
+          description: >
+            CMP case not yet admitted -> Pending. ST case already admitted -> Pending.
+            ST case already registered but queried using CMP -> Disposed.
+        subStage:
+          type: string
+        judgeName:
+          type: string
+        complainant:
+          type: string
+        respondent:
+          type: string
+        advocateComplainant:
+          type: string
+        advocateRespondent:
+          type: string
+
+    OpenApiCaseListResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        caseList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseListLineItem'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    CaseListLineItem:
+      type: object
+      properties:
+        caseNumber:
+          type: string
+        caseTitle:
+          type: string
+
+    CaseSearchTextRequest:
+      description: No RequestInfo field.
+      type: object
+      required: [tenantId, searchText, courtId]
+      properties:
+        tenantId:
+          type: string
+        searchText:
+          type: string
+        courtId:
+          type: string
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    CaseSearchTextResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseSearchTextItem'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    CaseSearchTextItem:
+      type: object
+      properties:
+        cmpNumber:
+          type: string
+        filingNumber:
+          type: string
+        courtCaseNumber:
+          type: string
+        cnrNumber:
+          type: string
+        caseTitle:
+          type: string
+
+    # =========================================================================
+    # PROFILE
+    # =========================================================================
+
+    CreateProfileRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        profile:
+          $ref: '#/components/schemas/Profile'
+
+    Profile:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        uuid:
+          type: string
+          description: 'Maps from the Java field named `id` but serialized as JSON property "uuid".'
+        litigantDetails:
+          type: object
+          description: 'REVIEW: free-form object in code; historical schema (0.1.0 spec) suggested {partyType, uniqueId} shape but is not enforced in the current DTO.'
+        editorDetails:
+          type: object
+          description: 'REVIEW: free-form object in code; historical schema (0.1.0 spec) suggested {isAdvocate, partyType, uuid} shape but is not enforced in the current DTO.'
+        pendingTaskRefId:
+          type: string
+        newData:
+          type: object
+          description: 'REVIEW: free-form object; historically shaped as {complainantDetails, respondentDetails} but not enforced in the current DTO.'
+        caseId:
+          type: string
+        document:
+          $ref: '#/components/schemas/Document'
+        reason:
+          type: string
+
+    ProcessProfileRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        processInfo:
+          $ref: '#/components/schemas/ProcessInfo'
+
+    ProcessInfo:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        caseId:
+          type: string
+        action:
+          $ref: '#/components/schemas/ActionType'
+        pendingTaskRefId:
+          type: string
+
+    # =========================================================================
+    # ADDRESS
+    # =========================================================================
+
+    AddAddressRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        tenantId:
+          type: string
+        caseId:
+          type: string
+          format: uuid
+        filingNumber:
+          type: string
+        partyAddresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyAddressRequest'
+
+    PartyAddressRequest:
+      type: object
+      properties:
+        uniqueId:
+          type: string
+          format: uuid
+        partyType:
+          type: string
+          description: e.g. Accused, Witness
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+
+    AddAddressResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        partyAddressList:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyAddressRequest'
+
+    # =========================================================================
+    # ADVOCATE / ADVOCATE-OFFICE
+    # =========================================================================
+
+    AdvocateCasesRequest:
+      type: object
+      required: [advocateId]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        advocateId:
+          type: string
+
+    AdvocateCasesResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateCaseInfo'
+
+    AdvocateCaseInfo:
+      type: object
+      properties:
+        caseId:
+          type: string
+        filingNumber:
+          type: string
+
+    MemberAdvocatesRequest:
+      type: object
+      required: [memberUserUuid, caseId]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        memberUserUuid:
+          type: string
+        caseId:
+          type: string
+
+    MemberAdvocatesResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        advocateUuids:
+          type: array
+          items:
+            type: string
+
+    CaseMemberSearchRequest:
+      type: object
+      required: [RequestInfo, criteria]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/CaseMemberSearchCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    CaseMemberSearchCriteria:
+      type: object
+      required: [tenantId, officeAdvocateUserUuid, memberUserUuid]
+      properties:
+        tenantId:
+          type: string
+        officeAdvocateUserUuid:
+          type: string
+        memberUserUuid:
+          type: string
+        advocateId:
+          type: string
+        caseSearchText:
+          type: string
+        caseMappingFilterStatus:
+          $ref: '#/components/schemas/CaseMappingFilterStatus'
+
+    CaseMemberSearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseMemberInfo'
+        totalCount:
+          type: integer
+          format: int32
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    CaseMemberInfo:
+      type: object
+      properties:
+        caseId:
+          type: string
+          format: uuid
+        filingNumber:
+          type: string
+        cmpNumber:
+          type: string
+        courtCaseNumber:
+          type: string
+        lprNumber:
+          type: string
+        caseTitle:
+          type: string
+        lifecycleStatus:
+          $ref: '#/components/schemas/LifecycleStatus'
+        isActive:
+          type: boolean
+
+    ProcessCaseMemberRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        processCaseMember:
+          $ref: '#/components/schemas/ProcessCaseMember'
+
+    ProcessCaseMember:
+      type: object
+      properties:
+        addCaseIds:
+          type: array
+          items:
+            type: string
+        removeCaseIds:
+          type: array
+          items:
+            type: string
+        officeAdvocateUserUuid:
+          type: string
+          format: uuid
+        memberUserUuid:
+          type: string
+          format: uuid
+        officeAdvocateId:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        officeAdvocateName:
+          type: string
+        memberType:
+          $ref: '#/components/schemas/MemberType'
+        memberName:
+          type: string
+        tenantId:
+          type: string
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+
+    ProcessCaseMemberResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        processCaseMember:
+          $ref: '#/components/schemas/ProcessCaseMember'

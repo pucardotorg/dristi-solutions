@@ -1,5 +1,4 @@
 import { Link, useHistory } from "react-router-dom";
-import _ from "lodash";
 import React from "react";
 import { Button } from "@egovernments/digit-ui-react-components";
 

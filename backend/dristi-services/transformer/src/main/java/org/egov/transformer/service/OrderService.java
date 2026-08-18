@@ -72,7 +72,7 @@ public class OrderService {
 
 
     private void addOrderDetailsToCase(Order order) {
-        if (order.getFilingNumber() != null
+        if (order.getFilingNumber() != null && order.getOrderType() != null
                 && (order.getOrderType().equalsIgnoreCase(ServiceConstants.BAIL_ORDER_TYPE)
                 || order.getOrderType().equalsIgnoreCase(ServiceConstants.JUDGEMENT_ORDER_TYPE))) {
             caseService.updateCase(order);

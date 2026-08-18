@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -240,6 +241,38 @@ public class CaseRepository {
         }
     }
 
+    /**
+     * Resolves a filingNumber to its caseId. Lightweight single-column, indexed lookup
+     * used to build the Redis key (tenantId:caseId) for the Redis-first metadata read.
+     * Returns null when the filingNumber does not exist.
+     */
+    public String getCaseIdByFilingNumber(String filingNumber) {
+        if (filingNumber == null || filingNumber.trim().isEmpty()) {
+            return null;
+        }
+        String query = "SELECT cases.id FROM dristi_cases cases WHERE cases.filingnumber = ? LIMIT 1";
+        List<String> ids = jdbcTemplate.query(query, new Object[]{filingNumber}, new int[]{java.sql.Types.VARCHAR},
+                (rs, rowNum) -> rs.getString("id"));
+        return ids.isEmpty() ? null : ids.get(0);
+    }
+
+    /**
+     * Scalar-only case metadata lookup by filingNumber(s). Single-table read against
+     * dristi_cases with no child-table joins, no Redis, and no decryption. Used as the
+     * database fallback when the case is not present in the Redis cache.
+     */
+    public List<CaseMeta> getCaseMeta(List<String> filingNumbers) {
+        if (filingNumbers == null || filingNumbers.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<Object> preparedStmtList = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+        String query = queryBuilder.getCaseMetaQuery(filingNumbers, preparedStmtList, preparedStmtArgList);
+        log.info("Final case meta query :: {}", query);
+        return jdbcTemplate.query(query, preparedStmtList.toArray(),
+                preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), new CaseMetaRowMapper());
+    }
+
     public List<CaseCriteria> getCases(List<CaseCriteria> searchCriteria, RequestInfo requestInfo) {
 
         try {
@@ -289,8 +322,33 @@ public class CaseRepository {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching case application list :: {}", e.toString());
+            log.error("Error while fetching case application list", e);
             throw new CustomException(SEARCH_CASE_ERR, "Exception while fetching case application list: " + e.getMessage());
+        }
+    }
+
+    public void refreshRepresentativeData(CourtCase courtCase) {
+        if (courtCase == null || courtCase.getId() == null) {
+            return;
+        }
+
+        List<String> ids = Collections.singletonList(String.valueOf(courtCase.getId()));
+        List<String> idsRepresentative = new ArrayList<>();
+        List<String> idsRepresenting = new ArrayList<>();
+        List<Object> preparedStmtListDoc = new ArrayList<>();
+
+        setRepresentatives(courtCase, ids);
+        setAdvocateOffices(courtCase, ids);
+        extractRepresentativeIds(courtCase, idsRepresentative);
+
+        if (!idsRepresentative.isEmpty()) {
+            setRepresenting(courtCase, idsRepresentative, preparedStmtListDoc);
+            extractRepresentingIds(courtCase, idsRepresenting);
+            setRepresentativeDocuments(courtCase, idsRepresentative);
+        }
+
+        if (!idsRepresenting.isEmpty()) {
+            setRepresentingDocuments(courtCase, idsRepresenting);
         }
     }
 
@@ -342,6 +400,22 @@ public class CaseRepository {
 
         if (!idsRepresenting.isEmpty())
             setRepresentingDocuments(caseCriteria, idsRepresenting);
+    }
+
+    private static void extractRepresentativeIds(CourtCase courtCase, List<String> idsRepresentative) {
+        if (courtCase.getRepresentatives() != null) {
+            courtCase.getRepresentatives().forEach(rep -> idsRepresentative.add(rep.getId()));
+        }
+    }
+
+    private static void extractRepresentingIds(CourtCase courtCase, List<String> idsRepresenting) {
+        if (courtCase.getRepresentatives() != null) {
+            courtCase.getRepresentatives().forEach(rep -> {
+                if (rep.getRepresenting() != null) {
+                    rep.getRepresenting().forEach(representing -> idsRepresenting.add(representing.getId().toString()));
+                }
+            });
+        }
     }
 
     private void setPoaDocuments(CaseCriteria caseCriteria, List<String> individualIdsPoaHolder) {
@@ -500,18 +574,83 @@ public class CaseRepository {
         }
     }
 
+    private void setRepresenting(CourtCase courtCase, List<String> idsRepresentative, List<Object> preparedStmtListDoc) {
+        String representingQuery = "";
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+
+        representingQuery = queryBuilder.getRepresentingSearchQuery(idsRepresentative, preparedStmtListDoc, preparedStmtArgList);
+        log.info("Final representing query :: {}", representingQuery);
+        Map<UUID, List<Party>> representingMap = jdbcTemplate.query(representingQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), representingRowMapper);
+        if (representingMap != null && courtCase.getRepresentatives() != null) {
+            courtCase.getRepresentatives().forEach(representative -> representative.setRepresenting(representingMap.get(UUID.fromString(representative.getId()))));
+        }
+    }
+
     private void setRepresentatives(CaseCriteria caseCriteria, List<String> ids) {
         List<Object> preparedStmtListDoc;
         String representativeQuery = "";
         preparedStmtListDoc = new ArrayList<>();
         List<Integer> preparedStmtArgList = new ArrayList<>();
 
-        representativeQuery = queryBuilder.getRepresentativesSearchQuery(ids, preparedStmtListDoc, preparedStmtArgList);
+        representativeQuery = queryBuilder.getRepresentativesSearchQueryWithAdvocateJoin(ids, preparedStmtListDoc, preparedStmtArgList);
         log.info("Final representative query :: {}", representativeQuery);
         Map<UUID, List<AdvocateMapping>> representativeMap = jdbcTemplate.query(representativeQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), representativeRowMapper);
         if (representativeMap != null) {
             caseCriteria.getResponseList().forEach(courtCase -> courtCase.setRepresentatives(representativeMap.get(courtCase.getId())));
         }
+    }
+
+    private void setRepresentatives(CourtCase courtCase, List<String> ids) {
+        List<Object> preparedStmtListDoc = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+
+        String representativeQuery = queryBuilder.getRepresentativesSearchQueryWithAdvocateJoin(ids, preparedStmtListDoc, preparedStmtArgList);
+        log.info("Final representative query :: {}", representativeQuery);
+        Map<UUID, List<AdvocateMapping>> representativeMap = jdbcTemplate.query(representativeQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), representativeRowMapper);
+        if (representativeMap != null) {
+            courtCase.setRepresentatives(representativeMap.get(courtCase.getId()));
+        }
+    }
+
+    private void setRepresentativeDocuments(CourtCase courtCase, List<String> idsRepresentative) {
+        String representativeDocumentQuery;
+        List<Object> preparedStmtListDoc = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+
+        representativeDocumentQuery = queryBuilder.getRepresentativeDocumentSearchQuery(idsRepresentative, preparedStmtListDoc, preparedStmtArgList);
+        log.info("Final representative document query :: {}", representativeDocumentQuery);
+        Map<UUID, List<Document>> caseRepresentativeDocumentMap = jdbcTemplate.query(representativeDocumentQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), representativeDocumentRowMapper);
+        if (caseRepresentativeDocumentMap != null && courtCase.getRepresentatives() != null) {
+            courtCase.getRepresentatives().forEach(rep -> {
+                if (rep != null) {
+                    rep.setDocuments(caseRepresentativeDocumentMap.get(UUID.fromString(rep.getId())));
+                }
+            });
+        }
+    }
+
+    private void setRepresentingDocuments(CourtCase courtCase, List<String> idsRepresenting) {
+        String representingDocumentQuery;
+        List<Object> preparedStmtListDoc = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+
+        representingDocumentQuery = queryBuilder.getRepresentingDocumentSearchQuery(idsRepresenting, preparedStmtListDoc, preparedStmtArgList);
+        log.info("Final representing document query :: {}", representingDocumentQuery);
+        Map<UUID, List<Document>> caseRepresentingDocumentMap = jdbcTemplate.query(representingDocumentQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), representingDocumentRowMapper);
+
+        if (caseRepresentingDocumentMap != null) {
+            setRepresentingDoc(courtCase, caseRepresentingDocumentMap);
+        }
+    }
+
+    private void setAdvocateOffices(CourtCase courtCase, List<String> ids) {
+        if (courtCase == null) {
+            return;
+        }
+
+        CaseCriteria caseCriteria = new CaseCriteria();
+        caseCriteria.setResponseList(new ArrayList<>(Collections.singletonList(courtCase)));
+        setAdvocateOffices(caseCriteria, ids);
     }
 
     private void setPoaHolders(CaseCriteria caseCriteria, List<String> ids) {
@@ -594,7 +733,7 @@ public class CaseRepository {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while checking case exist :: {}", e.toString());
+            log.error("Error while checking case exist", e);
             throw new CustomException(SEARCH_CASE_ERR, "Custom exception while checking case exist : " + e.getMessage());
         }
     }
@@ -774,7 +913,7 @@ public class CaseRepository {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while searching cases by text :: {}", e.toString());
+            log.error("Error while searching cases by text", e);
             throw new CustomException(CASE_SUMMARY_SEARCH_QUERY_EXCEPTION, "Error occurred while searching cases by text");
         }
     }

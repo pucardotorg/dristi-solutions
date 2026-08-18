@@ -7,6 +7,7 @@ const { search_task_v2, search_task_mangement } = require("../../api");
 const {
   duplicateExistingFileStore,
 } = require("../utils/duplicateExistingFileStore");
+const { logger } = require("../../logger");
 
 async function processPaymentReceipts(
   courtCase,
@@ -14,32 +15,35 @@ async function processPaymentReceipts(
   tenantId,
   requestInfo,
   TEMP_FILES_DIR,
-  indexCopy
+  indexCopy,
 ) {
+  logger.info(
+    `[processPaymentReceipts] Started | filingNumber: ${courtCase?.filingNumber}`,
+  );
   const paymentReceiptSection = filterCaseBundleBySection(
     caseBundleMaster,
-    "paymentreceipts"
+    "paymentreceipts",
   );
 
   const sectionPosition = indexCopy.sections?.findIndex(
-    (s) => s.name === "paymentreceipts"
+    (s) => s.name === "paymentreceipts",
   );
 
   const paymentReceiptsIndexSection = indexCopy.sections?.find(
-    (section) => section.name === "paymentreceipts"
+    (section) => section.name === "paymentreceipts",
   );
 
   const dynamicSectionNumber = getDynamicSectionNumber(
     indexCopy,
-    sectionPosition
+    sectionPosition,
   );
 
   const casePaymentReceipt = courtCase.documents
     ?.filter((doc) => doc.documentType === "PAYMENT_RECEIPT")
     ?.sort((a, b) =>
       (a?.additionalDetails?.consumerCode || "").localeCompare(
-        b?.additionalDetails?.consumerCode || ""
-      )
+        b?.additionalDetails?.consumerCode || "",
+      ),
     );
   const genericTaskDocument = await search_task_v2(
     tenantId,
@@ -55,7 +59,7 @@ async function processPaymentReceipts(
       sortBy: "createdDate",
       order: "asc",
       limit: 100,
-    }
+    },
   );
 
   const taskReceipts = genericTaskDocument.data.list
@@ -74,13 +78,13 @@ async function processPaymentReceipts(
       sortBy: "last_modified_time",
       order: "asc",
       limit: 100,
-    }
+    },
   );
 
   const taskMangementReceipts =
     taskMangementData?.data?.taskManagementRecords
       ?.map((task) =>
-        task?.documents?.find?.((d) => d?.documentType === "PAYMENT_RECEIPT")
+        task?.documents?.find?.((d) => d?.documentType === "PAYMENT_RECEIPT"),
       )
       ?.filter(Boolean) || [];
 
@@ -104,14 +108,16 @@ async function processPaymentReceipts(
 
         if (section.docketpagerequired === "yes") {
           const complainant = courtCase.litigants?.find((litigant) =>
-            litigant.partyType.includes("complainant.primary")
+            litigant?.partyType?.includes("complainant.primary"),
           );
-          const docketComplainantName = complainant.additionalDetails.fullName;
-          const docketNameOfAdvocate = courtCase.representatives?.find((adv) =>
-            adv.representing?.find(
-              (party) => party.individualId === complainant.individualId
-            )
-          )?.additionalDetails?.advocateName;
+          const docketComplainantName =
+            complainant?.additionalDetails?.fullName || "";
+          const docketNameOfAdvocate =
+            courtCase.representatives?.find((adv) =>
+              adv?.representing?.some(
+                (party) => party?.individualId === complainant?.individualId,
+              ),
+            )?.additionalDetails?.advocateName || "";
 
           const docketCounselFor = docketNameOfAdvocate
             ? `COUNSEL FOR THE COMPLAINANT - ${docketComplainantName}`
@@ -124,7 +130,7 @@ async function processPaymentReceipts(
               docketCounselFor: docketCounselFor,
               docketNameOfFiling: docketNameOfAdvocate || docketComplainantName,
               docketDateOfSubmission: new Date(
-                courtCase.registrationDate
+                courtCase.registrationDate,
               ).toLocaleDateString("en-IN"),
               documentPath: `${dynamicSectionNumber}.${
                 index + 1
@@ -135,14 +141,14 @@ async function processPaymentReceipts(
             courtCase,
             tenantId,
             requestInfo,
-            TEMP_FILES_DIR
+            TEMP_FILES_DIR,
           );
         } else {
           newFileStoreId = await duplicateExistingFileStore(
             tenantId,
             paymentReceiptFileStoreId,
             requestInfo,
-            TEMP_FILES_DIR
+            TEMP_FILES_DIR,
           );
         }
 
@@ -153,7 +159,7 @@ async function processPaymentReceipts(
           content: "paymentreceipts",
           sortParam: index + 1,
         };
-      })
+      }),
     );
     paymentReceiptsIndexSection.lineItems =
       paymentReceiptLineItems?.filter(Boolean);

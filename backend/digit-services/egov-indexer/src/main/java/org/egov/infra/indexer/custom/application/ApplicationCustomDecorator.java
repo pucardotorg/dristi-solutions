@@ -2,8 +2,6 @@ package org.egov.infra.indexer.custom.application;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.infra.indexer.custom.pt.Property;
-import org.egov.infra.indexer.custom.pt.PropertyDetail;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;

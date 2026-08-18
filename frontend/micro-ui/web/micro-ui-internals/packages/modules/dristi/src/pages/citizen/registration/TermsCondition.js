@@ -1,4 +1,5 @@
-import { FormComposerV2, Loader } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getUserDetails, setCitizenDetail } from "../../../hooks/useGetAccessToken";

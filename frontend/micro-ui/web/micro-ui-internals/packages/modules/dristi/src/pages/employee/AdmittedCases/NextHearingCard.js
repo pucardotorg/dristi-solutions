@@ -1,8 +1,6 @@
 import { Button, Card, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { DRISTIService } from "../../../services";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import useGetHearingLink from "@egovernments/digit-ui-module-hearings/src/hooks/hearings/useGetHearingLink";
 
@@ -18,10 +16,8 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
   const cnr = caseData.cnrNumber;
   const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const history = useHistory();
   const { t } = useTranslation();
   const userInfo = Digit?.UserService?.getUser()?.info;
-  const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isEmployee = useMemo(() => userInfo?.type === "EMPLOYEE", [userInfo]);
 
   const { data: slotTime } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }]);
@@ -61,22 +57,6 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
 
   const shouldShowButton = !hiddenOutcomes.includes(caseData?.case?.outcome) && !isEmployee;
 
-  const formattedTime = () => {
-    const date1 = new Date(scheduledHearing?.startTime);
-    const date2 = new Date(scheduledHearing?.endTime);
-    const formattedDate = `
-    ${date1.toLocaleTimeString("en-in", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}
-     - 
-     ${date2.toLocaleTimeString("en-in", {
-       hour: "2-digit",
-       minute: "2-digit",
-     })}`;
-    return formattedDate;
-  };
-
   const formattedDate = `${new Date(scheduledHearing?.startTime).toLocaleDateString("en-in", {
     month: "long",
     day: "numeric",
@@ -87,8 +67,6 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
   const { data: hearingLink } = useGetHearingLink();
 
   const handleButtonClick = () => {
-    const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-    const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
     const searchParams = new URLSearchParams();
     searchParams.set("hearingId", scheduledHearing?.hearingId);
     searchParams.set("filingNumber", scheduledHearing?.filingNumber);
@@ -96,16 +74,6 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
     if (enableJoinButton && hearingLink) {
       window.open(hearingLink, "_blank");
       return;
-    }
-
-    if (userType === "citizen") {
-      history.push(`/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`);
-    } else if (scheduledHearing?.status === "SCHEDULED") {
-      DRISTIService.startHearing({ hearing: scheduledHearing }).then(() => {
-        window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
-      });
-    } else {
-      window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
     }
   };
 

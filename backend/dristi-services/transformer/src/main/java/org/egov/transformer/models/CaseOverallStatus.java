@@ -9,6 +9,9 @@ import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Validated
 @Data
@@ -28,6 +31,9 @@ public class CaseOverallStatus {
 
     @JsonProperty("substage")
     private String substage = null;
+
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = new ArrayList<>();
 
     @JsonProperty("auditDetails")
     @Valid

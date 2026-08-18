@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
@@ -13,8 +14,10 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.ApplicationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ApplicationRepository;
+import org.pucar.dristi.util.DemandUtil;
 import org.pucar.dristi.util.EvidenceUtil;
 import org.pucar.dristi.util.FileStoreUtil;
+import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.util.SmsNotificationUtil;
 import org.pucar.dristi.validator.ApplicationValidator;
 import org.pucar.dristi.web.models.*;
@@ -23,7 +26,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -43,6 +49,8 @@ public class ApplicationService {
     private final ObjectMapper objectMapper;
     private final FileStoreUtil fileStoreUtil;
     private final EvidenceUtil evidenceUtil;
+    private final DemandUtil demandUtil;
+    private final MdmsUtil mdmsUtil;
 
     @Autowired
     public ApplicationService(
@@ -51,7 +59,7 @@ public class ApplicationService {
             ApplicationRepository applicationRepository,
             WorkflowService workflowService,
             Configuration config,
-            Producer producer, SmsNotificationUtil smsNotificationUtil, ObjectMapper objectMapper, FileStoreUtil fileStoreUtil, EvidenceUtil evidenceUtil) {
+            Producer producer, SmsNotificationUtil smsNotificationUtil, ObjectMapper objectMapper, FileStoreUtil fileStoreUtil, EvidenceUtil evidenceUtil, DemandUtil demandUtil, MdmsUtil mdmsUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.applicationRepository = applicationRepository;
@@ -62,6 +70,8 @@ public class ApplicationService {
         this.objectMapper = objectMapper;
         this.fileStoreUtil = fileStoreUtil;
         this.evidenceUtil = evidenceUtil;
+        this.demandUtil = demandUtil;
+        this.mdmsUtil = mdmsUtil;
     }
 
     public Application createApplication(ApplicationRequest body) {
@@ -81,7 +91,7 @@ public class ApplicationService {
             producer.push(config.getApplicationCreateTopic(), body);
             return body.getApplication();
         } catch (Exception e) {
-            log.error("Error occurred while creating application {}", e.getMessage());
+            log.error("Error occurred while creating application", e);
             throw new CustomException(CREATE_APPLICATION_ERR, e.getMessage());
         }
     }
@@ -120,6 +130,10 @@ public class ApplicationService {
             if(!fileStoreIds.isEmpty()){
                 fileStoreUtil.deleteFilesByFileStore(fileStoreIds, applicationRequest.getApplication().getTenantId());
                 log.info("Deleted files for application with ids: {}", fileStoreIds);
+            }
+
+            if (shouldCreateDemand(application)) {
+                createDemand(applicationRequest);
             }
 
             if (PENDINGPAYMENT.equalsIgnoreCase(application.getStatus())) {
@@ -174,12 +188,18 @@ public class ApplicationService {
             return applicationRequest.getApplication();
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while updating application {}", e.getMessage());
+            log.error("Custom Exception occurred while updating application", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while updating application {}", e.getMessage());
+            log.error("Error occurred while updating application", e);
             throw new CustomException(UPDATE_APPLICATION_ERR, "Error occurred while updating application: " + e.getMessage());
         }
+    }
+
+    private boolean shouldCreateDemand(Application application) {
+        return application.getWorkflow() != null &&
+                ESIGN.equalsIgnoreCase(application.getWorkflow().getAction()) &&
+                PENDINGPAYMENT.equalsIgnoreCase(application.getStatus());
     }
 
     private String getIndividualId(Object additionalDetails) {
@@ -290,7 +310,7 @@ public class ApplicationService {
                 return new ArrayList<>();
             return applicationList;
         } catch (Exception e) {
-            log.error("Error while fetching to search results {}", e.toString());
+            log.error("Error while fetching to search results", e);
             throw new CustomException(APPLICATION_SEARCH_ERR, e.getMessage());
         }
     }
@@ -299,10 +319,10 @@ public class ApplicationService {
         try {
             return applicationRepository.checkApplicationExists(applicationExistsRequest.getApplicationExists());
         } catch (CustomException e) {
-            log.error("Error while checking application exist {}", e.toString());
+            log.error("Error while checking application exist", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error while checking application exist {}", e.toString());
+            log.error("Error while checking application exist", e);
             throw new CustomException(APPLICATION_EXIST_EXCEPTION, e.getMessage());
         }
     }
@@ -334,11 +354,170 @@ public class ApplicationService {
                     .requestInfo(applicationAddCommentRequest.getRequestInfo()).build();
             producer.push(config.getApplicationUpdateCommentsTopic(), applicationRequest);
         } catch (CustomException e) {
-            log.error("Error while adding comments {}", e.toString());
+            log.error("Error while adding comments", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error while adding comments {}", e.toString());
+            log.error("Error while adding comments", e);
             throw new CustomException(COMMENT_ADD_ERR, e.getMessage());
         }
     }
+
+    private void createDemand(ApplicationRequest applicationRequest) {
+        Application application = applicationRequest.getApplication();
+        RequestInfo requestInfo = applicationRequest.getRequestInfo();
+        try {
+            String tenantId = application.getTenantId();
+            String entityType = determineEntityType(application);
+            String filingNumber = application.getFilingNumber();
+            String applicationNumber = application.getApplicationNumber();
+            String applicationType = application.getApplicationType();
+
+            String suffix = getSuffixFromMdms(requestInfo, tenantId, entityType);
+            if (suffix == null || suffix.isEmpty()) {
+                suffix = APPLICATION_FILING_SUFFIX;
+            }
+
+            String consumerCode = applicationNumber + "_" + suffix;
+
+            Double totalAmount = getApplicationAmountFromMdms(requestInfo, tenantId, applicationType);
+            if (totalAmount == null) {
+                totalAmount = 20.0;
+            }
+
+            if (totalAmount <= 0) {
+                log.info("Skipping demand creation for application {} with type {} as totalAmount is {}",
+                        applicationNumber, applicationType, totalAmount);
+                return;
+            }
+
+            demandUtil.createDemand(requestInfo, tenantId, entityType, filingNumber, consumerCode, totalAmount);
+        } catch (Exception e) {
+            log.error("Error while creating demand for application", e);
+            throw new CustomException(ERROR_WHILE_CREATING_DEMAND_FOR_CASE,
+                                    "Error while creating demand: " + e.getMessage());
+        }
+    }
+
+    private String getSuffixFromMdms(RequestInfo requestInfo, String tenantId, String entityType) {
+        try {
+            Map<String, Map<String, JSONArray>> mdmsData =
+                mdmsUtil.fetchMdmsData(requestInfo, tenantId,
+                        PAYMENT_MODULE, Collections.singletonList(PAYMENT_TYPE_MASTER));
+
+            if (mdmsData != null && mdmsData.containsKey(PAYMENT_MODULE)) {
+                JSONArray paymentTypes = mdmsData.get(PAYMENT_MODULE).get(PAYMENT_TYPE_MASTER);
+
+                if (paymentTypes != null) {
+
+                    for (Object paymentTypeObj : paymentTypes) {
+                        JsonNode paymentTypeNode = objectMapper.valueToTree(paymentTypeObj);
+                        JsonNode businessServices = paymentTypeNode.path(BUSINESS_SERVICE);
+
+                        if (businessServices.isArray()) {
+                            for (JsonNode businessService : businessServices) {
+                                String businessCode = businessService.path(BUSINESS_CODE).asText();
+                                if (entityType.equals(businessCode)) {
+                                    return paymentTypeNode.path(SUFFIX).asText();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error fetching suffix from MDMS", e);
+        }
+        return null;
+    }
+
+    private Double getApplicationAmountFromMdms(RequestInfo requestInfo, String tenantId, String applicationType) {
+        try {
+            Map<String, Map<String, net.minidev.json.JSONArray>> mdmsData =
+                mdmsUtil.fetchMdmsData(requestInfo, tenantId, APPLICATION_MODULE, Collections.singletonList(APPLICATION_TYPE_MASTER));
+
+            if (mdmsData != null && mdmsData.containsKey(APPLICATION_MODULE)) {
+                JSONArray applicationTypes = mdmsData.get(APPLICATION_MODULE).get(APPLICATION_TYPE_MASTER);
+
+                if (applicationTypes != null) {
+                    for (Object appTypeObj : applicationTypes) {
+                        JsonNode appTypeNode = objectMapper.valueToTree(appTypeObj);
+                        String type = appTypeNode.path("type").asText();
+
+                        if (applicationType.equals(type)) {
+                            JsonNode totalAmountNode = appTypeNode.path("totalAmount");
+                            if (!totalAmountNode.isMissingNode() && !totalAmountNode.isNull()) {
+                                return totalAmountNode.asDouble();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error fetching application amount from MDMS", e);
+        }
+        return null;
+    }
+
+    private String determineEntityType(Application application) {
+        boolean isResponseRequired = application.isResponseRequired();
+        String applicationType = application.getApplicationType();
+        UUID referenceId = application.getReferenceId();
+        String orderRefNumber = extractOrderRefNumber(application.getAdditionalDetails());
+
+        if (orderRefNumber != null && referenceId != null) {
+            return isResponseRequired ?
+                    config.getAsyncOrderSubWithResponseBusinessServiceName() :
+                    config.getAsyncOrderSubBusinessServiceName();
+        }
+
+        if (REQUEST_FOR_BAIL.equalsIgnoreCase(applicationType)) {
+            return config.getBailVoluntarySubBusinessServiceName();
+        }
+
+        return config.getAsyncVoluntarySubBusinessServiceName();
+    }
+
+    private String extractOrderRefNumber(Object additionalDetails) {
+        if (additionalDetails == null) {
+            return null;
+        }
+
+        try {
+            JsonNode rootNode = objectMapper.valueToTree(additionalDetails);
+            JsonNode formdataNode = rootNode.path("formdata");
+            if (formdataNode.isMissingNode() || formdataNode.isNull()) {
+                return null;
+            }
+
+            JsonNode refOrderIdNode = formdataNode.path("refOrderId");
+            if (refOrderIdNode.isMissingNode() || refOrderIdNode.isNull()) {
+                return null;
+            }
+
+            String refOrderId = refOrderIdNode.asText();
+            if (refOrderId.isEmpty()) {
+                return null;
+            }
+
+            return processOrderNumber(refOrderId);
+
+        } catch (IllegalArgumentException e) {
+            log.error("Failed to extract orderRefNumber from additionalDetails", e);
+            return null;
+        }
+    }
+
+    private String processOrderNumber(String orderItemId) {
+        if (orderItemId == null || orderItemId.isEmpty()) {
+            return orderItemId;
+        }
+
+        if (orderItemId.contains("_")) {
+            String[] parts = orderItemId.split("_");
+            return parts.length > 0 ? parts[parts.length - 1] : orderItemId;
+        }
+
+        return orderItemId;
+    }
+
 }

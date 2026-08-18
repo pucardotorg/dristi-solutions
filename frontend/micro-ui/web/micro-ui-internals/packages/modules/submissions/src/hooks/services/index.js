@@ -1,4 +1,4 @@
-import { Request } from "@egovernments/digit-ui-libraries";
+import { Request } from "@egovernments/digit-ui-module-common/src/utils/Request";
 import { Urls } from "./Urls";
 
 export const submissionService = {
@@ -143,6 +143,14 @@ export const submissionService = {
       url: Urls.openApi.updateDigitizedDocument,
       useCache: false,
       userService: false,
+      data,
+      params,
+    }),
+  getPaymentStatus: (data, params) =>
+    Request({
+      url: Urls.payment.paymentStatus,
+      useCache: false,
+      userService: true,
       data,
       params,
     }),

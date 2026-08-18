@@ -1,14 +1,9 @@
 import { Modal, Loader } from "@egovernments/digit-ui-react-components";
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import { FileUploadIcon } from "../../../dristi/src/icons/svgIndex";
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { hearingService } from "../hooks/services";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 const ForwardArrowIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="bi bi-arrow-right-short" viewBox="0 0 16 16">
     <path
@@ -17,15 +12,6 @@ const ForwardArrowIcon = () => (
     />
   </svg>
 );
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
 const BackBtn = ({ text }) => {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>

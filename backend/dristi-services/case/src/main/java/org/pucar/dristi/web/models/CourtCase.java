@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
+import org.pucar.dristi.web.models.advocateDetails.AdvocateDetailBlock;
+import org.pucar.dristi.web.models.enums.LifecycleStatus;
 import org.pucar.dristi.web.models.v2.WitnessDetails;
 import org.springframework.validation.annotation.Validated;
 
@@ -127,15 +129,6 @@ public class CourtCase {
     @JsonProperty("stage")
     private String stage = null;
 
-    @JsonProperty("stageBackup")
-    private String stageBackup = null;
-
-    @JsonProperty("substage")
-    private String substage = null;
-
-    @JsonProperty("substageBackup")
-    private String substageBackup = null;
-
     @JsonProperty("natureOfPleading")
     //@Size(min = 2, max = 64)
     private String natureOfPleading = null;
@@ -193,13 +186,22 @@ public class CourtCase {
     @Builder.Default
     private List<WitnessDetails> witnessDetails = new ArrayList<>();
 
+    @JsonProperty("advocateDetailBlock")
+    @Valid
+    @Builder.Default
+    private List<AdvocateDetailBlock> advocateDetailBlock = new ArrayList<>();
+
     @JsonProperty("lprNumber")
     private String lprNumber = null;
 
-    @JsonProperty("isLPRCase")
-    private Boolean isLPRCase = false;
+    @JsonProperty("lifecycleStatus")
+    @Builder.Default
+    private LifecycleStatus lifecycleStatus = LifecycleStatus.ACTIVE;
 
     @JsonProperty("courtCaseNumberBackup")
     private String courtCaseNumberBackup = null;
+
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = new ArrayList<>();
 
 }

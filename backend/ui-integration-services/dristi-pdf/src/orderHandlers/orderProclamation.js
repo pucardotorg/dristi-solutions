@@ -10,6 +10,7 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { handleApiCall } = require("../utils/handleApiCall");
 const { logger } = require("../logger");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 function formatToIndianCurrency(number) {
   if (!number) return "";
@@ -105,12 +106,7 @@ async function orderProclamation(
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
     const caseNumber =
-      (courtCase?.isLPRCase
-        ? courtCase?.lprNumber
-        : courtCase?.courtCaseNumber) ||
-      courtCase?.courtCaseNumber ||
-      courtCase?.cmpNumber ||
-      "";
+      getCaseNumber(courtCase);
     // Prepare data for PDF generation
     const data = {
       Data: [

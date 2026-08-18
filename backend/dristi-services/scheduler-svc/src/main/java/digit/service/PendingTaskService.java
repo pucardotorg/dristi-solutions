@@ -36,7 +36,7 @@ public class PendingTaskService {
             throw e;
         }
         catch (Exception e) {
-            log.error("Error occurred while expiring pending tasks: {}", e.getMessage());
+            log.error("Error occurred while expiring pending tasks", e);
         }
     }
 

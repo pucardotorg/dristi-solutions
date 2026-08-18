@@ -10,6 +10,7 @@ import org.egov.tracer.model.CustomException;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.event.EventListener;
 import org.egov.transformer.models.CourtCase;
+import org.egov.transformer.models.LifecycleStatus;
 import org.egov.transformer.models.Order;
 import org.egov.transformer.models.OrderAndNotification;
 import org.egov.transformer.models.OrderNotificationRequest;
@@ -84,7 +85,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
     }
 
     private String enrichCaseSTNumber(CourtCase courtCase) {
-        if (courtCase.getIsLPRCase()) {
+        if (LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus())) {
             return courtCase.getLprNumber();
         } else {
             return courtCase.getCourtCaseNumber() != null ? courtCase.getCourtCaseNumber() : courtCase.getCmpNumber();
@@ -151,7 +152,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
     }
 
     private String enrichCaseTitle(CourtCase courtCase) {
-        if (Boolean.TRUE.equals(courtCase.getIsLPRCase())) {
+        if (LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus())) {
             return (courtCase.getLprNumber() != null && !courtCase.getLprNumber().isEmpty())
                     ? courtCase.getCaseTitle() + " , " + courtCase.getLprNumber()
                     : courtCase.getCaseTitle();

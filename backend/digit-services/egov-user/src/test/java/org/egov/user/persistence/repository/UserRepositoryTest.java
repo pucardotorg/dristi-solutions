@@ -13,10 +13,10 @@ import org.egov.user.domain.model.enums.Gender;
 import org.egov.user.domain.model.enums.UserType;
 import org.egov.user.repository.builder.UserTypeQueryBuilder;
 import org.egov.user.repository.rowmapper.UserResultSetExtractor;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpMethod;
@@ -25,25 +25,26 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.client.ExpectedCount.once;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-@Ignore
-@RunWith(SpringRunner.class)
+@Disabled
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 public class UserRepositoryTest {
-	
-	@Autowired
+
+    @Autowired
     private AuditRepository auditRepository;
 
     @Autowired
@@ -74,7 +75,7 @@ public class UserRepositoryTest {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Before
+    @BeforeEach
     public void before() {
 
         server = MockRestServiceServer.bindTo(restTemplate).build();
@@ -82,7 +83,7 @@ public class UserRepositoryTest {
         server.expect(once(), requestTo("http://localhost:8094/egov-mdms-service/v1/_search"))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withSuccess(new Resources().getFileContents("roleSearchValidatedResponse.json"),
-                        MediaType.APPLICATION_JSON_UTF8));
+                        MediaType.APPLICATION_JSON));
 
         userRepository = new UserRepository(roleRepository, userTypeQueryBuilder, addressRepository,
                 userResultSetExtractor,
@@ -195,15 +196,17 @@ public class UserRepositoryTest {
         assertThat(actualUser.getPermanentAddress().getPinCode().equals("123"));
     }
 
-    @Test(expected = CustomException.class)
+    @Test
     public void test_should_throw_exception_when_role_does_not_exist_for_given_role_code() {
-        final String roleCode = "roleCode1";
-        final org.egov.user.domain.model.Role domainRole = org.egov.user.domain.model.Role.builder().name(roleCode)
-                .build();
-        User domainUser = User.builder()
-                .tenantId("ap.p")
-                .roles(Collections.singleton(domainRole)).build();
-        userRepository.create(domainUser);
+        assertThrows(CustomException.class, () -> {
+            final String roleCode = "roleCode1";
+            final org.egov.user.domain.model.Role domainRole = org.egov.user.domain.model.Role.builder().name(roleCode)
+                    .build();
+            User domainUser = User.builder()
+                    .tenantId("ap.p")
+                    .roles(Collections.singleton(domainRole)).build();
+            userRepository.create(domainUser);
+        });
     }
 
     @Test
@@ -321,7 +324,7 @@ public class UserRepositoryTest {
 //		assertThat(actualList.size() == 7);
 //	}
 
-    @Ignore
+    @Disabled
     @Sql(scripts = {"/sql/clearUserRoles.sql", "/sql/clearUsers.sql", "/sql/clearRoles.sql", "/sql/createRoles.sql",
             "/sql/clearAddresses.sql", "/sql/createUsers.sql"})
     public void test_search_user_bytype() {
@@ -342,7 +345,7 @@ public class UserRepositoryTest {
         assertThat(actualList.size() == 2);
     }
 
-    @Ignore
+    @Disabled
     @Test
     public void test_should_update_entity_user() {
         final Set<Role> roles = new HashSet<>();
@@ -354,7 +357,7 @@ public class UserRepositoryTest {
                 .createdBy(10L).tenantId("ap.public").build();
         userRepository.update(domainUser, domainUser,domainUser.getId(), domainUser.getUuid() );
         User actualUser = userRepository.findAll(UserSearchCriteria.builder().userName("TestUserName").tenantId("ap" +
-                ".public").type(UserType.CITIZEN)
+                        ".public").type(UserType.CITIZEN)
                 .build()).get(0);
 
         assertThat(actualUser != null);
@@ -369,19 +372,21 @@ public class UserRepositoryTest {
         assertThat(actualUser.getTenantId().equals("ap.public"));
     }
 
-    @Ignore
-    @Test(expected = InvalidRoleCodeException.class)
+    @Disabled
+    @Test
     public void test_should_throw_exception_when_updating_user_with_invalid_role_code() {
-        final String roleCode = "roleCode1";
-        final org.egov.user.domain.model.Role domainRole = org.egov.user.domain.model.Role.builder().name(roleCode)
-                .build();
-        User domainUser = User.builder()
-                .roles(Collections.singleton(domainRole)).id(1L).tenantId("ap.public").build();
-        userRepository.update(domainUser, domainUser,domainUser.getId(), domainUser.getUuid() );
+        assertThrows(InvalidRoleCodeException.class, () -> {
+            final String roleCode = "roleCode1";
+            final org.egov.user.domain.model.Role domainRole = org.egov.user.domain.model.Role.builder().name(roleCode)
+                    .build();
+            User domainUser = User.builder()
+                    .roles(Collections.singleton(domainRole)).id(1L).tenantId("ap.public").build();
+            userRepository.update(domainUser, domainUser,domainUser.getId(), domainUser.getUuid() );
+        });
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void test_should_return_user() {
 
         List<User> actualUsers = userRepository.findAll(UserSearchCriteria.builder().userName("bigcat399")

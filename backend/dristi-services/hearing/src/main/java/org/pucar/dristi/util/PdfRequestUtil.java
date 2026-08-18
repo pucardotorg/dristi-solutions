@@ -54,7 +54,7 @@ public class PdfRequestUtil {
 
             return responseEntity.getBody();
         } catch (Exception e) {
-            log.error("Error generating PDF for case {}: {}", request, e.getMessage());
+            log.error("Error generating PDF for case {}", request, e);
             throw new CustomException(PDF_UTILITY_EXCEPTION, "Error generating PDF for case: " + e.getMessage());
         }
     }

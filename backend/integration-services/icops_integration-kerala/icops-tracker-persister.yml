@@ -7,7 +7,7 @@ serviceMaps:
       isTransaction: true
       isAuditEnabled: true
       queryMaps:
-        - query: INSERT INTO dristi_kerala_icops (process_number, tenant_id, task_number, task_type, file_store_id, task_details, delivery_status, remarks, additional_details, row_version, acknowledgement_id, booking_date, received_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        - query: INSERT INTO dristi_kerala_icops (process_number, tenant_id, task_number, task_type, file_store_id, task_details, delivery_status, remarks, additional_details, row_version, acknowledgement_id, booking_date, received_date, request_blob) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
           basePath: IcopsTracker
           jsonMaps:
             - jsonPath: $.IcopsTracker.processNumber
@@ -27,6 +27,9 @@ serviceMaps:
             - jsonPath: $.IcopsTracker.acknowledgementId
             - jsonPath: $.IcopsTracker.bookingDate
             - jsonPath: $.IcopsTracker.receivedDate
+            - jsonPath: $.IcopsTracker.requestBlob
+              type: JSON
+              dbType: JSONB
 
     - version: 1.0
       description: Persists icops tracker data
@@ -34,7 +37,7 @@ serviceMaps:
       isTransaction: true
       isAuditEnabled: true
       queryMaps:
-        - query: UPDATE dristi_kerala_icops SET delivery_status = ?, remarks = ? , received_date = ?, additional_details = ?, row_version = ?  WHERE process_number = ?;
+        - query: UPDATE dristi_kerala_icops SET delivery_status = ?, remarks = ? , received_date = ?, additional_details = ?, row_version = ?, failure_reason = ? WHERE process_number = ?;
           basePath: IcopsTracker
           jsonMaps:
             - jsonPath: $.IcopsTracker.deliveryStatus
@@ -44,4 +47,5 @@ serviceMaps:
               type: JSON
               dbType: JSONB
             - jsonPath: $.IcopsTracker.rowVersion
+            - jsonPath: $.IcopsTracker.failureReason
             - jsonPath: $.IcopsTracker.processNumber

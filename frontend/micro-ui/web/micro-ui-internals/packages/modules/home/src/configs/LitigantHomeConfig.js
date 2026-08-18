@@ -2,6 +2,7 @@ const defaultSearchValues = {
   caseSearchText: "",
   caseType: "NIA S138",
   substage: "",
+  secondaryStage: "",
 };
 
 export const CaseWorkflowState = {
@@ -100,6 +101,7 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "HEARING_ACCEPTOR",
       "USER_REGISTER",
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
@@ -107,6 +109,15 @@ export const userTypeOptions = [
       "BAIL_BOND_CREATOR",
       "BAIL_BOND_VIEWER",
       "BAIL_BOND_EDITOR",
+      "PLEA_SIGNER",
+      "PLEA_EDITOR",
+      "MEDIATION_SIGNER",
+      "MEDIATION_EDITOR",
+      "EXAMINATION_SIGNER",
+      "EXAMINATION_EDITOR",
+      "PLEA_VIEWER",
+      "MEDIATION_VIEWER",
+      "EXAMINATION_VIEWER",
     ],
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
@@ -131,7 +142,9 @@ export const TabLitigantSearchConfig = {
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: {},
+          criteria: {
+            lifecycleStatus: "ACTIVE",
+          },
         },
         masterName: "commonUiConfig",
         moduleName: "homeLitigantUiConfig",
@@ -174,12 +187,37 @@ export const TabLitigantSearchConfig = {
                 type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "substage",
-                  optionsKey: "code",
+                  name: "stage",
+                  optionsKey: "name",
                   mdmsConfig: {
-                    masterName: "SubStage",
+                    masterName: "CaseUiPrimaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
+                    select:
+                      "(data) => {return data['case'].CaseUiPrimaryStage?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                isMandatory: false,
+                key: "secondaryStage",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "secondaryStage",
+                  optionsKey: "substage",
+                  mdmsConfig: {
+                    masterName: "CaseSecondaryStage",
+                    moduleName: "case",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -220,7 +258,12 @@ export const TabLitigantSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "substage",
+                jsonPath: "stage",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
               {
@@ -303,7 +346,7 @@ export const TabLitigantSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "status",
+                jsonPath: "stage",
                 additionalCustomization: true,
               },
               {
@@ -313,7 +356,7 @@ export const TabLitigantSearchConfig = {
               },
               {
                 label: "CS_LAST_EDITED",
-                jsonPath: "auditDetails.lastModifiedTime",
+                jsonPath: "lastModifiedTime",
                 additionalCustomization: true,
               },
             ],
@@ -336,7 +379,7 @@ export const TabLitigantSearchConfig = {
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: { outcome: [] },
+          criteria: { outcome: [], lifecycleStatus: "ACTIVE" },
         },
         masterName: "commonUiConfig",
         moduleName: "homeLitigantUiConfig",
@@ -386,6 +429,30 @@ export const TabLitigantSearchConfig = {
                     moduleName: "case",
                     select:
                       "(data) => {return data['case'].OutcomeType?.flatMap((item) => {return item.judgementList && item.judgementList.length > 0 ? item.judgementList.map(it => ({outcome: it})) : [item];}).sort((a,b) => a.outcome.localeCompare(b.outcome));}",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                isMandatory: false,
+                key: "secondaryStage",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "secondaryStage",
+                  optionsKey: "substage",
+                  mdmsConfig: {
+                    masterName: "CaseSecondaryStage",
+                    moduleName: "case",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -465,7 +532,7 @@ export const TabLitigantSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            isLPRCase: true,
+            lifecycleStatus: "LPR",
           },
         },
         masterName: "commonUiConfig",

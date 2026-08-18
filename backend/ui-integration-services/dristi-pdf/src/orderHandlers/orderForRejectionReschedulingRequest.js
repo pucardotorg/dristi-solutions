@@ -10,6 +10,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { handleApiCall } = require("../utils/handleApiCall");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 const orderForRejectionReschedulingRequest = async (
   req,
@@ -111,12 +112,7 @@ const orderForRejectionReschedulingRequest = async (
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
     const year = currentDate.getFullYear();
     const caseNumber =
-      (courtCase?.isLPRCase
-        ? courtCase?.lprNumber
-        : courtCase?.courtCaseNumber) ||
-      courtCase?.courtCaseNumber ||
-      courtCase?.cmpNumber ||
-      "";
+      getCaseNumber(courtCase);
     const data = {
       Data: [
         {

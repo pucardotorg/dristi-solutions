@@ -17,7 +17,6 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -30,7 +29,6 @@ import static digit.config.ServiceConstants.OPT_OUT_DUE;
 
 @Component
 @Slf4j
-@EnableScheduling
 public class RequestOptOutScheduleTask {
 
     private final ReScheduleRequestRepository reScheduleRepository;

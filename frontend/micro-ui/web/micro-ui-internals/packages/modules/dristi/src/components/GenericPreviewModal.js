@@ -1,8 +1,7 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import React, { useEffect, useState } from "react";
-import { Toast } from "@egovernments/digit-ui-react-components";
+import React from "react";
 import CustomChip from "./CustomChip";
+import { CloseBtn } from "./ModalComponents";
 
 const Heading = ({ t, showCustomChip, label, customChipText }) => {
   return (
@@ -12,15 +11,6 @@ const Heading = ({ t, showCustomChip, label, customChipText }) => {
     </div>
   );
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
 const getStyles = (key) => {
   const styles = {
     container: {
@@ -80,20 +70,6 @@ const GenericPreviewModal = ({
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const [showErrorToast, setShowErrorToast] = useState(null);
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   return (
     <React.Fragment>
@@ -141,9 +117,6 @@ const GenericPreviewModal = ({
           </div>
         </div>
       </Modal>
-      {showErrorToast && (
-        <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} style={{ zIndex: "10001" }} />
-      )}
     </React.Fragment>
   );
 };

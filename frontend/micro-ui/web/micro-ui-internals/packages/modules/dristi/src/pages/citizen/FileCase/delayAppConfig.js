@@ -95,7 +95,7 @@ export const delayAppConfig = [
               uploadGuidelines: "UPLOAD_DOC_10",
               maxFileSize: 10,
               maxFileErrorMessage: "CS_FILE_LIMIT_1_MB",
-              fileTypes: ["JPG", "PDF"],
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
             },
           ],
         },

@@ -46,11 +46,15 @@ public class PdfEmbedder {
         log.info("Method=findLocationToSign ,Result=Inprogress ,placeholder={}", signaturePlace);
 
         Coordinate coordinate = new Coordinate();
+        int lastPage = reader.getNumberOfPages();
         Rectangle cropBox = reader.getCropBox(1);
         coordinate.setX(cropBox.getLeft());
         coordinate.setY(cropBox.getBottom());
         coordinate.setFound(false);
-        coordinate.setPageNumber(reader.getNumberOfPages());
+        coordinate.setPageNumber(lastPage);
+        Rectangle defaultPageSize = reader.getPageSizeWithRotation(lastPage);
+        coordinate.setPageWidth(defaultPageSize.getWidth());
+        coordinate.setPageHeight(defaultPageSize.getHeight());
 
         if (signaturePlace == null || signaturePlace.isBlank()) {
             return coordinate;
@@ -82,6 +86,9 @@ public class PdfEmbedder {
                     coordinate.setY(y + configuration.getESignYCoordinateOffset());
                     coordinate.setFound(true);
                     coordinate.setPageNumber(i);
+                    Rectangle foundPageSize = reader.getPageSizeWithRotation(i);
+                    coordinate.setPageWidth(foundPageSize.getWidth());
+                    coordinate.setPageHeight(foundPageSize.getHeight());
                     log.info("Method=findLocationToSign,Result=Success,Coordinate found for placeholder={}", signaturePlace);
                     return coordinate;
 
@@ -101,21 +108,28 @@ public class PdfEmbedder {
     public MultipartFile signPdfWithDSAndReturnMultipartFileV2(Resource resource, String response, ESignParameter eSignParameter) {
         log.info("Method=signPdfWithDSAndReturnMultipartFileV2 ,Result=Inprogress ,filestoreId={}", eSignParameter.getFileStoreId());
         try {
-            int contentEstimated = 8192;
-
             PdfReader reader = new PdfReader(resource.getInputStream());
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
             String pkcsResponse = new XmlSigning().parseXml(response.trim());
             byte[] sigbytes = Base64.decodeBase64(pkcsResponse);
-            byte[] paddedSig = new byte[contentEstimated];
-            System.arraycopy(sigbytes, 0, paddedSig, 0, sigbytes.length);
-            MyExternalSignatureContainer container = new MyExternalSignatureContainer(paddedSig, null, null);
+            
+            int reservedSize = configuration.getSignatureContainerSize();
+            if (sigbytes.length > reservedSize) {
+                log.error("Method=signPdfWithDSAndReturnMultipartFileV2 ,Result=Error ,filestoreId={} ,Reason=Signature size {} exceeds reserved space {}", 
+                    eSignParameter.getFileStoreId(), sigbytes.length, reservedSize);
+                throw new CustomException("SIGNATURE_SIZE_EXCEEDED", 
+                    String.format("Signature size %d exceeds reserved container size %d", sigbytes.length, reservedSize));
+            }
+            
+            MyExternalSignatureContainer container = new MyExternalSignatureContainer(sigbytes, null, null);
 
             MakeSignature.signDeferred(reader, eSignParameter.getSignPlaceHolder(), baos, container);
 
             return new ByteArrayMultipartFile(FILE_NAME, baos.toByteArray());
 
+        } catch (CustomException e) {
+            throw e;
         } catch (Exception e) {
             log.info("Method=signPdfWithDSAndReturnMultipartFileV2 ,Result=Error ,filestoreId={}", eSignParameter.getFileStoreId());
             log.error("Method=signPdfWithDSAndReturnMultipartFileV2, Error:{}", e.toString());
@@ -161,10 +175,9 @@ public class PdfEmbedder {
             appearance.setImage(null);
             appearance.setVisibleSignature(rectangle,
                     locationToSign.getPageNumber(), signPlaceHolder);
-            int contentEstimated = 8192;
             MyExternalSignatureContainer container = new MyExternalSignatureContainer(new byte[]{0}, PdfName.ADOBE_PPKLITE, PdfName.ADBE_PKCS7_DETACHED);
 
-            MakeSignature.signExternalContainer(appearance, container, contentEstimated);
+            MakeSignature.signExternalContainer(appearance, container, configuration.getSignatureContainerSize());
 
 
             InputStream is = appearance.getRangeStream();

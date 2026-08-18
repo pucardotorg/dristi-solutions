@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { InboxSearchComposer, SubmitBar, Toast, CloseSvg, Loader, Banner } from "@egovernments/digit-ui-react-components";
+import { SubmitBar, Loader, Banner } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
@@ -9,7 +10,7 @@ import AddSignatureComponent from "../../components/AddSignatureComponent";
 import useDocumentUpload from "../../hooks/orders/useDocumentUpload";
 import CustomStepperSuccess from "../../components/CustomStepperSuccess";
 import UpdateDeliveryStatusComponent from "../../components/UpdateDeliveryStatusComponent";
-import { ordersService, taskService, processManagementService } from "../../hooks/services";
+import { taskService, processManagementService } from "../../hooks/services";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import qs from "qs";
 import { Urls } from "../../hooks/services/Urls";
@@ -19,7 +20,18 @@ import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
 import ReviewNoticeModal from "../../components/ReviewNoticeModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
-import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, isLPRCase, getDisplayCaseNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS, TASK_TYPES, getNonDeliveryReasonLabel } from "../../utils/constants";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { UploadModal } from "@egovernments/digit-ui-module-common";
+
+const parseXml = (xmlString, tagName) => {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+  const element = xmlDoc.getElementsByTagName(tagName)[0];
+  return element ? element.textContent.trim() : null;
+};
 
 const defaultSearchValues = {
   eprocess: "",
@@ -64,7 +76,7 @@ export const getJudgeDefaultConfig = (courtId) => {
   });
 };
 
-function getAction(selectedDelievery, orderType) {
+function getAction(selectedDelievery, taskType) {
   const key = selectedDelievery?.key;
 
   if (key === "OTHER") {
@@ -72,10 +84,12 @@ function getAction(selectedDelievery, orderType) {
   }
 
   if (key === "DELIVERED") {
-    return orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "DELIVERED" : "SERVED";
+    return taskType === TASK_TYPES.WARRANT || taskType === TASK_TYPES.PROCLAMATION || taskType === TASK_TYPES.ATTACHMENT ? "DELIVERED" : "SERVED";
   }
 
-  return orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "NOT_DELIVERED" : "NOT_SERVED";
+  return taskType === TASK_TYPES.WARRANT || taskType === TASK_TYPES.PROCLAMATION || taskType === TASK_TYPES.ATTACHMENT
+    ? "NOT_DELIVERED"
+    : "NOT_SERVED";
 }
 
 // Tab configuration mapping - maps tab labels to their storage keys
@@ -146,7 +160,7 @@ const createUpdatedConfig = (baseConfig, formValues) => ({
   },
 });
 
-const ReviewSummonsNoticeAndWarrant = () => {
+const ReviewSummonsNoticeAndWarrant = ({ refetchCounts }) => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
@@ -198,11 +212,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [signatureId, setSignatureId] = useState("");
   const [deliveryChannel, setDeliveryChannel] = useState("");
   const [reload, setReload] = useState(false);
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
   // const [taskDetails, setTaskDetails] = useState({});
   const [tasksData, setTasksData] = useState(null);
   const [remarks, setRemarks] = useState("");
   const [selectedDelievery, setSelectedDelievery] = useState({});
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [selectedReason, setSelectedReason] = useState({});
+  const [reasonText, setReasonText] = useState("");
+  const [showToast, setShowToast] = useState(null);
   const [bulkSignList, setBulkSignList] = useState([]);
   const [bulkSendList, setBulkSendList] = useState([]);
   const [bulkRpadList, setBulkRpadList] = useState([]);
@@ -214,8 +231,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [isBulkSending, setIsBulkSending] = useState(false);
   const [showBulkSignatureModal, setShowBulkSignatureModal] = useState(false);
   const [bulkSignatureData, setBulkSignatureData] = useState({});
-  const [isBulkSigned, setIsBulkSigned] = useState(false);
-  const [bulkSignatureId, setBulkSignatureId] = useState("");
   const [fileUploadError, setFileUploadError] = useState(null);
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
   const [allSelectedPolice, setAllSelectedPolice] = useState(false);
@@ -223,7 +238,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   // Initialize download PDF hook
   const { downloadPdf } = useDownloadCasePdf();
   const { uploadDocuments } = useDocumentUpload();
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const history = useHistory();
   const dayInMillisecond = 24 * 3600 * 1000;
   const todayDate = new Date().getTime();
@@ -231,6 +245,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+
+  const taskType = useMemo(() => {
+    return rowData?.taskType;
+  }, [rowData]);
 
   const [tabData, setTabData] = useState(
     isJudge
@@ -260,13 +278,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
           const extension = mimeType.includes("/") ? mimeType.split("/")[1] : "bin";
           const link = document.createElement("a");
           link.href = blobUrl;
-          link.download = `downloadedFile.${extension}`;
+          const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber}_${rowData?.taskNumber}_${rowData?.taskType}`;
+          link.download = `${fileName}.${extension}`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
           URL.revokeObjectURL(blobUrl);
         } else {
-          console.error("Failed to fetch the PDF:", response.statusText);
+          console.error("Failed to fetch the file:", response.statusText);
         }
       })
       .catch((error) => {
@@ -364,13 +383,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
           },
         };
         await taskService.updateTask(reqBody, { tenantId });
-        setShowErrorToast({
-          message: t("DOCUMENT_SENT_SUCCESSFULLY"),
+        setShowToast({
+          label: t("DOCUMENT_SENT_SUCCESSFULLY"),
           error: false,
         });
-        setTimeout(() => {
-          setShowErrorToast(null);
-        }, 3000);
         setBulkSendList((prev) => prev?.filter((item) => item?.taskNumber !== rowData?.taskNumber) || []);
       }
 
@@ -382,13 +398,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
         isInitialLoadRef.current = false;
       }, 1000);
     } catch (error) {
-      setShowErrorToast({
-        message: t("SEND_FAILED"),
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        label: t("SEND_FAILED"),
         error: true,
+        errorId,
       });
-      setTimeout(() => {
-        setShowErrorToast(null);
-      }, 5000);
     } finally {
       setIsSubmitting(false);
     }
@@ -488,8 +503,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
       const { successful, failed, total } = await callBulkSendApi(selectedItems);
       if (successful === total && total > 0) {
-        setShowErrorToast({ message: t("DOCUMENT_SENT_SUCCESSFULLY", { successful, total }), error: false });
-        setTimeout(() => setShowErrorToast(null), 3000);
+        setShowToast({ label: t("DOCUMENT_SENT_SUCCESSFULLY", { successful, total }), error: false });
         setBulkSendList((prev) => prev?.filter((item) => !selectedItems.some((s) => s.taskNumber === item.taskNumber)) || []);
         // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
         isInitialLoadRef.current = true;
@@ -498,8 +512,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           isInitialLoadRef.current = false;
         }, 1000);
       } else {
-        setShowErrorToast({ message: t("FAILED_TO_SEND_DOCUMENTS", { failed, total }), error: true });
-        setTimeout(() => setShowErrorToast(null), 5000);
+        setShowToast({ label: t("FAILED_TO_SEND_DOCUMENTS", { failed, total }), error: true });
         setBulkSendList([]);
         // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
         isInitialLoadRef.current = true;
@@ -509,8 +522,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
         }, 1000);
       }
     } catch (error) {
-      setShowErrorToast({ message: t("FAILED_TO_PERFORM_BULK_SEND"), error: true });
-      setTimeout(() => setShowErrorToast(null), 5000);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SEND"), error: true, errorId });
       setBulkSendList([]);
       // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
       isInitialLoadRef.current = true;
@@ -528,95 +541,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const handleBulkSendConfirm = useCallback(() => {
     handleBulkSendSubmit();
   }, [bulkSendList, t, handleBulkSendSubmit]);
-
-  const handleUpdateStatus = useCallback(async () => {
-    const { data: tasksData } = await refetch();
-    if (tasksData) {
-      try {
-        const task = tasksData?.list?.[0];
-        const reqBody = {
-          task: {
-            ...task,
-            ...(typeof task?.taskDetails === "string" && { taskDetails: JSON.parse(task?.taskDetails) }),
-            taskDetails: {
-              ...(typeof task?.taskDetails === "string" ? JSON.parse(task?.taskDetails) : task?.taskDetails),
-              deliveryChannels: {
-                ...task?.taskDetails?.deliveryChannels,
-                statusChangeDate: updateStatusDate
-                  ? updateStatusDate
-                  : convertToDateInputFormat(rowData?.taskDetails?.deliveryChannels?.statusChangeDate),
-              },
-              remarks: {
-                remark: remarks,
-              },
-            },
-            workflow: {
-              ...tasksData?.list?.[0]?.workflow,
-              action: getAction(selectedDelievery, orderType),
-              documents: [{}],
-            },
-          },
-        };
-        await taskService.updateTask(reqBody, { tenantId }).then(async (res) => {
-          if (
-            res?.task &&
-            selectedDelievery?.key === "NOT_DELIVERED" &&
-            !(orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT")
-          ) {
-            let action = "";
-            if (orderType === "MISCELLANEOUS_PROCESS") {
-              action = "NEW_PROCESS";
-            } else {
-              action = orderType === "SUMMONS" ? "NEW_SUMMON" : "NEW_NOTICE";
-            }
-
-            await taskService.updateTask(
-              {
-                task: {
-                  ...res.task,
-                  workflow: {
-                    ...res.task?.workflow,
-                    action: action,
-                  },
-                },
-              },
-              { tenantId }
-            );
-          }
-        });
-        if (selectedDelievery?.key === "NOT_DELIVERED") {
-          ordersService.customApiService(Urls.orders.pendingTask, {
-            pendingTask: {
-              actionCategory: "Review Process",
-              name: `Re-issue ${orderType === "NOTICE" ? "Notice" : "Summon"}`,
-              entityType: "order-default",
-              referenceId: `MANUAL_${orderData?.list[0]?.scheduledHearingNumber || orderData?.list[0]?.hearingNumber}`,
-              status: `RE-ISSUE_${orderType === "NOTICE" ? "NOTICE" : "SUMMON"}`,
-              assignedTo: [],
-              assignedRole: [orderType === "NOTICE" ? "PENDING_TASK_REISSUE_NOTICE" : "PENDING_TASK_REISSUE_SUMMON"], //checkForCourtRoomManager?
-              cnrNumber: tasksData?.list[0]?.cnrNumber,
-              filingNumber: tasksData?.list[0]?.filingNumber,
-              caseId: tasksData?.list[0]?.caseId,
-              caseTitle: tasksData?.list[0]?.caseTitle,
-              isCompleted: false,
-              stateSla: 3 * dayInMillisecond + todayDate,
-              additionalDetails: {},
-              tenantId,
-            },
-          });
-        }
-        setShowActionModal(false);
-        // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
-        isInitialLoadRef.current = true;
-        setReload(!reload);
-        setTimeout(() => {
-          isInitialLoadRef.current = false;
-        }, 1000);
-      } catch (error) {
-        console.error("Error updating task data:", error);
-      }
-    }
-  }, [dayInMillisecond, orderData, orderType, refetch, reload, selectedDelievery, tasksData, tenantId, todayDate]);
 
   useEffect(() => {
     // Set default values when component mounts
@@ -638,10 +562,49 @@ const ReviewSummonsNoticeAndWarrant = () => {
       sessionStorage.removeItem("ESignSummons");
       sessionStorage.removeItem("delieveryChannel");
       sessionStorage.removeItem("homeActiveTab");
+      return;
+    }
+
+    const returnStateRaw = sessionStorage.getItem("ReviewSummonsReturnState");
+    if (returnStateRaw) {
+      try {
+        const returnState = JSON.parse(returnStateRaw);
+        if (typeof returnState?.activeTabIndex === "number") {
+          setActiveTabIndex(returnState.activeTabIndex);
+          setTabData((prev) => prev?.map((i, c) => ({ ...i, active: c === returnState.activeTabIndex })));
+        }
+        if (returnState?.rowData) {
+          // Mirror handleRowClick exactly so reopening after "View Case" behaves the same as clicking the row
+          const original = returnState.rowData;
+          if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER", "WARRANT_REISSUED_WITH_NEW_WARRANT"].includes(original?.status)) {
+            setRowData(original);
+            setshowNoticeModal(true);
+          } else {
+            setRemarks("");
+            setSelectedDelievery({});
+            setRowData(original);
+            const lastSignedTN = typeof window !== "undefined" ? sessionStorage.getItem("LastSignedTaskNumber") : null;
+            const isLastSigned = lastSignedTN && original?.taskNumber && original.taskNumber === lastSignedTN;
+            setActionModalType(isLastSigned ? "SIGNED" : original?.documentStatus);
+            setShowActionModal(true);
+            setStep(typeof returnState?.step === "number" ? returnState.step : 0);
+            setIsSigned(isLastSigned ? true : original?.documentStatus === "SIGN_PENDING" ? false : true);
+            setDeliveryChannel(handleTaskDetails(original?.taskDetails)?.deliveryChannels?.channelName);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to restore ReviewSummonsReturnState:", e);
+      }
     }
   }, []);
 
-  const [activeTabIndex, setActiveTabIndex] = useState(0);
+  // Once the restored modal (or notice modal) is actually open, the saved return state has served its purpose
+  useEffect(() => {
+    if (showActionModal || showNoticeModal) {
+      sessionStorage.removeItem("ReviewSummonsReturnState");
+      sessionStorage.removeItem("homeActiveTab");
+    }
+  }, [showActionModal, showNoticeModal]);
 
   const handleClose = useCallback(() => {
     sessionStorage.removeItem("SignedFileStoreID");
@@ -727,14 +690,34 @@ const ReviewSummonsNoticeAndWarrant = () => {
       setNextHearingDate(findNextHearings(response?.HearingList));
     } catch (error) {
       console.error("error :>> ", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ISSUE_IN_FETCH_HEARINGS"), error: true, errorId });
     }
   };
+
+  const viewCaseLink = useMemo(() => {
+    if (userType !== "employee" || !tasksData?.list[0]?.caseId) return null;
+    return `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${tasksData?.list[0]?.caseId}&filingNumber=${tasksData?.list[0]?.filingNumber}&tab=Overview&fromHome=true`;
+  }, [userType, tasksData]);
+
+  const onViewCaseClick = useCallback(() => {
+    sessionStorage.setItem("homeActiveTab", "CS_HOME_PROCESS");
+    sessionStorage.setItem(
+      "ReviewSummonsReturnState",
+      JSON.stringify({
+        rowData,
+        activeTabIndex,
+        step,
+      })
+    );
+  }, [rowData, activeTabIndex, step]);
 
   const infos = useMemo(() => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
+        { key: "CASE_NUMBER", value: getDisplayCaseNumber(rowData), viewCaseLink, onViewCaseClick },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData, taskType) },
         {
           key: "NEXT_HEARING_DATE",
           value: caseDetails?.caseDetails?.hearingDate ? DateUtils.getFormattedDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
@@ -745,7 +728,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "E_PROCESS_ID", value: rowData?.taskNumber },
       ];
     }
-  }, [rowData?.taskDetails, rowData?.taskNumber, nextHearingDate, orderDetails, compositeItem, orderType]);
+  }, [rowData, nextHearingDate, orderDetails, compositeItem, orderType, taskType, viewCaseLink, onViewCaseClick]);
 
   const reverseToDDMMYYYY = (dateStr) => {
     if (!dateStr) return "N/A";
@@ -766,7 +749,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData, taskType) },
         { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
         { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
         { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
@@ -777,13 +760,18 @@ const ReviewSummonsNoticeAndWarrant = () => {
         },
       ];
     }
-  }, [rowData?.taskDetails, rowData?.createdDate, nextHearingDate, orderDetails, compositeItem, orderType]);
+  }, [rowData?.taskDetails, rowData?.createdDate, nextHearingDate, orderDetails, compositeItem, orderType, taskType]);
 
   const ReviewInfo = useMemo(() => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
+      const nonDeliveryReasonLabel = getNonDeliveryReasonLabel(
+        rowData?.taskType,
+        caseDetails?.deliveryChannels?.notDeliveredReason,
+        caseDetails?.deliveryChannels?.notDeliveredReasonText
+      );
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData, taskType) },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         {
           key: "NEXT_HEARING_DATE",
@@ -793,10 +781,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
         { key: "STATUS", value: rowData?.status },
         { key: "STATUS_UPDATED_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
+        // Show the recorded reason for non-delivery only when one exists (RPAD summons/warrant marked NOT_DELIVERED).
+        // Reuses the same REASON_FOR_NON_DELIVERY localization key as the update-status modal.
+        ...(nonDeliveryReasonLabel ? [{ key: "REASON_FOR_NON_DELIVERY", value: nonDeliveryReasonLabel }] : []),
         { key: "REMARKS", value: caseDetails?.remarks?.remark ? caseDetails?.remarks?.remark : "N/A" },
       ];
     }
-  }, [rowData?.taskDetails, rowData?.status, nextHearingDate, orderDetails, compositeItem, orderType]);
+  }, [rowData?.taskDetails, rowData?.status, rowData?.taskType, nextHearingDate, orderDetails, compositeItem, orderType, taskType]);
 
   const links = useMemo(() => {
     return [{ text: "View order", link: "" }];
@@ -807,7 +798,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       return rowData?.documents?.map((document) => {
         return { ...document, fileName: `${t(rowData?.taskType)} ${t("DOCUMENT_TEXT")}` };
       });
-  }, [rowData, orderType]);
+  }, [rowData]);
 
   // Detect if a signed document already exists for the selected row
   const hasSignedDoc = useMemo(() => {
@@ -834,40 +825,119 @@ const ReviewSummonsNoticeAndWarrant = () => {
     ];
   }, [rowData, isIcops]);
 
+  const handleUpdateStatus = useCallback(async () => {
+    const { data: tasksData } = await refetch();
+    if (tasksData) {
+      try {
+        const task = tasksData?.list?.[0];
+        const reqBody = {
+          task: {
+            ...task,
+            ...(typeof task?.taskDetails === "string" && { taskDetails: JSON.parse(task?.taskDetails) }),
+            taskDetails: {
+              ...(typeof task?.taskDetails === "string" ? JSON.parse(task?.taskDetails) : task?.taskDetails),
+              deliveryChannels: {
+                ...task?.taskDetails?.deliveryChannels,
+                statusChangeDate: updateStatusDate
+                  ? updateStatusDate
+                  : convertToDateInputFormat(rowData?.taskDetails?.deliveryChannels?.statusChangeDate),
+                ...(selectedDelievery?.key === "NOT_DELIVERED" &&
+                  rowData?.taskDetails?.deliveryChannels?.channelCode === "RPAD" &&
+                  selectedReason?.key && {
+                    notDeliveredReason: selectedReason.key,
+                    notDeliveredReasonText: reasonText,
+                  }),
+              },
+              remarks: {
+                remark: remarks,
+              },
+            },
+            workflow: {
+              ...tasksData?.list?.[0]?.workflow,
+              action: getAction(selectedDelievery, taskType),
+              documents: [{}],
+            },
+          },
+        };
+        await taskService.updateTask(reqBody, { tenantId }).then(async (res) => {
+          if (
+            res?.task &&
+            selectedDelievery?.key === "NOT_DELIVERED" &&
+            !(taskType === TASK_TYPES.WARRANT || taskType === TASK_TYPES.PROCLAMATION || taskType === TASK_TYPES.ATTACHMENT)
+          ) {
+            let action = "";
+            if (taskType === TASK_TYPES.MISCELLANEOUS_PROCESS) {
+              action = "NEW_PROCESS";
+            } else {
+              action = taskType === TASK_TYPES.SUMMONS ? "NEW_SUMMON" : "NEW_NOTICE";
+            }
+
+            await taskService.updateTask(
+              {
+                task: {
+                  ...res.task,
+                  workflow: {
+                    ...res.task?.workflow,
+                    action: action,
+                  },
+                },
+              },
+              { tenantId }
+            );
+          }
+        });
+        setShowActionModal(false);
+        // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
+        isInitialLoadRef.current = true;
+        setReload(!reload);
+        setTimeout(() => {
+          isInitialLoadRef.current = false;
+        }, 1000);
+      } catch (error) {
+        console.error("Error updating task data:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("HOME_SCREEN_UPDATE_FAILED"), error: true, errorId });
+      } finally {
+        setSelectedReason({});
+        setReasonText("");
+      }
+    }
+  }, [dayInMillisecond, orderData, taskType, refetch, reload, selectedDelievery, selectedReason, reasonText, tasksData, tenantId, todayDate]);
+
   const successMessage = useMemo(() => {
     let msg = "";
-    const isViaPolice = rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE";
+    const isViaPolice = rowData?.taskDetails?.deliveryChannels?.channelCode === CHANNEL_IDS.POLICE;
     if (documents && !isViaPolice) {
-      if (orderType === "NOTICE") {
+      if (taskType === TASK_TYPES.NOTICE) {
         msg = t("SUCCESSFULLY_SIGNED_NOTICE");
-      } else if (orderType === "WARRANT") {
+      } else if (taskType === TASK_TYPES.WARRANT) {
         msg = t("SUCCESSFULLY_SIGNED_WARRANT");
-      } else if (orderType === "PROCLAMATION") {
+      } else if (taskType === TASK_TYPES.PROCLAMATION) {
         msg = t("SUCCESSFULLY_SIGNED_PROCLAMATION");
-      } else if (orderType === "ATTACHMENT") {
+      } else if (taskType === TASK_TYPES.ATTACHMENT) {
         msg = t("SUCCESSFULLY_SIGNED_ATTACHMENT");
-      } else if (orderType === "MISCELLANEOUS_PROCESS") {
+      } else if (taskType === TASK_TYPES.MISCELLANEOUS_PROCESS) {
         msg = t("SUCCESSFULLY_SIGNED_MISCELLANEOUS_PROCESS");
       } else {
         msg = t("SUCCESSFULLY_SIGNED_SUMMON");
       }
     } else {
-      if (orderType === "NOTICE") {
+      if (taskType === TASK_TYPES.NOTICE) {
         msg = t("SENT_NOTICE_VIA");
-      } else if (orderType === "WARRANT") {
+      } else if (taskType === TASK_TYPES.WARRANT) {
         msg = t("SENT_WARRANT_VIA");
-      } else if (orderType === "PROCLAMATION") {
+      } else if (taskType === TASK_TYPES.PROCLAMATION) {
         msg = t("SENT_PROCLAMATION_VIA");
-      } else if (orderType === "ATTACHMENT") {
+      } else if (taskType === TASK_TYPES.ATTACHMENT) {
         msg = t("SENT_ATTACHMENT_VIA");
-      } else if (orderType === "MISCELLANEOUS_PROCESS") {
+      } else if (taskType === TASK_TYPES.MISCELLANEOUS_PROCESS) {
         msg = t("SENT_MISCELLANEOUS_PROCESS_VIA");
       } else {
         msg = t("SENT_SUMMONS_VIA");
       }
     }
     return `${msg}${!documents || isViaPolice ? " " + deliveryChannel : ""}`;
-  }, [documents, orderType, deliveryChannel]);
+  }, [documents, deliveryChannel, taskType, rowData]);
 
   const handleSubmitEsign = useCallback(async () => {
     // Set flag to prevent onFormValueChange from clearing sessionStorage during this operation
@@ -880,6 +950,15 @@ const ReviewSummonsNoticeAndWarrant = () => {
       } else {
         localStorageID = sessionStorage.getItem("fileStoreId");
       }
+
+      if (!mockESignEnabled) {
+        const effectiveSignedId = signatureId || localStorageID;
+        if (!effectiveSignedId || effectiveSignedId === rowData?.documents?.[0]?.fileStore) {
+          setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+          return { continue: false };
+        }
+      }
+
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
 
       if (currentConfig?.label === "PENDING_RPAD_COLLECTION") {
@@ -895,9 +974,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
         try {
           await DRISTIService.customApiService("/task/v1/bulk-pending-collection-update", payload);
         } catch (rpadError) {
+          const errorId = rpadError?.response?.headers?.["x-correlation-id"];
           console.error("Failed to update RPAD pending collection:", rpadError);
-          setShowErrorToast({ message: t("FAILED_TO_UPDATE_RPAD_COLLECTION"), error: true });
-          setTimeout(() => setShowErrorToast(null), 5000);
+          setShowToast({ label: t("FAILED_TO_UPDATE_RPAD_COLLECTION"), error: true, errorId });
           return { continue: false };
         }
       }
@@ -912,10 +991,19 @@ const ReviewSummonsNoticeAndWarrant = () => {
       sessionStorage.removeItem("fileStoreId");
       sessionStorage.removeItem("homeActiveTab");
       sessionStorage.setItem("SignedFileStoreID", documentsFile?.fileStore);
+
+      const parsedTaskDetails = typeof rowData?.taskDetails === "string" ? JSON.parse(rowData?.taskDetails) : rowData?.taskDetails;
+
       const reqBody = {
         task: {
           ...rowData,
-          ...(typeof rowData?.taskDetails === "string" && { taskDetails: JSON.parse(rowData?.taskDetails) }),
+          taskDetails: {
+            ...parsedTaskDetails,
+            deliveryChannels: {
+              ...parsedTaskDetails?.deliveryChannels,
+              isPendingCollection: false,
+            },
+          },
           documents: documentsFile ? [...documents, documentsFile] : documents,
           tenantId,
         },
@@ -931,9 +1019,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
         }));
         setIsSigned(true);
         setActionModalType("SIGNED");
+        if (currentConfig?.label === "PENDING_SIGN" && refetchCounts) setTimeout(() => refetchCounts(), 1000);
       }
 
-      if (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE") {
+      if (rowData?.taskDetails?.deliveryChannels?.channelCode === CHANNEL_IDS.POLICE) {
         const { data: tasksData } = await refetch();
         if (tasksData) {
           try {
@@ -971,6 +1060,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
       return { continue: true };
     } catch (error) {
       console.error("Error uploading document:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SEND"), error: true, errorId });
     } finally {
       setIsLoading(false);
       // Reset the flag after a delay to allow re-renders to complete
@@ -978,46 +1069,37 @@ const ReviewSummonsNoticeAndWarrant = () => {
         isInitialLoadRef.current = false;
       }, 1000);
     }
-  }, [rowData, signatureId, tenantId]);
+  }, [rowData, signatureId, tenantId, mockESignEnabled, isJudge, courtId, activeTabIndex, refetch, t, refetchCounts]);
 
   const handleBulkSign = useCallback(() => {
     const selectedItems = bulkSignList?.filter((item) => item?.isSelected) || [];
     if (selectedItems.length === 0) {
-      setShowErrorToast({ message: t("NO_DOCUMENTS_SELECTED"), error: true });
-      setTimeout(() => {
-        setShowErrorToast(null);
-      }, 5000);
+      setShowToast({ label: t("NO_DOCUMENTS_SELECTED"), error: true });
       return;
     }
     if (!(hasSignAttachmentAccess || hasSignProclamationAccess || hasSignSummonsAccess || hasSignWarrantAccess || hasSignNoticeAccess)) {
-      setShowErrorToast({
-        message: t("YOU_DO_NOT_HAVE_PERMISSION_TO_SIGN"),
+      setShowToast({
+        label: t("YOU_DO_NOT_HAVE_PERMISSION_TO_SIGN"),
         error: true,
       });
-      setTimeout(() => {
-        setShowErrorToast(null);
-      }, 5000);
       return;
     }
     const notAllowedItems = selectedItems.filter((doc) => {
-      if (doc.taskType === "SUMMONS" && !hasSignSummonsAccess) return true;
-      if (doc.taskType === "WARRANT" && !hasSignWarrantAccess) return true;
-      if (doc.taskType === "NOTICE" && !hasSignNoticeAccess) return true;
-      if (doc.taskType === "PROCLAMATION" && !hasSignProclamationAccess) return true;
-      if (doc.taskType === "ATTACHMENT" && !hasSignAttachmentAccess) return true;
+      if (doc.taskType === ORDER_TYPES.SUMMONS && !hasSignSummonsAccess) return true;
+      if (doc.taskType === ORDER_TYPES.WARRANT && !hasSignWarrantAccess) return true;
+      if (doc.taskType === ORDER_TYPES.NOTICE && !hasSignNoticeAccess) return true;
+      if (doc.taskType === ORDER_TYPES.PROCLAMATION && !hasSignProclamationAccess) return true;
+      if (doc.taskType === ORDER_TYPES.ATTACHMENT && !hasSignAttachmentAccess) return true;
       return false;
     });
 
     if (notAllowedItems.length > 0) {
       const notAllowedTypes = [...new Set(notAllowedItems.map((doc) => t(doc.taskType)))];
       const msg = t("FOLLOWING_DOCUMENTS_CANNOT_BE_SIGNED") + notAllowedTypes.join(", ");
-      setShowErrorToast({
-        message: msg,
+      setShowToast({
+        label: msg,
         error: true,
       });
-      setTimeout(() => {
-        setShowErrorToast(null);
-      }, 5000);
       return;
     }
     setShowBulkSignConfirmModal(true);
@@ -1026,13 +1108,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const handleBulkSend = useCallback(() => {
     const selectedItems = bulkSendList?.filter((item) => item?.isSelected) || [];
     if (selectedItems.length === 0) {
-      setShowErrorToast({
-        message: t("NO_DOCUMENTS_SELECTED"),
+      setShowToast({
+        label: t("NO_DOCUMENTS_SELECTED"),
         error: true,
       });
-      setTimeout(() => {
-        setShowErrorToast(null);
-      }, 5000);
       return;
     }
     setShowBulkSendConfirmModal(true);
@@ -1041,13 +1120,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const handleBulkPendingRpad = useCallback(async () => {
     const selectedItems = bulkRpadList?.filter((item) => item?.isSelected) || [];
     if (!selectedItems?.length) {
-      setShowErrorToast({
-        message: t("NO_DOCUMENTS_SELECTED"),
+      setShowToast({
+        label: t("NO_DOCUMENTS_SELECTED"),
         error: true,
       });
-      setTimeout(() => {
-        setShowErrorToast(null);
-      }, 5000);
       return;
     }
     try {
@@ -1061,13 +1137,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
       await DRISTIService.customApiService("/task/v1/bulk-pending-collection-update", payload);
 
       const total = selectedItems.length;
-      setShowErrorToast({ message: t("DOCUMENTS_SENT_FOR_BULK_SIGN_SUCCESSFULLY", { total }), error: false });
-      setTimeout(() => setShowErrorToast(null), 3000);
+      setShowToast({ label: t("DOCUMENTS_SENT_FOR_BULK_SIGN_SUCCESSFULLY", { total }), error: false });
       setBulkRpadList((prev) => prev?.filter((i) => !selectedItems.some((s) => s.taskNumber === i.taskNumber)) || []);
       setReload((prev) => !prev);
     } catch (error) {
-      setShowErrorToast({ message: t("FAILED_TO_PERFORM_BULK_SEND"), error: true });
-      setTimeout(() => setShowErrorToast(null), 5000);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SEND"), error: true, errorId });
     }
   }, [bulkRpadList, t, tenantId]);
 
@@ -1084,8 +1159,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
       await DRISTIService.customApiService("/task/v1/bulk-pending-collection-update", payload);
 
-      setShowErrorToast({ message: t("DOCUMENT_SENT_FOR_BULK_SIGN_SUCCESSFULLY", { total: 1 }), error: false });
-      setTimeout(() => setShowErrorToast(null), 3000);
+      setShowToast({ label: t("DOCUMENT_SENT_FOR_BULK_SIGN_SUCCESSFULLY", { total: 1 }), error: false });
       setShowActionModal(false);
 
       // Remove the sent case from the list immediately
@@ -1103,94 +1177,56 @@ const ReviewSummonsNoticeAndWarrant = () => {
         isInitialLoadRef.current = false;
       }, 1000);
     } catch (error) {
-      setShowErrorToast({ message: t("FAILED_TO_PERFORM_BULK_SEND"), error: true });
-      setTimeout(() => setShowErrorToast(null), 5000);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SEND"), error: true, errorId });
     }
   }, [tenantId, rowData?.taskNumber, t]);
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
+  const fetchResponseFromXmlRequest = useCallback(
+    async (orderRequestList) => {
+      const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
+      const responses = [];
 
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
-  // XML parsing utility from BulkESignView
-  const parseXml = (xmlString, tagName) => {
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-    const element = xmlDoc.getElementsByTagName(tagName)[0];
-    return element ? element.textContent.trim() : null;
-  };
-
-  const fetchResponseFromXmlRequest = async (orderRequestList) => {
-    const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
-    const responses = [];
-
-    const requests = orderRequestList?.map(async (order) => {
-      try {
-        const formData = qs.stringify({ response: order?.request });
-        const response = await axiosInstance.post(bulkSignUrl, formData, {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          },
-        });
-
-        const data = response?.data;
-        if (parseXml(data, "status") !== "failed") {
-          responses.push({
-            taskNumber: order?.taskNumber || order?.orderNumber,
-            signedTaskData: parseXml(data, "data"),
-            signed: true,
-            errorMsg: null,
-            tenantId: tenantId,
+      for (const order of orderRequestList || []) {
+        try {
+          const formData = qs.stringify({ response: order?.request });
+          const response = await axiosInstance.post(bulkSignUrl, formData, {
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            },
           });
-        } else {
-          responses.push({
-            taskNumber: order?.taskNumber || order?.orderNumber,
-            signedTaskData: parseXml(data, "data"),
-            signed: false,
-            errorMsg: parseXml(data, "error"),
-            tenantId: tenantId,
-          });
+
+          const data = response?.data;
+          if (parseXml(data, "status") !== "failed") {
+            responses.push({
+              taskNumber: order?.taskNumber || order?.orderNumber,
+              signedTaskData: parseXml(data, "data"),
+              signed: true,
+              errorMsg: null,
+              tenantId: tenantId,
+            });
+          } else {
+            responses.push({
+              taskNumber: order?.taskNumber || order?.orderNumber,
+              signedTaskData: parseXml(data, "data"),
+              signed: false,
+              errorMsg: parseXml(data, "error"),
+              tenantId: tenantId,
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching order ${order?.orderNumber}:`, error?.message);
         }
-      } catch (error) {
-        console.error(`Error fetching order ${order?.orderNumber}:`, error?.message);
       }
-    });
 
-    await Promise.allSettled(requests);
-    return responses;
-  };
-  const bulkUploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: "Signature",
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["PDF", "PNG", "JPEG", "JPG"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, []);
+      return responses;
+    },
+    [tenantId]
+  );
 
   const onBulkSignatureSelect = (key, value) => {
     if (value?.Signature === null) {
       setBulkSignatureData({});
-      setIsBulkSigned(false);
     } else {
       setBulkSignatureData((prevData) => ({
         ...prevData,
@@ -1200,18 +1236,17 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setFileUploadError(null);
   };
 
-  const onBulkSignatureSubmit = async () => {
+  const onBulkSignatureSubmit = async (combineResult) => {
     if (bulkSignatureData?.uploadSignature?.Signature?.length > 0) {
       try {
-        const uploadedFileId = await uploadDocuments(bulkSignatureData?.uploadSignature?.Signature, tenantId);
-        setBulkSignatureId(uploadedFileId?.[0]?.fileStoreId);
-        setIsBulkSigned(true);
         setShowBulkSignatureModal(false);
         handleActualBulkSign();
       } catch (error) {
         setBulkSignatureData({});
-        setIsBulkSigned(false);
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+        setFileUploadError(errorCode || "CS_FILE_UPLOAD_ERROR");
+        setShowToast({ label: t(errorCode), error: true, errorId });
       }
     }
   };
@@ -1222,7 +1257,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
     const criteriaList = selectedItems?.map((item) => {
       const fileStoreId = item?.documents?.[0]?.fileStore || "";
-      const placeHolder = item?.taskType === "MISCELLANEOUS_PROCESS" ? "Judicial Magistrate of First Class" : "Signature";
+      const placeHolder = item?.taskType === ORDER_TYPES.MISCELLANEOUS_PROCESS ? "Judicial Magistrate of First Class" : "Signature";
       return {
         fileStoreId: fileStoreId,
         taskNumber: item?.taskNumber || item?.id || item?.businessId,
@@ -1258,13 +1293,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
         selectedItems = selectedItems?.filter((item) => signedList?.some((signed) => signed?.taskNumber === item?.taskNumber));
 
         if (selectedItems?.length === 0) {
-          setShowErrorToast({
-            message: t("FAILED_TO_PERFORM_BULK_SIGN"),
+          setShowToast({
+            label: t("FAILED_TO_PERFORM_BULK_SIGN"),
             error: true,
           });
-          setTimeout(() => {
-            setShowErrorToast(null);
-          }, 3000);
           return;
         }
 
@@ -1272,18 +1304,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
         const totalSignedCount = responseArray?.filter((item) => item?.signed === true)?.length || selectedItems.length;
         setSuccessfullySignedCount(totalSignedCount);
 
-        setShowErrorToast({
-          message: t("BULK_SIGN_SUCCESS", { count: totalSignedCount }),
+        setShowToast({
+          label: t("BULK_SIGN_SUCCESS", { count: totalSignedCount }),
           error: false,
         });
 
-        setTimeout(() => {
-          setShowErrorToast(null);
-        }, 3000);
+        const policeTasks = selectedItems.filter((item) => item?.taskDetails?.deliveryChannels?.channelCode === CHANNEL_IDS.POLICE);
 
-        const policeTasks = selectedItems.filter((item) => item?.taskDetails?.deliveryChannels?.channelCode === "POLICE");
-
-        const nonPoliceTasks = selectedItems.filter((item) => item?.taskDetails?.deliveryChannels?.channelCode !== "POLICE");
+        const nonPoliceTasks = selectedItems.filter((item) => item?.taskDetails?.deliveryChannels?.channelCode !== CHANNEL_IDS.POLICE);
 
         // Track which tasks should be removed from bulkSignList
         const tasksToRemove = new Set();
@@ -1342,8 +1370,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
             // Show error message if any police tasks failed
             if (policeBulkSendResult?.failed > 0) {
               const failedTaskNumbers = policeBulkSendResult.failedTasks?.map((t) => t.taskNumber).join(", ") || "";
-              setShowErrorToast({
-                message:
+              setShowToast({
+                label:
                   t("FAILED_TO_SEND_POLICE_TASKS", {
                     failed: policeBulkSendResult.failed,
                     total: policeBulkSendResult.total,
@@ -1352,20 +1380,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
                   `Failed to send ${policeBulkSendResult.failed} out of ${policeBulkSendResult.total} police tasks. Task numbers: ${failedTaskNumbers}`,
                 error: true,
               });
-              setTimeout(() => {
-                setShowErrorToast(null);
-              }, 5000);
             }
           } catch (err) {
             console.error("Bulk send for POLICE tasks failed:", err);
             // If the API call itself fails, don't remove any police tasks
-            setShowErrorToast({
-              message: t("FAILED_TO_SEND_POLICE_TASKS_API_ERROR") || "Failed to send police tasks. Please try again.",
+            setShowToast({
+              label: t("FAILED_TO_SEND_POLICE_TASKS_API_ERROR") || "Failed to send police tasks. Please try again.",
               error: true,
             });
-            setTimeout(() => {
-              setShowErrorToast(null);
-            }, 5000);
           }
         }
 
@@ -1405,27 +1427,45 @@ const ReviewSummonsNoticeAndWarrant = () => {
           }, 1000);
           // Reset the count and police tasks when modal closes
           setShowBulkSignSuccessModal(true);
+
+          const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
+          if (currentConfig?.label === "PENDING_SIGN" && refetchCounts) setTimeout(() => refetchCounts(), 1000);
         } catch (e) {
           console.error("Error preparing bulk send after bulk sign:", e);
+          const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SEND"), error: true, errorId });
         }
       });
     } catch (error) {
-      setShowErrorToast({
-        message: t("FAILED_TO_PERFORM_BULK_SIGN"),
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        label: t("FAILED_TO_PERFORM_BULK_SIGN"),
         error: true,
+        errorId,
       });
-      setTimeout(() => {
-        setShowErrorToast(null);
-      }, 5000);
       setBulkSignList([]);
       setReload((prev) => prev + 1);
     } finally {
       setIsBulkLoading(false);
       setShowBulkSignConfirmModal(false);
     }
-    const isPolice = bulkSignList?.filter((item) => item?.isSelected)?.every((item) => item?.taskDetails?.deliveryChannels?.channelCode === "POLICE");
+    const isPolice = bulkSignList
+      ?.filter((item) => item?.isSelected)
+      ?.every((item) => item?.taskDetails?.deliveryChannels?.channelCode === CHANNEL_IDS.POLICE);
     setAllSelectedPolice(isPolice ? true : false);
-  }, [bulkSignList, tenantId, t, setShowErrorToast, setIsBulkLoading, fetchResponseFromXmlRequest, callBulkSendApi]);
+  }, [
+    bulkSignList,
+    tenantId,
+    t,
+    setShowToast,
+    setIsBulkLoading,
+    fetchResponseFromXmlRequest,
+    callBulkSendApi,
+    isJudge,
+    courtId,
+    activeTabIndex,
+    refetchCounts,
+  ]);
 
   const handleBulkDownload = useCallback(async () => {
     try {
@@ -1446,13 +1486,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }
 
       if (selectedItems.length === 0) {
-        setShowErrorToast({
-          message: t("NO_DOCUMENTS_SELECTED_FOR_DOWNLOAD"),
+        setShowToast({
+          label: t("NO_DOCUMENTS_SELECTED_FOR_DOWNLOAD"),
           error: true,
         });
-        setTimeout(() => {
-          setShowErrorToast(null);
-        }, 5000);
         return;
       }
       const downloadPromises = selectedItems.map(async (item, index) => {
@@ -1468,7 +1505,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             return s.charAt(0) + s.slice(1).toLowerCase();
           })();
           const caseNumber = (
-            (item?.isLPRCase ? item?.lprNumber : item?.courtCaseNumber) ||
+            (isLPRCase(item) ? item?.lprNumber : item?.courtCaseNumber) ||
             item?.courtCaseNumber ||
             item?.cmpNumber ||
             item?.filingNumber ||
@@ -1496,51 +1533,29 @@ const ReviewSummonsNoticeAndWarrant = () => {
       const results = await Promise.allSettled(downloadPromises);
       const successful = results.filter((r) => r.status === "fulfilled" && r.value?.success).length;
       const failed = results.length - successful;
-      setTimeout(() => {
-        if (successful > 0 && failed === 0) {
-          setShowErrorToast({
-            message: t("DOCUMENTS_DOWNLOADED_SUCCESSFULLY", { successful, total: selectedItems.length }),
-            error: false,
-          });
-          setTimeout(() => {
-            setShowErrorToast(null);
-          }, 3000);
-        } else if (successful > 0 && failed > 0) {
-          setShowErrorToast({
-            message: t("SOME_DOCUMENTS_FAILED_TO_DOWNLOAD", { successful, failed }),
-            error: true,
-          });
-          setTimeout(() => setShowErrorToast(null), 5000);
-        } else {
-          setShowErrorToast({
-            message: t("BULK_DOWNLOAD_FAILED"),
-            error: true,
-          });
-          setTimeout(() => setShowErrorToast(null), 5000);
-        }
-        // const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
-        // const isSignedTab = currentConfig?.label === "SIGNED";
-
-        // setBulkSignList((prev) => prev?.map((item) => ({ ...item, isSelected: false })) || []);
-        // setBulkSendList((prev) => prev?.map((item) => ({ ...item, isSelected: false })) || []);
-
-        // const successfulFileStoreIds = results.filter((r) => r.status === "fulfilled" && r.value?.fileStoreId).map((r) => r.value.fileStoreId);
-
-        // if (isSignedTab) {
-        //   setBulkSendList((prev) => prev?.filter((item) => !successfulFileStoreIds.includes(item?.documents?.[0]?.fileStore)) || []);
-        // } else {
-        //   setBulkSignList((prev) => prev?.filter((item) => !successfulFileStoreIds.includes(item?.documents?.[0]?.fileStore)) || []);
-        // }
-        // setReload((prev) => prev + 1);
-      }, 2000);
+      if (successful > 0 && failed === 0) {
+        setShowToast({
+          label: t("DOCUMENTS_DOWNLOADED_SUCCESSFULLY", { successful, total: selectedItems.length }),
+          error: false,
+        });
+      } else if (successful > 0 && failed > 0) {
+        setShowToast({
+          label: t("SOME_DOCUMENTS_FAILED_TO_DOWNLOAD", { successful, failed }),
+          error: true,
+        });
+      } else {
+        setShowToast({
+          label: t("BULK_DOWNLOAD_FAILED"),
+          error: true,
+        });
+      }
     } catch (error) {
-      setShowErrorToast({
-        message: t("BULK_DOWNLOAD_FAILED"),
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        label: t("BULK_DOWNLOAD_FAILED"),
         error: true,
+        errorId,
       });
-      setTimeout(() => {
-        setShowErrorToast(null);
-      }, 5000);
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
       const isSignedTab = currentConfig?.label === "SIGNED";
       const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
@@ -1561,7 +1576,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     tenantId,
     downloadPdf,
     t,
-    setShowErrorToast,
+    setShowToast,
     activeTabIndex,
     courtId,
     isJudge,
@@ -1587,11 +1602,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
       handleClose: handleClose,
       heading: { label: `${t("REVIEW_DOCUMENT_TEXT")} ${t(rowData?.taskType)} ${t("DOCUMENT_TEXT")}` },
       actionSaveLabel:
-        (rowData?.taskType === "ATTACHMENT" && hasSignAttachmentAccess) ||
-        (rowData?.taskType === "PROCLAMATION" && hasSignProclamationAccess) ||
-        (rowData?.taskType === "SUMMONS" && hasSignSummonsAccess) ||
-        (rowData?.taskType === "WARRANT" && hasSignWarrantAccess) ||
-        (rowData?.taskType === "NOTICE" && hasSignNoticeAccess) ||
+        (rowData?.taskType === ORDER_TYPES.ATTACHMENT && hasSignAttachmentAccess) ||
+        (rowData?.taskType === ORDER_TYPES.PROCLAMATION && hasSignProclamationAccess) ||
+        (rowData?.taskType === ORDER_TYPES.SUMMONS && hasSignSummonsAccess) ||
+        (rowData?.taskType === ORDER_TYPES.WARRANT && hasSignWarrantAccess) ||
+        (rowData?.taskType === ORDER_TYPES.NOTICE && hasSignNoticeAccess) ||
         isJudge
           ? t("PROCEED_TO_SIGN")
           : null,
@@ -1604,7 +1619,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
           actionSaveOnSubmit: () => {},
           hideSubmit:
             isTypist ||
-            ((rowData?.taskType === "WARRANT" || rowData?.taskType === "PROCLAMATION" || rowData?.taskType === "ATTACHMENT") &&
+            ((rowData?.taskType === ORDER_TYPES.WARRANT ||
+              rowData?.taskType === ORDER_TYPES.PROCLAMATION ||
+              rowData?.taskType === ORDER_TYPES.ATTACHMENT) &&
               rowData?.documentStatus === "SIGN_PENDING" &&
               !isJudge),
         },
@@ -1633,8 +1650,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
           actionSaveOnSubmit: handleSubmitEsign,
           async: true,
         },
-        ...(rowData?.taskDetails?.deliveryChannels?.channelCode !== "POLICE" ||
-        (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE" && isIcops?.state)
+        ...(rowData?.taskDetails?.deliveryChannels?.channelCode !== CHANNEL_IDS.POLICE ||
+        (rowData?.taskDetails?.deliveryChannels?.channelCode === CHANNEL_IDS.POLICE && isIcops?.state)
           ? [
               {
                 type: isIcops?.state === "failed" ? "failure" : "success",
@@ -1667,21 +1684,25 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       documents={documents}
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
+                      rowData={rowData}
                     />
                   ) : (
                     <CustomStepperSuccess
                       successMessage={successMessage}
                       bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-                      submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+                      submitButtonText={
+                        documents && hasEditTaskAccess && deliveryChannel !== DELIVERY_CHANNELS.POLICE ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")
+                      }
                       closeButtonText={documents ? t("DOWNLOAD_DOCUMENT") : t("BACK")}
                       closeButtonAction={handleClose}
-                      submitButtonAction={hasEditTaskAccess && deliveryChannel !== "Police" ? handleSubmit : handleClose}
+                      submitButtonAction={hasEditTaskAccess && deliveryChannel !== DELIVERY_CHANNELS.POLICE ? handleSubmit : handleClose}
                       t={t}
                       submissionData={submissionData}
                       documents={documents}
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
                       isSubmitting={isSubmitting}
+                      rowData={rowData}
                     />
                   ),
               },
@@ -1713,11 +1734,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
       handleClose: handleClose,
       heading: { label: `${t("REVIEW_DOCUMENT_TEXT")} ${t(rowData?.taskType)} ${t("DOCUMENT_TEXT")}` },
       actionSaveLabel:
-        (rowData?.taskType === "ATTACHMENT" && hasSignAttachmentAccess) ||
-        (rowData?.taskType === "PROCLAMATION" && hasSignProclamationAccess) ||
-        (rowData?.taskType === "SUMMONS" && hasSignSummonsAccess) ||
-        (rowData?.taskType === "WARRANT" && hasSignWarrantAccess) ||
-        (rowData?.taskType === "NOTICE" && hasSignNoticeAccess) ||
+        (rowData?.taskType === ORDER_TYPES.ATTACHMENT && hasSignAttachmentAccess) ||
+        (rowData?.taskType === ORDER_TYPES.PROCLAMATION && hasSignProclamationAccess) ||
+        (rowData?.taskType === ORDER_TYPES.SUMMONS && hasSignSummonsAccess) ||
+        (rowData?.taskType === ORDER_TYPES.WARRANT && hasSignWarrantAccess) ||
+        (rowData?.taskType === ORDER_TYPES.NOTICE && hasSignNoticeAccess) ||
         isJudge
           ? t("PROCEED_TO_SIGN")
           : null,
@@ -1733,7 +1754,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
           cancelTheme: "primary",
           hideSubmit:
             isTypist ||
-            ((rowData?.taskType === "WARRANT" || rowData?.taskType === "PROCLAMATION" || rowData?.taskType === "ATTACHMENT") &&
+            ((rowData?.taskType === ORDER_TYPES.WARRANT ||
+              rowData?.taskType === ORDER_TYPES.PROCLAMATION ||
+              rowData?.taskType === ORDER_TYPES.ATTACHMENT) &&
               rowData?.documentStatus === "SIGN_PENDING" &&
               !isJudge),
         },
@@ -1762,8 +1785,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
           actionSaveOnSubmit: handleSubmitEsign,
           async: true,
         },
-        ...(rowData?.taskDetails?.deliveryChannels?.channelCode !== "POLICE" ||
-        (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE" && isIcops?.state)
+        ...(rowData?.taskDetails?.deliveryChannels?.channelCode !== CHANNEL_IDS.POLICE ||
+        (rowData?.taskDetails?.deliveryChannels?.channelCode === CHANNEL_IDS.POLICE && isIcops?.state)
           ? [
               {
                 type: isIcops?.state === "failed" ? "failure" : "success",
@@ -1796,21 +1819,25 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       documents={documents}
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
+                      rowData={rowData}
                     />
                   ) : (
                     <CustomStepperSuccess
                       successMessage={successMessage}
                       bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-                      submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+                      submitButtonText={
+                        documents && hasEditTaskAccess && deliveryChannel !== DELIVERY_CHANNELS.POLICE ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")
+                      }
                       closeButtonText={documents ? t("DOWNLOAD_DOCUMENT") : t("BACK")}
                       closeButtonAction={handleClose}
-                      submitButtonAction={hasEditTaskAccess && deliveryChannel !== "Police" ? handleSubmit : handleClose}
+                      submitButtonAction={hasEditTaskAccess && deliveryChannel !== DELIVERY_CHANNELS.POLICE ? handleSubmit : handleClose}
                       t={t}
                       submissionData={submissionData}
                       documents={documents}
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
                       isSubmitting={isSubmitting}
+                      rowData={rowData}
                     />
                   ),
               },
@@ -1840,6 +1867,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const handleCloseActionModal = useCallback(() => {
     setShowActionModal(false);
+    setSelectedReason({});
+    setReasonText("");
     if (taskNumber) history.replace(`/${window?.contextPath}/employee/orders/Summons&Notice`);
   }, [history, taskNumber]);
 
@@ -1854,16 +1883,17 @@ const ReviewSummonsNoticeAndWarrant = () => {
         <CustomStepperSuccess
           successMessage={successMessage}
           bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-          submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== "Police" ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+          submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== DELIVERY_CHANNELS.POLICE ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
           closeButtonText={t("DOWNLOAD_DOCUMENT")}
           closeButtonAction={handleDownload}
-          submitButtonAction={hasEditTaskAccess && deliveryChannel !== "Police" ? handleSubmit : handleClose}
+          submitButtonAction={hasEditTaskAccess && deliveryChannel !== DELIVERY_CHANNELS.POLICE ? handleSubmit : handleClose}
           t={t}
           submissionData={submissionData}
           documents={documents}
           deliveryChannel={deliveryChannel}
           orderType={orderType}
           isSubmitting={isSubmitting}
+          rowData={rowData}
         />
         // <PrintAndSendDocumentComponent
         //   infos={infos}
@@ -1896,6 +1926,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
           remarks={remarks}
           setRemarks={setRemarks}
           setUpdateStatusDate={setUpdateStatusDate}
+          selectedReason={selectedReason}
+          setSelectedReason={setSelectedReason}
+          reasonText={reasonText}
+          setReasonText={setReasonText}
         />
       ),
       actionSaveOnSubmit: handleUpdateStatus,
@@ -1903,7 +1937,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
       isDisabled: isDisabled,
       hideSubmit: isTypist,
     };
-  }, [handleCloseActionModal, handleDownload, handleUpdateStatus, sentInfos, isDisabled, links, orderType, rowData, selectedDelievery, t]);
+  }, [
+    handleCloseActionModal,
+    handleDownload,
+    handleUpdateStatus,
+    sentInfos,
+    isDisabled,
+    links,
+    orderType,
+    rowData,
+    selectedDelievery,
+    selectedReason,
+    reasonText,
+    t,
+  ]);
 
   useEffect(() => {
     // if (rowData?.id) getTaskDocuments();
@@ -1919,7 +1966,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [rowData]);
 
   const handleRowClick = (props) => {
-    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER"].includes(props?.original?.status)) {
+    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER", "WARRANT_REISSUED_WITH_NEW_WARRANT"].includes(props?.original?.status)) {
       setRowData(props?.original);
       setshowNoticeModal(true);
       return;
@@ -2634,20 +2681,27 @@ const ReviewSummonsNoticeAndWarrant = () => {
         />
       )}
       {showBulkSignatureModal && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key="bulkSignature"
           name="Signature"
-          setOpenUploadSignatureModal={setShowBulkSignatureModal}
+          onClose={() => setShowBulkSignatureModal(false)}
           onSelect={onBulkSignatureSelect}
-          config={bulkUploadModalConfig}
           formData={bulkSignatureData}
           onSubmit={onBulkSignatureSubmit}
+          isDisabled={isBulkLoading}
+          isParentLoading={isBulkLoading}
           fileUploadError={fileUploadError}
         />
       )}
-      {showErrorToast && (
-        <Toast error={showErrorToast.error} label={showErrorToast.message} isDleteBtn={true} onClose={() => setShowErrorToast(null)} />
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
     </React.Fragment>
   );

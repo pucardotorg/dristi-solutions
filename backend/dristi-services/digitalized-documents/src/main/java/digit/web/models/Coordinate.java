@@ -25,4 +25,10 @@ public class Coordinate {
 
     @JsonProperty("tenantId")
     private String tenantId;
+
+    @JsonProperty("pageWidth")
+    private double pageWidth;
+
+    @JsonProperty("pageHeight")
+    private double pageHeight;
 }

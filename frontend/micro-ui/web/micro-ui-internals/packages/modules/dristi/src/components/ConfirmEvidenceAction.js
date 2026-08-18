@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Modal from "./Modal";
-import { CheckBox, CloseSvg, TextArea } from "@egovernments/digit-ui-react-components";
+import { CheckBox, TextArea } from "@egovernments/digit-ui-react-components";
+import { CloseBtn } from "./ModalComponents";
 
 function ConfirmEvidenceAction({
   t,
@@ -11,17 +12,7 @@ function ConfirmEvidenceAction({
   isFromActions = false,
   setMenuData,
 }) {
-  const CloseBtn = (props) => {
-    return (
-      <div
-        onClick={props?.onClick}
-        disabled={props?.isDisabled}
-        style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}
-      >
-        <CloseSvg />
-      </div>
-    );
-  };
+  
   const Heading = (props) => {
     return (
       <div className="evidence-title">

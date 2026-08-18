@@ -3,6 +3,7 @@ const {
   filterCaseBundleBySection,
 } = require("../utils/filterCaseBundleBySection");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 async function processAffidavitSection(
   courtCase,
@@ -10,25 +11,27 @@ async function processAffidavitSection(
   tenantId,
   requestInfo,
   TEMP_FILES_DIR,
-  indexCopy
+  indexCopy,
 ) {
-  // update affidavits
+  logger.info(
+    `[processAffidavitSection] Started | filingNumber: ${courtCase?.filingNumber}`,
+  );
   const affidavitsSection = filterCaseBundleBySection(
     caseBundleMaster,
-    "affidavit"
+    "affidavit",
   );
 
   const sectionPosition = indexCopy.sections?.findIndex(
-    (s) => s.name === "affidavit"
+    (s) => s.name === "affidavit",
   );
 
   const dynamicSectionNumber = getDynamicSectionNumber(
     indexCopy,
-    sectionPosition
+    sectionPosition,
   );
 
   const sortedAffidavitsSection = [...affidavitsSection].sort(
-    (secA, secB) => secA.sorton - secB.sorton
+    (secA, secB) => secA.sorton - secB.sorton,
   );
 
   const affidavitsLineItems = (
@@ -45,16 +48,17 @@ async function processAffidavitSection(
             const index = ind + i;
             if (section.docketpagerequired === "yes") {
               const complainant = courtCase.litigants?.find((litigant) =>
-                litigant.partyType.includes("complainant.primary")
+                litigant?.partyType?.includes("complainant.primary"),
               );
               const docketComplainantName =
-                complainant.additionalDetails.fullName;
-              const docketNameOfAdvocate = courtCase.representatives?.find(
-                (adv) =>
-                  adv.representing?.find(
-                    (party) => party.individualId === complainant.individualId
-                  )
-              )?.additionalDetails?.advocateName;
+                complainant?.additionalDetails?.fullName || "";
+              const docketNameOfAdvocate =
+                courtCase.representatives?.find((adv) =>
+                  adv?.representing?.some(
+                    (party) =>
+                      party?.individualId === complainant?.individualId,
+                  ),
+                )?.additionalDetails?.advocateName || "";
 
               const docketCounselFor = docketNameOfAdvocate
                 ? `COUNSEL FOR THE COMPLAINANT - ${docketComplainantName}`
@@ -82,14 +86,14 @@ async function processAffidavitSection(
                     docketNameOfFiling:
                       docketNameOfAdvocate || docketComplainantName,
                     docketDateOfSubmission: new Date(
-                      courtCase.registrationDate
+                      courtCase.registrationDate,
                     ).toLocaleDateString("en-IN"),
                     documentPath: documentPath,
                   },
                   courtCase,
                   tenantId,
                   requestInfo,
-                  TEMP_FILES_DIR
+                  TEMP_FILES_DIR,
                 );
 
               return {
@@ -108,17 +112,17 @@ async function processAffidavitSection(
                 content: "affidavit",
               };
             }
-          })
+          }),
         );
         return innerItems;
-      })
+      }),
     )
   ).flat();
 
   // update index
 
   const affidavitsIndexSection = indexCopy.sections?.find(
-    (section) => section.name === "affidavit"
+    (section) => section.name === "affidavit",
   );
   affidavitsIndexSection.lineItems = affidavitsLineItems?.filter(Boolean);
 }

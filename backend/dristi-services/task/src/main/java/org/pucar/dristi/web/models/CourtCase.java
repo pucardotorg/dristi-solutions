@@ -102,6 +102,9 @@ public class CourtCase {
     @Valid
     private Long filingDate = null;
 
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = new ArrayList<>();
+
     @JsonProperty("registrationDate")
     private Long registrationDate = null;
 

@@ -8,6 +8,7 @@ const {
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 async function orderAcceptanceRejectionCase(req, res, qrCode) {
   const cnrNumber = req.query.cnrNumber;
@@ -137,12 +138,7 @@ async function orderAcceptanceRejectionCase(req, res, qrCode) {
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
 
     const caseNumber =
-      (courtCase?.isLPRCase
-        ? courtCase?.lprNumber
-        : courtCase?.courtCaseNumber) ||
-      courtCase?.courtCaseNumber ||
-      courtCase?.cmpNumber ||
-      "";
+      getCaseNumber(courtCase);
     const data = {
       Data: [
         {

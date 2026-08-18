@@ -15,6 +15,8 @@ function RenderFileCard({
   uploadErrorInfo,
   isDisabled = false,
   disableUploadDelete = false,
+  setError = () => {},
+  configKey,
 }) {
   const [file, setFile] = useState(null);
   const popupAnchor = useRef();
@@ -89,6 +91,9 @@ function RenderFileCard({
                   label={t("CS_REUPLOAD")}
                 />
               }
+              onTypeError={() => {
+                setError(configKey, { message: t("CS_INVALID_FILE_TYPE") });
+              }}
               key={`file ${index}`}
             />
           </div>

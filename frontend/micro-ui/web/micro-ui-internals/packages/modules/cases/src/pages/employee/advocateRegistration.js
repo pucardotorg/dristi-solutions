@@ -6,7 +6,7 @@
 // // import { configs } from "../../configs/pucarCreateConfig";
 // import { transformCreateData } from "../../utils/createUtils";
 // import { advocateRegistrationConfig } from "../../configs/advocateRegistrationConfig";
-// import { InfoCard } from "@egovernments/digit-ui-components";
+// import { InfoCard} from "@egovernments/digit-ui-components";
 // import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 
 // const fieldStyle = { marginRight: 0 };

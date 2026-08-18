@@ -346,18 +346,11 @@ Case Viewing Flow:
 | `react-i18next` | 11.16.2 | Internationalization |
 | `react-query` | 3.6.1 | Data fetching |
 | `lodash` | 4.17.21 | Utility library |
-| `@react-pdf/renderer` | ^3.4.2 | PDF rendering |
-| `draft-js` | ^0.11.7 | Rich text editor |
-| `react-draft-wysiwyg` | ^1.15.0 | WYSIWYG editor |
 | `react-quill` | ^2.0.0 | Rich text editor (alternative) |
 | `react-drag-drop-files` | ^2.3.10 | File drag-and-drop |
 | `react-select` | ^5.10.1 | Advanced select component |
 | `dompurify` | ^3.2.6 | HTML sanitization |
-| `jsonpath` | ^1.1.1 | JSONPath query |
-| `recharts` | ^2.0.9 | Charting library |
 | `react-tooltip` | 4.1.2 | Tooltips |
-| `react-time-picker` | 4.2.1 | Time picker |
-| `react-simple-maps` | 2.0.0 | Map rendering |
 
 ---
 
@@ -384,7 +377,6 @@ Case Viewing Flow:
 2. **God service:** `DRISTIService` with 60+ methods handles case, evidence, hearing, order, payment, OCR, e-sign, and office management — violates single responsibility.
 3. **Cross-module imports:** Other modules (orders, home) directly import from `@egovernments/digit-ui-module-dristi/src/pages/employee/...`, creating deep coupling.
 4. **Typo in filename:** `contants.js` (should be `constants.js`).
-5. **Dual rich text editors:** Both `draft-js` + `react-draft-wysiwyg` AND `react-quill` are dependencies — potential redundancy.
-6. **No error boundaries:** The module wraps content with `ToastProvider` but does not implement error boundaries.
-7. **Large component registry:** 80+ components registered globally creates a large initialization cost and tight coupling between modules.
-8. **`localStorage` usage for judge/court IDs:** `localStorage.getItem("judgeId")` and `localStorage.getItem("courtId")` are used directly in service calls — not type-safe and fragile.
+5. **No error boundaries:** The module wraps content with `ToastProvider` but does not implement error boundaries.
+6. **Large component registry:** 80+ components registered globally creates a large initialization cost and tight coupling between modules.
+7. **`localStorage` usage for judge/court IDs:** `localStorage.getItem("judgeId")` and `localStorage.getItem("courtId")` are used directly in service calls — not type-safe and fragile.

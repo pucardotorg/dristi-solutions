@@ -106,6 +106,7 @@ public class ServiceConstants {
     public static final String ADDITIONAL_INFORMATION_MESSAGE = "ADDITIONAL_INFORMATION_MESSAGE";
     public static final String EVIDENCE = "Evidence";
     public static final String NOTICE = "NOTICE";
+    public static final String ACCEPT_RESCHEDULING_REQUEST = "ACCEPT_RESCHEDULING_REQUEST";
     public static final String NOTICE_ISSUED = "NOTICE_ISSUED";
     public static final String CASE_ADMITTED = "CASE_ADMITTED";
     public static final String NEXT_HEARING_SCHEDULED = "NEXT_HEARING_SCHEDULED";

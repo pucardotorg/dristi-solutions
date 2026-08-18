@@ -8,11 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.request.RequestInfo;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.pucar.dristi.web.models.CaseBundleNode;
-
-import java.util.List;
 
 @Data
 @Builder
@@ -36,8 +32,11 @@ public class DocPreviewRequest {
 
     @JsonProperty("ctcApplicationNumber")
     @Valid
-    @NotNull
     private String ctcApplicationNumber;
+
+    @JsonProperty("isCaseFileView")
+    @Valid
+    private Boolean isCaseFileView = false;
 
     @JsonProperty("courtId")
     @NotNull

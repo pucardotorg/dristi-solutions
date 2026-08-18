@@ -36,6 +36,9 @@ public class IcopsConfiguration {
     @Value("${location.jurisdiction.endpoint}")
     private String locationBasedJurisdiction;
 
+    @Value("${reschedule.request.endpoint}")
+    private String rescheduleRequestEndPoint;
+
     // File Store Service
     @Value("${egov.file.store.host}")
     private String fileStoreHost;
@@ -93,5 +96,8 @@ public class IcopsConfiguration {
 
     @Value("${egov.user.password}")
     private String password;
+
+    @Value("${kafka.topics.health.status}")
+    private String healthStatusTopic;
 
 }

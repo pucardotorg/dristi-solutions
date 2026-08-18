@@ -1,778 +1,871 @@
 package org.pucar.dristi.repository.querybuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.web.models.CaseCriteria;
 import org.pucar.dristi.web.models.CaseExists;
 import org.pucar.dristi.web.models.Order;
 import org.pucar.dristi.web.models.Pagination;
-import org.slf4j.Logger;
+import org.pucar.dristi.web.models.enums.LifecycleStatus;
+import org.pucar.dristi.web.models.v2.CaseSearchCriteriaV2;
+import org.pucar.dristi.web.models.v2.CaseSummaryListCriteria;
+import org.pucar.dristi.web.models.v2.CaseSummarySearchCriteria;
+import org.pucar.dristi.web.models.v2.CasesFor;
+
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@ExtendWith(MockitoExtension.class)
 class CaseQueryBuilderTest {
 
-    private CaseQueryBuilder queryBuilder;
+    private CaseQueryBuilder caseQueryBuilder;
 
-    @Mock
-    private Logger mockedLogger;
+    private List<Object> preparedStmtList;
+    private List<Integer> preparedStmtArgList;
+    private RequestInfo requestInfo;
 
     @BeforeEach
     void setUp() {
-        queryBuilder = new CaseQueryBuilder();
+        caseQueryBuilder = new CaseQueryBuilder();
+        preparedStmtList = new ArrayList<>();
+        preparedStmtArgList = new ArrayList<>();
+
+        requestInfo = new RequestInfo();
+        User userInfo = new User();
+        userInfo.setUuid("user-uuid");
+        requestInfo.setUserInfo(userInfo);
     }
+
+    // ---------- getCaseMetaQuery ----------
 
     @Test
-    void checkCaseExistQuery_ShouldGenerateCorrectQuery_WhenAllFieldsAreNotNull() {
-        // Arrange
-        String caseId = "111";
-        String courtCaseNumber = "123";
-        String cnrNumber = "456";
-        String filingNumber = "789";
-        CaseExists caseExists = new CaseExists();
-        caseExists.setCaseId(caseId);
-        caseExists.setCourtCaseNumber(courtCaseNumber);
-        caseExists.setCnrNumber(cnrNumber);
-        caseExists.setFilingNumber(filingNumber);
-        // Act
-        String query = queryBuilder.checkCaseExistQuery(caseExists, new ArrayList<>(), new ArrayList<>());
+    void testGetCaseMetaQuery_withSingleFilingNumber() {
+        String query = caseQueryBuilder.getCaseMetaQuery(List.of("FN1"), preparedStmtList, preparedStmtArgList);
 
-        // Assert
-        String expectedQuery = " SELECT COUNT(*) FROM dristi_cases cases  WHERE cases.id = ? AND cases.cnrNumber = ? AND cases.filingnumber = ? AND cases.courtcasenumber = ?;";
-        assertEquals(expectedQuery, query);
-    }
-
-    @Test
-    void checkCaseExistQuery_ShouldGenerateCorrectQuery_WhenAllFieldsAreNotNull2() {
-        // Arrange
-        String courtCaseNumber = "123";
-        String cnrNumber = "456";
-        String filingNumber = null;
-        String caseId = null;
-        CaseExists caseExists = new CaseExists();
-        caseExists.setCaseId(caseId);
-        caseExists.setCourtCaseNumber(courtCaseNumber);
-        caseExists.setCnrNumber(cnrNumber);
-        caseExists.setFilingNumber(filingNumber);
-        // Act
-        String query = queryBuilder.checkCaseExistQuery(caseExists, new ArrayList<>(), new ArrayList<>());
-
-        // Assert
-        String expectedQuery =" SELECT COUNT(*) FROM dristi_cases cases  WHERE cases.cnrNumber = ? AND cases.courtcasenumber = ?;";
-        assertEquals(expectedQuery, query);
-    }
-
-    @Test
-    void checkCaseExistQuery_ShouldGenerateCorrectQuery_WhenAllFieldsAreNotNull3() {
-        // Arrange
-        String courtCaseNumber = "123";
-        String cnrNumber = null;
-        String filingNumber = "789";
-        String caseId = null;
-        CaseExists caseExists = new CaseExists();
-        caseExists.setCaseId(caseId);
-        caseExists.setCourtCaseNumber(courtCaseNumber);
-        caseExists.setCnrNumber(cnrNumber);
-        caseExists.setFilingNumber(filingNumber);
-        // Act
-        String query = queryBuilder.checkCaseExistQuery(caseExists, new ArrayList<>(), new ArrayList<>());
-
-        // Assert
-        String expectedQuery = " SELECT COUNT(*) FROM dristi_cases cases  WHERE cases.filingnumber = ? AND cases.courtcasenumber = ?;";
-        assertEquals(expectedQuery, query);
-    }
-
-    @Test
-    void checkCaseExistQuery_ShouldGenerateCorrectQuery_WhenAllFieldsAreNotNull4() {
-        // Arrange
-        String courtCaseNumber = null;
-        String cnrNumber = "456";
-        String filingNumber = "789";
-        String caseId = null;
-        CaseExists caseExists = new CaseExists();
-        caseExists.setCaseId(caseId);
-        caseExists.setCourtCaseNumber(courtCaseNumber);
-        caseExists.setCnrNumber(cnrNumber);
-        caseExists.setFilingNumber(filingNumber);
-        // Act
-        String query = queryBuilder.checkCaseExistQuery(caseExists, new ArrayList<>(), new ArrayList<>());
-
-
-        // Assert
-        String expectedQuery = " SELECT COUNT(*) FROM dristi_cases cases  WHERE cases.cnrNumber = ? AND cases.filingnumber = ?;";
-        assertEquals(expectedQuery, query);
-    }
-
-    @Test
-    void checkCaseExistQuery_ShouldGenerateCorrectQuery_WhenAllFieldsAreNotNull5() {
-        // Arrange
-        String courtCaseNumber = "123";
-        CaseExists caseExists = new CaseExists();
-        caseExists.setCourtCaseNumber(courtCaseNumber);
-        // Act
-        String query = queryBuilder.checkCaseExistQuery(caseExists, new ArrayList<>(), new ArrayList<>());
-
-
-        // Assert
-        String expectedQuery = " SELECT COUNT(*) FROM dristi_cases cases  WHERE cases.courtcasenumber = ?;";
-        assertEquals(expectedQuery, query);
-    }
-
-    @Test
-    void checkCaseExistQuery_ShouldGenerateCorrectQuery_WhenAllFieldsAreNotNull6() {
-        // Arrange
-        String cnrNumber = "456";
-        CaseExists caseExists = new CaseExists();
-        caseExists.setCnrNumber(cnrNumber);
-        // Act
-        String query = queryBuilder.checkCaseExistQuery(caseExists, new ArrayList<>(), new ArrayList<>());
-
-        // Assert
-        String expectedQuery = " SELECT COUNT(*) FROM dristi_cases cases  WHERE cases.cnrNumber = ?;";
-        assertEquals(expectedQuery, query);
-    }
-
-    @Test
-    void checkCaseExistQuery_ShouldGenerateCorrectQuery_WhenAllFieldsAreNotNull7() {
-        // Arrange
-        String filingNumber = "123";
-
-        CaseExists caseExists = new CaseExists();
-        caseExists.setFilingNumber(filingNumber);
-        // Act
-        String query = queryBuilder.checkCaseExistQuery(caseExists, new ArrayList<>(), new ArrayList<>());
-
-
-        // Assert
-        String expectedQuery = " SELECT COUNT(*) FROM dristi_cases cases  WHERE cases.filingnumber = ?;";
-        assertEquals(expectedQuery, query);
-    }
-
-    @Test
-    void testGetCasesSearchQuery_SingleCriteria() {
-        CaseCriteria criteria = new CaseCriteria();
-        criteria.setCaseId("12345");
-        criteria.setCnrNumber("123");
-        criteria.setFilingNumber("9876");
-        criteria.setCourtCaseNumber("456");
-
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        String expectedQuery = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.accesscode as accesscode, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrNumber as cnrNumber,  cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.pendingadvocaterequests as pendingadvocaterequests, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.isactive as isactive, cases.casedetails as casedetails, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdby as createdby, cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, cases.stageBackup as stageBackup, cases.substageBackup as substageBackup, cases.lprNumber as lprNumber, cases.isLPRCase as isLPRCase, cases.courtCaseNumberBackup as courtCaseNumberBackup, cases.witnessDetails as witnessDetails FROM dristi_cases cases WHERE cases.id = ? AND cases.cnrNumber = ? AND LOWER(cases.filingnumber) LIKE LOWER(?) AND cases.courtcasenumber = ?";
-        String actualQuery = queryBuilder.getCasesSearchQuery(criteria, preparedStmtList, preparedStmtArgList,null);
-
-        assertEquals(expectedQuery, actualQuery);
-        assertEquals(4, preparedStmtList.size());
-        assertEquals("12345", preparedStmtList.get(0));
-    }
-
-    @Test()
-    public void testGetCasesSearchQuery_Exception() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        ids.add("1");
-        CaseCriteria criteria = new CaseCriteria();
-        criteria.setCaseId("12345");
-        criteria.setCnrNumber("123");
-        criteria.setFilingNumber("9876");
-        criteria.setCourtCaseNumber("456");
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Assert
-        assertThrows(Exception.class, () -> queryBuilder.getCasesSearchQuery(criteria, preparedStmtList, preparedStmtArgList,null));
-    }
-
-    @Test()
-    public void testGetCasesSearchQuery_CustomException() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        ids.add("1");
-        CaseCriteria criteria = new CaseCriteria();
-        criteria.setCaseId("12345");
-        criteria.setCnrNumber("123");
-        criteria.setFilingNumber("9876");
-        criteria.setCourtCaseNumber("456");
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Assert
-        assertThrows(CustomException.class, () -> queryBuilder.getCasesSearchQuery(criteria, preparedStmtList, preparedStmtArgList,null));
-    }
-
-    @Test
-    void testGetCasesSearchQuery_SingleCriteria2() {
-        CaseCriteria criteria = new CaseCriteria();
-        criteria.setCaseId(null);
-        criteria.setCnrNumber("123");
-        criteria.setFilingNumber("9876");
-        criteria.setCourtCaseNumber("456");
-
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        String expectedQuery = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.accesscode as accesscode, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrNumber as cnrNumber,  cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.pendingadvocaterequests as pendingadvocaterequests, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.isactive as isactive, cases.casedetails as casedetails, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdby as createdby, cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, cases.stageBackup as stageBackup, cases.substageBackup as substageBackup, cases.lprNumber as lprNumber, cases.isLPRCase as isLPRCase, cases.courtCaseNumberBackup as courtCaseNumberBackup, cases.witnessDetails as witnessDetails FROM dristi_cases cases WHERE cases.cnrNumber = ? AND LOWER(cases.filingnumber) LIKE LOWER(?) AND cases.courtcasenumber = ?";
-        String actualQuery = queryBuilder.getCasesSearchQuery(criteria, preparedStmtList, preparedStmtArgList,null);
-
-        assertEquals(expectedQuery, actualQuery);
-        assertEquals(3, preparedStmtList.size());
-        assertEquals("123", preparedStmtList.get(0));
-    }
-
-    @Test()
-    public void testGetCasesSearchQuery2_Exception() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        ids.add("1");
-        CaseCriteria criteria = new CaseCriteria();
-        criteria.setCaseId("12345");
-        criteria.setCnrNumber("123");
-        criteria.setFilingNumber("9876");
-        criteria.setCourtCaseNumber("456");
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Assert
-        assertThrows(CustomException.class, () -> queryBuilder.getCasesSearchQuery(criteria, preparedStmtList, preparedStmtArgList,null));
-    }
-
-    @Test
-    void testGetCasesSearchQuery_SingleCriteria3() {
-        CaseCriteria criteria = new CaseCriteria();
-        criteria.setCaseId(null);
-        criteria.setCnrNumber(null);
-        criteria.setFilingNumber("9876");
-        criteria.setCourtCaseNumber("456");
-
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        String expectedQuery = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.accesscode as accesscode, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrNumber as cnrNumber,  cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.pendingadvocaterequests as pendingadvocaterequests, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.isactive as isactive, cases.casedetails as casedetails, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdby as createdby, cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, cases.stageBackup as stageBackup, cases.substageBackup as substageBackup, cases.lprNumber as lprNumber, cases.isLPRCase as isLPRCase, cases.courtCaseNumberBackup as courtCaseNumberBackup, cases.witnessDetails as witnessDetails FROM dristi_cases cases WHERE LOWER(cases.filingnumber) LIKE LOWER(?) AND cases.courtcasenumber = ?";
-        String actualQuery = queryBuilder.getCasesSearchQuery(criteria, preparedStmtList, preparedStmtArgList,null);
-
-        assertEquals(expectedQuery, actualQuery);
-        assertEquals(2, preparedStmtList.size());
-        assertEquals("%9876%", preparedStmtList.get(0));
-    }
-
-    @Test()
-    public void testGetCasesSearchQuery3_Exception() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        ids.add("1");
-        CaseCriteria criteria = new CaseCriteria();
-        criteria.setCaseId("12345");
-        criteria.setCnrNumber("123");
-        criteria.setFilingNumber("9876");
-        criteria.setCourtCaseNumber("456");
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Assert
-        assertThrows(CustomException.class, () -> queryBuilder.getCasesSearchQuery(criteria, preparedStmtList, preparedStmtArgList,null));
-    }
-
-    @Test
-    void testGetCasesSearchQuery_SingleCriteria4() {
-        CaseCriteria criteria = new CaseCriteria();
-        criteria.setCaseId(null);
-        criteria.setCnrNumber(null);
-        criteria.setFilingNumber(null);
-        criteria.setCourtCaseNumber("456");
-
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        String expectedQuery = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.accesscode as accesscode, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrNumber as cnrNumber,  cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.pendingadvocaterequests as pendingadvocaterequests, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.isactive as isactive, cases.casedetails as casedetails, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdby as createdby, cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, cases.stageBackup as stageBackup, cases.substageBackup as substageBackup, cases.lprNumber as lprNumber, cases.isLPRCase as isLPRCase, cases.courtCaseNumberBackup as courtCaseNumberBackup, cases.witnessDetails as witnessDetails FROM dristi_cases cases WHERE cases.courtcasenumber = ?";
-        String actualQuery = queryBuilder.getCasesSearchQuery(criteria, preparedStmtList, preparedStmtArgList,null);
-
-        assertEquals(expectedQuery, actualQuery);
+        assertTrue(query.contains("FROM dristi_cases cases"));
+        assertTrue(query.contains("WHERE cases.filingnumber IN (?)"));
         assertEquals(1, preparedStmtList.size());
-        assertEquals("456", preparedStmtList.get(0));
-    }
-
-    @Test()
-    public void testGetCasesSearchQuery4_Exception() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        ids.add("1");
-        CaseCriteria criteria = new CaseCriteria();
-        criteria.setCaseId(null);
-        criteria.setCnrNumber(null);
-        criteria.setFilingNumber(null);
-        criteria.setCourtCaseNumber("456");
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Assert
-        assertThrows(CustomException.class, () -> queryBuilder.getCasesSearchQuery(criteria, preparedStmtList, preparedStmtArgList, null));
+        assertEquals("FN1", preparedStmtList.get(0));
+        assertEquals(Types.VARCHAR, preparedStmtArgList.get(0));
     }
 
     @Test
-    void testGetCasesSearchQuery_SingleCriteria5() {
-        CaseCriteria criteria = new CaseCriteria();
-        criteria.setCaseId(null);
-        criteria.setCnrNumber(null);
-        criteria.setFilingNumber(null);
-        criteria.setCourtCaseNumber("456");
-        criteria.setFilingFromDate(1223235235l);
-        criteria.setFilingToDate(1223235236l);
-        criteria.setRegistrationFromDate(1223235238l);
-        criteria.setRegistrationToDate(1223235239l);
-        List<Integer> preparedStmtArgList = new ArrayList<>();
+    void testGetCaseMetaQuery_withMultipleFilingNumbers() {
+        String query = caseQueryBuilder.getCaseMetaQuery(Arrays.asList("FN1", "FN2"), preparedStmtList, preparedStmtArgList);
 
-        List<Object> preparedStmtList = new ArrayList<>();
-
-        String actualQuery = queryBuilder.getCasesSearchQuery(criteria, preparedStmtList, preparedStmtArgList, null);
-
-        assertNotNull(actualQuery);
-        assertEquals(5, preparedStmtList.size());
-        assertEquals("456", preparedStmtList.get(0));
+        assertTrue(query.contains("WHERE cases.filingnumber IN (?, ?)"));
+        assertEquals(2, preparedStmtList.size());
+        assertEquals("FN1", preparedStmtList.get(0));
+        assertEquals("FN2", preparedStmtList.get(1));
+        assertEquals(Types.VARCHAR, preparedStmtArgList.get(0));
+        assertEquals(Types.VARCHAR, preparedStmtArgList.get(1));
     }
 
-    @Test()
-    public void testGetCasesSearchQuery5_Exception() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        List<Integer> preparedStmtArgList = new ArrayList<>();
+    // ---------- getCaseSummarySearchQuery ----------
 
-        ids.add("1");
-        CaseCriteria criteria = new CaseCriteria();
-        criteria.setCaseId(null);
-        criteria.setCnrNumber(null);
-        criteria.setFilingNumber(null);
-        criteria.setCourtCaseNumber("456");
+    @Test
+    void testGetCaseSummarySearchQuery_nullCriteria() {
+        String query = caseQueryBuilder.getCaseSummarySearchQuery(null, preparedStmtList, preparedStmtArgList);
 
-        // Assert
-        assertThrows(CustomException.class, () -> queryBuilder.getCasesSearchQuery(criteria, preparedStmtList, preparedStmtArgList, null));
+        assertFalse(query.contains("WHERE"));
+        assertTrue(preparedStmtList.isEmpty());
     }
 
     @Test
-    void getDocumentSearchQuery_ShouldGenerateCorrectQuery_WhenIdsNotEmpty() {
-        // Arrange
-        List<String> ids = List.of("1", "2", "3");
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
+    void testGetCaseSummarySearchQuery_withCourtId() {
+        CaseSummarySearchCriteria criteria = CaseSummarySearchCriteria.builder().courtId("court1").build();
 
-        // Act
-        String query = queryBuilder.getDocumentSearchQuery(ids, preparedStmtList, preparedStmtArgList);
+        String query = caseQueryBuilder.getCaseSummarySearchQuery(criteria, preparedStmtList, preparedStmtArgList);
 
-        // Assert
-        String expectedQuery = "Select doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore, doc.documentuid as documentuid, doc.additionaldetails as docadditionaldetails, doc.case_id as case_id, doc.isactive as isactive, doc.linked_case_id as linked_case_id, doc.litigant_id as litigant_id, doc.representative_id as representative_id, doc.representing_id as representing_id, doc.poaholder_id as poaholder_id  FROM dristi_case_document doc WHERE doc.isactive = true AND doc.case_id IN (?,?,?)";
-
-        assertEquals(expectedQuery, query);
-        assertEquals(3, preparedStmtList.size());
-        assertEquals("1", preparedStmtList.get(0));
-        assertEquals("2", preparedStmtList.get(1));
-        assertEquals("3", preparedStmtList.get(2));
-    }
-
-    @Test()
-    public void testetDocumentSearchQuery_ShouldGenerateCorrectQuery_Exception() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        List<Integer> preparedStmtArgList = null;
-        ids.add("1");
-
-        // Assert
-        assertThrows(CustomException.class, () -> queryBuilder.getDocumentSearchQuery(ids, preparedStmtList, preparedStmtArgList));
+        assertTrue(query.contains("WHERE cases.courtid = ?"));
+        assertTrue(query.contains("cases.status NOT IN ('DRAFT_IN_PROGRESS', 'DELETED_DRAFT')"));
+        assertEquals(1, preparedStmtList.size());
+        assertEquals("court1", preparedStmtList.get(0));
     }
 
     @Test
-    void getLinkedCaseSearchQuery_ShouldGenerateCorrectQuery_WhenIdsNotEmpty() {
-        // Arrange
-        List<String> ids = List.of("1", "2", "3");
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Act
-        String query = queryBuilder.getLinkedCaseSearchQuery(ids, preparedStmtList, preparedStmtArgList);
-
-        // Assert
-        String expectedQuery = " SELECT lics.id as id, lics.casenumbers as casenumbers, lics.case_id as case_id,lics.relationshiptype as relationshiptype, " +
-                "lics.isactive as isactive, lics.additionaldetails as additionaldetails, lics.createdby as createdby, lics.lastmodifiedby as lastmodifiedby, " +
-                "lics.createdtime as createdtime, lics.lastmodifiedtime as lastmodifiedtime  FROM dristi_linked_case lics WHERE lics.case_id IN (?,?,?)";
-        assertEquals(expectedQuery, query);
-        assertEquals(3, preparedStmtList.size());
-        assertEquals("1", preparedStmtList.get(0));
-        assertEquals("2", preparedStmtList.get(1));
-        assertEquals("3", preparedStmtList.get(2));
-    }
-
-    @Test()
-    public void testGetLinkedCaseSearchQuery_ShouldGenerateCorrectQuery_Exception() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        ids.add("1");
-
-        // Assert
-        assertThrows(CustomException.class, () -> queryBuilder.getLinkedCaseSearchQuery(ids, preparedStmtList, preparedStmtArgList));
-    }
-
-    @Test
-    void getLitigantSearchQuery_ShouldGenerateCorrectQuery_WhenIdsNotEmpty() {
-        // Arrange
-        List<String> ids = List.of("1", "2", "3");
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Act
-        String query = queryBuilder.getLitigantSearchQuery(ids, preparedStmtList,preparedStmtArgList);
-
-        // Assert
-        String expectedQuery = " SELECT ltg.id as id, ltg.tenantid as tenantid, ltg.partycategory as partycategory, ltg.case_id as case_id, ltg.isresponserequired as isresponserequired, ltg.individualid as individualid,  ltg.organisationid as organisationid, ltg.partytype as partytype, ltg.isactive as isactive, ltg.additionaldetails as additionaldetails, ltg.createdby as createdby, ltg.lastmodifiedby as lastmodifiedby, ltg.createdtime as createdtime, ltg.lastmodifiedtime as lastmodifiedtime , ltg.hassigned as hassigned  FROM dristi_case_litigants ltg WHERE ltg.case_id IN (?,?,?) AND ltg.isactive = true";
-        assertEquals(expectedQuery, query);
-        assertEquals(3, preparedStmtList.size());
-        assertEquals("1", preparedStmtList.get(0));
-        assertEquals("2", preparedStmtList.get(1));
-        assertEquals("3", preparedStmtList.get(2));
-    }
-
-    @Test()
-    public void testGetLitigantSearchQuery_ShouldGenerateCorrectQuery_Exception() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        ids.add("1");
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-
-        // Assert
-        assertThrows(CustomException.class, () -> queryBuilder.getLitigantSearchQuery(ids, preparedStmtList,preparedStmtArgList));
-    }
-
-    @Test
-    void getStatuteSectionSearchQuery_ShouldGenerateCorrectQuery_WhenIdsNotEmpty() {
-        // Arrange
-        List<String> ids = List.of("1", "2", "3");
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Act
-        String query = queryBuilder.getStatuteSectionSearchQuery(ids, preparedStmtList,preparedStmtArgList);
-
-        // Assert
-        String expectedQuery = " SELECT stse.id as id, stse.tenantid as tenantid, stse.statutes as statutes, stse.case_id as case_id, stse.sections as sections, stse.subsections as subsections, stse.additionaldetails as additionaldetails, stse.createdby as createdby, stse.lastmodifiedby as lastmodifiedby, stse.createdtime as createdtime, stse.lastmodifiedtime as lastmodifiedtime  FROM dristi_case_statutes_and_sections stse WHERE stse.case_id IN (?,?,?)";
-        assertEquals(expectedQuery, query);
-        assertEquals(3, preparedStmtList.size());
-        assertEquals("1", preparedStmtList.get(0));
-        assertEquals("2", preparedStmtList.get(1));
-        assertEquals("3", preparedStmtList.get(2));
-    }
-
-    @Test()
-    public void testGetStatuteSectionSearchQuery_Exception() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        ids.add("1");
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Assert
-        assertThrows(CustomException.class, () -> queryBuilder.getStatuteSectionSearchQuery(ids, preparedStmtList,preparedStmtArgList));
-    }
-
-    @Test
-    void getRepresentativesSearchQuery_ShouldGenerateCorrectQuery_WhenIdsNotEmpty() {
-        // Arrange
-        List<String> ids = List.of("1", "2", "3");
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Act
-        String query = queryBuilder.getRepresentativesSearchQuery(ids, preparedStmtList,preparedStmtArgList);
-
-        // Assert
-        String expectedQuery = " SELECT rep.id as id, rep.tenantid as tenantid, rep.advocateid as advocateid, rep.case_id as case_id,  rep.isactive as isactive, rep.additionaldetails as additionaldetails, rep.createdby as createdby, rep.lastmodifiedby as lastmodifiedby, rep.createdtime as createdtime, rep.lastmodifiedtime as lastmodifiedtime , rep.hassigned as hassigned, rep.advocate_filing_status as advocate_filing_status  FROM dristi_case_representatives rep WHERE rep.case_id IN (?,?,?) AND rep.isactive = true";
-        assertEquals(expectedQuery, query);
-        assertEquals(3, preparedStmtList.size());
-        assertEquals("1", preparedStmtList.get(0));
-        assertEquals("2", preparedStmtList.get(1));
-        assertEquals("3", preparedStmtList.get(2));
-    }
-
-    @Test()
-    public void testGetRepresentativesSearchQuery_Exception() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        ids.add("1");
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-
-        // Assert
-        assertThrows(CustomException.class, () -> queryBuilder.getRepresentativesSearchQuery(ids, preparedStmtList,preparedStmtArgList));
-    }
-
-    @Test
-    void getRepresentingSearchQuery_ShouldGenerateCorrectQuery_WhenIdsNotEmpty() {
-        // Arrange
-        List<String> ids = List.of("1", "2", "3");
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Act
-        String query = queryBuilder.getRepresentingSearchQuery(ids, preparedStmtList,preparedStmtArgList);
-
-        // Assert
-        String expectedQuery = " SELECT rpst.id as id, rpst.tenantid as tenantid, rpst.partycategory as partycategory, rpst.representative_id as representative_id, rpst.individualid as individualid, rpst.case_id as case_id,  rpst.organisationid as organisationid, rpst.partytype as partytype, rpst.isactive as isactive, rpst.additionaldetails as additionaldetails, rpst.createdby as createdby, rpst.lastmodifiedby as lastmodifiedby, rpst.createdtime as createdtime, rpst.lastmodifiedtime as lastmodifiedtime  FROM dristi_case_representing rpst WHERE rpst.representative_id IN (?,?,?) AND rpst.isactive = true";
-        assertEquals(expectedQuery, query);
-        assertEquals(3, preparedStmtList.size());
-        assertEquals("1", preparedStmtList.get(0));
-        assertEquals("2", preparedStmtList.get(1));
-        assertEquals("3", preparedStmtList.get(2));
-    }
-
-    @Test()
-    public void testGetRepresentingSearchQuery_Exception() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        ids.add("1");
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Assert
-        assertThrows(CustomException.class, () -> queryBuilder.getRepresentingSearchQuery(ids, preparedStmtList,preparedStmtArgList));
-    }
-
-    @Test
-    void getLinkedCaseDocumentSearchQuery_ShouldGenerateCorrectQuery_WhenIdsNotEmpty() {
-        // Arrange
-        List<String> ids = List.of("1", "2", "3");
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Act
-        String query = queryBuilder.getLinkedCaseDocumentSearchQuery(ids, preparedStmtList,preparedStmtArgList);
-
-        // Assert
-        String expectedQuery = "Select doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore, doc.documentuid as documentuid, doc.additionaldetails as docadditionaldetails, doc.case_id as case_id, doc.isactive as isactive, doc.linked_case_id as linked_case_id, doc.litigant_id as litigant_id, doc.representative_id as representative_id, doc.representing_id as representing_id, doc.poaholder_id as poaholder_id  FROM dristi_case_document doc WHERE doc.isactive = true AND doc.linked_case_id IN (?,?,?)";
-        assertEquals(expectedQuery, query);
-        assertEquals(3, preparedStmtList.size());
-        assertEquals("1", preparedStmtList.get(0));
-        assertEquals("2", preparedStmtList.get(1));
-        assertEquals("3", preparedStmtList.get(2));
-    }
-
-    @Test()
-    public void testGetLinkedCaseDocumentSearchQuery_Exception() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        ids.add("1");
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Assert
-        assertThrows(CustomException.class, () -> queryBuilder.getLinkedCaseDocumentSearchQuery(ids, preparedStmtList,preparedStmtArgList));
-    }
-
-    @Test
-    void getLitigantDocumentSearchQuery_ShouldGenerateCorrectQuery_WhenIdsNotEmpty() {
-        // Arrange
-        List<String> ids = List.of("1", "2", "3");
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Act
-        String query = queryBuilder.getLitigantDocumentSearchQuery(ids, preparedStmtList,preparedStmtArgList);
-
-        // Assert
-        String expectedQuery = "Select doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore, doc.documentuid as documentuid, doc.additionaldetails as docadditionaldetails, doc.case_id as case_id, doc.isactive as isactive, doc.linked_case_id as linked_case_id, doc.litigant_id as litigant_id, doc.representative_id as representative_id, doc.representing_id as representing_id, doc.poaholder_id as poaholder_id  FROM dristi_case_document doc WHERE doc.isactive = true AND doc.litigant_id IN (?,?,?)";
-        assertEquals(expectedQuery, query);
-        assertEquals(3, preparedStmtList.size());
-        assertEquals("1", preparedStmtList.get(0));
-        assertEquals("2", preparedStmtList.get(1));
-        assertEquals("3", preparedStmtList.get(2));
-    }
-
-    @Test()
-    public void testGetLitigantDocumentSearchQuery_Exception() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        ids.add("1");
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Assert
-        assertThrows(CustomException.class, () -> queryBuilder.getLitigantDocumentSearchQuery(ids, preparedStmtList,preparedStmtArgList));
-    }
-
-    @Test
-    void getRepresentativeDocumentSearchQuery_ShouldGenerateCorrectQuery_WhenIdsNotEmpty() {
-        // Arrange
-        List<String> ids = List.of("1", "2", "3");
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Act
-        String query = queryBuilder.getRepresentativeDocumentSearchQuery(ids, preparedStmtList,preparedStmtArgList);
-
-        // Assert
-        String expectedQuery = "Select doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore, doc.documentuid as documentuid, doc.additionaldetails as docadditionaldetails, doc.case_id as case_id, doc.isactive as isactive, doc.linked_case_id as linked_case_id, doc.litigant_id as litigant_id, doc.representative_id as representative_id, doc.representing_id as representing_id, doc.poaholder_id as poaholder_id  FROM dristi_case_document doc WHERE doc.isactive = true AND doc.representative_id IN (?,?,?)";
-        assertEquals(expectedQuery, query);
-        assertEquals(3, preparedStmtList.size());
-        assertEquals("1", preparedStmtList.get(0));
-        assertEquals("2", preparedStmtList.get(1));
-        assertEquals("3", preparedStmtList.get(2));
-    }
-
-    @Test()
-    public void testGetRepresentativeDocumentSearchQuery_Exception() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        ids.add("1");
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Assert
-        assertThrows(CustomException.class, () -> queryBuilder.getRepresentativeDocumentSearchQuery(ids, preparedStmtList,preparedStmtArgList));
-    }
-
-    @Test
-    void getRepresentingDocumentSearchQuery_ShouldGenerateCorrectQuery_WhenIdsNotEmpty() {
-        // Arrange
-        List<String> ids = List.of("1", "2", "3");
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Act
-        String query = queryBuilder.getRepresentingDocumentSearchQuery(ids, preparedStmtList,preparedStmtArgList);
-
-        // Assert
-        String expectedQuery = "Select doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore, doc.documentuid as documentuid, doc.additionaldetails as docadditionaldetails, doc.case_id as case_id, doc.isactive as isactive, doc.linked_case_id as linked_case_id, doc.litigant_id as litigant_id, doc.representative_id as representative_id, doc.representing_id as representing_id, doc.poaholder_id as poaholder_id  FROM dristi_case_document doc WHERE doc.isactive = true AND doc.representing_id IN (?,?,?)";
-        assertEquals(expectedQuery, query);
-        assertEquals(3, preparedStmtList.size());
-        assertEquals("1", preparedStmtList.get(0));
-        assertEquals("2", preparedStmtList.get(1));
-        assertEquals("3", preparedStmtList.get(2));
-    }
-
-    @Test()
-    public void testGetRepresentingDocumentSearchQuery_Exception() {
-        // Arrange
-        List<String> ids = new ArrayList<>();
-        List<Object> preparedStmtList = null;
-        ids.add("1");
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        // Assert
-        assertThrows(CustomException.class, () -> queryBuilder.getRepresentingDocumentSearchQuery(ids,preparedStmtList,preparedStmtArgList));
-    }
-
-
-    @Test
-    void getTotalCountQuery_ShouldReturnCorrectQuery_WhenBaseQueryIsNotNull() {
-        String baseQuery = "SELECT * FROM dristi_cases cases WHERE cases.id = '111'";
-
-        String query = queryBuilder.getTotalCountQuery(baseQuery);
-
-        String expectedQuery = "SELECT COUNT(*) FROM (SELECT * FROM dristi_cases cases WHERE cases.id = '111') total_result";
-
-        assertEquals(expectedQuery, query);
-    }
-
-    @Test
-    void addPagination_Query_ShouldReturnCorrectQuery_WhenPageSizeAndPageNumberAreNotNull() {
-        String query = "SELECT * FROM dristi_cases cases WHERE cases.id = '111'";
-        Pagination pagination = new Pagination();
-        pagination.setLimit(2);
-        pagination.setOffSet(0);
-        List<Object> prepareList = new ArrayList<>();
-
-        String paginatedQuery = queryBuilder.addPaginationQuery(query,prepareList, pagination, new ArrayList<>());
-
-        String expectedQuery = "SELECT * FROM dristi_cases cases WHERE cases.id = '111' LIMIT ? OFFSET ?";
-
-        assertEquals(expectedQuery, paginatedQuery);
-        assertEquals(2, prepareList.size());
-        assertEquals(2, prepareList.get(0));
-        assertEquals(0, prepareList.get(1));
-    }
-
-    @Test
-    void addOrderByQuery_ShouldAppendDefaultOrderBy_WhenPaginationIsNull() {
-        // Arrange
-        String baseQuery = "SELECT * FROM dristi_cases";
-        Pagination pagination = null;
-
-        // Act
-        String resultQuery = queryBuilder.addOrderByQuery(baseQuery, pagination);
-
-        // Assert
-        assertTrue(resultQuery.endsWith(" ORDER BY cases.createdtime DESC "));
-    }
-
-    @Test
-    void addOrderByQuery_ShouldAppendDefaultOrderBy_WhenSortByIsNull() {
-        // Arrange
-        String baseQuery = "SELECT * FROM dristi_cases";
-        Pagination pagination = new Pagination();
-        pagination.setSortBy(";");
-        pagination.setOrder(Order.ASC);
-
-        // Act
-        String resultQuery = queryBuilder.addOrderByQuery(baseQuery, pagination);
-
-        // Assert
-        assertTrue(resultQuery.endsWith(" ORDER BY cases.createdtime DESC "));
-    }
-
-    @Test
-    void addOrderByQuery_ShouldAppendDefaultOrderBy_WhenOrderIsNull() {
-        // Arrange
-        String baseQuery = "SELECT * FROM dristi_cases";
-        Pagination pagination = new Pagination();
-        pagination.setSortBy("casenumber");
-        pagination.setOrder(null);
-
-        // Act
-        String resultQuery = queryBuilder.addOrderByQuery(baseQuery, pagination);
-
-        // Assert
-        assertTrue(resultQuery.endsWith(" ORDER BY cases.createdtime DESC "));
-    }
-
-    @Test
-    void addOrderByQuery_ShouldAppendCustomOrderBy_WhenPaginationIsNotNull() {
-        // Arrange
-        String baseQuery = "SELECT * FROM dristi_cases";
-        Pagination pagination = new Pagination();
-        pagination.setSortBy("casenumber");
-        pagination.setOrder(Order.ASC);
-
-        // Act
-        String resultQuery = queryBuilder.addOrderByQuery(baseQuery, pagination);
-
-        // Assert
-        assertTrue(resultQuery.contains(" ORDER BY cases.casenumber ASC "));
-    }
-
-    @Test
-    void addCaseSearchTextCriteria_ShouldReturnCorrectQuery_WhenSearchTextIsNotNull() {
-        CaseCriteria criteria = new CaseCriteria();
-        criteria.setCaseSearchText("123");
-
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-
-        String expectedQuery = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.accesscode as accesscode, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrNumber as cnrNumber,  cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.pendingadvocaterequests as pendingadvocaterequests, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.isactive as isactive, cases.casedetails as casedetails, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdby as createdby, cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, cases.stageBackup as stageBackup, cases.substageBackup as substageBackup, cases.lprNumber as lprNumber, cases.isLPRCase as isLPRCase, cases.courtCaseNumberBackup as courtCaseNumberBackup, cases.witnessDetails as witnessDetails FROM dristi_cases cases WHERE  (LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?) or LOWER(cases.casetitle) LIKE LOWER(?))";
-        String actualQuery = queryBuilder.getCasesSearchQuery(criteria, preparedStmtList, preparedStmtArgList,null);
-
-        assertEquals(expectedQuery, actualQuery);
+    void testGetCaseSummarySearchQuery_withSearchNumber() {
+        CaseSummarySearchCriteria criteria = CaseSummarySearchCriteria.builder().searchNumber("  123  ").build();
+
+        String query = caseQueryBuilder.getCaseSummarySearchQuery(criteria, preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("LOWER(cases.filingnumber) LIKE LOWER(?)"));
+        assertTrue(query.contains("LOWER(cases.cnrnumber) LIKE LOWER(?)"));
+        assertTrue(query.contains("LOWER(cases.courtcasenumber) LIKE LOWER(?)"));
+        assertTrue(query.contains("LOWER(cases.cmpnumber) LIKE LOWER(?)"));
         assertEquals(4, preparedStmtList.size());
+        preparedStmtList.forEach(p -> assertEquals("%123%", p));
+    }
+
+    // ---------- getCasesSearchDetailsQuery (v2) ----------
+
+    @Test
+    void testGetCasesSearchDetailsQuery_nullCriteria() {
+        String query = caseQueryBuilder.getCasesSearchDetailsQuery(null, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertFalse(query.contains("WHERE"));
+    }
+
+    @Test
+    void testGetCasesSearchDetailsQuery_withCaseId() {
+        CaseSearchCriteriaV2 criteria = CaseSearchCriteriaV2.builder().caseId("case1").build();
+
+        String query = caseQueryBuilder.getCasesSearchDetailsQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("WHERE cases.id = ?"));
+        assertEquals(1, preparedStmtList.size());
+        assertEquals("case1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesSearchDetailsQuery_withCourtId() {
+        CaseSearchCriteriaV2 criteria = CaseSearchCriteriaV2.builder().courtId("court1").build();
+
+        String query = caseQueryBuilder.getCasesSearchDetailsQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("WHERE cases.courtid = ?"));
+        assertEquals(1, preparedStmtList.size());
+        assertEquals("court1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesSearchDetailsQuery_withFilingNumber() {
+        CaseSearchCriteriaV2 criteria = CaseSearchCriteriaV2.builder().filingNumber("FN1").build();
+
+        String query = caseQueryBuilder.getCasesSearchDetailsQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("LOWER(cases.filingnumber) LIKE LOWER(?)"));
+        assertEquals(1, preparedStmtList.size());
+        assertEquals("%FN1%", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesSearchDetailsQuery_withSecondaryStage() {
+        CaseSearchCriteriaV2 criteria = CaseSearchCriteriaV2.builder().secondaryStage(List.of("STAGE1", "STAGE2")).build();
+
+        String query = caseQueryBuilder.getCasesSearchDetailsQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("jsonb_exists_any(COALESCE(cases.secondaryStage, '[]'::jsonb), ARRAY['STAGE1','STAGE2'])"));
+        assertTrue(preparedStmtList.isEmpty());
+    }
+
+    @Test
+    void testGetCasesSearchDetailsQuery_withPoaHolderIndividualId() {
+        CaseSearchCriteriaV2 criteria = CaseSearchCriteriaV2.builder().poaHolderIndividualId("poa1").build();
+
+        String query = caseQueryBuilder.getCasesSearchDetailsQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("litigant.individualId = ? AND litigant.isactive = true"));
+        assertTrue(query.contains("poaholders.individual_id = ? AND poaholders.is_active = true"));
+        assertTrue(query.contains("cases.status = 'DRAFT_IN_PROGRESS'"));
+        assertTrue(query.contains("cases.status NOT IN ('DELETED_DRAFT')"));
+        assertFalse(query.contains("dcr.advocateId"));
+        assertEquals(3, preparedStmtList.size());
+        assertEquals("poa1", preparedStmtList.get(0));
+        assertEquals("poa1", preparedStmtList.get(1));
+        assertEquals("user-uuid", preparedStmtList.get(2));
+    }
+
+    @Test
+    void testGetCasesSearchDetailsQuery_withAdvocateId() {
+        CaseSearchCriteriaV2 criteria = CaseSearchCriteriaV2.builder().advocateId("adv1").build();
+
+        String query = caseQueryBuilder.getCasesSearchDetailsQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("dcr.advocateId = ? AND dcr.isactive = true"));
+        assertTrue(query.contains("elem->>'advocateId' = ?"));
+        assertEquals(5, preparedStmtList.size());
+        assertEquals("adv1", preparedStmtList.get(2));
+        assertEquals("user-uuid", preparedStmtList.get(3));
+        assertEquals("adv1", preparedStmtList.get(4));
+    }
+
+    @Test
+    void testGetCasesSearchDetailsQuery_withOfficeAdvocateId() {
+        CaseSearchCriteriaV2 criteria = CaseSearchCriteriaV2.builder().officeAdvocateId("office1").build();
+
+        String query = caseQueryBuilder.getCasesSearchDetailsQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("aocm.member_user_uuid = ?"));
+        assertTrue(query.contains("aocm.office_advocate_id = ?"));
+        assertEquals(5, preparedStmtList.size());
+        assertEquals("user-uuid", preparedStmtList.get(2));
+        assertEquals("office1", preparedStmtList.get(3));
+        assertEquals("user-uuid", preparedStmtList.get(4));
+    }
+
+    @Test
+    void testGetCasesSearchDetailsQuery_throwsExceptionOnNullRequestInfo() {
+        CaseSearchCriteriaV2 criteria = CaseSearchCriteriaV2.builder().poaHolderIndividualId("poa1").build();
+
+        assertThrows(CustomException.class,
+                () -> caseQueryBuilder.getCasesSearchDetailsQuery(criteria, preparedStmtList, preparedStmtArgList, null));
+    }
+
+    // ---------- getCasesListSearchQuery ----------
+
+    @Test
+    void testGetCasesListSearchQuery_nullCriteria() {
+        String query = caseQueryBuilder.getCasesListSearchQuery(null, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertFalse(query.contains("WHERE"));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_withCaseId() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().caseId("case1").build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("WHERE cases.id = ?"));
+        assertEquals(1, preparedStmtList.size());
+        assertEquals("case1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_withCnrNumber() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().cnrNumber("CNR1").build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("WHERE cases.cnrnumber = ?"));
+        assertEquals("CNR1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_withFilingNumber() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().filingNumber("FN1").build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("LOWER(cases.filingnumber) LIKE LOWER(?)"));
+        assertEquals("%FN1%", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_withCourtCaseNumber() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().courtCaseNumber("CCN1").build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("WHERE cases.courtcasenumber = ?"));
+        assertEquals("CCN1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_withJudgeId() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().judgeId("judge1").build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("WHERE cases.judgeid = ?"));
+        assertEquals("judge1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_withCourtId() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().courtId("court1").build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("WHERE cases.courtid = ?"));
+        assertEquals("court1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_withStageList() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().stage(List.of("STAGE1", "STAGE2")).build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("cases.stage IN (?,?)"));
+        assertEquals(2, preparedStmtList.size());
+        assertEquals("STAGE1", preparedStmtList.get(0));
+        assertEquals("STAGE2", preparedStmtList.get(1));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_withOutcomeList() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().outcome(List.of("OUTCOME1")).build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("cases.outcome IN (?)"));
+        assertEquals("OUTCOME1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_withCaseSearchText() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().caseSearchText("search1").build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("LOWER(cases.lprnumber) LIKE LOWER(?)"));
+        assertTrue(query.contains("LOWER(cases.courtcasenumberbackup) LIKE LOWER(?)"));
+        assertEquals(6, preparedStmtList.size());
+        preparedStmtList.forEach(p -> assertEquals("%search1%", p));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_withSecondaryStage() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().secondaryStage(List.of("STAGE1")).build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("jsonb_exists_any(COALESCE(cases.secondaryStage, '[]'::jsonb), ARRAY['STAGE1'])"));
+        assertTrue(preparedStmtList.isEmpty());
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_withStatusList() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().status(List.of("ACTIVE")).build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("cases.status IN (?)"));
+        assertEquals("ACTIVE", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_withFilingDateRange() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().filingFromDate(100L).filingToDate(200L).build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("WHERE cases.filingdate >= ? AND cases.filingdate <= ?"));
+        assertEquals(2, preparedStmtList.size());
+        assertEquals(100L, preparedStmtList.get(0));
+        assertEquals(200L, preparedStmtList.get(1));
+        assertEquals(Types.TIMESTAMP, preparedStmtArgList.get(0));
+        assertEquals(Types.TIMESTAMP, preparedStmtArgList.get(1));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_withRegistrationDateRange() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().registrationFromDate(300L).registrationToDate(400L).build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("WHERE cases.registrationdate>= ? AND cases.registrationdate <= ?"));
+        assertEquals(300L, preparedStmtList.get(0));
+        assertEquals(400L, preparedStmtList.get(1));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_withLifecycleStatus() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().lifecycleStatus(LifecycleStatus.ACTIVE).build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("WHERE cases.lifecycleStatus = ?"));
+        assertEquals("ACTIVE", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_casesForAdvocate() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().casesFor(CasesFor.ADVOCATE).advocateId("adv1").build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("dcr.advocateId = ? AND dcr.isactive = true"));
+        assertTrue(query.contains("litigant.individualId = ? AND litigant.isactive = true"));
+        assertTrue(query.contains("poaholders.individual_id = ? AND poaholders.is_active = true))"));
+        assertEquals(4, preparedStmtList.size());
+        assertEquals("adv1", preparedStmtList.get(0));
+        assertEquals("adv1", preparedStmtList.get(3));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_casesForAdvocate_officeAdvocateActiveMember() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder()
+                .casesFor(CasesFor.ADVOCATE).officeAdvocateId("office1").isMemberActiveInCase(true).build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("aocm.office_advocate_id = ?"));
+        assertTrue(query.contains("aocm.member_user_uuid = ?"));
+        assertTrue(query.contains("aocm.is_active = true))"));
+        assertEquals(2, preparedStmtList.size());
+        assertEquals("office1", preparedStmtList.get(0));
+        assertEquals("user-uuid", preparedStmtList.get(1));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_casesForAdvocate_officeAdvocateNotActiveMember() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder()
+                .casesFor(CasesFor.ADVOCATE).officeAdvocateId("office1").isMemberActiveInCase(false).build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("EXISTS (SELECT 1 FROM dristi_advocate_office_case_member aocm"));
+        assertTrue(query.contains("dcr.advocateId = ? AND dcr.isactive = true))"));
+        assertEquals(3, preparedStmtList.size());
+        assertEquals("office1", preparedStmtList.get(0));
+        assertEquals("user-uuid", preparedStmtList.get(1));
+        assertEquals("office1", preparedStmtList.get(2));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_casesForPoaLitigant() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().casesFor(CasesFor.POA_LITIGANT).litigantId("lit1").build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("cases.status ='DRAFT_IN_PROGRESS' AND cases.createdby = ?"));
+        assertEquals(3, preparedStmtList.size());
+        assertEquals("lit1", preparedStmtList.get(0));
+        assertEquals("user-uuid", preparedStmtList.get(2));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_casesForAll_withAdvocateId() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().casesFor(CasesFor.ALL).advocateId("adv1").build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("dcr.advocateId = ? AND dcr.isactive = true"));
+        assertEquals("adv1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_casesForAll_withoutAdvocateId() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().casesFor(CasesFor.ALL).litigantId("lit1").build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("cases.status ='DRAFT_IN_PROGRESS' AND cases.createdby = ?"));
+        assertEquals("lit1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_noCasesFor_withMemberIdAndOfficeAdvocateId() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().memberId("member1").officeAdvocateId("office1").build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("aocm.office_advocate_id = ?"));
+        assertEquals("office1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_noCasesFor_memberIdOnlyProducesNoClause() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().memberId("member1").build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertFalse(query.contains("WHERE"));
+        assertTrue(preparedStmtList.isEmpty());
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_noCasesFor_withAdvocateIdFallback() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().advocateId("adv1").build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("dcr.advocateId = ? AND dcr.isactive = true"));
+        assertEquals("adv1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesListSearchQuery_noCasesFor_withLitigantIdFallback() {
+        CaseSummaryListCriteria criteria = CaseSummaryListCriteria.builder().litigantId("lit1").build();
+
+        String query = caseQueryBuilder.getCasesListSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("cases.status ='DRAFT_IN_PROGRESS' AND cases.createdby = ?"));
+        assertEquals("lit1", preparedStmtList.get(0));
+    }
+
+    // ---------- checkCaseExistQuery ----------
+
+    @Test
+    void testCheckCaseExistQuery_withAllFields() {
+        CaseExists caseExists = CaseExists.builder().caseId("id1").cnrNumber("cnr1").filingNumber("fn1").courtCaseNumber("ccn1").build();
+
+        String query = caseQueryBuilder.checkCaseExistQuery(caseExists, preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("WHERE cases.id = ?"));
+        assertTrue(query.contains("AND cases.cnrNumber = ?"));
+        assertTrue(query.contains("AND cases.filingnumber = ?"));
+        assertTrue(query.contains("AND cases.courtcasenumber = ?"));
+        assertTrue(query.trim().endsWith(";"));
+        assertEquals(4, preparedStmtList.size());
+        assertEquals("id1", preparedStmtList.get(0));
+        assertEquals("cnr1", preparedStmtList.get(1));
+        assertEquals("fn1", preparedStmtList.get(2));
+        assertEquals("ccn1", preparedStmtList.get(3));
+    }
+
+    @Test
+    void testCheckCaseExistQuery_nullCaseExists() {
+        String query = caseQueryBuilder.checkCaseExistQuery(null, preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("SELECT COUNT(*) FROM dristi_cases cases"));
+        assertFalse(query.contains(";"));
+        assertTrue(preparedStmtList.isEmpty());
+    }
+
+    // ---------- getCasesSearchQuery (v1) ----------
+
+    @Test
+    void testGetCasesSearchQuery_nullCriteria() {
+        String query = caseQueryBuilder.getCasesSearchQuery(null, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertFalse(query.contains("WHERE"));
+    }
+
+    @Test
+    void testGetCasesSearchQuery_withCaseId() {
+        CaseCriteria criteria = CaseCriteria.builder().caseId("case1").build();
+
+        String query = caseQueryBuilder.getCasesSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("WHERE cases.id = ?"));
+        assertEquals("case1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetCasesSearchQuery_withIsClerkTrue() {
+        CaseCriteria criteria = CaseCriteria.builder().isClerk(true).build();
+
+        String query = caseQueryBuilder.getCasesSearchQuery(criteria, preparedStmtList, preparedStmtArgList, requestInfo);
+
+        assertTrue(query.contains("litigant.individualId = ? AND litigant.isactive = true"));
+        assertTrue(query.contains("cases.status NOT IN ('DELETED_DRAFT')"));
+    }
+
+    @Test
+    void testGetCasesSearchQuery_throwsExceptionOnNullRequestInfo() {
+        CaseCriteria criteria = CaseCriteria.builder().advocateId("adv1").build();
+
+        assertThrows(CustomException.class,
+                () -> caseQueryBuilder.getCasesSearchQuery(criteria, preparedStmtList, preparedStmtArgList, null));
+    }
+
+    // ---------- summary search queries ----------
+
+    @Test
+    void testGetLitigantSummarySearchQuery_withIds() {
+        String query = caseQueryBuilder.getLitigantSummarySearchQuery(List.of("id1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("FROM dristi_case_litigants ltg"));
+        assertTrue(query.contains("WHERE ltg.case_id IN (?)"));
+        assertTrue(query.contains("ltg.isactive = true"));
+        assertEquals("id1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetLitigantSummarySearchQuery_emptyIds() {
+        String query = caseQueryBuilder.getLitigantSummarySearchQuery(Collections.emptyList(), preparedStmtList, preparedStmtArgList);
+
+        assertFalse(query.contains("WHERE"));
+        assertTrue(preparedStmtList.isEmpty());
+    }
+
+    @Test
+    void testGetStatuteSectionSummarySearchQuery_withIds() {
+        String query = caseQueryBuilder.getStatuteSectionSummarySearchQuery(List.of("id1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("FROM dristi_case_statutes_and_sections stse"));
+        assertTrue(query.contains("WHERE stse.case_id IN (?)"));
+        assertFalse(query.contains("isactive"));
+        assertEquals("id1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetRepresentativesSummarySearchQuery_withIds() {
+        String query = caseQueryBuilder.getRepresentativesSummarySearchQuery(List.of("id1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("FROM dristi_case_representatives rep"));
+        assertTrue(query.contains("WHERE rep.case_id IN (?)"));
+        assertTrue(query.contains("rep.isactive = true"));
+        assertEquals("id1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetPoaHoldersSummarySearchQuery_withIds() {
+        String query = caseQueryBuilder.getPoaHoldersSummarySearchQuery(List.of("id1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("FROM dristi_case_poaholders poaholder"));
+        assertTrue(query.contains("WHERE poaholder.case_id IN (?)"));
+        assertTrue(query.contains("poaholder.is_active = true"));
+        assertEquals("id1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetRepresentingSummarySearchQuery_withIds() {
+        String query = caseQueryBuilder.getRepresentingSummarySearchQuery(List.of("id1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("FROM dristi_case_representing rpst"));
+        assertTrue(query.contains("WHERE rpst.representative_id IN (?)"));
+        assertTrue(query.contains("rpst.isactive = true"));
+        assertEquals("id1", preparedStmtList.get(0));
+    }
+
+    // ---------- getAdvocateOfficeCaseMemberSearchQuery ----------
+
+    @Test
+    void testGetAdvocateOfficeCaseMemberSearchQuery_withCaseIdsOnly() {
+        String query = caseQueryBuilder.getAdvocateOfficeCaseMemberSearchQuery(List.of("c1", "c2"), null, preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("WHERE aocm.case_id IN (?,?)"));
+        assertTrue(query.contains("AND aocm.is_active = true"));
+        assertEquals(2, preparedStmtList.size());
+    }
+
+    @Test
+    void testGetAdvocateOfficeCaseMemberSearchQuery_withOfficeAdvocateIdsOnly() {
+        String query = caseQueryBuilder.getAdvocateOfficeCaseMemberSearchQuery(null, List.of("o1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("WHERE aocm.office_advocate_id IN (?)"));
+        assertTrue(query.contains("AND aocm.is_active = true"));
+        assertEquals("o1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetAdvocateOfficeCaseMemberSearchQuery_withBoth() {
+        String query = caseQueryBuilder.getAdvocateOfficeCaseMemberSearchQuery(List.of("c1"), List.of("o1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("WHERE aocm.case_id IN (?)"));
+        assertTrue(query.contains("AND aocm.office_advocate_id IN (?)"));
+        assertTrue(query.contains("AND aocm.is_active = true"));
+        assertEquals("c1", preparedStmtList.get(0));
+        assertEquals("o1", preparedStmtList.get(1));
+    }
+
+    @Test
+    void testGetAdvocateOfficeCaseMemberSearchQuery_withNeither() {
+        String query = caseQueryBuilder.getAdvocateOfficeCaseMemberSearchQuery(null, null, preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("WHERE aocm.is_active = true"));
+        assertTrue(preparedStmtList.isEmpty());
+    }
+
+    // ---------- document search queries ----------
+
+    @Test
+    void testGetDocumentSearchQuery_withIds() {
+        String query = caseQueryBuilder.getDocumentSearchQuery(List.of("d1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("FROM dristi_case_document doc"));
+        assertTrue(query.contains("WHERE doc.isactive = true AND doc.case_id IN (?)"));
+        assertEquals("d1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetDocumentSearchQuery_emptyIds() {
+        String query = caseQueryBuilder.getDocumentSearchQuery(Collections.emptyList(), preparedStmtList, preparedStmtArgList);
+
+        assertFalse(query.contains("WHERE"));
+    }
+
+    @Test
+    void testGetLinkedCaseDocumentSearchQuery_withIds() {
+        String query = caseQueryBuilder.getLinkedCaseDocumentSearchQuery(List.of("d1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("WHERE doc.isactive = true AND doc.linked_case_id IN (?)"));
+        assertEquals("d1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetLitigantDocumentSearchQuery_withIds() {
+        String query = caseQueryBuilder.getLitigantDocumentSearchQuery(List.of("d1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("WHERE doc.isactive = true AND doc.litigant_id IN (?)"));
+        assertEquals("d1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetRepresentativeDocumentSearchQuery_withIds() {
+        String query = caseQueryBuilder.getRepresentativeDocumentSearchQuery(List.of("d1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("WHERE doc.isactive = true AND doc.representative_id IN (?)"));
+        assertEquals("d1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetPoaDocumentSearchQuery_withIds() {
+        String query = caseQueryBuilder.getPoaDocumentSearchQuery(List.of("d1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("WHERE doc.isactive = true AND doc.poaholder_id IN (?)"));
+        assertEquals("d1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetRepresentingDocumentSearchQuery_withIds() {
+        String query = caseQueryBuilder.getRepresentingDocumentSearchQuery(List.of("d1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("WHERE doc.isactive = true AND doc.representing_id IN (?)"));
+        assertEquals("d1", preparedStmtList.get(0));
+    }
+
+    // ---------- entity search queries (full projection) ----------
+
+    @Test
+    void testGetLinkedCaseSearchQuery_withIds() {
+        String query = caseQueryBuilder.getLinkedCaseSearchQuery(List.of("id1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("FROM dristi_linked_case lics"));
+        assertTrue(query.contains("WHERE lics.case_id IN (?)"));
+        assertEquals("id1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetLitigantSearchQuery_withIds() {
+        String query = caseQueryBuilder.getLitigantSearchQuery(List.of("id1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("WHERE ltg.case_id IN (?)"));
+        assertTrue(query.contains("ltg.isactive = true"));
+        assertEquals("id1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetStatuteSectionSearchQuery_withIds() {
+        String query = caseQueryBuilder.getStatuteSectionSearchQuery(List.of("id1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("WHERE stse.case_id IN (?)"));
+        assertEquals("id1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetRepresentativesSearchQuery_withIds() {
+        String query = caseQueryBuilder.getRepresentativesSearchQuery(List.of("id1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("WHERE rep.case_id IN (?)"));
+        assertTrue(query.contains("rep.isactive = true"));
+        assertFalse(query.contains("dristi_advocate da"));
+        assertEquals("id1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetRepresentativesSearchQueryWithAdvocateJoin_withIds() {
+        String query = caseQueryBuilder.getRepresentativesSearchQueryWithAdvocateJoin(List.of("id1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("LEFT JOIN dristi_advocate da ON rep.advocateid = da.id"));
+        assertTrue(query.contains("da.barregistrationnumber as advocate_barregistrationnumber"));
+        assertTrue(query.contains("WHERE rep.case_id IN (?)"));
+        assertEquals("id1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetPoaHoldersSearchQuery_withIds() {
+        String query = caseQueryBuilder.getPoaHoldersSearchQuery(List.of("id1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("WHERE poaholder.case_id IN (?)"));
+        assertTrue(query.contains("poaholder.is_active = true"));
+        assertEquals("id1", preparedStmtList.get(0));
+    }
+
+    @Test
+    void testGetRepresentingSearchQuery_withIds() {
+        String query = caseQueryBuilder.getRepresentingSearchQuery(List.of("id1"), preparedStmtList, preparedStmtArgList);
+
+        assertTrue(query.contains("WHERE rpst.representative_id IN (?)"));
+        assertTrue(query.contains("rpst.isactive = true"));
+        assertEquals("id1", preparedStmtList.get(0));
+    }
+
+    // ---------- misc query utilities ----------
+
+    @Test
+    void testGetTotalCountQuery() {
+        String result = caseQueryBuilder.getTotalCountQuery("SELECT * FROM cases");
+
+        assertEquals("SELECT COUNT(*) FROM (SELECT * FROM cases) total_result", result);
+    }
+
+    @Test
+    void testAddPaginationQuery() {
+        Pagination pagination = Pagination.builder().limit(10).offSet(0).build();
+
+        String result = caseQueryBuilder.addPaginationQuery("SELECT * FROM cases", preparedStmtList, pagination, preparedStmtArgList);
+
+        assertTrue(result.contains("LIMIT ? OFFSET ?"));
+        assertEquals(2, preparedStmtList.size());
+        assertEquals(10, preparedStmtList.get(0));
+        assertEquals(0, preparedStmtList.get(1));
+        assertEquals(Types.INTEGER, preparedStmtArgList.get(0));
+        assertEquals(Types.INTEGER, preparedStmtArgList.get(1));
+    }
+
+    @Test
+    void testAddOrderByQuery_withValidPagination() {
+        Pagination pagination = Pagination.builder().sortBy("casenumber").order(Order.ASC).build();
+
+        String result = caseQueryBuilder.addOrderByQuery("SELECT * FROM cases", pagination);
+
+        assertTrue(result.contains("ORDER BY cases.casenumber ASC"));
+    }
+
+    @Test
+    void testAddOrderByQuery_withEmptyPagination() {
+        Pagination pagination = Pagination.builder().sortBy(null).build();
+
+        String result = caseQueryBuilder.addOrderByQuery("SELECT * FROM cases", pagination);
+
+        assertTrue(result.contains("ORDER BY cases.createdtime DESC"));
+    }
+
+    @Test
+    void testAddOrderByQuery_withNullPagination() {
+        String result = caseQueryBuilder.addOrderByQuery("SELECT * FROM cases", null);
+
+        assertTrue(result.contains("ORDER BY cases.createdtime DESC"));
+    }
+
+    @Test
+    void testAddOrderByQuery_rejectsSortByContainingSemicolon() {
+        Pagination pagination = Pagination.builder().sortBy("casenumber; DROP TABLE cases;").order(Order.ASC).build();
+
+        String result = caseQueryBuilder.addOrderByQuery("SELECT * FROM cases", pagination);
+
+        assertTrue(result.contains("ORDER BY cases.createdtime DESC"));
+        assertFalse(result.contains("DROP TABLE"));
+    }
+
+    @Test
+    void testAddOrderByQueryForLitigants() {
+        String result = caseQueryBuilder.addOrderByQueryForLitigants("SELECT * FROM dristi_case_litigants ltg");
+
+        assertEquals("SELECT * FROM dristi_case_litigants ltg ORDER BY COALESCE((ltg.additionaldetails->>'currentPosition')::int, 999999);", result);
+    }
+
+    @Test
+    void testGetValidateAdvocateOfficeCaseMemberQuery() {
+        String query = caseQueryBuilder.getValidateAdvocateOfficeCaseMemberQuery(preparedStmtList, preparedStmtArgList, "office1", "member1");
+
+        assertEquals("SELECT COUNT(*) FROM dristi_advocate_office_case_member WHERE office_advocate_id = ? AND member_id = ? AND is_active = true", query);
+        assertEquals(2, preparedStmtList.size());
+        assertEquals("office1", preparedStmtList.get(0));
+        assertEquals("member1", preparedStmtList.get(1));
+        assertEquals(Types.VARCHAR, preparedStmtArgList.get(0));
+        assertEquals(Types.VARCHAR, preparedStmtArgList.get(1));
+    }
+
+    @Test
+    void testGetOfficeAdvocateIdsByMemberIdAndCaseIdQuery() {
+        String query = caseQueryBuilder.getOfficeAdvocateIdsByMemberIdAndCaseIdQuery(preparedStmtList, preparedStmtArgList, "member1", "case1");
+
+        assertEquals("SELECT DISTINCT office_advocate_id FROM dristi_advocate_office_case_member WHERE member_id = ? AND case_id = ? AND is_active = true", query);
+        assertEquals("member1", preparedStmtList.get(0));
+        assertEquals("case1", preparedStmtList.get(1));
+    }
+
+    @Test
+    void testGetCaseIdFromFilingNumberQuery() {
+        String query = caseQueryBuilder.getCaseIdFromFilingNumberQuery(preparedStmtList, preparedStmtArgList, "FN1");
+
+        assertEquals("SELECT id FROM dristi_cases WHERE filingnumber = ?", query);
+        assertEquals(1, preparedStmtList.size());
+        assertEquals("FN1", preparedStmtList.get(0));
+        assertEquals(Types.VARCHAR, preparedStmtArgList.get(0));
     }
 }

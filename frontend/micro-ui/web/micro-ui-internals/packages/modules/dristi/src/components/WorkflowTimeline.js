@@ -152,8 +152,8 @@ const WorkflowTimeline = ({
 
   // Filter and sort the timeline data
   const filteredTimeline = workflowDetails?.data?.timeline
-    ?.filter(({ state }) => statesToKeep.includes(state))
-    ?.filter((item, index, arr) => !index || item.state !== arr[index - 1].state); // Removed duplicate consecutive entries which have same state but different actions.
+    ?.filter(({ performedAction }) => performedAction !== "EDIT_UNSIGNED_CASE")
+    ?.filter(({ state }) => statesToKeep.includes(state));
 
   useEffect(() => {
     //this

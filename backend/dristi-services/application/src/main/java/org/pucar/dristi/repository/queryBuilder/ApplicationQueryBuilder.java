@@ -57,7 +57,7 @@ public class ApplicationQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building application exist query {}", e.getMessage());
+            log.error("Error while building application exist query", e);
             throw new CustomException(APPLICATION_EXIST_EXCEPTION, "Error occurred while building the application exist query: " + e.getMessage());
         }
     }
@@ -113,7 +113,11 @@ public class ApplicationQueryBuilder {
             }
             else {
                 addClauseIfRequired(query, firstCriteria);
-                query.append("app.status != 'DRAFT_IN_PROGRESS'");
+                if (Boolean.TRUE.equals(applicationCriteria.getIncludePendingPayment())) {
+                    query.append("app.status NOT IN ('DRAFT_IN_PROGRESS', 'PENDINGESIGN')");
+                } else {
+                    query.append("app.status NOT IN ('DRAFT_IN_PROGRESS', 'PENDINGESIGN', 'PENDINGPAYMENT')");
+                }
                 firstCriteria = false;
             }
 
@@ -288,7 +292,7 @@ public class ApplicationQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building document search query {}", e.getMessage());
+            log.error("Error while building document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Error occurred while building the query: " + e.getMessage());
         }
     }

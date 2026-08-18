@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.web.client.RestTemplate;
 
 
+
 @SpringBootApplication
 @Import({ TracerConfiguration.class })
 public class PaymentApplication {

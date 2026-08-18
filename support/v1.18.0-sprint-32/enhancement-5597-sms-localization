@@ -1,0 +1,48 @@
+curl --location 'http://localhost:6061/localization/messages/v1/_create' \
+--header 'Content-Type: application/json' \
+--data '{
+    "RequestInfo": {
+        "authToken": "7febd0ac-f7a4-4f53-bddf-49a72e25f600",
+        "userInfo": {
+            "id": 9187,
+            "uuid": "3059806b-3059-4724-8ae1-d3f4e12686ff"
+        }
+    },
+    "tenantId": "kl",
+    "messages": [
+        {
+            "code": "CLIENT_EXAMINATION_ESIGN",
+            "message": "Hello,\nPlease inform your client that the statement recorded under S.351 BNSS for case {{cmpNumber}} here: {{shortenedUrl}} requires his signature.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+
+        {
+            "code": "CLIENT_PLEA_ESIGN",
+            "message": "Hello,\nPlease inform your client that the Plea for case {{cmpNumber}} here: {{shortenedUrl}} requires his signature.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+
+        {
+            "code": "ADVOCATE_OFFICE_ADDITION",
+            "message": "Hello,\nYou have been added to the office of Advocate {{advocateName}} as a {{memberType}}. Log in to oncourts.kerala.gov.in for more details.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+
+        {
+            "code": "RPAD_DISPATCH",
+            "message": "Hello,\nA {{processType}} has been sent to {{partyType}} in case {{caseNumber}} via RPAD. Please log into oncourts.kerala.gov.in for more details.\n- ON Courts",
+            "module": "notification",
+            "locale": "en_IN"
+        },
+
+        {
+            "code": "sms.ctc.application.otp.msg",
+            "message": "Hello,\nPlease use the OTP %s to verify your mobile number and file/track application for certified true copy on oncourts.kerala.gov.in.\n- ON Courts",
+            "module": "egov-user",
+            "locale": "en_IN"
+        }
+    ]
+}'

@@ -9,6 +9,7 @@ const {
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { handleApiCall } = require("../utils/handleApiCall");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 function formatDate(epochMillis) {
   // Convert epoch milliseconds to a Date object
@@ -133,12 +134,7 @@ async function acceptReschedulingRequest(
 
     const formattedToday = formatDate(Date.now());
     const caseNumber =
-      (courtCase?.isLPRCase
-        ? courtCase?.lprNumber
-        : courtCase?.courtCaseNumber) ||
-      courtCase?.courtCaseNumber ||
-      courtCase?.cmpNumber ||
-      "";
+      getCaseNumber(courtCase);
 
     const data = {
       Data: [

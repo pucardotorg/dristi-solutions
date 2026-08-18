@@ -31,6 +31,9 @@ public class CaseDetails {
     @JsonProperty("hearingDate")
     private Long hearingDate;
 
+    @JsonProperty("originalHearingDate")
+    private Long originalHearingDate;
+
     @JsonProperty("judgeName")
     private String judgeName;
 

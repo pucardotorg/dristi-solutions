@@ -26,6 +26,7 @@ const DocumentViewerWithComment = ({ infos, links, documents, showCommentSection
                       docHeight="unset"
                       showDownloadOption={false}
                       // documentName={docs.fileName}
+                      disableInnerViewerScroll={true}
                     />
                   </div>
                 )}

@@ -60,4 +60,10 @@ public class DeliveryChannel {
     @JsonProperty("deliveryChannelName")
     private String deliveryChannelName;
 
+    @JsonProperty("notDeliveredReason")
+    private String notDeliveredReason;
+
+    @JsonProperty("notDeliveredReasonText")
+    private String notDeliveredReasonText;
+
 }

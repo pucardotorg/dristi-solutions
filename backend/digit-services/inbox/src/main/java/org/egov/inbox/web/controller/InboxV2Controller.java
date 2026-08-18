@@ -6,6 +6,8 @@ import org.egov.inbox.repository.builder.V2.InboxQueryBuilder;
 import org.egov.inbox.service.V2.InboxServiceV2;
 import org.egov.inbox.util.ResponseInfoFactory;
 import org.egov.inbox.web.model.ActionCategorySearchResponse;
+import org.egov.inbox.web.model.InboxBulkCountRequest;
+import org.egov.inbox.web.model.InboxBulkCountResponse;
 import org.egov.inbox.web.model.InboxRequest;
 import org.egov.inbox.web.model.InboxResponse;
 import org.egov.inbox.web.model.V2.SearchRequest;
@@ -61,6 +63,13 @@ public class InboxV2Controller {
     public ResponseEntity<InboxResponse> searchIndex(@Valid @RequestBody  InboxRequest inboxRequest) {
         InboxResponse inboxResponse = inboxService.getIndexResponse(inboxRequest);
         return new ResponseEntity<>(inboxResponse, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "index/_bulkCount")
+    public ResponseEntity<InboxBulkCountResponse> bulkCountIndex(@Valid @RequestBody InboxBulkCountRequest bulkCountRequest) {
+        InboxBulkCountResponse response = inboxService.getBulkIndexCount(bulkCountRequest);
+        response.setResponseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(bulkCountRequest.getRequestInfo(), true));
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
 

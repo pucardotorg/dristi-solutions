@@ -20,8 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.pucar.dristi.config.ServiceConstants.ES_IDS_QUERY;
-
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -46,11 +44,14 @@ public class DocPreviewService {
     public List<CaseBundleNode> getBundle(DocPreviewRequest request) {
 
         Boolean isPartyToCase = false;
-        if (StringUtils.hasText(request.getCtcApplicationNumber())) {
+        if (request.getCtcApplicationNumber() != null && StringUtils.hasText(request.getCtcApplicationNumber())) {
             isPartyToCase = ctcUtil.isPartyToCase(request.getCtcApplicationNumber(), request.getCourtId(), request.getRequestInfo());
         }
+        if (Boolean.TRUE.equals(request.getIsCaseFileView())) {
+            isPartyToCase = true;
+        }
 
-        CourtCase courtCase = caseUtil.getCase(request.getFilingNumber(), request.getCourtId(), request.getTenantId());
+        CourtCase courtCase = caseUtil.getCase(request.getFilingNumber(), request.getCourtId(), request.getTenantId(), request.getIsCaseFileView(), request.getRequestInfo());
 
         BundleData data = loadAllData(courtCase, request.getRequestInfo());
         List<CaseBundleNode> caseBundleNodes =  engine.build(data);

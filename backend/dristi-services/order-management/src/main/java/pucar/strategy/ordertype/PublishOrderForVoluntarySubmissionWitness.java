@@ -70,7 +70,18 @@ public class PublishOrderForVoluntarySubmissionWitness implements OrderUpdateStr
                 .build());
         for(Application application : applications) {
             if(ADDING_WITNESSES.equalsIgnoreCase(application.getApplicationType())) {
-                addWitnessToCase(application, orderRequest.getRequestInfo());
+                if (orderRequest.getWitnessAccumulator() != null) {
+                    // Composite batch mode: collect witnesses; caller will flush as a single API call
+                    Object additionalDetails = application.getAdditionalDetails();
+                    if (additionalDetails != null) {
+                        Object witnessDetails = jsonUtil.getNestedValue(additionalDetails, List.of("witnessDetails"), Object.class);
+                        if (witnessDetails != null) {
+                            orderRequest.getWitnessAccumulator().addAll(createWitnessDetails(witnessDetails));
+                        }
+                    }
+                } else {
+                    addWitnessToCase(application, orderRequest.getRequestInfo());
+                }
             }
         }
         log.info("operation=postProcess, result= COMPLETED, orderType:{}, orderNumber:{}", orderRequest.getOrder().getOrderType(), orderRequest.getOrder().getOrderNumber());

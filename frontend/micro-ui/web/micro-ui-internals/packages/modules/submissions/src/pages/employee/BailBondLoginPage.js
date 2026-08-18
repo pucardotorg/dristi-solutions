@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Card, CardHeader, CardLabel, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
-import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { submissionService } from "../../hooks/services";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const BailBondLoginPage = () => {
   const { t } = useTranslation();
@@ -12,6 +12,7 @@ const BailBondLoginPage = () => {
   const { bailbondId } = Digit.Hooks.useQueryParams();
   const [mobileNumber, setMobileNumber] = useState("");
   const [error, setError] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const config = {
     name: "mobileNumber",
     key: "mobileNumber",
@@ -51,6 +52,8 @@ const BailBondLoginPage = () => {
       });
     } catch (error) {
       setError(true);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BAIL_BOND_LOGIN_FAILED"), error: true, errorId });
       return;
     }
   };
@@ -124,6 +127,15 @@ const BailBondLoginPage = () => {
           </div>
         </div>
       </div>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

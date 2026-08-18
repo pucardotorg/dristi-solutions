@@ -139,7 +139,6 @@ const Login = ({ stateCode, isUserRegistered = true }) => {
     }
   };
 
-
   const selectOtp = async () => {
     try {
       setIsOtpValid(true);

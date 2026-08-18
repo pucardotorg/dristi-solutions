@@ -10,6 +10,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const config = require("../config");
 const { formatDate } = require("./formatDate");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 const getFullName = (seperator, ...strings) => {
   return strings.filter(Boolean).join(seperator);
@@ -129,12 +130,7 @@ const orderChangeAdvocate = async (
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
 
     const caseNumber =
-      (courtCase?.isLPRCase
-        ? courtCase?.lprNumber
-        : courtCase?.courtCaseNumber) ||
-      courtCase?.courtCaseNumber ||
-      courtCase?.cmpNumber ||
-      "";
+      getCaseNumber(courtCase);
     const data = {
       Data: [
         {

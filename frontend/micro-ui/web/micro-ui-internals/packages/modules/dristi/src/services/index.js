@@ -1,4 +1,4 @@
-import { Request } from "@egovernments/digit-ui-libraries";
+import { Request } from "@egovernments/digit-ui-module-common/src/utils/Request";
 import { Urls } from "../hooks";
 
 export const DRISTIService = {
@@ -398,6 +398,14 @@ export const DRISTIService = {
       data,
       params,
     }),
+  getPaymentStatus: (data, params) =>
+    Request({
+      url: Urls.dristi.paymentStatus,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
   fetchBillFileStoreId: (data, params) =>
     Request({
       url: Urls.dristi.billFileStoreId,
@@ -667,5 +675,13 @@ export const DRISTIService = {
       data,
       params,
       method: "POST",
+    }),
+  getPreviewDoc: (data, params) =>
+    Request({
+      url: Urls.dristi.previewDoc,
+      useCache: false,
+      userService: true,
+      data,
+      params,
     }),
 };

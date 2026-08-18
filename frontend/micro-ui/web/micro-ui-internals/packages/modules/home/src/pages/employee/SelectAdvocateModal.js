@@ -1,26 +1,10 @@
 //here choose primary advocate under whom the logged in clerk/junior advocate will take action.
-import { CloseSvg, Dropdown } from "@egovernments/digit-ui-react-components";
+import { Dropdown } from "@egovernments/digit-ui-react-components";
 
 import React, { useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { LabelFieldPair } from "@egovernments/digit-ui-react-components";
-
-const Heading = (props) => {
-  return (
-    <h1 className="heading-m" style={{ marginLeft: "24px" }}>
-      {props.label}
-    </h1>
-  );
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 function SelectAdvocateModal({ t, setShowSelectAdvocateModal, confirmAdvocate, preSelectedSeniorAdvocate = null, advocatesList = [] }) {
   const [selectedSeniorAdvocate, setSelectedSeniorAdvocate] = useState(preSelectedSeniorAdvocate);
   const handleDropdownChange = (e) => {
@@ -41,7 +25,7 @@ function SelectAdvocateModal({ t, setShowSelectAdvocateModal, confirmAdvocate, p
         actionCancelLabel={t("GO_BACK")}
         actionCancelOnSubmit={() => setShowSelectAdvocateModal(false)}
         formId="modal-action"
-        headerBarMain={<Heading label={t("FILE_A_CASE_ADVOCATE_CONFIRM_HEADER")} />}
+        headerBarMain={<Heading style={{ marginLeft: "24px" }} label={t("FILE_A_CASE_ADVOCATE_CONFIRM_HEADER")} />}
         submitTextClassName="select-senior-advocate-dropdown-submit"
         cancelTextClassName="select-senior-advocate-dropdown-cancel"
         popUpStyleMain={{ zIndex: "1000" }}

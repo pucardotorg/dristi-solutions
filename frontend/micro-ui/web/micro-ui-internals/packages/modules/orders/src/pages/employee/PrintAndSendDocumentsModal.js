@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Modal, CardLabel } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { printAndSendDocumentsConfig } from "./../../configs/EpostFormConfigs";
-import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import { Urls } from "../../hooks/services/Urls";
 import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
 import DocumentPrintComponent from "../../components/DocumentPrintComponent";

@@ -42,8 +42,4 @@ public class CaseOverallStatusType {
     @Valid
     private String stage = null;
 
-    @JsonProperty("substage")
-    @Valid
-    private String substage = null;
-
 }

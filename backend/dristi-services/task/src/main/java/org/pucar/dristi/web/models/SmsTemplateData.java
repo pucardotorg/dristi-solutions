@@ -17,6 +17,12 @@ public class SmsTemplateData {
 
     private String courtCaseNumber;
 
+    private String partyType;
+
+    private String processType;
+
+    private String caseNumber;
+
     private String hearingDate;
 
     private String cmpNumber;

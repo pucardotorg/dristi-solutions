@@ -1,11 +1,12 @@
 package org.egov.user.web.controller;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.egov.common.contract.response.ResponseInfo;
 import org.egov.user.domain.service.UserService;
 import org.egov.user.web.contract.LoggedInUserUpdatePasswordRequest;
 import org.egov.user.web.contract.NonLoggedInUserUpdatePasswordRequest;
+import org.egov.user.web.contract.SuppressPasswordPromptRequest;
 import org.egov.user.web.contract.UpdatePasswordResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,6 +48,20 @@ public class PasswordController {
     @PostMapping("/nologin/_update")
     public UpdatePasswordResponse updatePasswordForNonLoggedInUser(@RequestBody @Valid NonLoggedInUserUpdatePasswordRequest request) {
         userService.updatePasswordForNonLoggedInUser(request.toDomain(), request.getRequestInfo());
+
+        return new UpdatePasswordResponse(ResponseInfo.builder().status(String.valueOf(HttpStatus.OK.value())).build());
+    }
+
+    /**
+     * end-point backing the "don't ask again" option on the set-password prompt. Acts on the
+     * logged-in user taken from the RequestInfo, so it needs no body beyond that.
+     *
+     * @param request request info of the logged-in user
+     * @return
+     */
+    @PostMapping("/prompt/_suppress")
+    public UpdatePasswordResponse suppressPasswordPrompt(@RequestBody @Valid SuppressPasswordPromptRequest request) {
+        userService.suppressPasswordPrompt(request.getRequestInfo());
 
         return new UpdatePasswordResponse(ResponseInfo.builder().status(String.valueOf(HttpStatus.OK.value())).build());
     }

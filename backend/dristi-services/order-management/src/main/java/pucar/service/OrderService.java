@@ -109,6 +109,7 @@ public class OrderService {
         OrderFactory orderFactory = factoryProvider.getFactory(order.getOrderCategory());
         OrderProcessor orderProcessor = orderFactory.createProcessor();
 
+        orderProcessor.validateOrder(request);
         orderProcessor.preProcessOrder(request);
 
         if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate() != null) {
@@ -294,6 +295,7 @@ public class OrderService {
         request.setOrder(orderResponse.getOrder());
 
         // TODO : this is temporary solution need to have proper implementation
+        orderProcessor.validateOrder(request);
         orderProcessor.preProcessOrder(request);
 
         return orderResponse.getOrder();

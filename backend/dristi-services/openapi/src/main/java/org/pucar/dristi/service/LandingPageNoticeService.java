@@ -46,7 +46,7 @@ public class LandingPageNoticeService {
             log.info("operation = addNotices, status :: COMPLETED {}", landingPageNoticeRequest);
             return landingPageNotice;
         } catch (CustomException e) {
-            log.error("Error while adding notices: {}", e.getMessage(), e);
+            log.error("Error while adding notices", e);
             throw new CustomException("LANDING_PAGE_NOTICE_SERVICE_EXCEPTION", "Error occurred while adding notices " + e.getMessage());
         }
     }
@@ -66,7 +66,7 @@ public class LandingPageNoticeService {
             log.info("operation = updateNotices, status :: COMPLETED {}", landingPageNoticeRequest);
             return landingPageNotice;
         } catch (CustomException e) {
-            log.error("Error while updating notices: {}", e.getMessage(), e);
+            log.error("Error while updating notices", e);
             throw new CustomException("LANDING_PAGE_NOTICE_SERVICE_EXCEPTION", "Error occurred while updating notices");
         }
     }

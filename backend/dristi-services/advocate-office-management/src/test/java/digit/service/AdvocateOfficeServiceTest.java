@@ -44,6 +44,9 @@ class AdvocateOfficeServiceTest {
     @Mock
     private Configuration configuration;
 
+    @Mock
+    private NotificationService notificationService;
+
     @InjectMocks
     private AdvocateOfficeService advocateOfficeService;
 
@@ -113,6 +116,7 @@ class AdvocateOfficeServiceTest {
         doNothing().when(validator).validateAddMemberRequest(any());
         doNothing().when(enrichment).enrichAddMemberRequest(any());
         doNothing().when(producer).push(anyString(), any());
+        doNothing().when(notificationService).sendNotification(any(), any(), any(), any());
 
         AddMember result = advocateOfficeService.addMember(addMemberRequest);
 

@@ -27,4 +27,10 @@ public class Coordinate {
 
     @JsonProperty("pageNumber")
     private int pageNumber;
+
+    @JsonProperty("pageWidth")
+    private double pageWidth;
+
+    @JsonProperty("pageHeight")
+    private double pageHeight;
 }

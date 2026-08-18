@@ -1,7 +1,7 @@
-import _ from "lodash";
 import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
+import { getFormattedName } from "@egovernments/digit-ui-module-common";
 
 export const overrideHooks = () => {
   Object.keys(CustomisedHooks).map((ele) => {
@@ -43,15 +43,6 @@ export const updateCustomConfigs = () => {
   // setupLibraries("Utils", "parsingUtils", { ...window?.Digit?.Utils?.parsingUtils, ...parsingUtils });
 };
 
-export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
-  const nameParts = [firstName, middleName, lastName]
-    ?.map((part) => part?.trim())
-    ?.filter(Boolean)
-    ?.join(" ");
-
-  const nameWithDesignation = designation && nameParts ? `${nameParts} - ${designation}` : designation || nameParts;
-
-  return partyTypeLabel ? `${nameWithDesignation} ${partyTypeLabel}` : nameWithDesignation;
-};
+export { getFormattedName };
 
 export default {};

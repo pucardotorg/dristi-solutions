@@ -18,5 +18,7 @@ public class Coordinate {
     private int pageNumber; // The page number associated with this coordinate
     private String fileStoreId;
     private String tenantId;
+    private double pageWidth;
+    private double pageHeight;
 
 }

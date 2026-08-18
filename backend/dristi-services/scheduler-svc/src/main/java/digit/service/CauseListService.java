@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import digit.config.ServiceConstants;
+import digit.exception.RuntimeCustomException;
 import digit.kafka.producer.Producer;
 import digit.repository.CauseListRepository;
 import digit.repository.HearingRepository;
@@ -134,7 +135,7 @@ public class CauseListService {
             // Wait until all tasks are completed or timeout occurs
             executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         } catch (InterruptedException e) {
-            log.error("Error occurred while waiting for task completion: {}", e.getMessage());
+            log.error("Error occurred while waiting for task completion", e);
             Thread.currentThread().interrupt();
         }
     }
@@ -180,7 +181,7 @@ public class CauseListService {
                         causeList.get(0).getTenantId()
                 );
             } catch (Exception e) {
-                log.error("Failed to send cause list email for date: {}, error: {}", causeListDate.toString(), e.getMessage(), e);
+                log.error("Failed to send cause list email for date: {}", causeListDate.toString(), e);
             }
 
 
@@ -196,11 +197,11 @@ public class CauseListService {
             try {
                 esUtil.updateOpenHearingInCache(openHearings, getFromDate(hearingDate));
             } catch (Exception e) {
-                log.error("Failed to update open hearing in cache for date: {}, error: {}", causeListDate.toString(), e.getMessage(), e);
+                log.error("Failed to update open hearing in cache for date: {}", causeListDate.toString(), e);
             }
             log.info("operation = generateCauseListForJudge, result = SUCCESS, judgeId = {}", courtId);
         } catch (Exception e) {
-            log.error("operation = generateCauseListForJudge, result = FAILURE, judgeId = {}, error = {}", courtId, e.getMessage(), e);
+            log.error("operation = generateCauseListForJudge, result = FAILURE, judgeId = {}", courtId, e);
         }
     }
 
@@ -224,7 +225,7 @@ public class CauseListService {
             caseTypeList = causeListRepository.getCaseTypes();
             caseTypeList.sort(Comparator.comparing(CaseType::getPriority));
         } catch (Exception e) {
-            log.error("operation = getCaseTypeMap, result = FAILURE, error = {}", e.getMessage(), e);
+            log.error("operation = getCaseTypeMap, result = FAILURE", e);
         }
         return caseTypeList;
     }
@@ -244,7 +245,7 @@ public class CauseListService {
             }
             log.info("operation = getHearingTypePriority, result = SUCCESS");
         } catch (Exception e) {
-            log.error("operation = getHearingTypePriority, result = FAILURE, error = {}", e.getMessage(), e);
+            log.error("operation = getHearingTypePriority, result = FAILURE", e);
         }
     }
 
@@ -265,7 +266,7 @@ public class CauseListService {
             }
             log.info("operation = getHearingDataFromMdms, result = SUCCESS");
         } catch (Exception e) {
-            log.error("operation = getHearingDataFromMdms, result = FAILURE, error = {}", e.getMessage(), e);
+            log.error("operation = getHearingDataFromMdms, result = FAILURE", e);
         }
         return mdmsHearings;
     }
@@ -308,7 +309,7 @@ public class CauseListService {
             }
             log.info("operation = generateCauseListFromHearings, result = SUCCESS, judgeId = {}", causeList.get(0).getJudgeId());
         } catch (Exception e) {
-            log.error("operation = generateCauseListFromHearings, result = FAILURE, judgeId = {}, error = {}", causeList.get(0).getJudgeId(), e.getMessage(), e);
+            log.error("operation = generateCauseListFromHearings, result = FAILURE, judgeId = {}", causeList.get(0).getJudgeId(), e);
         }
     }
 
@@ -339,7 +340,7 @@ public class CauseListService {
             }
             log.info("operation = getSlottingDataFromMdms, result = SUCCESS");
         } catch (Exception e) {
-            log.error("operation = getSlottingDataFromMdms, result = FAILURE, error = {}", e.getMessage(), e);
+            log.error("operation = getSlottingDataFromMdms, result = FAILURE", e);
         }
         return mdmsSlots;
     }
@@ -368,7 +369,7 @@ public class CauseListService {
         log.info("operation = downloadCauseListForTomorrow, with searchRequest : {}", searchRequest.toString());
         List<String> fileStoreIds = getFileStoreForCauseList(searchRequest.getCauseListSearchCriteria());
         if(CollectionUtils.isEmpty(fileStoreIds)){
-            throw new CustomException("DK_CL_APP_ERR", "No CauseList found for the given search criteria");
+            throw new RuntimeCustomException("DK_CL_APP_ERR", "No CauseList found for the given search criteria");
         }
         byte[] pdfBytes = fileStoreUtil.getFile(config.getEgovStateTenantId(), fileStoreIds.get(0));
         return new ByteArrayResource(pdfBytes);
@@ -405,7 +406,7 @@ public class CauseListService {
            byteArrayResource =  pdfServiceUtil.generatePdfFromPdfService(slotRequest, config.getEgovStateTenantId(), config.getCauseListPdfTemplateKey());
            log.info("operation = generateCauseListPdf, result = SUCCESS");
         } catch (Exception e) {
-            log.error("Error occurred while generating pdf: {}", e.getMessage());
+            log.error("Error occurred while generating pdf", e);
         }
         return byteArrayResource;
     }
@@ -476,7 +477,7 @@ public class CauseListService {
                     .build();
             hearings = hearingUtil.fetchHearing(hearingListSearchRequest);
         } catch (Exception e) {
-            log.error("Error occurred while fetching hearings for court: {}", e.getMessage());
+            log.error("Error occurred while fetching hearings for court", e);
         }
         return hearings;
     }
@@ -699,7 +700,7 @@ public class CauseListService {
             }
         } catch (Exception e) {
             // Log the exception and continue the execution without throwing
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
     }
 
@@ -758,7 +759,7 @@ public class CauseListService {
             log.info("operation = getRecentCauseList, result = SUCCESS");
             return recentCauseLists;
         } catch (Exception e) {
-            log.error("operation = getRecentCauseList, result = FAILURE, error = {}", e.getMessage(), e);
+            log.error("operation = getRecentCauseList, result = FAILURE", e);
             throw e;
         }
     }

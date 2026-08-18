@@ -1,5 +1,5 @@
 import { Loader, UploadIcon } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CustomAddIcon, FileUploadIcon } from "../icons/svgIndex";
 
 import Button from "./Button";
@@ -11,10 +11,11 @@ import isEqual from "lodash/isEqual";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import RenderFileCard from "./RenderFileCard";
 import { FileUploader } from "react-drag-drop-files";
-import { useToast } from "./Toast/useToast";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { FSOErrorIcon } from "../icons/svgIndex";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import SearchableDropdown from "./SearchableDropdown";
+import { EXTENSION_TO_MIME } from "../Utils/constants";
 
 function ScrutinyInfoAdvocate({ message, t }) {
   return (
@@ -91,9 +92,10 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const urlParams = new URLSearchParams(window.location.search);
   const caseId = urlParams.get("caseId");
   const [isApproved, setIsApproved] = useState(false);
-  const toast = useToast();
+  const [showToast, setShowToast] = useState(null);
+
   const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
-  const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
+  const { uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
 
   const [advocateAndPipData, setAdvocateAndPipData] = useState(
     formData?.[config?.key]
@@ -217,11 +219,10 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           uploadGuidelines: "UPLOAD_DOC_10",
           maxFileSize: 10,
           maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-          fileTypes: ["JPG", "PDF", "PNG"],
+          fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
           isMultipleUpload: true,
           downloadTemplateText: "VAKALATNAMA_TEMPLATE_TEXT",
-          downloadTemplateLink:
-            "https://oncourts.kerala.gov.in/minio-filestore/v1/files/id?tenantId=kl&fileStoreId=eb7407fb-5642-40d9-9f06-31e4895c75b0",
+          downloadTemplateLink: `https://oncourts.kerala.gov.in/minio-filestore/v1/files/id?tenantId=${tenantId}&fileStoreId=eb7407fb-5642-40d9-9f06-31e4895c75b0`,
         },
         {
           fileKey: "pipAffidavitFileUpload",
@@ -233,13 +234,13 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           uploadGuidelines: "UPLOAD_DOC_10",
           maxFileSize: 10,
           maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-          fileTypes: ["JPG", "PDF", "PNG"],
+          fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
           isMultipleUpload: true,
         },
       ];
-  }, [config?.populators?.inputs]);
+  }, [config?.populators?.inputs, tenantId]);
 
-  const { data: caseData, refetch: refetchCaseData, isCaseLoading } = useSearchCaseService(
+  const { data: caseData, isCaseLoading } = useSearchCaseService(
     {
       criteria: [
         {
@@ -323,7 +324,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     return false;
   }, [caseDetails, advocateAndPipData]);
 
-  const { data, isLoading, refetch } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data: loggedInIndividual, isLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
         userUuid: selectedAdvocateUuid ? [selectedAdvocateUuid] : [userUuid], //If clerk/junior adv is filing case, details of respective office advocate should be fetched.
@@ -335,8 +336,10 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     userUuid && isUserLoggedIn
   );
 
-  const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
-  const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
+  const individualId = useMemo(() => loggedInIndividual?.Individual?.[0]?.individualId, [loggedInIndividual?.Individual]);
+  const userType = useMemo(() => loggedInIndividual?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [
+    loggedInIndividual?.Individual,
+  ]);
 
   const { data: searchData, isLoading: isSearchLoading } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
     {
@@ -385,16 +388,16 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     return individualData;
   };
 
-  const { data: selectedIndividual, isLoading: isInidividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data: selectedComplainantIndividual, isLoading: isIndividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
-        individualId: individualId,
+        individualId: advocateAndPipData?.boxComplainant?.individualId,
       },
     },
     { tenantId, limit: 1000, offset: 0 },
     moduleCode,
-    `getindividual-${individualId}`,
-    individualId
+    `getindividual-${advocateAndPipData?.boxComplainant?.individualId}`,
+    advocateAndPipData?.boxComplainant?.individualId
   );
 
   const isPrimaryAdvocate = useMemo(() => {
@@ -414,18 +417,27 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     return isAdvocateOfficeCreator?.advocateId;
   }, [caseDetails]);
 
+  // True when the advocate/clerk who is filing the case has entered their own mobile number as the complainant.
+  const isAdvocateActingAsComplainant = useMemo(() => {
+    const complainantUserType = selectedComplainantIndividual?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")
+      ?.value;
+    return complainantUserType === "ADVOCATE" || complainantUserType === "ADVOCATE_CLERK";
+  }, [selectedComplainantIndividual]);
+
   useEffect(() => {
     if (
       (userType === "ADVOCATE" &&
+        selectedComplainantIndividual &&
+        selectedComplainantIndividual?.Individual?.[0]?.userUuid !== userUuid &&
         advocateAndPipData?.multipleAdvocateNameDetails?.[0]?.advocateBarRegNumberWithName?.individualId !== individualId &&
         advocateAndPipData?.boxComplainant?.index === 0 &&
         advocateAndPipData?.boxComplainant?.individualId) ||
       (advocateAndPipData?.multipleAdvocateNameDetails?.[0]?.advocateBarRegNumberWithName?.individualId === individualId &&
         advocateAndPipData?.boxComplainant?.index === 0 &&
         advocateAndPipData?.boxComplainant?.individualId &&
-        selectedIndividual &&
+        loggedInIndividual &&
         advocateAndPipData?.multipleAdvocateNameDetails?.[0]?.advocateNameDetails?.advocateMobileNumber !==
-          selectedIndividual?.Individual?.[0]?.mobileNumber)
+          loggedInIndividual?.Individual?.[0]?.mobileNumber)
     ) {
       const advData = advocateAndPipData?.multipleAdvocateNameDetails;
       if (isApproved && searchResult) {
@@ -444,16 +456,16 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           individualId,
         };
 
-        const idType = selectedIndividual?.Individual?.[0]?.identifiers[0]?.identifierType || "";
+        const idType = loggedInIndividual?.Individual?.[0]?.identifiers[0]?.identifierType || "";
         const identifierIdDetails = JSON.parse(
-          selectedIndividual?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}"
+          loggedInIndividual?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}"
         );
 
         const advocateNameDetails = {
           firstName: splitNamesPartiallyFromFullName(userName)?.firstName,
           middleName: splitNamesPartiallyFromFullName(userName)?.middleName,
           lastName: splitNamesPartiallyFromFullName(userName)?.lastName,
-          advocateMobileNumber: selectedIndividual?.Individual?.[0]?.mobileNumber || "",
+          advocateMobileNumber: loggedInIndividual?.Individual?.[0]?.mobileNumber || "",
           advocateIdProof: identifierIdDetails?.fileStoreId
             ? [
                 {
@@ -473,7 +485,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           advData?.length === 1 &&
           advData?.[0]?.advocateBarRegNumberWithName?.individualId &&
           advData?.[0]?.advocateBarRegNumberWithName?.individualId === individualId &&
-          advData?.[0]?.advocateNameDetails?.advocateMobileNumber !== selectedIndividual?.Individual?.[0]?.mobileNumber
+          advData?.[0]?.advocateNameDetails?.advocateMobileNumber !== loggedInIndividual?.Individual?.[0]?.mobileNumber
         ) {
           const updatedData = [{ advocateBarRegNumberWithName, advocateNameDetails }];
           newData = { ...advocateAndPipData, multipleAdvocateNameDetails: updatedData, showVakalatNamaUpload: true, showAffidavit: false };
@@ -484,9 +496,19 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           (userType === "ADVOCATE" ? isPrimaryAdvocate : true) &&
           caseDetails?.status === CaseWorkflowState.DRAFT_IN_PROGRESS // Append filing advocate automatically only while  in filing stage, not thereafter (like case reassigned stage)
         ) {
-          const firstAdvocate = { advocateBarRegNumberWithName, advocateNameDetails };
-          const updatedData = [firstAdvocate, ...advData];
-          newData = { ...advocateAndPipData, multipleAdvocateNameDetails: updatedData, showVakalatNamaUpload: true, showAffidavit: false };
+          const isFilingAdvocateAlreadyPresent = advData?.some((advocateObj) => {
+            const existingAdvocate = advocateObj?.advocateBarRegNumberWithName || {};
+            return (
+              (individualId && existingAdvocate?.individualId === individualId) ||
+              (advocateId && existingAdvocate?.advocateId === advocateId) ||
+              (barRegNum && existingAdvocate?.barRegistrationNumberOriginal === barRegNum)
+            );
+          });
+          if (!isFilingAdvocateAlreadyPresent) {
+            const firstAdvocate = { advocateBarRegNumberWithName, advocateNameDetails };
+            const updatedData = [firstAdvocate, ...advData];
+            newData = { ...advocateAndPipData, multipleAdvocateNameDetails: updatedData, showVakalatNamaUpload: true, showAffidavit: false };
+          }
         }
         if (!isEqual(advocateAndPipData, newData)) {
           setAdvocateAndPipData(newData);
@@ -498,7 +520,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     isApproved,
     onSelect,
     searchResult,
-    selectedIndividual,
+    loggedInIndividual,
     userType,
     config?.key,
     individualId,
@@ -508,6 +530,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     authorizedUuid,
     userUuid,
     isPrimaryAdvocate,
+    selectedComplainantIndividual,
   ]);
 
   const handleInputChange = async (index, field, value) => {
@@ -611,7 +634,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         value === "YES"
           ? false
           : Array.isArray(advocateAndPipData?.multipleAdvocateNameDetails) &&
-            Object.keys(advocateAndPipData?.multipleAdvocateNameDetails?.[0])?.length !== 0,
+            Object.keys(advocateAndPipData?.multipleAdvocateNameDetails?.[0] || {})?.length !== 0,
       showAffidavit: value === "YES" ? true : false,
       vakalatnamaFileUpload: value === "YES" ? null : advocateAndPipData?.vakalatnamaFileUpload,
       pipAffidavitFileUpload: value === "NO" ? null : advocateAndPipData?.pipAffidavitFileUpload,
@@ -622,6 +645,12 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
 
   const fileValidator = (file, input) => {
     if (file?.fileStore) return null;
+    if (file?.type && input?.fileTypes?.length) {
+      const allowedMimes = input.fileTypes.flatMap((ext) => EXTENSION_TO_MIME[ext.toLowerCase()] || []);
+      if (allowedMimes.length && !allowedMimes.includes(file.type)) {
+        return t("NOT_SUPPORTED_FILE_TYPE");
+      }
+    }
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
     return file?.size > maxFileSize ? `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` : null;
   };
@@ -652,9 +681,6 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
       }
     });
 
-    const fileKey = input?.fileKey;
-    const name = input?.name;
-
     const newData = { ...advocateAndPipData, [input?.fileKey]: { [input?.name]: currentValue } };
     onSelect(config?.key, newData);
     setAdvocateAndPipData(newData);
@@ -667,14 +693,20 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     const newData = { ...advocateAndPipData, [input?.fileKey]: { [input?.name]: currentValue } };
     onSelect(config?.key, newData);
     setAdvocateAndPipData(newData);
+    if (clearErrors) {
+      clearErrors(config.key);
+    }
   };
 
   const disableRadio = useMemo(() => {
     return Boolean(
-      (userType === "ADVOCATE" && advocateAndPipData?.boxComplainant?.index === 0 && advocateAndPipData?.boxComplainant?.individualId) ||
+      (userType === "ADVOCATE" &&
+        selectedComplainantIndividual?.Individual?.[0]?.userUuid !== userUuid &&
+        advocateAndPipData?.boxComplainant?.index === 0 &&
+        advocateAndPipData?.boxComplainant?.individualId) ||
         litigants?.find((litigant) => litigant?.individualId === advocateAndPipData?.boxComplainant?.individualId)?.poaHolder
     );
-  }, [userType, advocateAndPipData, litigants]);
+  }, [userType, advocateAndPipData, litigants, selectedComplainantIndividual, userUuid]);
 
   const isDeleteAllowed = useCallback(
     (i) => {
@@ -690,7 +722,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     [advocateAndPipData, casePrimaryAdvocateId]
   );
 
-  if (isCaseLoading) {
+  if (isCaseLoading || isLoading || isSearchLoading || isIndividualLoading) {
     return <Loader></Loader>;
   }
 
@@ -708,7 +740,9 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         }}
       >
         <span style={{ fontSize: "16px", fontWeight: 700 }}>Complainant {advocateAndPipData?.boxComplainant?.index + 1 || 1}</span>
-        <span style={{ fontSize: "16px" }}>{advocateAndPipData?.boxComplainant?.firstName || ""}</span>
+        <span style={{ fontSize: "16px" }}>
+          {[advocateAndPipData?.boxComplainant?.firstName, advocateAndPipData?.boxComplainant?.lastName].filter(Boolean).join(" ") || ""}
+        </span>
       </div>
       <div
         style={{
@@ -886,6 +920,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                         value={data?.advocateBarRegNumberWithName}
                         onChange={(value) => handleInputChange(index, "advocateBarRegNumberWithName", value)}
                         disabled={data?.advocateBarRegNumberWithName?.individualId === individualId}
+                        excludeIndividualId={isAdvocateActingAsComplainant ? selectedComplainantIndividual?.Individual?.[0]?.individualId : null}
                       />
 
                       {data?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal &&
@@ -1014,6 +1049,8 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                       t={t}
                       uploadErrorInfo={fileErrors[index]}
                       input={input}
+                      configKey={config?.key}
+                      setError={setError}
                     />
                   ))}
 
@@ -1040,7 +1077,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                       }
                       key={input?.fileKey}
                       onTypeError={() => {
-                        toast.error(t("CS_INVALID_FILE_TYPE"));
+                        setShowToast({ label: t("CS_INVALID_FILE_TYPE"), error: true, errorId: null });
                       }}
                     />
                     <div className="upload-guidelines-div">
@@ -1089,6 +1126,15 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           );
         })}
       </div>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 }

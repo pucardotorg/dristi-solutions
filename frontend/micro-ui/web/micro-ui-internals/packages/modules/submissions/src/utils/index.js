@@ -1,8 +1,9 @@
-import _ from "lodash";
 import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { getFormattedName } from "@egovernments/digit-ui-module-common";
+import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
 
 export const overrideHooks = () => {
   Object.keys(CustomisedHooks).map((ele) => {
@@ -129,17 +130,7 @@ export function convertTaskResponseToPayload(responseArray, id = null) {
   return pendingTask;
 }
 
-export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
-  const nameParts = [firstName, middleName, lastName]
-    ?.map((part) => part?.trim())
-    ?.filter(Boolean)
-    ?.join(" ")
-    ?.trim();
-
-  const nameWithDesignation = designation && nameParts ? `${nameParts} - ${designation}` : designation || nameParts;
-
-  return partyTypeLabel ? `${nameWithDesignation} ${partyTypeLabel}` : nameWithDesignation;
-};
+export { getFormattedName };
 
 export const getUserInfoFromUuids = async (uuidList) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -161,33 +152,8 @@ export const getUserInfoFromUuids = async (uuidList) => {
       return {
         userUuid: user?.userUuid,
         name: userName,
+        fullName: getFullName(" ", user?.name?.givenName, user?.name?.otherNames, user?.name?.familyName),
         individualId: user?.individualId,
-      };
-    });
-    return userData;
-  }
-  return [];
-};
-
-export const getUserInfoFromIndividualId = async (individualId) => {
-  const tenantId = Digit.ULBService.getCurrentTenantId();
-
-  const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
-    {
-      Individual: {
-        individualId: individualId,
-      },
-    },
-    { tenantId, limit: 1000, offset: 0 },
-    "",
-    true
-  );
-  if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
-    const userData = individualData?.Individual?.map((user) => {
-      const userName = `${user?.name?.givenName} ${user?.name?.familyName || ""}`.trim();
-      return {
-        uuid: user?.userUuid,
-        name: userName,
       };
     });
     return userData;

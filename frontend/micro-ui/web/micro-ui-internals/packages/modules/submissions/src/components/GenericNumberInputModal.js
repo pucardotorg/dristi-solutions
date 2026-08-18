@@ -1,18 +1,6 @@
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import React, { useState } from "react";
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 const GenericNumberInputModal = ({ t, handleClose, handleSubmit, mobileNumber, setMobileNumber, error, setError, header }) => {
   const handleMobileNumberChange = (e) => {
     const value = e.target.value;

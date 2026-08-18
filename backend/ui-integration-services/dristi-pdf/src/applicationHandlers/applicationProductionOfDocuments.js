@@ -11,6 +11,7 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
+const { getCaseNumber } = require("../utils/commonUtils");
 const {
   getNameByUuid,
   getComplaintAndAccusedList,
@@ -174,9 +175,7 @@ async function applicationProductionOfDocuments(
     const additionalComments = htmlToFormattedText(
       application?.applicationDetails?.additionalComments || "",
     );
-    const caseNumber = courtCase?.isLPRCase
-      ? courtCase?.lprNumber
-      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = getCaseNumber(courtCase);
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
     const onBehalfOfLitigent = courtCase?.litigants?.find(

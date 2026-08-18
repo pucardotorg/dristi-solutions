@@ -30,7 +30,7 @@ public class MdmsDataConfig {
         try {
             String tenantId = requestInfo.getUserInfo().getTenantId();
             log.info("Fetching survey configuration from MDMS for tenantId: {}", tenantId);
-            
+
             JSONArray surveyConfigList = mdmsUtil.fetchMdmsData(
                     requestInfo,
                     tenantId,
@@ -47,7 +47,7 @@ public class MdmsDataConfig {
                 return getDefaultSurveyConfig();
             }
         } catch (Exception e) {
-            log.error("Unable to fetch survey configuration from MDMS, using default values. Error: {}", e.getMessage());
+            log.error("Unable to fetch survey configuration from MDMS, using default values. Error", e);
             return getDefaultSurveyConfig();
         }
     }

@@ -1,7 +1,8 @@
 package org.egov.user.web.controller;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.time.DateFormatUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.egov.common.contract.response.ResponseInfo;
 import org.egov.user.domain.model.*;
 
@@ -34,8 +35,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import javax.validation.Valid;
 
 import static org.egov.tracer.http.HttpUtils.isInterServiceCall;
 import static org.springframework.util.CollectionUtils.isEmpty;

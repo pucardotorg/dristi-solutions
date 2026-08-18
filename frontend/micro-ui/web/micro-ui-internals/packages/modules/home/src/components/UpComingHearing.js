@@ -142,7 +142,7 @@ const UpcomingHearings = ({ t, userInfoType, advocateId, individualData, selecte
 
   const individualUserType = Digit.UserService.getType();
 
-  const { data: hearingSlotsResponse } = Digit.Hooks.hearings.useGetHearingSlotMetaData(true);
+  const { data: hearingSlotsResponse } = Digit.Hooks.hearings.useGetHearingSlotMetaData(true, tenantId);
 
   const searchCase = useCallback(
     async (hearings) => {

@@ -8,7 +8,7 @@ const useESignOpenApi = () => {
   const Url = `/openapi/v1/${tenantId}/esign`;
 
   const handleEsign = useCallback(
-    async (name, pageModule, fileStoreId, signPlaceHolder) => {
+    async (name, pageModule, fileStoreId, setShowToast, t, signPlaceHolder) => {
       try {
         const newSignStatuses = [...parsedObj, { name: name, isSigned: true }];
         sessionStorage.setItem("signStatus", JSON.stringify(newSignStatuses));
@@ -51,6 +51,8 @@ const useESignOpenApi = () => {
         }
       } catch (error) {
         console.error("API call failed:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("E_SIGN_API_FAILED"), error: true, errorId: errorId });
       }
     },
     [parsedObj]

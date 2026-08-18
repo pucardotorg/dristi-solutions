@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Loader, LabelFieldPair, CardLabelError, CardText, CardHeader } from "@egovernments/digit-ui-react-components";
 import RadioButtons from "./RadioButton";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import _ from "lodash";
+import get from "lodash/get";
 
 const CustomRadioCard = ({ t, config, onSelect, formData = {}, errors, label }) => {
   const Digit = window.Digit || {};
@@ -14,7 +14,7 @@ const CustomRadioCard = ({ t, config, onSelect, formData = {}, errors, label }) 
   }
   const { data: idTypeData, isLoading } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "User Registration", [{ name: "IdType" }], {
     select: (data) => {
-      return _.get(data, "User Registration.IdType", []).map((opt) => ({ ...opt }));
+      return get(data, "User Registration.IdType", []).map((opt) => ({ ...opt }));
     },
   });
   if (isLoading) return <Loader />;

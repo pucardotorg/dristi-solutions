@@ -1,11 +1,8 @@
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
-const {
-  duplicateExistingFileStore,
-} = require("../utils/duplicateExistingFileStore");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { duplicateExistingFileStore } = require("../utils/duplicateExistingFileStore");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 async function processVakalatSection(
   courtCase,
@@ -16,7 +13,7 @@ async function processVakalatSection(
   indexCopy,
   messagesMap
 ) {
-  // update vakalatnamas
+  logger.info(`[processVakalatSection] Started | filingNumber: ${courtCase?.filingNumber}`);
   const vakalatnamaSection = filterCaseBundleBySection(
     caseBundleMaster,
     "vakalat"

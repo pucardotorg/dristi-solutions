@@ -181,8 +181,6 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
       !isEqual(locationData, formData?.[config?.key])
     ) {
       setLocationData(formData?.[config?.key]);
-    } else {
-      setLocationData(locationData);
     }
   }, [config?.key, formData, locationData]);
 

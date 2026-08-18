@@ -1,4 +1,6 @@
 import { Body, Loader } from "@egovernments/digit-ui-react-components";
+export { default as InboxSearchComposer } from "./components/InboxSearchComposer";
+export { FormComposer, FormComposerV2, FormComposerCitizen } from "./components/FormComposer";
 import React, { useMemo, createContext } from "react"; // Added createContext for breadcrumb implementation
 import { getI18n } from "react-i18next";
 import { QueryClient, QueryClientProvider } from "react-query";
@@ -57,17 +59,20 @@ const DigitUIWrapper = ({ stateCode, enabledModules, moduleReducers, defaultLand
     return <Loader page={true} />;
   }
 
+  // Ensure initData has a default value to prevent Redux undefined state errors
+  const safeInitData = initData || {};
+
   const i18n = getI18n();
   return (
-    <Provider store={getStore(initData, moduleReducers(initData))}>
+    <Provider store={getStore(safeInitData, moduleReducers(safeInitData))}>
       <Router>
         <Body>
           <DigitApp
-            initData={initData}
+            initData={safeInitData}
             stateCode={stateCode}
             modules={moduleData}
-            appTenants={initData.tenants}
-            logoUrl={initData?.stateInfo?.logoUrl}
+            appTenants={safeInitData.tenants}
+            logoUrl={safeInitData?.stateInfo?.logoUrl}
             defaultLanding={defaultLanding}
           />
         </Body>

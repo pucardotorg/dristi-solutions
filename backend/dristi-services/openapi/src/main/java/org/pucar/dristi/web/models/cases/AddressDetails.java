@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.egov.common.contract.user.enums.AddressType;
+import org.pucar.dristi.web.models.address.AddressType;
 import org.pucar.dristi.web.models.address.Coordinates;
 
 @Data

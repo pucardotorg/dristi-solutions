@@ -27,7 +27,6 @@ export const MultiSelectDropdownNew = React.memo(
     options = [],
     optionsKey = "label",
     displayKey = "code",
-    selected = [],
     onConfirm,
     onSelect,
     defaultLabel = "",
@@ -36,12 +35,8 @@ export const MultiSelectDropdownNew = React.memo(
     active,
     setActive = () => {},
   }) => {
-    const [localSelected, setLocalSelected] = useState(selected || []);
+    const [localSelected, setLocalSelected] = useState([]);
     const dropdownRef = useRef(null);
-
-    useEffect(() => {
-      setLocalSelected(selected || []);
-    }, [selected]);
 
     useEffect(() => {
       function handleClickOutside(e) {

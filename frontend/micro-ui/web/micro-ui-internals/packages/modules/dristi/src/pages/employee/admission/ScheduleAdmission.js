@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import CustomChooseDate from "../../../components/CustomChooseDate";
-import { Button, CardText, CustomDropdown, SubmitBar, TextInput, Toast, Loader } from "@egovernments/digit-ui-react-components";
+import { Button, CardText, CustomDropdown, SubmitBar } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
-import { formatDateInMonth, getMDMSObj } from "../../../Utils";
-import useGetStatuteSection from "../../../hooks/dristi/useGetStatuteSection";
+import { formatDateInMonth } from "../../../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import useSortedMDMSData from "../../../hooks/dristi/useSortedMDMSData";
 
@@ -45,7 +45,7 @@ function ScheduleAdmission({
   //   return datesArray;
   // };
   const [nextFiveDates, setNextFiveDates] = useState([]);
-  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const { data: hearingTypeOptions } = useSortedMDMSData("Hearing", "HearingType", "type", t);
   const isAdmissionHearingScheduled = useMemo(() => {
     if (!hearingDetails?.HearingList?.length) {
@@ -150,16 +150,6 @@ function ScheduleAdmission({
     isAdmissionHearingCompleted,
     delayCondonationData,
   ]);
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      closeToast();
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [closeToast]);
 
   const setPurpose = useCallback((props) => setPurposeValue(props), []);
   useEffect(() => {
@@ -170,7 +160,7 @@ function ScheduleAdmission({
 
   const handleSubmit = (props) => {
     if (!scheduleHearingParams?.date && !modalInfo?.showCustomDate) {
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true, errorId: null });
     } else {
       isCaseAdmitted || createAdmissionOrder ? caseAdmittedSubmit(scheduleHearingParams) : setModalInfo({ ...modalInfo, page: 1 });
     }
@@ -304,7 +294,15 @@ function ScheduleAdmission({
         ></SubmitBar>
       </div>
 
-      {showErrorToast && <Toast error={true} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 }

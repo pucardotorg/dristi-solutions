@@ -1,0 +1,67 @@
+{
+  "id": "c16f2cb8-233a-4e2a-9ae6-6cd2621a70c9",
+  "tenantId": "kl",
+  "code": "case.CasePrimaryStage",
+  "description": null,
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "required": [
+      "id",
+      "action",
+      "state",
+      "workflowModule",
+      "stage",
+      "typeIdentifier"
+    ],
+    "x-unique": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "stage": {
+        "type": "string"
+      },
+      "state": {
+        "type": "string"
+      },
+      "action": {
+        "type": "string"
+      },
+      "endStage": {
+        "type": "string"
+      },
+      "priority": {
+        "type": "number"
+      },
+      "entityType": {
+        "type": "string"
+      },
+      "processHandler": {
+        "type": "string"
+      },
+      "typeIdentifier": {
+        "type": "string"
+      },
+      "workflowModule": {
+        "type": "string"
+      },
+      "compositeHearingPath": {
+        "type": "string"
+      },
+      "intermediateHearingPath": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "isActive": true,
+  "auditDetails": {
+    "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+    "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+    "createdTime": 1775479203060,
+    "lastModifiedTime": 1775479203060
+  }
+}

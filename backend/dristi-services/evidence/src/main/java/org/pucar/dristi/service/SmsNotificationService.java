@@ -59,6 +59,7 @@ public class SmsNotificationService {
 
         String templateId = switch (messageCode) {
             case DOCUMENT_SUBMITTED -> config.getSmsNotificationDocumentSubmittedTemplateId();
+            case WITNESS_DEPOSITION_MESSAGE -> config.getSmsNotificationWitnessDeposition();
             default -> null;
         };
 
@@ -184,7 +185,7 @@ public class SmsNotificationService {
             codes = JsonPath.read(result, NOTIFICATION_LOCALIZATION_CODES_JSONPATH);
             messages = JsonPath.read(result, NOTIFICATION_LOCALIZATION_MSGS_JSONPATH);
         } catch (Exception e) {
-            log.error("Exception while fetching from localization: " + e);
+            log.error("Exception while fetching from localization", e);
         }
         if (null != result) {
             for (int i = 0; i < codes.size(); i++) {

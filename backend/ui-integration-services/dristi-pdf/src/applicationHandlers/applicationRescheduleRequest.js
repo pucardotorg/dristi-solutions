@@ -8,6 +8,7 @@ const {
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { cleanName } = require("./cleanName");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -191,9 +192,7 @@ async function applicationRescheduleRequest(
       application?.applicationDetails?.reasonForApplication || "";
     const additionalComments =
       application?.applicationDetails?.additionalComments || "";
-    const caseNumber = courtCase?.isLPRCase
-      ? courtCase?.lprNumber
-      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = getCaseNumber(courtCase);
     const prayer = application?.applicationDetails?.prayer || "";
     const data = {
       Data: [

@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static digit.config.ServiceConstants.*;
@@ -73,6 +74,16 @@ public class SummonsService {
     }
 
     public TaskResponse generateSummonsDocument(TaskRequest taskRequest) {
+        return generateSummonsDocument(taskRequest, false);
+    }
+
+    /**
+     * Generates the task PDF and attaches it to the task. When {@code overrideDocuments} is true the
+     * freshly generated document REPLACES the task's existing generated/signed/sent documents instead
+     * of accumulating alongside them - used by the warrant-reissue regeneration so a reissued warrant
+     * carries only its new GENERATE_TASK_DOCUMENT and not the stale copies from the previous cycle.
+     */
+    public TaskResponse generateSummonsDocument(TaskRequest taskRequest, boolean overrideDocuments) {
         String taskType = taskRequest.getTask().getTaskType();
 
         boolean isWarrantToWitness = false;
@@ -98,7 +109,7 @@ public class SummonsService {
             pdfTemplateKey = pdfTemplateKey + "-e-post";
         }
 
-        return generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, false);
+        return generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, false, overrideDocuments);
     }
 
     private String getTemplateType(String taskType, TaskDetails taskDetails) {
@@ -117,6 +128,10 @@ public class SummonsService {
     }
 
     private TaskResponse generateDocumentAndUpdateTask(TaskRequest taskRequest, String pdfTemplateKey, boolean qrCode) {
+        return generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, qrCode, false);
+    }
+
+    private TaskResponse generateDocumentAndUpdateTask(TaskRequest taskRequest, String pdfTemplateKey, boolean qrCode, boolean overrideDocuments) {
         ByteArrayResource byteArrayResource = pdfServiceUtil.generatePdfFromPdfService(taskRequest,
                 taskRequest.getTask().getTenantId(), pdfTemplateKey, qrCode);
         String fileStoreId = fileStorageUtil.saveDocumentToFileStore(byteArrayResource);
@@ -124,7 +139,7 @@ public class SummonsService {
         Document document = createDocument(fileStoreId, qrCode);
         taskRequest.getTask().addDocumentsItem(document);
 
-        return taskUtil.callUploadDocumentTask(taskRequest);
+        return taskUtil.callUploadDocumentTask(taskRequest, overrideDocuments);
     }
 
     public TaskResponse generateMiscellaneousDocumentAndUpdateTask(TaskRequest taskRequest, boolean qrCode) {
@@ -243,6 +258,9 @@ public class SummonsService {
         enrichPoliceStationReport(task, request.getSummonsDelivery());
         Role role = Role.builder().code(config.getSystemAdmin()).tenantId(config.getEgovStateTenantId()).build();
         request.getRequestInfo().getUserInfo().getRoles().add(role);
+
+        task.getTaskDetails().getDeliveryChannel().setStatusChangeDate(formatEpochToDate(System.currentTimeMillis()));
+
         TaskRequest taskRequest = TaskRequest.builder()
                 .requestInfo(request.getRequestInfo()).task(task).build();
         taskUtil.callUpdateTask(taskRequest);
@@ -254,6 +272,13 @@ public class SummonsService {
         if (!documents.isEmpty()) {
             createEvidenceForPoliceReport(taskRequest, documents.get(0));
         }
+    }
+
+    public static String formatEpochToDate(long epochMillis) {
+        Date date = new Date(epochMillis);
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+        sdf.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
+        return sdf.format(date);
     }
 
     public void createEvidenceForPoliceReport(TaskRequest taskRequest, Document document) {

@@ -62,6 +62,9 @@ public class SmsNotificationService {
         if(messageCode.equalsIgnoreCase(ADVOCATE_REGISTERED)){
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationAdvocateRegisteredTemplateId());
         }
+        if(messageCode.equalsIgnoreCase(ADVOCATE_REJECTED)){
+            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationAdvocateRejectedTemplateId());
+        }
     }
 
     private void pushNotification(SmsTemplateData smsTemplateData, String message, String mobileNumber, String templateId) {
@@ -161,7 +164,7 @@ public class SmsNotificationService {
             codes = JsonPath.read(result, NOTIFICATION_LOCALIZATION_CODES_JSONPATH);
             messages = JsonPath.read(result, NOTIFICATION_LOCALIZATION_MSGS_JSONPATH);
         } catch (Exception e) {
-            log.error("Exception while fetching from localization: " + e);
+            log.error("Exception while fetching from localization", e);
         }
         if (null != result) {
             for (int i = 0; i < codes.size(); i++) {

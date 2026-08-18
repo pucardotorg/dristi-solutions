@@ -44,6 +44,9 @@ public class CourtCase {
     @JsonProperty("filingNumber")
     private String filingNumber = null;
 
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = new ArrayList<>();
+
     @JsonProperty("advocateCount")
     private Integer advocateCount = null;
 
@@ -101,9 +104,6 @@ public class CourtCase {
     @JsonProperty("stage")
     private String stage = null;
 
-    @JsonProperty("substage")
-    private String substage = null;
-
     @JsonProperty("natureOfPleading")
     //@Size(min = 2, max = 64)
     private String natureOfPleading = null;
@@ -140,6 +140,10 @@ public class CourtCase {
 
     @JsonProperty("advocateStatus")
     private String advocateStatus = null;
+
+    @JsonProperty("lifecycleStatus")
+    @Builder.Default
+    private LifecycleStatus lifecycleStatus = LifecycleStatus.ACTIVE;
 
     @JsonProperty("witnessDetails")
     @Valid

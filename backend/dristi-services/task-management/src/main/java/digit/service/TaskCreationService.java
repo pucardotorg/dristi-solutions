@@ -10,6 +10,7 @@ import digit.util.*;
 import digit.web.models.*;
 import digit.web.models.cases.AddressDetails;
 import digit.web.models.cases.CourtCase;
+import digit.web.models.cases.LifecycleStatus;
 import digit.web.models.cases.POAHolder;
 import digit.web.models.cases.Party;
 import digit.web.models.cases.PartyAddress;
@@ -66,9 +67,9 @@ public class TaskCreationService {
     private final HrmsUtil hrmsUtil;
 
     public void generateFollowUpTasks(RequestInfo requestInfo, TaskManagement taskManagement) {
-        log.info("Starting follow-up task generation for filing number: {} with {} parties", 
+        log.info("Starting follow-up task generation for filing number: {} with {} parties",
                 taskManagement.getFilingNumber(), taskManagement.getPartyDetails().size());
-        
+
         try {
             int processedParties = 0;
             for (PartyDetails party : taskManagement.getPartyDetails()) {
@@ -85,12 +86,12 @@ public class TaskCreationService {
                         log.warn("Party details found with no respondent or witness details - skipping");
                     }
                 } catch (Exception e) {
-                    log.error("Error processing party details: {}", e.getMessage(), e);
+                    log.error("Error processing party details", e);
                     // Continue processing other parties
                 }
             }
-            
-            log.info("Successfully processed {} out of {} parties for filing number: {}", 
+
+            log.info("Successfully processed {} out of {} parties for filing number: {}",
                     processedParties, taskManagement.getPartyDetails().size(), taskManagement.getFilingNumber());
         } catch (Exception e) {
             log.error("Error generating follow-up tasks for filing number: {}", taskManagement.getFilingNumber(), e);
@@ -99,32 +100,32 @@ public class TaskCreationService {
     }
 
     private void createTasksForParty(RequestInfo requestInfo, TaskManagement taskManagement, PartyDetails partyDetails, String partyType) {
-        log.info("Creating tasks for {} party - Filing: {}, Order: {}", 
+        log.info("Creating tasks for {} party - Filing: {}, Order: {}",
                 partyType, taskManagement.getFilingNumber(), taskManagement.getOrderNumber());
-        
+
         try {
             log.info("Fetching case details for filing number: {}", taskManagement.getFilingNumber());
             CourtCase courtCase = fetchCase(requestInfo, taskManagement.getFilingNumber());
-            
+
             log.info("Fetching order details for order number: {}", taskManagement.getOrderNumber());
             Order order = fetchOrder(requestInfo, taskManagement.getOrderNumber());
-            
+
             log.info("Extracting additional details from order");
             Map<String, Object> additionalDetails = extractAdditionalDetails(order, taskManagement.getOrderItemId());
-            
+
             log.info("Fetching court details for case ID: {}", courtCase.getId());
             Map<String, Object> courtDetails = fetchCourtDetails(requestInfo, taskManagement, courtCase);
 
             log.info("Building case details and complainant details");
             CaseDetails caseDetails = buildCaseDetails(order, courtCase, courtDetails, taskManagement.getOrderItemId(), requestInfo);
             ComplainantDetails complainantDetails = getComplainantDetails(courtCase);
-            
+
             log.info("Building summon and notice details for {} party", partyType);
             TaskDetails baseTaskDetails = buildSummonAndNoticeDetails(order, courtCase, partyType, taskManagement.getOrderItemId());
 
             log.info("Building task details list for {} party", partyType);
             List<TaskDetails> taskDetailsList = buildTaskDetailsList(partyDetails, caseDetails, baseTaskDetails, complainantDetails, courtCase);
-            
+
             log.info("Building base task template");
             Task taskTemplate = buildBaseTask(taskManagement, order, courtCase, additionalDetails);
 
@@ -143,15 +144,15 @@ public class TaskCreationService {
                     log.info("Successfully created task {} of {} for {} party", createdTasks, taskDetailsList.size(), partyType);
                     createPendingTaskForRPAD(taskResponse.getTask(), requestInfo, order);
                 } catch (Exception e) {
-                    log.error("Error creating task {} for {} party: {}", createdTasks + 1, partyType, e.getMessage(), e);
+                    log.error("Error creating task {} for {} party", createdTasks + 1, partyType, e);
                     // Continue with next task
                 }
             }
-            
-            log.info("Successfully created {} out of {} tasks for {} party - Filing: {}", 
+
+            log.info("Successfully created {} out of {} tasks for {} party - Filing: {}",
                     createdTasks, taskDetailsList.size(), partyType, taskManagement.getFilingNumber());
         } catch (Exception e) {
-            log.error("Error creating tasks for {} party - Filing: {}, Order: {}", 
+            log.error("Error creating tasks for {} party - Filing: {}, Order: {}",
                     partyType, taskManagement.getFilingNumber(), taskManagement.getOrderNumber(), e);
             throw e;
         }
@@ -161,18 +162,18 @@ public class TaskCreationService {
 
     private CourtCase fetchCase(RequestInfo requestInfo, String filingNumber) {
         log.info("Fetching case details for filing number: {}", filingNumber);
-        
+
         try {
             JsonNode caseNode = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
                     .requestInfo(requestInfo)
                     .criteria(List.of(CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build()))
                     .build());
-            
+
             if (caseNode == null) {
                 log.error("No case found for filing number: {}", filingNumber);
                 throw new RuntimeException("Case not found for filing number: " + filingNumber);
             }
-            
+
             CourtCase courtCase = objectMapper.convertValue(caseNode, CourtCase.class);
             log.info("Successfully fetched case with ID: {} for filing number: {}",
                     courtCase.getId(), filingNumber);
@@ -185,18 +186,18 @@ public class TaskCreationService {
 
     private Order fetchOrder(RequestInfo requestInfo, String orderNumber) {
         log.info("Fetching order details for order number: {}", orderNumber);
-        
+
         try {
             OrderListResponse orderResponse = orderUtil.getOrders(OrderSearchRequest.builder()
                     .requestInfo(requestInfo)
                     .criteria(OrderCriteria.builder().orderNumber(orderNumber).build())
                     .build());
-            
+
             if (orderResponse == null || orderResponse.getList() == null || orderResponse.getList().isEmpty()) {
                 log.error("No order found for order number: {}", orderNumber);
                 throw new RuntimeException("Order not found for order number: " + orderNumber);
             }
-            
+
             Order order = orderResponse.getList().get(0);
             log.info("Successfully fetched order with ID: {} for order number: {}",
                     order.getId(), orderNumber);
@@ -209,7 +210,7 @@ public class TaskCreationService {
 
     private Map<String, Object> extractAdditionalDetails(Order order, String itemId) {
         log.info("Extracting additional details from order ID: {}", order.getId());
-        
+
         try {
             Map<String, Object> details = new HashMap<>();
             if (itemId != null) {
@@ -218,7 +219,7 @@ public class TaskCreationService {
             } else {
                 log.info("No itemId found in order additional details");
             }
-            
+
             log.info("Extracted {} additional detail entries from order", details.size());
             return details;
         } catch (Exception e) {
@@ -230,20 +231,20 @@ public class TaskCreationService {
     private Map<String, Object> fetchCourtDetails(RequestInfo requestInfo, TaskManagement task, CourtCase courtCase) {
         String tenantId = task.getTenantId();
         String courtId = courtCase.getCourtId();
-        
+
         log.info("Fetching court details for court ID: {} in tenant: {}", courtId, tenantId);
-        
+
         try {
             Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(
                     requestInfo, tenantId, "common-masters", List.of("Court_Rooms")
             );
-            
-            if (mdmsData == null || !mdmsData.containsKey("common-masters") || 
+
+            if (mdmsData == null || !mdmsData.containsKey("common-masters") ||
                 !mdmsData.get("common-masters").containsKey("Court_Rooms")) {
                 log.warn("No court rooms master data found for tenant: {}", tenantId);
                 return new HashMap<>();
             }
-            
+
             JSONArray rooms = mdmsData.get("common-masters").get("Court_Rooms");
             log.info("Found {} court rooms in master data for tenant: {}", rooms.size(), tenantId);
             Map<String, Object> courtDetails = new HashMap<>();
@@ -256,13 +257,13 @@ public class TaskCreationService {
                     }
                 }
             }
-            
+
             if (courtDetails.isEmpty()) {
                 log.warn("No court room found with ID: {} in tenant: {}", courtId, tenantId);
             } else {
                 log.info("Found matching court room details for court ID: {}", courtId);
             }
-            
+
             return courtDetails;
         } catch (Exception e) {
             log.error("Error fetching court details for court ID: {} in tenant: {}", courtId, tenantId, e);
@@ -286,6 +287,7 @@ public class TaskCreationService {
         return CaseDetails.builder()
                 .caseTitle(courtCase.getCaseTitle())
                 .hearingDate(hearingDateEpoch)
+                .originalHearingDate(hearingDateEpoch)
                 .courtName((String) courtDetails.get("name"))
                 .courtAddress((String) courtDetails.get("address"))
                 .courtId((String) courtDetails.get("code"))
@@ -564,7 +566,7 @@ public class TaskCreationService {
                                 .isPendingCollection(channel != null &&
                                         RPAD.equalsIgnoreCase(channel.getChannelCode()) &&
                                         channel.getFeePaidDate() != null &&
-                                        !Boolean.TRUE.equals(courtCase.getIsLPRCase())
+                                        !LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus())
                                 )
                                 .build())
                         .build());
@@ -648,7 +650,7 @@ public class TaskCreationService {
         try {
             age = witnessDetails.getWitnessAge() != null ? Integer.valueOf(witnessDetails.getWitnessAge()) : null;
         } catch (NumberFormatException ex) {
-            log.error("Error formatting age: {}", ex.getMessage());
+            log.error("Error formatting age", ex);
         }
 
         Address address = mapToAddress(partyAddress.getAddressDetails());
@@ -938,32 +940,32 @@ public class TaskCreationService {
 
     private ComplainantDetails getComplainantDetails(CourtCase courtCase) {
         log.info("Extracting complainant details from case ID: {}", courtCase.getId());
-        
+
         try {
             ComplainantDetails complainantDetails = new ComplainantDetails();
             Optional<Party> primaryComplainant = courtCase.getLitigants().stream()
                     .filter(item -> COMPLAINANT_PRIMARY.equalsIgnoreCase(item.getPartyType()))
                     .findFirst();
-            
+
             if (primaryComplainant.isPresent()) {
                 String individualId = primaryComplainant.get().getIndividualId();
                 log.info("Found primary complainant with individual ID: {} in case: {}",
                         individualId, courtCase.getId());
-                
+
                 Map<String, Object> complainantDetailsFromCourtCase = getComplainantDetailsFromCourtCase(courtCase, individualId);
-                
+
                 Map<String, Object> complainantAddressFromIndividualDetail = getComplainantAddressFromComplainantDetails(complainantDetailsFromCourtCase);
                 String complainantName = getComplainantName(complainantDetailsFromCourtCase);
-                
+
                 complainantDetails.setAddress(complainantAddressFromIndividualDetail);
                 complainantDetails.setName(complainantName);
-                
+
                 log.info("Extracted complainant details - Name: {}, Address available: {}",
                         complainantName, complainantAddressFromIndividualDetail != null && !complainantAddressFromIndividualDetail.isEmpty());
             } else {
                 log.warn("No primary complainant found in case ID: {}", courtCase.getId());
             }
-            
+
             return complainantDetails;
         } catch (Exception e) {
             log.error("Error extracting complainant details from case ID: {}", courtCase.getId(), e);
@@ -974,29 +976,29 @@ public class TaskCreationService {
     public Map<String, Object> getComplainantDetailsFromCourtCase(CourtCase courtCase, String complainantIndividualId) {
         log.info("Extracting complainant details for individual ID: {} from case: {}",
                 complainantIndividualId, courtCase != null ? courtCase.getId() : "null");
-        
+
         try {
             if (courtCase == null) {
                 log.warn("Court case is null, returning empty complainant details");
                 return Collections.emptyMap();
             }
-            
+
             Object additional = courtCase.getAdditionalDetails();
             Map<?, ?> complainantDetailsObj = jsonUtil.getNestedValue(additional, List.of("complainantDetails"), Map.class);
-            
+
             if (complainantDetailsObj == null) {
                 log.warn("No complainantDetails found in case additional details for case: {}", courtCase.getId());
                 return Collections.emptyMap();
             }
-            
+
             List<?> formdataList = jsonUtil.getNestedValue(complainantDetailsObj, List.of("formdata"), List.class);
             if (formdataList == null || formdataList.isEmpty()) {
                 log.warn("No formdata found in complainantDetails for case: {}", courtCase.getId());
                 return Collections.emptyMap();
             }
-            
+
             log.info("Found {} formdata entries for complainant details", formdataList.size());
-            
+
             Map complainantDetails = formdataList.stream()
                     .filter(d -> {
                         Map<?, ?> data = jsonUtil.getNestedValue(d, List.of("data"), Map.class);
@@ -1006,17 +1008,17 @@ public class TaskCreationService {
                     .findFirst()
                     .map(d -> jsonUtil.getNestedValue(d, List.of("data"), Map.class))
                     .orElse(Collections.emptyMap());
-            
+
             if (complainantDetails.isEmpty()) {
-                log.warn("No matching complainant details found for individual ID: {} in case: {}", 
+                log.warn("No matching complainant details found for individual ID: {} in case: {}",
                         complainantIndividualId, courtCase.getId());
             } else {
                 log.info("Successfully found complainant details for individual ID: {}", complainantIndividualId);
             }
-            
+
             return complainantDetails;
         } catch (Exception e) {
-            log.error("Error extracting complainant details for individual ID: {} from case: {}", 
+            log.error("Error extracting complainant details for individual ID: {} from case: {}",
                     complainantIndividualId, courtCase != null ? courtCase.getId() : "null", e);
             return Collections.emptyMap();
         }
@@ -1049,36 +1051,36 @@ public class TaskCreationService {
 
     public String getComplainantName(Map<String, Object> complainantDetails) {
         log.info("Extracting complainant name from details");
-        
+
         try {
             if (complainantDetails == null || complainantDetails.isEmpty()) {
                 log.warn("Complainant details are null or empty, returning empty name");
                 return "";
             }
-            
+
             String firstName = jsonUtil.getNestedValue(complainantDetails, List.of("firstName"), String.class);
             String lastName = jsonUtil.getNestedValue(complainantDetails, List.of("lastName"), String.class);
             String partyName = ((firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "")).trim();
-            
+
             log.info("Extracted party name: {} (firstName: {}, lastName: {})", partyName, firstName, lastName);
-            
+
             Map<?, ?> complainantTypeObj = jsonUtil.getNestedValue(complainantDetails, List.of("complainantType"), Map.class);
             String complainantTypeCode = complainantTypeObj != null ? (String) complainantTypeObj.get("code") : null;
-            
+
             log.info("Complainant type code: {}", complainantTypeCode);
-            
+
             if (INDIVIDUAL.equalsIgnoreCase(complainantTypeCode)) {
                 log.info("Individual complainant, returning party name: {}", partyName);
                 return partyName;
             }
-            
+
             String companyName = jsonUtil.getNestedValue(complainantDetails, List.of("complainantCompanyName"), String.class);
             if (companyName != null && !companyName.isEmpty()) {
                 String fullName = String.format("%s (Represented By %s)", companyName, partyName);
                 log.info("Company complainant, returning full name: {}", fullName);
                 return fullName;
             }
-            
+
             log.warn("Unable to determine complainant name from details");
             return "";
         } catch (Exception e) {
