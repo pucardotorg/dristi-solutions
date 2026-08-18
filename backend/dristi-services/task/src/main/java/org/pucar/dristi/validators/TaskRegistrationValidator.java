@@ -12,8 +12,10 @@ import org.pucar.dristi.util.OrderUtil;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -131,6 +133,11 @@ public class TaskRegistrationValidator {
         AdvocateDetails advocateDetails = joinCaseTaskRequest.getAdvocateDetails();
         List<ReplacementDetails> replacementDetailsList = joinCaseTaskRequest.getReplacementDetails();
 
+        if (CollectionUtils.isEmpty(replacementDetailsList)) {
+            log.info("operation=isValidJoinCasePendingTask, status=SUCCESS, no replacement details to validate, task request: {}", body);
+            return true;
+        }
+
         for (ReplacementDetails replacement : replacementDetailsList) {
             // Return false immediately if any replacement is invalid
             if (!isValidReplacement(replacement, courtCase, advocateDetails)) {
@@ -145,7 +152,7 @@ public class TaskRegistrationValidator {
     // The rest of the methods remain the same
     private CourtCase getCourtCase(TaskRequest body) {
         List<CourtCase> cases = caseUtil.getCaseDetails(body);
-        if (cases.isEmpty()) {
+        if (CollectionUtils.isEmpty(cases)) {
             throw new CustomException(UPDATE_TASK_ERR, "case not found");
         }
         return cases.get(0);
@@ -154,7 +161,7 @@ public class TaskRegistrationValidator {
     private boolean isValidReplacement(ReplacementDetails replacement, CourtCase courtCase, AdvocateDetails advocateDetails) {
         String litigantId = replacement.getLitigantDetails().getIndividualId();
 
-        if (replacement.getIsLitigantPip()) {
+        if (Boolean.TRUE.equals(replacement.getIsLitigantPip())) {
             return isValidPipLitigantReplacement(litigantId, courtCase);
         } else {
             return isValidAdvocateReplacement(replacement, courtCase, advocateDetails);
@@ -174,23 +181,19 @@ public class TaskRegistrationValidator {
     }
 
     private Party findActiveLitigantById(String litigantId, List<Party> parties) {
-        return parties.stream()
-                .filter(party -> party.getIndividualId().equalsIgnoreCase(litigantId) && party.getIsActive())
+        return emptyIfNull(parties).stream()
+                .filter(party -> isActivePartyOf(party, litigantId))
                 .findFirst()
                 .orElse(null);
     }
 
     private boolean isLitigantStillSelfRepresented(String litigantId, List<AdvocateMapping> advocateMappings) {
         log.info("operation=isLitigantStillSelfRepresented, status=IN_PROGRESS, litigantId , advocateMappings: {} , {}",litigantId, advocateMappings);
-        for (AdvocateMapping mapping : advocateMappings) {
-            Party litigantParty = mapping.getRepresenting().stream()
-                    .filter(party -> party.getIndividualId().equalsIgnoreCase(litigantId) && party.getIsActive())
-                    .findFirst()
-                    .orElse(null);
-
+        // A case with no representatives comes back as null from case service, meaning nobody is represented
+        for (AdvocateMapping mapping : emptyIfNull(advocateMappings)) {
             // If litigant is actively represented by an advocate, they're not self-represented
-            if (litigantParty != null) {
-                log.info("operation=isLitigantStillSelfRepresented, status=FAILURE, litigantId , advocateMappings: {} , {}, {}",litigantId, advocateMappings, litigantParty);
+            if (isRepresentingActiveLitigant(mapping, litigantId)) {
+                log.info("operation=isLitigantStillSelfRepresented, status=FAILURE, litigantId , advocateMappings: {} , {}, {}",litigantId, advocateMappings, mapping);
                 return false;
             }
         }
@@ -212,7 +215,7 @@ public class TaskRegistrationValidator {
         }
 
         // Check if the advocate is representing the specified litigant and the litigant is active
-        if (!isAdvocateRepresentingActiveLitigant(advocateMapping, litigantId)) {
+        if (!isRepresentingActiveLitigant(advocateMapping, litigantId)) {
             log.info("operation=isValidAdvocateReplacement, status=FAILURE, replacement details , courtCase, advocateMapping: {} , {}, {}",replacement,courtCase, advocateMapping);
             return false;
         }
@@ -222,32 +225,39 @@ public class TaskRegistrationValidator {
     }
 
     private AdvocateMapping findActiveAdvocateById(String advocateId, List<AdvocateMapping> advocateMappings) {
-        return advocateMappings.stream()
-                .filter(mapping -> mapping.getAdvocateId().equalsIgnoreCase(advocateId) && mapping.getIsActive())
+        return emptyIfNull(advocateMappings).stream()
+                .filter(mapping -> isSameAdvocate(advocateId, mapping) && Boolean.TRUE.equals(mapping.getIsActive()))
                 .findFirst()
                 .orElse(null);
     }
 
-    private boolean isAdvocateRepresentingActiveLitigant(AdvocateMapping advocateMapping, String litigantId) {
-        return advocateMapping.getRepresenting().stream()
-                .anyMatch(party -> party.getIndividualId().equalsIgnoreCase(litigantId) && party.getIsActive());
-    }
-
     private boolean isAdvocateAlreadyRepresentingLitigant(String advocateId, String litigantId, List<AdvocateMapping> advocateMappings) {
-        for (AdvocateMapping mapping : advocateMappings) {
-            if (mapping.getAdvocateId().equalsIgnoreCase(advocateId)) {
-                Party litigantParty = mapping.getRepresenting().stream()
-                        .filter(party -> party.getIndividualId().equalsIgnoreCase(litigantId) && party.getIsActive())
-                        .findFirst()
-                        .orElse(null);
-
-                if (litigantParty != null) {
-                    log.info("operation=isAdvocateAlreadyRepresentingLitigant, status=SUCCESS, advocateId, litigantId , {} , {}",advocateId, litigantId);
-                    return true;
-                }
+        for (AdvocateMapping mapping : emptyIfNull(advocateMappings)) {
+            if (isSameAdvocate(advocateId, mapping) && isRepresentingActiveLitigant(mapping, litigantId)) {
+                log.info("operation=isAdvocateAlreadyRepresentingLitigant, status=SUCCESS, advocateId, litigantId , {} , {}",advocateId, litigantId);
+                return true;
             }
         }
         log.info("operation=isAdvocateAlreadyRepresentingLitigant, status=FAILURE, advocateId, litigantId , {} , {}",advocateId, litigantId);
         return false;
+    }
+
+    private boolean isRepresentingActiveLitigant(AdvocateMapping advocateMapping, String litigantId) {
+        return emptyIfNull(advocateMapping.getRepresenting()).stream()
+                .anyMatch(party -> isActivePartyOf(party, litigantId));
+    }
+
+    private boolean isActivePartyOf(Party party, String litigantId) {
+        return litigantId != null
+                && litigantId.equalsIgnoreCase(party.getIndividualId())
+                && Boolean.TRUE.equals(party.getIsActive());
+    }
+
+    private boolean isSameAdvocate(String advocateId, AdvocateMapping mapping) {
+        return advocateId != null && advocateId.equalsIgnoreCase(mapping.getAdvocateId());
+    }
+
+    private <T> List<T> emptyIfNull(List<T> list) {
+        return list == null ? Collections.emptyList() : list;
     }
 }
