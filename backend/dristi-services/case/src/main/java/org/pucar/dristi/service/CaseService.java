@@ -5431,11 +5431,17 @@ public class CaseService {
 
             log.info("operation=updateJoinCaseApproved, status=IN_PROGRESS, joinCaseRequest, advocateUuid : {}, {}", joinCaseRequest, advocateUuid);
 
+            // a case with no advocate mapping yet (every litigant in person) comes back with
+            // representatives as null, so normalise it here before anyone reads or adds to it
             List<AdvocateMapping> advocateMappings = courtCase.getRepresentatives();
+            if (advocateMappings == null) {
+                advocateMappings = new ArrayList<>();
+                courtCase.setRepresentatives(advocateMappings);
+            }
 
             // checking weather advocate is present in case or not
             AdvocateMapping advocateTryingToReplace = advocateMappings.stream().filter(advocateMapping ->
-                    advocateMapping.getAdvocateId().equalsIgnoreCase(advocateUuid)).findFirst().orElse(null);
+                    advocateUuid != null && advocateUuid.equalsIgnoreCase(advocateMapping.getAdvocateId())).findFirst().orElse(null);
 
             AuditDetails auditDetails = enrichAuditDetails(requestInfo);
 
@@ -5450,18 +5456,19 @@ public class CaseService {
             List<ReplacementDetails> replacementDetailsList = joinCaseRequest.getReplacementDetails();
             AdvocateDetails advocateDetails = joinCaseRequest.getAdvocateDetails();
 
-            for (ReplacementDetails replacementDetails : replacementDetailsList) {
+            for (ReplacementDetails replacementDetails : replacementDetailsList == null ? new ArrayList<ReplacementDetails>() : replacementDetailsList) {
 
                 Party party = enrichParty(replacementDetails, courtCase, auditDetails);
                 LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
                 String partyType = litigantDetails.getPartyType();
                 ReplacementAdvocateDetails advocateDetailsToBeReplaced = new ReplacementAdvocateDetails();
                 String advocateUuidToBeReplaced = null;
-                if (!replacementDetails.getIsLitigantPip()) {
+                boolean isLitigantPip = Boolean.TRUE.equals(replacementDetails.getIsLitigantPip());
+                if (!isLitigantPip) {
                     advocateDetailsToBeReplaced = replacementDetails.getAdvocateDetails();
                     advocateUuidToBeReplaced = advocateDetailsToBeReplaced.getAdvocateUuid();
                 }
-                if (replacementDetails.getIsLitigantPip()) {
+                if (isLitigantPip) {
                     List<Party> litigantParties = courtCase.getLitigants();
                     if (advocateTryingToReplace == null) {
                         // adding the advocate in representatives list as he is new joining the case
@@ -5473,8 +5480,9 @@ public class CaseService {
                                 advocateTryingToReplace, courtCaseObj
                         );
                     }
-                    for (Party litigantParty : litigantParties) {
-                        if (litigantParty.getIndividualId().equalsIgnoreCase(litigantDetails.getIndividualId())) {
+                    for (Party litigantParty : litigantParties == null ? new ArrayList<Party>() : litigantParties) {
+                        if (litigantDetails.getIndividualId() != null
+                                && litigantDetails.getIndividualId().equalsIgnoreCase(litigantParty.getIndividualId())) {
                             // inactive the litigant from pip as advocate going to represent him
                             litigantParty.setPartyInPerson(false);
                         }
@@ -5490,9 +5498,7 @@ public class CaseService {
                                 advocateTryingToReplace, courtCaseObj
                         );
                     }
-                    if (!replacementDetails.getIsLitigantPip()) {
-                        inactivateOldAdvocate(replacementDetails, courtCase);
-                    }
+                    inactivateOldAdvocate(replacementDetails, courtCase);
                 }
 
                 // Enrich advocate office case members for the joining advocate
@@ -5559,9 +5565,13 @@ public class CaseService {
 
     private boolean validateAdvocateAlreadyRepresenting(AdvocateMapping advocateMapping, String
             litigantIndividualId) {
+        if (advocateMapping.getRepresenting() == null) {
+            return false;
+        }
         Party party = advocateMapping.getRepresenting().stream()
-                .filter(representing -> representing.getIndividualId().equalsIgnoreCase(litigantIndividualId)).findFirst().orElse(null);
-        return party != null && party.getIsActive();
+                .filter(representing -> litigantIndividualId != null
+                        && litigantIndividualId.equalsIgnoreCase(representing.getIndividualId())).findFirst().orElse(null);
+        return party != null && Boolean.TRUE.equals(party.getIsActive());
     }
 
     private void inactivateOldAdvocate(ReplacementDetails replacementDetails, CourtCase courtCase) {
@@ -5570,15 +5580,23 @@ public class CaseService {
         String litigantId = replacementDetails.getLitigantDetails().getIndividualId();
         //  remove the litigant in old advocate's representing list as another advocate is trying to replace
 
+        if (courtCase.getRepresentatives() == null) {
+            courtCase.setRepresentatives(new ArrayList<>());
+        }
+
         courtCase.getRepresentatives().stream()
-                .filter(mapping -> mapping.getAdvocateId().equalsIgnoreCase(advocateId))
+                .filter(mapping -> advocateId != null && advocateId.equalsIgnoreCase(mapping.getAdvocateId()))
                 .findFirst()
                 .ifPresent(mapping -> {
+                    if (mapping.getRepresenting() == null) {
+                        mapping.setRepresenting(new ArrayList<>());
+                    }
                     mapping.getRepresenting().stream()
-                            .filter(representing -> representing.getIndividualId().equalsIgnoreCase(litigantId))
+                            .filter(representing -> litigantId != null
+                                    && litigantId.equalsIgnoreCase(representing.getIndividualId()))
                             .forEach(representing -> representing.setIsActive(false)); // Use forEach to modify elements
 
-                    mapping.setIsActive(mapping.getRepresenting().stream().anyMatch(Party::getIsActive));
+                    mapping.setIsActive(mapping.getRepresenting().stream().anyMatch(party -> Boolean.TRUE.equals(party.getIsActive())));
                 });
         producer.push(config.getUpdateRepresentativeJoinCaseTopic(), courtCase);
 
@@ -5839,6 +5857,9 @@ public class CaseService {
         advocateMappingList.add(advocateMapping);
 
         courtCaseObj.setRepresentatives(advocateMappingList);
+        if (courtCase.getRepresentatives() == null) {
+            courtCase.setRepresentatives(new ArrayList<>());
+        }
         courtCase.getRepresentatives().add(advocateMapping);
         return advocateMapping;
     }
@@ -5847,14 +5868,18 @@ public class CaseService {
                                                List<AdvocateMapping> advocateMappings, AdvocateMapping advocateTryingToReplace,
                                                CourtCase courtCaseObj) {
 
-        for (AdvocateMapping advocateMapping : advocateMappings) {
-            if (advocateMapping.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
+        for (AdvocateMapping advocateMapping : advocateMappings == null ? new ArrayList<AdvocateMapping>() : advocateMappings) {
+            if (advocateUuid != null && advocateUuid.equalsIgnoreCase(advocateMapping.getAdvocateId())) {
 
                 boolean isAdvocateAlreadyRepresenting = validateAdvocateAlreadyRepresenting(advocateTryingToReplace, party.getIndividualId());
 
                 if (!isAdvocateAlreadyRepresenting) {
 
                     // Add the party to the representing list of the specific advocate mapping
+                    // representing is null when the mapping has no representing rows
+                    if (advocateMapping.getRepresenting() == null) {
+                        advocateMapping.setRepresenting(new ArrayList<>());
+                    }
                     advocateMapping.getRepresenting().add(party);
 
                     // Update the representatives in the original court case
@@ -5881,11 +5906,13 @@ public class CaseService {
             pendingAdvocateRequest) {
         log.info("operation=updateStatusOfAdvocate, status=IN_PROGRESS,courtCase advocateUuid,pendingAdvocateRequest : {}, {} ,{}", courtCase, advocateUuid,
                 pendingAdvocateRequest);
+        // representatives is null for a case that has no advocate mapping yet, and this is also
+        // reached from the reject path where nothing has normalised it
         List<AdvocateMapping> advocateMappings = courtCase.getRepresentatives();
         List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
 
-        boolean hasMapping = advocateMappings.stream()
-                .anyMatch(mapping -> mapping.getAdvocateId().equalsIgnoreCase(advocateUuid));
+        boolean hasMapping = advocateMappings != null && advocateMappings.stream()
+                .anyMatch(mapping -> advocateUuid != null && advocateUuid.equalsIgnoreCase(mapping.getAdvocateId()));
 
 
         if (hasMapping && pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
