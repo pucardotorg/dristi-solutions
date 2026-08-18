@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getUserDetails, setCitizenDetail } from "../../../hooks/useGetAccessToken";
 import { getFileByFileStore } from "../../../Utils";
+import { markPasswordPromptPending } from "../../../hooks/useSetPasswordPrompt";
 
 const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -43,6 +44,10 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
   const onSubmit = async () => {
     setIsDisabled(true);
     setIsLoading(true);
+    // Submitting this screen creates the user. A litigant is active immediately, an advocate /
+    // advocate clerk still awaits approval - either way the user is prompted to set a password on
+    // the screen they are taken to next (registration success, approval pending or home).
+    markPasswordPromptPending();
     const userType = params?.userType;
     const userTypeSelcted = params?.userType?.clientDetails?.selectUserType?.code;
     const Individual = params?.IndividualPayload
