@@ -1,0 +1,254 @@
+openapi: 3.0.0
+
+info:
+  title: Task Management Service API
+  description: >
+    DIGIT Task Management Service responsible for creation, assignment,
+    tracking, workflow transitions and reporting of tasks.
+  version: 1.0.0
+
+servers:
+  - url: /task-services
+    description: Task Service Base Path
+
+tags:
+  - name: Tasks
+  - name: Task Assignment
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /v1/_create:
+    post:
+      tags: [Tasks]
+      summary: Create task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+  /v1/_update:
+    post:
+      tags: [Tasks]
+      summary: Update task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+  /v1/_search:
+    post:
+      tags: [Tasks]
+      summary: Search tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskSearchRequest'
+      responses:
+        '200':
+          description: Task search result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskSearchResponse'
+
+  /v1/_assign:
+    post:
+      tags: [Task Assignment]
+      summary: Assign tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskAssignmentRequest'
+      responses:
+        '202':
+          description: Assignment accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAssignmentResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    TaskRequest:
+      type: object
+      required: [requestInfo, task]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        task:
+          $ref: '#/components/schemas/Task'
+
+    Task:
+      type: object
+      required: [tenantId, title, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+
+        taskNumber:
+          type: string
+
+        tenantId:
+          type: string
+
+        title:
+          type: string
+
+        description:
+          type: string
+
+        status:
+          type: string
+          enum: [PENDING, IN_PROGRESS, COMPLETED, CANCELLED]
+
+        priority:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+
+        assignee:
+          type: string
+          format: uuid
+
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+
+        additionalDetails:
+          type: object
+
+        auditDetails:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
+
+    Workflow:
+      type: object
+      properties:
+        action:
+          type: string
+        comments:
+          type: string
+        assignees:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    TaskSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          $ref: '#/components/schemas/TaskSearchCriteria'
+        pagination:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination"
+
+    TaskSearchCriteria:
+      type: object
+      required: [tenantId]
+      properties:
+        tenantId:
+          type: string
+        taskNumber:
+          type: string
+        courtId:
+          type: string
+        status:
+          type: string
+        assignee:
+          type: string
+          format: uuid
+
+    TaskResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        task:
+          $ref: '#/components/schemas/Task'
+
+    TaskSearchResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        totalCount:
+          type: integer
+          description: Total number of records matching search criteria
+
+    TaskAssignmentRequest:
+      type: object
+      required: [requestInfo, tenantId, taskIds, assignee]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        tenantId:
+          type: string
+        taskIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        assignee:
+          type: string
+          format: uuid
+        comment:
+          type: string
+
+    TaskAssignmentResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        success:
+          type: array
+          items:
+            type: string
+            format: uuid
+        failed:
+          type: array
+          items:
+            type: object
+            properties:
+              taskId:
+                type: string
+                format: uuid
+              errorMessage:
+                type: string

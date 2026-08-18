@@ -1,0 +1,110 @@
+[
+  {
+    "id": "cb913afc-b145-4848-a395-9faef45444e8",
+    "tenantId": "kl",
+    "schemaCode": "case.CaseSecondaryStage",
+    "uniqueIdentifier": "8",
+    "data": {
+      "id": "8",
+      "substage": "Proclamation & Attachment",
+      "orderType": "ATTACHMENT"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1775623989479,
+      "lastModifiedTime": 1775623989479
+    }
+  },
+  {
+    "id": "7df1f326-1d42-4577-a05f-066f6439fa35",
+    "tenantId": "kl",
+    "schemaCode": "case.CaseSecondaryStage",
+    "uniqueIdentifier": "5",
+    "data": {
+      "id": "5",
+      "substage": "Proclamation & Attachment",
+      "orderType": "PROCLAMATION"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1775565195491,
+      "lastModifiedTime": 1775624007475
+    }
+  },
+  {
+    "id": "c5ed9ff8-6657-479f-8f30-57c52a285c85",
+    "tenantId": "kl",
+    "schemaCode": "case.CaseSecondaryStage",
+    "uniqueIdentifier": "4",
+    "data": {
+      "id": "4",
+      "substage": "Warrant",
+      "orderType": "WARRANT"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1775565169644,
+      "lastModifiedTime": 1775623962289
+    }
+  },
+  {
+    "id": "d10d435e-ec64-45b7-bf9c-fd2fe51c9814",
+    "tenantId": "kl",
+    "schemaCode": "case.CaseSecondaryStage",
+    "uniqueIdentifier": "3",
+    "data": {
+      "id": "3",
+      "substage": "Summons",
+      "orderType": "SUMMONS"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1775565163065,
+      "lastModifiedTime": 1775623932284
+    }
+  },
+  {
+    "id": "dd4792ec-0136-4559-81e6-c1242f550f6c",
+    "tenantId": "kl",
+    "schemaCode": "case.CaseSecondaryStage",
+    "uniqueIdentifier": "2",
+    "data": {
+      "id": "2",
+      "substage": "Notice",
+      "orderType": "NOTICE"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1775565155970,
+      "lastModifiedTime": 1775623889470
+    }
+  },
+  {
+    "id": "e2c56c50-eb74-4b05-8b20-5b361e0c8384",
+    "tenantId": "kl",
+    "schemaCode": "case.CaseSecondaryStage",
+    "uniqueIdentifier": "1",
+    "data": {
+      "id": "1",
+      "substage": "Delay Condonation",
+      "orderType": "DELAY_CONDONATION"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1775565142100,
+      "lastModifiedTime": 1775623859928
+    }
+  }
+]

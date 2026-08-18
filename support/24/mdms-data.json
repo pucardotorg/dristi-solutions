@@ -1,0 +1,21 @@
+[
+  {
+    "moduleName": "Order",
+    "masterName": "OrderType",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "Order.OrderType",
+        "uniqueIdentifier": "42",
+        "data": {
+          "id": 42,
+          "code": "APPROVAL_REJECTION_ADD_WITNESS",
+          "type": "APPROVAL_REJECTION_ADD_WITNESS",
+          "isactive": true
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

@@ -1,5 +1,4 @@
 import { Link, useHistory } from "react-router-dom";
-import _ from "lodash";
 
 //create functions here based on module name set in mdms(eg->SearchProjectConfig)
 //how to call these -> Digit?.Customizations?.[masterName]?.[moduleName]
@@ -60,7 +59,6 @@ export const UICustomizations = {
       //     }, {});
 
       //   data.body.Individual = { ...Individual };
-      console.log(data, "data");
       return data;
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
@@ -120,7 +118,7 @@ export const UICustomizations = {
       min: new Date().toISOString().split("T")[0],
     };
   },
-  
+
   maxTodayDateValidation: () => {
     return {
       max: new Date().toISOString().split("T")[0],
@@ -143,5 +141,24 @@ export const UICustomizations = {
     return {
       pattern: /^[a-zA-Z0-9 ]+$/i,
     };
+  },
+
+  patternValidation: (key) => {
+    switch (key) {
+      case "contact":
+        return /^[6-9]\d{9}$/;
+      case "email":
+        return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      case "userName":
+        return /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i;
+      case "debtNature":
+        return /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,100}$/i;
+      case "address":
+        return /^[^\$\"<>?\\\\~`!@$%^()={}\[\]*:;“”‘’]{2,256}$/i;
+      case "nonNumericString":
+        return /^[^0-9]{1,}$/i;
+      default:
+        return;
+    }
   },
 };

@@ -1,0 +1,398 @@
+openapi: 3.0.0
+
+info:
+  title: Case Management Service API
+  description: |
+    DIGIT Case Management Service responsible for retrieval of complete case files,
+    grouping of related cases and generation of case bundles.
+  version: 1.0.0
+
+servers:
+  - url: /case-management-services
+    description: Case Management Service Base Path
+
+tags:
+  - name: Case Management
+  - name: Case Grouping
+  - name: Case Bundles
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /v1/case/files/_search:
+    post:
+      tags: [Case Management]
+      summary: Retrieve case files
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseFileSearchRequest'
+            example:
+              requestInfo:
+                apiId: Dristi
+                authToken: jwt-token
+                msgId: 1730970507148|en_IN
+              criteria:
+                filingNumber: KL-000105-2024
+                tenantId: kl
+      responses:
+        '200':
+          description: Case files retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseFileSearchResponse'
+
+  /v1/case/groups/_create:
+    post:
+      tags: [Case Grouping]
+      summary: Create case group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseGroupRequest'
+      responses:
+        '201':
+          description: Case group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseGroupResponse'
+
+  /v1/case/groups/{groupId}/_delete:
+    post:
+      tags: [Case Grouping]
+      summary: Delete case group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseGroupDeleteRequest'
+            example:
+              requestInfo:
+                apiId: Dristi
+                authToken: jwt-token
+      responses:
+        '200':
+          description: Case group deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseGroupDeleteResponse'
+
+  /v1/case/bundles/_create:
+    post:
+      tags: [Case Bundles]
+      summary: Generate case bundle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseBundleRequest'
+      responses:
+        '202':
+          description: Case bundle generation initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseBundleResponse'
+
+  /v1/case/bundles/_bulk:
+    post:
+      tags: [Case Bundles]
+      summary: Generate case bundles in bulk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkCaseBundleRequest'
+      responses:
+        '202':
+          description: Bulk case bundle generation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkCaseBundleResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    CaseFileSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          $ref: '#/components/schemas/CaseSearchCriteria'
+
+    CaseSearchCriteria:
+      type: object
+      anyOf:
+        - required: [caseId]
+        - required: [filingNumber]
+        - required: [caseNumber]
+      properties:
+        caseId:
+          type: string
+          format: uuid
+        filingNumber:
+          type: string
+        caseNumber:
+          type: string
+        tenantId:
+          type: string
+
+    CaseFileSearchResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        caseFiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseFile'
+
+    CaseFile:
+      type: object
+      properties:
+        case:
+          $ref: '#/components/schemas/CourtCase'
+        hearings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hearing'
+        witnesses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Witness'
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderTasks'
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Application'
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artifact'
+
+    CourtCase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        caseNumber:
+          type: string
+        filingNumber:
+          type: string
+        status:
+          type: string
+
+    Hearing:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        hearingNumber:
+          type: string
+
+    Witness:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    OrderTasks:
+      type: object
+      properties:
+        order:
+          $ref: '#/components/schemas/Order'
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderNumber:
+          type: string
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskType:
+          type: string
+        status:
+          type: string
+
+    Application:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        applicationNumber:
+          type: string
+
+    Artifact:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    CaseGroupRequest:
+      type: object
+      required: [requestInfo, caseGroup]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        caseGroup:
+          $ref: '#/components/schemas/CaseGroup'
+
+    CaseGroupDeleteRequest:
+      type: object
+      required: [requestInfo]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+
+    CaseGroupDeleteResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        success:
+          type: boolean
+          example: true
+
+    CaseGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        caseIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        groupName:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+
+    CaseGroupResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        caseGroup:
+          $ref: '#/components/schemas/CaseGroup'
+
+    CaseBundleRequest:
+      type: object
+      required: [requestInfo, caseId]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        caseId:
+          type: string
+          format: uuid
+        includeDocuments:
+          type: boolean
+
+    CaseBundleResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        bundleId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        downloadUrl:
+          type: string
+          format: uri
+
+    BulkCaseBundleRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          type: object
+          properties:
+            caseType:
+              type: string
+            status:
+              type: array
+              items:
+                type: string
+            fromDate:
+              type: string
+              format: date
+            toDate:
+              type: string
+              format: date
+
+    BulkCaseBundleResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        bulkRequestId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        totalCases:
+          type: integer
+        processedCases:
+          type: integer
+        failedCases:
+          type: integer

@@ -60,17 +60,13 @@ const EndHearing = ({
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
 
-  const handleNavigate = (path) => {
-    const contextPath = window?.contextPath || "";
-    history.push(`/${contextPath}${path}`);
-  };
 
   const endHearing = async (updatedTranscriptText) => {
     try {
       let updatedHearing = structuredClone(hearing);
-      if(updatedHearing?.transcript){
+      if (updatedHearing?.transcript) {
         updatedHearing.transcript[0] = updatedTranscriptText;
-      }else{
+      } else {
         updatedHearing = {
           ...updatedHearing,
           transcript: [updatedTranscriptText],

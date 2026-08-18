@@ -1,0 +1,16 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "payment.breakUpToHeadMapping",
+  "uniqueIdentifier": "E_POST",
+  "data": {
+    "headCodes": [
+      {
+        // TODO : need to give proper headId once provided by program team
+        "headId": "00027",
+        "percentage": 100
+      }
+    ],
+    "breakUpCode": "E_POST"
+  },
+  "isActive": true
+}

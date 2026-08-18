@@ -1,0 +1,85 @@
+[
+  {
+    "moduleName": "Order",
+    "masterName": "OrderType",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "id": "04e1ff2f-fb05-4c27-b50b-d5dfc7ce5251",
+        "tenantId": "kl",
+        "schemaCode": "Order.OrderType",
+        "uniqueIdentifier": "48",
+        "data": {
+          "id": 48,
+          "code": "WITNESS_BATTA",
+          "type": "WITNESS_BATTA",
+          "isactive": true
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1756115814607,
+          "lastModifiedTime": 1756115814607
+        }
+      },
+      {
+        "id": "3d8ffab1-5709-43f0-9474-a09660a4f219",
+        "tenantId": "kl",
+        "schemaCode": "Order.OrderType",
+        "uniqueIdentifier": "47",
+        "data": {
+          "id": 47,
+          "code": "COST",
+          "type": "COST",
+          "isactive": true
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1756115804168,
+          "lastModifiedTime": 1756115804168
+        }
+      },
+      {
+        "id": "ec25eefa-5541-422f-b66d-0d7d661770a6",
+        "tenantId": "kl",
+        "schemaCode": "Order.OrderType",
+        "uniqueIdentifier": "46",
+        "data": {
+          "id": 46,
+          "code": "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER",
+          "type": "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER",
+          "isactive": true
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "5eea71ba-9e58-4a55-8be5-5345f235437d",
+          "lastModifiedBy": "5eea71ba-9e58-4a55-8be5-5345f235437d",
+          "createdTime": 1755759722800,
+          "lastModifiedTime": 1755759722800
+        }
+      },
+      {
+        "id": "ed8168bc-2059-4e59-8bd7-0dbf453a1616",
+        "tenantId": "kl",
+        "schemaCode": "Order.OrderType",
+        "uniqueIdentifier": "45",
+        "data": {
+          "id": 45,
+          "code": "MOVE_CASE_TO_LONG_PENDING_REGISTER",
+          "type": "MOVE_CASE_TO_LONG_PENDING_REGISTER",
+          "isactive": true
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "5eea71ba-9e58-4a55-8be5-5345f235437d",
+          "lastModifiedBy": "5eea71ba-9e58-4a55-8be5-5345f235437d",
+          "createdTime": 1755759689874,
+          "lastModifiedTime": 1755759707688
+        }
+      }
+    ]
+  }
+]

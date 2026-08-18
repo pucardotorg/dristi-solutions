@@ -1,0 +1,77 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "e-filling",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "case.e-filling",
+        "uniqueIdentifier": "1",
+        "data": {
+          "id": 1,
+          "courtFee": 12.5,
+          "complaintFee": {
+            "0-50000": {
+              "fee": 250,
+              "max": 50000,
+              "min": 0
+            },
+            "50000-200000": {
+              "fee": 500,
+              "max": 200000,
+              "min": 50000
+            },
+            "200000-500000": {
+              "fee": 750,
+              "max": 500000,
+              "min": 200000
+            },
+            "500000-1000000": {
+              "fee": 1000,
+              "max": 1000000,
+              "min": 500000
+            },
+            "1000000-2000000": {
+              "fee": 2000,
+              "max": 2000000,
+              "min": 1000000
+            },
+            "2000000-5000000": {
+              "fee": 5000,
+              "max": 5000000,
+              "min": 2000000
+            },
+            "5000000-50000000000": {
+              "fee": 10000,
+              "max": 50000000000,
+              "min": 5000000
+            }
+          },
+          "legalBasicFund": 12.5,
+          "noOfAdvocateFees": {
+            "1": {
+              "max": 1,
+              "min": 1,
+              "advocateFee": 25
+            },
+            "2": {
+              "max": 2,
+              "min": 2,
+              "advocateFee": 50
+            },
+            "3-5000000000000": {
+              "max": 500000000,
+              "min": 3,
+              "advocateFee": 75
+            }
+          },
+          "delayCondonationFee": 20,
+          "delayCondonationPeriod": 2629800000,
+          "advocateClerkWelfareFund": 12
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

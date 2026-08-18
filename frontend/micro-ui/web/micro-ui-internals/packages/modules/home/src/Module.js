@@ -11,6 +11,9 @@ export const HomeModule = ({ stateCode, userType, tenants }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const moduleCode = ["home", "common", "workflow", "orders"];
   const language = Digit.StoreData.getCurrentLanguage();
+  const urlParams = new URLSearchParams(window.location.search);
+  const result = urlParams.get("result");
+  const fileStoreId = urlParams.get("filestoreId");
   const { isLoading, data: store } = Digit.Services.useStore({
     stateCode,
     moduleCode,
@@ -20,7 +23,7 @@ export const HomeModule = ({ stateCode, userType, tenants }) => {
   if (isLoading) {
     return <Loader />;
   }
-  return <EmployeeApp path={path} stateCode={stateCode} userType={userType} tenants={tenants} />;
+  return <EmployeeApp path={path} stateCode={stateCode} userType={userType} tenants={tenants} result={result} fileStoreId={fileStoreId} />;
 };
 
 const componentsToRegister = {

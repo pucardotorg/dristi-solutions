@@ -1,6 +1,5 @@
 const witnessFormConfig = [
   {
-    head: "CS_WITNESS_NAME",
     body: [
       {
         type: "text",
@@ -12,35 +11,48 @@ const witnessFormConfig = [
       {
         type: "text",
         label: "MIDDLE_NAME",
-        labelChildren: "optional",
-        isMandatory: false,
         populators: {
           name: "middleName",
           validation: {
+            title: "",
             pattern: {
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              value: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,100}$/i,
+              masterName: "commonUiConfig",
+              moduleName: "patternValidation",
+              patternType: "userName",
             },
-            title: "",
             patternType: "Name",
           },
         },
+        isMandatory: false,
+        labelChildren: "optional",
       },
       {
         type: "text",
         label: "LAST_NAME",
-        labelChildren: "optional",
-        isMandatory: false,
         populators: {
           name: "lastName",
           validation: {
+            title: "",
             pattern: {
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              value: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,100}$/i,
+              masterName: "commonUiConfig",
+              moduleName: "patternValidation",
+              patternType: "userName",
             },
-            title: "",
             patternType: "Name",
           },
+        },
+        isMandatory: false,
+        labelChildren: "optional",
+      },
+      {
+        key: "OrSeparator",
+        type: "component",
+        sublabel: "OR",
+        component: "OrSeparator",
+        populators: {
+          inputs: [],
         },
       },
       {
@@ -50,119 +62,141 @@ const witnessFormConfig = [
           name: "witnessDesignation",
         },
       },
+      {
+        type: "text",
+        label: "AGE",
+        populators: {
+          name: "witnessAge",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          validation: {
+            maxLength: 3,
+            patternType: "Number",
+          },
+        },
+        isMandatory: false,
+        labelChildren: "optional",
+      },
     ],
+    head: "WITNESS_BASIC_DETAILS",
   },
   {
+    body: [
+      {
+        key: "phonenumbers",
+        type: "component",
+        label: "CORE_COMMON_PHONE_NUMBER",
+        component: "SelectBulkInputs",
+        populators: {
+          inputs: [
+            {
+              name: "mobileNumber",
+              type: "text",
+              error: "ERR_HRMS_INVALID_MOB_NO",
+              label: "CORE_COMMON_PHONE_NUMBER",
+              className: "mobile-number",
+              validation: {
+                pattern: {
+                  masterName: "commonUiConfig",
+                  moduleName: "patternValidation",
+                  patternType: "contact",
+                },
+                isNumber: true,
+                required: true,
+                maxLength: 10,
+                minLength: 10,
+              },
+              componentInFront: "+91",
+            },
+          ],
+          validation: {},
+        },
+        withoutLabel: true,
+      },
+    ],
     head: "CS_WITNESS_CONTACT_DETAILS",
     subHead: "CS_WITNESS_NOTE",
-    body: [
-      {
-        type: "component",
-        component: "SelectBulkInputs",
-        key: "phonenumbers",
-        withoutLabel: true,
-        populators: {
-          inputs: [
-            {
-              label: "CORE_COMMON_PHONE_NUMBER",
-              type: "text",
-              name: "mobileNumber",
-              error: "ERR_HRMS_INVALID_MOB_NO",
-              componentInFront: "+91",
-              validation: {
-                required: true,
-                minLength: 10,
-                maxLength: 10,
-                pattern: /^[6-9]\d{9}$/,
-                isNumber: true,
-              },
-              className: "mobile-number",
-            },
-          ],
-          validation: {},
-        },
-      },
-    ],
   },
   {
-    head: " ",
     body: [
       {
-        type: "component",
-        component: "SelectBulkInputs",
         key: "emails",
-        withoutLabel: true,
-        populators: {
-          inputs: [
-            {
-              label: "CORE_COMMON_EMAILS",
-              type: "text",
-              name: "emailId",
-              error: "ERR_HRMS_INVALID_MOB_NO",
-              validation: {
-                required: true,
-                pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-              },
-              className: "email-address",
-            },
-          ],
-          validation: {},
-        },
-      },
-    ],
-  },
-  {
-    body: [
-      {
         type: "component",
-        component: "SelectComponentsMulti",
-        key: "addressDetails",
-        formType: "Witness",
-        withoutLabel: true,
-        error: "CORE_REQUIRED_FIELD_ERROR",
-        required: false,
-        isMandatory: true,
+        label: "CORE_COMMON_EMAILS",
+        component: "SelectBulkInputs",
         populators: {
           inputs: [
-            { label: "CS_LOCATION", type: "LocationSearch", name: ["pincode", "state", "district", "city", "coordinates", "locality"] },
             {
-              label: "PINCODE",
+              name: "emailId",
               type: "text",
+              error: "ERR_HRMS_INVALID_MOB_NO",
+              label: "CORE_COMMON_EMAILS",
+              className: "email-address",
+              validation: {
+                pattern: {
+                  masterName: "commonUiConfig",
+                  moduleName: "patternValidation",
+                  patternType: "email",
+                },
+                required: true,
+              },
+            },
+          ],
+          validation: {},
+        },
+        withoutLabel: true,
+      },
+    ],
+    head: " ",
+  },
+  {
+    body: [
+      {
+        key: "addressDetails",
+        type: "component",
+        error: "CORE_REQUIRED_FIELD_ERROR",
+        formType: "Witness",
+        required: false,
+        component: "SelectComponentsMulti",
+        populators: {
+          inputs: [
+            {
               name: "pincode",
+              type: "text",
+              label: "PINCODE",
               validation: {
-                minlength: 6,
-                maxlength: 7,
-                patternType: "Pincode",
-                pattern: "[0-9]+",
                 max: "9999999",
-                errMsg: "ADDRESS_PINCODE_INVALID",
-                isRequired: true,
                 title: "",
+                errMsg: "ADDRESS_PINCODE_INVALID",
+                pattern: "[0-9]+",
+                maxlength: 7,
+                minlength: 6,
+                isRequired: true,
+                patternType: "Pincode",
               },
               isMandatory: true,
             },
             {
-              label: "STATE",
-              type: "text",
               name: "state",
+              type: "text",
+              label: "STATE",
               validation: {
                 isRequired: true,
               },
               isMandatory: true,
             },
             {
-              label: "DISTRICT",
-              type: "text",
               name: "district",
+              type: "text",
+              label: "DISTRICT",
               validation: {
                 isRequired: true,
               },
               isMandatory: true,
             },
             {
-              label: "CITY/TOWN",
-              type: "text",
               name: "city",
+              type: "text",
+              label: "CITY/TOWN",
               validation: {
                 isRequired: true,
               },
@@ -171,25 +205,24 @@ const witnessFormConfig = [
           ],
           validation: {},
         },
+        withoutLabel: true,
       },
     ],
   },
   {
     body: [
       {
+        key: "witnessAdditionalDetails",
         type: "component",
         component: "SelectCustomTextArea",
-        key: "witnessAdditionalDetails",
-        withoutLabel: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
-              isOptional: true,
               name: "text",
-              textAreaSubHeader: "CS_TEXTAREA_WITNESS_ADDITIONAL_DETAIL",
-              placeholder: "CS_TEXTAREA_PLACEHOLDER_ADDITIONAL_DETAIL",
-              subHeaderClassName: "dristi-font-bold",
               type: "TextAreaComponent",
+              isOptional: true,
+              textAreaSubHeader: "CS_TEXTAREA_WITNESS_ADDITIONAL_DETAIL",
             },
           ],
         },

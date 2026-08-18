@@ -1,0 +1,19 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "payment.paymentTypeToBreakupMapping",
+  "uniqueIdentifier": "29",
+  "data": {
+    "breakUpList": [
+      {
+        "breakUpCode": "COURT_FEE",
+        "breakUpName": "Court Fee"
+      },
+      {
+        "breakUpCode": "E_POST",
+        "breakUpName": "E Post"
+      }
+    ],
+    "paymentType": "29"
+  },
+  "isActive": true
+}

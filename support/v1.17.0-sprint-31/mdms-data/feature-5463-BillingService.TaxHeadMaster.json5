@@ -1,0 +1,16 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "BillingService.TaxHeadMaster",
+  "uniqueIdentifier": "CTC_APPLICATION_ADVANCE_CARRYFORWARD_COURT_POST_PROCESS",
+  "data": {
+    "code": "CTC_APPLICATION_ADVANCE_CARRYFORWARD_COURT_POST_PROCESS",
+    "name": "CTC Application Advance Carryforward Court Post Process",
+    "order": "0",
+    "isDebit": true,
+    "service": "ctc-default",
+    "category": "ADVANCE_COLLECTION",
+    "isRequired": false,
+    "isActualDemand": false
+  },
+  "isActive": true
+}

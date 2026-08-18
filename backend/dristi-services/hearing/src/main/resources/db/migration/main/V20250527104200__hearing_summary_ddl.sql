@@ -1,0 +1,1 @@
+ALTER TABLE dristi_hearing ADD COLUMN hearingSummary varchar(1000) NULL;

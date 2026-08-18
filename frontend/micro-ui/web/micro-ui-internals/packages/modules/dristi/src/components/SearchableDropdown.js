@@ -2,7 +2,7 @@ import { ArrowDown } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { removeInvalidNameParts } from "../Utils";
 
-const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value, onChange, disabled }) => {
+const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value, onChange, disabled, excludeIndividualId }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [loader, setLoader] = useState(false);
@@ -14,7 +14,7 @@ const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value,
       status: "ACTIVE",
       tenantId: window?.Digit.ULBService.getStateId(),
       offset: 0,
-      limit: 100,
+      limit: 10,
     }
   );
 
@@ -39,7 +39,7 @@ const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value,
     (advocate) =>
       !selectedAdvocatesList.some(
         (selected) => selected.advocateBarRegNumberWithName.barRegistrationNumberOriginal === advocate.barRegistrationNumberOriginal
-      )
+      ) && !(excludeIndividualId && advocate.individualId === excludeIndividualId)
   );
 
   useEffect(() => {
@@ -90,7 +90,12 @@ const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value,
   return (
     <div
       className="dropdown-container"
-      style={{ position: "relative", width: "100%", marginBottom: "20px", pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty("numberOfAdvocates") ? "auto" : "none") : "auto" }}
+      style={{
+        position: "relative",
+        width: "100%",
+        marginBottom: "20px",
+        pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty("numberOfAdvocates") ? "auto" : "none") : "auto",
+      }}
     >
       <input
         type="text"

@@ -1,0 +1,132 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "522",
+    "data": {
+      "id": 522,
+      "actionid": 2764, // api : /task-management/v1/_search,
+      "rolecode": "PROCESS_MANAGEMENT_VIEWER",
+      "tenantid": "kl",
+      "actioncode": "2764" // api : /task-management/v1/_search
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "521",
+    "data": {
+      "id": 521,
+      "actionid": 2766, // api /analytics/offline-payment/_create
+      "rolecode": "CITIZEN",
+      "tenantid": "kl",
+      "actioncode": "2766" // api /analytics/offline-payment/_create
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "520",
+    "data": {
+      "id": 520,
+      "actionid": 2765, // api : /case/v1/address/_add
+      "rolecode": "PROCESS_MANAGEMENT_EDITOR",
+      "tenantid": "kl",
+      "actioncode": "2765" // api : /case/v1/address/_add
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "519",
+    "data": {
+      "id": 519,
+      "actionid": 2766, // api : /analytics/offline-payment/_create
+      "rolecode": "PROCESS_MANAGEMENT_CREATOR",
+      "tenantid": "kl",
+      "actioncode": "2766" // api : /analytics/offline-payment/_create
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "517",
+    "data": {
+      "id": 517,
+      "actionid": 2763, // api : /task-management/v1/_update
+      "rolecode": "PROCESS_MANAGEMENT_EDITOR",
+      "tenantid": "kl",
+      "actioncode": "2763" // api : /task-management/v1/_update
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "516",
+    "data": {
+      "id": 516,
+      "actionid": 2762, //  api :  /task-management/v1/_create
+      "rolecode": "PROCESS_MANAGEMENT_CREATOR",
+      "tenantid": "kl",
+      "actioncode": "2762" //  api :  /task-management/v1/_create
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "515",
+    "data": {
+      "id": 515,
+      "actionid": 2765, // api : /case/v1/address/_add
+      "rolecode": "CITIZEN",
+      "tenantid": "kl",
+      "actioncode": "2765" // api : /case/v1/address/_add
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "514",
+    "data": {
+      "id": 514,
+      "actionid": 2764, // api : /task-management/v1/_search
+      "rolecode": "CITIZEN",
+      "tenantid": "kl",
+      "actioncode": "2764" // api : /task-management/v1/_search
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "513",
+    "data": {
+      "id": 513,
+      "actionid": 2763, // api : /task-management/v1/_update
+      "rolecode": "CITIZEN",
+      "tenantid": "kl",
+      "actioncode": "2763" // api : /task-management/v1/_update
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "512",
+    "data": {
+      "id": 512,
+      "actionid": 2762, //  api :  /task-management/v1/_create
+      "rolecode": "CITIZEN",
+      "tenantid": "kl",
+      "actioncode": "2762" // api : /task-management/v1/_create
+    },
+    "isActive": true
+  }
+]

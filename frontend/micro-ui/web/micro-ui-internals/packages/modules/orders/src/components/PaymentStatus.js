@@ -10,15 +10,18 @@ const PaymentStatus = ({ path }) => {
   const location = useLocation();
   const { t } = useTranslation();
 
-  const isResponseSuccess = location.state.state.success;
+  const paymentStatus = location.state.state.paymentStatus;
+  const isResponseSuccess = paymentStatus ? paymentStatus === "PAID" : location.state.state.success;
+  const isVerificationPending = paymentStatus === "VERIFICATION_PENDING";
   const { state } = useLocation();
   const fileStoreId = location.state.state.fileStoreId;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const caseId = location.state.state.caseId;
   const receiptData = location.state.state.receiptData;
-  const orderType = receiptData?.orderType;
+  const taskType = receiptData?.taskType;
   const history = useHistory();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
 
   const commonProps = {
     whichSvg: "tick",
@@ -31,22 +34,35 @@ const PaymentStatus = ({ path }) => {
         ...commonProps,
         successful: true,
       }
+    : isVerificationPending
+    ? {
+        ...commonProps,
+        successful: false,
+        message: t("PAYMENT_VERIFICATION_PENDING_SUCCESS_MESSAGE"),
+      }
     : {
         ...commonProps,
         successful: false,
         message: t("CS_PAYMENT_FAILED"),
       };
 
-  const statusMessage = `${orderType === "SUMMONS" ? t("THE_SUMMON") : orderType === "NOTICE" ? t("THE_NOTICE") : t("THE_WARRANT")} ${t(
-    "WOULD_BE_SENT_TO_PARTY"
-  )}`;
+  const taskTypeMap = {
+    SUMMONS: "THE_SUMMON",
+    NOTICE: "THE_NOTICE",
+    WARRANT: "THE_WARRANT",
+    PROCLAMATION: "THE_PROCLAMATION",
+    ATTACHMENT: "THE_ATTACHMENT",
+  };
 
+  const statusMessage = `${t(taskTypeMap[taskType])} ${t("WOULD_BE_SENT_TO_PARTY")}`;
   return (
     <div className=" user-registration">
       <div className="e-filing-payment" style={{ minHeight: "100%", height: "100%" }}>
         <Banner
           successful={isResponseSuccess}
-          message={isResponseSuccess ? "Payment Successful" : "Payment Failed"}
+          message={
+            isResponseSuccess ? "Payment Successful" : isVerificationPending ? t("PAYMENT_VERIFICATION_PENDING_SUCCESS_MESSAGE") : "Payment Failed"
+          }
           info={`${state?.showID ? t("SUBMISSION_ID") : ""}`}
           whichSvg={`${isResponseSuccess ? "tick" : null}`}
           {...bannerProps}
@@ -63,6 +79,22 @@ const PaymentStatus = ({ path }) => {
               tableValueClassName={"e-filing-table-value-style"}
             />
           </div>
+        ) : isVerificationPending ? (
+          <InfoCard
+            className="payment-status-info-card"
+            headerWrapperClassName="payment-status-info-header"
+            populators={{
+              name: "infocard",
+            }}
+            variant="default"
+            text={t("PAYMENT_VERIFICATION_PENDING_INFO")}
+            label={"Note"}
+            style={{ marginTop: "1.5rem" }}
+            textStyle={{
+              color: "#3D3C3C",
+              margin: "0.5rem 0",
+            }}
+          />
         ) : (
           <InfoCard
             className="payment-status-info-card"
@@ -88,7 +120,9 @@ const PaymentStatus = ({ path }) => {
               label={t("Retry Payment")}
               labelClassName={"secondary-label-selector"}
               onClick={() => {
-                history.goBack();
+                triggerSurvey("TASK_PAYMENT", () => {
+                  history.goBack();
+                });
               }}
             />
           ) : (
@@ -108,11 +142,14 @@ const PaymentStatus = ({ path }) => {
             label={t("CS_GO_TO_HOME")}
             labelClassName={"tertiary-label-selector"}
             onClick={() => {
-              history.replace(`/${window?.contextPath}/citizen/home/home-pending-task`);
+              triggerSurvey("TASK_PAYMENT", () => {
+                history.replace(`/${window?.contextPath}/citizen/home/home-pending-task`);
+              });
             }}
           />
         </div>
       </div>
+      {SurveyUI}
     </div>
   );
 };

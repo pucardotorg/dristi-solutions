@@ -1,0 +1,377 @@
+openapi: 3.0.0
+
+info:
+  title: Case and Witness Registry
+  description: APIs for managing court cases, witnesses and related entities.
+  version: 2.0.0
+
+servers:
+  - url: /api
+
+tags:
+  - name: Case
+  - name: Witness
+  - name: Address
+  - name: Utilities
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /v1/_create:
+    post:
+      tags: [Case]
+      summary: Create a new case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseRequest'
+      responses:
+        '200':
+          description: Case created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
+
+  /v1/_update:
+    post:
+      tags: [Case]
+      summary: Update case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseRequest'
+      responses:
+        '200':
+          description: Case updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
+
+  /v1/_search:
+    post:
+      tags: [Case]
+      summary: Search cases
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseSearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseSearchResponse'
+
+  /v1/_exists:
+    post:
+      tags: [Case]
+      summary: Check if case exists
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseExistsRequest'
+      responses:
+        '200':
+          description: Exists response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseExistsResponse'
+
+  /v2/search/details:
+    post:
+      tags: [Case]
+      summary: Get detailed case information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseDetailsRequest'
+      responses:
+        '200':
+          description: Case details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseDetailsResponse'
+
+  /v1/address/_add:
+    post:
+      tags: [Address]
+      summary: Add address to party
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressRequest'
+      responses:
+        '200':
+          description: Address added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressResponse'
+
+  /v1/_generatePdf:
+    post:
+      tags: [Utilities]
+      summary: Generate case PDF
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CasePdfRequest'
+      responses:
+        '200':
+          description: PDF generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CasePdfResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    # -------------------------------
+    # WRAPPERS
+    # -------------------------------
+
+    CaseRequest:
+      type: object
+      required: [requestInfo, case]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        case:
+          $ref: '#/components/schemas/CourtCase'
+
+    CaseResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourtCase'
+
+    CaseSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          $ref: '#/components/schemas/CaseSearchCriteria'
+        pagination:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination"
+
+    CaseSearchResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourtCase'
+        totalCount:
+          type: integer
+
+    CaseExistsRequest:
+      type: object
+      required: [requestInfo, tenantId, filingNumber]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        tenantId:
+          type: string
+        filingNumber:
+          type: string
+
+    CaseExistsResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        exists:
+          type: boolean
+
+    CaseDetailsRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          type: object
+          properties:
+            tenantId:
+              type: string
+            caseId:
+              type: string
+
+    CaseDetailsResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        case:
+          $ref: '#/components/schemas/CourtCase'
+
+    AddressRequest:
+      type: object
+      required: [requestInfo, partyAddressList]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        partyAddressList:
+          type: array
+          items:
+            type: object
+            required: [caseId, partyId, address]
+            properties:
+              caseId:
+                type: string
+              partyId:
+                type: string
+              address:
+                $ref: '#/components/schemas/Address'
+
+    AddressResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        partyAddressList:
+          type: array
+          items:
+            type: object
+            properties:
+              caseId:
+                type: string
+              partyId:
+                type: string
+              address:
+                $ref: '#/components/schemas/Address'
+
+    CasePdfRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          type: object
+          properties:
+            tenantId:
+              type: string
+            caseId:
+              type: string
+
+    CasePdfResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        message:
+          type: string
+
+    # -------------------------------
+    # DOMAIN MODELS
+    # -------------------------------
+
+    CourtCase:
+      type: object
+      required:
+        - tenantId
+        - id
+        - caseTitle
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        caseTitle:
+          type: string
+        caseDescription:
+          type: string
+        filingNumber:
+          type: string
+        caseCategory:
+          type: string
+        resolutionMechanism:
+          type: string
+        status:
+          type: string
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+        auditDetails:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
+
+    Address:
+      type: object
+      required:
+        - doorNo
+        - street
+        - city
+        - district
+        - state
+        - pincode
+      properties:
+        doorNo:
+          type: string
+        street:
+          type: string
+        city:
+          type: string
+        district:
+          type: string
+        state:
+          type: string
+        pincode:
+          type: string
+        country:
+          type: string
+
+    CaseSearchCriteria:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        filingNumber:
+          type: string
+        caseId:
+          type: string
+        defaultFields:
+          type: boolean
+
+    Workflow:
+      type: object
+      properties:
+        action:
+          type: string

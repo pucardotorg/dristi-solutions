@@ -1,18 +1,11 @@
 import React from "react";
 import Modal from "../../../components/Modal";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import { useHistory } from "react-router-dom";
+import { CloseBtn } from "../../../components/ModalComponents";
 
 const ViewAllOrderDrafts = ({ t, setShow, draftOrderList, filingNumber }) => {
   const history = useHistory();
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   const Heading = (props) => {
     return (
       <div className="evidence-title">
@@ -45,7 +38,7 @@ const ViewAllOrderDrafts = ({ t, setShow, draftOrderList, filingNumber }) => {
           <div
             onClick={() => {
               setShow(false);
-              history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
+              history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
             }}
             style={{ cursor: "pointer", fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#007E7E" }}
           >

@@ -1,0 +1,42 @@
+{
+  "id": "b0f6c382-d561-4b3a-85cd-797b71f9a1c4",
+  "tenantId": "kl",
+  "code": "CaseManagement.case_bundle_state_master",
+  "description": null,
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "required": [
+      "id",
+      "moduleName",
+      "businessservice",
+      "state",
+      "topic"
+    ],
+    "x-unique": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "state": {
+        "type": "string"
+      },
+      "topic": {
+        "type": "string"
+      },
+      "moduleName": {
+        "type": "string"
+      },
+      "businessservice": {
+        "type": "string"
+      },
+      "isDelayRequired": {
+        "type": "boolean"
+      }
+    },
+    "additionalProperties": false
+  },
+  "isActive": true
+}

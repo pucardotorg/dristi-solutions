@@ -1,0 +1,29 @@
+// TODO : can be updated through workbench
+{
+  "tenantId": "kl",
+  "schemaCode": "common-masters.PendingTaskType",
+  "uniqueIdentifier": "19",
+  "data": {
+    "id": "19",
+    "actor": "Judge/CourtStaff",
+    "state": "PENDINGAPPROVAL",
+    "isgeneric": false,
+    "screenType": "applicationCompositeOrder",
+    "pendingTask": "Review of Bail Application",
+    "closerAction": [
+      "APPROVE",
+      "SEND_BACK",
+      "DELETE",
+      "REJECT",
+      "ABANDON"
+    ],
+    "triggerAction": [
+      "PAY"
+    ],
+    // TODO : need to update the actionCategory
+    "actionCategory": "Others",
+    "workflowModule": "voluntary-application-submission-bail"
+  },
+  // TODO : need to active the entry
+  "isActive": true
+}

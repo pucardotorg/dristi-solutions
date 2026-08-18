@@ -1,25 +1,16 @@
-import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useState } from "react";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import React, { useEffect, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { getFileByFileStore } from "../../../Utils";
 
-const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRefresh, userTypeRegister }) => {
+const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRefresh }) => {
   const Digit = window.Digit || {};
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const history = useHistory();
-  const [showErrorToast, setShowErrorToast] = useState(false);
-  const [showUsename, setshowUsename] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
 
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      closeToast();
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [closeToast]);
   const validateFormData = (data) => {
     let isValid = true;
     config.forEach((curr) => {
@@ -61,6 +52,26 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
     return isValid;
   };
 
+  const updatedConfig = useMemo(() => {
+    return config.map((section) => ({
+      ...section,
+      body: section.body.map((item) => {
+        if (item?.key !== "clientDetails") return item;
+
+        return {
+          ...item,
+          populators: {
+            ...item.populators,
+            inputs: item.populators.inputs.map((input) => ({
+              ...input,
+              disable: params?.isRejected || params?.isLitigantPartialRegistered,
+            })),
+          },
+        };
+      }),
+    }));
+  }, [config, params]);
+
   const [isDisabled, setIsDisabled] = useState(false);
   const onFormValueChange = (setValue, formData, formState) => {
     let isDisabled = false;
@@ -92,11 +103,10 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
       setIsDisabled(false);
     }
   };
-  const onSubmit = (userType) => {
+  const onSubmit = async (userType) => {
     const data = params;
     const userTypeSelcted = userType?.clientDetails?.selectUserType?.code;
-    const uploadedDocument = Digit?.SessionStorage?.get("UploadedDocument");
-    const aadhaarNumber = Digit?.SessionStorage?.get("aadharNumber");
+    const uploadedDocument = params?.uploadedDocument;
     const identifierId = uploadedDocument ? uploadedDocument?.filedata?.files?.[0]?.fileStoreId : data?.adhaarNumber;
     const identifierIdDetails = uploadedDocument
       ? {
@@ -195,38 +205,147 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
         auditDetails: {},
       },
     };
-    setParams({
+
+    const permanentAddress = Individual?.Individual?.address?.find((addr) => addr.type === "PERMANENT");
+    const correspondenceAddress = Individual?.Individual?.address?.find((addr) => addr.type === "CORRESPONDENCE");
+
+    const savedPermanentAddress = params?.Individual?.[0]?.address?.find((addr) => addr.type === "PERMANENT");
+    const savedCorrespondenceAddress = params?.Individual?.[0]?.address?.find((addr) => addr.type === "CORRESPONDENCE");
+
+    const latestParams = {
       ...params,
       IndividualPayload: {
         ...Individual,
       },
+      ...(params?.Individual && {
+        Individual: [
+          {
+            ...Individual?.Individual,
+            identifiers: [
+              {
+                ...params?.Individual?.[0]?.identifiers?.[0],
+                identifierType,
+                identifierId,
+              },
+            ],
+            address: [
+              {
+                ...savedPermanentAddress,
+                ...permanentAddress,
+              },
+              ...(correspondenceAddress
+                ? [
+                    {
+                      ...savedCorrespondenceAddress,
+                      ...correspondenceAddress,
+                    },
+                  ]
+                : savedCorrespondenceAddress
+                ? [
+                    {
+                      ...savedCorrespondenceAddress,
+                      ...permanentAddress,
+                      type: "CORRESPONDENCE",
+                    },
+                  ]
+                : []),
+            ],
+            rowVersion: params?.Individual?.[0]?.rowVersion,
+            isDeleted: params?.Individual?.[0]?.isDeleted,
+            isSystemUser: params?.Individual?.[0]?.isSystemUser,
+            isSystemUserActive: params?.Individual?.[0]?.isSystemUserActive,
+            individualId: params?.Individual?.[0]?.individualId,
+            auditDetails: params?.Individual?.[0]?.auditDetails,
+            id: params?.Individual?.[0]?.id,
+          },
+        ],
+      }),
       userType: {
         ...userType,
       },
-    });
-    if (
-      ((userTypeSelcted === "LITIGANT" || userTypeSelcted === "ADVOCATE_CLERK") && !data?.Individual?.[0]?.individualId) ||
-      (userTypeSelcted === "ADVOCATE_CLERK" && data?.Individual?.[0]?.individualId)
-    ) {
-      history.push(`/${window?.contextPath}/citizen/dristi/home/registration/terms-condition`);
+    };
+    setParams(latestParams);
+    if (userTypeSelcted === "LITIGANT" && !data?.Individual?.[0]?.individualId) {
+      // Litigants go directly to terms and conditions
+      history.push(`/${window?.contextPath}/citizen/dristi/home/registration/terms-condition`, { newParams: latestParams });
+    } else if (userTypeSelcted === "ADVOCATE" || userTypeSelcted === "ADVOCATE_CLERK") {
+      // Both advocates and advocate clerks go to additional details (BAR verification)
+      history.push(`/${window?.contextPath}/citizen/dristi/home/registration/additional-details`, { newParams: latestParams });
     } else {
-      history.push(`/${window?.contextPath}/citizen/dristi/home/registration/additional-details`);
+      history.push(`/${window?.contextPath}/citizen/dristi/home/registration/additional-details`, { newParams: latestParams });
     }
   };
-  if (!params?.indentity && showUsename === false && !params?.Individual?.[0]?.additionalFields) {
-    history.push(pathOnRefresh);
-  }
+
+  useEffect(() => {
+    const handleRedirect = async () => {
+      if (!params?.indentity && !params?.Individual?.[0]?.additionalFields) {
+        const storedParams = sessionStorage.getItem("userRegistrationParams");
+        let newParams = storedParams ? JSON.parse(storedParams) : params;
+
+        const fileStoreId = newParams?.uploadedDocument?.filedata?.files?.[0]?.fileStoreId;
+        const filename = newParams?.uploadedDocument?.filename;
+
+        const barCouncilFileStoreId = newParams?.formData?.clientDetails?.barCouncilId?.[1]?.fileStoreId;
+        const barCouncilFilename = newParams?.formData?.clientDetails?.barCouncilId?.[0];
+
+        if (barCouncilFileStoreId && barCouncilFilename) {
+          const barCouncilUri = `${
+            window.location.origin
+          }/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${barCouncilFileStoreId}`;
+          const barCouncilFile = await getFileByFileStore(barCouncilUri, barCouncilFilename);
+
+          newParams = {
+            ...newParams,
+            formData: {
+              ...newParams.formData,
+              clientDetails: {
+                ...newParams.formData.clientDetails,
+                barCouncilId: [
+                  [
+                    barCouncilFilename,
+                    {
+                      file: barCouncilFile,
+                      fileStoreId: barCouncilFileStoreId,
+                    },
+                  ],
+                ],
+              },
+            },
+          };
+        }
+
+        if (fileStoreId && filename) {
+          const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${Digit.ULBService.getCurrentTenantId()}&fileStoreId=${fileStoreId}`;
+          const file = await getFileByFileStore(uri, filename);
+
+          newParams = {
+            ...newParams,
+            uploadedDocument: {
+              ...newParams.uploadedDocument,
+              file,
+            },
+          };
+        }
+
+        sessionStorage.removeItem("userRegistrationParams");
+        history.push(pathOnRefresh, { newParams });
+      }
+    };
+
+    handleRedirect();
+  }, [params?.address, params, history, pathOnRefresh, Digit.ULBService]);
+
   return (
     <div className="select-user">
       <FormComposerV2
-        config={config}
+        config={updatedConfig}
         t={t}
         noBoxShadow
         inline
         label={t("CS_COMMON_CONTINUE")}
         onSubmit={(props) => {
           if (!validateFormData(props)) {
-            setShowErrorToast(!validateFormData(props));
+            setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true, errorId: null });
           } else {
             onSubmit(props);
           }
@@ -234,15 +353,23 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
         }}
         onFormValueChange={onFormValueChange}
         isDisabled={isDisabled}
-        value={params?.userType || (userTypeRegister && userTypeRegister) || {}}
-        defaultValues={params?.userType || (userTypeRegister && userTypeRegister) || {}}
+        value={params?.userType || {}}
+        defaultValues={params?.userType || {}}
         headingStyle={{ textAlign: "center" }}
         cardStyle={{ minWidth: "100%", padding: 20, display: "flex", flexDirection: "column" }}
         sectionHeadStyle={{ marginBottom: "20px", fontSize: "40px" }}
         buttonStyle={{ alignSelf: "center", minWidth: "50%" }}
         submitInForm
       ></FormComposerV2>
-      {showErrorToast && <Toast error={true} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 };

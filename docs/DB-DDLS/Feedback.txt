@@ -1,0 +1,11 @@
+Worth your attention:
+
+case.sql — dristi_case_conversion has no primary key/id column at all in its source migration; preserved as-is with a -- REVIEW: comment rather than guessing one.
+
+CONCURRENTLY indexes — application, hearing, and advocate each had a CREATE INDEX CONCURRENTLY in their migration history, which can't run inside a transaction. Downgraded to plain CREATE INDEX with an inline note; run those manually with CONCURRENTLY if applying to a live/loaded DB.
+
+scheduler-svc — the original cause_list table was dropped and recreated with a completely different shape partway through history; only the final shape is in the output.
+
+payment-calculator-svc.sql — despite the service name, its only migrations define a POSTAL_HUB table (ph_postal_hub-prefixed files) — flagged in the file as surprising but not ambiguous.
+
+bail-bond — defensive DROP TABLE IF EXISTS statements at the top of migrations were omitted as no-ops on a fresh database.

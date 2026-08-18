@@ -1,0 +1,97 @@
+[
+  // TODO : need to add in CaseManagement case_bundle_state_master , can be added through workbench
+  [
+    {
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "19",
+      "data": {
+        "id": "19",
+        "state": "COMPLETED",
+        "topic": "save-wf-transition",
+        "moduleName": "digitalized-document",
+        "businessservice": "digitalized-document-mediation",
+        "isDelayRequired": true
+      },
+      "isActive": true
+    },
+    {
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "18",
+      "data": {
+        "id": "18",
+        "state": "COMPLETED",
+        "topic": "save-wf-transition",
+        "moduleName": "digitalized-document",
+        "businessservice": "digitalized-document-plea",
+        "isDelayRequired": true
+      },
+      "isActive": true
+    },
+    {
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "17",
+      "data": {
+        "id": "17",
+        "state": "COMPLETED",
+        "topic": "save-wf-transition",
+        "moduleName": "digitalized-document",
+        "businessservice": "digitalized-document-examination",
+        "isDelayRequired": true
+      },
+      "isActive": true
+    }
+  ],
+  [
+    // TODO : need to add in CaseManagement case_bundle_master , can be added through workbench
+    {
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_master",
+      "uniqueIdentifier": "49",
+      "data": {
+        "id": "49",
+        "name": "others",
+        "Items": "Mediation",
+        "doctype": "MEDIATION",
+        "section": "Others",
+        "isactive": "yes",
+        "docketpagerequired": "yes"
+      },
+      "isActive": true
+    },
+    {
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_master",
+      "uniqueIdentifier": "48",
+      "data": {
+        "id": "48",
+        "name": "digitalizedDocuments",
+        "Items": "S351 Examination",
+        "sorton": "1",
+        "doctype": "EXAMINATION_OF_ACCUSED",
+        "section": "Examination of Accused",
+        "isactive": "yes",
+        "docketpagerequired": "yes"
+      },
+      "isActive": true
+    },
+    {
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_master",
+      "uniqueIdentifier": "47",
+      "data": {
+        "id": "47",
+        "name": "digitalizedDocuments",
+        "Items": "Plea",
+        "sorton": "2",
+        "doctype": "PLEA",
+        "section": "Examination of Accused",
+        "isactive": "yes",
+        "docketpagerequired": "yes"
+      },
+      "isActive": true
+    }
+  ]
+]

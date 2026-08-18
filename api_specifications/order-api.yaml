@@ -1,0 +1,214 @@
+openapi: 3.0.0
+
+info:
+  title: Order Management Service
+  description: APIs to manage court orders in DRISTI
+  version: 1.0.0
+
+servers:
+  - url: /order-services
+    description: Order Service Base Path
+
+tags:
+  - name: Orders
+    description: APIs for managing court orders
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /v1/_create:
+    post:
+      tags: [Orders]
+      summary: Create a new court order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '201':
+          description: Order successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+
+  /v1/_update:
+    post:
+      tags: [Orders]
+      summary: Update an existing order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '200':
+          description: Order successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+
+  /v1/_search:
+    post:
+      tags: [Orders]
+      summary: Search orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderSearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+
+  /v1/_exists:
+    post:
+      tags: [Orders]
+      summary: Check order existence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderExistsRequest'
+      responses:
+        '200':
+          description: Existence check response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderExistsResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    OrderRequest:
+      type: object
+      required: [requestInfo, order]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        order:
+          $ref: '#/components/schemas/Order'
+
+    OrderResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        order:
+          $ref: '#/components/schemas/Order'
+
+    Order:
+      type: object
+      description: Court order entity
+      required: [tenantId, orderType, status, isActive, createdDate]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        filingNumber:
+          type: string
+        cnrNumber:
+          type: string
+        hearingNumber:
+          type: string
+        orderNumber:
+          type: string
+        orderType:
+          type: string
+        status:
+          type: string
+        isActive:
+          type: boolean
+        createdDate:
+          type: integer
+          format: int64
+        additionalDetails:
+          type: object
+        auditDetails:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
+
+    OrderSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          $ref: '#/components/schemas/OrderSearchCriteria'
+        pagination:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination"
+
+    OrderSearchCriteria:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        filingNumber:
+          type: string
+        orderNumber:
+          type: string
+        status:
+          type: string
+
+    OrderListResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        totalCount:
+          type: integer
+          description: Total number of records matching search criteria
+
+    OrderExistsRequest:
+      type: object
+      required: [requestInfo, orderIds]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        orderIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    OrderExistsResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        orders:
+          type: array
+          items:
+            type: object
+            properties:
+              orderId:
+                type: string
+                format: uuid
+              exists:
+                type: boolean

@@ -1,0 +1,46 @@
+[
+  // can be add through workbench ui
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "29",
+    "data": {
+      "id": "29",
+      "actor": "Judge",
+      "state": "PENDING_REVIEW",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Review Witness Deposition",
+      "closerAction": [
+        "SIGN"
+      ],
+      "triggerAction": [
+        "UPLOAD",
+        "E-SIGN"
+      ],
+      "workflowModule": "witness-deposition-default"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "28",
+    "data": {
+      "id": "28",
+      "actor": "Litigant",
+      "state": "PENDING_E-SIGN",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Sign Witness Deposition",
+      "closerAction": [
+        "E-SIGN"
+      ],
+      "triggerAction": [
+        "INITIATE_E-SIGN"
+      ],
+      "workflowModule": "witness-deposition-default"
+    },
+    "isActive": true
+  }
+]

@@ -580,6 +580,11 @@
   justify-content: center;
   margin-bottom: 40px;
 
+  .verification-pending-buttons-div {
+    h2 {
+      font-size: 16px !important;
+    }
+  }
   .advocate-replacement-request-cancel-button,
   .advocate-replacement-request-submit-button {
     padding: 9px 24px;
@@ -595,6 +600,7 @@
       line-height: 24px;
       letter-spacing: 0px;
       text-align: center;
+      margin: 0px;
     }
   }
 

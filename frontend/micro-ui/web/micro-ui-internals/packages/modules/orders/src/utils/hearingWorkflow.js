@@ -11,4 +11,6 @@ export const HearingWorkflowState = {
   COMPLETED: "COMPLETED",
   ABATED: "ABATED",
   SCHEDULED: "SCHEDULED",
+  PASSED_OVER: "PASSED_OVER",
+  ABANDONED: "ABANDONED",
 };

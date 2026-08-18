@@ -1,0 +1,122 @@
+name: Docker Image Build
+description: Composite action to build and push Docker images.
+
+inputs:
+  service_name:
+    description: Name of the Docker image (e.g., egov-enc-service).
+    required: true
+  docker_user:
+    description: Docker registry username.
+    required: false
+    default: venkatramireddyb
+  docker_registry:
+    description: Docker registry URL (e.g., myregistry.azurecr.io).
+    required: false
+    default: docker.io
+  docker_password:
+    description: Docker registry password.
+    required: true
+  branch:
+    description: Branch name.
+    required: false
+  esign_private_key:
+    description: Private key for e-sign service.
+    required: false
+  esign_public_key:
+    description: Public key for e-sign service.
+    required: false
+
+outputs:
+  image_tag:
+    description: Generated Docker image tag.
+    value: ${{ steps.export-image-tag.outputs.image_tag }}
+
+runs:
+  using: "composite"
+  steps:
+
+    - name: Check files
+      shell: bash
+      run: |
+        echo "Checking files for service ${{ inputs.service_name }}"
+        if [[ ! -f "build/config.json" ]]; then
+          echo "build/config.json not found"
+          exit 1
+        fi
+
+    - name: Set environment variables
+      shell: bash
+      run: |
+        service_name="${{ inputs.service_name }}"
+        jq -r ".\"$service_name\" | to_entries | .[] | \"\(.key)=\(.value)\"" build/config.json | while IFS="=" read -r key value; do
+          echo "$key=$value" >> $GITHUB_ENV
+        done
+
+    - name: Set Version from Tag or Branch
+      id: set_version
+      shell: bash
+      env:
+        INPUT_BRANCH: ${{ inputs.branch }}
+      run: |
+        sanitize_branch() {
+          local b="$1"
+          b="${b#refs/heads/}"   # strip refs/heads if present
+          b="${b#refs/tags/}"    # strip refs/tags if present
+          b="${b//\//-}"         # replace / with -
+          echo "$b"
+        }
+        VERSION=""
+        if [[ -n "$INPUT_BRANCH" ]]; then
+          VERSION="$(sanitize_branch "$INPUT_BRANCH")"
+        elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+          VERSION="$(sanitize_branch "$GITHUB_REF")"
+        elif [[ "$GITHUB_REF" == refs/heads/* ]]; then
+          VERSION="$(sanitize_branch "$GITHUB_REF")"
+        else
+          VERSION="latest"
+        fi
+        echo "current version is $VERSION"
+        echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+    - name: Git commit_hash for service
+      shell: bash
+      run: |
+        commit_hash=$(git log -1 --pretty=format:%H -- ${{ env.service_source_path }})
+        echo " the commit hash is $commit_hash"
+        echo "commit_hash=$commit_hash" >> $GITHUB_ENV
+
+    - name: Login to Docker Registry
+      shell: bash
+      run: docker login -u "${{ inputs.docker_user }}" -p "${{ inputs.docker_password }}" "${{ inputs.docker_registry }}"
+
+    - name: export image tag
+      id: export-image-tag
+      shell: bash
+      run: |
+        echo "image tag for the service ${{ env.service_name }} is ${{ env.VERSION }}-${{ env.commit_hash }}"
+        echo "image_tag=${{ env.VERSION }}-${{ env.commit_hash }}" >> $GITHUB_OUTPUT
+
+    - name: Set encryption keys based on branch or tag
+      shell: bash
+      run: |
+          echo "${{ inputs.esign_private_key }}" > backend/integration-services/e-sign-svc/src/main/resources/privateKey.pem
+          echo "${{ inputs.esign_public_key }}" > backend/integration-services/e-sign-svc/src/main/resources/publicKey.cer
+          cat backend/integration-services/e-sign-svc/src/main/resources/privateKey.pem
+          cat backend/integration-services/e-sign-svc/src/main/resources/publicKey.cer
+
+    - name: Build and Push Docker Image
+      shell: bash
+      run: |
+        docker build \
+          --build-arg WORK_DIR="${{ env.service_source_path }}" \
+          -t ${{ inputs.docker_registry }}/${{ inputs.docker_user }}/${{ inputs.service_name }}:${{ steps.export-image-tag.outputs.image_tag }} \
+          -f ${{ env.dockerfile_path }} .
+        docker push ${{ inputs.docker_registry }}/${{ inputs.docker_user }}/${{ inputs.service_name }}:${{ steps.export-image-tag.outputs.image_tag }}
+
+    - name: Build and Push Docker image for service-db
+      if: env.db_source_path != ''
+      shell: bash
+      run: |
+        docker build -t ${{ inputs.docker_registry }}/${{ inputs.docker_user }}/${{ inputs.service_name }}-db:${{ steps.export-image-tag.outputs.image_tag }} . 
+        docker push ${{ inputs.docker_registry }}/${{ inputs.docker_user }}/${{ inputs.service_name }}-db:${{ steps.export-image-tag.outputs.image_tag }}
+      working-directory: ${{ env.db_source_path }}

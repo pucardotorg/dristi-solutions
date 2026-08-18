@@ -1,0 +1,40 @@
+[
+
+  {
+    "id": "cd05bad3-5f4b-46d0-9d3a-6e67d5abb85b",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "CTC_DOCUMENT_APPROVER",
+    "data": {
+      "code": "CTC_DOCUMENT_APPROVER",
+      "name": "CTC_DOCUMENT_APPROVER",
+      "description": "CTC_DOCUMENT_APPROVER"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1773133741188,
+      "lastModifiedTime": 1773133741188
+    }
+  },
+  {
+    "id": "cb5d9cba-7426-4edc-a9a6-a7a588a5427d",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLES.roles",
+    "uniqueIdentifier": "CTC_APPLICATION_APPROVER",
+    "data": {
+      "code": "CTC_APPLICATION_APPROVER",
+      "name": "CTC_APPLICATION_APPROVER",
+      "description": "CTC_APPLICATION_APPROVER"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1773133765915,
+      "lastModifiedTime": 1773133765915
+    }
+  }
+
+]

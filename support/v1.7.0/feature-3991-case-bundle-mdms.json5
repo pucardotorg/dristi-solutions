@@ -1,0 +1,270 @@
+{
+  "tenantId": "kl",
+  "moduleName": "Application",
+  "masterName": "ApplicationType",
+  "mdmsPayload": [
+    {
+      "id": "9975d035-4c67-449a-a090-6b3d67e365ae",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "13",
+      "data": {
+        "id": "13",
+        "state": "PENDINGAPPROVAL",
+        "topic": "save-wf-transition",
+        "moduleName": "application",
+        "businessservice": "application-voluntary-submission"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "createdTime": 1749627393721,
+        "lastModifiedTime": 1749627393721
+      }
+    },
+    {
+      "id": "0f3bd329-6b89-4e70-8e4e-103cf98fc811",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "12",
+      "data": {
+        "id": "12",
+        "state": "PENDINGAPPROVAL",
+        "topic": "save-wf-transition",
+        "moduleName": "application",
+        "businessservice": "voluntary-application-submission-bail"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "createdTime": 1749627188573,
+        "lastModifiedTime": 1749627188573
+      }
+    },
+    {
+      "id": "ba24c6dc-8eb6-4eaa-841a-a31abf76ab55",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "11",
+      "data": {
+        "id": "11",
+        "state": "PENDINGAPPROVAL",
+        "topic": "save-wf-transition",
+        "moduleName": "application",
+        "businessservice": "voluntary-application-submission-bail-documents"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "createdTime": 1749627085555,
+        "lastModifiedTime": 1749627085555
+      }
+    },
+    {
+      "id": "a27bf378-4abf-472f-986c-9c03077c7744",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "10",
+      "data": {
+        "id": "10",
+        "state": "PENDINGREVIEW",
+        "topic": "save-wf-transition",
+        "moduleName": "application",
+        "businessservice": "delay-condonation-submission",
+        "isDelayRequired": true
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "createdTime": 1749624276888,
+        "lastModifiedTime": 1749645475618
+      }
+    },
+    {
+      "id": "98a52e7a-19f9-405d-99e3-66c9be025f7c",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "9",
+      "data": {
+        "id": "9",
+        "state": "PUBLISHED",
+        "topic": "save-wf-transition",
+        "moduleName": "order",
+        "businessservice": "order-default",
+        "isDelayRequired": true
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "createdTime": 1749546557599,
+        "lastModifiedTime": 1749817236589
+      }
+    },
+    {
+      "id": "845192aa-4c65-4d5e-aac1-919771ca2741",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "8",
+      "data": {
+        "id": "8",
+        "state": "WARRANT_SENT",
+        "topic": "save-wf-transition",
+        "moduleName": "task",
+        "businessservice": "task-warrant"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "createdTime": 1749546527544,
+        "lastModifiedTime": 1749546527544
+      }
+    },
+    {
+      "id": "c21f6698-01d1-4e81-93d3-1e710813c9c4",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "7",
+      "data": {
+        "id": "7",
+        "state": "SUMMON_SENT",
+        "topic": "save-wf-transition",
+        "moduleName": "task",
+        "businessservice": "task-summons"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "createdTime": 1749546492976,
+        "lastModifiedTime": 1749546492976
+      }
+    },
+    {
+      "id": "5cfb526a-d9cf-48f8-b278-78b2b0a70048",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "6",
+      "data": {
+        "id": "6",
+        "state": "NOTICE_SENT",
+        "topic": "save-wf-transition",
+        "moduleName": "task",
+        "businessservice": "task-notice"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "createdTime": 1749546462950,
+        "lastModifiedTime": 1749546462950
+      }
+    },
+    {
+      "id": "a6204e2b-4789-4a4f-b9fe-01b7bb30d71e",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "5",
+      "data": {
+        "id": "5",
+        "state": "PENDINGREVIEW",
+        "topic": "save-wf-transition",
+        "moduleName": "application",
+        "businessservice": "application-voluntary-submission",
+        "isDelayRequired": true
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "createdTime": 1749546433764,
+        "lastModifiedTime": 1749645436822
+      }
+    },
+    {
+      "id": "78e813c6-f3d7-4e52-94d3-6ad1b8d8fd91",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "4",
+      "data": {
+        "id": "4",
+        "state": "CASE_REASSIGNED",
+        "topic": "save-wf-transition",
+        "moduleName": "case",
+        "businessservice": "case-default"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1731993244011,
+        "lastModifiedTime": 1731997336410
+      }
+    },
+    {
+      "id": "87e23722-4ee2-4600-a124-de7fee7b854f",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "3",
+      "data": {
+        "id": "3",
+        "state": "CASE_ADMITTED",
+        "topic": "save-wf-transition",
+        "moduleName": "case",
+        "businessservice": "case-default"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1731993205723,
+        "lastModifiedTime": 1731997323229
+      }
+    },
+    {
+      "id": "d4cc11bf-54dd-4a8b-82e6-a2e2af12b14b",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "2",
+      "data": {
+        "id": "2",
+        "state": "PENDING_ADMISSION_HEARING",
+        "topic": "save-wf-transition",
+        "moduleName": "case",
+        "businessservice": "case-default"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1731993182863,
+        "lastModifiedTime": 1731997311059
+      }
+    },
+    {
+      "id": "ad8b71fc-0841-4068-a922-382918869a9d",
+      "tenantId": "kl",
+      "schemaCode": "CaseManagement.case_bundle_state_master",
+      "uniqueIdentifier": "1",
+      "data": {
+        "id": "1",
+        "state": "UNDER_SCRUTINY",
+        "topic": "save-wf-transition",
+        "moduleName": "case",
+        "businessservice": "case-default"
+      },
+      "isActive": false,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1731993141951,
+        "lastModifiedTime": 1732006105187
+      }
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "LandingPage",
+    "masterName": "NotificationMessage",
+    "mdmsPayload": {
+      "tenantId": "kl",
+      "code": "LandingPage.NotificationMessage",
+      "description": null,
+      "definition": {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "required": [
+          "id",
+          "message"
+        ],
+        "x-unique": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "isActive": true
+    }
+  }
+]

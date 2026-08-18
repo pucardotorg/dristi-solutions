@@ -3,17 +3,9 @@ import { Close, RemoveableTag, ButtonSelector } from "@egovernments/digit-ui-rea
 import { useTranslation } from "react-i18next";
 import { UploadIcon } from "../icons/svgIndex";
 
-const getRandomId = () => {
-  return Math.floor((Math.random() || 1) * 139);
-};
 
-const ButtonBody = ({ t }) => {
-  return (
-    <div>
-      <h1 style={{ color: "#007E7E", fontSize: "16px", fontWeight: "600" }}>{t("CS_COMMON_CHOOSE_FILE")}</h1>
-    </div>
-  );
-};
+
+
 
 const getCitizenStyles = (value) => {
   let citizenStyles = {};

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Modal from "../../../dristi/src/components/Modal";
 import CustomCopyTextDiv from "../../../dristi/src/components/CustomCopyTextDiv";
 import { Banner, CardLabel } from "@egovernments/digit-ui-react-components";
@@ -24,11 +24,18 @@ function OrderIssueBulkSuccesModal({ t, history, bulkSignOrderListLength }) {
       },
     ],
   };
+  const userInfo = window?.Digit?.UserService?.getUser()?.info;
 
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   return (
     <Modal
       actionSaveLabel={t("BULK_SUCCESS_CLOSE")}
-      actionSaveOnSubmit={() => history.replace(`/${window?.contextPath}/employee/home/home-pending-task`)}
+      actionSaveOnSubmit={() => history.replace(homePath)}
       className={"orders-issue-bulk-success-modal"}
     >
       <div>

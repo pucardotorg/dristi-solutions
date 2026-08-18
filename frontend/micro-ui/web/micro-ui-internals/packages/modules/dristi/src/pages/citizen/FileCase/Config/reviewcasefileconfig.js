@@ -63,7 +63,7 @@ export const reviewCaseFileFormConfig = [
                   value: "currentAddressDetails",
                   dependentOn: "complainantType.code",
                   dependentValue: "INDIVIDUAL",
-                  enableScrutinyField: true
+                  enableScrutinyField: true,
                 },
                 {
                   type: "text",
@@ -214,6 +214,56 @@ export const reviewCaseFileFormConfig = [
                   label: "CS_DOCUMENT",
                   value: ["companyDetailsUpload.document", "inquiryAffidavitFileUpload.document"],
                 },
+                {
+                  type: "text",
+                  label: "HAS_LITIGANT_TRANFERRED_POA_TO_SOMEONE",
+                  value: "transferredPOA.name",
+                  isLocalizationRequired: true,
+                  defaultValue: "NO",
+                  hideOnStatus: ["DRAFT_IN_PROGRESS", "CASE_REASSIGNED", "UNDER_SCRUTINY", "PENDING_PAYMENT", "PENDING_REGISTRATION"],
+                },
+                {
+                  type: "textTitle",
+                  label: "POA_HOLDER_NAME",
+                  value: ["poaFirstName", "poaMiddleName", "poaLastName"],
+                  dependentOn: "transferredPOA.code",
+                  dependentValue: "YES",
+                },
+                {
+                  type: "phonenumber",
+                  label: "CS_POA_MOBILE_NUMBER",
+                  value: "poaVerification.mobileNumber",
+                  dependentOn: "transferredPOA.code",
+                  dependentValue: "YES",
+                },
+                {
+                  type: "text",
+                  label: "CS_POA_AGE",
+                  value: "poaAge",
+                  dependentOn: "transferredPOA.code",
+                  dependentValue: "YES",
+                },
+                {
+                  type: "image",
+                  label: "CS_POA_ID_PROOF",
+                  value: ["poaVerification.individualDetails.document"],
+                  dependentOn: "transferredPOA.code",
+                  dependentValue: "YES",
+                },
+                {
+                  type: "address",
+                  label: "CS_POA_ADDRESS",
+                  dependentOn: "transferredPOA.code",
+                  dependentValue: "YES",
+                  value: "poaAddressDetails",
+                },
+                {
+                  type: "image",
+                  label: "POA_AUTHORIZATION_DOCUMENT",
+                  value: ["poaAuthorizationDocument.poaDocument"],
+                  dependentOn: "transferredPOA.code",
+                  dependentValue: "YES",
+                },
               ],
               data: {},
             },
@@ -261,6 +311,11 @@ export const reviewCaseFileFormConfig = [
                   value: "payeeBranchName",
                 },
                 {
+                  type: "text",
+                  label: "CS_PAYEE_IFSC_CODE",
+                  value: "payeeIfscField.payeeIfsc",
+                },
+                {
                   type: "date",
                   label: "CS_DATE_OF_ISSUANCE",
                   value: "issuanceDate",
@@ -284,8 +339,8 @@ export const reviewCaseFileFormConfig = [
                 },
                 {
                   type: "text",
-                  label: "CS_IFSC_CODE",
-                  value: "ifsc",
+                  label: "CS_PAYER_IFSC_CODE",
+                  value: "payerIfscField.payerIfsc",
                 },
                 {
                   type: "amount",
@@ -316,7 +371,7 @@ export const reviewCaseFileFormConfig = [
                   value: "delayReason.reasonForReturnCheque",
                 },
                 {
-                  type: "text",
+                  type: "formattedText",
                   label: "CS_CHEQUE_ADDITIONAL_DETAILS",
                   value: "chequeAdditionalDetails.text",
                 },
@@ -355,7 +410,7 @@ export const reviewCaseFileFormConfig = [
                   value: "totalAmount",
                 },
                 {
-                  type: "text",
+                  type: "formattedText",
                   label: "CS_DEBT_ADDITIONAL_DETAILS",
                   value: "additionalDebtLiabilityDetails.text",
                 },
@@ -470,7 +525,7 @@ export const reviewCaseFileFormConfig = [
                   isLocalizationRequired: true,
                 },
                 {
-                  type: "text",
+                  type: "formattedText",
                   label: "DELAY_ADDITIONAL_INFO",
                   value: "additionalDelayCondonationDetails.text",
                 },
@@ -528,7 +583,7 @@ export const reviewCaseFileFormConfig = [
                   value: "addressDetails",
                 },
                 {
-                  type: "text",
+                  type: "formattedText",
                   label: "CS_TEXTAREA_WITNESS_ADDITIONAL_DETAIL",
                   value: "witnessAdditionalDetails.text",
                 },
@@ -552,6 +607,11 @@ export const reviewCaseFileFormConfig = [
                 // },
                 {
                   type: "formattedText",
+                  label: "CS_SYNOPSIS_HEADER",
+                  value: "synopsis.text",
+                },
+                {
+                  type: "formattedText",
                   label: "CS_MEMORANDUM_OF_COMPLAINT_HEADER",
                   // textDependentOn: "memorandumOfComplaint.document",
                   // textDependentValue: "DOCUMENT_UPLOADED",
@@ -572,12 +632,12 @@ export const reviewCaseFileFormConfig = [
                   value: "swornStatement.text",
                 },
                 {
-                  type: "text",
+                  type: "formattedText",
                   label: "CS_PRAYER",
                   value: "prayer.text",
                 },
                 {
-                  type: "text",
+                  type: "formattedText",
                   label: "CS_ADDITIONAL_DETAILS",
                   value: "additionalDetails.text",
                 },

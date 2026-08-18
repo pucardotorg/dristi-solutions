@@ -1,0 +1,17 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "LandingPage",
+    "masterName": "NotificationMessage",
+    "mdmsPayload":{
+      "tenantId": "kl",
+      "schemaCode": "LandingPage.NotificationMessage",
+      "uniqueIdentifier": "1",
+      "data": {
+        "id": "1",
+        "message": "The ON Courts platform will be unavailable from 5 PM to 9 PM on 16/5/25 due to scheduled maintenance."
+      },
+      "isActive": true
+    }
+  }
+]

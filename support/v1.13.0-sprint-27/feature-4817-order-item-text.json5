@@ -1,0 +1,35 @@
+// TODO : can be update using workbench
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "Order.ItemText",
+    "uniqueIdentifier": "8",
+    "data": {
+      "id": 8,
+      // TODO : update path , itemText for SUMMONS
+      "path": [
+        "CONCAT_STRING$.orderDetails.parties[*].partyName"
+      ],
+      "itemText": "Issue summons to [CONCAT_STRING$.orderDetails.parties[*].partyName]. Complainant is directed to make the appropriate payments and take steps to issue summons.",
+      "orderType": "SUMMONS"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Order.ItemText",
+    "uniqueIdentifier": "7",
+    "data": {
+      "id": 7,
+      // TODO : update path , itemText for NOTICE
+      "path": [
+        "$.orderDetails.noticeType",
+        // TODO : update path
+        "CONCAT_STRING$.orderDetails.parties[*].partyName"
+      ],
+      "itemText": "Issue [$.orderDetails.noticeType] to [CONCAT_STRING$.orderDetails.parties[*].partyName]. Complainant is directed to make the appropriate payments and take steps.",
+      "orderType": "NOTICE"
+    },
+    "isActive": true
+  }
+]
