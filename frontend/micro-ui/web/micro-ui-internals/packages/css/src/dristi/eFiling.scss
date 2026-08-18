@@ -2406,3 +2406,19 @@
   margin-bottom: 16px;
   max-width: 100% !important;
 }
+
+/* Accused phone number nudge on the review screen. */
+/* The shared .checkbox-wrap checkbox is 38px, which is oversized for this modal. */
+.popup-module.accused-mobile-nudge-modal {
+  .checkbox-wrap {
+    input,
+    .custom-checkbox {
+      width: 20px;
+      height: 20px;
+    }
+
+    .label {
+      margin-left: 28px;
+    }
+  }
+}
