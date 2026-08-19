@@ -144,6 +144,11 @@ public class DemandService {
                 iterator.remove();
             }
         }
+        // Whatever is left is routed to a non-eTreasury gateway (SBI for the e-Post delivery partner
+        // fee). Those demands are raised through the billing service directly.
+        if (!demands.isEmpty()) {
+            consumerCodes.addAll(callBillServiceAndCreateDemand(requestInfo, demands, task));
+        }
         return consumerCodes;
     }
 
@@ -241,8 +246,10 @@ public class DemandService {
     }
 
     private static List<Calculation> getCalculations(List<Calculation> calculations) {
+        // The treasury challan only carries the court fee. For e-Post the delivery partner portion is
+        // a separate demand collected through SBI; every other channel only has a court fee anyway.
         calculations.forEach(calculation -> {
-            calculation.setBreakDown(calculation.getBreakDown());
+            calculation.setBreakDown(calculation.getBreakDown().stream().filter(breakDown -> breakDown.getCode().equals("COURT_FEE")).toList());
             calculation.setTotalAmount(calculation.getBreakDown().stream().mapToDouble(BreakDown::getAmount).sum());
         });
         return calculations;
@@ -273,15 +280,10 @@ public class DemandService {
         String deliveryChannel = ChannelName.fromString(task.getTaskDetails().getDeliveryChannel().getChannelName()).name();
         Map<String, String> masterCodes = getTaxHeadMasterCodes(mdmsData, businessService, deliveryChannel);
 
-        if (E_POST.equalsIgnoreCase(deliveryChannel)) {
-            log.info("creating single demand for e post");
-            DemandDetail demandDetail = createDemandDetailForEPost(calculation.getTenantId(), calculation.getBreakDown(), masterCodes);
-            demandDetailList.add(demandDetail);
-            log.info("created single demand detail for e post");
-        } else {
-            for (BreakDown breakDown : calculation.getBreakDown()) {
-                demandDetailList.add(createDemandDetail(calculation.getTenantId(), breakDown, masterCodes));
-            }
+        // One demand detail per breakdown item. For e-Post that means a court fee detail (paid through
+        // e-Treasury) and a delivery partner detail (paid through SBI), each under its own consumer code.
+        for (BreakDown breakDown : calculation.getBreakDown()) {
+            demandDetailList.add(createDemandDetail(calculation.getTenantId(), breakDown, masterCodes));
         }
         return demandDetailList;
     }
@@ -351,14 +353,6 @@ public class DemandService {
                 .tenantId(tenantId)
                 .taxAmount(BigDecimal.valueOf(breakDown.getAmount()))
                 .taxHeadMasterCode(masterCodes.getOrDefault(breakDown.getType(), ""))
-                .build();
-    }
-
-    private DemandDetail createDemandDetailForEPost(String tenantId, List<BreakDown> breakDowns, Map<String, String> masterCodes) {
-        return DemandDetail.builder()
-                .tenantId(tenantId)
-                .taxAmount(BigDecimal.valueOf(breakDowns.stream().mapToDouble(BreakDown::getAmount).sum()))
-                .taxHeadMasterCode(masterCodes.getOrDefault(config.getEPostTaxHeadMasterCode(), ""))
                 .build();
     }
 
