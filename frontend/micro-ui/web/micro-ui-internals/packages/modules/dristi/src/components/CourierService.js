@@ -75,14 +75,19 @@ function CourierService({
 
   const paymentCriteriaList = useMemo(() => {
     if (!processCourierData?.addressDetails?.length) return [];
-    // add "EPOST" when it is needed
-    const defaultChannels = ["RPAD"];
-    const warrantChannels = ["RPAD", "POLICE"];
+    const defaultChannels = [CHANNEL_IDS.RPAD];
+    // e-Post is offered for summons only for now; notice follows once its SBI billing is enabled.
+    const summonsChannels = [CHANNEL_IDS.RPAD, CHANNEL_IDS.EPOST];
+    const warrantChannels = [CHANNEL_IDS.RPAD, CHANNEL_IDS.POLICE];
+    const channelsByTaskType = {
+      [TASK_TYPES.SUMMONS]: summonsChannels,
+      [TASK_TYPES.WARRANT]: warrantChannels,
+    };
     const taskTypes = orderType ? [orderType] : ["NOTICE", "SUMMONS", "WARRANT"];
 
     return processCourierData?.addressDetails?.flatMap((addr) =>
       taskTypes?.flatMap((taskType) => {
-        const channels = taskType === TASK_TYPES.WARRANT ? warrantChannels : defaultChannels;
+        const channels = channelsByTaskType[taskType] || defaultChannels;
 
         return channels.map((channelId) => ({
           channelId,

@@ -21,6 +21,12 @@ import { ORDER_TYPES } from "../../utils/constants";
 
 const modeOptions = [{ label: "E-Post (3-5 days)", value: "e-post" }];
 
+// Order types whose e-Post fees are billed as two demands - the court fee through e-Treasury and the
+// delivery partner fee through SBI. Anything else keeps the single merged e-Treasury bill. Add
+// ORDER_TYPES.NOTICE here, and task-notice to epost.split.billing.business.services on summons-svc, to
+// extend the SBI flow to notices.
+const EPOST_SBI_ORDER_TYPES = [ORDER_TYPES.SUMMONS];
+
 const submitModalInfo = {
   header: "CS_HEADER_FOR_SUMMON_POST",
   subHeader: "CS_SUBHEADER_TEXT_FOR_Summon_POST",
@@ -230,6 +236,14 @@ const PaymentForSummonModal = ({ path }) => {
     [orderData, compositeItem]
   );
 
+  const partyIndex = useMemo(
+    () =>
+      orderData?.list?.[0]?.orderCategory === "COMPOSITE"
+        ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex
+        : orderData?.list?.[0]?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex,
+    [orderData, compositeItem]
+  );
+
   const { data: hearingsData, isLoading: isHearingLoading } = Digit.Hooks.hearings.useGetHearings(
     {
       hearing: { tenantId },
@@ -245,32 +259,37 @@ const PaymentForSummonModal = ({ path }) => {
     Boolean((orderData?.list?.[0]?.hearingNumber || orderData?.list?.[0]?.scheduledHearingNumber) && caseCourtId)
   );
 
-  // temporarily POST_COURT and POST_PROCESS for epost is changed to POST_PROCESS_COURT
-  const consumerCode = useMemo(() => {
-    return taskNumber ? `${taskNumber}_POST_PROCESS_COURT` : undefined;
-  }, [taskNumber]);
+  // Split billing raises two demands against the same task: the court fee (e-Treasury) and the delivery
+  // partner fee (SBI). Task types outside that list keep the single merged e-Treasury demand.
+  const isSplitEPostBilling = useMemo(() => EPOST_SBI_ORDER_TYPES.includes(orderType), [orderType]);
+  const courtFeeConsumerCode = useMemo(() => (isSplitEPostBilling ? `${taskNumber}_POST_COURT` : `${taskNumber}_POST_PROCESS_COURT`), [
+    isSplitEPostBilling,
+    taskNumber,
+  ]);
+  const consumerCode = useMemo(() => (taskNumber ? courtFeeConsumerCode : undefined), [courtFeeConsumerCode, taskNumber]);
+  const deliveryPartnerConsumerCode = useMemo(() => `${taskNumber}_POST_PROCESS`, [taskNumber]);
   const service = useMemo(() => (orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE), [orderType]);
   const taskType = useMemo(() => getTaskType(service), [service]);
   const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchBill } = Digit.Hooks.dristi.useBillSearch(
     {},
     {
       tenantId,
-      consumerCode: `${taskNumber}_POST_PROCESS_COURT`,
+      consumerCode: courtFeeConsumerCode,
       service: service,
     },
-    `${taskNumber}_POST_PROCESS_COURT_${service}`,
+    `${courtFeeConsumerCode}_${service}`,
     Boolean(taskNumber && orderType)
   );
-  // const { data: ePostBillResponse, isLoading: isEPOSTBillLoading } = Digit.Hooks.dristi.useBillSearch(
-  //   {},
-  //   {
-  //     tenantId,
-  //     consumerCode: `${taskNumber}_POST_PROCESS_COURT`,
-  //     service: service,
-  //   },
-  //   `${taskNumber}_POST_PROCESS_COURT_${service}`,
-  //   Boolean(taskNumber && orderType)
-  // );
+  const { data: ePostBillResponse, isLoading: isEPOSTBillLoading, refetch: refetchEPostBill } = Digit.Hooks.dristi.useBillSearch(
+    {},
+    {
+      tenantId,
+      consumerCode: deliveryPartnerConsumerCode,
+      service: service,
+    },
+    `${deliveryPartnerConsumerCode}_${service}`,
+    Boolean(taskNumber && orderType && isSplitEPostBilling)
+  );
 
   const summonsPincode = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.address?.pincode, [filteredTasks]);
   const channelId = useMemo(() => extractFeeMedium(filteredTasks?.[0]?.taskDetails?.deliveryChannels?.channelName || ""), [filteredTasks]);
@@ -304,9 +323,9 @@ const PaymentForSummonModal = ({ path }) => {
     totalAmount: courtFeeAmount,
   });
 
-  // const deliveryPartnerFeeAmount = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.find((data) => data?.type === "E Post")?.amount, [
-  //   breakupResponse,
-  // ]);
+  const deliveryPartnerFeeAmount = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.find((data) => data?.type === "E Post")?.amount, [
+    breakupResponse,
+  ]);
 
   const mockSubmitModalInfo = useMemo(
     () =>
@@ -330,10 +349,11 @@ const PaymentForSummonModal = ({ path }) => {
           return null;
         }
         if (freshBillResponse?.Bill?.[0]?.status === "PAID") {
-          // setIsCaseLocked(ePostBillResponse?.Bill?.[0]?.status === "PAID" ? true : false);
-          // setPayOnlineButtonTitle(ePostBillResponse?.Bill?.[0]?.status === "PAID" ? "CS_BUTTON_PAY_ONLINE_NO_PENDING_PAYMENT" : "");
-          setIsCaseLocked(courtBillResponse?.Bill?.[0]?.status === "PAID" ? true : false);
-          setPayOnlineButtonTitle(courtBillResponse?.Bill?.[0]?.status === "PAID" ? "CS_BUTTON_PAY_ONLINE_NO_PENDING_PAYMENT" : "");
+          // For summons the court fee is only half of it - keep the screen usable until the delivery
+          // partner fee is settled through SBI too. Notice has a single bill, so it is done here.
+          const isSettled = isSplitEPostBilling ? ePostBillResponse?.Bill?.[0]?.status === "PAID" : courtBillResponse?.Bill?.[0]?.status === "PAID";
+          setIsCaseLocked(isSettled ? true : false);
+          setPayOnlineButtonTitle(isSettled ? "CS_BUTTON_PAY_ONLINE_NO_PENDING_PAYMENT" : "");
           return;
         }
         const caseLockStatus = await DRISTIService.getCaseLockStatus(
@@ -393,6 +413,45 @@ const PaymentForSummonModal = ({ path }) => {
       }
     };
 
+    // Delivery partner fee goes through the SBI gateway, not e-Treasury.
+    const onPayOnlineSBI = async () => {
+      try {
+        const { data: freshEPostBill } = await refetchEPostBill();
+        const ePostBill = freshEPostBill?.Bill?.length ? freshEPostBill : ePostBillResponse;
+
+        if (!ePostBill?.Bill?.length) {
+          setShowToast({ label: t("CS_NO_PENDING_PAYMENT"), error: true });
+          return;
+        }
+        if (ePostBill?.Bill?.[0]?.status === "PAID") {
+          setIsCaseLocked(true);
+          setPayOnlineButtonTitle("CS_BUTTON_PAY_ONLINE_NO_PENDING_PAYMENT");
+          return;
+        }
+
+        history.push(`/${window?.contextPath}/citizen/home/sbi-epost-payment`, {
+          state: {
+            billData: ePostBill,
+            serviceNumber: taskNumber,
+            businessService: service,
+            caseDetails: caseDetails,
+            consumerCode: deliveryPartnerConsumerCode,
+            orderData: orderData,
+            partyIndex: partyIndex,
+            filteredTasks: filteredTasks,
+            filingNumber: filingNumber,
+            isCourtBillPaid: courtBillResponse?.Bill?.[0]?.status === "PAID",
+            hearingId: orderData?.list?.[0]?.hearingNumber,
+            orderType: orderType,
+          },
+        });
+      } catch (error) {
+        console.error(error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ERROR_PROCESSING_PAYMENT"), error: true, errorId });
+      }
+    };
+
     return {
       "e-post": [
         {
@@ -400,27 +459,35 @@ const PaymentForSummonModal = ({ path }) => {
           amount: "Amount",
           action: "Actions",
         },
-        {
-          label: "E-post Fee",
-          amount: courtBillResponse?.Bill?.[0]?.totalAmount,
-          isCompleted: courtBillResponse?.Bill?.[0]?.status === "PAID",
-          action: "Pay Online",
-          onClick: onPayOnline,
-        },
-        // {
-        //   label: "Court Fees",
-        //   amount: courtFeeAmount,
-        //   isCompleted: courtBillResponse?.Bill?.[0]?.status === "PAID",
-        //   action: "Pay Online",
-        //   onClick: onPayOnline,
-        // },
-        // {
-        //   label: "Delivery Partner Fee",
-        //   amount: deliveryPartnerFeeAmount,
-        //   isCompleted: ePostBillResponse?.Bill?.[0]?.status === "PAID",
-        //   action: "Pay Online",
-        //   onClick: onPayOnline,
-        // },
+        ...(isSplitEPostBilling
+          ? [
+              {
+                // Court fee - e-Treasury
+                label: "Court Fees",
+                amount: courtFeeAmount,
+                isCompleted: courtBillResponse?.Bill?.[0]?.status === "PAID",
+                action: "Pay Online",
+                onClick: onPayOnline,
+              },
+              {
+                // Delivery partner fee - SBI
+                label: "Delivery Partner Fee",
+                amount: deliveryPartnerFeeAmount,
+                isCompleted: ePostBillResponse?.Bill?.[0]?.status === "PAID",
+                action: "Pay Online",
+                onClick: onPayOnlineSBI,
+              },
+            ]
+          : [
+              {
+                // Notice: court fee and delivery partner fee are billed together through e-Treasury.
+                label: "E-post Fee",
+                amount: courtBillResponse?.Bill?.[0]?.totalAmount,
+                isCompleted: courtBillResponse?.Bill?.[0]?.status === "PAID",
+                action: "Pay Online",
+                onClick: onPayOnline,
+              },
+            ]),
       ],
       "registered-post": [
         {
@@ -441,6 +508,12 @@ const PaymentForSummonModal = ({ path }) => {
     filteredTasks,
     courtFeeAmount,
     courtBillResponse,
+    deliveryPartnerFeeAmount,
+    ePostBillResponse,
+    refetchEPostBill,
+    deliveryPartnerConsumerCode,
+    partyIndex,
+    isSplitEPostBilling,
     openPaymentPortal,
     tenantId,
     mockSubmitModalInfo,
@@ -455,6 +528,7 @@ const PaymentForSummonModal = ({ path }) => {
     dayInMillisecond,
     todayDate,
     service,
+    t,
   ]);
 
   const infos = useMemo(() => {
@@ -519,7 +593,15 @@ const PaymentForSummonModal = ({ path }) => {
     };
   }, [feeOptions, history, infos, isCaseAdmitted, links, orderDate, orderType, paymentLoader, isUserAdv]);
 
-  if (isOrdersLoading || !orderData || isSummonsBreakUpLoading || isCourtBillLoading || isTaskLoading || isHearingLoading) {
+  if (
+    isOrdersLoading ||
+    !orderData ||
+    isSummonsBreakUpLoading ||
+    isCourtBillLoading ||
+    (isSplitEPostBilling && isEPOSTBillLoading) ||
+    isTaskLoading ||
+    isHearingLoading
+  ) {
     return <Loader />;
   }
 

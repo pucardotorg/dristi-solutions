@@ -193,10 +193,16 @@ const SmsPaymentPage = () => {
     return processCourierData;
   }, [processCourierData, noticeData]);
 
+  // e-Post is offered for summons only; notice keeps registered post as its single channel.
+  const channels = useMemo(() => (liveCourierData?.orderType?.toUpperCase() === ORDER_TYPES.SUMMONS ? ["RPAD", "EPOST"] : ["RPAD"]), [
+    liveCourierData?.orderType,
+  ]);
+  // With a single channel on offer there is nothing to choose, so keep it pre-selected as before.
+  const isSingleChannel = useMemo(() => channels?.length === 1, [channels]);
+
   const paymentCriteriaList = useMemo(() => {
     if (!liveCourierData?.addressDetails?.length) return [];
 
-    const channels = ["RPAD"]; // add EPOST when needed
     const taskTypes = [liveCourierData?.orderType];
 
     return liveCourierData?.addressDetails?.flatMap((addr) =>
@@ -210,7 +216,7 @@ const SmsPaymentPage = () => {
         }))
       )
     );
-  }, [liveCourierData?.addressDetails, liveCourierData?.orderType, tenantId]);
+  }, [channels, liveCourierData?.addressDetails, liveCourierData?.orderType, tenantId]);
 
   const { data: breakupResponse, isLoading: isBreakUpLoading } = useOpenApiSummonsPaymentBreakUp(
     {
@@ -254,11 +260,11 @@ const SmsPaymentPage = () => {
       fees: item?.fees || 0,
       deliveryTime: item?.channelDeliveryTime,
       deliveryChannelName: `${t(item?.channelCode)} (INR ${item?.fees}) • ${t(item?.channelDeliveryTime)}`,
-      selected: true, // make it false when epost or other delievry channels added
+      selected: isSingleChannel, // with more than one channel the user picks explicitly
     }));
 
     return options;
-  }, [breakupResponse?.Calculation, liveCourierData?.addressDetails, t]);
+  }, [breakupResponse?.Calculation, isSingleChannel, liveCourierData?.addressDetails, t]);
 
   useEffect(() => {
     if (!liveCourierData?.notices?.length) return;
@@ -302,12 +308,14 @@ const SmsPaymentPage = () => {
       }));
 
       const mergedOptions = breakupOptions?.map((opt) => {
-        const currentlySelectedInState = notice?.courierOptions?.find((c) => c?.channelId === opt?.channelId)?.selected || true; // when other delievery channels then set it to false
+        const existingOption = notice?.courierOptions?.find((c) => c?.channelId === opt?.channelId);
         const alreadySelectedInTask = existingDeliveryChannels?.some((ch) => ch?.channelId === opt?.channelId);
 
         return {
           ...opt,
-          selected: currentlySelectedInState || alreadySelectedInTask,
+          // keep whatever the user has toggled; otherwise fall back to what was already saved on the
+          // task, or to the channel itself when it is the only one on offer
+          selected: existingOption ? Boolean(existingOption?.selected) : alreadySelectedInTask || isSingleChannel,
         };
       });
 
@@ -342,7 +350,7 @@ const SmsPaymentPage = () => {
     }
 
     setNoticeData(updatedNotices);
-  }, [breakupResponse, liveCourierData, taskManagementList, t, courierBreakupOptions]);
+  }, [breakupResponse, liveCourierData, taskManagementList, t, courierBreakupOptions, isSingleChannel]);
 
   const handleProceedToPaymentPage = async () => {
     try {

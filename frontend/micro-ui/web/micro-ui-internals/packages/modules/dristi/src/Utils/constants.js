@@ -63,6 +63,7 @@ export const TASK_TYPES = {
 export const CHANNEL_IDS = {
   RPAD: "RPAD",
   POLICE: "POLICE",
+  EPOST: "EPOST",
 };
 
 export const ORDER_CATEGORIES = {

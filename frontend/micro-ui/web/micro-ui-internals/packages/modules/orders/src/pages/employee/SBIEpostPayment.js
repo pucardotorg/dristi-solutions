@@ -42,14 +42,18 @@ const SBIEpostPayment = ({ path }) => {
   const [payOnlineButtonTitle, setPayOnlineButtonTitle] = useState("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
   const [showToast, setShowToast] = useState(null);
 
+  // The bill payload handed over by the payment modal does not always carry businessService, so fall
+  // back to the one that was passed alongside it - without it the search returns no bill.
+  const billBusinessService = businessService || bill?.Bill?.[0]?.businessService;
+
   const { refetch: refetchBill } = Digit.Hooks.dristi.useBillSearch(
     {},
     {
       tenantId,
       consumerCode: consumerCode,
-      service: bill?.Bill?.[0]?.businessService,
+      service: billBusinessService,
     },
-    `${consumerCode}_POST_PROCESS_${bill?.Bill?.[0]?.businessService}`,
+    `${consumerCode}_POST_PROCESS_${billBusinessService}`,
     Boolean(orderType)
   );
   const fetchCaseLockStatus = useCallback(async () => {

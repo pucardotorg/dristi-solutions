@@ -68,7 +68,7 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupRes
             deliveryTime: channelId === "RPAD" ? "RPAD_DELIVERY_TIME" : "EPOST_DELIVERY_TIME",
             fees: 0,
             addressIds: [],
-            selected: true, // auto-select when any address has it
+            selected: false, // resolved below: auto-selected only when it is the sole channel
           };
         }
 
@@ -76,12 +76,14 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupRes
         newCourierMap[key].addressIds.push(addressId);
       });
 
-      // Merge with existing courierOptions if already had them (retain selected flags)
+      // Merge with existing courierOptions if already had them (retain selected flags). A lone channel
+      // stays auto-selected; when several are on offer the user picks explicitly.
+      const isSingleChannel = Object.keys(newCourierMap).length === 1;
       const mergedCourierOptions = Object.values(newCourierMap).map((opt) => {
         const existing = notice?.courierOptions?.find((c) => c?.channelId === opt?.channelId);
         return {
           ...opt,
-          selected: existing ? existing.selected : opt.selected,
+          selected: existing ? existing.selected : isSingleChannel,
         };
       });
 
@@ -231,7 +233,7 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupRes
               <h3>{t("SELECT_COURIER_SERVICES")}</h3>
               <div className="courier-options">
                 {notice?.courierOptions?.map((courier) => (
-                  <label key={courier.id} className="courier-option">
+                  <label key={courier.channelId} className="courier-option">
                     <input type="checkbox" checked={courier.selected} onChange={() => handleCourierChange(notice.id, courier.channelId)} />
                     <div className="courier-details">
                       <div className="courier-name">

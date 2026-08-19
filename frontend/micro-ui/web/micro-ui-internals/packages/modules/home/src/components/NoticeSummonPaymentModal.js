@@ -12,6 +12,8 @@ import { PrintIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgInd
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote";
 import useGetPaymentVerificationStatus from "../../../submissions/src/hooks/submissions/useGetPaymentVerificationStatus";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { CHANNEL_IDS } from "@egovernments/digit-ui-module-dristi/src/Utils/constants";
 
 const verificationPendingNoteConfig = {
   populators: {
@@ -37,6 +39,7 @@ function NoticeSummonPaymentModal({
   onClose = () => {},
 }) {
   const { t } = useTranslation();
+  const history = useHistory();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const scenario = "EfillingCase";
   const path = "";
@@ -83,6 +86,17 @@ function NoticeSummonPaymentModal({
     });
     return Object.entries(channelMap).map(([code, names]) => `${t(code)} (${names?.join(", ")})`);
   }, [t, taskManagement]);
+
+  // TEMPORARY: routes e-Post task payments through SBI while that integration is being validated.
+  const hasEPostChannel = useMemo(
+    () =>
+      Boolean(
+        taskManagement?.partyDetails?.some((party) =>
+          party?.deliveryChannels?.some((channel) => channel?.channelId === CHANNEL_IDS.EPOST || channel?.channelCode === "E_POST")
+        )
+      ),
+    [taskManagement]
+  );
 
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
   const advocatesUuids = useMemo(() => {
@@ -232,6 +246,30 @@ function NoticeSummonPaymentModal({
         setIsCaseLocked(true);
         return;
       }
+      // TEMPORARY: while the SBI integration is being validated, an e-Post task is collected through
+      // SBI instead of e-Treasury. The task-management demand is a single merged one, so the whole
+      // amount goes through SBI. RPAD-only tasks are untouched and keep using e-Treasury.
+      // The SBI page acquires its own case lock, so hand over before locking here.
+      if (hasEPostChannel) {
+        console.log("[NoticeSummonPaymentModal][onTaskPayOnline] e-Post task — routing to SBI");
+        history.push(`/${window?.contextPath}/citizen/home/sbi-epost-payment`, {
+          state: {
+            billData: bill,
+            serviceNumber: taskManagement?.taskManagementNumber,
+            businessService: "task-management-payment",
+            consumerCode: `${taskManagement?.taskManagementNumber}_${suffix}`,
+            caseDetails: caseDetails,
+            filingNumber: caseDetails?.filingNumber,
+            orderType: courierOrderDetails?.orderType,
+            orderData: { list: [courierOrderDetails] },
+            filteredTasks: [],
+            // The task-management workflow closes its own pending task once the payment lands, so the
+            // SBI status screen must not also write the legacy summons pending task.
+            isCourtBillPaid: false,
+          },
+        });
+        return;
+      }
       const caseLockStatus = await DRISTIService.getCaseLockStatus(
         {},
         {
@@ -285,7 +323,13 @@ function NoticeSummonPaymentModal({
       }
     } catch (error) {
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-      console.error("[NoticeSummonPaymentModal][onTaskPayOnline] EXCEPTION", { error, errorId, isPostPaymentVerificationPending, retryPayment, receiptFilstoreId });
+      console.error("[NoticeSummonPaymentModal][onTaskPayOnline] EXCEPTION", {
+        error,
+        errorId,
+        isPostPaymentVerificationPending,
+        retryPayment,
+        receiptFilstoreId,
+      });
       isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
       setRetryPayment(true);
       setShowToast({ label: t("CS_PAYMENT_ERROR"), error: true, errorId });
@@ -333,9 +377,7 @@ function NoticeSummonPaymentModal({
         inline
         className={"adhaar-verification-info-card"}
       />
-      {showVerificationPending && (
-        <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
-      )}
+      {showVerificationPending && <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />}
       <div className="total-payment">
         {paymentCalculation
           ?.filter((item) => item?.isTotalFee)
