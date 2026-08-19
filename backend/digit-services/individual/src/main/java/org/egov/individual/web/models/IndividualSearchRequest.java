@@ -15,7 +15,7 @@ import javax.validation.constraints.NotNull;
 * IndividualSearchRequest
 */
 @Validated
-@javax.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2022-12-27T11:47:19.561+05:30")
+@jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2022-12-27T11:47:19.561+05:30")
 
 @Data
 @NoArgsConstructor
@@ -28,7 +28,7 @@ public class IndividualSearchRequest   {
 
   @Valid
 
-
+  @Builder.Default
     private org.egov.common.contract.request.RequestInfo requestInfo = null;
 
         @JsonProperty("Individual")
@@ -36,7 +36,7 @@ public class IndividualSearchRequest   {
 
   @Valid
 
-
+  @Builder.Default
     private IndividualSearch individual = null;
 
 

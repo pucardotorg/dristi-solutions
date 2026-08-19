@@ -16,7 +16,7 @@ import org.egov.common.contract.request.RequestInfo;
 public class InboxRequest {
 
     @JsonProperty("RequestInfo")
-    private RequestInfo RequestInfo;
+    private RequestInfo requestInfo;
 
     @Valid
     @JsonProperty("inbox")

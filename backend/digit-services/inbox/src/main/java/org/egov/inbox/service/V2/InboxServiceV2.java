@@ -511,6 +511,19 @@ public class InboxServiceV2 {
                 .RequestInfo(searchRequest.getRequestInfo())
                 .inbox(inboxSearchCriteria)
                 .build();
+        InboxResponse inboxResponse = getIndexResponse(inboxRequest);
+
+        if (moduleName != null && moduleName.equalsIgnoreCase(config.getAdvocateModuleName())) {
+            inboxResponse = getInboxResponse(inboxRequest);
+        }
+        if (moduleName != null && moduleName.equalsIgnoreCase(config.getBillingServiceModuleName())) {
+            inboxResponse = getIndexResponse(inboxRequest);
+        }
+
+        if (criteria.getIsOnlyCountRequired()) {
+            criteria.setCount(inboxResponse.getTotalCount());
+            setter.accept(criteria);
+        }
     }
 
     private void populateActionCategoryData(SearchRequest searchRequest,

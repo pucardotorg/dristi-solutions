@@ -1,20 +1,21 @@
 package org.egov.user.persistence.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
+import lombok.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Getter
+@Data
+@Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class ActionResponse {
 
-    List<Action> actions;
+    private List<org.egov.user.persistence.dto.Action> actions;
 
     public List<org.egov.user.domain.model.Action> toDomainActions() {
+        if (actions == null) return null;
         return actions.stream()
-                .map(Action::toDomain)
+                .map(org.egov.user.persistence.dto.Action::toDomain)
                 .collect(Collectors.toList());
     }
 }

@@ -3,8 +3,14 @@ package org.egov.web.notification.sms.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.jayway.jsonpath.*;
 import lombok.extern.slf4j.*;
-import org.apache.http.conn.ssl.*;
-import org.apache.http.impl.client.*;
+import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
+import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
+import org.apache.hc.core5.http.config.Registry;
+import org.apache.hc.core5.http.config.RegistryBuilder;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.classic.*;
+import org.apache.hc.client5.http.classic.*;
+import org.apache.hc.client5.http.ssl.*;
 import org.egov.web.notification.sms.config.*;
 import org.egov.web.notification.sms.models.*;
 import org.springframework.asm.*;
@@ -18,7 +24,7 @@ import org.springframework.http.converter.json.*;
 import org.springframework.util.*;
 import org.springframework.web.client.*;
 
-import javax.annotation.*;
+import jakarta.annotation.*;
 import javax.net.ssl.*;
 import java.io.*;
 import java.lang.reflect.Type;
@@ -180,25 +186,39 @@ abstract public class BaseSMSService implements SMSService, SMSBodyBuilder {
 
     @PostConstruct
     protected void setupSSL() {
+
         if (!smsProperties.isVerifySSL()) {
 
-            SSLContext ctx = null;
             try {
 
-                ctx =  SSLContext.getInstance("SSL");
-                ctx.init(null, null, SecureRandom.getInstance("SHA1PRNG"));
+                SSLContext ctx = SSLContext.getInstance("TLS");
+                ctx.init(null, null, new SecureRandom());
 
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            } catch (KeyManagementException e) {
-                e.printStackTrace();
+                SSLConnectionSocketFactory sslSocketFactory =
+                        new SSLConnectionSocketFactory(ctx, NoopHostnameVerifier.INSTANCE);
+
+                Registry<org.apache.hc.client5.http.socket.ConnectionSocketFactory> socketFactoryRegistry =
+                        org.apache.hc.core5.http.config.RegistryBuilder
+                                .<org.apache.hc.client5.http.socket.ConnectionSocketFactory>create()
+                                .register("https", sslSocketFactory)
+                                .register("http", new org.apache.hc.client5.http.socket.PlainConnectionSocketFactory())
+                                .build();
+
+                org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager connectionManager =
+                        new org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager(socketFactoryRegistry);
+
+                CloseableHttpClient httpClient = HttpClients.custom()
+                        .setConnectionManager(connectionManager)
+                        .build();
+
+                HttpComponentsClientHttpRequestFactory requestFactory =
+                        new HttpComponentsClientHttpRequestFactory(httpClient);
+
+                restTemplate.setRequestFactory(requestFactory);
+
+            } catch (Exception e) {
+                throw new RuntimeException("Error configuring SSL", e);
             }
-            SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(ctx, new NoopHostnameVerifier());
-            CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(csf).build();
-            HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
-            requestFactory.setHttpClient(httpClient);
-            restTemplate.setRequestFactory(requestFactory);
         }
     }
-
 }
