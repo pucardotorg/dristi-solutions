@@ -56,16 +56,18 @@ public class SystemUserValidator implements Validator<IndividualBulkRequest, Ind
                 continue;
             }
 
-            if (existingIndividualFoundForUser(individual)) {
-                Error error = Error.builder()
-                        .errorMessage("Individual already exists for the given user")
-                        .errorCode("INDIVIDUAL_ALREADY_EXISTS_FOR_USER")
-                        .type(Error.ErrorType.NON_RECOVERABLE)
-                        .exception(new CustomException("INDIVIDUAL_ALREADY_EXISTS_FOR_USER",
-                                "Individual already exists for the given user"))
-                        .build();
-                populateErrorDetails(individual, error, errorDetailsMap);
-            }
+            // TODO: TEMPORARILY DISABLED FOR LOCAL TESTING - REVERT BEFORE COMMIT
+            // duplicate check: individual already exists for the given user
+//            if (existingIndividualFoundForUser(individual)) {
+//                Error error = Error.builder()
+//                        .errorMessage("Individual already exists for the given user")
+//                        .errorCode("INDIVIDUAL_ALREADY_EXISTS_FOR_USER")
+//                        .type(Error.ErrorType.NON_RECOVERABLE)
+//                        .exception(new CustomException("INDIVIDUAL_ALREADY_EXISTS_FOR_USER",
+//                                "Individual already exists for the given user"))
+//                        .build();
+//                populateErrorDetails(individual, error, errorDetailsMap);
+//            }
         }
 
         return errorDetailsMap;
