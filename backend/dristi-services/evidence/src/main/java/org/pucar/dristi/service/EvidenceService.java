@@ -168,7 +168,6 @@ public class EvidenceService {
                 .filingNumber(body.getArtifact().getFilingNumber())
                 .artifactType(WITNESS_DEPOSITION)
                 .tenantId(body.getArtifact().getTenantId())
-                .isActive(true)
                 .build();
     }
 
