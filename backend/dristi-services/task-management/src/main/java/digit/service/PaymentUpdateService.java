@@ -172,7 +172,15 @@ public class PaymentUpdateService {
         }
         Document paymentReceipt = null;
         if (ONLINE.equalsIgnoreCase(paymentMode)) {
-            paymentReceipt = getPaymentReceipt(request, paymentDetail.getBillId(), taskManagement.getTaskManagementNumber() + "_" + configuration.getTaskManagementSuffix());
+            // Receipt enrichment is best effort. The payment is already recorded in collections by this
+            // point, and the receipt is only ever attached as a document, so a failure here must not stop
+            // the task status update or the follow up tasks that depend on it. Payments made outside
+            // eTreasury (SBI ePay, for one) have no eTreasury receipt to fetch and land here routinely.
+            try {
+                paymentReceipt = getPaymentReceipt(request, paymentDetail.getBillId(), taskManagement.getTaskManagementNumber() + "_" + configuration.getTaskManagementSuffix());
+            } catch (Exception e) {
+                log.error("Could not fetch payment receipt for bill id: {}, continuing without it", paymentDetail.getBillId(), e);
+            }
         }
         if (paymentReceipt != null) {
             taskManagement.setDocuments(List.of(paymentReceipt));
