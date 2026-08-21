@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { useGetAccessToken } from "../../../hooks/useGetAccessToken";
 import { SuccessIcon } from "../../../icons/svgIndex";
 import JoinCaseHome from "../../../../../cases/src/pages/employee/JoinCaseHome";
 import SetPasswordPromptModal from "../Login/SetPasswordPromptModal";
@@ -17,8 +16,6 @@ const Response = ({ refetch, setHideBack }) => {
   // A litigant is created without any approval step and lands here right after registration, so the
   // "set a password" prompt is surfaced over this screen.
   const { showPasswordPrompt, onSetPassword, onRemindLater, onDontRemindAgain } = useSetPasswordPrompt();
-
-  useGetAccessToken("citizen.refresh-token", true);
 
   useEffect(() => {
     setHideBack(true);

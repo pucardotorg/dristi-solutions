@@ -76,7 +76,6 @@ const Registration = ({ stateCode }) => {
     }
     localStorage.setItem("citizen.userRequestObject", user);
     Digit.UserService.setUser(user);
-    localStorage.setItem("citizen.refresh-token", user?.refresh_token);
     setCitizenDetail(user?.info, user?.access_token, stateCode);
     const redirectPath = location.state?.from || `${path}/user-name`;
     // routeToAdditionalDetail(user?.info);
@@ -161,7 +160,8 @@ const Registration = ({ stateCode }) => {
         otpReference: otp,
         tenantId: stateCode,
       };
-      const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.registerUser(requestData, stateCode);
+      // refresh_token is discarded here so it is never persisted by setUser
+      const { ResponseInfo, refresh_token, UserRequest: info, ...tokens } = await Digit.UserService.registerUser(requestData, stateCode);
       if (window?.globalConfigs?.getConfig("ENABLE_SINGLEINSTANCE")) {
         info.tenantId = Digit.ULBService.getStateId();
       }
