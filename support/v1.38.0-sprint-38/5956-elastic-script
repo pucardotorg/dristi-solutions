@@ -1,0 +1,165 @@
+GET pending-tasks-index/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": {
+            "Data.name.keyword": "Pending Upload Signature For Case"
+          }
+        },
+        {
+          "term": {
+            "Data.isCompleted": false
+          }
+        }
+      ]
+    }
+  },
+  "size": 20
+}
+
+
+POST pending-tasks-index/_update_by_query
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": {
+            "Data.name.keyword": "Create DCA Applications"
+          }
+        },
+        {
+          "term": {
+            "Data.isCompleted": false
+          }
+        }
+      ]
+    }
+  },
+  "script": {
+    "lang": "painless",
+    "source": """
+    if (ctx._source.Data.createdTime != null) {
+      ctx._source.Data.stateSla = ctx._source.Data.createdTime + 3*86400000;
+    }
+    """
+  }
+}
+
+POST pending-tasks-index/_update_by_query
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": {
+            "Data.name.keyword": "Pending Upload Signature For Case"
+          }
+        },
+        {
+          "term": {
+            "Data.isCompleted": false
+          }
+        }
+      ]
+    }
+  },
+  "script": {
+    "lang": "painless",
+    "source": """
+    if (ctx._source.Data.createdTime != null) {
+      ctx._source.Data.stateSla = ctx._source.Data.createdTime + 86400000;
+    }
+    """
+  }
+}
+
+
+POST pending-tasks-index/_update_by_query
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": {
+            "Data.name.keyword": "Pending re-upload signature for case"
+          }
+        },
+        {
+          "term": {
+            "Data.isCompleted": false
+          }
+        }
+      ]
+    }
+  },
+  "script": {
+    "lang": "painless",
+    "source": """
+    if (ctx._source.Data.createdTime != null) {
+      ctx._source.Data.stateSla = ctx._source.Data.createdTime + 86400000;
+    }
+    """
+  }
+}
+
+
+POST pending-tasks-index/_update_by_query
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": {
+            "Data.name.keyword": "Pending Re Esign For Case"
+          }
+        },
+        {
+          "term": {
+            "Data.isCompleted": false
+          }
+        }
+      ]
+    }
+  },
+  "script": {
+    "lang": "painless",
+    "source": """
+    if (ctx._source.Data.createdTime != null) {
+      ctx._source.Data.stateSla = ctx._source.Data.createdTime + 86400000;
+    }
+    """
+  }
+}
+
+
+POST pending-tasks-index/_update_by_query
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": {
+            "Data.name.keyword": "E-Sign is Pending"
+          }
+        },
+        {
+          "term": {
+            "Data.isCompleted": false
+          }
+        }
+      ]
+    }
+  },
+  "script": {
+    "lang": "painless",
+    "source": """
+    if (ctx._source.Data.createdTime != null) {
+      ctx._source.Data.stateSla = ctx._source.Data.createdTime + 86400000;
+    }
+    """
+  }
+}
+
