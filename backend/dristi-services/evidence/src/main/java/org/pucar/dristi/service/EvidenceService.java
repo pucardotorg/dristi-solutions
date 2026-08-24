@@ -91,6 +91,14 @@ public class EvidenceService {
         return ((isEvidenceMarkedFlow || isArtifactTypeDeposition || isFilingTypeDirect) && hasWorkflow) || isArtifactTypeWitnessDeposition;
     }
 
+    private boolean shouldInitiateWorkflowOnCreate(EvidenceRequest body, String artifactType, String filingType) {
+        boolean isArtifactTypeDeposition = artifactType != null && artifactType.equals(DEPOSITION);
+        boolean isSubmissionWithWorkflow = body.getArtifact().getWorkflow() != null && SUBMISSION.equalsIgnoreCase(filingType);
+        boolean isArtifactTypeWitnessDeposition = WITNESS_DEPOSITION.equalsIgnoreCase(artifactType);
+
+        return isArtifactTypeDeposition || isSubmissionWithWorkflow || isArtifactTypeWitnessDeposition;
+    }
+
     public Artifact createEvidence(EvidenceRequest body) {
         try {
 
@@ -112,7 +120,7 @@ public class EvidenceService {
                 }
             }
             // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
-            if ((artifactType != null && artifactType.equals(DEPOSITION)) || (body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION)) || WITNESS_DEPOSITION.equalsIgnoreCase(artifactType)) {
+            if (shouldInitiateWorkflowOnCreate(body, artifactType, filingType)) {
                 workflowService.updateWorkflowStatus(body, filingType);
                 producer.push(config.getEvidenceCreateTopic(), body);
             } else {
@@ -150,7 +158,8 @@ public class EvidenceService {
         List<Artifact> artifacts = repository.getArtifacts(evidenceSearchCriteria, null);
         boolean witnessFound = artifacts.stream().anyMatch(artifact -> artifact.getTag() != null && artifact.getTag().equalsIgnoreCase(body.getArtifact().getTag()));
         if (witnessFound) {
-            log.info("Tag already exists for the witness with source:{} ", body.getArtifact().getSourceType());
+            log.error("Tag {} already exists for a witness deposition in filing number {} with source:{} ", body.getArtifact().getTag(), body.getArtifact().getFilingNumber(), body.getArtifact().getSourceType());
+            throw new CustomException(DUPLICATE_WITNESS_DEPOSITION, "A deposition already exists for witness tag: " + body.getArtifact().getTag() + " in case: " + body.getArtifact().getFilingNumber());
         }
     }
 
