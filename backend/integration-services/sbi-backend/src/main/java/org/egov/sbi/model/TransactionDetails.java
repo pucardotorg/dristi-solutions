@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -142,12 +144,21 @@ public class TransactionDetails {
     @JsonProperty("mobileNumber")
     private String mobileNumber;
 
+    /**
+     * SBI expects amounts as Decimal(17,2): a plain, locale independent string with exactly two
+     * decimal places. A raw double renders as "82.0", and as "1.0E7" once it reaches ten million,
+     * neither of which SBI accepts.
+     */
+    public static String formatAmount(double amount) {
+        return BigDecimal.valueOf(amount).setScale(2, RoundingMode.HALF_UP).toPlainString();
+    }
+
     public String toSingleRequestString() {
         return merchantId + "|" +
                 operatingMode + "|" +
                 merchantCountry + "|" +
                 merchantCurrency + "|" +
-                postingAmount + "|" +
+                formatAmount(postingAmount) + "|" +
                 otherDetails + "|" +
                 successUrl + "|" +
                 failUrl + "|" +
@@ -165,7 +176,7 @@ public class TransactionDetails {
         }
         return amountDetails.stream()
                 .map(detail -> String.format("%s|%s|%s",
-                        detail.getPostingAmount(),
+                        formatAmount(detail.getPostingAmount()),
                         detail.getMerchantCurrency(),
                         detail.getAccountIdentifier()))
                 .collect(Collectors.joining("||"));

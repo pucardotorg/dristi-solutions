@@ -133,15 +133,17 @@ public class BrowserDetails {
         browserDetails.setTransactionDate(parts[11]);
         browserDetails.setPayMode(parts[12]);
         browserDetails.setCin(parts[13]);
-        browserDetails.setRef1(parts[15]);
-        browserDetails.setRef2(parts[16]);
-        browserDetails.setRef3(parts[17]);
-        browserDetails.setRef4(parts[18]);
-        browserDetails.setRef5(parts[19]);
-        browserDetails.setRef6(parts[20]);
-        browserDetails.setRef7(parts[21]);
-        browserDetails.setRef8(parts[22]);
-        browserDetails.setRef9(parts[23]);
+        // parts[14] repeats the merchant id and parts[15] is Total Fee GST (a caret separated
+        // "fee^gst" pair, so not parsed here). The reference fields start at parts[16].
+        browserDetails.setRef1(parts[16]);
+        browserDetails.setRef2(parts[17]);
+        browserDetails.setRef3(parts[18]);
+        browserDetails.setRef4(parts[19]);
+        browserDetails.setRef5(parts[20]);
+        browserDetails.setRef6(parts[21]);
+        browserDetails.setRef7(parts[22]);
+        browserDetails.setRef8(parts[23]);
+        browserDetails.setRef9(parts[24]);
 
         return browserDetails;
     }

@@ -142,7 +142,7 @@ public class PaymentService {
         String sbiEpayRefId = browserDetails.getSbiEpayRefId();
         String merchantId = config.getSbiMerchantId();
         String merchantOrderNumber = browserDetails.getMerchantOrderNumber();
-        String amount = String.valueOf(browserDetails.getAmount());
+        String amount = TransactionDetails.formatAmount(browserDetails.getAmount());
         String queryRequest = String.join("|", sbiEpayRefId, merchantId, merchantOrderNumber, amount);
 
         Map<String, String> params = new HashMap<>();
