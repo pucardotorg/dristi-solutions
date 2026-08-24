@@ -197,7 +197,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
     }
   };
 
-  const searchIndividualUser = (info, tokens) => {
+  const searchIndividualUser = (info) => {
     DRISTIService.searchIndividualUser(
       {
         Individual: {
@@ -345,12 +345,11 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
           tenantId: stateCode,
           userType: getUserType(),
         };
-        const { ResponseInfo, UserRequest: info, ...tokens } = await window?.Digit.UserService.authenticate(requestData);
+        const { UserRequest: info } = await window?.Digit.UserService.authenticate(requestData);
         if (window?.globalConfigs?.getConfig("ENABLE_SINGLEINSTANCE")) {
           info.tenantId = window?.Digit.ULBService.getStateId();
         }
-        searchIndividualUser(info, tokens);
-        localStorage.setItem(`temp-refresh-token-${formData[config.key]?.[input?.mobileNoKey]}`, tokens?.refresh_token);
+        searchIndividualUser(info);
         setState((prev) => ({
           ...prev,
           isUserVerified: true,
@@ -364,13 +363,12 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
           tenantId: stateCode,
         };
 
-        const { ResponseInfo, UserRequest: info, ...tokens } = await window?.Digit.UserService.registerUser(requestData, stateCode);
+        const { UserRequest: info } = await window?.Digit.UserService.registerUser(requestData, stateCode);
 
         if (window?.globalConfigs?.getConfig("ENABLE_SINGLEINSTANCE")) {
           info.tenantId = window?.Digit.ULBService.getStateId();
         }
-        searchIndividualUser(info, tokens);
-        localStorage.setItem(`temp-refresh-token-${formData[config.key]?.[input?.mobileNoKey]}`, tokens?.refresh_token);
+        searchIndividualUser(info);
         setState((prev) => ({
           ...prev,
           isUserVerified: true,

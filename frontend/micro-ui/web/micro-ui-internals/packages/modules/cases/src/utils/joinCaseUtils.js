@@ -1,7 +1,6 @@
 import { userTypeOptions } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/registration/config";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { CASEService, Urls } from "../hooks/services";
-import { getUserDetails } from "@egovernments/digit-ui-module-dristi/src/hooks/useGetAccessToken";
 
 const TYPE_REGISTER = { type: "register" };
 const TYPE_LOGIN = { type: "login" };
@@ -40,7 +39,8 @@ export const selectOtp = async (isUserRegistered, mobileNumber, otp, tenantId, n
         tenantId: tenantId,
         userType: Digit.UserService.getType(),
       };
-      const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
+      // refresh_token is discarded here so it is never persisted by setUser
+      const { ResponseInfo, refresh_token, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
 
       if (window?.globalConfigs?.getConfig("ENABLE_SINGLEINSTANCE")) {
         info.tenantId = Digit.ULBService.getStateId();
@@ -54,11 +54,11 @@ export const selectOtp = async (isUserRegistered, mobileNumber, otp, tenantId, n
         tenantId: tenantId,
       };
 
-      const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.registerUser(requestData, tenantId);
+      // refresh_token is discarded here so it is never persisted by setUser
+      const { ResponseInfo, refresh_token, UserRequest: info, ...tokens } = await Digit.UserService.registerUser(requestData, tenantId);
       if (window?.globalConfigs?.getConfig("ENABLE_SINGLEINSTANCE")) {
         info.tenantId = Digit.ULBService.getStateId();
       }
-      localStorage.setItem(`temp-refresh-token-${mobileNumber}`, tokens?.refresh_token);
       return { info: info, ...tokens };
     }
   } catch (err) {
@@ -137,11 +137,6 @@ export const registerIndividualWithNameAndMobileNumber = async (data, tenantId) 
     },
   };
   const response = await window?.Digit.DRISTIService.postIndividualService(Individual, tenantId);
-  const refreshToken = window.localStorage.getItem(`temp-refresh-token-${response?.Individual?.mobileNumber}`);
-  window.localStorage.removeItem(`temp-refresh-token-${response?.Individual?.mobileNumber}`);
-  if (refreshToken) {
-    await getUserDetails(refreshToken, response?.Individual?.mobileNumber);
-  }
   return response;
 };
 

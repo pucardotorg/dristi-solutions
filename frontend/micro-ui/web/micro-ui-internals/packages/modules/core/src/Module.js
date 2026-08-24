@@ -13,7 +13,6 @@ import ChangeLanguage from "./components/ChangeLanguage";
 import { useState } from "react";
 import ErrorBoundary from "./components/ErrorBoundaries";
 import getStore from "./redux/store";
-import { useGetAccessToken } from "./hooks/useGetAccessToken";
 
 // Initialize breadcrumb parameters with empty values
 const initialBreadCrumbParamsData = { caseId: "", filingNumber: "" };
@@ -87,12 +86,6 @@ export const DigitUI = ({ stateCode, registry, enabledModules, moduleReducers, d
   const [BreadCrumbsParamsData, setBreadCrumbsParamsData] = useState(initialBreadCrumbParamsData);
   // State to manage advocate data across the application
   const [AdvocateData, setAdvocateDataContext] = useState(initialAdvocateData);
-
-  const { isLoading: isGetAccessToken } = useGetAccessToken("refresh-token");
-
-  if (isGetAccessToken) {
-    return <Loader />;
-  }
 
   const userType = Digit.UserService.getType();
   const queryClient = new QueryClient({

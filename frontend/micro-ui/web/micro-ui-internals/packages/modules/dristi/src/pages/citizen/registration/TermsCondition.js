@@ -2,7 +2,6 @@ import { Loader } from "@egovernments/digit-ui-react-components";
 import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { getUserDetails, setCitizenDetail } from "../../../hooks/useGetAccessToken";
 import { getFileByFileStore } from "../../../Utils";
 import { markPasswordPromptPending } from "../../../hooks/useSetPasswordPrompt";
 
@@ -64,17 +63,7 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
       };
       try {
         await window?.Digit.DRISTIService.updateIndividualUser(IndividualData, { tenantId });
-        const refreshToken = window.localStorage.getItem("citizen.refresh-token");
-        if (refreshToken) {
-          getUserDetails(refreshToken).then((res) => {
-            const { ResponseInfo, UserRequest: info, ...tokens } = res;
-            const user = { info, ...tokens };
-            localStorage.setItem("citizen.userRequestObject", user);
-            window?.Digit.UserService.setUser(user);
-            setCitizenDetail(user?.info, user?.access_token, window?.Digit.ULBService.getStateId());
-            history.push(`/${window?.contextPath}/citizen/dristi/home`);
-          });
-        }
+        history.push(`/${window?.contextPath}/citizen/dristi/home`);
       } catch (error) {
         history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error" });
       } finally {
@@ -167,17 +156,7 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
                 })
                   .then(() => {
                     setShowSuccess(true);
-                    const refreshToken = window.localStorage.getItem("citizen.refresh-token");
-                    if (refreshToken) {
-                      getUserDetails(refreshToken).then((res) => {
-                        const { ResponseInfo, UserRequest: info, ...tokens } = res;
-                        const user = { info, ...tokens };
-                        localStorage.setItem("citizen.userRequestObject", user);
-                        window?.Digit.UserService.setUser(user);
-                        setCitizenDetail(user?.info, user?.access_token, window?.Digit.ULBService.getStateId());
-                        history.push(`/${window?.contextPath}/citizen/dristi/home`);
-                      });
-                    }
+                    history.push(`/${window?.contextPath}/citizen/dristi/home`);
                   })
                   .catch(() => {
                     history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error" });
@@ -272,17 +251,7 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
             })
               .then(() => {
                 setShowSuccess(true);
-                const refreshToken = window.localStorage.getItem("citizen.refresh-token");
-                if (refreshToken) {
-                  getUserDetails(refreshToken).then((res) => {
-                    const { ResponseInfo, UserRequest: info, ...tokens } = res;
-                    const user = { info, ...tokens };
-                    localStorage.setItem("citizen.userRequestObject", user);
-                    window?.Digit.UserService.setUser(user);
-                    setCitizenDetail(user?.info, user?.access_token, window?.Digit.ULBService.getStateId());
-                    history.push(`/${window?.contextPath}/citizen/dristi/home`);
-                  });
-                }
+                history.push(`/${window?.contextPath}/citizen/dristi/home`);
               })
               .catch(() => {
                 history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error" });

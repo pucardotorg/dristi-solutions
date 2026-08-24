@@ -151,7 +151,8 @@ const Login = ({ stateCode, isUserRegistered = true }) => {
           tenantId: stateCode,
           userType: getUserType(),
         };
-        const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
+        // refresh_token is discarded here so it is never persisted by setUser
+        const { ResponseInfo, refresh_token, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
 
         if (location.state?.role) {
           const roleInfo = info.roles.find((userRole) => userRole.code === location.state.role);
@@ -174,7 +175,8 @@ const Login = ({ stateCode, isUserRegistered = true }) => {
           tenantId: stateCode,
         };
 
-        const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.registerUser(requestData, stateCode);
+        // refresh_token is discarded here so it is never persisted by setUser
+        const { ResponseInfo, refresh_token, UserRequest: info, ...tokens } = await Digit.UserService.registerUser(requestData, stateCode);
 
         if (window?.globalConfigs?.getConfig("ENABLE_SINGLEINSTANCE")) {
           info.tenantId = Digit.ULBService.getStateId();

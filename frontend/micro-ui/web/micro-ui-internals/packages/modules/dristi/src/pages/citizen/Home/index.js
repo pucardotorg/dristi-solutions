@@ -3,7 +3,6 @@ import { Loader } from "@egovernments/digit-ui-react-components";
 import ApplicationAwaitingPage from "./ApplicationAwaitingPage";
 import TakeUserToRegistration from "./TakeUserToRegistration";
 import { userTypeOptions } from "../registration/config";
-import { useGetAccessToken } from "../../../hooks/useGetAccessToken";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import Modal from "../../../components/Modal";
@@ -145,8 +144,6 @@ function CitizenHome({ tenantId, setHideBack = () => {} }) {
       setHideBack(false);
     };
   }, [userHasIncompleteRegistration, registrationIsDoneApprovalIsPending, setHideBack]);
-
-  useGetAccessToken("citizen.refresh-token", individualId && !isApprovalPending && !isRejected);
 
   if (isLoading || isSearchLoading || refetchingAdvocateClerk) {
     return <Loader />;
