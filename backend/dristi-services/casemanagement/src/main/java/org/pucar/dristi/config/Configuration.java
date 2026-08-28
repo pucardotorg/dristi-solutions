@@ -244,6 +244,17 @@ public class Configuration {
 	@Value("${dristi.ctc.update.endpoint}")
 	private String ctcUpdateEndpoint;
 
+	// Hearing Service Config
+	@Value("${dristi.hearing.host}")
+	private String hearingHost;
+
+	@Value("${dristi.hearing.search.url}")
+	private String hearingSearchUrl;
+
+	// Witness search is exposed by the case service
+	@Value("${dristi.witness.search.url}")
+	private String witnessSearchUrl;
+
 	@PostConstruct
 	public void init() {
 		caseAllowedStatusesList = Arrays.asList(caseAllowedStatuses.split(","));
