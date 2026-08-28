@@ -68,6 +68,7 @@ import useFetchBill from "./hooks/dristi/useFetchBill";
 import WorkflowTimeline from "./components/WorkflowTimeline";
 import ImageModal from "./components/ImageModal";
 import SelectCustomFormatterTextArea from "./components/SelectCustomFormatterTextArea";
+import SelectSynopsisTemplateTextArea from "./components/SelectSynopsisTemplateTextArea";
 import CustomCalendarV2 from "./components/CustomCalendarV2";
 import SelectCustomGroupedDropdown from "./components/SelectCustomGroupedDropdown";
 import SuretyComponent from "./components/SuretyComponent";
@@ -214,6 +215,7 @@ const componentsToRegister = {
   SearchableDropdown,
   WorkflowTimeline,
   SelectCustomFormatterTextArea,
+  SelectSynopsisTemplateTextArea,
   SelectCustomGroupedDropdown,
   SuretyComponent,
   EditSendBackModal,

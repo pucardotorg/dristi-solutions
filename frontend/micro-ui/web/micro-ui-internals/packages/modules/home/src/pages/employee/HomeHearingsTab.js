@@ -716,8 +716,8 @@ const HomeHearingsTab = ({
     </div>
   );
 
-  if (isEpostUser) {
-    history.push(homePath);
+  if (isEpostUser || isCitizen) {
+    history.push(homePath);s
   }
 
   return (

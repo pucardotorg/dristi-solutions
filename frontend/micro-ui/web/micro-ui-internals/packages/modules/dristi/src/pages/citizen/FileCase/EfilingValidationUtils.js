@@ -1640,9 +1640,9 @@ const documentUploadHandler = async (document, index, prevCaseDetails, data, pag
       documentName: uploadedData.filename || document?.documentName,
       fileName: pageConfig?.selectDocumentName?.[key],
     };
-    if (uploadedData.file?.files?.[0]?.fileStoreId && efilingDocumentKeyAndTypeMapping[key]) {
-      sendDocumentForOcr(key, uploadedData.file?.files?.[0]?.fileStoreId, prevCaseDetails?.filingNumber, tenantId, document);
-    }
+    // if (uploadedData.file?.files?.[0]?.fileStoreId && efilingDocumentKeyAndTypeMapping[key]) {
+    //   sendDocumentForOcr(key, uploadedData.file?.files?.[0]?.fileStoreId, prevCaseDetails?.filingNumber, tenantId, document);
+    // }
     if (oldBouncedChequeFileUpload !== undefined) {
       const xTemp = prevCaseDetails?.documents?.filter((doc) => doc.fileStore === oldBouncedChequeFileUpload?.document?.[index]?.fileStore)?.[0];
       tempDocList.push({
@@ -2754,15 +2754,15 @@ export const updateCaseDetails = async ({
                 if (document) {
                   const documentType = documentsTypeMapping["inquiryAffidavitFileUpload"];
                   const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
-                  if (uploadedData.file?.files?.[0]?.fileStoreId && efilingDocumentKeyAndTypeMapping["inquiryAffidavitFileUpload"]) {
-                    sendDocumentForOcr(
-                      "inquiryAffidavitFileUpload",
-                      uploadedData.file?.files?.[0]?.fileStoreId,
-                      prevCaseDetails?.filingNumber,
-                      tenantId,
-                      document
-                    );
-                  }
+                  // if (uploadedData.file?.files?.[0]?.fileStoreId && efilingDocumentKeyAndTypeMapping["inquiryAffidavitFileUpload"]) {
+                  //   sendDocumentForOcr(
+                  //     "inquiryAffidavitFileUpload",
+                  //     uploadedData.file?.files?.[0]?.fileStoreId,
+                  //     prevCaseDetails?.filingNumber,
+                  //     tenantId,
+                  //     document
+                  //   );
+                  // }
                   const doc = {
                     documentType,
                     fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
@@ -3306,15 +3306,15 @@ export const updateCaseDetails = async ({
                 if (document) {
                   const documentType = documentsTypeMapping["vakalatnamaFileUpload"];
                   const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
-                  if (uploadedData.file?.files?.[0]?.fileStoreId && efilingDocumentKeyAndTypeMapping["vakalatnamaFileUpload"]) {
-                    sendDocumentForOcr(
-                      "vakalatnamaFileUpload",
-                      uploadedData.file?.files?.[0]?.fileStoreId,
-                      prevCaseDetails?.filingNumber,
-                      tenantId,
-                      document
-                    );
-                  }
+                  // if (uploadedData.file?.files?.[0]?.fileStoreId && efilingDocumentKeyAndTypeMapping["vakalatnamaFileUpload"]) {
+                  //   sendDocumentForOcr(
+                  //     "vakalatnamaFileUpload",
+                  //     uploadedData.file?.files?.[0]?.fileStoreId,
+                  //     prevCaseDetails?.filingNumber,
+                  //     tenantId,
+                  //     document
+                  //   );
+                  // }
                   const doc = {
                     documentType,
                     fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,

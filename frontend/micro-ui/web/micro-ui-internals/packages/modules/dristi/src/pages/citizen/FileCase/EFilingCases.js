@@ -56,6 +56,7 @@ import CaseLockModal from "./CaseLockModal";
 import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
+import { EFilingCaseContext } from "../../../components/EFilingCaseContext";
 import ConfirmAccusedMobileNumberModal from "./ConfirmAccusedMobileNumberModal";
 import ErrorDataModal from "./ErrorDataModal";
 import { documentLabels } from "../../../Utils";
@@ -443,6 +444,15 @@ function EFilingCases({ path }) {
   }, [caseDetails]);
 
   const prevCaseDetails = useMemo(() => structuredClone(caseDetails), [caseDetails]);
+
+  // In CASE_REASSIGNED the pages accumulate their edits into `errorCaseDetails` and only
+  // persist at the review step, so that copy - not the searched case - is the live one.
+  const activeCaseDetails = useMemo(() => (isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails), [
+    isCaseReAssigned,
+    errorCaseDetails,
+    caseDetails,
+  ]);
+  const eFilingCaseContextValue = useMemo(() => ({ caseDetails: activeCaseDetails }), [activeCaseDetails]);
 
   const scrutinyObj = useMemo(() => {
     return caseDetails?.additionalDetails?.scrutiny?.data || {};
@@ -1661,6 +1671,7 @@ function EFilingCases({ path }) {
                       "SelectBulkInputs",
                       "SelectCustomTextArea",
                       "SelectCustomFormatterTextArea",
+                      "SelectSynopsisTemplateTextArea",
                       "SelectUserTypeComponent",
                     ].includes(formComponent.component)
                   ) {
@@ -3346,74 +3357,76 @@ function EFilingCases({ path }) {
             />
           )}
           {sectionWiseErrors?.[selected] && <ScrutinyInfo t={t} config={{ populators: { scrutinyMessage: sectionWiseErrors?.[selected] } }} />}
-          {!isLoading &&
-            !isLoader &&
-            modifiedFormConfig.map((config, index) => {
-              return formdata[index].isenabled ? (
-                <div key={`${selected}-${index}`} className={`${selected !== "processCourierService" ? "form-wrapper-d" : ""}`}>
-                  {pageConfig?.addFormText && (
-                    <div className="form-item-name">
-                      <h1>{`${t(pageConfig?.formItemName)} ${formdata[index]?.displayindex + 1}`}</h1>
-                      {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) &&
-                        (isDraftInProgress ||
-                          (isCaseReAssigned &&
-                            (Object?.keys(judgeObj || {})?.length > 0 ||
-                              (!!formdata?.[index] &&
-                                !(
-                                  caseDetails?.additionalDetails?.[selected]?.formdata?.[index] ||
-                                  caseDetails?.caseDetails?.[selected]?.formdata?.[index]
-                                ))))) && (
-                          <span
-                            style={{ cursor: "pointer" }}
-                            onClick={() => {
-                              setConfirmDeleteModal(true);
-                              setDeleteFormIndex(index);
-                            }}
-                          >
-                            <CustomDeleteIcon />
-                          </span>
-                        )}
-                    </div>
-                  )}
-                  <FormComposerV2
-                    key={`${selected}-${index}-${formRenderKey}-${
-                      (caseDetails || errorCaseDetails || {})?.additionalDetails?.[selected]?.formdata?.[index]?.transferredPOA?.code || "EMPTY"
-                    }`}
-                    label={showActionsLabels && actionName}
-                    config={config}
-                    onSubmit={() => onSubmit("SAVE_DRAFT")}
-                    onSecondayActionClick={onSaveDraft}
-                    defaultValues={getDefaultValues(index)}
-                    onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-                      onFormValueChange(
-                        setValue,
-                        formData,
-                        formState,
-                        reset,
-                        setError,
-                        clearErrors,
-                        trigger,
-                        getValues,
-                        index,
-                        formdata[index].displayindex
-                      );
-                    }}
-                    isDisabled={isSubmitDisabled}
-                    cardStyle={{ minWidth: "100%" }}
-                    cardClassName={`e-filing-card-form-style ${pageConfig.className}`}
-                    secondaryLabel={t("CS_SAVE_DRAFT")}
-                    showSecondaryLabel={isDraftInProgress}
-                    actionClassName="e-filing-action-bar"
-                    className={`${pageConfig.className} ${getFormClassName()}`}
-                    noBreakLine
-                    submitIcon={<RightArrow />}
-                    formRef={formRefsMap.current[index] || (formRefsMap.current[index] = { current: null })}
-                    validateAllForms={validateAllForms}
-                    allFormRefs={formRefsMap}
-                  />
-                </div>
-              ) : null;
-            })}
+          <EFilingCaseContext.Provider value={eFilingCaseContextValue}>
+            {!isLoading &&
+              !isLoader &&
+              modifiedFormConfig.map((config, index) => {
+                return formdata[index].isenabled ? (
+                  <div key={`${selected}-${index}`} className={`${selected !== "processCourierService" ? "form-wrapper-d" : ""}`}>
+                    {pageConfig?.addFormText && (
+                      <div className="form-item-name">
+                        <h1>{`${t(pageConfig?.formItemName)} ${formdata[index]?.displayindex + 1}`}</h1>
+                        {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) &&
+                          (isDraftInProgress ||
+                            (isCaseReAssigned &&
+                              (Object?.keys(judgeObj || {})?.length > 0 ||
+                                (!!formdata?.[index] &&
+                                  !(
+                                    caseDetails?.additionalDetails?.[selected]?.formdata?.[index] ||
+                                    caseDetails?.caseDetails?.[selected]?.formdata?.[index]
+                                  ))))) && (
+                            <span
+                              style={{ cursor: "pointer" }}
+                              onClick={() => {
+                                setConfirmDeleteModal(true);
+                                setDeleteFormIndex(index);
+                              }}
+                            >
+                              <CustomDeleteIcon />
+                            </span>
+                          )}
+                      </div>
+                    )}
+                    <FormComposerV2
+                      key={`${selected}-${index}-${formRenderKey}-${
+                        (caseDetails || errorCaseDetails || {})?.additionalDetails?.[selected]?.formdata?.[index]?.transferredPOA?.code || "EMPTY"
+                      }`}
+                      label={showActionsLabels && actionName}
+                      config={config}
+                      onSubmit={() => onSubmit("SAVE_DRAFT")}
+                      onSecondayActionClick={onSaveDraft}
+                      defaultValues={getDefaultValues(index)}
+                      onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+                        onFormValueChange(
+                          setValue,
+                          formData,
+                          formState,
+                          reset,
+                          setError,
+                          clearErrors,
+                          trigger,
+                          getValues,
+                          index,
+                          formdata[index].displayindex
+                        );
+                      }}
+                      isDisabled={isSubmitDisabled}
+                      cardStyle={{ minWidth: "100%" }}
+                      cardClassName={`e-filing-card-form-style ${pageConfig.className}`}
+                      secondaryLabel={t("CS_SAVE_DRAFT")}
+                      showSecondaryLabel={isDraftInProgress}
+                      actionClassName="e-filing-action-bar"
+                      className={`${pageConfig.className} ${getFormClassName()}`}
+                      noBreakLine
+                      submitIcon={<RightArrow />}
+                      formRef={formRefsMap.current[index] || (formRefsMap.current[index] = { current: null })}
+                      validateAllForms={validateAllForms}
+                      allFormRefs={formRefsMap}
+                    />
+                  </div>
+                ) : null;
+              })}
+          </EFilingCaseContext.Provider>
           {confirmDeleteModal && (
             <Modal
               headerBarMain={<Heading label={t("Are you sure?")} />}
