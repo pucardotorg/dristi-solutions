@@ -7,13 +7,19 @@ import { useEFilingCase } from "./EFilingCaseContext";
 import { generateSynopsisTemplate } from "../Utils/generateSynopsisTemplate";
 
 /**
- * Returns true when the rich text editor currently holds something other than empty markup.
+ * Returns true when the rich text editor currently holds something the user would lose.
+ *
+ * The markup is parsed rather than stripped with a regex: regex tag removal is trivially
+ * defeated by nested tags such as `<scr<script>ipt>`, and `parseFromString` on a detached
+ * document reads the text without executing or loading anything.
  */
 const hasExistingText = (html) => {
   if (!html) return false;
-  const textOnly = String(html)
-    .replace(/<[^>]*>/g, "")
-    .replace(/&nbsp;/g, " ")
+  const body = new DOMParser().parseFromString(String(html), "text/html").body;
+  // Quill also allows images, which are content even though they carry no text.
+  if (body.querySelector("img")) return true;
+  const textOnly = (body.textContent || "")
+    // Entities are already decoded by the parser, so only the raw code points remain.
     .replace(/\u00A0/g, " ")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .trim();
