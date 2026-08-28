@@ -3,8 +3,7 @@ import Button from "./Button";
 import Modal from "./Modal";
 import { CloseBtn, Heading } from "./ModalComponents";
 import SelectCustomFormatterTextArea from "./SelectCustomFormatterTextArea";
-import useSearchCaseService from "../hooks/dristi/useSearchCaseService";
-import { transformCaseDataForFetching } from "../pages/citizen/FileCase/EfilingValidationUtils";
+import { useEFilingCase } from "./EFilingCaseContext";
 import { generateSynopsisTemplate } from "../Utils/generateSynopsisTemplate";
 
 /**
@@ -27,53 +26,22 @@ const hasExistingText = (html) => {
  * Any field that has not been filled yet is printed as "_____".
  */
 const SelectSynopsisTemplateTextArea = ({ t, config, formData = {}, onSelect, errors, ...restProps }) => {
-  const tenantId = window?.localStorage?.getItem("tenant-id");
-  const urlParams = new URLSearchParams(window.location.search);
-  const caseId = urlParams.get("caseId");
-
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
 
   const configKey = config?.key;
   const inputName = config?.populators?.inputs?.[0]?.name || "text";
   const generateButtonLabel = config?.populators?.generateButtonLabel || "SYNOPSIS_GENERATE_TEMPLATE";
 
-  const { data: caseData, refetch } = useSearchCaseService(
-    {
-      criteria: [
-        {
-          caseId: caseId,
-          defaultFields: false,
-        },
-      ],
-      tenantId,
-    },
-    {},
-    `synopsis-template-${caseId}`,
-    caseId,
-    Boolean(caseId)
-  );
+  // The live case, which is `errorCaseDetails` while the case is CASE_REASSIGNED - the
+  // earlier pages are not persisted until the review step in that flow.
+  const { caseDetails } = useEFilingCase();
 
   const currentText = useMemo(() => formData?.[configKey]?.[inputName], [formData, configKey, inputName]);
 
-  const applyTemplate = useCallback(async () => {
-    setIsGenerating(true);
-    try {
-      // The earlier pages are persisted as draft on navigation, so pull the latest copy.
-      let response = caseData;
-      try {
-        const refetched = await refetch();
-        response = refetched?.data || caseData;
-      } catch (error) {
-        response = caseData;
-      }
-      const caseDetails = transformCaseDataForFetching(response?.criteria?.[0]?.responseList?.[0] || {}, ["advocateDetails"]);
-      const generatedHtml = generateSynopsisTemplate({ caseDetails, t });
-      onSelect(configKey, { ...(formData?.[configKey] || {}), [inputName]: generatedHtml }, { shouldValidate: true });
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [caseData, refetch, t, onSelect, configKey, inputName, formData]);
+  const applyTemplate = useCallback(() => {
+    const generatedHtml = generateSynopsisTemplate({ caseDetails: caseDetails || {}, t });
+    onSelect(configKey, { ...(formData?.[configKey] || {}), [inputName]: generatedHtml }, { shouldValidate: true });
+  }, [caseDetails, t, onSelect, configKey, inputName, formData]);
 
   const onGenerateClick = useCallback(() => {
     if (hasExistingText(currentText)) {
@@ -97,7 +65,7 @@ const SelectSynopsisTemplateTextArea = ({ t, config, formData = {}, onSelect, er
           variation="secondary"
           label={t(generateButtonLabel, "Generate Template")}
           onButtonClick={onGenerateClick}
-          isDisabled={isGenerating || config?.disable}
+          isDisabled={config?.disable}
           type="button"
         />
       </div>
