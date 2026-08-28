@@ -1,0 +1,32 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: CASE-BUNDLE
+spec:
+  schedule: "0 12 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name:  CASE-BUNDLE
+            image: egovio/case-bundle
+            command: ["python3","cronJobAPIConfig.py"]
+            args: ["CASE"]  
+            env:
+              - name: TENANT_ID
+                valueFrom:
+                  configMapKeyRef:
+                    name: egov-config
+                    key: egov-state-level-tenant-id 
+              - name: USER_SERVICE_HOST
+                valueFrom:
+                  configMapKeyRef:
+                    name: egov-service-host
+                    key: egov-user
+              - name: CASEBUNDLE_HOST
+                valueFrom:
+                  configMapKeyRef:
+                    name: egov-service-host
+                    key: casemanagement      
+          restartPolicy: OnFailure
