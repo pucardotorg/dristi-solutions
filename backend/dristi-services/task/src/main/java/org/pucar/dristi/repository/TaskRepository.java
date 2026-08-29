@@ -1,9 +1,11 @@
 package org.pucar.dristi.repository;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.pucar.dristi.web.models.Document;
 import org.egov.tracer.model.CustomException;
+import org.postgresql.util.PGobject;
 import org.pucar.dristi.repository.querybuilder.TaskCaseQueryBuilder;
 import org.pucar.dristi.repository.querybuilder.TaskQueryBuilder;
 import org.pucar.dristi.repository.rowmapper.AmountRowMapper;
@@ -33,6 +35,7 @@ public class TaskRepository {
     private final DocumentRowMapper documentRowMapper;
     private final TaskCaseQueryBuilder taskCaseQueryBuilder;
     private final TaskCaseRowMapper taskCaseRowMapper;
+    private final ObjectMapper objectMapper;
 
 
     @Autowired
@@ -40,7 +43,10 @@ public class TaskRepository {
                           JdbcTemplate jdbcTemplate,
                           TaskRowMapper rowMapper,
                           AmountRowMapper amountRowMapper,
-                          DocumentRowMapper documentRowMapper, TaskCaseQueryBuilder taskCaseQueryBuilder, TaskCaseRowMapper taskCaseRowMapper) {
+                          DocumentRowMapper documentRowMapper,
+                          TaskCaseQueryBuilder taskCaseQueryBuilder,
+                          TaskCaseRowMapper taskCaseRowMapper,
+                          ObjectMapper objectMapper) {
         this.queryBuilder = queryBuilder;
         this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
@@ -48,6 +54,7 @@ public class TaskRepository {
         this.documentRowMapper = documentRowMapper;
         this.taskCaseQueryBuilder = taskCaseQueryBuilder;
         this.taskCaseRowMapper = taskCaseRowMapper;
+        this.objectMapper = objectMapper;
     }
 
 
@@ -158,6 +165,96 @@ public class TaskRepository {
         String countQuery = taskQuery + taskCaseQueryBuilder.getTotalCountQuery(baseQuery);
         log.info("Final count query :: {}", countQuery);
         return jdbcTemplate.queryForObject(countQuery, Integer.class, preparedStmtList.toArray());
+    }
+
+    public void updateTask(Task task) {
+        try {
+            String taskUpsertQuery = "INSERT INTO dristi_task(id, tenantId, orderId, filingNumber, cnrNumber, taskNumber, createdDate, dateCloseBy, dateClosed, taskDescription, taskType, taskDetails, status, assignedTo, isActive, additionalDetails, createdBy, lastModifiedBy, createdTime, lastModifiedTime) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                    "ON CONFLICT (id) DO UPDATE SET tenantid = EXCLUDED.tenantid, orderid = EXCLUDED.orderid, filingnumber = EXCLUDED.filingnumber, " +
+                    "cnrnumber = EXCLUDED.cnrnumber, tasknumber = EXCLUDED.tasknumber, createddate = EXCLUDED.createddate, " +
+                    "datecloseby = EXCLUDED.datecloseby, dateclosed = EXCLUDED.dateclosed, taskdescription = EXCLUDED.taskdescription, " +
+                    "tasktype = EXCLUDED.tasktype, taskdetails = EXCLUDED.taskdetails, assignedto = EXCLUDED.assignedto, " +
+                    "status = EXCLUDED.status, isactive = EXCLUDED.isactive, additionaldetails = EXCLUDED.additionaldetails, " +
+                    "createdby = EXCLUDED.createdby, lastmodifiedby = EXCLUDED.lastmodifiedby, " +
+                    "createdtime = EXCLUDED.createdtime, lastmodifiedtime = EXCLUDED.lastmodifiedtime";
+
+            jdbcTemplate.update(taskUpsertQuery,
+                    task.getId(),
+                    task.getTenantId(),
+                    task.getOrderId(),
+                    task.getFilingNumber(),
+                    task.getCnrNumber(),
+                    task.getTaskNumber(),
+                    task.getCreatedDate(),
+                    task.getDateCloseBy(),
+                    task.getDateClosed(),
+                    task.getTaskDescription(),
+                    task.getTaskType(),
+                    toPGobject(task.getTaskDetails()),
+                    task.getStatus(),
+                    toPGobject(task.getAssignedTo()),
+                    task.getIsActive(),
+                    toPGobject(task.getAdditionalDetails()),
+                    task.getAuditDetails().getCreatedBy(),
+                    task.getAuditDetails().getLastModifiedBy(),
+                    task.getAuditDetails().getCreatedTime(),
+                    task.getAuditDetails().getLastModifiedTime()
+            );
+
+            if (task.getAmount() != null) {
+                Amount amount = task.getAmount();
+                String amountUpsertQuery = "INSERT INTO dristi_task_amount(id, amount, type, task_id, paymentRefNumber, status, additionalDetails) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?) " +
+                        "ON CONFLICT (id) DO UPDATE SET amount = EXCLUDED.amount, paymentrefnumber = EXCLUDED.paymentrefnumber, " +
+                        "type = EXCLUDED.type, task_id = EXCLUDED.task_id, additionaldetails = EXCLUDED.additionaldetails, status = EXCLUDED.status";
+
+                jdbcTemplate.update(amountUpsertQuery,
+                        amount.getId(),
+                        amount.getAmount(),
+                        amount.getType(),
+                        task.getId(),
+                        amount.getPaymentRefNumber(),
+                        amount.getStatus(),
+                        toPGobject(amount.getAdditionalDetails())
+                );
+            }
+
+            if (task.getDocuments() != null && !task.getDocuments().isEmpty()) {
+                String documentUpsertQuery = "INSERT INTO dristi_task_document(id, fileStore, documentUid, documentType, task_id, additionalDetails) " +
+                        "VALUES (?, ?, ?, ?, ?, ?) " +
+                        "ON CONFLICT (id) DO UPDATE SET filestore = EXCLUDED.filestore, documentuid = EXCLUDED.documentuid, " +
+                        "documenttype = EXCLUDED.documenttype, task_id = EXCLUDED.task_id, additionaldetails = EXCLUDED.additionaldetails";
+
+                for (Document document : task.getDocuments()) {
+                    jdbcTemplate.update(documentUpsertQuery,
+                            document.getId(),
+                            document.getFileStore(),
+                            document.getDocumentUid(),
+                            document.getDocumentType(),
+                            task.getId(),
+                            toPGobject(document.getAdditionalDetails())
+                    );
+                }
+            }
+
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error while updating task via JDBC :: {}", e.toString());
+            throw new CustomException(UPDATE_TASK_ERR, "Exception while updating task via JDBC: " + e.getMessage());
+        }
+    }
+
+    private PGobject toPGobject(Object value) {
+        try {
+            PGobject pgObject = new PGobject();
+            pgObject.setType("jsonb");
+            pgObject.setValue(value != null ? objectMapper.writeValueAsString(value) : null);
+            return pgObject;
+        } catch (Exception e) {
+            throw new CustomException(UPDATE_TASK_ERR, "Failed to convert value to PGobject: " + e.getMessage());
+        }
     }
 
     public List<TaskCase> getTaskWithCaseDetails(TaskCaseSearchRequest request) {

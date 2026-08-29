@@ -191,6 +191,7 @@ public class PaymentUpdateService {
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
+                    repository.updateTask(taskRequest.getTask());
                 }
                 case NOTICE -> {
                     WorkflowObject workflow = new WorkflowObject();
@@ -205,6 +206,7 @@ public class PaymentUpdateService {
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
+                    repository.updateTask(taskRequest.getTask());
                 }
                 case WARRANT-> {
                     WorkflowObject workflow = new WorkflowObject();
@@ -221,6 +223,7 @@ public class PaymentUpdateService {
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
+                    repository.updateTask(taskRequest.getTask());
                 }
                 case PROCLAMATION -> {
                     WorkflowObject workflow = new WorkflowObject();
@@ -237,6 +240,7 @@ public class PaymentUpdateService {
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
+                    repository.updateTask(taskRequest.getTask());
                 }
                 case ATTACHMENT -> {
                     WorkflowObject workflow = new WorkflowObject();
@@ -253,6 +257,7 @@ public class PaymentUpdateService {
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
+                    repository.updateTask(taskRequest.getTask());
                 }
                 case JOIN_CASE_PAYMENT -> {
                     WorkflowObject workflow = new WorkflowObject();
@@ -265,6 +270,7 @@ public class PaymentUpdateService {
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
+                    repository.updateTask(taskRequest.getTask());
 
                     // update remaining pending task of payment's of the advocate
 
@@ -287,6 +293,7 @@ public class PaymentUpdateService {
                     }
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
+                    repository.updateTask(taskRequest.getTask());
                 }
             }
         }
@@ -434,6 +441,7 @@ public class PaymentUpdateService {
 
             TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
             producer.push(config.getTaskUpdateTopic(), taskRequest);
+            repository.updateTask(taskRequest.getTask());
         });
         searchAndCancelTaskRelatedDemands(tenantId, tasks, requestInfo);
     }
