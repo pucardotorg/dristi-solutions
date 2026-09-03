@@ -144,7 +144,7 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
         })}
 
         <Chip
-          label={isCustomDateSelected ? formatToUI(selectedValue) : t("SELECT_ANOTHER_DATE")}
+          label={isCustomDateSelected ? formatToUI(selectedValue) : t(config?.populators?.selectDateLabel || "SELECT_ANOTHER_DATE")}
           isSelected={isCustomDateSelected}
           handleClick={() => setShowPicker(true)}
           icon={isCustomDateSelected ? <EditPencilIcon /> : null}
