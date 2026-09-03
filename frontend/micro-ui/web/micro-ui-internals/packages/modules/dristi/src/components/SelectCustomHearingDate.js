@@ -1,8 +1,9 @@
 import React, { useMemo, useState, useEffect } from "react";
-import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { EditPencilIcon } from "../icons/svgIndex";
 import { CloseBtn } from "./ModalComponents";
+import NonWorkingDayWarningModal from "./NonWorkingDayWarningModal";
+import { COURT_NON_WORKING_DAYS_COURT_ID, COURT_NON_WORKING_DAYS_MASTER, isCourtNonWorkingDay } from "../Utils/courtNonWorkingDays";
 
 const toInternal = (dateStr) => {
   if (!dateStr || typeof dateStr !== "string") return dateStr;
@@ -49,14 +50,20 @@ const Chip = ({ label, isSelected, handleClick, icon, disabled }) => {
 };
 function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors }) {
   const [showPicker, setShowPicker] = useState(false);
-  const [showToast, setShowToast] = useState(null);
+  // Date awaiting confirmation because it falls on a court non-working day or a weekend.
+  const [pendingNonWorkingDate, setPendingNonWorkingDate] = useState(null);
 
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const CustomCalendar = Digit.ComponentRegistryService.getComponent("CustomCalendarV2");
 
-  const { data: nonWorkingDay } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "schedule-hearing", [{ name: "COURT000334" }], {
-    select: (data) => data || [],
-  });
+  const { data: nonWorkingDay } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    COURT_NON_WORKING_DAYS_MASTER,
+    [{ name: COURT_NON_WORKING_DAYS_COURT_ID }],
+    {
+      select: (data) => data || [],
+    }
+  );
 
   const suggestedDates = useMemo(() => config?.populators?.inputs?.[0]?.options || [], [config]);
 
@@ -75,27 +82,30 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
     return new Date(y, m - 1, d).getTime();
   };
 
-  const handleDateChange = (date) => {
+  const commitDate = (date) => {
     const d = String(date.getDate()).padStart(2, "0");
     const m = String(date.getMonth() + 1).padStart(2, "0");
     const y = date.getFullYear();
 
-    const formattedForCheck = `${d}-${m}-${y}`;
-    const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
-
-    if (isNonWorkingDay) {
-      setShowToast({ error: true, label: t("CS_COMMON_COURT_NON_WORKING"), errorId: null });
-      return;
-    }
-
-    const finalInternalDate = `${y}-${m}-${d}`;
-    onSelect(config.key, finalInternalDate);
+    onSelect(config.key, `${y}-${m}-${d}`);
+    setPendingNonWorkingDate(null);
     setShowPicker(false);
   };
 
+  // A non-working day is only a soft block: warn and let the court confirm.
+  const selectDate = (date) => {
+    if (isCourtNonWorkingDay(date, nonWorkingDay)) {
+      setPendingNonWorkingDate(date);
+      return;
+    }
+    commitDate(date);
+  };
+
+  const handleDateChange = (date) => selectDate(date);
+
   const handleChipClick = (dateStr) => {
-    onSelect(config.key, toInternal(dateStr));
-    setShowPicker(false);
+    const [y, m, d] = toInternal(dateStr).split("-");
+    selectDate(new Date(y, m - 1, d));
   };
 
   useEffect(() => {
@@ -105,14 +115,14 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
       }
     };
 
-    if (showPicker) {
+    if (showPicker && !pendingNonWorkingDate) {
       window.addEventListener("click", handleBackdropClick);
     }
 
     return () => {
       window.removeEventListener("click", handleBackdropClick);
     };
-  }, [showPicker]);
+  }, [showPicker, pendingNonWorkingDate]);
 
   return (
     <div className="judge-hearing-selection-v2" style={{ width: "100%" }}>
@@ -150,6 +160,8 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
           popupModuleMianClassName="custom-date-selector-modal-v2"
           popupModuleMianStyles={{ width: "640px", maxHeight: "90vh" }}
           popupStyles={{ width: "fit-content" }}
+          // Kept mounted but hidden behind the warning, so the shown month survives a "Back".
+          popUpStyleMain={pendingNonWorkingDate ? { display: "none" } : {}}
         >
           <CustomCalendar
             config={{ showBottomBar: false }}
@@ -162,13 +174,12 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
         </Modal>
       )}
 
-      {showToast && (
-        <CustomToast
-          error={showToast?.error}
-          label={showToast?.label}
-          errorId={showToast?.errorId}
-          onClose={() => setShowToast(null)}
-          duration={showToast?.errorId ? 7000 : 5000}
+      {pendingNonWorkingDate && (
+        <NonWorkingDayWarningModal
+          t={t}
+          selectedDate={pendingNonWorkingDate}
+          onCancel={() => setPendingNonWorkingDate(null)}
+          onConfirm={() => commitDate(pendingNonWorkingDate)}
         />
       )}
 
