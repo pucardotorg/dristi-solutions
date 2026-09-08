@@ -12,6 +12,11 @@ import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks
 import get from "lodash/get";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import {
+  COURT_NON_WORKING_DAYS_COURT_ID,
+  COURT_NON_WORKING_DAYS_MASTER,
+  getNextWorkingDay,
+} from "@egovernments/digit-ui-module-dristi/src/Utils/courtNonWorkingDays";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
 
@@ -96,6 +101,10 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const [fileUploadError, setFileUploadError] = useState(null);
   const [allHearings, setAllHearings] = useState(bulkAllHearingsData || []);
   const [loading, setIsLoader] = useState(false);
+  // Set after a search so the proposed dates are corrected once the non-working day master has
+  // loaded; the search itself can resolve before that master does, and it is the only source of
+  // non-working days, so nothing can be corrected until it arrives.
+  const [awaitingWorkingDayDefaults, setAwaitingWorkingDayDefaults] = useState(false);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
   const hasNotificationApproveAccess = useMemo(() => userInfo?.roles?.some((role) => role.code === "NOTIFICATION_APPROVER"), [userInfo]);
@@ -158,6 +167,15 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       select: (data) => {
         return get(data, "Hearing.BulkRescheduleReason", []).map((opt) => ({ ...opt }));
       },
+    }
+  );
+
+  const { data: nonWorkingDay } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    COURT_NON_WORKING_DAYS_MASTER,
+    [{ name: COURT_NON_WORKING_DAYS_COURT_ID }],
+    {
+      select: (data) => data || [],
     }
   );
 
@@ -445,6 +463,34 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     }
   };
 
+  // The scheduler proposes the day after the blocked range, which can land on a court non-working
+  // day. Move those to the next working day so the court starts from a valid default. The date
+  // stays editable, and choosing a non-working day by hand still asks for confirmation.
+  const withWorkingDayDefaults = (hearings) =>
+    (hearings || []).map((hearing) => {
+      if (!hearing?.hearingDate) return hearing;
+
+      const shiftInMs =
+        new Date(getNextWorkingDay(hearing.hearingDate, nonWorkingDay)).setHours(0, 0, 0, 0) - new Date(hearing.hearingDate).setHours(0, 0, 0, 0);
+      if (!shiftInMs) return hearing;
+
+      // Shift by whole days so the slot times the scheduler assigned are carried over as they are.
+      return {
+        ...hearing,
+        hearingDate: hearing.hearingDate + shiftInMs,
+        ...(hearing?.startTime && { startTime: hearing.startTime + shiftInMs }),
+        ...(hearing?.endTime && { endTime: hearing.endTime + shiftInMs }),
+      };
+    });
+
+  useEffect(() => {
+    if (!awaitingWorkingDayDefaults || !nonWorkingDay) return;
+    // Re-running this is safe: a date already on a working day is left untouched.
+    setAllHearings(withWorkingDayDefaults);
+    setNewHearingData(withWorkingDayDefaults);
+    setAwaitingWorkingDayDefaults(false);
+  }, [awaitingWorkingDayDefaults, nonWorkingDay]);
+
   const handleBulkHearingSearch = async (newFormData) => {
     try {
       setIsLoader(true);
@@ -461,8 +507,10 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
           searchableFields: newFormData?.searchableFields,
         },
       });
-      setAllHearings(tentativeDates?.Hearings || []);
-      setNewHearingData(tentativeDates?.Hearings || []);
+      const proposedHearings = withWorkingDayDefaults(tentativeDates?.Hearings || []);
+      setAllHearings(proposedHearings);
+      setNewHearingData(proposedHearings);
+      setAwaitingWorkingDayDefaults(true);
       if (tentativeDates?.Hearings?.length === 0) {
         setShowToast({ error: true, label: t("NO_NEW_HEARINGS_AVAILABLE") });
       }

@@ -1,5 +1,5 @@
-// Court non-working days are maintained in the MDMS "schedule-hearing" master as
-// dd-MM-yyyy strings. Weekends are not part of that master, so they are derived here.
+// Court non-working days - weekends and holidays alike - are all maintained in the MDMS
+// "schedule-hearing" master as dd-MM-yyyy strings, so that master is the only thing consulted here.
 export const COURT_NON_WORKING_DAYS_MASTER = "schedule-hearing";
 export const COURT_NON_WORKING_DAYS_COURT_ID = "COURT000334";
 
@@ -9,18 +9,25 @@ const toMdmsDateString = (date) => {
   return `${day}-${month}-${date.getFullYear()}`;
 };
 
-export const isWeekend = (date) => {
-  const day = new Date(date).getDay();
-  return day === 0 || day === 6;
-};
-
 // nonWorkingDayMdms is the response of useCustomMDMS(stateId, "schedule-hearing", [{ name: courtId }]).
 export const isCourtNonWorkingDay = (date, nonWorkingDayMdms) => {
   if (!date) return false;
-  const selectedDate = new Date(date);
-  if (isWeekend(selectedDate)) return true;
-  const dateString = toMdmsDateString(selectedDate);
+  const dateString = toMdmsDateString(new Date(date));
   return Boolean(
     nonWorkingDayMdms?.[COURT_NON_WORKING_DAYS_MASTER]?.[COURT_NON_WORKING_DAYS_COURT_ID]?.some((item) => item?.date === dateString)
   );
+};
+
+// Walks forward from the given date to the first working day, returning the date itself when it
+// already is one. The cap only guards against a pathological MDMS master that marks a whole year
+// non-working; without it a bad master would spin forever.
+export const getNextWorkingDay = (date, nonWorkingDayMdms, maxDaysToScan = 365) => {
+  if (!date) return date;
+  const nextWorkingDay = new Date(date);
+  let daysScanned = 0;
+  while (isCourtNonWorkingDay(nextWorkingDay, nonWorkingDayMdms) && daysScanned < maxDaysToScan) {
+    nextWorkingDay.setDate(nextWorkingDay.getDate() + 1);
+    daysScanned += 1;
+  }
+  return nextWorkingDay;
 };

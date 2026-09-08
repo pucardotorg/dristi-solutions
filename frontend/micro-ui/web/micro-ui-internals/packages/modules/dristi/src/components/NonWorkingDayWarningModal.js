@@ -2,7 +2,7 @@ import React from "react";
 import Modal from "./Modal";
 import { CloseBtn, Heading } from "./ModalComponents";
 
-// Soft block for hearings scheduled on a court non-working day or a weekend.
+// Soft block for hearings scheduled on a court non-working day.
 // The court is never prevented from picking such a date, it only has to confirm.
 const NonWorkingDayWarningModal = ({ t, selectedDate, onCancel, onConfirm }) => {
   const formattedDate = selectedDate ? new Date(selectedDate).toLocaleDateString("en-GB") : "";

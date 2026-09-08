@@ -50,7 +50,7 @@ const Chip = ({ label, isSelected, handleClick, icon, disabled }) => {
 };
 function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors }) {
   const [showPicker, setShowPicker] = useState(false);
-  // Date awaiting confirmation because it falls on a court non-working day or a weekend.
+  // Date awaiting confirmation because it falls on a court non-working day.
   const [pendingNonWorkingDate, setPendingNonWorkingDate] = useState(null);
 
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
