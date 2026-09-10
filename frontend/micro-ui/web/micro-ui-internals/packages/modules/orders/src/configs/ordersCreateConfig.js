@@ -878,23 +878,27 @@ export const configsScheduleHearingDate = [
         },
       },
       {
-        label: "HEARING_DATE",
-        isMandatory: true,
+        // Uses the hearing calendar (SelectCustomHearingDate) instead of a plain date input, so the
+        // court sees slot counts and gets the court non-working day warning. Current/future dates
+        // are enforced by the calendar's minDate, so no minTodayDateValidation is needed here.
         key: "hearingDate",
+        type: "component",
+        component: "SelectCustomHearingDate",
         schemaKeyPath: "orderDetails.hearingDate",
         transformer: "date",
-        type: "date",
-        labelChildren: "OutlinedInfoIcon",
-        tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
+        withoutLabel: true,
+        isMandatory: true,
+        label: "HEARING_DATE",
         populators: {
           name: "hearingDate",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
+          selectDateLabel: "SELECT_HEARING_DATE",
+          inputs: [
+            {
+              name: "hearingDate",
+              options: [],
             },
-          },
+          ],
         },
       },
       {

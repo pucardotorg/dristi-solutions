@@ -130,6 +130,14 @@ const AddOrderTypeModal = ({
       }
     }
 
+    // SelectCustomHearingDate sets the value through setValue, which does not re-run validation,
+    // so a stale "required" error has to be cleared once a date has been picked.
+    if (currentOrderType && ["SCHEDULE_OF_HEARING_DATE"].includes(currentOrderType)) {
+      if (formData?.hearingDate && Object.keys(formState?.errors).includes("hearingDate")) {
+        clearFormErrors?.current?.[index]?.("hearingDate");
+      }
+    }
+
     if (currentOrderType && ["WARRANT"].includes(currentOrderType)) {
       if (
         formData?.warrantSubType?.templateType === "SPECIFIC" &&

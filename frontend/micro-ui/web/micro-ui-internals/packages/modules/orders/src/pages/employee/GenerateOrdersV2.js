@@ -33,6 +33,7 @@ import {
   getParties,
   getUpdateDocuments,
   prepareUpdatedOrderData,
+  syncItemTextHearingDate,
   createTaskPayload,
 } from "../../utils/orderUtils";
 import { addOrderItem, createOrder, deleteOrderItem, fetchInboxData, replaceUploadedDocsWithCombinedFile } from "../../utils/orderApiCallUtils";
@@ -1797,6 +1798,18 @@ const GenerateOrdersV2 = () => {
       const isAcceptBailOrder = orderFormData?.orderType?.code === "ACCEPT_BAIL";
       const requestBailBond = orderFormData?.requestBailBond;
       let updatedOrderData = prepareUpdatedOrderData(currentOrder, updatedFormData, compOrderIndex);
+
+      if (updatedFormData?.orderType?.code === ORDER_TYPES.SCHEDULE_OF_HEARING_DATE) {
+        const previousHearingDate =
+          currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE
+            ? currentOrder?.compositeItems?.[compOrderIndex]?.orderSchema?.additionalDetails?.formdata?.hearingDate
+            : currentOrder?.additionalDetails?.formdata?.hearingDate;
+
+        updatedOrderData = {
+          ...updatedOrderData,
+          itemText: syncItemTextHearingDate(updatedOrderData?.itemText, previousHearingDate, updatedFormData?.hearingDate),
+        };
+      }
 
       if (orderFormData?.orderType?.code === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
         const miscItemText = orderFormData?.processTemplate?.orderText || "";
