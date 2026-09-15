@@ -2,6 +2,7 @@ package org.pucar.dristi.enrichment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -9,9 +10,12 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.pucar.dristi.config.ServiceConstants.ADMIT_CASE_WORKFLOW_ACTION;
+import static org.pucar.dristi.config.ServiceConstants.ADVOCATE_ROLE;
+import static org.pucar.dristi.config.ServiceConstants.COURT_ASSIGNED_ROLE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +25,9 @@ import java.util.UUID;
 
 import org.egov.common.contract.models.AuditDetails;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.v2.*;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +37,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.service.IndividualService;
+import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.HrmsUtil;
 import org.pucar.dristi.util.IdgenUtil;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,6 +53,15 @@ class CaseRegistrationEnrichmentTest {
 
     @Mock
     private Configuration config;
+
+    @Mock
+    private IndividualService individualService;
+
+    @Mock
+    private AdvocateUtil advocateUtil;
+
+    @Mock
+    private HrmsUtil hrmsUtil;
 
     @InjectMocks
     private CaseRegistrationEnrichment caseRegistrationEnrichment;
@@ -315,6 +333,481 @@ class CaseRegistrationEnrichmentTest {
         AuditDetails auditDetails = new AuditDetails("createdBy", "lastModifiedBy", System.currentTimeMillis(), System.currentTimeMillis());
         CaseRegistrationEnrichment.enrichRepresentativesOnCreateAndUpdate(courtCase, auditDetails);
         assertEquals(auditDetails, existingRepresentative.getAuditDetails());
+    }
+
+    // ------------------------------------------------------------------
+    // Helpers for enrichCaseSearchRequest / enrichCitizenUserId coverage
+    // ------------------------------------------------------------------
+
+    private static final String INDIVIDUAL_ID = "individual-123";
+
+    private RequestInfo buildRequestInfo(String type, String... roleCodes) {
+        RequestInfo ri = new RequestInfo();
+        User user = new User();
+        user.setType(type);
+        List<Role> roles = new ArrayList<>();
+        for (String code : roleCodes) {
+            roles.add(Role.builder().code(code).build());
+        }
+        user.setRoles(roles);
+        ri.setUserInfo(user);
+        return ri;
+    }
+
+    // ===================== CaseSearchRequest (list) =====================
+
+    @Test
+    void enrichCaseSearchRequest_list_citizen_defaultsCasesForToAll_nonAdvocate() {
+        when(individualService.getIndividualId(any(RequestInfo.class))).thenReturn(INDIVIDUAL_ID);
+
+        // client supplied values that must be discarded
+        CaseCriteria criteria = new CaseCriteria();
+        criteria.setAdvocateId("client-advocate");
+        criteria.setLitigantId("client-litigant");
+        criteria.setPoaHolderIndividualId("client-poa");
+        // casesFor left null on purpose
+
+        CaseSearchRequest request = CaseSearchRequest.builder()
+                .criteria(new ArrayList<>(Collections.singletonList(criteria)))
+                .requestInfo(buildRequestInfo("citizen"))
+                .build();
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertEquals(CasesFor.ALL, criteria.getCasesFor());
+        assertNull(criteria.getAdvocateId());
+        assertEquals(INDIVIDUAL_ID, criteria.getLitigantId());
+        assertEquals(INDIVIDUAL_ID, criteria.getPoaHolderIndividualId());
+        verify(advocateUtil, never()).fetchAdvocatesByIndividualId(any(), any());
+    }
+
+    @Test
+    void enrichCaseSearchRequest_list_citizen_all_advocate_withAdvocateFound() {
+        when(individualService.getIndividualId(any(RequestInfo.class))).thenReturn(INDIVIDUAL_ID);
+        UUID advId = UUID.randomUUID();
+        when(advocateUtil.fetchAdvocatesByIndividualId(any(), eq(INDIVIDUAL_ID)))
+                .thenReturn(Collections.singletonList(Advocate.builder().id(advId).build()));
+
+        CaseCriteria criteria = new CaseCriteria();
+        criteria.setCasesFor(CasesFor.ALL);
+
+        CaseSearchRequest request = CaseSearchRequest.builder()
+                .criteria(new ArrayList<>(Collections.singletonList(criteria)))
+                .requestInfo(buildRequestInfo("citizen", ADVOCATE_ROLE))
+                .build();
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertEquals(advId.toString(), criteria.getAdvocateId());
+        assertEquals(INDIVIDUAL_ID, criteria.getLitigantId());
+        assertEquals(INDIVIDUAL_ID, criteria.getPoaHolderIndividualId());
+    }
+
+    @Test
+    void enrichCaseSearchRequest_list_citizen_all_advocate_noAdvocateFound() {
+        when(individualService.getIndividualId(any(RequestInfo.class))).thenReturn(INDIVIDUAL_ID);
+        when(advocateUtil.fetchAdvocatesByIndividualId(any(), eq(INDIVIDUAL_ID)))
+                .thenReturn(Collections.emptyList());
+
+        CaseCriteria criteria = new CaseCriteria();
+        criteria.setCasesFor(CasesFor.ALL);
+
+        CaseSearchRequest request = CaseSearchRequest.builder()
+                .criteria(new ArrayList<>(Collections.singletonList(criteria)))
+                .requestInfo(buildRequestInfo("citizen", ADVOCATE_ROLE))
+                .build();
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertNull(criteria.getAdvocateId());
+        assertEquals(INDIVIDUAL_ID, criteria.getLitigantId());
+        assertEquals(INDIVIDUAL_ID, criteria.getPoaHolderIndividualId());
+    }
+
+    @Test
+    void enrichCaseSearchRequest_list_citizen_poaLitigant() {
+        when(individualService.getIndividualId(any(RequestInfo.class))).thenReturn(INDIVIDUAL_ID);
+
+        CaseCriteria criteria = new CaseCriteria();
+        criteria.setCasesFor(CasesFor.POA_LITIGANT);
+
+        CaseSearchRequest request = CaseSearchRequest.builder()
+                .criteria(new ArrayList<>(Collections.singletonList(criteria)))
+                .requestInfo(buildRequestInfo("citizen"))
+                .build();
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertNull(criteria.getAdvocateId());
+        assertEquals(INDIVIDUAL_ID, criteria.getLitigantId());
+        assertEquals(INDIVIDUAL_ID, criteria.getPoaHolderIndividualId());
+        verify(advocateUtil, never()).fetchAdvocatesByIndividualId(any(), any());
+    }
+
+    @Test
+    void enrichCaseSearchRequest_list_citizen_advocateOnly() {
+        when(individualService.getIndividualId(any(RequestInfo.class))).thenReturn(INDIVIDUAL_ID);
+        UUID advId = UUID.randomUUID();
+        when(advocateUtil.fetchAdvocatesByIndividualId(any(), eq(INDIVIDUAL_ID)))
+                .thenReturn(Collections.singletonList(Advocate.builder().id(advId).build()));
+
+        CaseCriteria criteria = new CaseCriteria();
+        criteria.setCasesFor(CasesFor.ADVOCATE);
+
+        CaseSearchRequest request = CaseSearchRequest.builder()
+                .criteria(new ArrayList<>(Collections.singletonList(criteria)))
+                .requestInfo(buildRequestInfo("citizen", ADVOCATE_ROLE))
+                .build();
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertEquals(advId.toString(), criteria.getAdvocateId());
+        assertNull(criteria.getLitigantId());
+        assertNull(criteria.getPoaHolderIndividualId());
+    }
+
+    @Test
+    void enrichCaseSearchRequest_list_citizen_emptyCriteria_earlyReturn() {
+        CaseSearchRequest request = CaseSearchRequest.builder()
+                .criteria(new ArrayList<>())
+                .requestInfo(buildRequestInfo("citizen"))
+                .build();
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        verify(individualService, never()).getIndividualId(any());
+    }
+
+    @Test
+    void enrichCaseSearchRequest_list_citizen_nullCriteria_earlyReturn() {
+        CaseSearchRequest request = CaseSearchRequest.builder()
+                .requestInfo(buildRequestInfo("citizen"))
+                .build();
+        request.setCriteria(null);
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        verify(individualService, never()).getIndividualId(any());
+    }
+
+    @Test
+    void enrichCaseSearchRequest_list_employee_courtAssigned_setsCourtId() {
+        when(hrmsUtil.getCourtId(any(RequestInfo.class))).thenReturn("court-1");
+
+        CaseCriteria criteria = new CaseCriteria();
+        criteria.setCourtId("client-court");
+
+        CaseSearchRequest request = CaseSearchRequest.builder()
+                .criteria(new ArrayList<>(Collections.singletonList(criteria)))
+                .requestInfo(buildRequestInfo("employee", COURT_ASSIGNED_ROLE))
+                .build();
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertEquals("court-1", criteria.getCourtId());
+    }
+
+    @Test
+    void enrichCaseSearchRequest_list_employee_notCourtAssigned_clearsCourtId() {
+        CaseCriteria criteria = new CaseCriteria();
+        criteria.setCourtId("client-court");
+
+        CaseSearchRequest request = CaseSearchRequest.builder()
+                .criteria(new ArrayList<>(Collections.singletonList(criteria)))
+                .requestInfo(buildRequestInfo("employee"))
+                .build();
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertNull(criteria.getCourtId());
+    }
+
+    @Test
+    void enrichCaseSearchRequest_list_systemUser_noOp() {
+        CaseSearchRequest request = CaseSearchRequest.builder()
+                .criteria(new ArrayList<>())
+                .requestInfo(buildRequestInfo("system"))
+                .build();
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        verify(individualService, never()).getIndividualId(any());
+    }
+
+    @Test
+    void enrichCaseSearchRequest_list_unknownType_throws() {
+        CaseSearchRequest request = CaseSearchRequest.builder()
+                .criteria(new ArrayList<>())
+                .requestInfo(buildRequestInfo("alien"))
+                .build();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> caseRegistrationEnrichment.enrichCaseSearchRequest(request));
+    }
+
+    // ===================== CaseSearchRequestV2 =====================
+
+    @Test
+    void enrichCaseSearchRequestV2_citizen_defaultsCasesForToAll_nonAdvocate() {
+        when(individualService.getIndividualId(any(RequestInfo.class))).thenReturn(INDIVIDUAL_ID);
+
+        CaseSearchCriteriaV2 criteria = new CaseSearchCriteriaV2();
+        criteria.setAdvocateId("client-advocate");
+        criteria.setLitigantId("client-litigant");
+        criteria.setPoaHolderIndividualId("client-poa");
+
+        CaseSearchRequestV2 request = new CaseSearchRequestV2();
+        request.setCriteria(criteria);
+        request.setRequestInfo(buildRequestInfo("citizen"));
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertEquals(CasesFor.ALL, criteria.getCasesFor());
+        assertNull(criteria.getAdvocateId());
+        assertEquals(INDIVIDUAL_ID, criteria.getLitigantId());
+        assertEquals(INDIVIDUAL_ID, criteria.getPoaHolderIndividualId());
+    }
+
+    @Test
+    void enrichCaseSearchRequestV2_citizen_all_advocate_found() {
+        when(individualService.getIndividualId(any(RequestInfo.class))).thenReturn(INDIVIDUAL_ID);
+        UUID advId = UUID.randomUUID();
+        when(advocateUtil.fetchAdvocatesByIndividualId(any(), eq(INDIVIDUAL_ID)))
+                .thenReturn(Collections.singletonList(Advocate.builder().id(advId).build()));
+
+        CaseSearchCriteriaV2 criteria = new CaseSearchCriteriaV2();
+        criteria.setCasesFor(CasesFor.ALL);
+
+        CaseSearchRequestV2 request = new CaseSearchRequestV2();
+        request.setCriteria(criteria);
+        request.setRequestInfo(buildRequestInfo("citizen", ADVOCATE_ROLE));
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertEquals(advId.toString(), criteria.getAdvocateId());
+        assertEquals(INDIVIDUAL_ID, criteria.getLitigantId());
+        assertEquals(INDIVIDUAL_ID, criteria.getPoaHolderIndividualId());
+    }
+
+    @Test
+    void enrichCaseSearchRequestV2_citizen_poaLitigant() {
+        when(individualService.getIndividualId(any(RequestInfo.class))).thenReturn(INDIVIDUAL_ID);
+
+        CaseSearchCriteriaV2 criteria = new CaseSearchCriteriaV2();
+        criteria.setCasesFor(CasesFor.POA_LITIGANT);
+
+        CaseSearchRequestV2 request = new CaseSearchRequestV2();
+        request.setCriteria(criteria);
+        request.setRequestInfo(buildRequestInfo("citizen"));
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertNull(criteria.getAdvocateId());
+        assertEquals(INDIVIDUAL_ID, criteria.getLitigantId());
+        assertEquals(INDIVIDUAL_ID, criteria.getPoaHolderIndividualId());
+    }
+
+    @Test
+    void enrichCaseSearchRequestV2_citizen_advocateOnly_noAdvocateFound() {
+        when(individualService.getIndividualId(any(RequestInfo.class))).thenReturn(INDIVIDUAL_ID);
+        when(advocateUtil.fetchAdvocatesByIndividualId(any(), eq(INDIVIDUAL_ID)))
+                .thenReturn(Collections.emptyList());
+
+        CaseSearchCriteriaV2 criteria = new CaseSearchCriteriaV2();
+        criteria.setCasesFor(CasesFor.ADVOCATE);
+
+        CaseSearchRequestV2 request = new CaseSearchRequestV2();
+        request.setCriteria(criteria);
+        request.setRequestInfo(buildRequestInfo("citizen", ADVOCATE_ROLE));
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertNull(criteria.getAdvocateId());
+        assertNull(criteria.getLitigantId());
+        assertNull(criteria.getPoaHolderIndividualId());
+    }
+
+    @Test
+    void enrichCaseSearchRequestV2_employee_courtAssigned_setsCourtId() {
+        when(hrmsUtil.getCourtId(any(RequestInfo.class))).thenReturn("court-9");
+
+        CaseSearchCriteriaV2 criteria = new CaseSearchCriteriaV2();
+
+        CaseSearchRequestV2 request = new CaseSearchRequestV2();
+        request.setCriteria(criteria);
+        request.setRequestInfo(buildRequestInfo("employee", COURT_ASSIGNED_ROLE));
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertEquals("court-9", criteria.getCourtId());
+    }
+
+    @Test
+    void enrichCaseSearchRequestV2_employee_notCourtAssigned_clearsCourtId() {
+        CaseSearchCriteriaV2 criteria = new CaseSearchCriteriaV2();
+        criteria.setCourtId("client-court");
+
+        CaseSearchRequestV2 request = new CaseSearchRequestV2();
+        request.setCriteria(criteria);
+        request.setRequestInfo(buildRequestInfo("employee"));
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertNull(criteria.getCourtId());
+    }
+
+    @Test
+    void enrichCaseSearchRequestV2_systemUser_noOp() {
+        CaseSearchRequestV2 request = new CaseSearchRequestV2();
+        request.setCriteria(new CaseSearchCriteriaV2());
+        request.setRequestInfo(buildRequestInfo("system"));
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        verify(individualService, never()).getIndividualId(any());
+    }
+
+    @Test
+    void enrichCaseSearchRequestV2_unknownType_throws() {
+        CaseSearchRequestV2 request = new CaseSearchRequestV2();
+        request.setCriteria(new CaseSearchCriteriaV2());
+        request.setRequestInfo(buildRequestInfo("alien"));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> caseRegistrationEnrichment.enrichCaseSearchRequest(request));
+    }
+
+    // ===================== CaseSummaryListRequest =====================
+
+    @Test
+    void enrichCaseSummaryList_citizen_defaultsCasesForToAll_nonAdvocate() {
+        when(individualService.getIndividualId(any(RequestInfo.class))).thenReturn(INDIVIDUAL_ID);
+
+        CaseSummaryListCriteria criteria = new CaseSummaryListCriteria();
+        criteria.setAdvocateId("client-advocate");
+        criteria.setLitigantId("client-litigant");
+        criteria.setPoaHolderIndividualId("client-poa");
+
+        CaseSummaryListRequest request = new CaseSummaryListRequest();
+        request.setCriteria(criteria);
+        request.setRequestInfo(buildRequestInfo("citizen"));
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertEquals(CasesFor.ALL, criteria.getCasesFor());
+        assertNull(criteria.getAdvocateId());
+        assertEquals(INDIVIDUAL_ID, criteria.getLitigantId());
+        assertEquals(INDIVIDUAL_ID, criteria.getPoaHolderIndividualId());
+    }
+
+    @Test
+    void enrichCaseSummaryList_citizen_all_advocate_found() {
+        when(individualService.getIndividualId(any(RequestInfo.class))).thenReturn(INDIVIDUAL_ID);
+        UUID advId = UUID.randomUUID();
+        when(advocateUtil.fetchAdvocatesByIndividualId(any(), eq(INDIVIDUAL_ID)))
+                .thenReturn(Collections.singletonList(Advocate.builder().id(advId).build()));
+
+        CaseSummaryListCriteria criteria = new CaseSummaryListCriteria();
+        criteria.setCasesFor(CasesFor.ALL);
+
+        CaseSummaryListRequest request = new CaseSummaryListRequest();
+        request.setCriteria(criteria);
+        request.setRequestInfo(buildRequestInfo("citizen", ADVOCATE_ROLE));
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertEquals(advId.toString(), criteria.getAdvocateId());
+        assertEquals(INDIVIDUAL_ID, criteria.getLitigantId());
+        assertEquals(INDIVIDUAL_ID, criteria.getPoaHolderIndividualId());
+    }
+
+    @Test
+    void enrichCaseSummaryList_citizen_poaLitigant() {
+        when(individualService.getIndividualId(any(RequestInfo.class))).thenReturn(INDIVIDUAL_ID);
+
+        CaseSummaryListCriteria criteria = new CaseSummaryListCriteria();
+        criteria.setCasesFor(CasesFor.POA_LITIGANT);
+
+        CaseSummaryListRequest request = new CaseSummaryListRequest();
+        request.setCriteria(criteria);
+        request.setRequestInfo(buildRequestInfo("citizen"));
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertNull(criteria.getAdvocateId());
+        assertEquals(INDIVIDUAL_ID, criteria.getLitigantId());
+        assertEquals(INDIVIDUAL_ID, criteria.getPoaHolderIndividualId());
+    }
+
+    @Test
+    void enrichCaseSummaryList_citizen_advocateOnly() {
+        when(individualService.getIndividualId(any(RequestInfo.class))).thenReturn(INDIVIDUAL_ID);
+        UUID advId = UUID.randomUUID();
+        when(advocateUtil.fetchAdvocatesByIndividualId(any(), eq(INDIVIDUAL_ID)))
+                .thenReturn(Collections.singletonList(Advocate.builder().id(advId).build()));
+
+        CaseSummaryListCriteria criteria = new CaseSummaryListCriteria();
+        criteria.setCasesFor(CasesFor.ADVOCATE);
+
+        CaseSummaryListRequest request = new CaseSummaryListRequest();
+        request.setCriteria(criteria);
+        request.setRequestInfo(buildRequestInfo("citizen", ADVOCATE_ROLE));
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertEquals(advId.toString(), criteria.getAdvocateId());
+        assertNull(criteria.getLitigantId());
+        assertNull(criteria.getPoaHolderIndividualId());
+    }
+
+    @Test
+    void enrichCaseSummaryList_employee_courtAssigned_setsCourtId() {
+        when(hrmsUtil.getCourtId(any(RequestInfo.class))).thenReturn("court-5");
+
+        CaseSummaryListCriteria criteria = new CaseSummaryListCriteria();
+
+        CaseSummaryListRequest request = new CaseSummaryListRequest();
+        request.setCriteria(criteria);
+        request.setRequestInfo(buildRequestInfo("employee", COURT_ASSIGNED_ROLE));
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertEquals("court-5", criteria.getCourtId());
+    }
+
+    @Test
+    void enrichCaseSummaryList_employee_notCourtAssigned_clearsCourtId() {
+        CaseSummaryListCriteria criteria = new CaseSummaryListCriteria();
+        criteria.setCourtId("client-court");
+
+        CaseSummaryListRequest request = new CaseSummaryListRequest();
+        request.setCriteria(criteria);
+        request.setRequestInfo(buildRequestInfo("employee"));
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        assertNull(criteria.getCourtId());
+    }
+
+    @Test
+    void enrichCaseSummaryList_systemUser_noOp() {
+        CaseSummaryListRequest request = new CaseSummaryListRequest();
+        request.setCriteria(new CaseSummaryListCriteria());
+        request.setRequestInfo(buildRequestInfo("system"));
+
+        caseRegistrationEnrichment.enrichCaseSearchRequest(request);
+
+        verify(individualService, never()).getIndividualId(any());
+    }
+
+    @Test
+    void enrichCaseSummaryList_unknownType_throws() {
+        CaseSummaryListRequest request = new CaseSummaryListRequest();
+        request.setCriteria(new CaseSummaryListCriteria());
+        request.setRequestInfo(buildRequestInfo("alien"));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> caseRegistrationEnrichment.enrichCaseSearchRequest(request));
     }
 }
 
