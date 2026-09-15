@@ -590,6 +590,26 @@ export const reviewCaseFileFormConfig = [
               ],
               data: {},
             },
+
+            {
+              key: "advocateDetails",
+              name: "advocateDetails",
+              label: "CS_ADVOCATE_DETAILS",
+              icon: "AdvocateDetailsIcon",
+              disableScrutiny: true,
+              config: [
+                {
+                  type: "title",
+                  prefix: "Complainant:",
+                  value: [
+                    "multipleAdvocatesAndPip.boxComplainant.firstName",
+                    "multipleAdvocatesAndPip.boxComplainant.middleName",
+                    "multipleAdvocatesAndPip.boxComplainant.lastName",
+                  ],
+                },
+              ],
+              data: {},
+            },
             {
               key: "prayerSwornStatement",
               name: "prayerSwornStatement",
@@ -650,25 +670,6 @@ export const reviewCaseFileFormConfig = [
                   type: "image",
                   label: "CS_DOCUMENT",
                   value: ["swornStatement.document", "SelectUploadDocWithName"],
-                },
-              ],
-              data: {},
-            },
-            {
-              key: "advocateDetails",
-              name: "advocateDetails",
-              label: "CS_ADVOCATE_DETAILS",
-              icon: "AdvocateDetailsIcon",
-              disableScrutiny: true,
-              config: [
-                {
-                  type: "title",
-                  prefix: "Complainant:",
-                  value: [
-                    "multipleAdvocatesAndPip.boxComplainant.firstName",
-                    "multipleAdvocatesAndPip.boxComplainant.middleName",
-                    "multipleAdvocatesAndPip.boxComplainant.lastName",
-                  ],
                 },
               ],
               data: {},

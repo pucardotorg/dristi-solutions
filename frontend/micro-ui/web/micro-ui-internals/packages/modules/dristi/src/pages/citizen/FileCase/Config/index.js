@@ -238,6 +238,24 @@ export const sideMenuConfig = [
         dependentOptionalFields: [],
         initialOptionalFieldCount: 4,
       },
+
+      {
+        key: "advocateDetails",
+        label: "CS_ADVOCATE_DETAILS",
+        checked: false,
+        isCompleted: false,
+        isDisabled: false,
+        pageConfig: advocateDetailsConfig,
+        mandatoryFields: [],
+        // We are not specifying mandatory fields here because whole form
+        // is a custom component and it is not possible to show fields in that manner.
+        // the counting logic is written directly for Advocate Details page.
+        initialMandatoryFieldCount: 2,
+        optionalFields: [],
+        dependentOptionalFields: [],
+        dependentMandatoryFields: [],
+        initialOptionalFieldCount: 0,
+      },
       {
         key: "prayerSwornStatement",
         label: "CS_PRAYER_SWORN_STATEMENT",
@@ -256,23 +274,6 @@ export const sideMenuConfig = [
         ],
         dependentOptionalFields: [],
         initialOptionalFieldCount: 6,
-      },
-      {
-        key: "advocateDetails",
-        label: "CS_ADVOCATE_DETAILS",
-        checked: false,
-        isCompleted: false,
-        isDisabled: false,
-        pageConfig: advocateDetailsConfig,
-        mandatoryFields: [],
-        // We are not specifying mandatory fields here because whole form
-        // is a custom component and it is not possible to show fields in that manner.
-        // the counting logic is written directly for Advocate Details page.
-        initialMandatoryFieldCount: 2,
-        optionalFields: [],
-        dependentOptionalFields: [],
-        dependentMandatoryFields: [],
-        initialOptionalFieldCount: 0,
       },
     ],
   },

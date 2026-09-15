@@ -147,15 +147,14 @@ export const SYNOPSIS_SECTION_MAPPING = [
         key: "dateOfPresentation",
         label: "SYNOPSIS_LABEL_DATE_OF_PRESENTATION",
         defaultLabel: "Date of presentation",
-        path: "depositDate",
+        path: "",
         type: "date",
       },
       {
-        // No "date of return of cheque" field exists on the cheque details form today.
         key: "dateOfReturnOfCheque",
         label: "SYNOPSIS_LABEL_DATE_OF_RETURN_OF_CHEQUE",
         defaultLabel: "Date of Return of Cheque",
-        path: "",
+        path: "depositDate",
         type: "date",
       },
       {
