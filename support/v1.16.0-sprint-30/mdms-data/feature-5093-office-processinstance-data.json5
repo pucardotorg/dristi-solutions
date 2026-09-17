@@ -1,0 +1,50 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.assigneToOfficeMembers",
+    "uniqueIdentifier": "task-generic",
+    "data": {
+      "states": [
+        "PENDING_PAYMENT"
+      ],
+      "workflowModule": "task-generic"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.assigneToOfficeMembers",
+    "uniqueIdentifier": "task-payment",
+    "data": {
+      "states": [
+        "PENDING_PAYMENT"
+      ],
+      "workflowModule": "task-payment"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.assigneToOfficeMembers",
+    "uniqueIdentifier": "case-default",
+    "data": {
+      "states": [
+        "CASE_REASSIGNED"
+      ],
+      "workflowModule": "case-default"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.assigneToOfficeMembers",
+    "uniqueIdentifier": "bail-bond-default",
+    "data": {
+      "states": [
+        "PENDING_E-SIGN"
+      ],
+      "workflowModule": "bail-bond-default"
+    },
+    "isActive": true
+  }
+]

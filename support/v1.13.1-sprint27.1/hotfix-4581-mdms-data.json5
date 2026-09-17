@@ -1,0 +1,104 @@
+[
+  {
+    "id": "0631e014-0928-41c9-a8c2-c4218a8895b3",
+    "tenantId": "kl",
+    "schemaCode": "INBOX.InboxQueryConfiguration",
+    "uniqueIdentifier": "order-notification-view",
+    "data": {
+      "index": "order-notification-view",
+      "module": "Transformer service",
+      "sortBy": {
+        "path": "Data.orderNotification.createdTime",
+        "defaultOrder": "DESC"
+      },
+      "sourceFilterPathList": [
+        "Data"
+      ],
+      "allowedSearchCriteria": [
+        {
+          "name": "id",
+          "path": "Data.orderNotification.id.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "tenantId",
+          "path": "Data.orderNotification.tenantId.keyword",
+          "operator": "EQUAL",
+          "isMandatory": true
+        },
+        {
+          "name": "type",
+          "path": "Data.orderNotification.type.keyword",
+          "isMandatory": false
+        },
+        // TODO: Add operator for WILDCARD in partyName search criteria
+        {
+          "name": "partyName",
+          "path": "Data.orderNotification.parties.partyName.keyword",
+          "operator": "WILDCARD",
+          "isMandatory": false
+        },
+        {
+          "name": "status",
+          "path": "Data.orderNotification.status.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "entityType",
+          "path": "Data.orderNotification.entityType.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "title",
+          "path": "Data.orderNotification.title.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "filingNumbers",
+          "path": "Data.orderNotification.filingNumbers.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "caseNumbers",
+          "path": "Data.orderNotification.caseNumbers.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "caseTitle",
+          "path": "Data.orderNotification.caseTitle.keyword",
+          "operator": "WILDCARD",
+          "isMandatory": false
+        },
+        {
+          "name": "startOfTheDay",
+          "path": "Data.orderNotification.createdTime",
+          "operator": "GTE",
+          "isMandatory": false
+        },
+        {
+          "name": "endOfTheDay",
+          "path": "Data.orderNotification.createdTime",
+          "operator": "LTE",
+          "isMandatory": false
+        },
+        {
+          "name": "caseSTNumber",
+          "path": "Data.orderNotification.caseSTNumber",
+          "isMandatory": false
+        },
+        {
+          "name": "courtId",
+          "path": "Data.orderNotification.courtId.keyword",
+          "isMandatory": false
+        }
+      ]
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+      "lastModifiedBy": "7a695a12-8ac5-4f7e-97dd-313f3d3c57d2",
+      "createdTime": 1741617443361,
+      "lastModifiedTime": 1764051120661
+    }
+  }
+]

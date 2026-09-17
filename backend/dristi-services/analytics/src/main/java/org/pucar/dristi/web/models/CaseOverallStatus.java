@@ -1,0 +1,47 @@
+package org.pucar.dristi.web.models;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.egov.common.contract.models.AuditDetails;
+import org.springframework.validation.annotation.Validated;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
+@Schema(description = "Case overall status topic object")
+@Validated
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class CaseOverallStatus {
+
+    @JsonProperty("filingNumber")
+    private String filingNumber = null;
+
+    @JsonProperty("tenantId")
+    private String tenantId = null;
+
+    @JsonProperty("stage")
+    private String stage = null;
+
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = new ArrayList<>();
+
+    @JsonProperty("auditDetails")
+    @Valid
+    private AuditDetails auditDetails = null;
+
+    public CaseOverallStatus(String filingNumber, String tenantId, String stage) {
+        this.filingNumber = filingNumber;
+        this.tenantId = tenantId;
+        this.stage = stage;
+    }
+
+}

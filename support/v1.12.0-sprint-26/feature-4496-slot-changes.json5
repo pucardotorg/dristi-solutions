@@ -1,0 +1,65 @@
+[
+  {
+    "id": "4efd6c1d-a224-428f-8fe0-7b4862d1c23f",
+    "tenantId": "kl",
+    "schemaCode": "court.slots",
+    "uniqueIdentifier": "3",
+    "data": {
+      "id": 3,
+      "slotName": "Morning Slot",
+      "slotEndTime": "17:00:00",
+      "slotDuration": "360",
+      "slotStartTime": "11:00:00",
+      "unitOfMeasurement": "Minutes"
+    },
+    "isActive": false, // should be disabled
+    "auditDetails": {
+      "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1741264558824,
+      "lastModifiedTime": 1757666671916
+    }
+  },
+  {
+    "id": "0e6ee559-2609-42f6-ba16-bb8e0cf166ff",
+    "tenantId": "kl",
+    "schemaCode": "court.slots",
+    "uniqueIdentifier": "2",
+    "data": {
+      "id": 2,
+      "slotName": "Morning Slot",
+      "slotEndTime": "17:00:00",
+      "slotDuration": "180",
+      "slotStartTime": "11:00:00",
+      "unitOfMeasurement": "Minutes"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1721811121698,
+      "lastModifiedTime": 1757666719004
+    }
+  },
+  {
+    "id": "6f182a05-ef18-4642-b9b1-a46704ff7626",
+    "tenantId": "kl",
+    "schemaCode": "court.slots",
+    "uniqueIdentifier": "1",
+    "data": {
+      "id": 1,
+      "slotName": "Morning Slot",
+      "slotEndTime": "17:00:00",
+      "slotDuration": "120",
+      "slotStartTime": "11:00:00",
+      "unitOfMeasurement": "Minutes"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1721811121671,
+      "lastModifiedTime": 1757666757699
+    }
+  }
+]

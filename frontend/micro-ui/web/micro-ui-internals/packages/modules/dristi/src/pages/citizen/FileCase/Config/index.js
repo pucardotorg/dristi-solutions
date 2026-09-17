@@ -1,3 +1,15 @@
+import { advocateDetailsConfig } from "./advocateDetailsConfig";
+import { chequeDetailsConfig } from "./chequedetailsConfig";
+import { complaintdetailconfig } from "./complaindetailsConfig";
+import { debtliabilityconfig } from "./debtLiabilityConfig";
+import { delayApplicationConfig } from "./delayApplicationConfig";
+import { demandNoticeConfig } from "./demandNoticeConfig";
+import { prayerAndSwornConfig } from "./prayerAndSwornConfig";
+import { processDeliveryCourierServiceConfig } from "./processDeliveryCourierServiceConfig";
+import { respondentconfig } from "./respondentConfig";
+import { reviewcasefileconfig } from "./reviewcasefileconfig";
+import { witnessConfig } from "./witnessConfig";
+
 export const sideMenuConfig = [
   {
     isOpen: false,
@@ -11,16 +23,7 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "complainantDetailsConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: complaintdetailconfig,
         mandatoryFields: [
           "complainantType",
           "complainantVerification.otpNumber", // checkThis- make sure to unset otpNumber if otp model is closed or canceled.
@@ -73,16 +76,7 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "respondentConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: respondentconfig,
         mandatoryFields: ["respondentType", "respondentFirstName"],
         ifMultipleAddressLocations: {
           // using this for counting mandatory fields in case of multiple locations .
@@ -123,16 +117,7 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "chequeDetailsConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: chequeDetailsConfig,
         mandatoryFields: [
           "chequeSignatoryName",
           "bouncedChequeFileUpload.document",
@@ -144,7 +129,8 @@ export const sideMenuConfig = [
           "payerBankName",
           "payerBranchName",
           "delayReason.reasonForReturnCheque",
-          "ifsc",
+          "payeeIfscField.payeeIfsc",
+          "payerIfscField.payerIfsc",
           "chequeAmount",
           "depositDate",
           "returnMemoFileUpload.document",
@@ -161,16 +147,7 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "debtLiabilityConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: debtliabilityconfig,
         mandatoryFields: ["liabilityNature", "liabilityType"],
         initialMandatoryFieldCount: 2,
         dependentMandatoryFields: [{ field: "totalAmount", dependentOn: "liabilityType", dependentOnKey: "showAmountCovered" }],
@@ -184,16 +161,7 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "demandNoticeConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: demandNoticeConfig,
         mandatoryFields: [
           "dateOfDispatch",
           "legalDemandNoticeFileUpload.document",
@@ -221,16 +189,7 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "delayApplicationFormConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: delayApplicationConfig,
         mandatoryFields: ["delayCondonationType"],
         initialMandatoryFieldCount: 1,
         dependentMandatoryFields: [
@@ -260,16 +219,7 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "witnessConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: witnessConfig,
         anyOneOfTheseMandatoryFields: [["firstName", "witnessDesignation"]],
         initialMandatoryFieldCount: 0,
         dependentMandatoryFields: [],
@@ -294,19 +244,9 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "prayerAndSwornConfig",
-              },
-            ],
-          },
-        ],
-        mandatoryFields: ["memorandumOfComplaint.text"],
-        anyOneOfTheseMandatoryFields: ["swornStatement.document"],
-        initialMandatoryFieldCount: 2,
+        pageConfig: prayerAndSwornConfig,
+        mandatoryFields: ["memorandumOfComplaint.text", "synopsis.text", "prayer.text", "swornStatement.document"],
+        initialMandatoryFieldCount: 4,
         dependentMandatoryFields: [],
         optionalFields: [
           "prayerAndSwornStatementType",
@@ -323,16 +263,7 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "advocateDetailsConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: advocateDetailsConfig,
         mandatoryFields: [],
         // We are not specifying mandatory fields here because whole form
         // is a custom component and it is not possible to show fields in that manner.
@@ -341,8 +272,26 @@ export const sideMenuConfig = [
         optionalFields: [],
         dependentOptionalFields: [],
         dependentMandatoryFields: [],
+        initialOptionalFieldCount: 0,
+      },
+    ],
+  },
+  {
+    isOpen: false,
+    isDisabled: false,
+    title: "CS_PAYMENT_CONFIRMATION",
+    key: "paymentConfirmation",
+    children: [
+      {
+        key: "processCourierService",
+        label: "PROCESS_DELIVERY_COURIER_SERVICE",
+        checked: false,
+        isCompleted: false,
+        isDisabled: false,
+        pageConfig: processDeliveryCourierServiceConfig,
+        mandatoryFields: [],
+        initialMandatoryFieldCount: 1,
         optionalFields: [],
-        dependentOptionalFields: [],
         initialOptionalFieldCount: 0,
       },
     ],
@@ -359,16 +308,7 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "reviewCaseFileConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: reviewcasefileconfig,
       },
     ],
   },

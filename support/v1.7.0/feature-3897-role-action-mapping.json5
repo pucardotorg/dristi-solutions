@@ -1,0 +1,76 @@
+{
+  "mastername": "roleactions",
+  "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+  "mdmsPayload": [
+    {
+      "id": "c9237e22-c5d9-4b99-aa65-eccc099ff05d",
+      "tenantId": "kl",
+      "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+      "uniqueIdentifier": "485",
+      "data": {
+        "id": 485,
+        "actionid": 2712,
+        "rolecode": "GENERAL_COURT_ROOM_MANAGER",
+        "tenantid": "kl",
+        "actioncode": "2712"
+      },
+      "isActive": true
+    },
+    {
+      "id": "46b77d2b-dd25-462c-8b80-92b27059cf51",
+      "tenantId": "kl",
+      "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+      "uniqueIdentifier": "484",
+      "data": {
+        "id": 484,
+        "actionid": 2712,
+        "rolecode": "BENCH_CLERK",
+        "tenantid": "kl",
+        "actioncode": "2712"
+      },
+      "isActive": true
+    },
+    {
+      "id": "b236d830-8e0f-451d-85a2-94438fb53c06",
+      "tenantId": "kl",
+      "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+      "uniqueIdentifier": "483",
+      "data": {
+        "id": 483,
+        "actionid": 2712,
+        "rolecode": "TYPIST_ROLE",
+        "tenantid": "kl",
+        "actioncode": "2712"
+      },
+      "isActive": true
+    },
+    {
+      "id": "478ba13d-c8d6-40b4-8e25-b838b69f3c53",
+      "tenantId": "kl",
+      "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+      "uniqueIdentifier": "482",
+      "data": {
+        "id": 482,
+        "actionid": 2711,
+        "rolecode": "BENCH_CLERK",
+        "tenantid": "kl",
+        "actioncode": "2711"
+      },
+      "isActive": true
+    },
+    {
+      "id": "0f2d0ac7-e31c-481a-bd2d-56f33fbaec40",
+      "tenantId": "kl",
+      "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+      "uniqueIdentifier": "481",
+      "data": {
+        "id": 481,
+        "actionid": 2711,
+        "rolecode": "TYPIST_ROLE",
+        "tenantid": "kl",
+        "actioncode": "2711"
+      },
+      "isActive": true
+    }
+  ]
+}

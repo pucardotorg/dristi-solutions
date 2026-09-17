@@ -1,0 +1,176 @@
+package org.egov.eTreasury.controller;
+
+import jakarta.validation.Valid;
+import org.egov.common.contract.models.Document;
+import org.egov.eTreasury.model.*;
+import org.egov.eTreasury.model.demand.DemandCreateRequest;
+import org.egov.eTreasury.model.demand.DemandResponse;
+import org.egov.eTreasury.service.PaymentService;
+import org.egov.eTreasury.util.ResponseInfoFactory;
+import lombok.extern.slf4j.Slf4j;
+
+import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.response.ResponseInfo;
+import org.egov.tracer.model.CustomException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/payment")
+@Slf4j
+public class PaymentController {
+
+    private final PaymentService paymentService;
+
+    private final ResponseInfoFactory responseInfoFactory;
+
+    public PaymentController(PaymentService paymentService, ResponseInfoFactory responseInfoFactory) {
+        this.paymentService = paymentService;
+        this.responseInfoFactory = responseInfoFactory;
+    }
+
+    @PostMapping("/v1/_verifyConnection")
+    public ConnectionResponse verifyServerConnection(@RequestParam(value = "tenantId", required = false) String tenantId,@RequestBody RequestInfo request) {
+        log.info("Verifying Server Connection for request: {}", request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request, true);
+        ConnectionStatus connectionStatus = paymentService.verifyConnection();
+        log.info("Verified Server Connection for request: {}", request);
+        return ConnectionResponse.builder().responseInfo(responseInfo).connectionStatus(connectionStatus).build();
+    }
+
+    @PostMapping("/v1/_createDemand")
+    public ResponseEntity<DemandResponse> createDemand(@RequestBody DemandCreateRequest request) {
+        log.info("Creating demand for request: {}", request);
+        DemandResponse demandResponse = paymentService.createDemand(request);
+        log.info("Demand created successfully for request: {}", request);
+        return ResponseEntity.ok(demandResponse);
+    }
+
+    @PostMapping("/v1/_processChallan")
+    public HtmlResponse processPayment(@RequestBody ChallanRequest request) {
+        log.info("Processing payment for request: {}", request);
+        Payload paymentPage = paymentService.processPayment(request.getChallanData(), request.getRequestInfo());
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+        log.info("Payment processed successfully for request: {}", request);
+        return HtmlResponse.builder().payload(paymentPage).responseInfo(responseInfo).build();
+    }
+
+    @PostMapping("/v1/_decryptTreasuryResponse")
+    public TreasuryPaymentResponse decryptTreasuryResponse(@RequestBody TreasuryRequest request) {
+        log.info("Decrypting Treasury Response for request: {}", request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+        TreasuryPaymentData treasuryPaymentData = paymentService.decryptAndProcessTreasuryPayload(request.getTreasuryParams(), request.getRequestInfo());
+        log.info("Decrypted Treasury Response successfully for request: {}", request);
+        return TreasuryPaymentResponse.builder()
+                .responseInfo(responseInfo).treasuryPaymentData(treasuryPaymentData).build();
+    }
+
+    @PostMapping("/v1/_getPaymentReceipt")
+    public PrintResponse getTreasuryPaymentReceipt(@RequestParam String billId, @RequestBody RequestInfo requestInfo) {
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);
+        Document document = paymentService.getTreasuryPaymentData(billId);
+        return PrintResponse.builder()
+                .responseInfo(responseInfo)
+                .document(document).build();
+    }
+
+    @PostMapping("/v1/_paymentStatus")
+    public ResponseEntity<PaymentStatusResponse> getPaymentStatus(@RequestParam(required = false) String billId,
+                                                                  @RequestParam(required = false) String consumerCode,
+                                                                  @RequestParam(required = false) String businessService,
+                                                                  @RequestBody PaymentStatusRequest paymentStatusRequest) {
+        if (!StringUtils.hasText(billId) && !StringUtils.hasText(consumerCode)) {
+            throw new CustomException("INVALID_PAYMENT_STATUS_REQUEST", "Either billId or consumerCode is mandatory");
+        }
+        log.info("Fetching payment status for billId: {}, consumerCode: {}, businessService: {}", billId, consumerCode, businessService);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(paymentStatusRequest.getRequestInfo(), true);
+        PaymentStatusData paymentStatus = paymentService.getPaymentStatus(billId, consumerCode, businessService, paymentStatusRequest.getRequestInfo());
+        PaymentStatusResponse response = PaymentStatusResponse.builder()
+                .responseInfo(responseInfo).paymentStatus(paymentStatus).build();
+        log.info("Payment status for billId: {}, consumerCode: {} is {}", billId, consumerCode, paymentStatus.getStatus());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/v1/_getHeadBreakDown")
+    public ResponseEntity<TreasuryMappingResponse> getHeadBreakDown(@RequestParam String consumerCode, @RequestBody RequestInfo requestInfo) {
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);
+        TreasuryMapping treasuryMapping = paymentService.getHeadBreakDown(consumerCode);
+        TreasuryMappingResponse response = TreasuryMappingResponse.builder().responseInfo(responseInfo).treasuryMapping(treasuryMapping).build();
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/v1/_processDoubleVerification")
+    public ResponseEntity<String> processDoubleVerificationBatch(@RequestBody RequestInfo requestInfo) {
+        log.info("Batch triggering double verification via endpoint");
+        paymentService.processDoubleVerificationBatch(requestInfo);
+        return ResponseEntity.ok("Batch processing initiated.");
+    }
+
+    @PostMapping("/v1/_processReconciliationV3")
+    public ResponseEntity<String> processReconciliationV3Batch(@RequestBody RequestInfo requestInfo) {
+        log.info("V3 reconciliation batch triggered via endpoint");
+        paymentService.processReconciliationV3Batch(requestInfo);
+        return ResponseEntity.ok("V3 reconciliation batch initiated.");
+    }
+
+    @PostMapping("/v1/_testReconciliationV3")
+    public ResponseEntity<ReconciliationV3TestResponse> testReconciliationV3(
+            @RequestParam("departmentId") String departmentId,
+            @RequestParam(value = "dryRun", required = false, defaultValue = "true") boolean dryRun,
+            @RequestBody RequestInfo requestInfo) {
+        log.info("V3 reconciliation TEST endpoint hit | departmentId={} | dryRun={}", departmentId, dryRun);
+        ReconciliationV3TestResponse response = paymentService.testReconciliationV3(departmentId, dryRun, requestInfo);
+        response.setResponseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true));
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/v1/_doubleVerification")
+    public TreasuryPaymentResponse verifyDetails(@Valid @RequestBody VerificationRequest request) {
+        log.info("Performing double verification for billId: {}",  request.getVerificationData() != null ? request.getVerificationData().getBillId() : "null");
+        TreasuryPaymentData treasuryPaymentData = paymentService.doubleVerifyPayment(request.getVerificationData(), request.getRequestInfo());
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+        log.info("Double verification completed | status: {} | GRN: {}",  treasuryPaymentData != null ? treasuryPaymentData.getStatus() : "null", treasuryPaymentData != null ? treasuryPaymentData.getGrn() : "null");
+        return TreasuryPaymentResponse.builder()
+                .responseInfo(responseInfo)
+                .treasuryPaymentData(treasuryPaymentData)
+                .build();
+    }
+
+//    @PostMapping("/v1/_printPayInSlip")
+//    public PrintResponse printPayInSlip(@RequestBody PrintRequest request) {
+//        log.info("Fetching pay-in slip for details: {}", request);
+//        Document document = paymentService.printPayInSlip(request.getPrintDetails(), request.getRequestInfo());
+//        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+//        log.info("Pay-in slip fetched successfully for details: {}", request);
+//        return PrintResponse.builder().responseInfo(responseInfo).document(document).build();
+//    }
+
+//    @PostMapping("/v1/_transactionDetails")
+//    public TransactionResponse processTransaction(@RequestBody TransactionRequest request) {
+//        log.info("Fetching transaction details for request: {}", request);
+//        TransactionDetails transactionDetails = paymentService.fetchTransactionDetails(request.getTransactionDetails(), request.getRequestInfo());
+//        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+//        log.info("Transaction details fetched successfully for request: {}", request);
+//        return TransactionResponse.builder().transactionDetails(transactionDetails).responseInfo(responseInfo).build();
+//    }
+
+//    @PostMapping("/v1/_refundPayment")
+//    public RefundResponse processRefundPayment(@RequestBody RefundRequest request) {
+//        log.info("Processing refund for request: {}", request);
+//        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+//        RefundData refundData = paymentService.processRefund(request.getRefundDetails(), request.getRequestInfo());
+//        log.info("Refund processed successfully for request: {}", request);
+//        return RefundResponse.builder().responseInfo(responseInfo).refundData(refundData).build();
+//    }
+
+//    @PostMapping("/v1/_refundStatus")
+//    public RefundResponse checkRefundStatus(@RequestBody RefundStatusRequest request) {
+//        log.info("Verifying refund status for request: {}", request);
+//        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+//        RefundData refundData = paymentService.checkRefundStatus(request.getRefundStatus(), request.getRequestInfo());
+//        log.info("Verified Refund Status successfully for request: {}", request);
+//        return RefundResponse.builder().responseInfo(responseInfo).refundData(refundData).build();
+//    }
+
+}

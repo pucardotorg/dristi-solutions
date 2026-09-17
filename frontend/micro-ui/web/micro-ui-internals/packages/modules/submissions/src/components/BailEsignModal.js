@@ -1,0 +1,93 @@
+import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
+import React, { useEffect, useState } from "react";
+import { Button, InfoCard } from "@egovernments/digit-ui-components";
+import useESignOpenApi from "../hooks/submissions/useESignOpenApi";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+const BailEsignModal = ({
+  t,
+  handleProceed,
+  handleCloseSignaturePopup,
+  fileStoreId,
+  signPlaceHolder,
+  mobileNumber,
+  forWitnessDeposition = false,
+  handleMockESign,
+  customizedNote,
+}) => {
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const [isSigned, setIsSigned] = useState(false);
+  const { handleEsign, checkSignStatus } = useESignOpenApi();
+  const [pageModule, setPageModule] = useState("ci");
+  const name = "signature";
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const [showToast, setShowToast] = useState(null);
+
+  const handleClickEsign = () => {
+    if (mockESignEnabled) {
+      handleMockESign();
+    } else {
+      sessionStorage.setItem("mobileNumber", mobileNumber);
+      handleEsign(name, pageModule, fileStoreId, setShowToast, t, signPlaceHolder);
+    }
+  };
+
+  useEffect(() => {
+    checkSignStatus(name, setIsSigned);
+  }, []);
+
+  return (
+    <React.Fragment>
+      <Modal
+        headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
+        headerBarEnd={<CloseBtn onClick={() => handleCloseSignaturePopup()} />}
+        actionCancelLabel={t("BACK")}
+        actionCancelOnSubmit={() => handleCloseSignaturePopup()}
+        actionSaveLabel={isSigned ? t("PROCEED") : t("PROCEED_TO_E_SIGN")}
+        isDisabled={false}
+        actionSaveOnSubmit={() => {
+          if (!isSigned) {
+            handleClickEsign();
+          } else {
+            handleProceed();
+          }
+        }}
+        className={"submission-add-signature-modal responsive-signature-modal"}
+      >
+        <div style={{ paddingTop: "10px" }}>
+          <InfoCard
+            variant={"default"}
+            label={t("PLEASE_NOTE")}
+            additionalElements={[<p>{customizedNote ? t(customizedNote) : t("BAIL_BOND_WITNESS_POPUP_NOTES")}</p>]}
+            inline
+            textStyle={{}}
+            className={`custom-info-card`}
+          />
+          <div className="add-signature-main-div">
+            {!isSigned ? (
+              <div className="not-signed">
+                <h1 style={{ color: "#3d3c3c", fontSize: "24px", fontWeight: "bold" }}>{t("YOUR_SIGNATURE")}</h1>
+              </div>
+            ) : (
+              <div className="signed">
+                <h1>{t("YOUR_SIGNATURE")}</h1>
+                <span>{t("SIGNED")}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
+    </React.Fragment>
+  );
+};
+
+export default BailEsignModal;

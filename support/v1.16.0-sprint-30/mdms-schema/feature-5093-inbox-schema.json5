@@ -1,0 +1,98 @@
+{
+  "tenantId": "kl",
+  "code": "INBOX.InboxQueryConfiguration",
+  "description": null,
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "required": [
+      "module",
+      "index",
+      "allowedSearchCriteria",
+      "sortBy",
+      "sourceFilterPathList"
+    ],
+    "x-unique": [
+      "index"
+    ],
+    "properties": {
+      "index": {
+        "type": "string"
+      },
+      "module": {
+        "type": "string"
+      },
+      "sortBy": {
+        "type": "object",
+        "required": [
+          "path",
+          "defaultOrder"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "defaultOrder": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "sourceFilterPathList": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "allowedSearchCriteria": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "name",
+            "path",
+            "isMandatory"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "orPaths": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "path"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "nestedPath": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "operator": {
+              "type": "string"
+            },
+            "nestedPath": {
+              "type": "string"
+            },
+            "isMandatory": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "additionalProperties": false
+  },
+  "isActive": true
+}

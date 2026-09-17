@@ -1,0 +1,79 @@
+{
+  "tenantId": "kl",
+  "masterName": "Hearing",
+  "moduleName": "HearingStatus",
+  "mdmsPayload": [
+    {
+      "tenantId": "kl",
+      "schemaCode": "Hearing.HearingStatus",
+      "uniqueIdentifier": "6",
+      "data": {
+        "id": 6,
+        "code": "ABANDONED",
+        "status": "ABANDONED",
+        "priority": 50
+      },
+      "isActive": true
+    },
+    {
+      "tenantId": "kl",
+      "schemaCode": "Hearing.HearingStatus",
+      "uniqueIdentifier": "5",
+      "data": {
+        "id": 5,
+        "code": "PASSED_OVER",
+        "status": "PASSED_OVER",
+        "priority": 30
+      },
+      "isActive": true
+    },
+    {
+      "tenantId": "kl",
+      "schemaCode": "Hearing.HearingStatus",
+      "uniqueIdentifier": "4",
+      "data": {
+        "id": 4,
+        "code": "OPT_OUT",
+        "status": "OPT_OUT",
+        "priority": 60
+      },
+      "isActive": true
+    },
+    {
+      "tenantId": "kl",
+      "schemaCode": "Hearing.HearingStatus",
+      "uniqueIdentifier": "3",
+      "data": {
+        "id": 3,
+        "code": "COMPLETED",
+        "status": "COMPLETED",
+        "priority": 40
+      },
+      "isActive": true
+    },
+    {
+      "tenantId": "kl",
+      "schemaCode": "Hearing.HearingStatus",
+      "uniqueIdentifier": "2",
+      "data": {
+        "id": 2,
+        "code": "IN_PROGRESS",
+        "status": "IN_PROGRESS",
+        "priority": 10
+      },
+      "isActive": true
+    },
+    {
+      "tenantId": "kl",
+      "schemaCode": "Hearing.HearingStatus",
+      "uniqueIdentifier": "1",
+      "data": {
+        "id": 1,
+        "code": "SCHEDULED",
+        "status": "SCHEDULED",
+        "priority": 20
+      },
+      "isActive": true
+    }
+  ]
+}

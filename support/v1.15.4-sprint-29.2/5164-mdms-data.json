@@ -1,0 +1,17 @@
+[
+  {
+    "id": "c590d2f3-ad29-4e92-b4f8-572a9ce08f80",
+    "tenantId": "kl",
+    "schemaCode": "Order.ItemText",
+    "uniqueIdentifier": "24",
+    "data": {
+      "id": 24,
+      "path": [
+        "$.orderDetails.caseNumber"
+      ],
+      "itemText": "[$.orderDetails.caseNumber] is dismissed.",
+      "orderType": "DISMISS_CASE"
+    },
+    "isActive": true
+  }
+]

@@ -1,0 +1,308 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "504",
+    "data": {
+      "id": 504,
+      "actionid": 2711, // /hearing/v1/bulk/_reschedule
+      "rolecode": "VIEW_BULK_RESCHEDULE_HEARINGS",
+      "tenantid": "kl",
+      "actioncode": "2711"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "516",
+    "data": {
+      "id": 516,
+      "actionid": 2712, // /hearing/v1/bulk/_update
+      "rolecode": "BULK_RESCHEDULE_UPDATE_ACCESS",
+      "tenantid": "kl",
+      "actioncode": "2712"
+    },
+    "isActive": true
+  },
+  {
+    "id": "843dd0b8-992a-4e41-a032-9ffd658dba3e",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "507",
+    "data": {
+      "id": 507,
+      "actionid": 2757, // /task/v1/_updateSignedTasks
+      "rolecode": "SIGN_PROCESS_ATTACHMENT",
+      "tenantid": "kl",
+      "actioncode": "2757"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1759504023409,
+      "lastModifiedTime": 1759504079517
+    }
+  },
+  {
+    "id": "08e14d7f-4c63-4e22-b8b8-1d4f49dd5b8c",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "506",
+    "data": {
+      "id": 506,
+      "actionid": 2757, // /task/v1/_updateSignedTasks
+      "rolecode": "SIGN_PROCESS_PROCLAMATION",
+      "tenantid": "kl",
+      "actioncode": "2757"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1759504011743,
+      "lastModifiedTime": 1759504011743
+    }
+  },
+  {
+    "id": "d780720e-6a28-40c9-9eab-2ab96feffb41",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "505",
+    "data": {
+      "id": 505,
+      "actionid": 2757, // /task/v1/_updateSignedTasks
+      "rolecode": "SIGN_PROCESS_NOTICE",
+      "tenantid": "kl",
+      "actioncode": "2757"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1759503994289,
+      "lastModifiedTime": 1759504062077
+    }
+  },
+  {
+    "id": "401bdb7e-2572-4a3a-bc1b-4562aa8e70c1",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "504",
+    "data": {
+      "id": 504,
+      "actionid": 2757, // /task/v1/_updateSignedTasks
+      "rolecode": "SIGN_PROCESS_WARRANT",
+      "tenantid": "kl",
+      "actioncode": "2757"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1759503981508,
+      "lastModifiedTime": 1759504049983
+    }
+  },
+  {
+    "id": "0492cbe7-e194-42cc-9b4a-94082f9df97d",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "503",
+    "data": {
+      "id": 503,
+      "actionid": 2757, // /task/v1/_updateSignedTasks
+      "rolecode": "SIGN_PROCESS_SUMMONS",
+      "tenantid": "kl",
+      "actioncode": "2757"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1759503944447,
+      "lastModifiedTime": 1759504036458
+    }
+  },
+  {
+    "id": "d4d1002e-e07e-4dc9-aa1a-5b4db826f85c",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "492",
+    "data": {
+      "id": 492,
+      "actionid": 2749, // /bail-bond/v1/_updateSignedBails
+      "rolecode": "BAIL_BOND_ESIGN",
+      "tenantid": "kl",
+      "actioncode": "2749"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1752669322885,
+      "lastModifiedTime": 1758705678896
+    }
+  },
+  {
+    "id": "556d3ece-03f1-42ba-819a-07c8a73f4da8",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "491",
+    "data": {
+      "id": 491,
+      "actionid": 2748, // /bail-bond/v1/_getBailsToSign
+      "rolecode": "BAIL_BOND_ESIGN",
+      "tenantid": "kl",
+      "actioncode": "2748"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1752669104795,
+      "lastModifiedTime": 1758705659698
+    }
+  },
+  {
+    "id": "f53117dc-ddbd-4e3a-8dac-ca553d758920",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "401",
+    "data": {
+      "id": 401,
+      "actionid": 2693, // /advocate/v1/applicationnumber/_search
+      "rolecode": "ADVOCATE_APPROVER",
+      "tenantid": "kl",
+      "actioncode": ""
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1731071921371,
+      "lastModifiedTime": 1759154245989
+    }
+  },
+  {
+    "id": "d709d22f-bde1-41b3-977d-dd0d52cfa56a",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "515",
+    "data": {
+      "id": 515,
+      "actionid": 2759, // /task/v1/bulk-send
+      "rolecode": "TASK_EDITOR",
+      "tenantid": "kl",
+      "actioncode": "2759"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1759747142652,
+      "lastModifiedTime": 1759747142652
+    }
+  },
+  {
+    "id": "eec9b4cb-75e1-4634-8bb4-9d7baf3f577f",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "514",
+    "data": {
+      "id": 514,
+      "actionid": 2760, // /task/v1/_getTasksToSign
+      "rolecode": "VIEW_PROCESS_PROCLAMATION",
+      "tenantid": "kl",
+      "actioncode": "2760"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1759735510218,
+      "lastModifiedTime": 1759735677656
+    }
+  },
+  {
+    "id": "2d08dbff-8bb0-4e6e-8670-9517178c13a7",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "513",
+    "data": {
+      "id": 513,
+      "actionid": 2760, // /task/v1/_getTasksToSign
+      "rolecode": "VIEW_PROCESS_ATTACHMENT",
+      "tenantid": "kl",
+      "actioncode": "2760"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1759735478439,
+      "lastModifiedTime": 1759735688570
+    }
+  },
+  {
+    "id": "dd6b5783-5991-4cb6-9124-25e1b33e7652",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "512",
+    "data": {
+      "id": 512,
+      "actionid": 2760, // /task/v1/_getTasksToSign
+      "rolecode": "VIEW_PROCESS_NOTICE",
+      "tenantid": "kl",
+      "actioncode": "2760"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1759735461108,
+      "lastModifiedTime": 1759735699978
+    }
+  },
+  {
+    "id": "693b7043-a070-4950-acc1-6f91371bed1a",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "511",
+    "data": {
+      "id": 511,
+      "actionid": 2760, // /task/v1/_getTasksToSign
+      "rolecode": "VIEW_PROCESS_WARRANT",
+      "tenantid": "kl",
+      "actioncode": "2760"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1759735439552,
+      "lastModifiedTime": 1759735713134
+    }
+  },
+  {
+    "id": "51fd8229-49e4-422f-a98b-810552393885",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "510",
+    "data": {
+      "id": 510,
+      "actionid": 2760, // /task/v1/_getTasksToSign
+      "rolecode": "VIEW_PROCESS_SUMMONS",
+      "tenantid": "kl",
+      "actioncode": "2760"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1759735418481,
+      "lastModifiedTime": 1759735725606
+    }
+  }
+]

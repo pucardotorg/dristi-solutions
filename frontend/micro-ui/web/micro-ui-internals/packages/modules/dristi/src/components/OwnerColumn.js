@@ -1,24 +1,18 @@
 import React from "react";
 import { FactCheckIcon } from "../icons/svgIndex";
 import { SubmissionWorkflowState } from "../Utils/submissionWorkflow";
+import { DateUtils } from "../Utils";
 
 export const OwnerColumn = ({ rowData, colData, value = "", showAsHeading = false, t }) => {
   const userInfo = Digit.UserService.getUser()?.info;
   const userRoles = userInfo?.roles?.map((role) => role.code);
-  const formatDate = (value) => {
-    const date = new Date(value);
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
-    const year = date.getFullYear();
-    const formattedDate = `${day}-${month}-${year}`;
-    return formattedDate;
-  };
+  const { getFormattedDate } = DateUtils;
 
   const defaultObj = {
     status: rowData?.status,
     details: {
       applicationType: rowData?.applicationType,
-      applicationSentOn: formatDate(parseInt(rowData?.auditDetails?.createdTime)),
+      applicationSentOn: getFormattedDate(parseInt(rowData?.auditDetails?.createdTime)),
       sender: rowData?.owner,
       additionalDetails: rowData?.additionalDetails,
       applicationId: rowData?.id,
@@ -34,7 +28,7 @@ export const OwnerColumn = ({ rowData, colData, value = "", showAsHeading = fals
       status: rowData?.status,
       details: {
         applicationType: rowData?.applicationType,
-        applicationSentOn: formatDate(parseInt(rowData?.auditDetails?.createdTime)),
+        applicationSentOn: getFormattedDate(parseInt(rowData?.auditDetails?.createdTime)),
         sender: rowData?.owner,
         additionalDetails: rowData?.additionalDetails,
         applicationId: rowData?.id,
@@ -54,9 +48,6 @@ export const OwnerColumn = ({ rowData, colData, value = "", showAsHeading = fals
     };
   }) || [defaultObj];
 
-  // const createdByUuid = rowData.statuteSection?.auditdetails?.createdBy;
-  // const respondingUuids = rowData?.additionalDetails?.respondingParty?.map((party) => party?.uuid.map((uuid) => uuid)).flat();
-
   const showDoc = userRoles.includes("JUDGE_ROLE")
     ? [
         SubmissionWorkflowState.PENDINGREVIEW,
@@ -67,13 +58,6 @@ export const OwnerColumn = ({ rowData, colData, value = "", showAsHeading = fals
         SubmissionWorkflowState.DOC_UPLOAD,
       ].includes(rowData?.status)
     : true;
-  //   ||
-  // userInfo?.uuid === createdByUuid ||
-  // (!rowData?.referenceId && [SubmissionWorkflowState.PENDINGRESPONSE, SubmissionWorkflowState.PENDINGREVIEW].includes(rowData?.status)) ||
-  // (![SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(
-  //   rowData?.status
-  // ) &&
-  //   respondingUuids?.includes(userInfo?.uuid));
 
   return (
     <React.Fragment>

@@ -1,0 +1,19 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "Order",
+    "masterName": "ADRMode",
+    "mdmsPayload": {
+      "id": "88196695-1a7b-4743-8cde-9e72b4242c6c",
+      "tenantId": "kl",
+      "schemaCode": "Order.ADRMode",
+      "uniqueIdentifier": "4",
+      "data": {
+        "code": 4,
+        "name": "LOK_ADALAT",
+        "isActive": true
+      },
+      "isActive": true
+    }
+  }
+]

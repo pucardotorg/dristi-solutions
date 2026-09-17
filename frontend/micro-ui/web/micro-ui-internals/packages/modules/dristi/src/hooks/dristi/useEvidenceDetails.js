@@ -1,45 +1,26 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "react-query";
-import useGetSubmissions from "./useGetSubmissions";
 import { DRISTIService } from "../../services";
+import { getNameByUuid } from "../../Utils";
+import { getFullName } from "../../../../cases/src/utils/joinCaseUtils";
 
 const useEvidenceDetails = ({ url, params, body, config = {}, plainAccessRequest, state, changeQueryName = "Random" }) => {
   const client = useQueryClient();
-
-  const { searchForm } = state;
-  const { stage, type, caseNameOrId } = searchForm;
   const tenant = Digit.ULBService.getCurrentTenantId();
 
-  const getOwnerName = async (artifact) => {
-    if (artifact?.sourceType === "COURT") {
-      if (!artifact.sourceID) {
-        return "";
-      }
-      const owner = await Digit.UserService.userSearch(tenant, { uuid: [artifact?.sourceID] }, {});
-      if (owner?.user?.length > 1) return "";
-      return `${owner?.user?.[0]?.name}`.trim();
-    } else {
-      if (!artifact.sourceID) {
-        return "";
-      }
-      const owner = await DRISTIService.searchIndividualUser(
-        {
-          Individual: {
-            individualId: artifact?.sourceID,
-          },
-        },
-        { ...params, limit: 1000, offset: 0 },
-        plainAccessRequest,
-        true
-      );
-      if (owner?.Employees?.length > 1) return "";
-      return `${owner?.Individual?.[0]?.name?.givenName} ${owner?.Individual?.[0]?.name?.familyName || ""}`.trim();
+  const getOwnerName = async (artifact, caseDetails) => {
+    if (!artifact.sourceID) {
+      return "";
     }
+    const owner = await Digit.UserService.userSearch(tenant, { uuid: [artifact?.sourceID] }, {});
+    if (owner?.user?.length > 1) return "";
+    return `${owner?.user?.[0]?.name}`.trim();
   };
 
   const fetchCombinedData = async () => {
     //need to filter this hearing list response based on slot
-    const res = await DRISTIService.searchEvidence(body, params, plainAccessRequest, true);
+    const { caseDetails, ...searchBody } = body || {};
+    const res = await DRISTIService.searchEvidence(searchBody, params, plainAccessRequest, true);
     const uniqueArtifactsMap = new Map();
     res?.artifacts?.forEach((artifact) => {
       if (!uniqueArtifactsMap.has(artifact.sourceID)) {
@@ -48,15 +29,51 @@ const useEvidenceDetails = ({ url, params, body, config = {}, plainAccessRequest
     });
     const uniqueArtifacts = Array.from(uniqueArtifactsMap.values());
 
+    const nonCourtSourceIDs = [
+      ...new Set(uniqueArtifacts?.filter((artifact) => artifact?.sourceType !== "COURT" && artifact?.sourceID).map((artifact) => artifact.sourceID)),
+    ];
+
+    const individualIds = nonCourtSourceIDs.filter((sourceID) => sourceID?.startsWith("IND"));
+    const userUuids = nonCourtSourceIDs.filter((sourceID) => !sourceID?.startsWith("IND"));
+
+    const individualNamesBySourceID = new Map();
+    if (individualIds.length > 0) {
+      const individualResponse = await DRISTIService.searchIndividualUser(
+        { Individual: { individualIds } },
+        { tenantId: tenant, limit: 1000, offset: 0 }
+      );
+      individualResponse?.Individual?.forEach((individual) => {
+        const individualName = getFullName(" ", individual?.name?.givenName, individual?.name?.otherNames, individual?.name?.familyName);
+        const nameFromCase = getNameByUuid(individual?.userUuid, caseDetails);
+        individualNamesBySourceID.set(individual?.individualId, nameFromCase || individualName || "");
+      });
+    }
+    if (userUuids.length > 0) {
+      const individualResponse = await DRISTIService.searchIndividualUser(
+        { Individual: { userUuid: userUuids } },
+        { tenantId: tenant, limit: 1000, offset: 0 }
+      );
+      individualResponse?.Individual?.forEach((individual) => {
+        const individualName = getFullName(" ", individual?.name?.givenName, individual?.name?.otherNames, individual?.name?.familyName);
+        const nameFromCase = getNameByUuid(individual?.userUuid, caseDetails);
+        individualNamesBySourceID.set(individual?.userUuid, nameFromCase || individualName || "");
+      });
+    }
+
     const ownerNames = await Promise.all(
       uniqueArtifacts?.map(async (artifact) => {
-        const ownerName = await getOwnerName(artifact);
-        return { owner: ownerName, sourceID: artifact.sourceID };
+        if (artifact?.sourceType === "COURT") {
+          const name = await getOwnerName(artifact, caseDetails);
+          return { owner: name, fullName: name, sourceID: artifact.sourceID };
+        }
+        const name = individualNamesBySourceID.get(artifact?.sourceID) || "";
+        return { owner: name, fullName: name, sourceID: artifact.sourceID };
       })
     );
     const artifacts = res?.artifacts?.map((artifact) => {
       const ownerName = ownerNames?.find((item) => item.sourceID === artifact.sourceID)?.owner;
-      return { ...artifact, owner: ownerName };
+      const ownerFullName = ownerNames?.find((item) => item.sourceID === artifact.sourceID)?.fullName;
+      return { ...artifact, owner: ownerName, ownerFullName: ownerFullName };
     });
 
     return {

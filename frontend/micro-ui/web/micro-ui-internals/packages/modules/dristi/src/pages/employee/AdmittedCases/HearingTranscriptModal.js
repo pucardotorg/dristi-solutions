@@ -1,36 +1,20 @@
-import { CloseSvg, TextArea } from "@egovernments/digit-ui-components";
+import { TextArea } from "@egovernments/digit-ui-components";
 import React, { useEffect } from "react";
 import Modal from "../../../components/Modal";
 import { SubmitBar } from "@egovernments/digit-ui-react-components";
-
-const formatDate = (epochTime) => {
-  const date = new Date(epochTime);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-};
+import { DateUtils } from "../../../Utils";
+import { CloseBtn } from "../../../components/ModalComponents";
 
 function HearingTranscriptModal({ t, hearing, setShowHearingTranscriptModal }) {
   const Heading = () => {
-    return <h1 className="heading-m">{`${t(hearing?.hearingType)} Hearing- ${formatDate(hearing?.startTime)}`}</h1>;
+    return <h1 className="heading-m">{`${t(hearing?.hearingType)} Hearing- ${DateUtils.getFormattedDate(hearing?.startTime)}`}</h1>;
   };
 
-  const CloseBtn = (props) => {
-    return (
-      <div
-        onClick={() => setShowHearingTranscriptModal(false)}
-        style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}
-      >
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   return (
     <Modal
       headerBarMain={<Heading />}
-      headerBarEnd={<CloseBtn />}
+      headerBarEnd={<CloseBtn onClick={() => setShowHearingTranscriptModal(false)} />}
       actionCancelLabel={null}
       actionCancelOnSubmit={() => {}}
       actionSaveLabel={null}
@@ -41,7 +25,10 @@ function HearingTranscriptModal({ t, hearing, setShowHearingTranscriptModal }) {
     >
       <div>
         <h2 className="transcript-header">{t("HEARING_TRANSCRIPT_SUMMARY_HEADING")}</h2>
-        <TextArea style={{ width: "100%", height: "25vh", border: "solid 1px #3d3c3c", resize: "none", fontSize: "large" }} value={hearing?.transcript || ""} />
+        <TextArea
+          style={{ width: "100%", height: "25vh", border: "solid 1px #3d3c3c", resize: "none", fontSize: "large" }}
+          value={hearing?.hearingSummary || ""}
+        />
       </div>
       <div className="submit-bar-div">
         <SubmitBar

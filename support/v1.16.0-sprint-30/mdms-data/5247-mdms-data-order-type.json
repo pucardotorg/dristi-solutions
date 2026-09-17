@@ -1,0 +1,18 @@
+{
+  "tenantId": "kl",
+  "moduleName": "Order",
+  "masterName": "OrderType",
+  "mdmsPayload": {
+    "id": "82646a70-74aa-4f25-933e-b7d7b4a4e422",
+    "tenantId": "kl",
+    "schemaCode": "Order.OrderType",
+    "uniqueIdentifier": "51",
+    "data": {
+      "id": 51,
+      "code": "ACCEPT_RESCHEDULING_REQUEST",
+      "type": "ACCEPT_RESCHEDULING_REQUEST",
+      "isactive": true
+    },
+    "isActive": true
+  }
+}

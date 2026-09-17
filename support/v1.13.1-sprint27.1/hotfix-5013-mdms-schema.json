@@ -1,0 +1,39 @@
+[
+  {
+    "id": "462a9b8d-2d6e-40f3-8a06-50104481bfbf",
+    "tenantId": "kl",
+    "code": "Order.natureOfDisposal",
+    "description": null,
+    "definition": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "required": [
+        "id",
+        "code",
+        "name"
+      ],
+      "x-unique": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "7a695a12-8ac5-4f7e-97dd-313f3d3c57d2",
+      "lastModifiedBy": "7a695a12-8ac5-4f7e-97dd-313f3d3c57d2",
+      "createdTime": 1764246321928,
+      "lastModifiedTime": 1764246321928
+    }
+  }
+]

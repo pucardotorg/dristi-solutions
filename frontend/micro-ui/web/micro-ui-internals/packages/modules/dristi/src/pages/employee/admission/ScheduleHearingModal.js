@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Button, CardText, CustomDropdown, SubmitBar, TextInput, Toast, Modal, Loader, Banner } from "@egovernments/digit-ui-react-components";
+import { Button, CardText, SubmitBar, Modal, Loader, Banner } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { formatDateInMonth } from "../../../Utils";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
@@ -7,11 +8,7 @@ import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks
 import { HomeService } from "../../../../../home/src/hooks/services";
 import { Urls } from "../../../hooks";
 import { InfoCard } from "@egovernments/digit-ui-components";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { Heading } from "../../../components/ModalComponents";
 const Close = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g clip-path="url(#clip0_4124_3214)">
@@ -142,7 +139,7 @@ function ScheduleHearing({
   const { status } = Digit.Hooks.useQueryParams();
   const [modalInfo, setModalInfo] = useState(null);
   const [selectedChip, setSelectedChip] = React.useState(status === "OPTOUT" ? [] : null);
-  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const [scheduleHearingParams, setScheduleHearingParam] = useState({ purpose: "Admission Purpose" });
   const [selectedCustomDate, setSelectedCustomDate] = useState(new Date());
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
@@ -151,26 +148,14 @@ function ScheduleHearing({
   const location = useLocation();
   const referenceId = location?.state?.state?.params?.referenceId;
 
-  const CustomCaseInfoDiv = Digit.ComponentRegistryService.getComponent("CustomCaseInfoDiv") || <React.Fragment></React.Fragment>;
   const CustomChooseDate = Digit.ComponentRegistryService.getComponent("CustomChooseDate") || <React.Fragment></React.Fragment>;
   const CustomCalendar = Digit.ComponentRegistryService.getComponent("CustomCalendar") || <React.Fragment></React.Fragment>;
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
+  const courtId = localStorage.getItem("courtId");
   const { t } = useTranslation();
   const history = useHistory();
-  const shortCaseInfo = useMemo(() => {
-    if (submitModalInfo?.shortCaseInfo) {
-      return submitModalInfo?.shortCaseInfo.map((data) => {
-        if (data.key === "CASE_NUMBER") {
-          data.value = filingNumber || "";
-        }
-        return data;
-      });
-    }
-    return null;
-  }, [filingNumber, submitModalInfo?.shortCaseInfo]);
-
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 
   const { data: caseData, isLoading } = useSearchCaseService(
@@ -178,6 +163,8 @@ function ScheduleHearing({
       criteria: [
         {
           filingNumber: oldCaseDetails?.filingNumber,
+          caseId: oldCaseDetails?.id || "",
+          ...(courtId && userInfoType === "employee" && { courtId }),
         },
       ],
       tenantId,
@@ -189,21 +176,6 @@ function ScheduleHearing({
   );
   const caseDetails = useMemo(() => caseData?.criteria[0]?.responseList[0], [caseData]);
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
-
-  const { data: applicationData } = Digit.Hooks.submissions.useSearchSubmissionService(
-    {
-      criteria: {
-        filingNumber: filingNumber,
-        tenantId: tenantId,
-        applicationType: "RE_SCHEDULE",
-        status: "COMPLETED",
-      },
-      tenantId,
-    },
-    {},
-    "",
-    true
-  );
 
   const { data: dateResponse } = Digit.Hooks.home.useSearchReschedule(
     {
@@ -219,7 +191,7 @@ function ScheduleHearing({
 
   const nextFourDates = status === "OPTOUT" ? getSuggestedDates(dateResponse) : nextFiveDates;
 
-  const { data: OptOutLimit, isLoading: loading } = Digit.Hooks.useCustomMDMS(
+  const { data: OptOutLimit } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "SCHEDULER-CONFIG",
     [
@@ -232,13 +204,6 @@ function ScheduleHearing({
     }
   );
 
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
-
-  const setPurposeValue = (value, input) => {
-    setScheduleHearingParam({ ...scheduleHearingParams, purpose: isCaseAdmitted ? value : value.code });
-  };
   const handleClickDate = (label) => {
     if (status === "OPTOUT") {
       const newSelectedChip = selectedChip.includes(label) ? null : label;
@@ -279,7 +244,7 @@ function ScheduleHearing({
   const handleClose = () => {
     history.goBack();
   };
-  const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+  const judgeId = localStorage.getItem("judgeId");
 
   const handleSubmit = async (data) => {
     if (status !== "OPTOUT") {
@@ -323,32 +288,35 @@ function ScheduleHearing({
         },
       };
 
-      setIsSubmitDisabled(true);
-      HomeService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId })
-        .then(async (res) => {
-          await HomeService.customApiService(Urls.dristi.pendingTask, {
-            pendingTask: {
-              name: "Schedule Hearing",
-              entityType: "case-default",
-              referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-              status: "SCHEDULE_HEARING",
-              assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
-              cnrNumber: caseDetails?.cnrNumber,
-              filingNumber: caseDetails?.filingNumber,
-              caseId: caseDetails?.id,
-              caseTitle: caseDetails?.caseTitle,
-              isCompleted: true,
-              additionalDetails: {},
-              tenantId,
-            },
-          });
-          history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
-          setIsSubmitDisabled(false);
-        })
-        .catch((err) => {
-          setIsSubmitDisabled(false);
+      try {
+        setIsSubmitDisabled(true);
+        const res = await HomeService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId });
+        await HomeService.customApiService(Urls.dristi.pendingTask, {
+          pendingTask: {
+            actionCategory: "Schedule Hearing",
+            name: "Schedule Hearing",
+            entityType: "case-default",
+            referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+            status: "SCHEDULE_HEARING",
+            assignedTo: [],
+            assignedRole: ["PENDING_TASK_ORDER"],
+            cnrNumber: caseDetails?.cnrNumber,
+            filingNumber: caseDetails?.filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
+            isCompleted: true,
+            additionalDetails: {},
+            tenantId,
+          },
         });
+        history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+      } catch (err) {
+        console.error("Error creating order:", err);
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ error: true, label: t("CS_ORDER_CREATION_FAILED"), errorId });
+      } finally {
+        setIsSubmitDisabled(false);
+      }
     } else if (status && status === "OPTOUT") {
       const individualId = await fetchBasicUserInfo();
       setIsSubmitDisabled(true);
@@ -390,6 +358,9 @@ function ScheduleHearing({
           setSucessOptOut(true);
         })
         .catch((err) => {
+          console.error("Error creating opt-out:", err);
+          const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ error: true, label: t("ERROR_CREATING_OPT_OUT"), errorId });
           setIsSubmitDisabled(false);
         });
     }
@@ -457,7 +428,15 @@ function ScheduleHearing({
           ></SubmitBar>
         </div>
 
-        {showErrorToast && <Toast error={true} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
+          />
+        )}
         {modalInfo?.showDate && (
           <Modal
             headerBarMain={<Heading label={t(customDateConfig.headModal)} />}

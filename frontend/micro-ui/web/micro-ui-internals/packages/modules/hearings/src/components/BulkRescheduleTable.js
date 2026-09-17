@@ -1,11 +1,8 @@
 import React from "react";
 import CustomDatePicker from "./CustomDatePicker"; // Adjust path if needed
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const BulkRescheduleTable = ({ tableData, setNewHearingData, t }) => {
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("en-GB");
-  };
-
   const config = {
     key: "hearingDate",
     label: "Hearing Date",
@@ -50,7 +47,7 @@ const BulkRescheduleTable = ({ tableData, setNewHearingData, t }) => {
                   <td>{item?.caseId}</td>
                   <td>{item?.caseStage}</td>
                   <td>{t(item?.hearingType)}</td>
-                  <td>{formatDate(item.originalHearingDate)}</td>
+                  <td>{DateUtils.getFormattedDate(item.originalHearingDate)}</td>
                   <td>
                     <CustomDatePicker t={t} config={config} formData={item} onSelect={(key, date) => handleChange(key, date, index)} errors={{}} />
                   </td>

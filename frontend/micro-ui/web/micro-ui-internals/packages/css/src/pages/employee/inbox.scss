@@ -629,6 +629,22 @@
   }
 }
 
+.custom-download-icon {
+  position: absolute !important;
+  top: 32px;
+  right: 292px;
+  z-index: 1001;
+  cursor: pointer;
+}
+.custom-download-icon svg {
+  width: 18px;
+  height: 20px;
+  transition: transform 0.2s ease;
+}
+
+.custom-download-icon svg path {
+  fill: #fff;
+}
 .action-button-application {
   display: flex;
   align-items: center;

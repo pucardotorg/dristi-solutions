@@ -1,0 +1,436 @@
+{
+  "tenantId": "kl",
+  "uuid": "44efc76e-05b4-4767-a37e-89a25d29637b",
+  "businessService": "task-notice",
+  "business": "task",
+  "businessServiceSla": 4320000000,
+  "states": [
+    {
+      "auditDetails": {
+        "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "createdTime": 1750936933901,
+        "lastModifiedTime": 1770796887583
+      },
+      "uuid": "409b91de-d119-4061-9f7e-5334801dcc36",
+      "tenantId": "kl",
+      "businessServiceId": "44efc76e-05b4-4767-a37e-89a25d29637b",
+      "sla": null,
+      "state": "EXPIRED",
+      "applicationStatus": "INACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    },
+    {
+      "auditDetails": {
+        "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "createdTime": 1732020035362,
+        "lastModifiedTime": 1770796887583
+      },
+      "uuid": "32d8ec07-ae98-4232-b6da-40fa890d3f2f",
+      "tenantId": "kl",
+      "businessServiceId": "44efc76e-05b4-4767-a37e-89a25d29637b",
+      "sla": null,
+      "state": null,
+      "applicationStatus": null,
+      "docUploadRequired": true,
+      "isStartState": true,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+            "createdTime": 1747399461108,
+            "lastModifiedTime": 1770796887583
+          },
+          "uuid": "d157f5da-9942-4306-a4e0-70496a98429e",
+          "tenantId": "kl",
+          "currentState": "32d8ec07-ae98-4232-b6da-40fa890d3f2f",
+          "action": "CREATE_WITH_OUT_PAYMENT",
+          "nextState": "8712a420-a3bc-420c-bf0d-03de1647beb9",
+          "roles": [
+            "TASK_CREATOR"
+          ],
+          "active": true
+        },
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+            "createdTime": 1732020035362,
+            "lastModifiedTime": 1770796887583
+          },
+          "uuid": "93c493be-3752-4c7a-aa40-36dce6151faf",
+          "tenantId": "kl",
+          "currentState": "32d8ec07-ae98-4232-b6da-40fa890d3f2f",
+          "action": "CREATE",
+          "nextState": "0575e6a7-2cd6-434d-8318-c10f924a00ea",
+          "roles": [
+            "TASK_CREATOR"
+          ],
+          "active": true
+        }
+      ]
+    },
+    {
+      "auditDetails": {
+        "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "createdTime": 1732020035362,
+        "lastModifiedTime": 1770796887583
+      },
+      "uuid": "0575e6a7-2cd6-434d-8318-c10f924a00ea",
+      "tenantId": "kl",
+      "businessServiceId": "44efc76e-05b4-4767-a37e-89a25d29637b",
+      "sla": 172800000,
+      "state": "PENDING_PAYMENT",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": true,
+      "isStartState": true,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+            "createdTime": 1732020035362,
+            "lastModifiedTime": 1770796887583
+          },
+          "uuid": "c28338b4-b9dd-4281-824d-6d1e6388b2a0",
+          "tenantId": "kl",
+          "currentState": "0575e6a7-2cd6-434d-8318-c10f924a00ea",
+          "action": "MAKE_PAYMENT",
+          "nextState": "8712a420-a3bc-420c-bf0d-03de1647beb9",
+          "roles": [
+            "TASK_CREATOR",
+            "CITIZEN",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ],
+          "active": true
+        },
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+            "createdTime": 1750937194853,
+            "lastModifiedTime": 1770796887583
+          },
+          "uuid": "fbaadc75-7a81-4c7c-ae7c-db65a336ff9e",
+          "tenantId": "kl",
+          "currentState": "0575e6a7-2cd6-434d-8318-c10f924a00ea",
+          "action": "EXPIRE",
+          "nextState": "409b91de-d119-4061-9f7e-5334801dcc36",
+          "roles": [
+            "TASK_CREATOR",
+            "CITIZEN",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ],
+          "active": true
+        },
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+            "createdTime": 1732020035362,
+            "lastModifiedTime": 1770796887583
+          },
+          "uuid": "08fc1d2e-6a9e-4730-9cad-46a8be749b7b",
+          "tenantId": "kl",
+          "currentState": "0575e6a7-2cd6-434d-8318-c10f924a00ea",
+          "action": "ABANDON",
+          "nextState": "30ac571d-77f6-4678-b7a7-298f5dd3cae1",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ],
+          "active": true
+        }
+      ]
+    },
+    {
+      "auditDetails": {
+        "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "createdTime": 1732020035362,
+        "lastModifiedTime": 1770796887583
+      },
+      "uuid": "8712a420-a3bc-420c-bf0d-03de1647beb9",
+      "tenantId": "kl",
+      "businessServiceId": "44efc76e-05b4-4767-a37e-89a25d29637b",
+      "sla": 172800000,
+      "state": "ISSUE_NOTICE",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+            "createdTime": 1732020035362,
+            "lastModifiedTime": 1770796887583
+          },
+          "uuid": "3667dcf6-53bb-4cf1-a731-7e019b66a64f",
+          "tenantId": "kl",
+          "currentState": "8712a420-a3bc-420c-bf0d-03de1647beb9",
+          "action": "ABANDON",
+          "nextState": "30ac571d-77f6-4678-b7a7-298f5dd3cae1",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ],
+          "active": true
+        },
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+            "createdTime": 1732020035362,
+            "lastModifiedTime": 1770796887583
+          },
+          "uuid": "b8238ebf-eb3c-4515-b501-55b0b94f2c80",
+          "tenantId": "kl",
+          "currentState": "8712a420-a3bc-420c-bf0d-03de1647beb9",
+          "action": "SEND",
+          "nextState": "c4ab998e-71f4-4ac0-b88f-a82789e2ae6e",
+          "roles": [
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ],
+          "active": true
+        }
+      ]
+    },
+    {
+      "auditDetails": {
+        "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "createdTime": 1732020035362,
+        "lastModifiedTime": 1770796887583
+      },
+      "uuid": "c4ab998e-71f4-4ac0-b88f-a82789e2ae6e",
+      "tenantId": "kl",
+      "businessServiceId": "44efc76e-05b4-4767-a37e-89a25d29637b",
+      "sla": 3888000000,
+      "state": "NOTICE_SENT",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+            "createdTime": 1732020035362,
+            "lastModifiedTime": 1770796887583
+          },
+          "uuid": "0474342f-6594-4dab-80cf-547ebe688b27",
+          "tenantId": "kl",
+          "currentState": "c4ab998e-71f4-4ac0-b88f-a82789e2ae6e",
+          "action": "ABANDON",
+          "nextState": "30ac571d-77f6-4678-b7a7-298f5dd3cae1",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ],
+          "active": true
+        },
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+            "createdTime": 1747904859336,
+            "lastModifiedTime": 1770796887583
+          },
+          "uuid": "4fdf6a28-2cff-4ab5-9859-4b007944d8d0",
+          "tenantId": "kl",
+          "currentState": "c4ab998e-71f4-4ac0-b88f-a82789e2ae6e",
+          "action": "OTHER",
+          "nextState": "b5eb72d0-473f-4a81-9f14-58445584c93a",
+          "roles": [
+            //added new role
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ],
+          "active": true
+        },
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+            "createdTime": 1732020035362,
+            "lastModifiedTime": 1770796887583
+          },
+          "uuid": "f85fac5f-49be-4d44-a9a6-2e3028585859",
+          "tenantId": "kl",
+          "currentState": "c4ab998e-71f4-4ac0-b88f-a82789e2ae6e",
+          "action": "SERVED",
+          "nextState": "4d7d0cdb-8f66-431b-bf10-a7993df61c6c",
+          "roles": [
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ],
+          "active": true
+        },
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+            "createdTime": 1732020035362,
+            "lastModifiedTime": 1770796887583
+          },
+          "uuid": "9108d094-f29b-4801-b2b8-1db403ad4183",
+          "tenantId": "kl",
+          "currentState": "c4ab998e-71f4-4ac0-b88f-a82789e2ae6e",
+          "action": "NOT_SERVED",
+          "nextState": "ca995421-b244-4446-a368-1f590d4ce721",
+          "roles": [
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN",
+            "AUTO_ESCALATE"
+          ],
+          "active": true
+        }
+      ]
+    },
+    {
+      "auditDetails": {
+        "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "createdTime": 1732020035362,
+        "lastModifiedTime": 1770796887583
+      },
+      "uuid": "ca995421-b244-4446-a368-1f590d4ce721",
+      "tenantId": "kl",
+      "businessServiceId": "44efc76e-05b4-4767-a37e-89a25d29637b",
+      "sla": 86400000,
+      "state": "RE_ISSUE",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+            "createdTime": 1732020035362,
+            "lastModifiedTime": 1770796887583
+          },
+          "uuid": "f444be20-e71a-499a-a989-a7871a30403b",
+          "tenantId": "kl",
+          "currentState": "ca995421-b244-4446-a368-1f590d4ce721",
+          "action": "NEW_NOTICE",
+          "nextState": "726e4d39-4760-422a-a62b-d44750b83cd3",
+          "roles": [
+            "TASK_CREATOR",
+            "TASK_EDITOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ],
+          "active": true
+        }
+      ]
+    },
+    {
+      "auditDetails": {
+        "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "createdTime": 1732020035362,
+        "lastModifiedTime": 1770796887583
+      },
+      "uuid": "4d7d0cdb-8f66-431b-bf10-a7993df61c6c",
+      "tenantId": "kl",
+      "businessServiceId": "44efc76e-05b4-4767-a37e-89a25d29637b",
+      "sla": null,
+      "state": "DELIVERED",
+      "applicationStatus": "ACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    },
+    {
+      "auditDetails": {
+        "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "createdTime": 1732020035362,
+        "lastModifiedTime": 1770796887583
+      },
+      "uuid": "726e4d39-4760-422a-a62b-d44750b83cd3",
+      "tenantId": "kl",
+      "businessServiceId": "44efc76e-05b4-4767-a37e-89a25d29637b",
+      "sla": null,
+      "state": "UNDELIVERED",
+      "applicationStatus": "INACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    },
+    {
+      "auditDetails": {
+        "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "createdTime": 1732020035362,
+        "lastModifiedTime": 1770796887583
+      },
+      "uuid": "30ac571d-77f6-4678-b7a7-298f5dd3cae1",
+      "tenantId": "kl",
+      "businessServiceId": "44efc76e-05b4-4767-a37e-89a25d29637b",
+      "sla": null,
+      "state": "ABATED",
+      "applicationStatus": "INACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    },
+    {
+      "auditDetails": {
+        "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+        "createdTime": 1747904769707,
+        "lastModifiedTime": 1770796887583
+      },
+      "uuid": "b5eb72d0-473f-4a81-9f14-58445584c93a",
+      "tenantId": "kl",
+      "businessServiceId": "44efc76e-05b4-4767-a37e-89a25d29637b",
+      "sla": null,
+      "state": "OTHER",
+      "applicationStatus": "INACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false,
+      "actions": null
+    }
+  ],
+  "auditDetails": {
+    "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+    "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+    "createdTime": 1732020035362,
+    "lastModifiedTime": 1770796887583
+  }
+}

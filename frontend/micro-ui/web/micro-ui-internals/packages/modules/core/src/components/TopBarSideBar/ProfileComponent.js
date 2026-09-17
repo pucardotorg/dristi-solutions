@@ -21,6 +21,11 @@ const ProfileComponent = ({ userDetails, userOptions, handleUserDropdownSelectio
     setShowModal(false);
   };
 
+  const showPasswordSettings = () => {
+    history.push(`/${window?.contextPath}/citizen/dristi/home/password-settings`);
+    setShowModal(false);
+  };
+
   const toggleModal = () => {
     setShowModal(!showModal);
   };
@@ -46,14 +51,26 @@ const ProfileComponent = ({ userDetails, userOptions, handleUserDropdownSelectio
   const handleSelection = (option) => {
     if (option.name === "Logout") {
       onLogout();
+    } else if (option.name === "Password Settings") {
+      showPasswordSettings();
     } else {
       showProfilePage();
     }
     setShowModal(false);
   };
 
-  const userRole = userDetails?.info?.roles?.some((role) => role.name === "ADVOCATE_ROLE") ? t("ADVOCATE") : t("LITIGANT_OPT");
-  const showDefaultRole = userDetails?.info?.roles.length !== 1 && userRole;
+  const getUserRole = () => {
+    const roles = userDetails?.info?.roles || [];
+    if (roles?.some((role) => role?.code === "ADVOCATE_ROLE")) {
+      return t("ADVOCATE");
+    }
+    if (roles?.some((role) => role?.code === "ADVOCATE_CLERK_ROLE")) {
+      return t("ADVOCATE_CLERK");
+    }
+    return t("LITIGANT");
+  };
+  const userRole = getUserRole();
+  const showDefaultRole = userDetails?.info?.roles?.length !== 1 && userRole;
   return (
     <div className="profile-component">
       <div onClick={toggleModal}>
@@ -78,6 +95,45 @@ const ProfileComponent = ({ userDetails, userOptions, handleUserDropdownSelectio
                 <EditProfileIcon />
               </span>
               {t("EDIT_PROFILE")}
+            </div>
+            <div className="password-settings" onClick={() => handleSelection({ name: "Password Settings" })}>
+              <div className="password-settings-main">
+                <span role="img" aria-label="password-settings" className="password-settings-icon">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="7.5" cy="15.5" r="4.5" />
+                    <path d="m10.7 12.3 8.6-8.6M17 6l2.5 2.5M14.5 8.5 17 11" />
+                  </svg>
+                </span>
+                <div className="password-settings-text">
+                  <span className="password-settings-title">{t("PASSWORD_SETTINGS")}</span>
+                  <span className="password-settings-sub">
+                    {window.localStorage.getItem("hasPassword") === "true" ? t("CHANGE_YOUR_PASSWORD") : t("SET_PASSWORD")}
+                  </span>
+                </div>
+              </div>
+              <span className="password-settings-chevron">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </span>
             </div>
             <div className="language-selection">
               <div className="language-select-icon">

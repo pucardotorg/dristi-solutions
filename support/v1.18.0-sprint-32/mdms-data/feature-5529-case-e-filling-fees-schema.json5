@@ -1,0 +1,69 @@
+// todo recreate this schema after deleting the old schema
+{
+  "id": "0cf25795-6422-4928-9bb0-6faa24d40dca",
+  "tenantId": "kl",
+  "code": "case.e-filling",
+  "description": null,
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "required": [
+      "id",
+      "legalBasicFund",
+      "courtFee",
+      "vakalathnamaFee",
+      "advocateClerkWelfareFund",
+      "noOfAdvocateFees"
+    ],
+    "x-unique": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "type": "integer"
+      },
+      "courtFee": {
+        "type": "number"
+      },
+      "complaintFee": {
+        "type": "object"
+      },
+      // todo add this
+      "stipendStamp": {
+        "type": "object"
+      },
+      "legalBasicFund": {
+        "type": "number"
+      },
+      "vakalathnamaFee": {
+        "type": "integer"
+      },
+      "noOfAdvocateFees": {
+        "type": "object"
+      },
+      "advocateWelfareFund": {
+        "type": "integer"
+      },
+      "defaultComplaintFee": {
+        "type": "integer"
+      },
+      "delayCondonationFee": {
+        "type": "integer"
+      },
+      "delayCondonationPeriod": {
+        "type": "integer"
+      },
+      "advocateClerkWelfareFund": {
+        "type": "integer"
+      }
+    },
+    "additionalProperties": false
+  },
+  "isActive": true,
+  "auditDetails": {
+    "createdBy": "user-uuid",
+    "lastModifiedBy": "user-uuid",
+    "createdTime": 1774609126559,
+    "lastModifiedTime": 1774609126559
+  }
+}

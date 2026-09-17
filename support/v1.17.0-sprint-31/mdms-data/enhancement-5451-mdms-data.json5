@@ -1,0 +1,50 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "35",
+    "data": {
+      "id": "35",
+      "actor": "Litigant",
+      "state": "PENDING_E-SIGN",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Sign Recorded Plea",
+      // TODO : need to update closerAction
+      "closerAction": [
+        "E-SIGN",
+        "UPLOAD"
+      ],
+      // TODO : need to update triggerAction
+      "triggerAction": [
+        "SUBMIT"
+      ],
+      "workflowModule": "digitalized-document-plea"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "32",
+    "data": {
+      "id": "32",
+      "actor": "Litigant",
+      "state": "PENDING_E-SIGN",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Sign S351 Examination",
+      // TODO : need to update closerAction
+      "closerAction": [
+        "E-SIGN",
+        "UPLOAD"
+      ],
+      // TODO : need to update triggerAction
+      "triggerAction": [
+        "SUBMIT"
+      ],
+      "workflowModule": "digitalized-document-examination"
+    },
+    "isActive": true
+  }
+]

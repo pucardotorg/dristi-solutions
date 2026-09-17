@@ -1,0 +1,626 @@
+openapi: 3.0.0
+
+info:
+  title: Task Management Service API
+  description: >
+    DIGIT Task Management Service responsible for creation, update, search
+    and follow-up task generation for tasks that are created as part of an
+    order (e.g. summons, notice, warrant), and that are delivered to parties
+    via one or more delivery channels.
+  version: 1.0.0
+
+servers:
+  - url: /task-management
+    description: Task Management Service Base Path (server.servlet.context-path=/task-management)
+
+tags:
+  - name: Task
+    description: APIs to create, update and search for task management records.
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /v1/_create:
+    post:
+      tags: [Task]
+      summary: Create a new task management record
+      description: |
+        API to create a new task management record in the system. A task management record
+        represents a single task (e.g. summons, notice, warrant) linked to an order and case,
+        along with party details, delivery-channel and workflow information.
+      requestBody:
+        description: Details for the new task management record + RequestInfo meta data.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskManagementRequest'
+      responses:
+        '200':
+          description: Task management record created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskManagementResponse'
+
+  /v1/_update:
+    post:
+      tags: [Task]
+      summary: Update an existing task management record
+      description: |
+        API to update an existing task management record. Used to update task details, status,
+        workflow state, party/delivery-channel details, or any other task management related
+        information for the record.
+      requestBody:
+        description: Details for updating the task management record + RequestInfo meta data.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskManagementRequest'
+      responses:
+        '200':
+          description: Task management record updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskManagementResponse'
+
+  /v1/_search:
+    post:
+      tags: [Task]
+      summary: Search task management records
+      description: |
+        API to search for task management records based on various criteria including case/order
+        references, workflow status, task types, and other task management specific filters.
+        # REVIEW: controller returns HTTP 202 (Accepted) via ResponseEntity.accepted(), not 200,
+        # even though this is a read/search operation. Confirmed from
+        # TaskManagementController.getTaskManagement (digit/web/controllers/TaskManagementController.java).
+      requestBody:
+        description: Search criteria for task management records + RequestInfo meta data.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskSearchRequest'
+      responses:
+        '202':
+          description: ResponseInfo with list of task management records matching search criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskManagementSearchResponse'
+
+  /v1/generate:
+    post:
+      tags: [Task]
+      summary: Generate follow-up tasks for a task management record
+      description: |
+        # REVIEW: Marked "//dummy endpoint" in source (TaskManagementController.generateFollowUpTasks).
+        # Triggers TaskCreationService.generateFollowUpTasks(RequestInfo, TaskManagement) to create
+        # follow-up tasks (e.g. re-issue of summons/notice) for the given task management record.
+        # The controller method returns void and swallows/logs any exception internally, so callers
+        # cannot observe success/failure of generation from the HTTP response. Body shape and intent
+        # of this endpoint should be verified with the service owner before external use.
+      requestBody:
+        description: Task management record for which follow-up tasks should be generated + RequestInfo meta data.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskManagementRequest'
+      responses:
+        '200':
+          description: Follow-up task generation triggered (no response body; errors are logged, not surfaced)
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    TaskManagementRequest:
+      type: object
+      required: [RequestInfo, taskManagement]
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        taskManagement:
+          $ref: '#/components/schemas/TaskManagement'
+
+    TaskManagementResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        taskManagement:
+          $ref: '#/components/schemas/TaskManagement'
+
+    TaskSearchRequest:
+      type: object
+      required: [RequestInfo, criteria]
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          $ref: '#/components/schemas/TaskSearchCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    TaskManagementSearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        taskManagementRecords:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskManagement'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        totalCount:
+          type: integer
+          format: int32
+          description: >
+            Total number of records matching search criteria. Echoes pagination.totalCount
+            (cast to int) when pagination is supplied on the request, otherwise falls back to
+            the size of taskManagementRecords.
+
+    TaskManagement:
+      type: object
+      description: Source - digit.web.models.TaskManagement.
+      required: [filingNumber, taskType, tenantId]
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the task management record
+        filingNumber:
+          type: string
+          description: Reference to the case filing number
+          example: "CASE-2023-001"
+        courtId:
+          type: string
+          description: ID of the court associated with the task
+        orderNumber:
+          type: string
+          description: Reference to the order number
+          example: "KL-xxxxxx-yyyy-OR*"
+        orderItemId:
+          type: string
+          description: Reference to the order item ID
+        taskType:
+          type: string
+          description: >
+            There are various types of tasks, each defining its own schema for required
+            information. This value identifies which schema to pick from MDMS.
+          example: SUMMONS
+        taskManagementNumber:
+          type: string
+          description: Unique number assigned to the task management record
+          example: "KL-xxxxxx-yyyy-TM1"
+        tenantId:
+          type: string
+          description: Tenant ID that the task management record belongs to
+          example: "kl"
+        status:
+          type: string
+          description: Current workflow status of the task management record
+        partyDetails:
+          type: array
+          description: List of party (respondent/witness) details this task is being delivered to
+          items:
+            $ref: '#/components/schemas/PartyDetails'
+        additionalDetails:
+          type: object
+          additionalProperties: true
+          description: Additional details related to the task management record
+        auditDetails:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
+        workflow:
+          $ref: '#/components/schemas/WorkflowObject'
+        documents:
+          type: array
+          description: Documents attached to the task management record
+          items:
+            $ref: '#/components/schemas/Document'
+        partyType:
+          type: string
+          enum: [COMPLAINANT, RESPONDENT, COURT]
+          description: Source - digit.web.models.enums.PartyType
+
+    TaskSearchCriteria:
+      type: object
+      description: Source - digit.web.models.TaskSearchCriteria.
+      required: [tenantId]
+      properties:
+        id:
+          type: string
+          description: Filter by task management record ID
+        courtId:
+          type: string
+          description: Filter by court ID
+        tenantId:
+          type: string
+          description: Tenant ID for which task management records are being searched
+          example: "kl"
+        taskManagementNumber:
+          type: string
+          description: Unique number assigned to the task management record
+          example: "KL-xxxxxx-yyyy-TM1"
+        orderNumber:
+          type: string
+          description: Filter by order number
+          example: "KL-xxxxxx-yyyy-OR*"
+        orderItemId:
+          type: string
+          description: Filter by order item ID
+        filingNumber:
+          type: string
+          description: Filter by filing number
+          example: "KL-xxxxxx-yyyy"
+        status:
+          type: string
+          description: Filter by task status
+          example: "IN_PROGRESS"
+        taskType:
+          type: array
+          items:
+            type: string
+          description: Filter by task type
+          example: ["NOTICE", "SUMMONS"]
+        partyType:
+          type: string
+          description: >
+            Filter by party type. Plain string in code (digit.web.models.TaskSearchCriteria),
+            not constrained to the PartyType enum used on TaskManagement.partyType.
+          example: "RESPONDENT"
+
+    Pagination:
+      type: object
+      description: >
+        Source - digit.web.models.Pagination. NOTE: this is a task-management-local Pagination
+        model, distinct in field names/casing from the shared DIGIT common-contract Pagination
+        schema (offSet vs offset, no validatedTotalRecords/searchOffset field, etc). Do not
+        substitute the common-contract Pagination schema here.
+      properties:
+        limit:
+          type: number
+          description: Max number of records to return (validated <= 100)
+          default: 10
+        offSet:
+          type: number
+          default: 0
+        totalCount:
+          type: number
+        sortBy:
+          type: string
+        order:
+          type: string
+          enum: [asc, desc]
+          description: Source - digit.web.models.Order
+
+    PartyDetails:
+      type: object
+      description: Source - digit.web.models.PartyDetails.
+      properties:
+        respondentDetails:
+          $ref: '#/components/schemas/RespondentDetails'
+        witnessDetails:
+          $ref: '#/components/schemas/WitnessDetails'
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyAddress'
+        deliveryChannels:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeliveryChannel'
+        status:
+          type: string
+          enum: [NOT_COMPLETED, IN_PROGRESS, COMPLETED]
+          description: Source - digit.web.models.taskdetails.UpFrontStatus
+        processDeliveryDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcessDeliveryDetails'
+
+    RespondentDetails:
+      type: object
+      description: Source - digit.web.models.cases.RespondentDetails.
+      properties:
+        uniqueId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        middleName:
+          type: string
+        partyType:
+          type: string
+        partyIndex:
+          type: string
+        email:
+          type: array
+          items:
+            type: string
+        phone_numbers:
+          type: array
+          items:
+            type: string
+        address:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+        addressDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyAddress'
+        respondentType:
+          type: object
+          additionalProperties: true
+        respondentFirstName:
+          type: string
+        respondentMiddleName:
+          type: string
+        respondentLastName:
+          type: string
+        respondentAge:
+          type: integer
+          format: int32
+        companyDetailsUpload:
+          type: object
+          additionalProperties: true
+        respondentVerification:
+          type: object
+          additionalProperties: true
+        inquiryAffidavitFileUpload:
+          type: object
+          additionalProperties: true
+
+    WitnessDetails:
+      type: object
+      description: Source - digit.web.models.cases.WitnessDetails.
+      properties:
+        uniqueId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        middleName:
+          type: string
+        emails:
+          $ref: '#/components/schemas/Emails'
+        phonenumbers:
+          $ref: '#/components/schemas/PhoneNumbers'
+        addressDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyAddress'
+        witnessDesignation:
+          type: string
+        witnessAge:
+          type: string
+        witnessAdditionalDetails:
+          type: object
+          additionalProperties: true
+        dateOfService:
+          type: string
+        witnessTag:
+          type: string
+        ownerType:
+          type: string
+        createdTime:
+          type: integer
+          format: int64
+        uiData:
+          type: object
+          additionalProperties: true
+
+    Emails:
+      type: object
+      description: Source - digit.web.models.cases.Emails.
+      properties:
+        emailId:
+          type: array
+          items:
+            type: string
+        textfieldValue:
+          type: string
+
+    PhoneNumbers:
+      type: object
+      description: Source - digit.web.models.cases.PhoneNumbers.
+      properties:
+        mobileNumber:
+          type: array
+          items:
+            type: string
+        textfieldValue:
+          type: string
+
+    PartyAddress:
+      type: object
+      description: Source - digit.web.models.cases.PartyAddress.
+      properties:
+        id:
+          type: string
+        addressDetails:
+          $ref: '#/components/schemas/AddressDetails'
+
+    AddressDetails:
+      type: object
+      description: Source - digit.web.models.cases.AddressDetails.
+      properties:
+        city:
+          type: string
+        state:
+          type: string
+        pincode:
+          type: string
+        district:
+          type: string
+        locality:
+          type: string
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        typeOfAddress:
+          $ref: '#/components/schemas/AddressType'
+
+    AddressType:
+      type: object
+      description: Source - digit.web.models.cases.AddressType.
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        code:
+          type: string
+        isActive:
+          type: boolean
+
+    Coordinates:
+      type: object
+      description: Source - digit.web.models.Coordinates.
+      properties:
+        latitude:
+          type: string
+        longitude:
+          type: string
+
+    Address:
+      type: object
+      description: Source - digit.web.models.Address.
+      properties:
+        state:
+          type: string
+        city:
+          type: string
+        district:
+          type: string
+        pincode:
+          type: string
+        locality:
+          type: string
+        coordinate:
+          $ref: '#/components/schemas/Coordinates'
+        geoLocationDetails:
+          $ref: '#/components/schemas/GeoLocationDetails'
+
+    GeoLocationDetails:
+      type: object
+      description: Source - digit.web.models.GeoLocationDetails.
+      properties:
+        policeStation:
+          $ref: '#/components/schemas/PoliceStationDetails'
+
+    PoliceStationDetails:
+      type: object
+      description: Source - digit.web.models.PoliceStationDetails.
+      properties:
+        police_station:
+          type: string
+        police_station_code:
+          type: string
+        name:
+          type: string
+        district:
+          type: string
+        active:
+          type: boolean
+
+    DeliveryChannel:
+      type: object
+      description: Source - digit.web.models.DeliveryChannel.
+      properties:
+        fees:
+          type: string
+        status:
+          type: string
+        channelCode:
+          type: string
+        feePaidDate:
+          type: string
+        statusChangeDate:
+          type: string
+        channelName:
+          type: string
+        paymentFees:
+          type: string
+        paymentTransactionId:
+          type: string
+        paymentStatus:
+          type: string
+        deliveryStatus:
+          type: string
+        channelAcknowledgementId:
+          type: string
+        channelId:
+          type: string
+        taskType:
+          type: string
+        channelDeliveryTime:
+          type: string
+        deliveryChannelName:
+          type: string
+        isPendingCollection:
+          type: boolean
+          default: false
+        notDeliveredReason:
+          type: string
+        notDeliveredReasonText:
+          type: string
+
+    ProcessDeliveryDetails:
+      type: object
+      description: Source - digit.web.models.ProcessDeliveryDetails.
+      properties:
+        addressId:
+          type: string
+        channelCode:
+          type: string
+        processDeliveryDetailsStatus:
+          type: string
+          enum: [NOT_COMPLETED, COMPLETED]
+          description: Source - digit.web.models.taskdetails.ProcessDeliveryDetailsStatus
+
+    Document:
+      type: object
+      description: Source - digit.web.models.Document.
+      properties:
+        id:
+          type: string
+          maxLength: 64
+        documentType:
+          type: string
+        fileStore:
+          type: string
+        documentUid:
+          type: string
+          maxLength: 64
+        additionalDetails:
+          type: object
+          additionalProperties: true
+
+    WorkflowObject:
+      description: >-
+        Extends the common DIGIT Workflow contract with a task-management-specific
+        additionalDetails object (digit.web.models.WorkflowObject extends
+        org.egov.common.contract.models.Workflow).
+      allOf:
+        - $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Workflow"
+        - type: object
+          properties:
+            additionalDetails:
+              type: object
+              additionalProperties: true
+      # TODO: fields not fully expanded, verify base Workflow fields against org.egov.common.contract.models.Workflow

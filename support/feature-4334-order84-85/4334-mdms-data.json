@@ -1,0 +1,708 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "BillingService.BusinessService",
+    "uniqueIdentifier": "task-attachment",
+    "data": {
+      "code": "task-attachment",
+      "billGineiURL": " ",
+      "businessService": "task-attachment",
+      "demandUpdateTime": 604799997,
+      "isAdvanceAllowed": false,
+      "minAmountPayable": 0,
+      "partPaymentAllowed": false,
+      "isVoucherCreationEnabled": true,
+      "collectionModesNotAllowed": [
+        "OFFLINE_NEFT",
+        "OFFLINE_RTGS",
+        "POSTAL_ORDER"
+      ]
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "BillingService.BusinessService",
+    "uniqueIdentifier": "task-proclamation",
+    "data": {
+      "code": "task-proclamation",
+      "billGineiURL": " ",
+      "businessService": "task-proclamation",
+      "demandUpdateTime": 604799998,
+      "isAdvanceAllowed": false,
+      "minAmountPayable": 0,
+      "partPaymentAllowed": false,
+      "isVoucherCreationEnabled": true,
+      "collectionModesNotAllowed": [
+        "OFFLINE_NEFT",
+        "OFFLINE_RTGS",
+        "POSTAL_ORDER"
+      ]
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "BillingService.TaxHeadMaster",
+    "uniqueIdentifier": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_POST_PROCESS_FEES",
+    "data": {
+      "code": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_POST_PROCESS_FEES",
+      "name": "Proclamation Post Process Fee",
+      "order": "0",
+      "isDebit": true,
+      "service": "task-proclamation",
+      "category": "ADVANCE_COLLECTION",
+      "isRequired": false,
+      "isActualDemand": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "BillingService.TaxHeadMaster",
+    "uniqueIdentifier": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_EPOST_COURT_FEES",
+    "data": {
+      "code": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_EPOST_COURT_FEES",
+      "name": "Proclamation Post Court Fee",
+      "order": "0",
+      "isDebit": true,
+      "service": "task-proclamation",
+      "category": "ADVANCE_COLLECTION",
+      "isRequired": false,
+      "isActualDemand": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "BillingService.TaxHeadMaster",
+    "uniqueIdentifier": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_RPAD_COURT_FEES",
+    "data": {
+      "code": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_RPAD_COURT_FEES",
+      "name": "Proclamation Rpad Court Fee",
+      "order": "0",
+      "isDebit": true,
+      "service": "task-proclamation",
+      "category": "ADVANCE_COLLECTION",
+      "isRequired": false,
+      "isActualDemand": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "BillingService.TaxHeadMaster",
+    "uniqueIdentifier": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_ICOPS_COURT_FEES",
+    "data": {
+      "code": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_ICOPS_COURT_FEES",
+      "name": "Task Proclamation advance carry forward icops court fees",
+      "order": "0",
+      "isDebit": true,
+      "service": "task-proclamation",
+      "category": "ADVANCE_COLLECTION",
+      "isRequired": false,
+      "isActualDemand": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "BillingService.TaxHeadMaster",
+    "uniqueIdentifier": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_ICOPS_COURT_FEES",
+    "data": {
+      "code": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_ICOPS_COURT_FEES",
+      "name": "Task Attachment advance carry forward icops court fees",
+      "order": "0",
+      "isDebit": true,
+      "service": "task-attachment",
+      "category": "ADVANCE_COLLECTION",
+      "isRequired": false,
+      "isActualDemand": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "BillingService.TaxHeadMaster",
+    "uniqueIdentifier": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_RPAD_COURT_FEES",
+    "data": {
+      "code": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_RPAD_COURT_FEES",
+      "name": "Attachment Rpad Court Fee",
+      "order": "0",
+      "isDebit": true,
+      "service": "task-attachment",
+      "category": "ADVANCE_COLLECTION",
+      "isRequired": false,
+      "isActualDemand": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "BillingService.TaxHeadMaster",
+    "uniqueIdentifier": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_EPOST_COURT_FEES",
+    "data": {
+      "code": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_EPOST_COURT_FEES",
+      "name": "Attachment Post Court Fee",
+      "order": "0",
+      "isDebit": true,
+      "service": "task-attachment",
+      "category": "ADVANCE_COLLECTION",
+      "isRequired": false,
+      "isActualDemand": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "BillingService.TaxHeadMaster",
+    "uniqueIdentifier": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_POST_PROCESS_FEES",
+    "data": {
+      "code": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_POST_PROCESS_FEES",
+      "name": "Attachment Post Process Fee",
+      "order": "0",
+      "isDebit": true,
+      "service": "task-attachment",
+      "category": "ADVANCE_COLLECTION",
+      "isRequired": false,
+      "isActualDemand": false
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "BillingService.TaxPeriod",
+    "uniqueIdentifier": "TSPAN202330",
+    "data": {
+      "code": "TSPAN202330",
+      "toDate": 1901145600000,
+      "service": "task-proclamation",
+      "fromDate": 1680287400000,
+      "periodCycle": "ANNUAL",
+      "financialYear": "2023-30"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "BillingService.TaxPeriod",
+    "uniqueIdentifier": "TSAAN202330",
+    "data": {
+      "code": "TSAAN202330",
+      "toDate": 1901145600000,
+      "service": "task-attachment",
+      "fromDate": 1680287400000,
+      "periodCycle": "ANNUAL",
+      "financialYear": "2023-30"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.PaymentMasterCode",
+    "uniqueIdentifier": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_RPAD_COURT_FEES",
+    "data": {
+      "type": "Court Fee",
+      "masterCode": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_RPAD_COURT_FEES",
+      "paymentType": "Proclamation Rpad Court Fee",
+      "businessService": "task-proclamation",
+      "deliveryChannel": "RPAD"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.PaymentMasterCode",
+    "uniqueIdentifier": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_ICOPS_COURT_FEES",
+    "data": {
+      "type": "Court Fee",
+      "masterCode": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_ICOPS_COURT_FEES",
+      "paymentType": "Proclamation Court Fee",
+      "businessService": "task-proclamation",
+      "deliveryChannel": "POLICE"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.PaymentMasterCode",
+    "uniqueIdentifier": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_EPOST_COURT_FEES",
+    "data": {
+      "type": "Court Fee",
+      "masterCode": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_EPOST_COURT_FEES",
+      "paymentType": "Proclamation Post Court Fee",
+      "businessService": "task-proclamation",
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.PaymentMasterCode",
+    "uniqueIdentifier": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_POST_PROCESS_FEES",
+    "data": {
+      "type": "E Post",
+      "masterCode": "TASK_PROCLAMATION_ADVANCE_CARRYFORWARD_POST_PROCESS_FEES",
+      "paymentType": "Proclamation Post Process Fee",
+      "businessService": "task-proclamation",
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.PaymentMasterCode",
+    "uniqueIdentifier": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_POST_PROCESS_FEES",
+    "data": {
+      "type": "E Post",
+      "masterCode": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_POST_PROCESS_FEES",
+      "paymentType": "Attachment Post Process Fee",
+      "businessService": "task-attachment",
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.PaymentMasterCode",
+    "uniqueIdentifier": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_EPOST_COURT_FEES",
+    "data": {
+      "type": "Court Fee",
+      "masterCode": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_EPOST_COURT_FEES",
+      "paymentType": "Attachment Post Court Fee",
+      "businessService": "task-attachment",
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.PaymentMasterCode",
+    "uniqueIdentifier": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_ICOPS_COURT_FEES",
+    "data": {
+      "type": "Court Fee",
+      "masterCode": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_ICOPS_COURT_FEES",
+      "paymentType": "Attachment Court Fee",
+      "businessService": "task-attachment",
+      "deliveryChannel": "POLICE"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.PaymentMasterCode",
+    "uniqueIdentifier": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_RPAD_COURT_FEES",
+    "data": {
+      "type": "Court Fee",
+      "masterCode": "TASK_ATTACHMENT_ADVANCE_CARRYFORWARD_RPAD_COURT_FEES",
+      "paymentType": "Attachment Rpad Court Fee",
+      "businessService": "task-attachment",
+      "deliveryChannel": "RPAD"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentType",
+    "uniqueIdentifier": "21",
+    "data": {
+      "id": 21,
+      "suffix": "EPOST_COURT",
+      "paymentType": "Proclamation Rpad Court Fee",
+      "businessService": [
+        {
+          "id": 1,
+          "businessCode": "task-proclamation"
+        }
+      ],
+      "deliveryChannel": "RPAD"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentType",
+    "uniqueIdentifier": "22",
+    "data": {
+      "id": 22,
+      "suffix": "POST_PROCESS",
+      "paymentType": "Proclamation Post Process Fee",
+      "businessService": [
+        {
+          "id": 1,
+          "businessCode": "task-proclamation"
+        }
+      ],
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentType",
+    "uniqueIdentifier": "23",
+    "data": {
+      "id": 23,
+      "suffix": "POST_COURT",
+      "paymentType": "Proclamation Post Court Fee",
+      "businessService": [
+        {
+          "id": 1,
+          "businessCode": "task-proclamation"
+        }
+      ],
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentType",
+    "uniqueIdentifier": "24",
+    "data": {
+      "id": 24,
+      "suffix": "ICOPS_COURT",
+      "paymentType": "Proclamation Court Fee",
+      "businessService": [
+        {
+          "id": 1,
+          "businessCode": "task-proclamation"
+        }
+      ],
+      "deliveryChannel": "POLICE"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentType",
+    "uniqueIdentifier": "25",
+    "data": {
+      "id": 25,
+      "suffix": "EPOST_COURT",
+      "paymentType": "Attachment Rpad Court Fee",
+      "businessService": [
+        {
+          "id": 1,
+          "businessCode": "task-attachment"
+        }
+      ],
+      "deliveryChannel": "RPAD"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentType",
+    "uniqueIdentifier": "26",
+    "data": {
+      "id": 26,
+      "suffix": "POST_PROCESS",
+      "paymentType": "Attachment Post Process Fee",
+      "businessService": [
+        {
+          "id": 1,
+          "businessCode": "task-attachment"
+        }
+      ],
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentType",
+    "uniqueIdentifier": "27",
+    "data": {
+      "id": 27,
+      "suffix": "POST_COURT",
+      "paymentType": "Attachment Post Court Fee",
+      "businessService": [
+        {
+          "id": 1,
+          "businessCode": "task-attachment"
+        }
+      ],
+      "deliveryChannel": "EPOST"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentType",
+    "uniqueIdentifier": "28",
+    "data": {
+      "id": 28,
+      "suffix": "ICOPS_COURT",
+      "paymentType": "Attachment Court Fee",
+      "businessService": [
+        {
+          "id": 1,
+          "businessCode": "task-attachment"
+        }
+      ],
+      "deliveryChannel": "POLICE"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentTypeToBreakupMapping",
+    "uniqueIdentifier": "21",
+    "data": {
+      "breakUpList": [
+        {
+          "breakUpCode": "COURT_FEE",
+          "breakUpName": "Court Fee"
+        }
+      ],
+      "paymentType": "21"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentTypeToBreakupMapping",
+    "uniqueIdentifier": "23",
+    "data": {
+      "breakUpList": [
+        {
+          "breakUpCode": "COURT_FEE",
+          "breakUpName": "Court Fee"
+        }
+      ],
+      "paymentType": "23"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentTypeToBreakupMapping",
+    "uniqueIdentifier": "24",
+    "data": {
+      "breakUpList": [
+        {
+          "breakUpCode": "COURT_FEE",
+          "breakUpName": "Court Fee"
+        }
+      ],
+      "paymentType": "24"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentTypeToBreakupMapping",
+    "uniqueIdentifier": "25",
+    "data": {
+      "breakUpList": [
+        {
+          "breakUpCode": "COURT_FEE",
+          "breakUpName": "Court Fee"
+        }
+      ],
+      "paymentType": "25"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentTypeToBreakupMapping",
+    "uniqueIdentifier": "27",
+    "data": {
+      "breakUpList": [
+        {
+          "breakUpCode": "COURT_FEE",
+          "breakUpName": "Court Fee"
+        }
+      ],
+      "paymentType": "27"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentTypeToBreakupMapping",
+    "uniqueIdentifier": "28",
+    "data": {
+      "breakUpList": [
+        {
+          "breakUpCode": "COURT_FEE",
+          "breakUpName": "Court Fee"
+        }
+      ],
+      "paymentType": "28"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Task.DeliveryChannel",
+    "uniqueIdentifier": "8",
+    "data": {
+      "id": 8,
+      "channel": "POLICE",
+      "isactive": true,
+      "channelfor": "PROCLAMATION"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Task.DeliveryChannel",
+    "uniqueIdentifier": "9",
+    "data": {
+      "id": 9,
+      "channel": "POLICE",
+      "isactive": true,
+      "channelfor": "ATTACHMENT"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Order.CourtStaffOrderType",
+    "uniqueIdentifier": "4",
+    "data": {
+      "id": 4,
+      "code": "PROCLAMATION",
+      "name": "Proclamation",
+      "isActive": true
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Order.CourtStaffOrderType",
+    "uniqueIdentifier": "5",
+    "data": {
+      "id": 5,
+      "code": "ATTACHMENT",
+      "name": "Attachment",
+      "isActive": true
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Order.OrderType",
+    "uniqueIdentifier": "43",
+    "data": {
+      "id": 43,
+      "code": "PROCLAMATION",
+      "type": "PROCLAMATION",
+      "isactive": true
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Order.OrderType",
+    "uniqueIdentifier": "44",
+    "data": {
+      "id": 44,
+      "code": "ATTACHMENT",
+      "type": "ATTACHMENT",
+      "isactive": true
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Order.SentStatus",
+    "uniqueIdentifier": "10",
+    "data": {
+      "id": 10,
+      "code": "PROCLAMATION_SENT",
+      "name": "Proclamation Sent",
+      "isActive": true
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Order.SentStatus",
+    "uniqueIdentifier": "11",
+    "data": {
+      "id": 11,
+      "code": "ATTACHMENT_SENT",
+      "name": "Attachment Sent",
+      "isActive": true
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "task-payment.taskPaymentDetails",
+    "uniqueIdentifier": "5",
+    "data": {
+      "id": 5,
+      "type": "ATTACHMENT",
+      "courtfee": 0,
+      "channelAllowed": [
+        "POLICE"
+      ],
+      "issuedEntities": [
+        {
+          "type": "ARREST",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "BENCH",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "SEARCH",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "WITNESS",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        }
+      ],
+      "issuanceFeeEnable": true
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "task-payment.taskPaymentDetails",
+    "uniqueIdentifier": "4",
+    "data": {
+      "id": 4,
+      "type": "PROCLAMATION",
+      "courtfee": 0,
+      "channelAllowed": [
+        "POLICE"
+      ],
+      "issuedEntities": [
+        {
+          "type": "ARREST",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "BENCH",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "SEARCH",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        },
+        {
+          "type": "WITNESS",
+          "entity": "ACCUSED",
+          "issuanceFee": 1
+        }
+      ],
+      "issuanceFeeEnable": true
+    },
+    "isActive": true
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "INBOX.InboxQueryConfiguration",
+  "uniqueIdentifier": "pending-tasks-index",
+  "data": {
+    "index": "pending-tasks-index",
+    "module": "Pending Tasks Service",
+    "allowedSearchCriteria": [
+      // this needs to be added to the existing data
+      {
+        "name": "name",
+        "path": "Data.name.keyword",
+        "operator": "WILDCARD",
+        "isMandatory": false
+      }
+    ]
+  }
+}

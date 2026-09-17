@@ -1,0 +1,53 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "payment",
+    "masterName": "paymentDemandType",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "payment.paymentDemandType",
+        "uniqueIdentifier": "4",
+        "data": {
+          "id": "4",
+          "code": "ADVOCATE_CLERK_WELFARE_FUND",
+          "name": "Advocate Clerk Welfare Fund"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "payment.paymentDemandType",
+        "uniqueIdentifier": "3",
+        "data": {
+          "id": "3",
+          "code": "ADVOCATE_WELFARE_FUND",
+          "name": "Advocate Welfare Fund"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "payment.paymentDemandType",
+        "uniqueIdentifier": "2",
+        "data": {
+          "id": "2",
+          "code": "COURT_FEE",
+          "name": "Court Fee"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "payment.paymentDemandType",
+        "uniqueIdentifier": "1",
+        "data": {
+          "id": "1",
+          "code": "LEGAL_BENEFIT_FEE",
+          "name": "Legal Benefit Fee"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

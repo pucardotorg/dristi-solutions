@@ -1,0 +1,543 @@
+openapi: 3.0.0
+
+info:
+  title: Order Management Service
+  description: APIs to manage court orders in DRISTI
+  version: 1.0.0
+
+servers:
+  - url: /order
+    description: Order Service Base Path (server.servlet.context-path=/order)
+
+tags:
+  - name: Orders
+    description: APIs for managing court orders
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /v1/create:
+    post:
+      tags: [Orders]
+      summary: Create a new court order
+      description: Details for the new order + RequestInfo meta data.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '200':
+          description: Order successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+
+  /v1/update:
+    post:
+      tags: [Orders]
+      summary: Update an existing order
+      description: Details for the update order(s) + RequestInfo meta data.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '200':
+          description: Order successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+
+  /v1/search:
+    post:
+      tags: [Orders]
+      summary: Search orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderSearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+
+  /v1/exists:
+    post:
+      tags: [Orders]
+      summary: Check order existence
+      description: Check if the order(s) exist. Can send in any one of the values.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderExistsRequest'
+      responses:
+        '200':
+          description: Existence check response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderExistsResponse'
+
+  /v2/add-item:
+    post:
+      tags: [Orders]
+      summary: Add an item to a composite order
+      description: Details for the new item/order + RequestInfo meta data.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '200':
+          description: Order successfully updated with the new item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+
+  /v2/remove-item:
+    post:
+      tags: [Orders]
+      summary: Remove an item from a composite order
+      description: Details for the item/order to be removed + RequestInfo meta data.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveItemRequest'
+      responses:
+        '200':
+          description: Order successfully updated after item removal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+
+  /v1/order-details:
+    post:
+      tags: [Orders]
+      summary: Process order details
+      description: Request containing order details, order number and unique ID
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderDetailsRequest'
+      responses:
+        '200':
+          description: Order details processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetailsResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    OrderRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        order:
+          $ref: '#/components/schemas/Order'
+
+    OrderResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        order:
+          $ref: '#/components/schemas/Order'
+
+    Order:
+      type: object
+      description: An order is created as an outcome of an hearing or based on an application. Order will contain a set of tasks
+      required: [tenantId, orderCategory, status, isActive]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          description: This is tenantId of the case
+        filingNumber:
+          type: string
+          description: the associated case
+        courtId:
+          type: string
+        cnrNumber:
+          type: string
+          description: The CNR number of the associated case. helps in faster search
+        applicationNumber:
+          type: array
+          items:
+            type: string
+            description: application number the order is based on. Could be empty if not based on any application
+        hearingNumber:
+          type: string
+          description: in case the order is part of a hearing. if not, this will be set to null
+        hearingType:
+          type: string
+        scheduledHearingNumber:
+          type: string
+        orderNumber:
+          type: string
+          minLength: 2
+          maxLength: 256
+          description: Order date and Case Name For example it will be Order number 1 for Rajpal et all vs State of Kerala
+        linkedOrderNumber:
+          type: string
+          minLength: 2
+          maxLength: 256
+          description: Linked orderNumber for reissue of orders (for summons and warrants etc)
+        createdDate:
+          type: integer
+          format: int64
+          description: the date on which the order was created (epoch millis). Can be treated as the start date also
+        issuedBy:
+          $ref: '#/components/schemas/IssuedBy'
+        orderType:
+          type: string
+          description: Master Data ID from OrderType master
+        orderCategory:
+          type: string
+          description: Master data ID
+          example: Intermediate, Judgement
+        status:
+          type: string
+          description: workflow status
+        comments:
+          type: string
+          description: any additional comments with regards the order, the judge may want to write
+        isActive:
+          type: boolean
+          description: to handle soft delete
+        statuteSection:
+          $ref: '#/components/schemas/StatuteSection'
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        orderDetails:
+          type: object
+          description: schema to define fields that required to creation of ORDER PDFs. will be used to validate the fields before creating the PDF
+        compositeItems:
+          type: object
+          description: >-
+            # TODO: fields not fully expanded, verify against CompositeItem.java / order compositeItems structure
+        attendance:
+          type: object
+          description: attendance information captured against the order
+        itemText:
+          type: string
+        purposeOfNextHearing:
+          type: string
+        nextHearingDate:
+          type: integer
+          format: int64
+        orderTitle:
+          type: string
+        additionalDetails:
+          type: object
+          description: This field is meant to hold any extra information that we want to store.
+        auditDetails:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
+        workflow:
+          $ref: '#/components/schemas/WorkflowObject'
+        partyUniqueIds:
+          type: array
+          items:
+            type: string
+
+    OrderSearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          $ref: '#/components/schemas/OrderCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    OrderCriteria:
+      type: object
+      description: can send in any one of the values. If multiple parameters are passed, then it will be a logical AND search
+      properties:
+        id:
+          type: string
+        cnrNumber:
+          type: string
+        filingNumber:
+          type: string
+        tenantId:
+          type: string
+        applicationNumber:
+          type: string
+        orderType:
+          type: string
+        courtId:
+          type: string
+        orderNumber:
+          type: string
+        orderCategory:
+          type: string
+        status:
+          type: string
+        hearingNumber:
+          type: string
+        hearingType:
+          type: string
+        scheduledHearingNumber:
+          type: string
+        fromPublishedDate:
+          type: integer
+          format: int64
+        toPublishedDate:
+          type: integer
+          format: int64
+        isFuzzySearch:
+          type: boolean
+          default: false
+
+    Pagination:
+      type: object
+      description: Pagination details
+      properties:
+        limit:
+          type: number
+          default: 10
+          maximum: 100
+        offSet:
+          type: number
+          default: 0
+        totalCount:
+          type: number
+        sortBy:
+          type: string
+        order:
+          type: string
+          description: Sorting order
+          enum: [asc, desc]
+
+    OrderListResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        TotalCount:
+          type: integer
+          format: int32
+          description: Total number of records matching search criteria
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    OrderExistsRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        orderList:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderExists'
+
+    OrderExistsResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        orderList:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderExists'
+
+    OrderExists:
+      type: object
+      description: can send in any one of the values and Exists value will be populated with true or false. If multiple parameters are passed, then it will be a logical AND search
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        filingNumber:
+          type: string
+        cnrNumber:
+          type: string
+        applicationNumber:
+          type: string
+        orderNumber:
+          type: string
+        exists:
+          type: boolean
+
+    RemoveItemRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        order:
+          $ref: '#/components/schemas/RemoveItem'
+
+    RemoveItem:
+      type: object
+      description: Represents the details of the item to be removed from the order.
+      required: [tenantId, orderNumber, itemID]
+      properties:
+        tenantId:
+          type: string
+        courtId:
+          type: string
+        orderNumber:
+          type: string
+        itemID:
+          type: string
+        itemText:
+          type: string
+
+    OrderDetailsRequest:
+      type: object
+      required: [RequestInfo, orderDetailsDTO]
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        orderDetailsDTO:
+          $ref: '#/components/schemas/OrderDetailsDTO'
+
+    OrderDetailsResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        orderDetailsDTO:
+          $ref: '#/components/schemas/OrderDetailsDTO'
+        message:
+          type: string
+
+    OrderDetailsDTO:
+      type: object
+      required: [id, tenantId, filingNumber, orderNumber, uniqueId]
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        filingNumber:
+          type: string
+        additionalDetails:
+          type: object
+        compositeItems:
+          type: object
+          description: >-
+            # TODO: fields not fully expanded, verify against CompositeItem.java
+        orderNumber:
+          type: string
+        uniqueId:
+          type: string
+        auditDetails:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
+
+    IssuedBy:
+      type: object
+      description: details of issuer of order
+      properties:
+        benchID:
+          type: string
+        judgeID:
+          type: array
+          items:
+            type: string
+            format: uuid
+        courtID:
+          type: string
+
+    StatuteSection:
+      type: object
+      description: Holds the statute ID and the corresponding section & subsections applicable to the case.
+      required:
+        - tenantId
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          minLength: 2
+          maxLength: 64
+        statute:
+          type: string
+        sections:
+          type: array
+          items:
+            type: string
+        subsections:
+          type: array
+          items:
+            type: string
+        additionalDetails:
+          type: object
+        auditDetails:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
+        strSections:
+          type: string
+        strSubsections:
+          type: string
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+        documentType:
+          type: string
+        fileStore:
+          type: string
+        documentUid:
+          type: string
+        additionalDetails:
+          type: object
+        isActive:
+          type: boolean
+          default: true
+
+    WorkflowObject:
+      description: >-
+        Extends the common DIGIT Workflow contract with an order-specific
+        additionalDetails object (org.pucar.dristi.web.models.WorkflowObject extends
+        org.egov.common.contract.models.Workflow).
+      allOf:
+        - $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Workflow"
+        - type: object
+          properties:
+            additionalDetails:
+              type: object
+      # TODO: fields not fully expanded, verify base Workflow fields against org.egov.common.contract.models.Workflow

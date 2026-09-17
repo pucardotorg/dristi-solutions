@@ -1,0 +1,272 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "4",
+    "data": {
+      "id": "4",
+      "actor": "FSO/CMO",
+      "state": "UNDER_SCRUTINY",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Scrutiny of Case",
+      "closerAction": [
+        "VALIDATE",
+        "SEND_BACK"
+      ],
+      //TODO need to update this data once updated the schema
+      "defaultRoles": [
+        "VIEW_SCRUTINY_CASES"
+      ],
+      "triggerAction": [
+        "MAKE_PAYMENT",
+        "E-SIGN",
+        "E-SIGN_PARTY_IN_PERSON",
+        "UPLOAD"
+      ],
+      // TODO : need to update the actionCategory
+      "actionCategory": "Scrutinise cases",
+      "workflowModule": "case-default"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "3",
+    "data": {
+      "id": "3",
+      "actor": "Advocate/Litigant",
+      "state": "CASE_REASSIGNED",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Correct File Errors",
+      "closerAction": [
+        "EDIT_CASE"
+      ],
+      // TODO need to update this data once updated the schema
+      "defaultRoles": [
+        "VIEW_SCRUTINY_CASES"
+      ],
+      "triggerAction": [
+        "SEND_BACK"
+      ],
+      // TODO : need to update the actionCategory
+      "actionCategory": "Scrutinise cases",
+      "workflowModule": "case-default"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "22",
+    "data": {
+      "id": "22",
+      "actor": "Judge/Advocate/Litigant",
+      "state": "PENDING_APPROVAL",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Review Advocate Replace Request",
+      "closerAction": [
+        "APPROVE",
+        "REJECT"
+      ],
+      "triggerAction": [
+        "CREATE"
+      ],
+      // TODO : need to update the actionCategory
+      "actionCategory": "Others",
+      "workflowModule": "task-join-case"
+    },
+    "isActive": true
+  },
+  {
+    "id": "14038b6c-7c8e-499c-81cf-238e59572ed0",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "20",
+    "data": {
+      "id": "20",
+      "actor": "Judge/CourtStaff",
+      "state": "PENDINGAPPROVAL",
+      "isgeneric": false,
+      "screenType": "applicationCompositeOrder",
+      "pendingTask": "Review Bail Documents",
+      "closerAction": [
+        "APPROVE",
+        "DELETE",
+        "REJECT",
+        "ABANDON"
+      ],
+      "triggerAction": [
+        "ESIGN"
+      ],
+      // TODO : need to update the actionCategory
+      "actionCategory": "Others",
+      "workflowModule": "voluntary-application-submission-bail-documents"
+    },
+    "isActive": true
+  },
+  {
+    "id": "59041f95-c91e-4a6f-a9a0-5c1dfe58f395",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "15",
+    "data": {
+      "id": "15",
+      "actor": "Judge/CMO",
+      "state": "PENDINGAPPROVAL",
+      "isgeneric": false,
+      "screenType": "applicationCompositeOrder",
+      "pendingTask": "Accept Document Submission",
+      "closerAction": [
+        "APPROVE",
+        "REJECT",
+        "DELETE",
+        "ABANDON"
+      ],
+      "triggerAction": [
+        "RESPONSE",
+        "AUTO ESCALATE"
+      ],
+      // TODO : need to update the actionCategory
+      "actionCategory": "Others",
+      "workflowModule": "application-voluntary-submission"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1724750461961,
+      "lastModifiedTime": 1759125763081
+    }
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "18",
+    "data": {
+      "id": "18",
+      "actor": "Judge/CMO",
+      "state": "PENDINGAPPROVAL",
+      "isgeneric": false,
+      "screenType": "applicationCompositeOrder",
+      "pendingTask": "Review Delay Condonation application",
+      "closerAction": [
+        "REJECT",
+        "APPROVE",
+        "ABANDON"
+      ],
+      "triggerAction": [
+        "CREATE"
+      ],
+      // TODO : need to update the actionCategory
+      "actionCategory": "Delay Condonation",
+      "workflowModule": "delay-condonation-submission"
+    },
+    "isActive": true
+  },
+  {
+    "id": "eae32a0f-2303-4265-ba32-e7e3c0c9984c",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "8",
+    "data": {
+      "id": "8",
+      "actor": "Judge/CMO",
+      "state": "REQUESTDELAY",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Review Delay in Submission",
+      "closerAction": [
+        "APPROVE",
+        "DELETE",
+        "REJECT",
+        "ABANDON"
+      ],
+      "triggerAction": [
+        "DELAY"
+      ],
+      // TODO : need to update the actionCategory
+      "actionCategory": "Delay Condonation",
+      "workflowModule": "application-order-submission-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1729236636800,
+      "lastModifiedTime": 1759125973384
+    }
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "14",
+    "data": {
+      "id": "14",
+      "actor": "Judge/CMO",
+      "state": "PENDINGREVIEW",
+      "isgeneric": false,
+      "screenType": "applicationCompositeOrder",
+      "pendingTask": "Review Document Submission",
+      "closerAction": [
+        "APPROVE",
+        "REJECT",
+        "AUTOESCALATE",
+        "DELETE",
+        "RESPOND",
+        "ABANDON"
+      ],
+      "triggerAction": [
+        "PAY"
+      ],
+      // TODO : need to update the actionCategory
+      "actionCategory": "Others",
+      "workflowModule": "application-voluntary-submission",
+      "referenceEntityTypeNameMapping": [
+        {
+          "pendingTaskName": "Review Litigant Details Change",
+          "referenceEntityType": "CORRECTION_IN_COMPLAINANT_DETAILS"
+        },
+        // TODO : need to update the actionCategory and add referenceEntityType
+        {
+          "actionCategory": "Delay Condonation",
+          "referenceEntityType": "DELAY_CONDONATION"
+        },
+        {
+          "actionCategory": "Reschedule Applications",
+          "referenceEntityType": "RE_SCHEDULE"
+        }
+      ]
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "10",
+    "data": {
+      "id": "10",
+      "actor": "Judge/CMO",
+      "state": "REQUESTDELAY",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "Review Delay in Submission",
+      "closerAction": [
+        "APPROVE",
+        "DELETE",
+        "REJECT",
+        "ABANDON"
+      ],
+      "triggerAction": [
+        "DELAY"
+      ],
+      // TODO : need to update the actionCategory
+      "actionCategory": "Delay Condonation",
+      "workflowModule": "application-order-submission-feedback"
+    },
+    "isActive": true
+  }
+]

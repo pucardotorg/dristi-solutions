@@ -1,0 +1,2 @@
+DELETE FROM public.eg_mdms_data
+	WHERE id='ad175962-2668-43e4-bd29-196e3bd9a9ea' or id='c9228bec-c4c4-4273-9e3d-ddd561a4ff8e';

@@ -4,29 +4,26 @@ import { Button } from "@egovernments/digit-ui-react-components";
 
 export const Context = React.createContext();
 
-const OverlayDropdown = ({column}) => {
+const OverlayDropdown = ({ column }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [showModal,setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const dropdownItems = [
-    { label: 'View Case', path: '/employee/hearings/view-case' ,onClick: column.onViewCaseClick},
-    { label: 'Reschedule hearing', path: '/employee/hearings/reschedule-hearing',onClick: column.onRescheduleClick },
-    { label: 'View transcript', path: '/employee/hearings/view-transcript',onClick: column.onViewTranscriptClick },
-    { label: 'View witness deposition', path: '/employee/hearings/view-witness-deposition',onClick: column.onViewWitnessClick },
-    { label: 'View pending task', path: '/employee/hearings/view-pending-task',onClick: column.onViewPendingTaskClick },
+    { label: 'View Case', path: '/employee/hearings/view-case', onClick: column.onViewCaseClick },
+    { label: 'Reschedule hearing', path: '/employee/hearings/reschedule-hearing', onClick: column.onRescheduleClick },
+    { label: 'View transcript', path: '/employee/hearings/view-transcript', onClick: column.onViewTranscriptClick },
+    { label: 'View witness deposition', path: '/employee/hearings/view-witness-deposition', onClick: column.onViewWitnessClick },
+    { label: 'View pending task', path: '/employee/hearings/view-pending-task', onClick: column.onViewPendingTaskClick },
   ];
-//[TODO: Dropdown values need to be referred from MDMS data]
-  const handleNavigate = (path) => {
-    const contextPath = window?.contextPath || ''; // Adjust as per your context path logic
-    window.location.href = `/${contextPath}${path}`;
-  };
+  //[TODO: Dropdown values need to be referred from MDMS data]
+
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
- // [TODO: Inline css to be moved to css file , Component need to be referred from @egovernments/digit-ui-components]
+  // [TODO: Inline css to be moved to css file , Component need to be referred from @egovernments/digit-ui-components]
   return (
-      <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative' }}>
       {/* Three dots or any other trigger */}
       <div
         style={{

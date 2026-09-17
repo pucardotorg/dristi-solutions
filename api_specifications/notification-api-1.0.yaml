@@ -1,0 +1,271 @@
+openapi: "3.0.2"
+info:
+  title: API specs for Notification
+  version: "1.0"
+servers:
+  - url: ""
+tags:
+  - name: Notification
+    description: APIs for managing Notifications related to a Court
+paths:
+  /notification/v1/create:
+    post:
+      tags:
+        - Notification
+      summary: create new Notification
+      requestBody:
+        description: Details for the new Notification + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+        required: true
+      responses:
+        "201":
+          description: ResponseInfo with Notification(s) updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+        "400":
+          description: Notification(s) creation failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: NotificationRequest
+
+  /notification/v1/update:
+    post:
+      tags:
+        - Notification
+      summary: update Notification requests.
+      requestBody:
+        description: Details for the update Notification(s) + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+        required: true
+      responses:
+        "201":
+          description: ResponseInfo with Notification(s) updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+        "400":
+          description: Notification(s) update failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: NotificationRequest
+
+  /notification/v1/search:
+    post:
+      tags:
+        - Notification
+      summary: search for Notifications
+      description: |
+        search Notification(s) based on different parameters
+      requestBody:
+        description: Details for the search Notification(s) + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/NotificationSearchRequest'
+        required: true
+      responses:
+        "200":
+          description: ResponseInfo with Notification list
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+        "400":
+          description: failed to find Notification(s)
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /notification/v1/exists:
+    post:
+      tags:
+        - Notification
+      summary: Notification exits or not
+      requestBody:
+        description: check if the Notification(S) exists
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/NotificationExistsRequest'
+        required: true
+      responses:
+        "201":
+          description: ResponseInfo with Notification(s) updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/NotificationExistsResponse'
+        "400":
+          description: failed to find Notification
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    NotificationSearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/NotificationCriteria'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+    NotificationRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        notification:
+          $ref: '#/components/schemas/Notification'
+
+    NotificationResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        notification:
+          $ref: '#/components/schemas/Notification'
+
+    NotificationListResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        totalCount:
+          type: integer
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+    NotificationExistsRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        notificationList:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationExists'
+
+    NotificationExistsResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        notificationList:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationExists'
+
+    NotificationCriteria:
+      type: object
+      description: can send in any one of the values. If multiple parameters are passed, then it will be a logical AND search
+      properties:
+        tenantId:
+          type: string
+        id:
+          type: string
+        notificationNumber:
+          type: string
+        notificationType:
+          type: string
+        courtId:
+          type: string
+
+    NotificationExists:
+      type: object
+-      description: can send in any one of the values and Exists value will be populated with true or false. If multiple paramters are passed, then it will be a logical AND search
++      description: can send in any one of the values and 'exists' will be populated as true or false. If multiple parameters are passed, then it will be a logical AND search
+      properties:
+        id:
+          type: string
+          format: uuid
+          minLength: 36
+          maxLength: 36
+        notificationNumber:
+          type: string
+        notificationType:
+          type: string
+        exists:
+          type: boolean
+    Notification:
+      description: An Notification is created as an outcome of an hearing or based on an application. Notification will contain a set of tasks
+      type: object
+      required: [tenantId, createdDate, notificationType, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+          minLength: 36
+          maxLength: 36
+          description: auto generated primary for internal reference
+          readOnly: true
+        tenantId:
+          type: string
+          description: This is tenantId of the case
+        caseNumber:
+          type: array
+          items:
+            type: string
+            description: case number associated with this notification. Suggest we store the CMP number of the case
+        courtId:
+          type: string
+          description: The court for which the notification is issued like KLKM52
+        notificationNumber:
+          type: string
+          description: "[STATE][DISTRICT][ESTABLISHMENT][XXXXXX][cy:yyyy]-NT. The logic is same as CNR numbering. The number has as final NT suffix to distinguish from CNR. Reference - https://docs.google.com/spreadsheets/d/1HPBO1MB62iDAP3pcvl2LWUuVcYyNBR20etZtWcxPIFU/edit?gid=294766976#gid=294766976"
+        createdDate:
+          type: integer
+          format: int64
+          description: the date on which the Notification was created. Can be treated as the start date also
+        issuedBy:
+          type: string
+          description: could be Judge ID or ID of the CRM/GCRM who issued the notification
+        notificationType:
+          type: string
+          description: Master Data ID from NotificationType master like rescheduling notification , holiday notification etc.
+        notificationDetails:
+          type: object
+          description: schema to define fields that required to creation of Notification PDFs. will be used to validate the fields before creating the PDF
+        status:
+          type: string
+          description: workflow status
+        comments:
+          type: string
+          description: any additional comments with regards the Notification, the judge/CRM may want to write
+        isActive:
+          type: boolean
+          description: to handle soft delete
+        documents:
+          type: array
+          items:
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Document'
+        additionalDetails:
+          type: object
+          description: This field is meant to hold any extra information that we want to store.
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
+        workflow:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Workflow'
+

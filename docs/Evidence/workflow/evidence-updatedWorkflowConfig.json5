@@ -1,0 +1,98 @@
+{
+  "BusinessServices": [
+    {
+      "tenantId": "kl",
+      "business": "evidence",
+      "businessService": "evidence-default",
+      "businessServiceSla": null,
+      "states": [
+        {
+          "sla": null,
+          "state": null,
+          "applicationStatus": null,
+          "docUploadRequired": false,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "CREATE",
+              "nextState": "DRAFT_IN_PROGRESS",
+              "roles": [
+                "EVIDENCE_CREATOR"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "DRAFT_IN_PROGRESS",
+          "applicationStatus": "ACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "SAVE_DRAFT",
+              "nextState": "DRAFT_IN_PROGRESS",
+              "roles": [
+                "EVIDENCE_EDITOR"
+              ]
+            },
+            {
+              "action": "E-SIGN",
+              "nextState": "COMPLETED",
+              "roles": [
+                "EVIDENCE_APPROVER"
+              ]
+            },
+            {
+              "action": "SUBMIT_BULK_E-SIGN",
+              "nextState": "PENDING_BULK_E-SIGN",
+              "roles": [
+                "EVIDENCE_APPROVER"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "PENDING_BULK_E-SIGN",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "E-SIGN",
+              "nextState": "COMPLETED",
+              "roles": [
+                "EVIDENCE_APPROVER",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "EDIT",
+              "nextState": "DRAFT_IN_PROGRESS",
+              "roles": [
+                "EVIDENCE_EDITOR"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "COMPLETED",
+          "applicationStatus": "ACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false
+        }
+      ]
+    }
+  ]
+}

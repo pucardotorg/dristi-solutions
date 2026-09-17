@@ -1,0 +1,68 @@
+{
+  "tenantId": "kl",
+  "moduleName": "common-masters",
+  "masterName": "StateInfo",
+  "mdmsPayload": {
+    "id": "3a5ff20a-cfd4-4af4-93e1-f21d0a3f6be1",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.StateInfo",
+    "uniqueIdentifier": "kl",
+    "data": {
+      "languages": [
+        {
+          "label": "ENGLISH",
+          "value": "en_IN"
+        },
+        {
+          "label": "മലയാളം",
+          "value": "ml_IN"
+        }
+      ],
+      "localizationModules": [
+        {
+          "label": "rainmaker-common",
+          "value": "rainmaker-common"
+        },
+        {
+          "label": "rainmaker-pt",
+          "value": "rainmaker-pt"
+        },
+        {
+          "label": "rainmaker-hr",
+          "value": "rainmaker-hr"
+        },
+        {
+          "label": "rainmaker-workbench",
+          "value": "rainmaker-workbench"
+        },
+        {
+          "label": "rainmaker-schema",
+          "value": "rainmaker-schema"
+        },
+        {
+          "label": "rainmaker-mdms",
+          "value": "rainmaker-mdms"
+        }
+      ],
+      "code": "kl",
+      "name": "Demo",
+      "logoUrl": "https://oncourts.kerala.gov.in/minio-filestore/v1/files/id?tenantId=kl&fileStoreId=cfab6a6e-8e7c-40cd-970b-733da79807e5",
+      "bannerUrl": "https://egov-dev-assets.s3.ap-south-1.amazonaws.com/pucar/banner-image.png",
+      "qrCodeURL": "https://lh3.googleusercontent.com/-311gz2-xcHw/X6KRNSQTkWI/AAAAAAAAAKU/JmHSj-6rKPMVFbo6oL5x4JhYTTg8-UHmwCK8BGAsYHg/s0/2020-11-04.png",
+      "statelogo": "https://pucarfilestore.blob.core.windows.net/pucar-filestore/pg/pucar-assets/govt-of-ind-logo.png",
+      "defaultUrl": {
+        "citizen": "/user/register",
+        "employee": "/user/login"
+      },
+      "logoUrlWhite": "https://uat.digit.org/pg-egov-assets/mseva-logo-white.png",
+      "hasLocalisation": true
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1721810878449,
+      "lastModifiedTime": 1769764234253
+    }
+  }
+}

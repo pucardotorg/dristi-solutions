@@ -1,0 +1,32 @@
+[
+  {
+    "tenantId": "kl",
+    "masterName": "roleactions",
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "mdmsPayload": [
+      {
+        "0": {
+          "id": "cb1c9546-a12a-4a84-97ef-4ca67ee5e6c2",
+          "tenantId": "kl",
+          "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+          "uniqueIdentifier": "485",
+          "data": {
+            "id": 485,
+            "actionid": 2678,
+            // (/v1/task/table/search)
+            "rolecode": "CITIZEN",
+            "tenantid": "kl",
+            "actioncode": "2678"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+            "createdTime": 1749639502014,
+            "lastModifiedTime": 1749639502014
+          }
+        }
+      }
+    ]
+  }
+]

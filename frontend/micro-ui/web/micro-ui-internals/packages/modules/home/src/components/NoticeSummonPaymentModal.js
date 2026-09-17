@@ -1,0 +1,409 @@
+import { Loader, Button } from "@egovernments/digit-ui-react-components";
+import React, { useEffect, useMemo, useState } from "react";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import usePaymentProcess from "../hooks/usePaymentProcess";
+import { useTranslation } from "react-i18next";
+import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
+import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
+import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
+import { InfoCard } from "@egovernments/digit-ui-components";
+import { PrintIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
+import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
+import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote";
+import useGetPaymentVerificationStatus from "../../../submissions/src/hooks/submissions/useGetPaymentVerificationStatus";
+
+const verificationPendingNoteConfig = {
+  populators: {
+    inputs: [
+      {
+        infoHeader: "WARNING",
+        infoText: "PAYMENT_VERIFICATION_PENDING_INFO",
+        showTooltip: true,
+      },
+    ],
+  },
+};
+
+function NoticeSummonPaymentModal({
+  suffix,
+  setHideCancelButton,
+  formDataKey,
+  taskManagementList,
+  courierOrderDetails,
+  setIsPaymentCompleted,
+  caseDetails,
+  authorizedUuid,
+  onClose = () => {},
+}) {
+  const { t } = useTranslation();
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const scenario = "EfillingCase";
+  const path = "";
+  const [showToast, setShowToast] = useState(null);
+  const [isCaseLocked, setIsCaseLocked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [calculationResponse, setCalculationResponse] = useState(null);
+  const { downloadPdf } = useDownloadCasePdf();
+  const [receiptFilstoreId, setReceiptFilstoreId] = useState(null);
+  const [retryPayment, setRetryPayment] = useState(false);
+  const [isPostPaymentVerificationPending, setIsPostPaymentVerificationPending] = useState(false);
+
+  const taskManagement = useMemo(() => taskManagementList?.find((task) => task?.taskType === courierOrderDetails?.orderType), [
+    taskManagementList,
+    courierOrderDetails,
+  ]);
+
+  const accusedNameList = useMemo(() => {
+    const partyList = courierOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party || [];
+    const names = partyList?.map((party) =>
+      getFormattedName(party?.data?.firstName, party?.data?.middleName, party?.data?.lastName, party?.data?.witnessDesignation, null)
+    );
+    return names?.join(", ");
+  }, [formDataKey, courierOrderDetails]);
+
+  const nextHearingDate = useMemo(() => {
+    const nextHearingDate = courierOrderDetails?.additionalDetails?.formdata?.dateForHearing;
+    return new Date(nextHearingDate)?.toLocaleDateString("en-GB")?.replace(/\//g, "-");
+  }, [courierOrderDetails]);
+
+  const deliveryChannelsList = useMemo(() => {
+    if (!taskManagement?.partyDetails?.length) return [];
+    const channelMap = {};
+    taskManagement?.partyDetails?.forEach((party) => {
+      const person = party?.respondentDetails || party?.witnessDetails || {};
+      const fullName = getFormattedName(person?.firstName, person?.middleName, person?.lastName, person?.witnessDesignation, null);
+
+      party?.deliveryChannels?.forEach((channel) => {
+        const code = channel?.channelCode;
+        if (!code) return;
+        if (!channelMap[code]) channelMap[code] = [];
+        channelMap[code]?.push(fullName);
+      });
+    });
+    return Object.entries(channelMap).map(([code, names]) => `${t(code)} (${names?.join(", ")})`);
+  }, [t, taskManagement]);
+
+  const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
+  const advocatesUuids = useMemo(() => {
+    if (allAdvocates && typeof allAdvocates === "object") {
+      return Object.values(allAdvocates).flat();
+    }
+    return [];
+  }, [allAdvocates]);
+  const isUserAdv = useMemo(() => advocatesUuids.includes(authorizedUuid), [advocatesUuids, authorizedUuid]);
+
+  useEffect(() => {
+    const fetchCalculation = async () => {
+      if (taskManagement?.taskManagementNumber && suffix) {
+        setIsLoading(true);
+        try {
+          const response = await DRISTIService.getTreasuryPaymentBreakup(
+            { tenantId: tenantId },
+            {
+              consumerCode: taskManagement?.taskManagementNumber + `_${suffix}`,
+            },
+            "dristi",
+            true
+          );
+          setCalculationResponse(response?.TreasuryHeadMapping?.calculation);
+        } catch (error) {
+          console.error("Error fetching payment calculation:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("CS_PAYMENT_CALCULATION_ERROR"), error: true, errorId });
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchCalculation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantId, suffix, taskManagement?.taskManagementNumber]);
+
+  const totalAmount = useMemo(() => {
+    const totalAmount = calculationResponse?.totalAmount || 0;
+    return parseFloat(totalAmount)?.toFixed(2);
+  }, [calculationResponse]);
+
+  const paymentCalculation = useMemo(() => {
+    const breakdown = calculationResponse?.breakDown || [];
+    const updatedCalculation = breakdown?.map((item) => ({
+      key: item?.type,
+      value: item?.amount,
+      currency: "Rs",
+    }));
+
+    updatedCalculation?.push({
+      key: t("CS_TASK_FEES"),
+      value: totalAmount,
+      currency: "Rs",
+      isTotalFee: true,
+    });
+
+    return updatedCalculation;
+  }, [t, calculationResponse, totalAmount]);
+
+  const { fetchBill, openPaymentPortal } = usePaymentProcess({
+    tenantId,
+    consumerCode: taskManagement?.taskManagementNumber + `_${suffix}`,
+    service: "task-management-payment",
+    path,
+    caseDetails: {},
+    totalAmount: totalAmount,
+    scenario,
+  });
+
+  const { data: paymentStatusData } = useGetPaymentVerificationStatus(
+    taskManagement?.taskManagementNumber ? `${taskManagement.taskManagementNumber}_${suffix}` : "",
+    tenantId,
+    Boolean(taskManagement?.taskManagementNumber && suffix)
+  );
+
+  const isVerificationPending = useMemo(
+    () => Boolean(paymentStatusData && paymentStatusData.PaymentStatus && paymentStatusData.PaymentStatus.status === "VERIFICATION_PENDING"),
+    [paymentStatusData]
+  );
+  // Override stale hook data once we have a definitive post-payment outcome (PAID -> receipt, or failed -> retry)
+  const showVerificationPending = (isVerificationPending || isPostPaymentVerificationPending) && !receiptFilstoreId && !retryPayment;
+
+  console.log("[NoticeSummonPaymentModal] render", {
+    isVerificationPending,
+    isPostPaymentVerificationPending,
+    retryPayment,
+    receiptFilstoreId,
+    showVerificationPending,
+    isLoading,
+    isCaseLocked,
+    isUserAdv,
+    totalAmount,
+    paymentStatusRaw: paymentStatusData?.PaymentStatus?.status,
+    taskManagementNumber: taskManagement?.taskManagementNumber,
+    suffix,
+    consumerCode: taskManagement?.taskManagementNumber ? `${taskManagement.taskManagementNumber}_${suffix}` : "",
+  });
+
+  useEffect(() => {
+    if (taskManagement?.taskManagementNumber) {
+      const fetchCaseLockStatus = async () => {
+        try {
+          const status = await DRISTIService.getCaseLockStatus(
+            {},
+            {
+              uniqueId: taskManagement?.taskManagementNumber,
+              tenantId: tenantId,
+            }
+          );
+          setIsCaseLocked(status?.Lock?.isLocked);
+        } catch (error) {
+          console.error("Error fetching case lock status", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("CS_CASE_LOCK_STATUS_ERROR"), error: true, errorId });
+        }
+      };
+      fetchCaseLockStatus();
+    }
+  }, [taskManagement, tenantId]);
+
+  const onTaskPayOnline = async () => {
+    try {
+      console.log("[NoticeSummonPaymentModal][onTaskPayOnline] START — closure-captured state", {
+        isPostPaymentVerificationPending,
+        retryPayment,
+        receiptFilstoreId,
+        isCaseLocked,
+        isVerificationPending,
+        showVerificationPending,
+        taskManagementNumber: taskManagement?.taskManagementNumber,
+        suffix,
+      });
+      setIsLoading(true);
+      setIsPostPaymentVerificationPending(false);
+      setRetryPayment(false);
+      const bill = await fetchBill(taskManagement?.taskManagementNumber + `_${suffix}`, tenantId, "task-management-payment");
+      console.log("[NoticeSummonPaymentModal][onTaskPayOnline] fetchBill result", {
+        billCount: bill?.Bill?.length,
+        billId: bill?.Bill?.[0]?.id,
+        consumerCode: bill?.Bill?.[0]?.consumerCode,
+      });
+      if (!bill?.Bill?.length) {
+        console.log("[NoticeSummonPaymentModal][onTaskPayOnline] no pending bill — aborting");
+        setShowToast({ label: t("CS_NO_PENDING_PAYMENT"), error: false });
+        setIsCaseLocked(true);
+        return;
+      }
+      const caseLockStatus = await DRISTIService.getCaseLockStatus(
+        {},
+        {
+          uniqueId: taskManagement?.taskManagementNumber,
+          tenantId: tenantId,
+        }
+      );
+      console.log("[NoticeSummonPaymentModal][onTaskPayOnline] caseLockStatus", { isLocked: caseLockStatus?.Lock?.isLocked });
+      if (caseLockStatus?.Lock?.isLocked) {
+        console.log("[NoticeSummonPaymentModal][onTaskPayOnline] case is locked — aborting");
+        setIsCaseLocked(true);
+        setShowToast({ label: t("CS_CASE_LOCKED_BY_ANOTHER_USER"), error: false });
+        return;
+      }
+      await DRISTIService.setCaseLock({ Lock: { uniqueId: taskManagement?.taskManagementNumber, tenantId: tenantId, lockType: "PAYMENT" } }, {});
+      console.log("[NoticeSummonPaymentModal][onTaskPayOnline] case locked, opening payment portal");
+      const paymentStatus = await openPaymentPortal(bill);
+      console.log("[NoticeSummonPaymentModal][onTaskPayOnline] openPaymentPortal resolved", { paymentStatus });
+      await DRISTIService.setCaseUnlock({}, { uniqueId: taskManagement?.taskManagementNumber, tenantId: tenantId });
+      console.log("[NoticeSummonPaymentModal][onTaskPayOnline] case unlocked");
+      const success = paymentStatus === "PAID";
+      if (success) {
+        console.log("[NoticeSummonPaymentModal][onTaskPayOnline] PAID — fetching receipt fileStoreId", { billId: bill?.Bill?.[0]?.id });
+        const response = await DRISTIService.fetchBillFileStoreId({}, { billId: bill?.Bill?.[0]?.id, tenantId });
+        const fileStoreId = response?.Document?.fileStore;
+        console.log("[NoticeSummonPaymentModal][onTaskPayOnline] fetchBillFileStoreId result", { fileStoreId });
+        if (fileStoreId) {
+          setReceiptFilstoreId(fileStoreId);
+          setIsPaymentCompleted(true);
+          setHideCancelButton(true);
+          isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+          retryPayment && setRetryPayment(false);
+        } else {
+          console.warn("[NoticeSummonPaymentModal][onTaskPayOnline] PAID but no fileStoreId returned — receipt not set");
+        }
+      } else if (paymentStatus === "VERIFICATION_PENDING") {
+        console.log("[NoticeSummonPaymentModal][onTaskPayOnline] VERIFICATION_PENDING — staying on screen", {
+          prevIsPostPaymentVerificationPending: isPostPaymentVerificationPending,
+          prevRetryPayment: retryPayment,
+        });
+        setIsPostPaymentVerificationPending(true);
+        retryPayment && setRetryPayment(false);
+      } else {
+        console.log("[NoticeSummonPaymentModal][onTaskPayOnline] FAILED/other — setting retryPayment=true", {
+          paymentStatus,
+          prevIsPostPaymentVerificationPending: isPostPaymentVerificationPending,
+          prevRetryPayment: retryPayment,
+        });
+        isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+        setRetryPayment(true);
+      }
+    } catch (error) {
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      console.error("[NoticeSummonPaymentModal][onTaskPayOnline] EXCEPTION", { error, errorId, isPostPaymentVerificationPending, retryPayment, receiptFilstoreId });
+      isPostPaymentVerificationPending && setIsPostPaymentVerificationPending(false);
+      setRetryPayment(true);
+      setShowToast({ label: t("CS_PAYMENT_ERROR"), error: true, errorId });
+    } finally {
+      console.log("[NoticeSummonPaymentModal][onTaskPayOnline] finally — setIsLoading(false)");
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="task-payment-loader">
+        <Loader />
+      </div>
+    );
+  }
+
+  return (
+    <div className="task-payment-due-wrapper">
+      <InfoCard
+        variant={"default"}
+        label={t("CS_IMPORTANT_INFORMATION")}
+        additionalElements={[
+          <div className="info-card-content">
+            <ul style={{ width: "100%" }}>
+              <li>
+                <span>{t("CS_TASK_ISSUED_TO")}: </span>
+                <span>{accusedNameList}</span>
+              </li>
+              <li>
+                <span>{t("CS_TASK_NEXT_HEARING_DATE")}:</span>
+                <span>{nextHearingDate}</span>
+              </li>
+              <li>
+                <span>{t("CS_TASK_DELIVERY_CHANNEL")}:</span>
+                <span className="delivery-channel-list">
+                  {deliveryChannelsList?.map((line, index) => (
+                    <p key={index}>{line}</p>
+                  ))}
+                </span>
+              </li>
+            </ul>
+          </div>,
+        ]}
+        inline
+        className={"adhaar-verification-info-card"}
+      />
+      {showVerificationPending && (
+        <SelectCustomNote t={t} config={verificationPendingNoteConfig} isWarning={true} />
+      )}
+      <div className="total-payment">
+        {paymentCalculation
+          ?.filter((item) => item?.isTotalFee)
+          ?.map((item) => (
+            <div className={`total-payment-item ${paymentCalculation?.length > 6 ? "has-many-items" : ""}`}>
+              <span className="total-payment-label">
+                {item?.key}{" "}
+                <CustomChip
+                  text={receiptFilstoreId ? t("CS_TASK_PAYMENT_DONE") : t("CS_TASK_PENDING")}
+                  shade={receiptFilstoreId ? "green" : "orange"}
+                  style={{ marginLeft: "6px", fontWeight: "500", padding: "5px 15px" }}
+                />
+              </span>
+              <span className="total-payment-amount">
+                {item?.currency} {parseFloat(item?.value)?.toFixed(2)}
+              </span>
+            </div>
+          ))}
+      </div>
+      <div className="breakdown-payment">
+        {paymentCalculation
+          ?.filter((item) => !item.isTotalFee)
+          ?.map((item) => (
+            <div className="breakdown-payment-item">
+              <span>{item?.key}</span>
+              <span>
+                {item?.currency} {parseFloat(item?.value)?.toFixed(2)}
+              </span>
+            </div>
+          ))}
+      </div>
+
+      {showVerificationPending ? (
+        <div style={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: "12px" }}>
+          <Button
+            label={t("CS_TRY_PAYMENT_AGAIN")}
+            variation="secondary"
+            className={"pay-online-button"}
+            onButtonClick={onTaskPayOnline}
+            isDisabled={isCaseLocked || !isUserAdv}
+          />
+          <Button
+            label={t("CS_WAIT_AND_CHECK_LATER")}
+            onButtonClick={onClose}
+            style={{ border: "none", paddingRight: "20px", paddingLeft: "20px" }}
+          />
+        </div>
+      ) : (
+        <Button
+          label={receiptFilstoreId ? t("CS_TASK_DOWNLOAD_RECEIPT") : retryPayment ? t("CS_TASK_RETRY_PAYMENT") : t("CS_TASK_PAY_ONLINE")}
+          variation="secondary"
+          className={"pay-online-button"}
+          icon={receiptFilstoreId && <PrintIcon />}
+          onButtonClick={receiptFilstoreId ? () => downloadPdf(tenantId, receiptFilstoreId) : onTaskPayOnline}
+          isDisabled={isCaseLocked || !isUserAdv}
+        />
+      )}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
+    </div>
+  );
+}
+
+export default NoticeSummonPaymentModal;

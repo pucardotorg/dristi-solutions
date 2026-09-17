@@ -1,0 +1,15 @@
+// TODO : can add through work bench , need to add this new entry
+{
+  "tenantId": "kl",
+  "schemaCode": "CaseManagement.case_bundle_state_master",
+  "uniqueIdentifier": "16",
+  "data": {
+    "id": "16",
+    "state": "COMPLETED",
+    "topic": "save-wf-transition",
+    "moduleName": "task-management",
+    "businessservice": "task-management-payment",
+    "isDelayRequired": true
+  },
+  "isActive": true
+}

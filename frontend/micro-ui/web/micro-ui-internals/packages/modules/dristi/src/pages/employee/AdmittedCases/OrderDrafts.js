@@ -14,6 +14,7 @@ const OrderDrafts = ({ caseData, setOrderModal }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [currentOrder, setCurrentOrder] = useState({});
+  const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
 
   const { data: ordersRes, refetch: refetchOrdersData, isLoading: isOrdersLoading } = useGetOrders(
     {
@@ -21,6 +22,7 @@ const OrderDrafts = ({ caseData, setOrderModal }) => {
         filingNumber: filingNumber,
         tenantId: tenantId,
         status: "DRAFT_IN_PROGRESS",
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
@@ -68,7 +70,7 @@ const OrderDrafts = ({ caseData, setOrderModal }) => {
               }}
               onClick={() => {
                 setCurrentOrder(order);
-                history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order.orderNumber}`, {
+                history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order.orderNumber}`, {
                   caseId: caseId,
                   tab: "Orders",
                 });
@@ -83,7 +85,7 @@ const OrderDrafts = ({ caseData, setOrderModal }) => {
                     color: "#101828",
                   }}
                 >
-                  {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(`ORDER_TYPE_${order?.orderType?.toUpperCase()}`)}
+                  {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderTitle) || t(order?.orderType)}
                 </div>
                 <CustomArrowOut />
               </div>

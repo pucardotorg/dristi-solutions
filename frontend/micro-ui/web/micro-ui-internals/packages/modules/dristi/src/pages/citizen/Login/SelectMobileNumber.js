@@ -2,7 +2,18 @@ import React from "react";
 import FormStep from "../../../components/FormStep";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 
-const SelectMobileNumber = ({ t, onSelect, mobileNumber, onMobileChange, config, canSubmit, isRegister, isUserLoggedIn, className }) => {
+const SelectMobileNumber = ({
+  t,
+  onSelect,
+  mobileNumber,
+  onMobileChange,
+  config,
+  canSubmit,
+  isRegister,
+  isUserLoggedIn,
+  className,
+  cooldownTime = 0,
+}) => {
   return (
     <div className={`login-form ${className}`}>
       <FormStep
@@ -14,7 +25,13 @@ const SelectMobileNumber = ({ t, onSelect, mobileNumber, onMobileChange, config,
         onChange={onMobileChange}
         value={mobileNumber}
         buttonStyle={{ color: "red" }}
-      ></FormStep>
+      >
+        {cooldownTime > 0 && (
+          <div className="cooldown-timer">
+            <p>{t("CS_RESEND_OTP_TIMER", { seconds: cooldownTime })}</p>
+          </div>
+        )}
+      </FormStep>
       {!isRegister && (
         <h3>
           {t("CS_REGISTER_ACCOUNT")}

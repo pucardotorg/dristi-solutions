@@ -1,12 +1,12 @@
 //new comp
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
-import { FormComposerV2, Loader } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
-import { useToast } from "../../../components/Toast/useToast";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
-import { DRISTIService } from "../../../services";
 import DocViewerWrapper from "../docViewerWrapper";
 import { Urls } from "../../../hooks";
 import { OrderWorkflowAction } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
@@ -41,20 +41,24 @@ const ReviewLitigantDetails = ({ path }) => {
   const { t } = useTranslation();
   const history = useHistory();
   const location = useLocation();
-  const toast = useToast();
   const urlParams = new URLSearchParams(window.location.search);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const caseId = urlParams.get("caseId");
   const referenceId = urlParams.get("referenceId");
   const refApplicationNUmber = urlParams.get("refApplicationId");
   const [showDocModal, setShowDocModal] = useState(false);
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const courtId = localStorage.getItem("courtId");
+  const [showToast, setShowToast] = useState(null);
 
-  const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
+  const { data: caseData, isLoading } = useSearchCaseService(
     {
       criteria: [
         {
           caseId: caseId,
           defaultFields: false,
+          ...(courtId && userType === "employee" && { courtId }),
         },
       ],
       tenantId,
@@ -71,6 +75,24 @@ const ReviewLitigantDetails = ({ path }) => {
     }),
     [caseData]
   );
+
+  const { data: applicationData, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        applicationNumber: refApplicationNUmber,
+        tenantId,
+        courtId,
+      },
+      tenantId,
+    },
+    {},
+    refApplicationNUmber,
+    Boolean(refApplicationNUmber)
+  );
+
+  const applicationDetails = useMemo(() => {
+    return applicationData?.applicationList?.[0];
+  }, [applicationData?.applicationList]);
 
   const profileRequest = useMemo(() => {
     return caseDetails?.additionalDetails?.profileRequests?.find((req) => req?.pendingTaskRefId === referenceId);
@@ -192,6 +214,14 @@ const ReviewLitigantDetails = ({ path }) => {
     return false;
   }, [profileRequest, caseDetails]);
 
+  const getPersonNameByUUID = (litigantDetails, representative, uuid) => {
+    const combined = [...(litigantDetails || []), ...(representative || [])];
+
+    const person = combined?.find((item) => item?.additionalDetails?.uuid === uuid);
+
+    return person?.additionalDetails?.fullName || person?.additionalDetails?.advocateName || "";
+  };
+
   const handleApproveReject = async (action) => {
     try {
       const reqBody = {
@@ -216,6 +246,11 @@ const ReviewLitigantDetails = ({ path }) => {
             documents: [{}],
           },
           documents: [],
+          orderDetails: {
+            applicantName: getPersonNameByUUID(caseDetails?.litigants, caseDetails?.representatives, profileRequest?.editorDetails?.uuid),
+            applicationStatus: action === "ACCEPT" ? "APPROVED" : "REJECTED",
+            applicationCMPNumber: applicationDetails?.applicationCMPNumber,
+          },
           applicationNumber: [refApplicationNUmber],
           additionalDetails: {
             formdata: {
@@ -244,12 +279,13 @@ const ReviewLitigantDetails = ({ path }) => {
       const res = await HomeService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId });
       if (res.order.orderNumber) {
         history.push(
-          `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
+          `/${window.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       }
     } catch (error) {
-      toast.error(t("SOMETHING_WENT_WRONG"));
-      console.error(error);
+      console.error("Failed to create order for updating litigant details:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("LITIGANT_UPDATE_FAILED"), error: true, errorId });
     }
   };
 
@@ -294,7 +330,17 @@ const ReviewLitigantDetails = ({ path }) => {
         <div
           className="supporting-document"
           style={{ marginTop: "-25px", marginLeft: "10px", cursor: "pointer" }}
-          onClick={() => setShowDocModal(true)}
+          onClick={() => {
+            if (profileRequest?.document?.fileStore) {
+              setShowDocModal(true);
+            } else {
+              setShowToast({
+                label: t("NO_SUPPORTING_DOCUMENTS_UPLOADED"),
+                error: true,
+                errorId: null,
+              });
+            }
+          }}
         >
           <DocViewerWrapper
             fileStoreId={profileRequest?.document?.fileStore}
@@ -319,7 +365,7 @@ const ReviewLitigantDetails = ({ path }) => {
     return imageInfo;
   }, [profileRequest, t]);
 
-  if (isLoading) {
+  if (isLoading || isApplicationLoading) {
     return <Loader />;
   }
 
@@ -385,6 +431,15 @@ const ReviewLitigantDetails = ({ path }) => {
         </div>
       </div>
       {showDocModal && <ImageModal imageInfo={imageInfo} handleCloseModal={() => setShowDocModal(false)}></ImageModal>}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 };

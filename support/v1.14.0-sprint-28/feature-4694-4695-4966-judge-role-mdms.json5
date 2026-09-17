@@ -1,0 +1,35 @@
+[
+  //PLEA
+                   {
+
+       "data": {
+           "code": "PLEA_CREATOR",
+           "name": "PLEA_CREATOR",
+           "description": "PLEA_CREATOR"
+       },
+   },
+              {
+ 
+       "data": {
+           "code": "PLEA_APPROVER",
+           "name": "PLEA_APPROVER",
+           "description": "PLEA_APPROVER"
+       }
+   },
+    {
+
+       "data": {
+           "code": "PLEA_EDITOR",
+           "name": "PLEA_EDITOR",
+           "description": "PLEA_EDITOR"
+       }
+   },
+  {
+ 
+       "data": {
+           "code": "PLEA_VIEWER",
+           "name": "PLEA_VIEWER",
+           "description": "PLEA_VIEWER"
+       }
+   }
+]

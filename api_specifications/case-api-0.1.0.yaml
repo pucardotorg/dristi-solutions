@@ -512,10 +512,144 @@ paths:
               schema:
                 $ref: >-
                   https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
-      
+
+  /case/v2/add/witness:
+      post:
+        tags:
+          - Case
+        summary: API to add a witness to a case
+        requestBody:
+          description: Details for the witness + RequestInfo meta data.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/WitnessDetailsRequest'
+          required: true
+        responses:
+          '200':
+            description: ResponseInfo with witness details added to case successfully
+            content:
+              '*/*':
+                schema:
+                  $ref: '#/components/schemas/WitnessDetailsResponse'
+          '400':
+            description: Adding witness to a case failed
+            content:
+              '*/*':
+                schema:
+                  $ref: >- 
+                    https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes  
+  /case/v1/address/_add:
+    post:
+      tags:
+        - Case
+      summary: Add or update addresses for parties in a case
+      description: |
+        This API is used to add or update addresses for parties involved in a case.
+        It can handle multiple addresses for multiple parties in a single request.
+      requestBody:
+        description: Request containing the addresses to be added or updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddAddressRequest'
+      responses:
+        '200':
+          description: ResponseInfo with case details inside responseList
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AddAddressResponse'
+        '400':
+          description: Fetch case failed
+          content:
+            '*/*':
+              schema:
+                $ref: >-
+                  https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
 
 components:
   schemas:
+    AddAddressRequest:
+      type: object
+      required:
+        - requestInfo
+        - tenantId
+        - caseId
+        - filingNumber
+        - partyAddresses
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        tenantId:
+          type: string
+          description: Tenant ID of the case
+          example: "pb.amritsar"
+        caseId:
+          type: string
+          format: uuid
+          description: Unique ID of the case
+          example: "a0e6a3b1-2c3d-4e5f-8a9b-0c1d2e3f4a5b"
+        filingNumber:
+          type: string
+          description: Filing number of the case
+          example: "CASE/2023/000123"
+        partyAddresses:
+          type: array
+          description: List of party addresses to be added/updated
+          items:
+            $ref: '#/components/schemas/PartyAddressRequest'
+
+    PartyAddressRequest:
+      type: object
+      required:
+        - individualId
+        - partyType
+        - addresses
+      properties:
+        individualId:
+          type: string
+          format: uuid
+          description: ID of the individual/party
+          example: "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+        partyType:
+          type: string
+          description: Type of the party (PETITIONER, RESPONDENT, WITNESS, etc.)
+          example: "PETITIONER"
+        addresses:
+          type: array
+          description: List of addresses for the party
+          items:
+            $ref: '#/components/schemas/AddressDetails'
+
+    AddAddressResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        addresses:
+          type: array
+          description: List of created/updated addresses with their IDs
+          items:
+            $ref: '#/components/schemas/AddressResponse'
+
+    AddressResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique ID of the address
+          example: "a1b2c3d4-e5f6-4a5b-8c7d-9e0f1a2b3c4d"
+        individualId:
+          type: string
+          format: uuid
+          description: ID of the individual/party this address belongs to
+        addressDetails:
+          $ref: '#/components/schemas/AddressDetails'
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
     CourtCase:
       description: Case registry
       required:
@@ -1755,3 +1889,109 @@ components:
         paymentTaskNumber:
           type: string
           description: task number for payment, it will be null if payment is not required
+
+    WitnessDetailsRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: >-
+            https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
+        tenantId:
+          type: string
+        caseFilingNumber:
+          type: string
+        witnessDetails:
+          $ref: "#components/schemas/WitnessDetails"
+
+    WitnessDetailsResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: >-
+            https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        witnessDetails:
+          $ref: "#components/schemas/WitnessDetails"
+
+    WitnessDetails:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        middleName:
+          type: string
+        mobileNumber:
+          type: string
+        emails:
+          type: object
+          properties:
+            emailId:
+              type: array
+              items:
+                type: string
+            textfieldValue:
+              type: string
+        phonenumbers:
+          type: object
+          properties:
+            phoneNumber:
+              type: array
+              items:
+                type: string
+            textfieldValue:
+              type: string
+        addressDetails:
+          type: array
+          items:
+            $ref: "#components/schemas/WitnessAddress"
+        witnessDesignation:
+          type: string
+        witnessAge:
+          type: string
+        witnessAdditionalDetails:
+          type: object
+        dateOfService:
+          type: string
+
+    WitnessAddress:
+      type: object
+      properties:
+        addressDetails:
+          $ref: "#components/schemas/AddressDetails"
+        id:
+          type: string
+
+    AddressDetails:
+      type: object
+      properties:
+        locality:
+          type: string
+        city:
+          type: string
+        district:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+        pincode:
+          type: string
+        coordinates:
+          type: object
+          properties:
+            latitude:
+              type: string
+            longitude:
+              type: string
+        typeOfAddress:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            code:
+              type: string
+            isActive:
+              type: boolean

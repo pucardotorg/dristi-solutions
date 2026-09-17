@@ -1,35 +1,39 @@
-import { CloseSvg, TextArea } from "@egovernments/digit-ui-components";
-import React, { useEffect } from "react";
+import { TextArea } from "@egovernments/digit-ui-components";
+import React, { useEffect, useState } from "react";
 import Modal from "./Modal";
-import { SubmitBar } from "@egovernments/digit-ui-react-components";
+import { Loader, SubmitBar } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
-
-const formatDate = (epochTime) => {
-  const date = new Date(epochTime);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
+import { DateUtils, downloadCaseSummaryPdf } from "../Utils";
+import { CloseBtn } from "./ModalComponents";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.heading}</h1>;
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList }) => {
+const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView = false, filingNumber, caseNumber, cnrNumber, tenantId, courtId }) => {
   const { t } = useTranslation();
+  const [loader, setLoader] = useState(false);
+
+  const handleDownloadCaseSummary = async () => {
+    if (loader) return;
+    try {
+      setLoader(true);
+      await downloadCaseSummaryPdf({
+        tenantId: tenantId || window?.Digit?.ULBService?.getCurrentTenantId(),
+        filingNumber,
+        cnrNumber,
+        courtId,
+        fileName: `${(caseNumber || filingNumber || "Case").replace(/\//g, "_")}_BDiary.pdf`,
+      });
+    } catch (error) {
+      console.error("Error downloading case summary PDF:", error);
+    } finally {
+      setLoader(false);
+    }
+  };
 
   return (
     <Modal
-      headerBarMain={<Heading heading={t("ALL_HEARING_TRANSCRIPT")} />}
+      headerBarMain={<Heading heading={t("CS_BDIARY")} />}
       headerBarEnd={<CloseBtn onClick={() => setShowAllTranscript(false)} />}
       actionCancelLabel={null}
       actionCancelOnSubmit={() => {}}
@@ -40,28 +44,74 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList }) => {
       className={"view-hearing-transcript-modal"}
     >
       <div style={{ height: "50vh", overflowY: "auto" }}>
-        {hearingList?.map((hearing, index) => (
-          <div key={index} style={{ paddingRight: "20px", marginTop: "15px" }}>
-            <div className="transcript-header" style={{ display: "flex", justifyContent: "space-between" }}>
-              <div style={{marginLeft:"4px"}}>{`${hearing?.hearingType.charAt(0).toUpperCase()}${hearing?.hearingType.slice(1).toLowerCase()} Hearing`}</div>
-              <div style={{ marginRight: "8px" }}>{`${formatDate(hearing?.startTime)}`}</div>
+        {!botdOrderList?.length ? (
+          <div style={{ marginTop: "20px" }}>{t("NO_BOTD_SUMMARY_AVAILABLE")}</div>
+        ) : (
+          botdOrderList?.map((botdOrder, index) => (
+            <div key={index} style={{ paddingRight: "20px", marginTop: "15px" }}>
+              <div className="transcript-header" style={{ display: "flex", justifyContent: "space-between" }}>
+                <div style={{ marginLeft: "4px" }}>
+                  {botdOrder?.hearingNumber ? `${botdOrder?.hearingType ? t(botdOrder?.hearingType) : ""} ${t("BOTD")}` : t("BOTD")}
+                </div>
+                <div style={{ marginRight: "8px" }}>{`${DateUtils.getFormattedDate(botdOrder?.createdDate)}`}</div>
+              </div>
+              <div>
+                <TextArea
+                  style={{ width: "100%", height: "12vh", border: "solid 1px #3d3c3c", resize: "none" }}
+                  value={botdOrder?.businessOfTheDay || ""}
+                  readOnly
+                />
+              </div>
+
+              {/* {hearing?.attendees && hearing?.attendees?.length > 0 && (
+              <div style={{ border: "solid 1px rgb(61, 60, 60)", marginTop: "-5px", padding: "5px" }}>
+                <span>Attendees: </span>
+                <span style={{ whiteSpace: "normal", wordBreak: "normal" }}>
+                  {hearing?.attendees
+                    ?.filter((attendee) => attendee?.wasPresent)
+                    ?.map((attendee, index) => attendee?.name)
+                    ?.filter(Boolean)
+                    ?.join(", ")}
+                </span>
+              </div>
+            )} */}
             </div>
-            <TextArea
-              style={{ width: "100%", height: "12vh", border: "solid 1px #3d3c3c", resize: "none",  }}
-              value={hearing.transcript?.[0] || ""}
-              readOnly
-            />
-          </div>
-        ))}
+          ))
+        )}
       </div>
-      <div className="submit-bar-div">
+      <div className="submit-bar-div" style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center" }}>
+        <div
+          onClick={handleDownloadCaseSummary}
+          style={{ fontWeight: 700, fontSize: "16px", lineHeight: "18.75px", color: "#007E7E", cursor: "pointer" }}
+        >
+          {t("CS_COMMON_DOWNLOAD")}
+        </div>
         <SubmitBar
           variation="primary"
           onSubmit={() => setShowAllTranscript(false)}
           className="primary-label-btn"
-          label={t("CS_COMMON_CANCEL")}
+          label={t("CS_COMMON_BACK")}
         ></SubmitBar>
       </div>
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "9999",
+            position: "fixed",
+            right: "0",
+            top: "0",
+            display: "flex",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
     </Modal>
   );
 };

@@ -10,21 +10,19 @@ const DRISTICard = () => {
   const Digit = useMemo(() => window?.Digit || {}, []);
   const history = useHistory();
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isScrutiny = useMemo(() => roles.some((role) => role.code === "CASE_REVIEWER"), [roles]);
-  const isCourtOfficer = useMemo(() => roles.some((role) => role.code === "HEARING_CREATOR"), [roles]);
-  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE"), [roles]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
-  const isNyayMitra = ["ADVOCATE_APPLICATION_VIEWER", "ADVOCATE_APPROVER", "ADVOCATE_CLERK_APPROVER"].reduce((res, curr) => {
-    if (!res) return res;
-    res = roles.some((role) => role.code === curr);
-    return res;
-  }, true);
+  const isProcessViewer = useMemo(() => roles?.some((role) => role.code === "PROCESS_VIEWER"), [roles]);
 
-  if (isScrutiny || isJudge || isCourtOfficer || isBenchClerk) {
-    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+  if (!isEpostUser && !isCitizen) {
+    history.push(`/${window?.contextPath}/employee/home/home-screen`);
   } else if (isCitizen) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
+  } else if (isProcessViewer) {
+    history.push(`/${window?.contextPath}/employee/orders/Summons&Notice`);
+  } else if (isEpostUser) {
+    history.push(`/${window?.contextPath}/employee/home/epost-home-screen`);
   }
 
   let roleType = isJudge ? "isJudge" : "default";
@@ -53,14 +51,12 @@ const DRISTICard = () => {
                     }}
                   />
                   <CustomCard
-                    label={isNyayMitra ? t("CS_VIEW_PENDING_PAYMENTS") : t("CS_VIEW_CASES")}
-                    subLabel={isNyayMitra ? t("CS_VIEW_PENDING_PAYMENTS_SUB_TEXT") : t("CS_VIEW_CASES_SUB_TEXT")}
-                    buttonLabel={isNyayMitra ? t("CS_VIEW_PENDING_PAYMENTS") : t("CS_VIEW_CASES")}
+                    label={t("CS_VIEW_CASES")}
+                    subLabel={t("CS_VIEW_CASES_SUB_TEXT")}
+                    buttonLabel={t("CS_VIEW_CASES")}
                     className="custom-card-style"
                     onClick={() => {
-                      isNyayMitra
-                        ? history.push(`/${window?.contextPath}/employee/dristi/pending-payment-inbox`)
-                        : history.push(`/${window?.contextPath}/employee/dristi/cases`);
+                      history.push(`/${window?.contextPath}/employee/dristi/cases`);
                     }}
                   />
                 </div>

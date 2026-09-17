@@ -1,0 +1,16 @@
+// TODO : can be added through workbench UI
+{
+  "tenantId": "kl",
+  "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+  "uniqueIdentifier": "2776",
+  "data": {
+    "id": 2776,
+    "url": "/task/v1/bulk-pending-collection-update",
+    "code": "2776",
+    "name": "task bulk pending collection update",
+    "displayName": "task bulk pending collection update",
+    "orderNumber": 0,
+    "serviceCode": "task"
+  },
+  "isActive": true
+}

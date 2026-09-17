@@ -2,17 +2,20 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/";
 import PreHearingModal from "../../components/PreHearingModal";
 import TasksComponent from "../../components/TaskComponentCalander";
 import { Button, Loader } from "@egovernments/digit-ui-react-components";
 import BulkReschedule from "./BulkReschedule";
+import { useLocation } from "react-router-dom";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-const MonthlyCalendar = () => {
+const MonthlyCalendar = ({ hideRight }) => {
   const history = useHistory();
+  const location = useLocation();
   const { t } = useTranslation();
   const calendarRef = useRef(null);
   const getCurrentViewType = () => {
@@ -26,17 +29,19 @@ const MonthlyCalendar = () => {
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const { data: individualData } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
-        userUuid: [userInfo?.uuid],
+        userUuid: [authorizedUuid],
       },
     },
     { tenantId, limit: 1000, offset: 0 },
     "Home",
     "",
-    userInfo?.uuid && isUserLoggedIn,
+    authorizedUuid && isUserLoggedIn,
     6 * 1000
   );
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
@@ -46,18 +51,34 @@ const MonthlyCalendar = () => {
   const [caseType, setCaseType] = useState({});
   const [stepper, setStepper] = useState(0);
   const initial = "dayGridMonth";
+  const courtId = localStorage.getItem("courtId");
 
   const search = window.location.search;
-  const { fromDate, toDate, slot, slotId, initialView, count } = useMemo(() => {
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
+  const [slot, setSlot] = useState(null);
+  const [slotId, setSlotId] = useState(null);
+  const [initialView, setInitialView] = useState(initial);
+  const [count, setCount] = useState(0);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
+  const hasBulkRescheduleAccess = useMemo(
+    () =>
+      ["BULK_RESCHEDULE_UPDATE_ACCESS", "NOTIFICATION_CREATOR", "NOTIFICATION_APPROVER", "DIARY_EDITOR"].every((role) =>
+        assignedRoles?.includes(role)
+      ),
+    [assignedRoles]
+  );
+
+  useEffect(() => {
     const searchParams = new URLSearchParams(search);
-    const fromDate = Number(searchParams.get("from-date")) || null;
-    const toDate = Number(searchParams.get("to-date")) || null;
-    const slot = searchParams.get("slot") || null;
-    const slotId = searchParams.get("slotId") || null;
-    const initialView = searchParams.get("view") || initial;
-    const count = searchParams.get("count") || 0;
-    return { fromDate, toDate, slot, slotId, initialView, count };
-  }, [search]);
+    setFromDate(Number(searchParams.get("from-date")) || null);
+    setToDate(Number(searchParams.get("to-date")) || null);
+    setSlot(searchParams.get("slot") || null);
+    setSlotId(searchParams.get("slotId") || null);
+    setInitialView(searchParams.get("view") || initial);
+    setCount(Number(searchParams.get("count")) || 0);
+  }, [search, initial]);
 
   const reqBody = {
     criteria: {
@@ -65,18 +86,9 @@ const MonthlyCalendar = () => {
       fromDate: dateRange.start ? dateRange.start.getTime() : null,
       toDate: dateRange.end ? dateRange.end.getTime() : null,
       attendeeIndividualId: individualId,
+      ...(courtId && { courtId }),
     },
   };
-
-  // const { data: hearingResponse, refetch } = useGetHearings(
-  //   reqBody,
-  //   { applicationNumber: "", cnrNumber: "", tenantId },
-  //   `${dateRange.start?.toISOString()}-${dateRange.end?.toISOString()}`,
-  //   Boolean(dateRange.start && dateRange.end && (userInfoType === "citizen" ? individualId : true)),
-  //   false,
-  //   userInfoType === "citizen" && individualId,
-  //   6 * 1000
-  // );
 
   const { data: hearingResponse } = Digit.Hooks.hearings.useGetHearingsCounts(
     reqBody,
@@ -97,66 +109,6 @@ const MonthlyCalendar = () => {
     },
   });
   const events = useMemo(() => mdmsEvents?.data, [mdmsEvents]); //mdmsEvents?.data;
-
-  // function epochToDateTimeObject(epochTime) {
-  //   if (!epochTime || typeof epochTime !== "number") {
-  //     return null;
-  //   }
-
-  //   const date = new Date(epochTime);
-  //   const year = date.getFullYear();
-  //   const month = String(date.getMonth() + 1).padStart(2, "0");
-  //   const day = String(date.getDate()).padStart(2, "0");
-  //   const hours = String(date.getHours()).padStart(2, "0");
-  //   const minutes = String(date.getMinutes()).padStart(2, "0");
-  //   const seconds = String(date.getSeconds()).padStart(2, "0");
-  //   const dateTimeObject = {
-  //     date: `${year}-${month}-${day}`,
-  //     time: `${hours}:${minutes}:${seconds}`,
-  //   };
-
-  //   return dateTimeObject;
-  // }
-
-  // const Calendar_events = useMemo(() => {
-  //   const calendarEvents = {};
-
-  //   hearingDetails.forEach((hearing) => {
-  //     const dateTimeObj = epochToDateTimeObject(hearing.startTime);
-  //     if (dateTimeObj) {
-  //       const dateString = dateTimeObj.date;
-  //       events?.forEach((slot) => {
-  //         // if (dateTimeObj.time >= slot.slotStartTime && dateTimeObj.time < slot.slotEndTime) {
-  //         const eventKey = `${dateString}-${slot.slotName}`;
-
-  //         if (!calendarEvents[eventKey]) {
-  //           calendarEvents[eventKey] = {
-  //             title: `${slot.slotName} Hearing`,
-  //             // start: `${dateString}T${slot.slotStartTime}`,
-  //             // end: `${dateString}T${slot.slotEndTime}`,
-  //             // please refer to ticket #3129 for all modifications done related to changing slots to one.
-  //             start: `${dateString}T00:00:00`,
-  //             end: `${dateString}T23:59:59`,
-  //             extendedProps: {
-  //               // hearings: [hearing],
-  //               count: 1,
-  //               date: new Date(dateString),
-  //               slot: slot.slotName,
-  //               slotId: slot.id,
-  //             },
-  //           };
-  //         } else {
-  //           calendarEvents[eventKey].extendedProps.count += 1;
-  //           // calendarEvents[eventKey].extendedProps.hearings.push(hearing);
-  //         }
-  //         // }
-  //       });
-  //     }
-  //   });
-
-  //   const eventsArray = Object.values(calendarEvents);
-  //   return eventsArray;
-  // }, [hearingDetails, events]);
 
   const getSlot = useCallback(
     (hearingTime) => {
@@ -204,22 +156,8 @@ const MonthlyCalendar = () => {
     const eventsArray = Object.values(calendarEvents);
     return eventsArray;
   }, [getSlot, hearingCountsResponse]);
-  // const getEachHearingType = (hearingList) => {
-  //   return [...new Set(hearingList.map((hearing) => hearing.hearingType))];
-  // };
-
-  // const hearingCount = (hearingList) => {
-  //   const hearingTypeList = getEachHearingType(hearingList);
-  //   return hearingTypeList.map((type) => {
-  //     return {
-  //       type: type,
-  //       frequency: hearingList?.filter((hearing) => hearing?.hearingType === type).length,
-  //     };
-  //   });
-  // };
 
   const handleEventClick = (arg, ...rest) => {
-    console.log(arg, ...rest);
     const fromDate = arg.event.start;
     const count = arg.event.extendedProps.count;
     const toDate = arg.event.end;
@@ -230,22 +168,50 @@ const MonthlyCalendar = () => {
     searchParams.set("slotId", arg.event.extendedProps.slotId);
     searchParams.set("view", getCurrentViewType());
     searchParams.set("count", count);
-    history.replace({ search: searchParams.toString() });
+    setFromDate(fromDate.getTime());
+    setToDate(toDate.getTime());
+    setSlot(arg.event.extendedProps.slot);
+    setSlotId(arg.event.extendedProps.slotId);
+    setInitialView(getCurrentViewType());
+    const updatedState = location?.state?.fromHome ? { ...location.state, fromHome: true } : location?.state;
+
+    setCount(count);
+    if (!hideRight) {
+      history.replace({
+        search: searchParams.toString(),
+        state: updatedState,
+      });
+    }
   };
 
   const closeModal = () => {
-    const searchParams = new URLSearchParams(search);
-    searchParams.delete("from-date");
-    searchParams.delete("to-date");
-    searchParams.delete("slot");
-    searchParams.delete("slotId");
-    searchParams.delete("view");
-    searchParams.delete("count");
-    history.replace({ search: searchParams.toString() });
+    if (!hideRight) {
+      const searchParams = new URLSearchParams(search);
+      searchParams.delete("from-date");
+      searchParams.delete("to-date");
+      searchParams.delete("slot");
+      searchParams.delete("slotId");
+      searchParams.delete("view");
+      searchParams.delete("count");
+
+      const updatedState = location?.state?.fromHome ? { ...location.state, fromHome: true } : location?.state;
+
+      history.replace({
+        search: searchParams.toString(),
+        state: updatedState,
+      });
+    } else {
+      setFromDate(null);
+      setToDate(null);
+      setSlot(null);
+      setSlotId(null);
+      setInitialView(initial);
+      setCount(0);
+    }
   };
 
   const onSubmit = () => {
-    setStepper((prev) => prev + 1);
+    history.push(`/${window?.contextPath}/employee/home/home-screen`, { homeActiveTab: "CS_HOME_BULK_RESCHEDULE" });
   };
 
   const maxHearingCount = 5;
@@ -255,13 +221,13 @@ const MonthlyCalendar = () => {
   // }
   return (
     <React.Fragment>
-      {Digit.UserService.getType() === "employee" && (
+      {Digit.UserService.getType() === "employee" && !hideRight && hasBulkRescheduleAccess && (
         <div style={{ display: "flex", justifyContent: "end", paddingRight: "24px", marginTop: "5px" }}>
           <Button label={t("BULK_RESCHEDULE")} onButtonClick={onSubmit}></Button>
         </div>
       )}
       <div style={{ display: "flex" }}>
-        <div style={{ width: "70%" }}>
+        <div style={{ width: hideRight ? "100%" : "70%" }}>
           <div>
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -271,7 +237,7 @@ const MonthlyCalendar = () => {
                 center: "title",
                 end: "next,dayGridMonth,timeGridWeek,timeGridDay",
               }}
-              height={"85vh"}
+              height={hideRight ? "75vh" : "85vh"}
               events={Calendar_events}
               eventContent={(arg) => {
                 return (
@@ -298,28 +264,6 @@ const MonthlyCalendar = () => {
                       </div>
                     )}
                   </div>
-
-                  // <div>
-                  //   <div>{`${arg.event.extendedProps.slot} :`}</div>
-                  //   <div>{`${arg.event.extendedProps.count}-${t("HEARINGS")}`}</div>
-
-                  //   {hearings.length <= maxHearingCount ? (
-                  //     hearings.map((hearingFrequency, index) => (
-                  //       <div key={index} style={{ whiteSpace: "normal" }}>
-                  //         {hearingFrequency.frequency} - {t(hearingFrequency.type)}
-                  //       </div>
-                  //     ))
-                  //   ) : (
-                  //     <div>
-                  //       {hearings.slice(0, maxHearingCount).map((hearingFrequency, index) => (
-                  //         <div key={index} style={{ whiteSpace: "normal" }}>
-                  //           {hearingFrequency.frequency} - {t(hearingFrequency.type)}
-                  //         </div>
-                  //       ))}
-                  //       <div style={{ color: "green" }}>{`${t("CALENDER_MORE")}`}</div>
-                  //     </div>
-                  //   )}
-                  // </div>
                 );
               }}
               eventClick={handleEventClick}
@@ -340,17 +284,11 @@ const MonthlyCalendar = () => {
             )}
           </div>
         </div>
-        <div className="right-side">
-          <TasksComponent
-            taskType={taskType}
-            setTaskType={setTaskType}
-            caseType={caseType}
-            setCaseType={setCaseType}
-            isLitigant={Boolean(userInfoType === "citizen")}
-            uuid={userInfo?.uuid}
-            userInfoType={userInfoType}
-          />
-        </div>
+        {hideRight ? null : (
+          <div className="right-side">
+            <TasksComponent taskType={taskType} setTaskType={setTaskType} caseType={caseType} setCaseType={setCaseType} userInfoType={userInfoType} />
+          </div>
+        )}
       </div>
       <BulkReschedule stepper={stepper} setStepper={setStepper} selectedSlot={[]} />
     </React.Fragment>

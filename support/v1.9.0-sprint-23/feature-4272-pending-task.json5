@@ -1,0 +1,63 @@
+[
+  {
+    "id": "3e473d5c-ecb2-43f0-abd8-42a6429a7053",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "27",
+    "data": {
+      "id": "27",
+      "actor": "Litigant",
+      "state": "PENDING_E-SIGN",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "sign the bail bond",
+      "closerAction": [
+        "EDIT",
+        "E-SIGN",
+        "E-SIGN_COMPLETE"
+      ],
+      "triggerAction": [
+        "INITIATE_E-SIGN",
+        "E-SIGN"
+      ],
+      "workflowModule": "bail-bond-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1752751586099,
+      "lastModifiedTime": 1752751586099
+    }
+  },
+  {
+    "id": "818bdceb-f3f2-4d7f-8f5e-65ffab26f381",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "26",
+    "data": {
+      "id": "26",
+      "actor": "Judge",
+      "state": "PENDING_REVIEW",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "review the bail bond",
+      "closerAction": [
+        "SIGN",
+        "REJECT"
+      ],
+      "triggerAction": [
+        "UPLOAD",
+        "E-SIGN_COMPLETE"
+      ],
+      "workflowModule": "bail-bond-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1752751494884,
+      "lastModifiedTime": 1752755253822
+    }
+  }
+]

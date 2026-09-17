@@ -12,7 +12,6 @@
 @import "react-date-range/dist/theme/default.css";
 
 @import "./components/loader.scss";
-
 @import "./components/body.scss";
 @import "./components/navbar.scss";
 @import "./components/card.scss";
@@ -122,12 +121,15 @@
 @import "./dristi/components/customUploadButton.scss";
 @import "./dristi/components/customRadioSelector.scss";
 @import "./dristi/components/customErrorTooltip.scss";
+@import "./dristi/components/witnessDepositionSignature.scss";
+@import "./dristi/components/surveyModal.scss";
 @import "./dristi/eFiling.scss";
 @import "./dristi/editProfile.scss";
 @import "./dristi/admission.scss";
 @import "./dristi/components/selectUserTypeComponent.scss";
 @import "./dristi/pages/citizen/caseType.scss";
 @import "./dristi/pages/citizen/userRegistration.scss";
+@import "./dristi/pages/citizen/login.scss";
 @import "./dristi/components/verifyPhoneNumber.scss";
 @import "./dristi/components/customPopup.scss";
 @import "../src/pages/employee/nyayMitra.scss";
@@ -158,6 +160,7 @@
 @import "./components/ProfileComponent.scss";
 @import "./hearings/BulkReschedule.scss";
 @import "./home/Dashboard.scss";
+@import "./home/components/addTemaplte.scss";
 
 .wbh-header-container {
   display: flex !important;

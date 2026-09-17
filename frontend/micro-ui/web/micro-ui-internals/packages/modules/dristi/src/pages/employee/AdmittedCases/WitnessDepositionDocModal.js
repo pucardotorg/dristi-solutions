@@ -1,0 +1,138 @@
+import { Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+
+import React, { useEffect, useMemo, useState } from "react";
+import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
+import { DRISTIService } from "../../../services";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
+
+function WitnessDepositionDocModal({ t, docObj, setShowWitnessDepositionDoc, setShowWitnessModal }) {
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
+  const artifact = docObj?.artifactList;
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+  const [showToast, setShowToast] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const isCitizen = useMemo(() => userRoles?.includes("CITIZEN"), [userRoles]);
+  const isEmployee = useMemo(() => userRoles?.includes("EMPLOYEE"), [userRoles]);
+
+  const showDocument = useMemo(() => {
+    return (
+      <React.Fragment>
+        {docObj?.applicationContent?.fileStoreId ? (
+          <DocViewerWrapper
+            key={docObj?.applicationContent?.fileStoreId}
+            docWidth={"75vw"}
+            docHeight={"unset"}
+            fileStoreId={docObj?.applicationContent?.fileStoreId}
+            tenantId={tenantId}
+            displayFilename={docObj?.applicationContent?.additionalDetails?.name}
+            showDownloadOption={false}
+            documentName={docObj?.applicationContent?.additionalDetails?.name}
+            isLocalizationRequired={false}
+          />
+        ) : (
+          <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
+        )}
+      </React.Fragment>
+    );
+  }, [docObj, t, tenantId]);
+
+  const saveLabel = useMemo(() => {
+    if (isEmployee) {
+      if (artifact?.status === "PENDING_E-SIGN") {
+        return t("EDIT_DETAILS_DEPOSITION");
+      } else return null;
+    } else if (isCitizen && userInfo?.uuid !== artifact?.sourceId) {
+      return null;
+    } else return null;
+  }, [isCitizen, artifact, t, userInfo?.uuid, isEmployee]);
+
+  const handleSubmit = async () => {
+    if (saveLabel === t("EDIT_DETAILS_DEPOSITION")) {
+      try {
+        setIsLoading(true);
+        const updateEvidenceReqBody = {
+          artifact: {
+            ...artifact,
+            workflow: {
+              ...artifact?.workflow,
+              action: "EDIT",
+            },
+          },
+        };
+        const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
+        if (updatedEvidence?.artifact) {
+          setShowWitnessModal({ show: true, artifactNumber: updatedEvidence?.artifact?.artifactNumber });
+          setShowWitnessDepositionDoc({ docObj: null, show: false });
+        }
+      } catch (error) {
+        console.error("Failed to update witness evidence:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("WITNESS_UPDATE_FAILED"), error: true, errorId });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  return (
+    <div>
+      <Modal
+        headerBarMain={<Heading label={`${t("WITNESS_DEPOSITION")} ${t(artifact?.tag)}`} />}
+        headerBarEnd={<CloseBtn onClick={() => setShowWitnessDepositionDoc({ docObj: null, show: false })} />}
+        actionCancelLabel={t("BACK")}
+        actionCancelOnSubmit={() => setShowWitnessDepositionDoc({ docObj: null, show: false })}
+        actionSaveLabel={saveLabel}
+        hideSubmit={!Boolean(saveLabel)}
+        actionSaveOnSubmit={handleSubmit}
+        isDisabled={isLoading}
+        isBackButtonDisabled={isLoading}
+        popupStyles={{ width: "70vw", minHeight: "75vh", maxHeight: "90vh" }}
+        headerBarMainStyle={{ minHeight: "50px" }}
+        className={"review-submission-appl-modal bail-bond"}
+        style={{ backgroundColor: "#007e7e !important" }}
+        textStyle={{ color: "#fff", fontSize: "1.2rem", fontWeight: "600", margin: "0px" }}
+        formId="modal-action"
+      >
+        <div className="review-submission-appl-body-main">
+          <div className="application-details">
+            <div className="application-view doc-preview">{showDocument}</div>
+          </div>
+        </div>
+        {isLoading && (
+          <div
+            style={{
+              width: "100vw",
+              height: "100vh",
+              zIndex: "9999",
+              position: "fixed",
+              right: "0",
+              display: "flex",
+              top: "0",
+              background: "rgb(234 234 245 / 50%)",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            className="submit-loader"
+          >
+            <Loader />
+          </div>
+        )}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
+          />
+        )}
+      </Modal>
+    </div>
+  );
+}
+
+export default WitnessDepositionDocModal;

@@ -1,0 +1,15 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "case.CaseOverallStatusType",
+  "uniqueIdentifier": "11",
+  "data": {
+    "id": "11",
+    "stage": "Pre-Trial",
+    "state": "PENDING_RESPONSE",
+    "action": "REGISTER",
+    "substage": "COGNIZANCE",
+    "typeIdentifier": "congnizance",
+    "workflowModule": "case-default"
+  },
+  "isActive": true
+}

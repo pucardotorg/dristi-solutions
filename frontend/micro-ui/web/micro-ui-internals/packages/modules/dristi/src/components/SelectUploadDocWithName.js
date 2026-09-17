@@ -9,12 +9,16 @@ import { CustomAddIcon } from "../icons/svgIndex";
 import Button from "./Button";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import { DRISTIService } from "../services";
-import { getFilingType } from "../Utils";
+import { getAuthorizedUuid, getFilingType, sanitizeData } from "../Utils";
+import { EXTENSION_TO_MIME } from "../Utils/constants";
 
-function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
+function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError, errors, clearErrors }) {
   const [documentData, setDocumentData] = useState(formData?.[config.key] ? formData?.[config.key] : []);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { caseId } = window?.Digit.Hooks.useQueryParams();
+  const userInfo = Digit.UserService.getUser()?.info;
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const inputs = useMemo(
     () =>
@@ -37,8 +41,8 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
           name: "document",
           documentHeader: "header",
           type: "DragDropComponent",
-          maxFileSize: 50,
-          maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+          maxFileSize: 10,
+          maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
           fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
           isMultipleUpload: false,
         },
@@ -62,6 +66,20 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
   const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "CaseFiling"), [filingTypeData?.FilingType]);
 
   const handleFileChange = (file, input, index) => {
+    // MIME type validation
+    if (file?.type && input?.fileTypes?.length) {
+      const allowedMimes = input.fileTypes.flatMap((ext) => EXTENSION_TO_MIME[ext.toLowerCase()] || []);
+      if (allowedMimes.length && !allowedMimes.includes(file.type)) {
+        setError(`${config.key}_${index}`, { message: t("NOT_SUPPORTED_FILE_TYPE") });
+        return;
+      }
+    }
+    // File size validation
+    const maxFileSize = input?.maxFileSize * 1024 * 1024;
+    if (file?.size > maxFileSize) {
+      setError(`${config.key}_${index}`, { message: `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` });
+      return;
+    }
     let currentDocumentDataCopy = structuredClone(documentData);
     let currentDataObj = currentDocumentDataCopy[index];
     currentDataObj.document = [file];
@@ -71,6 +89,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
   };
 
   const handleDeleteFile = (index) => {
+    if (clearErrors) clearErrors(`${config.key}_${index}`);
     let currentDocumentDataCopy = structuredClone(documentData);
     let currentDataObj = currentDocumentDataCopy[index];
     currentDataObj.document = [];
@@ -80,8 +99,16 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
   };
 
   const fileValidator = (file, input) => {
+    if (file?.fileStore) return null;
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
     if (file.length > 0) {
+      if (file[0]?.type && input?.fileTypes?.length) {
+        const allowedMimes = input.fileTypes.flatMap((ext) => EXTENSION_TO_MIME[ext.toLowerCase()] || []);
+        if (allowedMimes.length && !allowedMimes.includes(file[0].type)) {
+          return t("NOT_SUPPORTED_FILE_TYPE");
+        }
+      }
+
       return file[0].size > maxFileSize ? t(input?.maxFileErrorMessage) : null;
     } else return null;
   };
@@ -105,7 +132,9 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
           artifactType: "DOCUMENTARY",
           sourceType: "COMPLAINANT",
           caseId: caseId,
+          filingNumber: config?.filingNumber,
           tenantId,
+          asUser: authorizedUuid,
           artifactId: currentDocumentDataCopy?.[index].document?.[0]?.artifactId,
           comments: [],
           filingType: filingType,
@@ -137,10 +166,11 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
               <div className="file-uploader-with-name-header">
                 <h1>{`${t("DOCUMENT_NUMBER_HEADING")} ${index + 1}`}</h1>
 
-                {(config?.state === "DRAFT_IN_PROGRESS" || index >= config?.doclength) && (
+                {!config?.disable && (["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"]?.includes(config?.state) || index >= config?.doclength) && (
                   <span
                     onClick={() => {
-                      if (!config?.disable && (config?.state === "DRAFT_IN_PROGRESS" || index >= config?.doclength)) {
+                      if (!config?.disable && (["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"]?.includes(config?.state) || index >= config?.doclength)) {
+                        clearErrors(`${config?.key}_${index}`);
                         handleDeleteDocument(index);
                       }
                     }}
@@ -165,7 +195,8 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
                           key={input?.name}
                           value={currentValue}
                           onChange={(e) => {
-                            handleOnTextChange(e.target.value, input, index);
+                            const val = sanitizeData(e.target.value);
+                            handleOnTextChange(val, input, index);
                           }}
                           disable={input?.isDisabled || (index < config?.doclength ? true : config?.disable)}
                           defaultValue={undefined}
@@ -189,6 +220,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
                           <RenderFileCard
                             fileData={currentValue[0]}
                             handleChange={(data) => {
+                              clearErrors(`${config.key}_${index}`);
                               handleFileChange(data, input, index);
                             }}
                             handleDeleteFile={() => handleDeleteFile(index)}
@@ -196,12 +228,15 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
                             uploadErrorInfo={fileErrors}
                             input={input}
                             disableUploadDelete={index < config?.doclength ? true : config?.disable}
+                            configKey={`${config?.key}_${index}`}
+                            setError={setError}
                           />
                         )}
                         {showFileUploader && (
                           <div className={`file-uploader-div-main ${showFileUploader ? "show-file-uploader" : ""}`}>
                             <FileUploader
                               handleChange={(data) => {
+                                clearErrors(`${config.key}_${index}`);
                                 handleFileChange(data, input, index);
                               }}
                               name="file"
@@ -209,9 +244,17 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
                               children={dragDropJSX}
                               key={input?.name}
                               // disabled={config?.disable}
+                              onTypeError={(file) => {
+                                setError(`${config.key}_${index}`, { message: t("CS_INVALID_FILE_TYPE") });
+                              }}
                             />
                             <div className="upload-guidelines-div">{input.uploadGuidelines && <p>{t(input.uploadGuidelines)}</p>}</div>
                           </div>
+                        )}
+                        {errors?.[`${config.key}_${index}`] && (
+                          <span className="alert-error">
+                            {t(errors?.[`${config.key}_${index}`]?.msg || errors?.[`${config.key}_${index}`].message || "CORE_REQUIRED_FIELD_ERROR")}
+                          </span>
                         )}
                       </div>
                     );
