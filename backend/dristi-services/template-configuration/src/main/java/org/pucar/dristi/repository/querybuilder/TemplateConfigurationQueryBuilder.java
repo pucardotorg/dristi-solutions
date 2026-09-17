@@ -62,7 +62,7 @@ public class TemplateConfigurationQueryBuilder {
             return query.toString();
 
         } catch (Exception e) {
-            log.error("Error while building template configuration search query: {}", e.getMessage());
+            log.error("Error while building template configuration search query", e);
             throw new CustomException(TEMPLATE_SEARCH_EXCEPTION, "Error occurred while building the template configuration search query: " + e.getMessage());
         }
     }

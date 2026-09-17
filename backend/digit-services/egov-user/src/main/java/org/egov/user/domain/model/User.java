@@ -16,13 +16,13 @@ import org.egov.user.domain.model.enums.BloodGroup;
 import org.egov.user.domain.model.enums.Gender;
 import org.egov.user.domain.model.enums.GuardianRelation;
 import org.egov.user.domain.model.enums.UserType;
-import org.hibernate.validator.constraints.Email;
+import jakarta.validation.constraints.Email;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import static org.springframework.util.ObjectUtils.isEmpty;
 
@@ -87,6 +87,18 @@ public class User {
     private boolean otpValidationMandatory;
     private boolean mobileValidationMandatory = true;
     private String alternateMobileNumber;
+    /**
+     * True once the user has a real password stored, as opposed to the generated placeholder a
+     * user is given when created without one. Drives which login screen the UI offers on _search.
+     * Nullable so that an update carrying no opinion leaves the stored value untouched.
+     */
+    private Boolean hasPassword;
+    /**
+     * True once the user chose "don't remind me again" on the set-password prompt. Independent of
+     * {@link #hasPassword}: a user may dismiss the prompt without ever setting a password.
+     * Nullable so that an update carrying no opinion leaves the stored value untouched.
+     */
+    private Boolean passwordPromptDismissed;
 
     public User addAddressItem(Address addressItem) {
         if (this.addresses == null) {

@@ -117,8 +117,9 @@ public class CourtCase {
     @JsonProperty("stage")
     private String stage = null;
 
-    @JsonProperty("substage")
-    private String substage = null;
+    @JsonProperty("lifecycleStatus")
+    @Builder.Default
+    private LifecycleStatus lifecycleStatus = LifecycleStatus.ACTIVE;
 
     @JsonProperty("natureOfPleading")
     //@Size(min = 2, max = 64)

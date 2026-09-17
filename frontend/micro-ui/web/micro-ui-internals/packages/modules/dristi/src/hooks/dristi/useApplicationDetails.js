@@ -1,43 +1,45 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "react-query";
 import { DRISTIService } from "../../services";
+import { getNameByUuid } from "../../Utils";
+import { getUserInfoFromUuids } from "../../../../submissions/src/utils";
 
 const useApplicationDetails = ({ url, params, body, config = {}, plainAccessRequest, state, changeQueryName = "Random" }) => {
   const client = useQueryClient();
 
-  const { searchForm } = state;
-  const { stage, type, caseNameOrId } = searchForm;
-
   const fetchCombinedData = async () => {
     //need to filter this hearing list response based on slot
-    const res = await DRISTIService.searchSubmissions(body, params, plainAccessRequest, true);
-    // .then((response) => {
-    //   console.log(response, "RESPONSE");
-    // });
-    const owenrList = res.applicationList.map((application) => application.auditDetails.createdBy);
-    const owners =
-      owenrList.length > 0
-        ? await DRISTIService.searchIndividualUser(
-            {
-              Individual: {
-                userUuid: [...new Set(owenrList)],
-              },
-            },
-            { ...params, limit: 1000, offset: 0 },
-            plainAccessRequest,
-            true
-          )
-        : [];
+    const { caseDetails, ...searchBody } = body || {};
+    const res = await DRISTIService.searchSubmissions(searchBody, params, plainAccessRequest, true);
+
+    const namesByUuid = new Map();
+    const unresolvedUuids = new Set();
+    res.applicationList.forEach((application) => {
+      const uuid = application.auditDetails.createdBy;
+      if (!uuid || namesByUuid.has(uuid)) return;
+      const nameByUuid = getNameByUuid(uuid, caseDetails);
+      if (nameByUuid) {
+        namesByUuid.set(uuid, nameByUuid);
+      } else {
+        unresolvedUuids.add(uuid);
+      }
+    });
+
+    if (unresolvedUuids.size > 0) {
+      const userInfo = await getUserInfoFromUuids([...unresolvedUuids]);
+      userInfo?.forEach((user) => {
+        if (user?.userUuid) namesByUuid.set(user.userUuid, user?.fullName || "");
+      });
+    }
+
+    const applicationList = res.applicationList.map((application) => ({
+      ...application,
+      owner: namesByUuid.get(application.auditDetails.createdBy) || "",
+    }));
+
     return {
       ...res,
-      applicationList: res.applicationList.map((application) => {
-        return {
-          ...application,
-          owner: `${owners.Individual.find((individual) => application.auditDetails.createdBy === individual.userUuid)?.name.givenName} ${
-            owners.Individual.find((individual) => application.auditDetails.createdBy === individual.userUuid)?.name.familyName
-          }`,
-        };
-      }),
+      applicationList,
     };
   };
 

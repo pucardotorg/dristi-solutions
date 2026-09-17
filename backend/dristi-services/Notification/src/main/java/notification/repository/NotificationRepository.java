@@ -79,7 +79,7 @@ public class NotificationRepository {
             }
             return notificationExists;
         } catch (Exception e) {
-            log.error("Error while checking case exist :: {}", e.toString());
+            log.error("Error while checking case exist", e);
             throw new CustomException(EXISTS_NOTIFICATION_EXCEPTION, "Custom exception while checking Notification exist : " + e.getMessage());
         }
     }

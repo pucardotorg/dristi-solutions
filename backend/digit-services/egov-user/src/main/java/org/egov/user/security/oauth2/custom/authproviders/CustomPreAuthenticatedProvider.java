@@ -1,9 +1,7 @@
 package org.egov.user.security.oauth2.custom.authproviders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.tracer.model.CustomException;
 import org.egov.user.domain.exception.DuplicateUserNameException;
 import org.egov.user.domain.exception.UserNotFoundException;
 import org.egov.user.domain.model.SecureUser;
@@ -12,25 +10,23 @@ import org.egov.user.domain.model.enums.UserType;
 import org.egov.user.domain.service.UserService;
 import org.egov.user.domain.service.utils.EncryptionDecryptionUtil;
 import org.egov.user.web.contract.auth.Role;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.common.exceptions.OAuth2Exception;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
-import static org.springframework.util.StringUtils.isEmpty;
+import org.springframework.util.StringUtils;
 
 @Component
 @Slf4j
@@ -55,11 +51,11 @@ public class CustomPreAuthenticatedProvider implements AuthenticationProvider {
         String tenantId = details.get("tenantId");
         String userType = details.get("userType");
 
-        if (isEmpty(tenantId)) {
-            throw new OAuth2Exception("TenantId is mandatory");
+        if (!StringUtils.hasText(tenantId)) {
+            throw new BadCredentialsException("TenantId is mandatory");
         }
-        if (isEmpty(userType) || isNull(UserType.fromValue(userType))) {
-            throw new OAuth2Exception("User Type is mandatory and has to be a valid type");
+        if (!StringUtils.hasText(userType) || isNull(UserType.fromValue(userType))) {
+            throw new BadCredentialsException("User Type is mandatory and has to be a valid type");
         }
 
         User user;
@@ -77,15 +73,15 @@ public class CustomPreAuthenticatedProvider implements AuthenticationProvider {
             user = encryptionDecryptionUtil.decryptObject(user, "UserSelf", User.class, requestInfo);
         } catch (UserNotFoundException e) {
             log.error("User not found", e);
-            throw new OAuth2Exception("Invalid login credentials");
+            throw new BadCredentialsException("Invalid login credentials");
         } catch (DuplicateUserNameException e) {
             log.error("Fatal error, user conflict, more than one user found", e);
-            throw new OAuth2Exception("Invalid login credentials");
+            throw new BadCredentialsException("Invalid login credentials");
 
         }
 
         if (user.getAccountLocked() == null || user.getAccountLocked()) {
-            throw new OAuth2Exception("Account locked");
+            throw new LockedException("Account locked");
         }
 
         List<GrantedAuthority> grantedAuths = new ArrayList<>();

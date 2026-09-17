@@ -3,7 +3,7 @@ import Modal from "../../../components/Modal";
 import { Dropdown, Loader, CloseSvg, TextArea, TextInput, LabelFieldPair, CardLabel } from "@egovernments/digit-ui-react-components";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
-import { sanitizeData } from "../../../Utils";
+import { isLPRCase, sanitizeData } from "../../../Utils";
 
 const INITIAL_PAYMENT_ITEM = { type: "", amount: "" };
 const MIN_AMOUNT = 0;
@@ -208,7 +208,7 @@ const PaymentDemandModal = ({
           status: "",
           filingNumber: caseDetails?.filingNumber,
           cmpNumber: caseDetails?.cmpNumber,
-          courtCaseNumber: (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.courtCaseNumber,
+          courtCaseNumber: (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.courtCaseNumber,
           taskDescription: comments || null,
           taskType: "GENERIC",
           duedate: dueDateTimestamp,

@@ -1,0 +1,27 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2808",
+    "data": {
+      "id": 2808,
+      "url": "/user/password/nologin/_update", // TODO : need to give access to CITIZEN role
+      "code": "2808",
+      "name": "update password"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2807",
+    "data": {
+      "id": 2807,
+      "url": "/user/password/prompt/_suppress", // TODO : need to give access to CITIZEN role
+      "code": "2807",
+      "name": "suppress prompt",
+      "enabled": true
+    },
+    "isActive": true
+  }
+]

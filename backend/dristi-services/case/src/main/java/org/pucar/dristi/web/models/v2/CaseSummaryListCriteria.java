@@ -3,6 +3,7 @@ package org.pucar.dristi.web.models.v2;
 import java.util.List;
 
 import org.pucar.dristi.web.models.Pagination;
+import org.pucar.dristi.web.models.enums.LifecycleStatus;
 import org.springframework.validation.annotation.Validated;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -64,11 +65,11 @@ public class CaseSummaryListCriteria {
     @JsonProperty("judgeId")
     private String judgeId = null;
 
+    @JsonProperty("casesFor")
+    private CasesFor casesFor = null;
+
     @JsonProperty("stage")
     private List<String> stage = null;
-
-    @JsonProperty("substage")
-    private String substage = null;
 
     @JsonProperty("litigantId")
     @Valid
@@ -94,8 +95,8 @@ public class CaseSummaryListCriteria {
     @Valid
     private Pagination pagination = null;
 
-    @JsonProperty("isLPRCase")
-    private Boolean isLPRCase = null;
+    @JsonProperty("lifecycleStatus")
+    private LifecycleStatus lifecycleStatus = null;
 
     @JsonProperty("officeAdvocateId")
     private String officeAdvocateId = null;
@@ -105,5 +106,8 @@ public class CaseSummaryListCriteria {
 
     @JsonProperty("isMemberActiveInCase")
     private Boolean isMemberActiveInCase = null;
+
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = null;
 
 }

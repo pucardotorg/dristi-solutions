@@ -112,7 +112,7 @@ public class EvidenceService {
                 }
             }
             // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
-            if (artifactType != null && artifactType.equals(DEPOSITION) || body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION) || WITNESS_DEPOSITION.equalsIgnoreCase(artifactType)) {
+            if ((artifactType != null && artifactType.equals(DEPOSITION)) || (body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION)) || WITNESS_DEPOSITION.equalsIgnoreCase(artifactType)) {
                 workflowService.updateWorkflowStatus(body, filingType);
                 producer.push(config.getEvidenceCreateTopic(), body);
             } else {
@@ -173,9 +173,12 @@ public class EvidenceService {
             JsonNode courtCase = searchCaseDetails(body, filingNumber);
 
             JsonNode witnessDetailsNode = courtCase.get("witnessDetails");
+            String action = body.getArtifact().getWorkflow().getAction();
             if (StringUtils.isBlank(uniqueId) || witnessDetailsNode == null || !witnessDetailsNode.isArray()) {
                 log.info("Witness list missing/invalid or uniqueId blank; falling back to legacy path. uniqueIdPresent={}", StringUtils.isNotBlank(uniqueId));
-                updateWitnessDeposition(body, courtCase);
+                if(SUBMIT.equalsIgnoreCase(action)){
+                    enrichTagForParties(body, courtCase);
+                }
                 return;
             }
             List<WitnessDetails> witnessDetails = objectMapper.convertValue(witnessDetailsNode, new TypeReference<>() {});
@@ -188,7 +191,9 @@ public class EvidenceService {
                 updateWitnessRecord(body, uniqueId, witness);
             } else {
                 log.info("No matching witness by uniqueId; using legacy update path");
-                updateWitnessDeposition(body, courtCase);
+                if(SUBMIT.equalsIgnoreCase(action)){
+                    enrichTagForParties(body, courtCase);
+                }
             }
             log.info("Successfully completed updateCaseWitness for filing number: {}", filingNumber);
 
@@ -200,7 +205,7 @@ public class EvidenceService {
         }
     }
 
-    private void updateWitnessDeposition(EvidenceRequest body, JsonNode courtCase) {
+    private void enrichTagForParties(EvidenceRequest body, JsonNode courtCase) {
         JsonNode litigants = courtCase.get("litigants");
         JsonNode representatives = courtCase.get("representatives");
         JsonNode poaHolders = courtCase.get("poaHolders");
@@ -335,7 +340,9 @@ public class EvidenceService {
 
     private void updateWitnessRecord(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
         witness.setUniqueId(uniqueId);
-        witness.setWitnessTag(body.getArtifact().getTag());
+        if(SUBMIT.equalsIgnoreCase(body.getArtifact().getWorkflow().getAction())){
+            witness.setWitnessTag(body.getArtifact().getTag());
+        }
 
         // Remark: may need to add email later to witness details
 //        updateWitnessEmails(body, witness);
@@ -454,7 +461,7 @@ public class EvidenceService {
             }
             return filingType;
         } catch (Exception e){
-            log.error("Error fetching filing type from mdms: {}", e.toString());
+            log.error("Error fetching filing type from mdms", e);
             throw new CustomException("MDMS_FETCH_ERR", "Error fetching filing type from mdms: " + e.toString());
         }
     }
@@ -665,10 +672,10 @@ public class EvidenceService {
 
             producer.push(config.getEvidenceUpdateCommentsTopic(), evidenceRequest);
         } catch (CustomException e) {
-            log.error("Custom exception while adding comments {}", e.toString());
+            log.error("Custom exception while adding comments", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error while adding comments {}", e.toString());
+            log.error("Error while adding comments", e);
             throw new CustomException(COMMENT_ADD_ERR, e.getMessage());
         }
     }
@@ -722,7 +729,7 @@ public class EvidenceService {
         }
         catch (Exception e) {
             // Log the exception and continue the execution without throwing
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
     }
 
@@ -1018,12 +1025,55 @@ public class EvidenceService {
             }
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
-                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
+                double cx = coordinate.getX();
+                double cy = coordinate.getY();
+                double pageWidth = coordinate.getPageWidth();
+                double pageHeight = coordinate.getPageHeight();
+                int sigWidth = config.getEsignSignatureWidth();
+                int sigHeight = config.getEsignSignatureHeight();
+                if (pageWidth > 0) {
+                    double overflow = cx + sigWidth - pageWidth;
+                    if (overflow > 0) {
+                        // Phase 1: reduce width first, down to preferredWidthThreshold
+                        int phase1MaxReduction = sigWidth - config.getEsignSignaturePreferredWidthThreshold();
+                        int phase1Reduction = (int) Math.min(overflow, phase1MaxReduction);
+                        sigWidth -= phase1Reduction;
+                        overflow -= phase1Reduction;
+                        if (overflow > 0) {
+                            // Phase 2: balance offset and width reduction equally
+                            int widthBudget = sigWidth - config.getEsignSignatureMinWidth();
+                            int maxOffset = config.getEsignSignatureMaxLeftOffset();
+                            int half = (int) (overflow / 2);
+                            int wReduce, offset;
+                            if (half <= widthBudget && half <= maxOffset) {
+                                wReduce = (int) overflow / 2;
+                                offset = (int) overflow - wReduce;
+                            } else if (half > widthBudget) {
+                                wReduce = widthBudget;
+                                offset = (int) Math.min(overflow - wReduce, maxOffset);
+                            } else {
+                                offset = maxOffset;
+                                wReduce = (int) Math.min(overflow - offset, widthBudget);
+                            }
+                            sigWidth -= wReduce;
+                            cx = Math.max(cx - offset, 0);
+                        }
+                    }
+                    double remainingOverflow = cx + sigWidth - pageWidth;
+                    if (remainingOverflow > 0) {
+                        cx = Math.max(cx - remainingOverflow, 0);
+                    }
+                }
+                if (pageHeight > 0) {
+                    cy = Math.min(cy, pageHeight - sigHeight);
+                    cy = Math.max(cy, 0);
+                }
+                String coord = (int) Math.floor(cx) + "," + (int) Math.floor(cy);
                 String txnId = java.util.UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
                 java.time.ZonedDateTime timestamp = java.time.ZonedDateTime.now(java.time.ZoneId.of(config.getZoneId()));
 
-                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
+                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo, sigWidth);
                 String artifactId = artifactCriteriaMap.get(coordinate.getFileStoreId()).getArtifactNumber();
                 artifactToSign.setArtifactNumber(artifactId);
                 artifactToSign.setRequest(xmlRequest);
@@ -1119,7 +1169,7 @@ public class EvidenceService {
                             .caseDiaryList(caseDiaryEntries)
                             .build());
                 } catch (Exception ex) {
-                    log.error("Error occurred while creating bulk case diary entries: {}", ex.getMessage(), ex);
+                    log.error("Error occurred while creating bulk case diary entries", ex);
                 }
             }
         }
@@ -1127,7 +1177,7 @@ public class EvidenceService {
     }
 
 
-    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
+    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber, int effectiveWidth) {
         log.info("generating request, result= IN_PROGRESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
         Map<String, Object> requestData = new LinkedHashMap<>();
 
@@ -1154,7 +1204,7 @@ public class EvidenceService {
         Map<String, Object> pdf = new LinkedHashMap<>();
         pdf.put(PAGE, pageNumber);
         pdf.put(CO_ORDINATES, coordination);
-        pdf.put(SIZE, config.getEsignSignatureWidth() + "," + config.getEsignSignatureHeight());
+        pdf.put(SIZE, effectiveWidth + "," + config.getEsignSignatureHeight());
         pdf.put(DATE_FORMAT, ESIGN_DATE_FORMAT);
         requestData.put(PDF, pdf);
 
@@ -1284,11 +1334,11 @@ public class EvidenceService {
                 esUtil.manualIndex(uri, request);
             } catch (Exception e) {
                 log.error("Error occurred while updating open Artifact in es");
-                log.error("ERROR_FROM_ES: {}", e.getMessage());
+                log.error("ERROR_FROM_ES", e);
             }
     } catch (Exception e) {
             log.error("Something went wrong while updating status of open Artifact with artifactNumber {}", evidenceRequest.getArtifact().getArtifactNumber());
-            log.error("ERROR: {}", e.getMessage());
+            log.error("ERROR", e);
         }
 
     }

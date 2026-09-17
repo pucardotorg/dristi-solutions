@@ -146,10 +146,25 @@ public class InboxConfiguration {
     @Value("${advocate.service.module.name}")
     private String advocateModuleName;
 
+    @Value("${advocate.clerk.service.module.name}")
+    private String advocateClerkModuleName;
+
 	@Value("${spring.redis.timeout}")
 	private Long redisTimeout;
 
 	@Value("${spring.redis.enabled}")
 	private Boolean redisEnabled;
+
+	@Value("${ab.diary.host}")
+	private String abDiaryHost;
+
+	@Value("${ab.diary.search.path}")
+	private String abDiarySearchPath;
+
+	@Value("${task.service.host}")
+	private String taskServiceHost;
+
+	@Value("${task.table.search.path}")
+	private String taskTableSearchPath;
 
 }

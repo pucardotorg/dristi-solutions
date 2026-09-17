@@ -1,4 +1,5 @@
-import { FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Header, Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { bailBondConfig } from "../../configs/generateBailBondConfig";
@@ -9,7 +10,8 @@ import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/d
 import SuccessBannerModal from "../../components/SuccessBannerModal";
 import { useHistory, useLocation } from "react-router-dom";
 import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
-import { combineMultipleFiles, getAuthorizedUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, getAuthorizedUuid, getNameByUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { getComplainantsList } from "@egovernments/digit-ui-module-dristi/src/pages/employee/AdmittedCases/utils/partyUtils";
 import { submissionService } from "../../hooks/services";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "../../../../dristi/src/Utils/submissionWorkflow";
@@ -24,6 +26,7 @@ import {
   validateSuretyContactNumber,
   validateSurities,
 } from "../../utils/bailBondUtils";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -44,26 +47,26 @@ const convertToFormData = (t, obj) => {
     noOfSureties: obj?.noOfSureties || obj?.sureties?.length || null,
     sureties:
       Array.isArray(obj?.sureties) && obj.sureties.length > 0
-        ? obj.sureties.map((surety) => ({
-            id: surety?.id,
-            name: surety?.name,
-            fatherName: surety?.fatherName,
-            mobileNumber: surety?.mobileNumber,
-            address: surety?.address,
-            email: surety?.email,
-            index: surety?.index,
-            identityProof: {
-              document: surety?.documents?.filter((doc) => doc?.documentType === "IDENTITY_PROOF" && doc?.isActive === true) || [],
-            },
-            proofOfSolvency: {
-              document: surety?.documents?.filter((doc) => doc?.documentType === "PROOF_OF_SOLVENCY" && doc?.isActive === true) || [],
-            },
-            otherDocuments: {
-              document: surety?.documents?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS" && doc?.isActive === true) || [],
-            },
-          }))?.sort((a, b) => 
-            (Boolean(a?.index) ? a.index : 0) -
-            (Boolean(b?.index) ? b.index : 0))
+        ? obj.sureties
+            .map((surety) => ({
+              id: surety?.id,
+              name: surety?.name,
+              fatherName: surety?.fatherName,
+              mobileNumber: surety?.mobileNumber,
+              address: surety?.address,
+              email: surety?.email,
+              index: surety?.index,
+              identityProof: {
+                document: surety?.documents?.filter((doc) => doc?.documentType === "IDENTITY_PROOF" && doc?.isActive === true) || [],
+              },
+              proofOfSolvency: {
+                document: surety?.documents?.filter((doc) => doc?.documentType === "PROOF_OF_SOLVENCY" && doc?.isActive === true) || [],
+              },
+              otherDocuments: {
+                document: surety?.documents?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS" && doc?.isActive === true) || [],
+              },
+            }))
+            ?.sort((a, b) => (Boolean(a?.index) ? a.index : 0) - (Boolean(b?.index) ? b.index : 0))
         : Array.from({ length: obj?.noOfSureties || 0 }, () => ({})),
   };
 
@@ -75,7 +78,7 @@ const GenerateBailBondV2 = () => {
   const { t } = useTranslation();
   const history = useHistory();
   const { filingNumber, bailBondId, showModal } = Digit.Hooks.useQueryParams();
-  const { state, pathname, search } = useLocation();
+  const { state, pathname } = useLocation();
   const pendingTaskrefId = state?.state?.params?.actualReferenceId || null;
   // const pendingTaskId = state?.state?.params?.refId || null;
   const userInfo = Digit.UserService.getUser()?.info;
@@ -98,7 +101,7 @@ const GenerateBailBondV2 = () => {
   const setFormDataValue = useRef(null);
   const clearFormDataErrors = useRef(null);
   const [formdata, setFormdata] = useState({});
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [bailBondFileStoreId, setBailBondFileStoreId] = useState("");
   const [bailBondSignatureURL, setBailBondSignatureURL] = useState("");
   const [defaultFormValueData, setDefaultFormValueData] = useState({});
@@ -236,40 +239,12 @@ const GenerateBailBondV2 = () => {
       );
   }, [caseDetails]);
 
-  const complainantsList = useMemo(() => {
-    const loggedinUserUuid = authorizedUuid;
-    // If logged in person is an advocate
-    const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
-    const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
-    const accusedLoggedIn = pipAccuseds?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
-
-    if (isAdvocateLoggedIn) {
-      return isAdvocateLoggedIn?.representing?.map((r) => {
-        return {
-          code: r?.additionalDetails?.fullName,
-          name: r?.additionalDetails?.fullName,
-          uuid: r?.additionalDetails?.uuid,
-        };
-      });
-    } else if (isPipLoggedIn) {
-      return [
-        {
-          code: isPipLoggedIn?.additionalDetails?.fullName,
-          name: isPipLoggedIn?.additionalDetails?.fullName,
-          uuid: isPipLoggedIn?.additionalDetails?.uuid,
-        },
-      ];
-    } else if (accusedLoggedIn) {
-      return [
-        {
-          code: accusedLoggedIn?.additionalDetails?.fullName,
-          name: accusedLoggedIn?.additionalDetails?.fullName,
-          uuid: accusedLoggedIn?.additionalDetails?.uuid,
-        },
-      ];
-    }
-    return [];
-  }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
+  const complainantsList = useMemo(() => getComplainantsList(caseDetails, pipComplainants, pipAccuseds, authorizedUuid), [
+    caseDetails,
+    pipComplainants,
+    pipAccuseds,
+    authorizedUuid,
+  ]);
 
   const pendingTasks = useMemo(() => {
     if (complainantsList?.length === 1 || (!pendingTaskrefId && !pendingTaskId)) {
@@ -281,12 +256,34 @@ const GenerateBailBondV2 = () => {
     }
   }, [complainantsList, pendingTaskId, pendingTaskrefId, pendingTasksResponse]);
 
+  // First accused (in dropdown order) that actually has a bail-bond pending task. Used to pre-select
+  // and auto-fill in the multi-accused "Raise Bail Bond" flow that is opened directly (not from a tile).
+  const firstAccusedWithTaskUuid = useMemo(() => {
+    const tasks = Array.isArray(pendingTasksResponse?.data) ? pendingTasksResponse.data : [];
+    if (!Array.isArray(complainantsList) || complainantsList.length === 0 || tasks.length === 0) return null;
+    const match = complainantsList.find((complainant) =>
+      tasks.some((task) => task?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field.value === complainant?.uuid))
+    );
+    return match?.uuid || null;
+  }, [complainantsList, pendingTasksResponse]);
+
+  // In the multi-accused direct flow the pending tasks are not pre-filtered to a single accused, so
+  // resolve the task belonging to the currently selected (or first-with-task) accused instead of
+  // blindly taking the first task in the list. For single-accused / pending-task-click flows this
+  // stays null so the existing (working) first-task behaviour is preserved.
+  const activeAccusedUuid = useMemo(() => {
+    if (complainantsList?.length > 1 && !pendingTaskrefId && !pendingTaskId) {
+      return formdata?.selectComplainant?.uuid || firstAccusedWithTaskUuid || null;
+    }
+    return null;
+  }, [complainantsList, pendingTaskrefId, pendingTaskId, formdata?.selectComplainant?.uuid, firstAccusedWithTaskUuid]);
+
   const pendingTaskAdditionalDetails = useMemo(() => {
-    return convertTaskResponseToPayload(pendingTasks)?.additionalDetails || {};
-  }, [pendingTasks]);
+    return convertTaskResponseToPayload(pendingTasks, activeAccusedUuid)?.additionalDetails || {};
+  }, [pendingTasks, activeAccusedUuid]);
 
   const selectedRepresentative = useMemo(() => {
-    return caseDetails?.litigants?.filter((litigant) => litigant?.individualId === pendingTaskAdditionalDetails?.litigantUuid)?.[0] || {};
+    return caseDetails?.litigants?.filter((litigant) => litigant?.additionalDetails?.uuid === pendingTaskAdditionalDetails?.litigantUuid)?.[0] || {};
   }, [caseDetails?.litigants, pendingTaskAdditionalDetails?.litigantUuid]);
 
   const { data: applicationData, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
@@ -465,11 +462,12 @@ const GenerateBailBondV2 = () => {
   const handleComplainantSelection = async (selectedComplainant, setValue) => {
     if (!selectedComplainant?.uuid || complainantsList?.length <= 1) return;
 
-    const litigantId =
-      caseDetails?.litigants?.filter((litigant) => litigant?.additionalDetails?.uuid === selectedComplainant?.uuid)?.[0]?.individualId || {};
-
+    // The bail-bond pending task stores the accused's user uuid (litigant.additionalDetails.uuid)
+    // under additionalDetails.litigantUuid, which is exactly what complainantsList carries as `uuid`.
+    // Match on that uuid directly (previously this compared against the litigant's individualId,
+    // which never matched and wiped the auto-populated data).
     const filteredTasks = (Array.isArray(pendingTasksResponse?.data) ? pendingTasksResponse.data : [])?.filter((item) =>
-      item?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field.value === litigantId)
+      item?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field.value === selectedComplainant?.uuid)
     );
 
     if (filteredTasks?.length > 0) {
@@ -704,8 +702,64 @@ const GenerateBailBondV2 = () => {
       const newObject = {
         ...getPendingTaskPayload,
         litigantId: selectedRepresentative?.additionalDetails?.uuid || getPendingTaskPayload?.litigantUuid,
-        litigantName: getPendingTaskPayload?.litigantName || selectedRepresentative?.additionalDetails?.fullName,
+        litigantName: getPendingTaskPayload?.litigantName || selectedRepresentative?.additionalDetails?.fullName || complainantsList?.[0]?.name,
       };
+      return convertToFormData(t, newObject);
+    }
+
+    // Multi-accused opened directly via "Raise Bail Bond" (not from a pending-task tile):
+    // resolve the selected (or first-with-task) accused and mount the form already populated, so
+    // surety rows are filled on first render. Filling via defaultValues (instead of setValue after
+    // mount) avoids the race where surety inputs mount empty and only fill after switching accused.
+    if (!bailBond && complainantsList?.length > 1 && !pendingTaskrefId && !pendingTaskId) {
+      const selectedUuid = formdata?.selectComplainant?.uuid || firstAccusedWithTaskUuid || complainantsList?.[0]?.uuid;
+      const selectedComplainant = complainantsList?.find((complainant) => complainant?.uuid === selectedUuid);
+      if (!selectedComplainant) return {};
+
+      const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks, selectedUuid)?.additionalDetails || {};
+
+      // Selected accused has no bail-bond task → empty form, but keep the accused selected/enabled.
+      if (Object.keys(getPendingTaskPayload).length === 0) {
+        return {
+          selectComplainant: {
+            code: selectedComplainant.code,
+            name: selectedComplainant.name,
+            uuid: selectedComplainant.uuid,
+          },
+        };
+      }
+
+      const applicationDetailsData = getPendingTaskPayload?.refApplicationId ? applicationDetails?.applicationDetails || {} : {};
+      const noOfSureties = getPendingTaskPayload?.noOfSureties || 0;
+      const providedSureties = Array.isArray(applicationDetailsData?.sureties)
+        ? applicationDetailsData.sureties.map((s) => ({
+            id: s?.id || s?.index || null,
+            name: s?.name || "",
+            fatherName: s?.fatherName || "",
+            mobileNumber: s?.mobileNumber || "",
+            address: s?.address || {},
+            email: s?.email || "",
+            documents: [...(applicationDetailsData?.applicationDocuments?.filter((doc) => doc?.suretyIndex === s?.suretyIndex) || [])].map((d) => ({
+              ...d,
+              documentName: d?.documentTitle,
+              isActive: true,
+            })),
+          }))
+        : [];
+
+      const sureties =
+        providedSureties.length < noOfSureties
+          ? [...providedSureties, ...Array.from({ length: noOfSureties - providedSureties.length }, () => ({}))]
+          : providedSureties;
+
+      const newObject = {
+        ...getPendingTaskPayload,
+        litigantFatherName: applicationDetailsData?.litigantFatherName || getPendingTaskPayload?.litigantFatherName,
+        litigantName: selectedComplainant.name,
+        litigantId: selectedComplainant.uuid,
+        sureties,
+      };
+
       return convertToFormData(t, newObject);
     }
 
@@ -734,6 +788,7 @@ const GenerateBailBondV2 = () => {
     clearAutoPopulatedData,
     complainantsList,
     defaultFormValueData,
+    firstAccusedWithTaskUuid,
     formdata,
     pendingTaskAdditionalDetails,
     pendingTaskrefId,
@@ -908,7 +963,7 @@ const GenerateBailBondV2 = () => {
           asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
           documents: [],
           additionalDetails: {
-            createdUserName: userInfo?.name,
+            createdUserName: getNameByUuid(userUuid, caseDetails) || userInfo?.name,
             isFormReset: clearAutoPopulatedData,
             formDisableCount: applicationDetails?.applicationDetails?.sureties?.length || 0,
           },
@@ -965,7 +1020,7 @@ const GenerateBailBondV2 = () => {
             litigantMobileNumber: individualData ? individualData?.Individual?.[0]?.mobileNumber : bailBondDetails?.litigantMobileNumber,
             additionalDetails: {
               ...bailBondDetails.additionalDetails,
-              createdUserName: userInfo?.name,
+              createdUserName: getNameByUuid(userUuid, caseDetails) || userInfo?.name,
               isFormReset: bailBondDetails?.additionalDetails?.isFormReset || clearAutoPopulatedData,
             },
             workflow: { ...bailBondDetails.workflow, action, documents: [{}] },
@@ -991,7 +1046,7 @@ const GenerateBailBondV2 = () => {
       // If NOT form reset → perform sureties validation
       if (!clearAutoPopulatedData && !isFormReset) {
         if (formdata?.sureties?.length < pendingTaskAdditionalDetails?.noOfSureties) {
-          setShowErrorToast({
+          setShowToast({
             label: t("NUMBER_OF_SURETIES_IS_LESS_THAN_EXPECTED"),
             error: true,
           });
@@ -1004,12 +1059,12 @@ const GenerateBailBondV2 = () => {
         const surety = formdata?.sureties?.[i];
         const isError = bailBondAddressValidation({ formData: surety?.address, inputs });
         if (isError) {
-          setShowErrorToast({ label: t("CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT"), error: true });
+          setShowToast({ label: t("CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT"), error: true });
           return;
         }
       }
 
-      if (validateAdvocateSuretyContactNumber(t, formdata?.sureties, userInfo, setShowErrorToast)) {
+      if (validateAdvocateSuretyContactNumber(t, formdata?.sureties, userInfo, setShowToast)) {
         return;
       }
     }
@@ -1017,7 +1072,7 @@ const GenerateBailBondV2 = () => {
     try {
       setLoader(true);
       const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
-      const validateSuretyContactNumbers = validateSuretyContactNumber(individualData, formdata, setShowErrorToast, t);
+      const validateSuretyContactNumbers = validateSuretyContactNumber(individualData, formdata, setShowToast, t);
 
       if (!validateSuretyContactNumbers) {
         setLoader(false);
@@ -1050,7 +1105,8 @@ const GenerateBailBondV2 = () => {
       }
     } catch (error) {
       console.error("Error while creating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -1060,40 +1116,76 @@ const GenerateBailBondV2 = () => {
     // Todo : Create and Update Api Call
     try {
       if (!formdata?.bailType) {
-        setShowErrorToast({ label: t("BAIL_TYPE_ISSUE"), error: true });
+        setShowToast({ label: t("BAIL_TYPE_ISSUE"), error: true });
         return;
       }
 
       setLoader(true);
-      const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
+      let individualData;
+      try {
+        individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
+      } catch (error) {
+        console.error("Failed to fetch user UUID:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("FAILED_TO_FETCH_USER_DETAILS"), error: true, errorId });
+        setLoader(false);
+        return;
+      }
+
       let bailBondResponse = null;
       if (!bailBondId) {
         const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
-        bailBondResponse = await createBailBond(individualData);
-        setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        try {
+          bailBondResponse = await createBailBond(individualData);
+          setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        } catch (error) {
+          console.error("Failed to create bail bond:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("BAIL_BOND_CREATE_FAILED"), error: true, errorId });
+          setLoader(false);
+          return;
+        }
+
         if (pendingTasks?.length > 0) {
-          await submissionService.customApiService(Urls.pendingTask, {
-            pendingTask: {
-              ...getPendingTaskPayload,
-              additionalDetails: {
-                ...getPendingTaskPayload?.additionalDetails,
-                bailBondId: bailBondResponse?.bails?.[0]?.bailId || null,
+          try {
+            await submissionService.customApiService(Urls.pendingTask, {
+              pendingTask: {
+                ...getPendingTaskPayload,
+                additionalDetails: {
+                  ...getPendingTaskPayload?.additionalDetails,
+                  bailBondId: bailBondResponse?.bails?.[0]?.bailId || null,
+                },
+                tenantId,
               },
-              tenantId,
-            },
-          });
+            });
+          } catch (error) {
+            console.error("Failed to update pending task:", error);
+            const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+            setShowToast({ label: t("FAILED_TO_UPDATE_PENDING_TASK"), error: true, errorId });
+            setLoader(false);
+            return;
+          }
         }
         history.replace(
           `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bails?.[0]?.bailId}`
         );
       } else {
-        bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT, individualData);
-        setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        try {
+          bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT, individualData);
+          setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        } catch (error) {
+          console.error("Failed to update bail bond:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("BAIL_BOND_UPDATE_FAILED"), error: true, errorId });
+          setLoader(false);
+          return;
+        }
       }
-      setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
+      setShowToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
     } catch (error) {
-      console.error("Error while creating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Unexpected error while saving bail bond:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -1105,7 +1197,8 @@ const GenerateBailBondV2 = () => {
   };
 
   const handleDownload = () => {
-    downloadPdf(tenantId, bailBondFileStoreId);
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${bailBondId}_Bail_Bond_draft`;
+    downloadPdf(tenantId, bailBondFileStoreId, name);
   };
 
   const handleESign = async () => {
@@ -1127,7 +1220,8 @@ const GenerateBailBondV2 = () => {
       setShowBailBondEsign(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true, errorId });
     } finally {
       setShowsignatureModal(false);
     }
@@ -1138,7 +1232,7 @@ const GenerateBailBondV2 = () => {
     try {
       setLoader(true);
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
-      const res = await updateBailBond(fileStoreId, bailBondWorkflowAction.UPLOAD);
+      await updateBailBond(fileStoreId, bailBondWorkflowAction.UPLOAD);
       if (pendingTasks?.length > 0) {
         await submissionService.customApiService(Urls.pendingTask, {
           pendingTask: {
@@ -1153,7 +1247,8 @@ const GenerateBailBondV2 = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -1161,10 +1256,6 @@ const GenerateBailBondV2 = () => {
 
   const handleCloseSuccessModal = () => {
     history.replace(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`);
-  };
-
-  const closeToast = () => {
-    setShowErrorToast(null);
   };
 
   const documents = useMemo(() => {
@@ -1183,15 +1274,6 @@ const GenerateBailBondV2 = () => {
     }
     return docList;
   }, [bailBondDetails]);
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   useEffect(() => {
     if (showModal) {
@@ -1316,6 +1398,9 @@ const GenerateBailBondV2 = () => {
             setLoader={setBailUploadLoader}
             loader={bailUploadLoader}
             fileStoreId={bailBondFileStoreId}
+            downloadedFileName={`${
+              caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"
+            }_${bailBondId}_Bail_Bond_draft`}
           />
         )}
 
@@ -1329,7 +1414,15 @@ const GenerateBailBondV2 = () => {
           />
         )}
         {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"BAIL_BOND_BANNER_HEADER"} />}
-        {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
+          />
+        )}
       </div>
     </React.Fragment>
   );

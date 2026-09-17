@@ -194,7 +194,7 @@ public class WorkflowUtil {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error getting current workflow: {}", e.toString());
+            log.error("Error getting current workflow", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.toString());
         }
     }

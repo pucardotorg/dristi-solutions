@@ -765,6 +765,11 @@
   }
 }
 
+.application-info.wide-label-info .info-row .info-key {
+  width: 220px;
+  flex-shrink: 0;
+}
+
 .review-summon-order {
   margin: 0px;
   font-family: Roboto;

@@ -2,6 +2,7 @@ package org.pucar.dristi.repository.querybuilder;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
@@ -10,6 +11,7 @@ import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.v2.CaseSearchCriteriaV2;
 import org.pucar.dristi.web.models.v2.CaseSummaryListCriteria;
 import org.pucar.dristi.web.models.v2.CaseSummarySearchCriteria;
+import org.pucar.dristi.web.models.v2.CasesFor;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
@@ -21,15 +23,15 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 public class CaseQueryBuilder {
     private static final String BASE_CASE_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, " +
             "cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.accesscode as accesscode, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrNumber as cnrNumber, " +
-            " cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.pendingadvocaterequests as pendingadvocaterequests, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.isactive as isactive, cases.casedetails as casedetails, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdby as createdby," +
-            " cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, cases.stageBackup as stageBackup, cases.substageBackup as substageBackup, cases.lprNumber as lprNumber, cases.isLPRCase as isLPRCase, cases.courtCaseNumberBackup as courtCaseNumberBackup, cases.witnessDetails as witnessDetails";
+            " cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.pendingadvocaterequests as pendingadvocaterequests, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.isactive as isactive, cases.casedetails as casedetails, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdby as createdby," +
+            " cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, cases.lprNumber as lprNumber, cases.lifecycleStatus as lifecycleStatus, cases.courtCaseNumberBackup as courtCaseNumberBackup, cases.witnessDetails as witnessDetails, cases.secondaryStage as secondaryStage";
 
     private static final String BASE_CASE_SUMMARY_LIST_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.courtid as courtid, cases.casetitle as casetitle, cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.courtcasenumber as courtcasenumber, cases.cnrnumber as cnrnumber, " +
-            " cases.cmpnumber as cmpnumber, cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.status as status, cases.pendingadvocaterequests as pendingadvocaterequests, cases.substage as substage, cases.filingdate as filingdate,cases.lastmodifiedtime as lastmodifiedtime, cases.createdtime as createdtime, cases.isLPRCase as isLPRCase, cases.lprNumber as lprNumber";
+            " cases.cmpnumber as cmpnumber, cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.status as status, cases.pendingadvocaterequests as pendingadvocaterequests, cases.stage as stage, cases.filingdate as filingdate,cases.lastmodifiedtime as lastmodifiedtime, cases.createdtime as createdtime, cases.lifecycleStatus as lifecycleStatus, cases.lprNumber as lprNumber, cases.secondaryStage as secondaryStage";
 
     private static final String BASE_CASE_SUMMARY_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, " +
             "cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrnumber as cnrnumber, " +
-            " cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.cmpnumber as cmpnumber,cases.createdby as createdby,cases.courtid as courtid, cases.benchid as benchid, cases.casetype as casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdtime as createdtime";
+            " cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.cmpnumber as cmpnumber,cases.createdby as createdby,cases.courtid as courtid, cases.benchid as benchid, cases.casetype as casetype, cases.judgeid as judgeid, cases.stage as stage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdtime as createdtime, cases.secondaryStage as secondaryStage";
 
     private static final String FROM_CASES_TABLE = " FROM dristi_cases cases";
     private static final String ORDERBY_CLAUSE = " ORDER BY cases.{orderBy} {sortingOrder} ";
@@ -99,7 +101,31 @@ public class CaseQueryBuilder {
 
     private static final String BASE_CASE_EXIST_QUERY = " SELECT COUNT(*) FROM dristi_cases cases ";
 
+    // Scalar-only projection (single table, no joins). All selected columns are plaintext,
+    // so results need no enc-service decryption.
+    private static final String BASE_CASE_META_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.filingnumber as filingnumber, " +
+            " cases.courtid as courtid, cases.courtcasenumber as courtcasenumber, cases.cmpnumber as cmpnumber, cases.lprnumber as lprnumber, " +
+            " cases.cnrnumber as cnrnumber, cases.lifecyclestatus as lifecyclestatus, cases.casetitle as casetitle, cases.status as status, " +
+            " cases.stage as stage, cases.filingdate as filingdate, cases.registrationdate as registrationdate ";
+
     public static final String AND = " AND ";
+
+    public String getCaseMetaQuery(List<String> filingNumbers, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        try {
+            StringBuilder query = new StringBuilder(BASE_CASE_META_QUERY);
+            query.append(FROM_CASES_TABLE);
+            String placeholders = filingNumbers.stream().map(f -> "?").collect(Collectors.joining(", "));
+            query.append(" WHERE cases.filingnumber IN (").append(placeholders).append(")");
+            for (String filingNumber : filingNumbers) {
+                preparedStmtList.add(filingNumber);
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
+            return query.toString();
+        } catch (Exception e) {
+            log.error("Error while building case meta query", e);
+            throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the case meta query: " + e.getMessage());
+        }
+    }
 
     public String getCaseSummarySearchQuery(CaseSummarySearchCriteria criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         try {
@@ -109,14 +135,23 @@ public class CaseQueryBuilder {
             if (criteria != null) {
                 firstCriteria = addCriteria(criteria.getCourtId(), query, firstCriteria, "cases.courtid = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
-                addCriteria(criteria.getFilingNumber() == null ? null : "%" + criteria.getFilingNumber() + "%", query, firstCriteria, "LOWER(cases.filingnumber) LIKE LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
-
-                query.append(" AND cases.status NOT IN ('DRAFT_IN_PROGRESS', 'DELETED_DRAFT') ");
+                if (criteria.getSearchNumber() != null && !criteria.getSearchNumber().trim().isEmpty()) {
+                    String searchTerm = "%" + criteria.getSearchNumber().trim() + "%";
+                    addClauseIfRequired(query, firstCriteria);
+                    query.append("(LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cnrnumber) LIKE LOWER(?) OR LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?))");
+                    for (int i = 0; i < 4; i++) {
+                        preparedStmtList.add(searchTerm);
+                        preparedStmtArgList.add(Types.VARCHAR);
+                    }
+                    firstCriteria = false;
+                }
+                addClauseIfRequired(query, firstCriteria);
+                query.append(" cases.status NOT IN ('DRAFT_IN_PROGRESS', 'DELETED_DRAFT') ");
             }
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building case summary search query :: {}", e.toString());
+            log.error("Error while building case summary search query", e);
             throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the case summary search query: " + e.getMessage());
         }
     }
@@ -134,16 +169,31 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addCriteria(criteria.getFilingNumber() == null ? null : "%" + criteria.getFilingNumber() + "%", query, firstCriteria, "LOWER(cases.filingnumber) LIKE LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
-                firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                // firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
-                firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                // firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
-                addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                firstCriteria = addJsonbArrayCriteria(criteria.getSecondaryStage(), query, firstCriteria, "cases.secondaryStage", preparedStmtList, preparedStmtArgList);
+
+                // addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                if (criteria.getPoaHolderIndividualId() != null
+                        || criteria.getAdvocateId() != null
+                        || criteria.getOfficeAdvocateId()!=null) {
+                    firstCriteria = addUserVisibilityCriteria(
+                            criteria.getAdvocateId(),
+                            criteria.getPoaHolderIndividualId(),
+                            criteria.getOfficeAdvocateId(),
+                            preparedStmtList,
+                            preparedStmtArgList,
+                            requestInfo,
+                            query,
+                            firstCriteria);
+                }
             }
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building case details search query :: {}", e.toString());
+            log.error("Error while building case details search query", e);
             throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the case details search query: " + e.getMessage());
         }
     }
@@ -171,13 +221,11 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addListCriteria(criteria.getOutcome(), query, firstCriteria, "cases.outcome", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
-                firstCriteria = addCriteria(criteria.getSubstage(), query, firstCriteria, "cases.substage = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
-
                 firstCriteria = addCaseSearchTextCriteria(criteria, query, firstCriteria, preparedStmtList, preparedStmtArgList);
 
-                firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                firstCriteria = addCasesForCriteria(criteria, preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
-                firstCriteria = addAdvocateCriteriaForListSearch(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), criteria.getOfficeAdvocateId(), criteria.getIsMemberActiveInCase(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                firstCriteria = addJsonbArrayCriteria(criteria.getSecondaryStage(), query, firstCriteria, "cases.secondaryStage", preparedStmtList, preparedStmtArgList);
 
                 firstCriteria = addListCriteria(criteria.getStatus(), query, firstCriteria, "cases.status", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
@@ -185,20 +233,91 @@ public class CaseQueryBuilder {
 
                 addRegistrationDateCriteria(criteria, firstCriteria, query, preparedStmtList, preparedStmtArgList);
 
-                // Filter by isLPRCase if specified
-                if (criteria.getIsLPRCase() != null) {
+                // Filter by lifecycleStatus if specified
+                if (criteria.getLifecycleStatus() != null) {
                     addClauseIfRequired(query, firstCriteria);
-                    query.append("cases.isLPRCase = ?");
-                    preparedStmtList.add(criteria.getIsLPRCase());
-                    preparedStmtArgList.add(Types.BOOLEAN);
+                    query.append("cases.lifecycleStatus = ?");
+                    preparedStmtList.add(criteria.getLifecycleStatus().name());
+                    preparedStmtArgList.add(Types.VARCHAR);
                     firstCriteria = false;
                 }
             }
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building case summary search query :: {}", e.toString());
+            log.error("Error while building case summary search query", e);
             throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the case summary search query: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Routes to the correct query method based on casesFor set by enrichment.
+     * - ADVOCATE      → advocate-specific query (dcr + pending requests)
+     * - POA_LITIGANT  → litigant/POA query
+     * - ALL           → combined: advocate (if set) + litigant + POA
+     * - null          → citizen clerks/office-members pass memberId or officeAdvocateId directly;
+     * falls back to advocateId check, then litigantCriteria
+     */
+    private boolean addCasesForCriteria(CaseSummaryListCriteria criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
+        CasesFor casesFor = criteria.getCasesFor();
+
+        if (CasesFor.ADVOCATE.equals(casesFor)) {
+            return addAdvocateCriteriaForListSearch(
+                    criteria.getAdvocateId(),
+                    criteria.getPoaHolderIndividualId(),
+                    criteria.getOfficeAdvocateId(),
+                    criteria.getIsMemberActiveInCase(),
+                    preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+
+        } else if (CasesFor.POA_LITIGANT.equals(casesFor)) {
+            return addLitigantCriteria(
+                    criteria.getLitigantId(),
+                    criteria.getPoaHolderIndividualId(),
+                    preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+
+        } else if (CasesFor.ALL.equals(casesFor)) {
+            // Advocate user: advocateId + litigantId + poaHolderIndividualId all set
+            // Non-advocate user: only litigantId + poaHolderIndividualId set
+            if (criteria.getAdvocateId() != null && !criteria.getAdvocateId().isEmpty()) {
+                return addAdvocateCriteriaForListSearch(
+                        criteria.getAdvocateId(),
+                        criteria.getPoaHolderIndividualId(),
+                        criteria.getOfficeAdvocateId(),
+                        criteria.getIsMemberActiveInCase(),
+                        preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+            } else {
+                return addLitigantCriteria(
+                        criteria.getLitigantId(),
+                        criteria.getPoaHolderIndividualId(),
+                        preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+            }
+
+        } else {
+            // casesFor not set (citizen clerk/office-member, employee, or system user)
+            // Citizen clerks/office-members pass memberId and officeAdvocateId directly without casesFor
+            // Check memberId/officeAdvocateId first before falling back to advocateId or litigantId
+            boolean hasMember = criteria.getMemberId() != null && !criteria.getMemberId().isEmpty();
+            boolean hasOfficeAdvocate = criteria.getOfficeAdvocateId() != null && !criteria.getOfficeAdvocateId().isEmpty();
+            if (hasMember || hasOfficeAdvocate) {
+                return addAdvocateCriteriaForListSearch(
+                        criteria.getAdvocateId(),
+                        criteria.getPoaHolderIndividualId(),
+                        criteria.getOfficeAdvocateId(),
+                        criteria.getIsMemberActiveInCase(),
+                        preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+            } else if (criteria.getAdvocateId() != null && !criteria.getAdvocateId().isEmpty()) {
+                return addAdvocateCriteriaForListSearch(
+                        criteria.getAdvocateId(),
+                        criteria.getPoaHolderIndividualId(),
+                        criteria.getOfficeAdvocateId(),
+                        criteria.getIsMemberActiveInCase(),
+                        preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+            } else {
+                return addLitigantCriteria(
+                        criteria.getLitigantId(),
+                        criteria.getPoaHolderIndividualId(),
+                        preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+            }
         }
     }
 
@@ -209,32 +328,31 @@ public class CaseQueryBuilder {
         if (officeAdvocateId != null && !officeAdvocateId.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
 
-            if (Boolean.TRUE.equals(isMemberActiveInCase)) {
-                // Member wants to view only cases where they are active members
+            if (!Boolean.FALSE.equals(isMemberActiveInCase)) {
+                // Default (null) and explicit true: only cases where clerk is an active member in aocm for that case
                 query.append("(cases.id IN (" +
-                                " SELECT aocm.case_id" +
-                                " FROM dristi_advocate_office_case_member aocm" +
-                                " WHERE aocm.office_advocate_id = ?" +
-                                " AND aocm.member_user_uuid = ?" +
-                                " AND aocm.case_id = cases.id" +
-                                " AND aocm.is_active = true))" +
-                                " AND (cases.status NOT IN ('DELETED_DRAFT'))"
-                        );
+                        " SELECT aocm.case_id" +
+                        " FROM dristi_advocate_office_case_member aocm" +
+                        " WHERE aocm.office_advocate_id = ?" +
+                        " AND aocm.member_user_uuid = ?" +
+                        " AND aocm.is_active = true))" +
+                        " AND (cases.status NOT IN ('DELETED_DRAFT'))"
+                );
                 preparedStmtList.add(officeAdvocateId);
                 preparedStmtArgList.add(Types.VARCHAR);
                 preparedStmtList.add(userUuid);
                 preparedStmtArgList.add(Types.VARCHAR);
             } else {
-                // Member wants to view all advocate's cases from dcr table
+                // Explicit false: all advocate's cases — clerk is a member of the office (not case-specific)
+                // aocm check confirms clerk belongs to this advocate's office; dcr confirms advocate represents the case
                 query.append("(EXISTS (SELECT 1 FROM dristi_advocate_office_case_member aocm " +
-                           "WHERE aocm.office_advocate_id = ? " +
-                           "AND aocm.member_user_uuid = ? " +
-                           "AND aocm.case_id = cases.id " +
-                           "AND aocm.is_active = true) " +
-                           "AND cases.id IN (" +
-                                " SELECT dcr.case_id" +
-                                " FROM dristi_case_representatives dcr" +
-                                " WHERE dcr.advocateId = ? AND dcr.isactive = true))" +
+                        "WHERE aocm.office_advocate_id = ? " +
+                        "AND aocm.member_user_uuid = ? " +
+                        "AND aocm.is_active = true) " +
+                        "AND cases.id IN (" +
+                        " SELECT dcr.case_id" +
+                        " FROM dristi_case_representatives dcr" +
+                        " WHERE dcr.advocateId = ? AND dcr.isactive = true))" +
                         " AND (cases.status NOT IN ('DELETED_DRAFT'))");
                 preparedStmtList.add(officeAdvocateId);
                 preparedStmtArgList.add(Types.VARCHAR);
@@ -255,15 +373,32 @@ public class CaseQueryBuilder {
                     "        SELECT dcr.case_id" +
                     "        FROM dristi_case_representatives dcr" +
                     "        WHERE dcr.advocateId = ? AND dcr.isactive = true" +
+
                     "        UNION" +
+
+                    "        SELECT litigant.case_id" +
+                    "        FROM dristi_case_litigants litigant" +
+                    "        WHERE litigant.individualId = ? AND litigant.isactive = true" +
+
+                    "        UNION" +
+
                     "        SELECT poaholders.case_id" +
                     "        FROM dristi_case_poaholders poaholders" +
                     "        WHERE poaholders.individual_id = ? AND poaholders.is_active = true))" +
-                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('DELETED_DRAFT'))");
+
+                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) )" +
+                    " AND (cases.status NOT IN ('DELETED_DRAFT'))");
             preparedStmtList.add(advocateId);
             preparedStmtArgList.add(Types.VARCHAR);
+
+// litigant visibility
             preparedStmtList.add(poaHolderIndividualId);
             preparedStmtArgList.add(Types.VARCHAR);
+
+// poa visibility
+            preparedStmtList.add(poaHolderIndividualId);
+            preparedStmtArgList.add(Types.VARCHAR);
+
             preparedStmtList.add(advocateId);
             preparedStmtArgList.add(Types.VARCHAR);
             firstCriteria = false;
@@ -307,9 +442,113 @@ public class CaseQueryBuilder {
         return firstCriteria;
     }
 
+    private boolean addUserVisibilityCriteria(
+            String advocateId,
+            String poaHolderIndividualId,
+            String officeAdvocateId,
+            List<Object> preparedStmtList,
+            List<Integer> preparedStmtArgList,
+            RequestInfo requestInfo,
+            StringBuilder query,
+            boolean firstCriteria) {
+
+        addClauseIfRequired(query, firstCriteria);
+
+        String userUuid = requestInfo.getUserInfo().getUuid();
+
+        query.append("(");
+
+        // Base visibility for everyone (Litigant + POA)
+        query.append("""
+                    cases.id IN (
+                
+                        SELECT litigant.case_id
+                        FROM dristi_case_litigants litigant
+                        WHERE litigant.individualId = ? AND litigant.isactive = true
+                
+                        UNION
+                
+                        SELECT poaholders.case_id
+                        FROM dristi_case_poaholders poaholders
+                        WHERE poaholders.individual_id = ? AND poaholders.is_active = true
+                """);
+
+        preparedStmtList.add(poaHolderIndividualId);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add(poaHolderIndividualId);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        // Advocate visibility
+        if (advocateId != null && !advocateId.isEmpty()) {
+            query.append("""
+                        UNION
+                    
+                        SELECT dcr.case_id
+                        FROM dristi_case_representatives dcr
+                        WHERE dcr.advocateId = ? AND dcr.isactive = true
+                    """);
+
+            preparedStmtList.add(advocateId);
+            preparedStmtArgList.add(Types.VARCHAR);
+        }
+
+        // Clerk visibility
+        if (officeAdvocateId != null && !officeAdvocateId.isEmpty()) {
+            query.append("""
+                        UNION
+                    
+                        SELECT aocm.case_id
+                        FROM dristi_advocate_office_case_member aocm
+                        WHERE aocm.member_user_uuid = ?
+                          AND aocm.office_advocate_id = ?
+                          AND aocm.is_active = true
+                    """);
+            preparedStmtList.add(userUuid);
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(officeAdvocateId);
+            preparedStmtArgList.add(Types.VARCHAR);
+        }
+
+
+        query.append(")");
+
+        // Draft visibility
+        query.append("""
+                    OR (
+                        cases.status = 'DRAFT_IN_PROGRESS'
+                        AND cases.createdby = ?
+                    )
+                """);
+
+        preparedStmtList.add(userUuid);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        // Pending advocate requests only for advocates
+        if (advocateId != null && !advocateId.isEmpty()) {
+
+            query.append("""
+                        OR EXISTS (
+                            SELECT 1
+                            FROM jsonb_array_elements(pendingAdvocateRequests) elem
+                            WHERE elem->>'advocateId' = ?
+                        )
+                    """);
+
+            preparedStmtList.add(advocateId);
+            preparedStmtArgList.add(Types.VARCHAR);
+        }
+
+        query.append(")");
+
+        query.append(" AND cases.status NOT IN ('DELETED_DRAFT')");
+
+        return false;
+    }
+
     private boolean addClerkCriteria(Boolean isClerk, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
 
-        if(Boolean.TRUE.equals(isClerk)){
+        if (Boolean.TRUE.equals(isClerk)) {
             // Clerk: check only via office member table using member_user_uuid
 
             addClauseIfRequired(query, firstCriteria);
@@ -395,15 +634,28 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addListCriteria(criteria.getOutcome(), query, firstCriteria, "cases.outcome", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
-                firstCriteria = addCriteria(criteria.getSubstage(), query, firstCriteria, "cases.substage = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
-
                 firstCriteria = addCaseSearchTextCriteria(criteria, query, firstCriteria, preparedStmtList, preparedStmtArgList);
 
-                firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+//                firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+//
+//                firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+//
+//                firstCriteria = addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                if (criteria.getPoaHolderIndividualId() != null
+                        || criteria.getAdvocateId() != null
+                        || Boolean.TRUE.equals(criteria.getIsClerk())) {
+                    firstCriteria = addUserVisibilityCriteria(
+                            criteria.getAdvocateId(),
+                            criteria.getPoaHolderIndividualId(),
+                            criteria.getOfficeAdvocateId(),
+                            preparedStmtList,
+                            preparedStmtArgList,
+                            requestInfo,
+                            query,
+                            firstCriteria);
+                }
 
-                firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
-
-                firstCriteria = addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                firstCriteria = addJsonbArrayCriteria(criteria.getSecondaryStage(), query, firstCriteria, "cases.secondaryStage", preparedStmtList, preparedStmtArgList);
 
                 firstCriteria = addListCriteria(criteria.getStatus(), query, firstCriteria, "cases.status", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
@@ -414,7 +666,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building case search query :: {}", e.toString());
+            log.error("Error while building case search query", e);
             throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the case search query: " + e.getMessage());
         }
     }
@@ -425,6 +677,36 @@ public class CaseQueryBuilder {
             prepareStatementAndArgumentForListCriteria(itemList, query, str, preparedStmtList, preparedStmtArgList, varchar);
             firstCriteria = false;
         }
+        return firstCriteria;
+    }
+
+    private boolean addJsonbArrayCriteria(
+            List<String> itemList,
+            StringBuilder query,
+            boolean firstCriteria,
+            String jsonbColumn,
+            List<Object> preparedStmtList,
+            List<Integer> preparedStmtArgList) {
+
+        if (itemList != null && !itemList.isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+
+            // Use jsonb_exists_any() function instead of ?| operator
+            // because JDBC interprets ? in ?| as a parameter placeholder
+            query.append("jsonb_exists_any(COALESCE(")
+                    .append(jsonbColumn)
+                    .append(", '[]'::jsonb), ARRAY[");
+
+            query.append(itemList.stream()
+                    .filter(Objects::nonNull)
+                    .map(item -> "'" + item.replace("'", "''") + "'")
+                    .collect(Collectors.joining(",")));
+
+            query.append("])");
+
+            firstCriteria = false;
+        }
+
         return firstCriteria;
     }
 
@@ -533,7 +815,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building litigant search query :: {}", e.toString());
+            log.error("Error while building litigant search query", e);
             throw new CustomException(LITIGANT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the litigant query: " + e.getMessage());
         }
     }
@@ -552,7 +834,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building statute section search query :: {}", e.toString());
+            log.error("Error while building statute section search query", e);
             throw new CustomException(STATUTE_SECTION_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the statue section query: " + e.getMessage());
         }
     }
@@ -573,7 +855,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building representatives search query :: {}", e.toString());
+            log.error("Error while building representatives search query", e);
             throw new CustomException(REPRESENTATIVES_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representative search query: " + e.getMessage());
         }
     }
@@ -594,7 +876,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building poa holder search query :: {}", e.toString());
+            log.error("Error while building poa holder search query", e);
             throw new CustomException(POA_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the poa holder search query: " + e.getMessage());
         }
     }
@@ -615,7 +897,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building representing search query :: {}", e.toString());
+            log.error("Error while building representing search query", e);
             throw new CustomException(REPRESENTING_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representing search query: " + e.getMessage());
         }
     }
@@ -650,7 +932,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building advocate office case member search query :: {}", e.toString());
+            log.error("Error while building advocate office case member search query", e);
             throw new CustomException("ADVOCATE_OFFICE_CASE_MEMBER_SEARCH_QUERY_EXCEPTION", "Exception occurred while building the advocate office case member search query: " + e.getMessage());
         }
     }
@@ -671,7 +953,7 @@ public class CaseQueryBuilder {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while building document search query :: {}", e.toString());
+            log.error("Error while building document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the document query: " + e.getMessage());
         }
     }
@@ -690,7 +972,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building linked case search query :: {}", e.toString());
+            log.error("Error while building linked case search query", e);
             throw new CustomException(LINKED_CASE_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the linked case search query: " + e.getMessage());
         }
     }
@@ -711,7 +993,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building litigant search query :: {}", e.toString());
+            log.error("Error while building litigant search query", e);
             throw new CustomException(LITIGANT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the litigant query: " + e.getMessage());
         }
     }
@@ -730,7 +1012,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building statute section search query :: {}", e.toString());
+            log.error("Error while building statute section search query", e);
             throw new CustomException(STATUTE_SECTION_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the statue section query: " + e.getMessage());
         }
     }
@@ -739,6 +1021,7 @@ public class CaseQueryBuilder {
         try {
             StringBuilder query = new StringBuilder(BASE_REPRESENTATIVES_QUERY);
             query.append(FROM_REPRESENTATIVES_TABLE);
+            // NOTE: Do not join advocates by default here; tests expect only representatives columns.
             if (!ids.isEmpty()) {
                 query.append(" WHERE rep.case_id IN (")
                         .append(ids.stream().map(id -> "?").collect(Collectors.joining(",")))
@@ -751,8 +1034,44 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building representatives search query :: {}", e.toString());
+            log.error("Error while building representatives search query", e);
             throw new CustomException(REPRESENTATIVES_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representative search query: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Returns representatives query with a LEFT JOIN to dristi_advocate to fetch authoritative advocate columns.
+     * This is used by search flows that need the joined advocate fields populated in the row mapper.
+     */
+    public String getRepresentativesSearchQueryWithAdvocateJoin(List<String> ids, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        try {
+            StringBuilder query = new StringBuilder();
+            // select representative columns
+            query.append(BASE_REPRESENTATIVES_QUERY);
+            // select joined advocate columns with aliases expected by the row mapper
+            query.append(
+                    ", da.id as advocate_id, da.tenantid as advocate_tenantid, da.applicationnumber as advocate_applicationnumber, da.status as advocate_status, " +
+                            "da.barregistrationnumber as advocate_barregistrationnumber, da.organisationid as advocate_organisationid, da.individualid as advocate_individualid, da.isactive as advocate_isactive, da.additionaldetails as advocate_additionaldetails"
+            );
+
+            // from representatives with left join to advocates
+            query.append(" ").append(FROM_REPRESENTATIVES_TABLE)
+                    .append(" LEFT JOIN dristi_advocate da ON rep.advocateid = da.id");
+
+            if (!ids.isEmpty()) {
+                query.append(" WHERE rep.case_id IN (")
+                        .append(ids.stream().map(id -> "?").collect(Collectors.joining(",")))
+                        .append(")")
+                        .append(AND)
+                        .append("rep.isactive = true");
+                preparedStmtList.addAll(ids);
+                ids.forEach(i -> preparedStmtArgList.add(Types.VARCHAR));
+            }
+
+            return query.toString();
+        } catch (Exception e) {
+            log.error("Error while building representatives search query with advocate join", e);
+            throw new CustomException(REPRESENTATIVES_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representative search query with advocate join: " + e.getMessage());
         }
     }
 
@@ -772,7 +1091,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building poa holder search query :: {}", e.toString());
+            log.error("Error while building poa holder search query", e);
             throw new CustomException(POA_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the poa holder search query: " + e.getMessage());
         }
     }
@@ -793,7 +1112,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building representing search query :: {}", e.toString());
+            log.error("Error while building representing search query", e);
             throw new CustomException(REPRESENTING_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representing search query: " + e.getMessage());
         }
     }
@@ -812,7 +1131,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building linked case document search query :: {}", e.toString());
+            log.error("Error while building linked case document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the linked case document search query: " + e.getMessage());
         }
     }
@@ -831,7 +1150,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building litigant document search query :: {}", e.toString());
+            log.error("Error while building litigant document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the litigant document search query: " + e.getMessage());
         }
     }
@@ -850,7 +1169,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building representative document search query :: {}", e.toString());
+            log.error("Error while building representative document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representative document search query: " + e.getMessage());
         }
     }
@@ -869,7 +1188,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building poa holder document search query :: {}", e.toString());
+            log.error("Error while building poa holder document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the poa holder document search query: " + e.getMessage());
         }
     }
@@ -888,7 +1207,7 @@ public class CaseQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building representing document search query :: {}", e.toString());
+            log.error("Error while building representing document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representing document search query: " + e.getMessage());
         }
     }

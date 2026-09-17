@@ -71,7 +71,7 @@ class AdvocateClerkQueryBuilderTest {
 
     private void testStatusQuery(String status, String tenantId, int expectedSize) {
         List<Object> preparedStmtList = new ArrayList<>();
-        String query = queryBuilder.getAdvocateClerkSearchQueryByStatus(status, preparedStmtList, new ArrayList<>(), tenantId, limit, offset);
+        String query = queryBuilder.getAdvocateClerkSearchQueryByStatus(null, status, preparedStmtList, new ArrayList<>(), tenantId, limit, offset);
 
         assertNotNull(query);
         assertTrue(query.contains("FROM dristi_advocate_clerk advc"));

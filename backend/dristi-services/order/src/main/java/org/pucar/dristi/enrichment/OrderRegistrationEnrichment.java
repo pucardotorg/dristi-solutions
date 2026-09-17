@@ -14,6 +14,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.MdmsDataConfig;
+import org.pucar.dristi.repository.OrderRepository;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.util.LocalizationUtil;
@@ -43,14 +44,17 @@ public class OrderRegistrationEnrichment {
     private CaseUtil caseUtil;
     private final MdmsDataConfig mdmsDataConfig;
     private final LocalizationUtil localizationUtil;
+    private final OrderRepository repository;
 
-    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, ObjectMapper objectMapper, CaseUtil caseUtil, MdmsDataConfig mdmsDataConfig, LocalizationUtil localizationUtil) {
+
+    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, ObjectMapper objectMapper, CaseUtil caseUtil, MdmsDataConfig mdmsDataConfig, LocalizationUtil localizationUtil, OrderRepository repository) {
         this.idgenUtil = idgenUtil;
         this.configuration = configuration;
         this.objectMapper = objectMapper;
         this.caseUtil = caseUtil;
         this.mdmsDataConfig = mdmsDataConfig;
         this.localizationUtil = localizationUtil;
+        this.repository = repository;
     }
 
     public void enrichOrderRegistration(OrderRequest orderRequest) {
@@ -82,10 +86,10 @@ public class OrderRegistrationEnrichment {
             }
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while enriching order :: {}", e.toString());
+            log.error("Custom Exception occurred while enriching order", e);
             throw e;
         } catch (Exception e) {
-            log.error("Exception occurred while enriching order :: {}", e.toString());
+            log.error("Exception occurred while enriching order", e);
             throw e;
         }
     }
@@ -125,7 +129,7 @@ public class OrderRegistrationEnrichment {
                 });
             }
         } catch (Exception e) {
-            log.error("Error enriching order application upon update :: {}", e.toString());
+            log.error("Error enriching order application upon update", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in order enrichment service during order update process: " + e.getMessage());
         }
     }
@@ -141,6 +145,18 @@ public class OrderRegistrationEnrichment {
             if (COMPOSITE.equalsIgnoreCase(orderRequest.getOrder().getOrderCategory()) && orderRequest.getOrder().getCompositeItems() != null) {
                 Object compositeOrderItem = orderRequest.getOrder().getCompositeItems();
                 ArrayNode arrayNode = objectMapper.convertValue(compositeOrderItem, ArrayNode.class);
+                OrderCriteria orderCriteria = new OrderCriteria();
+                orderCriteria.setFilingNumber(orderRequest.getOrder().getFilingNumber());
+                orderCriteria.setTenantId(orderRequest.getOrder().getTenantId());
+                orderCriteria.setOrderCategory(INTERMEDIATE);
+                orderCriteria.setOrderNumber(orderRequest.getOrder().getOrderNumber());
+                orderCriteria.setCourtId(orderRequest.getOrder().getCourtId());
+
+                List<Order> existingOrders = repository.getOrders(orderCriteria, Pagination.builder().limit(1.0).offSet(0.0).build());
+                String intermediateOrderType = null;
+                if(existingOrders != null && !existingOrders.isEmpty()) {
+                    intermediateOrderType = existingOrders.get(0).getOrderType();
+                }
 
                 if (arrayNode != null && !arrayNode.isEmpty()) {
                     for (int i = 0; i < arrayNode.size(); i++) {
@@ -152,6 +168,9 @@ public class OrderRegistrationEnrichment {
 
                             if (itemNode.has("orderType")) {
                                 String orderType = itemNode.get("orderType").asText();
+                                // ID already assigned above; skip text enrichment — itemText was set when this order was in INTERMEDIATE state, re-enriching would duplicate it
+                                if(intermediateOrderType !=null && intermediateOrderType.equalsIgnoreCase(orderType))
+                                    continue;
 
                                 if (orderType != null && !orderType.equalsIgnoreCase(orderRequest.getOrder().getOrderType()) && itemNode.has("orderSchema")) {
                                     JsonNode orderSchemaNode = itemNode.get("orderSchema");
@@ -173,7 +192,7 @@ public class OrderRegistrationEnrichment {
                 orderRequest.getOrder().setCompositeItems(arrayNode);
             }
         } catch (Exception e) {
-            log.error("Error enriching composite order item id add item :: {}", e.toString());
+            log.error("Error enriching composite order item id add item", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in order enrichment service during add item: " + e.getMessage());
         }
     }
@@ -218,7 +237,7 @@ public String processOrderText(String orderType, String orderSchema, RequestInfo
             return getText(orderSchema, paths, text, requestInfo, tenantId);
         }
     } catch (Exception e) {
-        log.error("Error enriching item text :: {}", e.toString());
+        log.error("Error enriching item text", e);
     }
 
     return null;

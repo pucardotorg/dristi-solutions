@@ -65,7 +65,7 @@ public class AdvocateOfficeRepository {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching member list :: {}", e.toString());
+            log.error("Error while fetching member list", e);
             throw new CustomException(SEARCH_MEMBER_ERR, SEARCH_MEMBER_ERR_MESSAGE + e.getMessage());
         }
     }

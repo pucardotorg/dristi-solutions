@@ -162,6 +162,8 @@ const SummaryModal = ({
       })
       .catch((err) => {
         console.error(err);
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+        console.error("Error ID:", errorId);
       });
   };
 
@@ -185,7 +187,9 @@ const SummaryModal = ({
       );
       setCaseDetails(response?.criteria[0]?.responseList[0]);
     } catch (error) {
-      console.log("error fetching case details", error);
+      console.error("error fetching case details", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      console.error("Error ID:", errorId);
     }
   };
 

@@ -1,10 +1,11 @@
 package org.egov.user.domain.model;
 
 import org.egov.user.domain.exception.InvalidNonLoggedInUserUpdatePasswordRequestException;
+import org.egov.user.domain.model.enums.PasswordUpdateVerificationMode;
 import org.egov.user.domain.model.enums.UserType;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class NonLoggedInUserUpdatePasswordRequestTest {
 
@@ -27,16 +28,48 @@ public class NonLoggedInUserUpdatePasswordRequestTest {
         assertFalse(request.isOtpReferenceAbsent());
     }
 
-    @Test(expected = InvalidNonLoggedInUserUpdatePasswordRequestException.class)
-    public void test_should_throw_exception_when_tenant_id_is_not_present() {
+    @Test
+    public void test_should_not_require_an_otp_when_the_request_is_verified_by_token() {
         final NonLoggedInUserUpdatePasswordRequest request = NonLoggedInUserUpdatePasswordRequest.builder()
-                .tenantId(null)
                 .newPassword("newPassword")
                 .userName("userName")
-                .otpReference("otpReference")
+                .tenantId("ap.public")
+                .type(UserType.CITIZEN)
+                .verificationMode(PasswordUpdateVerificationMode.TOKEN)
                 .build();
 
         request.validate();
+
+        assertFalse(request.isOtpVerified());
+        assertFalse(request.isOtpReferenceAbsent());
+    }
+
+    @Test
+    public void test_should_default_to_otp_verification_when_no_mode_is_given() {
+        final NonLoggedInUserUpdatePasswordRequest request = NonLoggedInUserUpdatePasswordRequest.builder()
+                .newPassword("newPassword")
+                .userName("userName")
+                .tenantId("ap.public")
+                .type(UserType.CITIZEN)
+                .build();
+
+        assertEquals(PasswordUpdateVerificationMode.OTP, request.getVerificationMode());
+        assertTrue(request.isOtpReferenceAbsent());
+        assertThrows(InvalidNonLoggedInUserUpdatePasswordRequestException.class, request::validate);
+    }
+
+    @Test
+    public void test_should_throw_exception_when_tenant_id_is_not_present() {
+        assertThrows(InvalidNonLoggedInUserUpdatePasswordRequestException.class, () -> {
+            final NonLoggedInUserUpdatePasswordRequest request = NonLoggedInUserUpdatePasswordRequest.builder()
+                    .tenantId(null)
+                    .newPassword("newPassword")
+                    .userName("userName")
+                    .otpReference("otpReference")
+                    .build();
+
+            request.validate();
+        });
     }
 
     @Test
@@ -51,16 +84,18 @@ public class NonLoggedInUserUpdatePasswordRequestTest {
         assertTrue(request.isTenantIdAbsent());
     }
 
-    @Test(expected = InvalidNonLoggedInUserUpdatePasswordRequestException.class)
+    @Test
     public void test_should_throw_exception_when_new_password_is_not_present() {
-        final NonLoggedInUserUpdatePasswordRequest request = NonLoggedInUserUpdatePasswordRequest.builder()
-                .tenantId("tenantId")
-                .newPassword(null)
-                .userName("userName")
-                .otpReference("otpReference")
-                .build();
+        assertThrows(InvalidNonLoggedInUserUpdatePasswordRequestException.class, () -> {
+            final NonLoggedInUserUpdatePasswordRequest request = NonLoggedInUserUpdatePasswordRequest.builder()
+                    .tenantId("tenantId")
+                    .newPassword(null)
+                    .userName("userName")
+                    .otpReference("otpReference")
+                    .build();
 
-        request.validate();
+            request.validate();
+        });
     }
 
     @Test
@@ -75,16 +110,18 @@ public class NonLoggedInUserUpdatePasswordRequestTest {
         assertTrue(request.isNewPasswordAbsent());
     }
 
-    @Test(expected = InvalidNonLoggedInUserUpdatePasswordRequestException.class)
+    @Test
     public void test_should_throw_exception_when_mobile_number_is_not_present() {
-        final NonLoggedInUserUpdatePasswordRequest request = NonLoggedInUserUpdatePasswordRequest.builder()
-                .tenantId("tenantId")
-                .newPassword("newPassword")
-                .userName(null)
-                .otpReference("otpReference")
-                .build();
+        assertThrows(InvalidNonLoggedInUserUpdatePasswordRequestException.class, () -> {
+            final NonLoggedInUserUpdatePasswordRequest request = NonLoggedInUserUpdatePasswordRequest.builder()
+                    .tenantId("tenantId")
+                    .newPassword("newPassword")
+                    .userName(null)
+                    .otpReference("otpReference")
+                    .build();
 
-        request.validate();
+            request.validate();
+        });
     }
 
     @Test
@@ -99,16 +136,18 @@ public class NonLoggedInUserUpdatePasswordRequestTest {
         assertTrue(request.isUsernameAbsent());
     }
 
-    @Test(expected = InvalidNonLoggedInUserUpdatePasswordRequestException.class)
+    @Test
     public void test_should_throw_exception_when_otp_reference_is_not_present() {
-        final NonLoggedInUserUpdatePasswordRequest request = NonLoggedInUserUpdatePasswordRequest.builder()
-                .tenantId("tenantId")
-                .newPassword("newPassword")
-                .userName("userName")
-                .otpReference(null)
-                .build();
+        assertThrows(InvalidNonLoggedInUserUpdatePasswordRequestException.class, () -> {
+            final NonLoggedInUserUpdatePasswordRequest request = NonLoggedInUserUpdatePasswordRequest.builder()
+                    .tenantId("tenantId")
+                    .newPassword("newPassword")
+                    .userName("userName")
+                    .otpReference(null)
+                    .build();
 
-        request.validate();
+            request.validate();
+        });
     }
 
     @Test

@@ -1,4 +1,6 @@
-import { BackButton, FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { BackButton, Header, Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useEffect, useMemo, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
@@ -16,17 +18,9 @@ import {
   sendBackCase,
 } from "../../citizen/FileCase/Config/admissionActionConfig";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
-import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
+import { getAdvocates, transformCaseDataForFetching } from "../../citizen/FileCase/EfilingValidationUtils";
 import AdmissionActionModal from "./AdmissionActionModal";
-import {
-  advocateCaseFilingStatusTypes,
-  DateUtils,
-  getAuthorizedUuid,
-  getCaseEditAllowedAssignees,
-  getFilingType,
-  runComprehensiveSanitizer,
-} from "../../../Utils";
-import { documentTypeMapping } from "../../citizen/FileCase/Config";
+import { advocateCaseFilingStatusTypes, DateUtils, getAuthorizedUuid, getCaseEditAllowedAssignees, runComprehensiveSanitizer } from "../../../Utils";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
@@ -87,7 +81,7 @@ const delayCondonationTextStyle = {
 function CaseFileAdmission({ t, path }) {
   const [isDisabled, setIsDisabled] = useState(false);
   const history = useHistory();
-  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [modalInfo, setModalInfo] = useState(null);
   const [submitModalInfo, setSubmitModalInfo] = useState(null);
@@ -131,7 +125,13 @@ function CaseFileAdmission({ t, path }) {
     caseId,
     Boolean(caseId)
   );
-  const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || null, [caseFetchResponse]);
+
+  const caseDetails = useMemo(() => {
+    const caseDetails = structuredClone(caseFetchResponse?.criteria?.[0]?.responseList?.[0] || {});
+    const updatedCaseData = transformCaseDataForFetching(caseDetails, ["witnessDetails", "advocateDetails"]);
+    return updatedCaseData;
+  }, [caseFetchResponse]);
+
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
@@ -141,8 +141,9 @@ function CaseFileAdmission({ t, path }) {
     return allAdvocates?.[caseDetails?.litigants?.find((litigant) => litigant?.partyType === "complainant.primary")?.additionalDetails?.uuid];
   }, [allAdvocates, caseDetails]);
 
+  // Currently for DCA application through efiling, primary complainant is targeted as per current flow.
   const complainantPrimaryUUId = useMemo(
-    () => caseDetails?.litigants?.find((item) => item?.partyType === "complainant.primary").additionalDetails?.uuid || "",
+    () => caseDetails?.litigants?.find((item) => item?.partyType === "complainant.primary")?.additionalDetails?.uuid || "",
     [caseDetails]
   );
 
@@ -157,12 +158,6 @@ function CaseFileAdmission({ t, path }) {
   });
 
   const filingNumber = useMemo(() => caseDetails?.filingNumber, [caseDetails?.filingNumber]);
-
-  const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
-    { name: "FilingType" },
-  ]);
-
-  const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "CaseFiling"), [filingTypeData?.FilingType]);
 
   const { data: hearingDetails } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -320,13 +315,7 @@ function CaseFileAdmission({ t, path }) {
                   return {
                     ...input,
                     data:
-                      input?.key === "witnessDetails"
-                        ? caseDetails?.witnessDetails?.map((witness) => {
-                            return {
-                              data: witness,
-                            };
-                          }) || {}
-                        : input?.key === "paymentReceipt"
+                      input?.key === "paymentReceipt"
                         ? [
                             {
                               data: {
@@ -484,9 +473,8 @@ function CaseFileAdmission({ t, path }) {
               setIsDisabled(true);
               await createDcaAndPendingTasks();
             } catch (error) {
-              setShowErrorToast("INTERNAL_ERROR_OCCURRED");
               setIsDisabled(false);
-              throw new Error("Delay condonation application creation failed: " + error.message);
+              throw error;
             }
           }
           await handleRegisterCase();
@@ -494,7 +482,8 @@ function CaseFileAdmission({ t, path }) {
           setCreateAdmissionOrder(true);
           setLoader(false);
         } catch (error) {
-          setShowErrorToast("INTERNAL_ERROR_OCCURRED");
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("UNABLE_TO_REGISTER_CASE"), error: true, errorId });
           console.error("some error occurred:", error);
           setLoader(false);
         }
@@ -566,29 +555,15 @@ function CaseFileAdmission({ t, path }) {
     setModalInfo({ type: "sendCaseBack", page: 0 });
   };
 
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
-
   const handleSendCaseBack = (props) => {
-    updateCaseDetails("SEND_BACK", { comment: props?.commentForLitigant }).then((res) => {
-      setModalInfo({ ...modalInfo, page: 1 });
-    });
-  };
-
-  const fetchBasicUserInfo = async () => {
-    const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
-      {
-        Individual: {
-          userUuid: [caseDetails?.auditDetails?.createdBy],
-        },
-      },
-      { tenantId, limit: 1000, offset: 0 },
-      "",
-      caseDetails?.auditDetails?.createdBy
-    );
-
-    return individualData?.Individual?.[0]?.individualId;
+    updateCaseDetails("SEND_BACK", { comment: props?.commentForLitigant })
+      .then(() => {
+        setModalInfo({ ...modalInfo, page: 1 });
+      })
+      .catch((error) => {
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("CASE_UPDATE_FAILED"), error: true, errorId });
+      });
   };
 
   const efilingCreatorMainUser = useMemo(() => {
@@ -606,104 +581,9 @@ function CaseFileAdmission({ t, path }) {
   const handleRegisterCase = async () => {
     setIsDisabled(true);
     setCaseADmitLoader(true);
-    const individualId = await fetchBasicUserInfo();
-    let documentList = [];
-    documentList = [
-      ...documentList,
-      ...caseDetails?.caseDetails?.chequeDetails?.formdata?.map((form) => ({
-        document: form?.data?.bouncedChequeFileUpload?.document,
-        key: "bouncedChequeFileUpload",
-      })),
-      ...caseDetails?.caseDetails?.chequeDetails?.formdata?.map((form) => ({
-        document: form?.data?.depositChequeFileUpload?.document,
-        key: "depositChequeFileUpload",
-      })),
-      ...caseDetails?.caseDetails?.chequeDetails?.formdata?.map((form) => ({
-        document: form?.data?.returnMemoFileUpload?.document,
-        key: "returnMemoFileUpload",
-      })),
-      ...caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.map((form) => ({
-        document: form?.data?.debtLiabilityFileUpload?.document,
-        key: "debtLiabilityFileUpload",
-      })),
-      ...caseDetails?.caseDetails?.demandNoticeDetails?.formdata?.map((form) => ({
-        document: form?.data?.legalDemandNoticeFileUpload?.document,
-        key: "legalDemandNoticeFileUpload",
-      })),
-      ...caseDetails?.caseDetails?.demandNoticeDetails?.formdata?.map((form) => ({
-        document: form?.data?.proofOfAcknowledgmentFileUpload?.document,
-        key: "proofOfAcknowledgmentFileUpload",
-      })),
-      ...caseDetails?.caseDetails?.demandNoticeDetails?.formdata?.map((form) => ({
-        document: form?.data?.proofOfDispatchFileUpload?.document,
-        key: "proofOfDispatchFileUpload",
-      })),
-      ...caseDetails?.caseDetails?.demandNoticeDetails?.formdata?.map((form) => ({
-        document: form?.data?.proofOfReplyFileUpload?.document,
-        key: "proofOfReplyFileUpload",
-      })),
-      ...caseDetails?.additionalDetails?.prayerSwornStatement?.formdata?.map((form) => ({
-        document: form?.data?.swornStatement?.document,
-        key: "swornStatement",
-      })),
-      ...caseDetails?.additionalDetails?.respondentDetails?.formdata?.map((form) => ({
-        document: form?.data?.inquiryAffidavitFileUpload?.document,
-        key: "inquiryAffidavitFileUpload",
-      })),
-      ...caseDetails?.additionalDetails?.advocateDetails?.formdata?.map((form) => ({
-        document: form?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload
-          ? form?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload?.document
-          : form?.data?.multipleAdvocatesAndPip?.pipAffidavitFileUpload?.document,
-        key: form?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload ? "vakalatnamaFileUpload" : "pipAffidavitFileUpload",
-      })),
-    ].flat();
 
-    updateCaseDetails("REGISTER", formdata).then(async (res) => {
-      await Promise.all(
-        documentList
-          ?.filter((data) => data)
-          ?.map(async (data) => {
-            data?.document?.forEach(async (docFile) => {
-              if (docFile?.fileStore) {
-                try {
-                  await DRISTIService.createEvidence({
-                    artifact: {
-                      artifactType: documentTypeMapping[data?.key],
-                      sourceType: "COMPLAINANT",
-                      sourceID: individualId,
-                      asUser: efilingCreatorMainUser, // Sending uuid of the main advocate even if clerk/jr. adv has filed/edited the case.
-                      caseId: caseDetails?.id,
-                      filingNumber: caseDetails?.filingNumber,
-                      cnrNumber: res?.cases?.[0]?.cnrNumber,
-                      tenantId,
-                      comments: [],
-                      file: {
-                        documentType: docFile?.fileType || docFile?.documentType,
-                        fileStore: docFile?.fileStore,
-                        fileName: docFile?.fileName,
-                        documentName: docFile?.documentName,
-                      },
-                      filingType: filingType,
-                      workflow: {
-                        action: "TYPE DEPOSITION",
-                        documents: [
-                          {
-                            documentType: docFile?.fileType || docFile?.documentType,
-                            fileName: docFile?.fileName,
-                            documentName: docFile?.documentName,
-                            fileStoreId: docFile?.fileStore,
-                          },
-                        ],
-                      },
-                    },
-                  });
-                } catch (error) {
-                  console.error(`Error creating evidence for document ${docFile.fileName}:`, error);
-                }
-              }
-            });
-          })
-      );
+    try {
+      const res = await updateCaseDetails("REGISTER", formdata);
       setCaseADmitLoader(false);
       setSubmitModalInfo({
         ...registerCaseConfig,
@@ -723,7 +603,16 @@ function CaseFileAdmission({ t, path }) {
       setModalInfo({ ...modalInfo, page: 4 });
       setIsDisabled(false);
       setShowModal(true);
-    });
+    } catch (error) {
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("CASE_UPDATE_FAILED"), error: true, errorId });
+      setCaseADmitLoader(false);
+      setIsDisabled(false);
+      const taggedError = new Error(error?.message || "CASE_UPDATE_FAILED");
+      taggedError.isRegisterCaseError = true;
+      taggedError.originalError = error;
+      throw taggedError;
+    }
   };
 
   const isDelayCondonationApplicable = useMemo(
@@ -886,6 +775,8 @@ function CaseFileAdmission({ t, path }) {
       })
       .catch((error) => {
         console.error("Error while creating order", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ISSUE_IN_HEARING_UPDATE"), error: true, errorId });
       });
   };
 
@@ -974,7 +865,10 @@ function CaseFileAdmission({ t, path }) {
           `/${window.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       })
-      .catch((err) => {});
+      .catch((err) => {
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ISSUE_IN_HEARING_UPDATE"), error: true, errorId });
+      });
   };
 
   const handleDownloadPdf = () => {
@@ -982,7 +876,8 @@ function CaseFileAdmission({ t, path }) {
       caseDetails?.documents?.find((doc) => doc?.key === "case.complaint.signed")?.fileStore || caseDetails?.additionalDetails?.signedCaseDocument;
 
     if (fileStoreId) {
-      downloadPdf(tenantId, fileStoreId);
+      const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Complaint`;
+      downloadPdf(tenantId, fileStoreId, name);
       return;
     } else {
       console.error("No fileStoreId available for download.");
@@ -1000,7 +895,7 @@ function CaseFileAdmission({ t, path }) {
     );
   }
 
-  if (isLoading || isWorkFlowLoading || isLoader || caseAdmitLoader || isApplicationLoading || isFilingTypeLoading) {
+  if (isLoading || isWorkFlowLoading || isLoader || caseAdmitLoader || isApplicationLoading) {
     return <Loader />;
   }
   const scrollToHeading = (heading) => {
@@ -1100,7 +995,16 @@ function CaseFileAdmission({ t, path }) {
                   noBreakLine
                   skipStyle={{ position: "fixed", left: "20px", bottom: "18px", color: "#007E7E", fontWeight: "700" }}
                 />
-                {showErrorToast && <Toast error={true} label={t(showErrorToast)} isDleteBtn={true} onClose={closeToast} />}
+                {showToast && (
+                  <CustomToast
+                    error={showToast?.error}
+                    label={showToast?.label}
+                    errorId={showToast?.errorId}
+                    onClose={() => setShowToast(null)}
+                    duration={showToast?.errorId ? 7000 : 5000}
+                    style={{ zIndex: 10001 }}
+                  />
+                )}
                 {showScheduleHearingModal && (
                   <ScheduleHearing
                     setUpdateCounter={setUpdateCounter}

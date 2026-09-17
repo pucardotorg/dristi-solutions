@@ -22,7 +22,7 @@ participant PersisterSvc as P #lightgreen
 Database PostgreSQL as DB #gray
 end box
 
-note right of J: Judge has logged in and picked a case for which order needs to be passed
+note right of J: Judge has logged in and picked a case for which an Order needs to be passed
 J->OU: Fill in the Order details
 
 OU->OS++: Create Order
@@ -84,9 +84,10 @@ opt ordertype = bail
 end
 OS->W++: update Order status
 return Order status 'Published'
-return 200 order updated
 OS-> K++: Push Order payload to topic
 return
+return 200 (success). order updated
+
 P-> K: Read payload
 P-> DB: Create records in DB
 @endum

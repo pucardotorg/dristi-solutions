@@ -49,6 +49,9 @@ public class CourtCase {
 	@JsonProperty("isActive")
 	private Boolean isActive = true;
 
+	@JsonProperty("secondaryStage")
+	private List<String> secondaryStage = new ArrayList<>();
+
 	@JsonProperty("caseDescription")
 	//@Size(min = 2, max = 10000)
 	private String caseDescription = null;

@@ -141,6 +141,7 @@ public class ESignService {
         String tenantId = eSignParameter.getTenantId();
         String response = eSignParameter.getResponse();
 
+        long start = System.currentTimeMillis();
         try {
             log.info("Method=signDocWithDigitalSignature ,Result=InProgress, filestoreId:{},tenantId:{}", fileStoreId, tenantId);
             Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, tenantId);
@@ -157,6 +158,7 @@ public class ESignService {
                     .eSignParameter(eSignDetails).requestInfo(request.getRequestInfo()).build();
 
             producer.push(configuration.getEsignUpdateTopic(), eSignRequest);
+            pushHealthStatus("UP", System.currentTimeMillis() - start, "Signed callback processed for txnId=" + txnId);
 
             log.info("Method=signDocWithDigitalSignature ,Result=Success");
             return signedFileStoreId;
@@ -165,12 +167,29 @@ public class ESignService {
             eSignDetails.setResponseBlob(eSignParameter);
             eSignDetails.setStatus(STATUS_FAILURE);
             eSignDetails.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
-            
+
             ESignRequest eSignRequest = ESignRequest.builder()
                     .eSignParameter(eSignDetails).requestInfo(request.getRequestInfo()).build();
             producer.push(configuration.getEsignUpdateTopic(), eSignRequest);
-            
+            pushHealthStatus("DOWN", System.currentTimeMillis() - start, e.getMessage());
+
             throw new CustomException("E_SIGN_FAILURE", "E-signature process failed: " + e.getMessage());
+        }
+    }
+
+    private void pushHealthStatus(String status, long elapsedMs, String message) {
+        try {
+            HealthStatusEvent event = HealthStatusEvent.builder()
+                    .serviceName("ESIGN")
+                    .serviceUrl("esignservice.cdac.in")
+                    .lastStatus(status)
+                    .lastUpdatedTime(System.currentTimeMillis())
+                    .responseTimeMs(elapsedMs)
+                    .message(message)
+                    .build();
+            producer.push(configuration.getHealthStatusTopic(), event);
+        } catch (Exception e) {
+            log.error("Failed to push ESIGN health status to kafka: {}", e.getMessage(), e);
         }
     }
 

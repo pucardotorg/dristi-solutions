@@ -23,6 +23,7 @@ export const CaseWorkflowState = {
   PENDING_RE_E_SIGN: "PENDING_RE_E-SIGN",
   PENDING_SIGN: "PENDING_SIGN",
   PENDING_RE_SIGN: "PENDING_RE_SIGN",
+  FILING: "FILING",
 };
 
 export const CaseWorkflowAction = {

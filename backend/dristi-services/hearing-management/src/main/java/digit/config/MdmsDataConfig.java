@@ -73,7 +73,7 @@ public class MdmsDataConfig {
                     .collect(Collectors.toList());
 
         } catch (Exception e) {
-            log.error("Error while calling mdms :: {}",e.getMessage());
+            log.error("Error while calling mdms", e);
         }
 
         return new ArrayList<>();

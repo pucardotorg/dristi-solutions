@@ -6,7 +6,7 @@ import NameListWithModal from "../../../components/NameListWithModal";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { RightArrow } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { useTranslation } from "react-i18next";
-import { DateUtils, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, getAuthorizedUuid, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 
 const JoinCaseSuccess = ({
@@ -51,7 +51,7 @@ const JoinCaseSuccess = ({
         {
           key: "CASE_NUMBER",
           value:
-            (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+            (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
             caseDetails?.courtCaseNumber ||
             caseDetails?.cmpNumber ||
             caseDetails?.filingNumber,

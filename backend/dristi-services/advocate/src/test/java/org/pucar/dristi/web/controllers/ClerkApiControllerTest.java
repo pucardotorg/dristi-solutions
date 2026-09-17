@@ -69,13 +69,13 @@ import static org.mockito.Mockito.when;
         userInfo.setType("EMPLOYEE");
         userInfo.setUuid(UUID.randomUUID().toString());
         requestInfo.setUserInfo(userInfo);
-        AdvocateSimpleSearchRequest advocateSimpleSearchRequest = new AdvocateSimpleSearchRequest();
-        advocateSimpleSearchRequest.setRequestInfo(requestInfo);
+        AdvocateClerkSimpleSearchRequest advocateClerkSimpleSearchRequest = new AdvocateClerkSimpleSearchRequest();
+        advocateClerkSimpleSearchRequest.setRequestInfo(requestInfo);
 
-        when(advocateService.searchAdvocateClerkApplicationsByStatus(requestInfo, status, tenantId, 10, 0)).thenReturn(advocateList);
+        when(advocateService.searchAdvocateClerkApplicationsByStatus(advocateClerkSimpleSearchRequest, status, tenantId, 10, 0)).thenReturn(advocateList);
         when(responseInfoFactory.createResponseInfoFromRequestInfo(null, true)).thenReturn(new ResponseInfo());
 
-        ResponseEntity<AdvocateClerkResponse> responseEntity = advocateApiController.clerkV1StatusSearchPost(status, tenantId, 10, 0, advocateSimpleSearchRequest);
+        ResponseEntity<AdvocateClerkResponse> responseEntity = advocateApiController.clerkV1StatusSearchPost(status, tenantId, 10, 0, advocateClerkSimpleSearchRequest);
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals(advocateList, responseEntity.getBody().getClerks());

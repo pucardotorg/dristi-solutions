@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static java.lang.String.format;
@@ -22,8 +23,16 @@ import static java.lang.String.format;
 public class OtpSMSRepository {
 
     private static final String LOCALIZATION_KEY_REGISTER_SMS = "sms.register.otp.msg";
+    private static final String LOCALIZATION_CTC_APPLICATION_SMS = "sms.ctc.application.otp.msg";
     private static final String LOCALIZATION_KEY_LOGIN_SMS = "sms.login.otp.msg";
     private static final String LOCALIZATION_KEY_PWD_RESET_SMS = "sms.pwd.reset.otp.msg";
+
+    private static final Map<String, String> DEFAULT_MESSAGES = new HashMap<String, String>() {{
+        put(LOCALIZATION_KEY_REGISTER_SMS, "High Court of Kerala, Your OTP for mobile number verification is %s. Do not share this code with anyone.");
+        put(LOCALIZATION_KEY_LOGIN_SMS, "Dear Citizen, Your Login OTP is %s.");
+        put(LOCALIZATION_KEY_PWD_RESET_SMS, "Dear Citizen, Your OTP for recovering password is %s.");
+        put(LOCALIZATION_CTC_APPLICATION_SMS, "Hello,\nPlease use the OTP %s to verify your mobile number and file/track application for certified true copy on oncourts.kerala.gov.in.\n- ON Courts");
+    }};
 
     @Value("${expiry.time.for.otp: 4000}")
     private long maxExecutionTime=2000L;
@@ -36,6 +45,15 @@ public class OtpSMSRepository {
 
     @Value("${egov.register.sms.template.id}")
     private String registerTemplateId;
+
+    @Value("${egov.ctc.application.sms.template.id}")
+    private String ctcApplicationTemplateId;
+
+    @Value("${egov.pwd.reset.sms.template.id}")
+    private String pwdResetTemplateId;
+
+    @Value("${egov.pwd.reset.sms.localization.code}")
+    private String pwdResetLocalizationCode;
 
     private CustomKafkaTemplate<String, SMSRequest> kafkaTemplate;
     private String smsTopic;
@@ -60,7 +78,7 @@ public class OtpSMSRepository {
         SMSRequest smsRequest = SMSRequest.builder()
                 .mobileNumber(otpRequest.getMobileNumber())
                 .tenantId(otpRequest.getTenantId())
-                .templateId(otpRequest.isLoginRequestType() ? templateId : registerTemplateId)
+                .templateId(getTemplateId(otpRequest))
                 .contentType("TEXT")
                 .category(Category.OTP)
                 .locale("en_IN")
@@ -68,6 +86,16 @@ public class OtpSMSRepository {
                 .message(message).build();
         String updatedTopic = centralInstanceUtil.getStateSpecificTopicName(otpRequest.getTenantId(), smsTopic);
         kafkaTemplate.send(updatedTopic, smsRequest);
+    }
+
+    private String getTemplateId(OtpRequest otpRequest) {
+        if (otpRequest.isLoginRequestType())
+            return templateId;
+        if (otpRequest.isCTCApplicationLoginRequestType() || otpRequest.isCTCApplicationRegisterRequestType())
+            return ctcApplicationTemplateId;
+        if (otpRequest.isRegistrationRequestType())
+            return registerTemplateId;
+        return pwdResetTemplateId;
     }
 
     private String getMessage(String otpNumber, OtpRequest otpRequest) {
@@ -78,22 +106,27 @@ public class OtpSMSRepository {
     private String getMessageFormat(OtpRequest otpRequest) {
         String tenantId = getRequiredTenantId(otpRequest.getTenantId());
         Map<String, String> localisedMsgs = localizationService.getLocalisedMessages(tenantId, "en_IN", "egov-user");
-        if (localisedMsgs.isEmpty()) {
+        if (localisedMsgs.isEmpty())
             log.info("Localization Service didn't return any msgs so using default...");
-            localisedMsgs.put(LOCALIZATION_KEY_REGISTER_SMS, "High Court of Kerala, Your OTP for mobile number verification is %s. Do not share this code with anyone.");
-            localisedMsgs.put(LOCALIZATION_KEY_LOGIN_SMS, "Dear Citizen, Your Login OTP is %s.");
-            localisedMsgs.put(LOCALIZATION_KEY_PWD_RESET_SMS, "Dear Citizen, Your OTP for recovering password is %s.");
-        }
-        String message = null;
 
-        if (otpRequest.isRegistrationRequestType())
-            message = localisedMsgs.get(LOCALIZATION_KEY_REGISTER_SMS);
-        else if (otpRequest.isLoginRequestType())
-            message = localisedMsgs.get(LOCALIZATION_KEY_LOGIN_SMS);
-        else
-            message = localisedMsgs.get(LOCALIZATION_KEY_PWD_RESET_SMS);
+        String localizationCode = getLocalizationCode(otpRequest);
+        String message = localisedMsgs.get(localizationCode);
+        if (message == null) {
+            log.info("No localised msg found for {} so using default...", localizationCode);
+            message = DEFAULT_MESSAGES.getOrDefault(localizationCode, DEFAULT_MESSAGES.get(LOCALIZATION_KEY_LOGIN_SMS));
+        }
 
         return message;
+    }
+
+    private String getLocalizationCode(OtpRequest otpRequest) {
+        if (otpRequest.isRegistrationRequestType())
+            return LOCALIZATION_KEY_REGISTER_SMS;
+        if (otpRequest.isLoginRequestType())
+            return LOCALIZATION_KEY_LOGIN_SMS;
+        if (otpRequest.isCTCApplicationLoginRequestType() || otpRequest.isCTCApplicationRegisterRequestType())
+            return LOCALIZATION_CTC_APPLICATION_SMS;
+        return pwdResetLocalizationCode;
     }
 
     /**

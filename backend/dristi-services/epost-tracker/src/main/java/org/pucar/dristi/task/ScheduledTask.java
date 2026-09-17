@@ -121,7 +121,7 @@ public class ScheduledTask {
                 log.warn("Excel filestore upload returned null fileStoreId; proceeding without attachment");
             }
         } catch (Exception ex) {
-            log.error("Failed to upload Excel to filestore: {}", ex.getMessage(), ex);
+            log.error("Failed to upload Excel to filestore", ex);
         }
 
         // Resolve recipients
@@ -194,7 +194,7 @@ public class ScheduledTask {
             log.info("Uploaded PDF to filestore with id {}", fileStoreId);
             return fileStoreId;
         } catch (Exception e) {
-            log.error("Failed to generate/upload PDF: {}", e.getMessage(), e);
+            log.error("Failed to generate/upload PDF", e);
             return null;
         }
     }

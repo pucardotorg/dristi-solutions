@@ -127,7 +127,7 @@ public class DiaryEntryService {
             log.info("operation=bulkDiaryEntry, status=SUCCESS");
             return addedEntries;
         } catch (Exception e) {
-            log.error("Error adding bulk diary entries: {}", e.getMessage());
+            log.error("Error adding bulk diary entries", e);
             throw new CustomException("Error adding bulk diary entries.", e.getMessage());
         }
     }

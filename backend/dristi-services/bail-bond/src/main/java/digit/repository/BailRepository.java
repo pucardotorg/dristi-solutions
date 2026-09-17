@@ -76,7 +76,7 @@ public class BailRepository {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching bail list {}", e.getMessage());
+            log.error("Error while fetching bail list", e);
             throw new CustomException("BAIL_SEARCH_ERR", "Error while fetching bail list: " + e.getMessage());
         }
     }

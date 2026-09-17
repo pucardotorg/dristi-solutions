@@ -71,7 +71,7 @@ public class HearingRegistrationEnrichment {
             log.error("Custom Exception occurred while Enriching hearing");
             throw e;
         } catch (Exception e) {
-            log.error("Error enriching hearing application: {}", e.getMessage());
+            log.error("Error enriching hearing application", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error hearing in enrichment service: " + e.getMessage());
         }
 
@@ -98,7 +98,7 @@ public class HearingRegistrationEnrichment {
             enrichHearingAttendees(hearingRequest);
             enrichHearingDuration(hearingRequest);
         } catch (Exception e) {
-            log.error("Error enriching hearing application upon update: {}", e.getMessage());
+            log.error("Error enriching hearing application upon update", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in hearing enrichment service during hearing update process: " + e.getMessage());
         }
     }
@@ -115,7 +115,7 @@ public class HearingRegistrationEnrichment {
                 });
             }
         } catch (Exception e) {
-            log.error("Error enriching hearing attendees upon update: {}", e.getMessage());
+            log.error("Error enriching hearing attendees upon update", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in hearing enrichment service during hearing update process: " + e.getMessage());
         }
     }
@@ -187,7 +187,7 @@ public class HearingRegistrationEnrichment {
 
             hearingRequest.getHearing().setHearingDurationInMillis(hearingDuration);
         } catch (Exception e) {
-            log.error("Error enriching hearing duration: {}", e.getMessage());
+            log.error("Error enriching hearing duration", e);
         }
 
     }

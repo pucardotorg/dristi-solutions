@@ -17,7 +17,7 @@ public class CtcApplicationQueryBuilder {
             SELECT id, ctc_application_number, tenant_id, case_number, case_title, filing_number, cnr_number, court_id, applicant_name, mobile_number, is_party_to_case, party_designation,affidavit_document, documents, selected_case_bundle, case_bundles, total_pages, status, date_of_application_approval, judge_comments, payment_receipt, created_by, last_modified_by, created_time, last_modified_time FROM dristi_ctc_applications ctc""";
 
     private static final String COUNT_QUERY = """
-        SELECT COUNT(*) 
+        SELECT COUNT(*)
         FROM dristi_ctc_applications
         """;
 
@@ -42,7 +42,7 @@ public class CtcApplicationQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building ctc application search query :: {}", e.toString());
+            log.error("Error while building ctc application search query", e);
             throw new CustomException("CTC_SEARCH_QUERY_EXCEPTION", "Exception occurred while building the ctc application search query: " + e.getMessage());
         }
     }

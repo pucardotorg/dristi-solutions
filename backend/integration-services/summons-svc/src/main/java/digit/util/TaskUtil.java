@@ -68,10 +68,22 @@ public class TaskUtil {
     }
 
     public TaskResponse callUploadDocumentTask(TaskRequest taskRequest) {
+        return callUploadDocumentTask(taskRequest, false);
+    }
+
+    /**
+     * Uploads the generated document onto the task. When {@code override} is true the task service
+     * replaces the task's existing generated/signed/sent documents with the uploaded one (used by the
+     * warrant-reissue regeneration); otherwise the document is appended.
+     */
+    public TaskResponse callUploadDocumentTask(TaskRequest taskRequest, boolean override) {
         try {
             StringBuilder uri = new StringBuilder();
             uri.append(config.getTaskServiceHost())
                     .append(config.getTaskServiceUpdateDocumentEndpoint());
+            if (override) {
+                uri.append("?override=true");
+            }
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);

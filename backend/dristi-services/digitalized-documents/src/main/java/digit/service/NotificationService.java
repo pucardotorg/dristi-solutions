@@ -70,6 +70,8 @@ public class NotificationService {
             case SIGN_EXAMINATION_DOCUMENT -> config.getExaminationSignTemplateId();
             case SIGN_PLEA_DOCUMENT -> config.getPleaSignTemplateId();
             case SIGN_MEDIATION_DOCUMENT -> config.getMediationSignTemplateId();
+            case CLIENT_EXAMINATION_ESIGN -> config.getClientExaminationEsignTemplateId();
+            case CLIENT_PLEA_ESIGN -> config.getClientPleaEsignTemplateId();
             default -> null;
         };
 
@@ -92,7 +94,7 @@ public class NotificationService {
             codes = JsonPath.read(result, NOTIFICATION_LOCALIZATION_CODES_JSONPATH);
             messages = JsonPath.read(result, NOTIFICATION_LOCALIZATION_MSGS_JSONPATH);
         } catch (Exception e) {
-            log.error("Exception while fetching from localization: " + e);
+            log.error("Exception while fetching from localization", e);
         }
         if (null != result) {
             for (int i = 0; i < codes.size(); i++) {

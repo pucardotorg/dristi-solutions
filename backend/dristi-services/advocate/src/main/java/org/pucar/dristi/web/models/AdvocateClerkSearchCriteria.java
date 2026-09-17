@@ -33,6 +33,9 @@ public class AdvocateClerkSearchCriteria {
 	@JsonProperty("individualId")
 	private String individualId = null;
 
+	@JsonProperty("status")
+	private String status = null;
+
 	@JsonProperty("responseList")
 	@Valid
 	private List<AdvocateClerk> responseList = null;

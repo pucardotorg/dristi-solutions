@@ -223,7 +223,7 @@ public class IndexerUtilsTest {
           [  {
               "cmpNumber": "CMP-123",
               "courtCaseNumber": "COURT-456",
-              "substage": "HEARING",
+              "stage": "HEARING",
               "representatives": [
                 {
                   "additionalDetails": {

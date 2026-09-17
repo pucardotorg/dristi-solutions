@@ -12,6 +12,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseRepository;
+import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.EncryptionDecryptionUtil;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.task.TaskRequest;
@@ -53,9 +54,11 @@ public class PaymentUpdateService {
 
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
+    private ServiceRequestRepository serviceRequestRepository;
+
     @Autowired
     public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, CaseRepository repository,
-                                Producer producer, Configuration configuration, CacheService cacheService, CaseService caseService, CaseRegistrationEnrichment enrichmentUtil,EncryptionDecryptionUtil encryptionDecryptionUtil) {
+                                Producer producer, Configuration configuration, CacheService cacheService, CaseService caseService, CaseRegistrationEnrichment enrichmentUtil,EncryptionDecryptionUtil encryptionDecryptionUtil, ServiceRequestRepository serviceRequestRepository) {
         this.workflowService = workflowService;
         this.mapper = mapper;
         this.repository = repository;
@@ -65,6 +68,7 @@ public class PaymentUpdateService {
         this.caseService = caseService;
         this.enrichmentUtil = enrichmentUtil;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
+        this.serviceRequestRepository = serviceRequestRepository;
     }
 
     public void process(Map<String, Object> record) {
@@ -166,6 +170,11 @@ public class PaymentUpdateService {
             courtCase.setAuditdetails(auditDetails);
             CourtCase decryptedCourtCase = encryptionDecryptionUtil.decryptObject(courtCase, configuration.getCaseDecryptSelf(), CourtCase.class, requestInfo);
 
+            // Capture identifiers before re-encryption so the "Pending Payment" task can be closed below.
+            String caseId = decryptedCourtCase.getId() != null ? decryptedCourtCase.getId().toString() : null;
+            String cnrNumber = decryptedCourtCase.getCnrNumber();
+            String caseTitle = decryptedCourtCase.getCaseTitle();
+
             CaseRequest caseRequest = new CaseRequest();
             caseRequest.setRequestInfo(requestInfo);
             caseRequest.setCases(decryptedCourtCase);
@@ -183,9 +192,6 @@ public class PaymentUpdateService {
             CourtCase latestRedisCase = caseService.searchRedisCache(requestInfo, courtCase.getId().toString());
             if (latestRedisCase != null) {
                 caseRequest.getCases().setStage(latestRedisCase.getStage());
-                caseRequest.getCases().setSubstage(latestRedisCase.getSubstage());
-                caseRequest.getCases().setStageBackup(latestRedisCase.getStageBackup());
-                caseRequest.getCases().setSubstageBackup(latestRedisCase.getSubstageBackup());
             }
             cacheService.save(requestInfo.getUserInfo().getTenantId() + ":" + courtCase.getId().toString(), caseRequest.getCases());
             if(paymentReceipt!=null){
@@ -193,7 +199,43 @@ public class PaymentUpdateService {
             }
             producer.push(configuration.getCaseUpdateStatusTopic(),caseRequest);
 
+            // Close the "Pending Payment" pending task server-side. In the normal online flow the
+            // browser does this after the bill turns PAID, but payment reconciliation (cron) has no
+            // browser - so without this the case advances yet the pending task stays open.
+            closePaymentPendingTask(requestInfo, fillingNumber, caseId, cnrNumber, caseTitle);
+
         });
+    }
+
+    private void closePaymentPendingTask(RequestInfo requestInfo, String filingNumber, String caseId, String cnrNumber, String caseTitle) {
+        try {
+            PendingTask pendingTask = PendingTask.builder()
+                    .name(PENDING_PAYMENT_TASK_NAME)
+                    .entityType(CASE_DEFAULT_ENTITY_TYPE)
+                    .referenceId(MANUAL_PENDING_TASK_PREFIX + filingNumber)
+                    .status(PAYMENT_PENDING)
+                    .cnrNumber(cnrNumber)
+                    .filingNumber(filingNumber)
+                    .caseId(caseId)
+                    .caseTitle(caseTitle)
+                    .isCompleted(true)
+                    .stateSla(null)
+                    .additionalDetails(new HashMap<>())
+                    .build();
+
+            PendingTaskRequest pendingTaskRequest = PendingTaskRequest.builder()
+                    .requestInfo(requestInfo)
+                    .pendingTask(pendingTask)
+                    .build();
+
+            StringBuilder uri = new StringBuilder(configuration.getAnalyticsServiceHost())
+                    .append(configuration.getAnalyticsServicePath());
+            serviceRequestRepository.fetchResult(uri, pendingTaskRequest);
+            log.info("Closed 'Pending Payment' pending task for filingNumber: {}", filingNumber);
+        } catch (Exception e) {
+            // Never fail payment processing because of pending-task closure.
+            log.error("Error closing 'Pending Payment' pending task for filingNumber: {}", filingNumber, e);
+        }
     }
 
 

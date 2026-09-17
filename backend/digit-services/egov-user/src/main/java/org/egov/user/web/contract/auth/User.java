@@ -1,8 +1,6 @@
 package org.egov.user.web.contract.auth;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.Set;
@@ -10,6 +8,8 @@ import java.util.Set;
 @Setter
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 //This class is serialized to Redis
 public class User implements Serializable {
     private static final long serialVersionUID = -1053170163821651014L;
@@ -25,4 +25,10 @@ public class User implements Serializable {
     private boolean active;
     private String tenantId;
     private String permanentCity;
+    /**
+     * Tells the UI whether to show the "set a password" prompt after login. False once the user
+     * has set a password or chosen not to be asked again, and wherever the deployment does not
+     * allow this user type to log in with a password.
+     */
+    private boolean showPasswordSetupPrompt;
 }

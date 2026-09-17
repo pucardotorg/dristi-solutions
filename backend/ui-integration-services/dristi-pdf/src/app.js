@@ -16,6 +16,7 @@ const digitisation = require("./routes/digitisation");
 const templateConfiguration = require("./routes/templateConfiguration");
 const ctcApplications = require("./routes/ctcApplications");
 const ctcCertification = require("./routes/ctcCertification");
+const caseSummary = require("./routes/caseSummary");
 // var {listenConsumer} = require("./consumer")
 
 var app = express();
@@ -40,6 +41,7 @@ app.use(config.app.contextPath + "/digitisation", digitisation);
 app.use(config.app.contextPath + "/template-configuration", templateConfiguration); 
 app.use(config.app.contextPath + "/ctc-applications", ctcApplications);
 app.use(config.app.contextPath + "/ctc-certification", ctcCertification);
+app.use(config.app.contextPath + "/case-summary", caseSummary);
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));

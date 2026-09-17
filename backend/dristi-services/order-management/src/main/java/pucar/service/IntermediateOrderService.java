@@ -14,10 +14,17 @@ import java.util.List;
 public class IntermediateOrderService implements OrderProcessor {
 
     private final OrderStrategyExecutor orderStrategyExecutor;
+    private final ApplicationValidationService applicationValidationService;
 
     @Autowired
-    public IntermediateOrderService(OrderStrategyExecutor orderStrategyExecutor) {
+    public IntermediateOrderService(OrderStrategyExecutor orderStrategyExecutor, ApplicationValidationService applicationValidationService) {
         this.orderStrategyExecutor = orderStrategyExecutor;
+        this.applicationValidationService = applicationValidationService;
+    }
+
+    @Override
+    public void validateOrder(OrderRequest request) {
+        applicationValidationService.validate(request.getRequestInfo(), request.getOrder());
     }
 
     @Override

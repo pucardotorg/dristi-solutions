@@ -4,10 +4,13 @@ import org.pucar.dristi.web.models.advocateofficemember.CaseMemberInfo;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 
+@Slf4j
 @Component
 public class CaseMemberInfoRowMapper implements RowMapper<CaseMemberInfo> {
 
@@ -18,7 +21,7 @@ public class CaseMemberInfoRowMapper implements RowMapper<CaseMemberInfo> {
                 .filingNumber(rs.getString("filingnumber"))
                 .cmpNumber(rs.getString("cmpnumber"))
                 .lprNumber(rs.getString("lprnumber"))
-                .isLPRCase(rs.getObject("islprcase") != null ? rs.getBoolean("islprcase") : null)
+                .lifecycleStatus(getLifecycleStatus(rs, "lifecyclestatus"))
                 .courtCaseNumber(rs.getString("courtcasenumber"))
                 .caseTitle(rs.getString("casetitle"))
                 .isActive(rs.getObject("is_active") != null ? rs.getBoolean("is_active") : null)
@@ -27,5 +30,16 @@ public class CaseMemberInfoRowMapper implements RowMapper<CaseMemberInfo> {
 
     private UUID toUuid(String value) {
         return value == null ? null : UUID.fromString(value);
+    }
+
+    private org.pucar.dristi.web.models.enums.LifecycleStatus getLifecycleStatus(ResultSet rs, String columnName) throws SQLException {
+        try {
+            String str = rs.getString(columnName);
+            if (str == null || str.isEmpty()) return org.pucar.dristi.web.models.enums.LifecycleStatus.ACTIVE;
+            return org.pucar.dristi.web.models.enums.LifecycleStatus.valueOf(str);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid LifecycleStatus value in database: {}", columnName, e);
+            return org.pucar.dristi.web.models.enums.LifecycleStatus.ACTIVE;
+        }
     }
 }

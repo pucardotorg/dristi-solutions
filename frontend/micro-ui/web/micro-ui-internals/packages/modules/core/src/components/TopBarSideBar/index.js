@@ -40,8 +40,6 @@ const TopBarSideBar = ({
   const handleOnSubmit = async () => {
     try {
       await Digit.UserService.logoutUser(); // ✅ added await
-      window.localStorage.clear();
-      window.sessionStorage.clear();
 
       if (CITIZEN) {
         window.location.replace(`/${window?.contextPath}/citizen`);
@@ -52,6 +50,9 @@ const TopBarSideBar = ({
       setShowDialog(false);
     } catch (error) {
       console.error("Logout failed:", error);
+    } finally {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
     }
   };
   const handleOnCancel = () => {

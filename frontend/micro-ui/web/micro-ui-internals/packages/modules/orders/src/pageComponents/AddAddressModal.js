@@ -1,38 +1,13 @@
 import React, { useState } from "react";
-import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
-import { Button, TextInput, CardLabelError, CloseSvg, Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { TextInput, CardLabelError, Loader } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-
-const Heading = (props) => {
-  return (
-    <h1 className="heading-m" style={{ fontSize: "20px" }}>
-      {props.label}
-    </h1>
-  );
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        paddingRight: "20px",
-        cursor: "pointer",
-        ...(props?.backgroundColor && { backgroundColor: props.backgroundColor }),
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 const AddAddressModal = ({ t, processCourierData, setShowAddAddressModalLocal, handleDataChange }) => {
   const [newAddress, setNewAddress] = useState({});
   const [addressErrors, setAddressErrors] = useState({});
   const [loader, setLoader] = useState(false);
+  const [showToast, setShowToast] = useState(null);
 
   // Pattern validation function
   const patternValidation = (key) => {
@@ -71,7 +46,7 @@ const AddAddressModal = ({ t, processCourierData, setShowAddAddressModalLocal, h
         </div>
       )}
       <Modal
-        headerBarMain={<Heading label={t("Add Address")} />}
+        headerBarMain={<Heading style={{ fontSize: "20px" }} label={t("Add Address")} />}
         headerBarEnd={
           <CloseBtn
             onClick={() => {
@@ -90,6 +65,8 @@ const AddAddressModal = ({ t, processCourierData, setShowAddAddressModalLocal, h
             setAddressErrors({});
           } catch (error) {
             console.error("error while adding address ", error);
+            const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+            setShowToast({ label: "ERROR_ADDING_ADDRESS", error: true, errorId });
           } finally {
             setLoader(false);
           }
@@ -228,6 +205,15 @@ const AddAddressModal = ({ t, processCourierData, setShowAddAddressModalLocal, h
           </div>
         </div>
       </Modal>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

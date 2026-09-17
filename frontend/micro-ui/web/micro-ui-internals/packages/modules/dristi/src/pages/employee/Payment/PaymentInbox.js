@@ -1,4 +1,4 @@
-import { InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { paymentTabInboxConfig } from "./paymentInboxConfig";

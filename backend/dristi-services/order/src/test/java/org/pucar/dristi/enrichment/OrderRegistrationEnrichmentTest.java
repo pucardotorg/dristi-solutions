@@ -13,13 +13,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.repository.OrderRepository;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.Order;
 import org.pucar.dristi.web.models.OrderRequest;
 import org.pucar.dristi.web.models.StatuteSection;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,6 +39,9 @@ class OrderRegistrationEnrichmentTest {
 
     @Mock
     private ObjectMapper objectMapper;
+
+    @Mock
+    private OrderRepository orderRepository;
 
     @Mock
     private CaseUtil caseUtil;
@@ -169,11 +175,46 @@ class OrderRegistrationEnrichmentTest {
         realArrayNode.add(realObjectNode);
 
         when(objectMapper.convertValue(any(), eq(ArrayNode.class))).thenReturn(realArrayNode);
+        when(orderRepository.getOrders(any(), any())).thenReturn(new ArrayList<>());
 
         orderRegistrationEnrichment.enrichCompositeOrderItemIdOnAddItem(orderRequest);
 
         assertTrue(realObjectNode.has("id"));
         assertNotNull(realObjectNode.get("id").asText());
+    }
+
+
+    @Test
+    void testEnrichCompositeOrderItemIdOnAddItem_SkipsTextEnrichmentForExistingIntermediateType() {
+        // Given: composite order whose item.orderType matches the existing INTERMEDIATE order's type.
+        // Expectation: id is still assigned, but item-text enrichment is skipped (no duplication).
+        OrderRequest orderRequest = createMockOrderRequest();
+        orderRequest.getOrder().setOrderCategory("COMPOSITE");
+        orderRequest.getOrder().setOrderType("BAIL");
+        orderRequest.getOrder().setItemText("existing text");
+
+        ObjectNode itemNode = new ObjectMapper().createObjectNode();
+        itemNode.put("orderType", "BAIL"); // matches intermediateOrderType returned below
+        ArrayNode realArrayNode = new ObjectMapper().createArrayNode();
+        realArrayNode.add(itemNode);
+
+        // Provide a non-null compositeItems so the outer guard passes.
+        orderRequest.getOrder().setCompositeItems(realArrayNode);
+
+        when(objectMapper.convertValue(any(), eq(ArrayNode.class))).thenReturn(realArrayNode);
+
+        Order existingIntermediateOrder = new Order();
+        existingIntermediateOrder.setOrderType("BAIL");
+        when(orderRepository.getOrders(any(), any())).thenReturn(List.of(existingIntermediateOrder));
+
+        // When
+        orderRegistrationEnrichment.enrichCompositeOrderItemIdOnAddItem(orderRequest);
+
+        // Then: itemText must not be appended/duplicated
+        assertEquals("existing text", orderRequest.getOrder().getItemText());
+        // And: id must still be assigned to the composite item
+        assertTrue(itemNode.has("id"));
+        assertNotNull(itemNode.get("id").asText());
     }
 
 

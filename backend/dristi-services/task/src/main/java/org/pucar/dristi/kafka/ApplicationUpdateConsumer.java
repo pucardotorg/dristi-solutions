@@ -74,7 +74,7 @@ public class ApplicationUpdateConsumer {
             throw new RuntimeException();
         } catch (Exception e) {
             log.error("Error occurred while updating evidence, method: updateTaskStatus , result: Failure");
-            log.error("Error: {}", e.toString());
+            log.error("Error", e);
         }
         log.info("method: updateTaskStatus , result: Success");
 

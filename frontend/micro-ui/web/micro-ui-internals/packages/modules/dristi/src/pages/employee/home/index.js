@@ -1,4 +1,4 @@
-import { InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useMemo } from "react";
 import { scrutinyInboxConfig } from "./scrutinyInboxConfig";
 import { useHistory } from "react-router-dom";

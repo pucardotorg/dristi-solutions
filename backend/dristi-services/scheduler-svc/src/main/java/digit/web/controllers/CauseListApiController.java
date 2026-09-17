@@ -1,6 +1,7 @@
 package digit.web.controllers;
 
 
+import digit.exception.RuntimeCustomException;
 import digit.service.CauseListService;
 import digit.util.ResponseInfoFactory;
 import digit.web.models.*;
@@ -62,8 +63,12 @@ public class CauseListApiController {
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                     .contentType(MediaType.APPLICATION_PDF)
                     .body(resource);
-        } catch (Exception e) {
-            log.error("api = /causelist/v1/_download, result = FAILED, error = {}", e.getMessage());
+        }
+        catch (RuntimeCustomException e) {
+            return new ResponseEntity<>(CAUSE_LIST_NOT_FOUND, HttpStatus.BAD_REQUEST);
+        }
+        catch (Exception e) {
+            log.error("api = /causelist/v1/_download, result = FAILED", e);
             return new ResponseEntity<>(CAUSE_LIST_NOT_FOUND, HttpStatus.BAD_REQUEST);
         }
     }
@@ -80,7 +85,7 @@ public class CauseListApiController {
             log.info("api = /causelist/v1/_generate, result = SUCCESS");
             return new ResponseEntity<>(HttpStatus.CREATED);
         } catch (Exception e) {
-            log.error("api = /causelist/v1/_generate, result = FAILED, error = {}", e.getMessage());
+            log.error("api = /causelist/v1/_generate, result = FAILED", e);
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
@@ -97,7 +102,7 @@ public class CauseListApiController {
             log.info("api = /causelist/v1/_recentCauseList, result = SUCCESS");
             return new ResponseEntity<>(recentCauseListResponse, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("api = /causelist/v1/_recentCauseList, result = FAILED, error = {}", e.getMessage());
+            log.error("api = /causelist/v1/_recentCauseList, result = FAILED", e);
             return new ResponseEntity<>(CAUSE_LIST_NOT_FOUND, HttpStatus.BAD_REQUEST);
         }
     }

@@ -20,6 +20,9 @@ public class TransformerProperties {
     @Value("${egov.case.path}")
     private String caseSearchUrlEndPoint;
 
+    @Value("${egov.case.meta.path}")
+    private String caseMetaPath;
+
     @Value("${transformer.producer.save.case.topic}")
     private String saveCaseTopic;
 

@@ -45,13 +45,13 @@ const AccessCodeValidation = ({ caseDetails, validationCode, setValidationCode, 
         text={t("SIX_DIGIT_CODE_INFO")}
         textStyle={{}}
         className={`custom-info-card`}
-        style={{ width: "100%", maxWidth: "960px" }}
+        style={{ width: "100%" }}
       />
       <LabelFieldPair className="case-label-field-pair">
         <div className="join-case-tooltip-wrapper">
           <CardLabel className="case-input-label">{`${t("ENTER_SECRET_CODE")}`}</CardLabel>
         </div>
-        <div style={{ width: "100%", maxWidth: "960px" }}>
+        <div style={{ width: "100%" }}>
           <TextInput
             style={{ width: "100%" }}
             type={"text"}

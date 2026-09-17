@@ -113,9 +113,6 @@ public class CtcApplicationValidator {
 
         try {
 
-            boolean isAdvocate = requestInfo.getUserInfo().getRoles().stream()
-                    .anyMatch(role -> role.getCode().equals(ADVOCATE_ROLE));
-
             CourtCase courtCase = caseUtil.getCase(application.getFilingNumber(), application.getCourtId(), requestInfo);
 
             if (courtCase == null) {
@@ -124,7 +121,7 @@ public class CtcApplicationValidator {
                 return;
             }
 
-            UserMatchResult result = findUser(requestInfo, courtCase, isAdvocate);
+            UserMatchResult result = findUser(requestInfo, courtCase);
 
             if (result != null) {
                 application.setApplicantName(result.name());
@@ -142,22 +139,18 @@ public class CtcApplicationValidator {
     }
 
 
-    private UserMatchResult findUser(RequestInfo requestInfo, CourtCase courtCase, boolean isAdvocate) {
-
-        if (isAdvocate) {
-                    UserMatchResult result = findUserFromAdvocate(requestInfo, courtCase);
-                    if (result != null) {
-                        return result;
-                    }
-                    return findUserFromPoaHolder(requestInfo, courtCase);
-        } else {
-            // non advocate
-                    UserMatchResult result = findUserFromLitigant(requestInfo, courtCase);
-                    if (result != null) {
-                        return result;
-                    }
-                    return findUserFromPoaHolder(requestInfo, courtCase);
+    private UserMatchResult findUser(RequestInfo requestInfo, CourtCase courtCase) {
+        UserMatchResult result = findUserFromAdvocate(requestInfo, courtCase);
+        if (result != null) {
+            return result;
         }
+
+        result = findUserFromLitigant(requestInfo, courtCase);
+        if (result != null) {
+            return result;
+        }
+
+        return findUserFromPoaHolder(requestInfo, courtCase);
     }
 
     private UserMatchResult findUserFromLitigant(RequestInfo requestInfo, CourtCase courtCase) {

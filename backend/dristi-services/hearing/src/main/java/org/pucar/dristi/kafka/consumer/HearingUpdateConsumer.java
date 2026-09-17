@@ -62,7 +62,7 @@ public class HearingUpdateConsumer {
             hearingService.updateCaseReferenceHearing(objectMapper.convertValue(payload.value(), Map.class));
             log.info("Updated case reference number for hearings");
         } catch (IllegalArgumentException e) {
-            log.error("Error while listening to case reference number details topic: {}: {}", topic, e.getMessage());
+            log.error("Error while listening to case reference number details topic: {}", topic, e);
         }
 
     }
@@ -75,7 +75,7 @@ public class HearingUpdateConsumer {
             hearingService.updateCaseReferenceHearingAfterLpr(caseRequest);
             log.info("Updated case reference number for hearings after lpr update");
         } catch (IllegalArgumentException e) {
-            log.error("Error while listening to case reference number details topic: {}: {}", topic, e.getMessage());
+            log.error("Error while listening to case reference number details topic: {}", topic, e);
         }
 
     }
@@ -102,7 +102,7 @@ public class HearingUpdateConsumer {
             }
             log.info("Updated hearings");
         } catch (IllegalArgumentException e) {
-            log.error("Error while listening to hearings topic: {}: {}", topic, e.getMessage());
+            log.error("Error while listening to hearings topic: {}", topic, e);
         }
     }
 

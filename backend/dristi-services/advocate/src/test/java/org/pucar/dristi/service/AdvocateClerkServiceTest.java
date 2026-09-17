@@ -18,6 +18,7 @@ import org.pucar.dristi.validators.AdvocateClerkRegistrationValidator;
 import org.pucar.dristi.web.models.AdvocateClerk;
 import org.pucar.dristi.web.models.AdvocateClerkRequest;
 import org.pucar.dristi.web.models.AdvocateClerkSearchCriteria;
+import org.pucar.dristi.web.models.AdvocateClerkSimpleSearchRequest;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.*;
@@ -312,10 +313,10 @@ import static org.mockito.Mockito.*;
         userInfo.setUuid(UUID.randomUUID().toString());
         requestInfo.setUserInfo(userInfo);
 
-        when(advocateClerkRepository.getApplicationsByStatus(anyString(), anyString(), anyInt(), anyInt())).thenReturn(applications);
+        when(advocateClerkRepository.getApplicationsByStatus(any(), anyString(), anyString(), anyInt(), anyInt())).thenReturn(applications);
 
         // Act
-        List<AdvocateClerk> result = advocateClerkService.searchAdvocateClerkApplicationsByStatus(requestInfo, status, tenantId, limit, offset);
+        List<AdvocateClerk> result = advocateClerkService.searchAdvocateClerkApplicationsByStatus(AdvocateClerkSimpleSearchRequest.builder().requestInfo(requestInfo).build(), status, tenantId, limit, offset);
 
         // Assert
         assertNotNull(result);
@@ -339,10 +340,10 @@ import static org.mockito.Mockito.*;
         List<AdvocateClerk> applications = new ArrayList<>();
         // Populate applications with test data
 
-        when(advocateClerkRepository.getApplicationsByStatus(anyString(), anyString(), anyInt(), anyInt())).thenReturn(applications);
+        when(advocateClerkRepository.getApplicationsByStatus(any(), anyString(), anyString(), anyInt(), anyInt())).thenReturn(applications);
 
         // Act
-        List<AdvocateClerk> result = advocateClerkService.searchAdvocateClerkApplicationsByStatus(requestInfo, status, tenantId, limit, offset);
+        List<AdvocateClerk> result = advocateClerkService.searchAdvocateClerkApplicationsByStatus(AdvocateClerkSimpleSearchRequest.builder().requestInfo(requestInfo).build(), status, tenantId, limit, offset);
 
         // Assert
         assertNotNull(result);
@@ -363,10 +364,10 @@ import static org.mockito.Mockito.*;
         userInfo.setUuid(UUID.randomUUID().toString());
         requestInfo.setUserInfo(userInfo);
 
-        when(advocateClerkRepository.getApplicationsByStatus(anyString(), anyString(), anyInt(), anyInt())).thenThrow(new RuntimeException());
+        when(advocateClerkRepository.getApplicationsByStatus(any(), anyString(), anyString(), anyInt(), anyInt())).thenThrow(new RuntimeException());
 
         // Assert
-        assertThrows(Exception.class, () -> advocateClerkService.searchAdvocateClerkApplicationsByStatus(requestInfo, status, tenantId, limit, offset));
+        assertThrows(Exception.class, () -> advocateClerkService.searchAdvocateClerkApplicationsByStatus(AdvocateClerkSimpleSearchRequest.builder().requestInfo(requestInfo).build(), status, tenantId, limit, offset));
     }
 
     @Test
@@ -383,10 +384,10 @@ import static org.mockito.Mockito.*;
         userInfo.setUuid(UUID.randomUUID().toString());
         requestInfo.setUserInfo(userInfo);
 
-        when(advocateClerkRepository.getApplicationsByStatus(anyString(), anyString(), anyInt(), anyInt())).thenThrow(new CustomException());
+        when(advocateClerkRepository.getApplicationsByStatus(any(), anyString(), anyString(), anyInt(), anyInt())).thenThrow(new CustomException());
 
         // Assert
-        assertThrows(CustomException.class, () -> advocateClerkService.searchAdvocateClerkApplicationsByStatus(requestInfo, status, tenantId, limit, offset));
+        assertThrows(CustomException.class, () -> advocateClerkService.searchAdvocateClerkApplicationsByStatus(AdvocateClerkSimpleSearchRequest.builder().requestInfo(requestInfo).build(), status, tenantId, limit, offset));
     }
 
     @Test

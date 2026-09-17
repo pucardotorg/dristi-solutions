@@ -11,6 +11,7 @@ import org.pucar.dristi.validators.AdvocateClerkRegistrationValidator;
 import org.pucar.dristi.web.models.AdvocateClerk;
 import org.pucar.dristi.web.models.AdvocateClerkRequest;
 import org.pucar.dristi.web.models.AdvocateClerkSearchCriteria;
+import org.pucar.dristi.web.models.AdvocateClerkSimpleSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -54,7 +55,7 @@ public class AdvocateClerkService {
         } catch(CustomException e){
             throw e;
         } catch (Exception e){
-            log.error("Error occurred while creating advocate clerk :: {}", e.toString());
+            log.error("Error occurred while creating advocate clerk", e);
             throw new CustomException(ADVOCATE_CLERK_CREATE_EXCEPTION,e.getMessage());
         }
     }
@@ -76,7 +77,7 @@ public class AdvocateClerkService {
             throw e;
         }
         catch (Exception e){
-            log.error(FETCH_SEARCH_RESULT_EXCEPTION, e.toString());
+            log.error(FETCH_SEARCH_RESULT_EXCEPTION, e);
             throw new CustomException(ADVOCATE_CLERK_SEARCH_EXCEPTION,e.getMessage());
         }
     }
@@ -105,13 +106,22 @@ public class AdvocateClerkService {
             throw e;
         }
         catch (Exception e){
-            log.error(FETCH_SEARCH_RESULT_EXCEPTION, e.toString());
+            log.error(FETCH_SEARCH_RESULT_EXCEPTION, e);
             throw new CustomException(ADVOCATE_CLERK_SEARCH_EXCEPTION,e.getMessage());
         }
     }
 
-    public List<AdvocateClerk> searchAdvocateClerkApplicationsByStatus(RequestInfo requestInfo, String status, String tenantId, Integer limit, Integer offset) {
+    public List<AdvocateClerk> searchAdvocateClerkApplicationsByStatus(AdvocateClerkSimpleSearchRequest body, String status, String tenantId, Integer limit, Integer offset) {
         try {
+            if (body == null) {
+                throw new CustomException(ADVOCATE_CLERK_SEARCH_EXCEPTION, "Request body cannot be null");
+            }
+
+            RequestInfo requestInfo = body.getRequestInfo();
+            AdvocateClerkSearchCriteria searchCriteria = null;
+            if (body.getAdvocateClerkSearchCriteria() != null) {
+                searchCriteria = body.getAdvocateClerkSearchCriteria();
+            }
             if(limit == null)
                 limit = 10;
             if(offset == null)
@@ -119,7 +129,7 @@ public class AdvocateClerkService {
 
             // Fetch applications from database according to the given search criteria
             List<AdvocateClerk> applications;
-            applications = advocateClerkRepository.getApplicationsByStatus(status, tenantId, limit, offset);
+            applications = advocateClerkRepository.getApplicationsByStatus(searchCriteria, status, tenantId, limit, offset);
 
             log.info("Application size :: {}", applications.size());
             // If no applications are found matching the given criteria, return an empty list
@@ -134,7 +144,7 @@ public class AdvocateClerkService {
             throw e;
         }
         catch (Exception e){
-            log.error(FETCH_SEARCH_RESULT_EXCEPTION, e.toString());
+            log.error(FETCH_SEARCH_RESULT_EXCEPTION, e);
             throw new CustomException(ADVOCATE_CLERK_SEARCH_EXCEPTION,e.getMessage());
         }
     }
@@ -163,7 +173,7 @@ public class AdvocateClerkService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while updating advocate clerk :: {}", e.toString());
+            log.error("Error occurred while updating advocate clerk", e);
             throw new CustomException(ADVOCATE_CLERK_UPDATE_EXCEPTION, "Error occurred while updating advocate clerk: " + e.getMessage());
         }
     }
@@ -172,7 +182,7 @@ public class AdvocateClerkService {
         try {
             return validator.validateApplicationExistence(clerk);
         } catch (Exception e) {
-            log.error("Error validating existing application :: {}", e.toString());
+            log.error("Error validating existing application", e);
             throw new CustomException(VALIDATION_EXCEPTION, "Error validating existing application: " + e.getMessage());
         }
     }

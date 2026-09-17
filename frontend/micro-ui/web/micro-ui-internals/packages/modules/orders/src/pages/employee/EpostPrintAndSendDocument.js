@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
 import DocumentPrintComponent from "../../components/DocumentPrintComponent";
-import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import { printAndSendDocumentsConfig } from "../../configs/EpostFormConfigs";
 
 const EpostPrintAndSendDocument = ({ t, rowData, form, setTempForm, tempForm, infos, documents, links }) => {

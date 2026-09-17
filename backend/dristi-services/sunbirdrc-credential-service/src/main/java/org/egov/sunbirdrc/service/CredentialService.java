@@ -125,7 +125,7 @@ public class CredentialService {
             credentialUuidRepository.invalidateCache("vcid_uuid_mapper","vc-mdms");
             credentialUuidRepository.loadData();
         }catch (JsonProcessingException e) {
-            log.error("Exception occurred while processing JSON: " + e.getMessage());
+            log.error("Exception occurred while processing JSON", e);
         }
     }
 
@@ -254,7 +254,7 @@ public class CredentialService {
             log.info("Final result: {}", result);
             return result;
         } catch (JsonProcessingException e) {
-            log.error("Exception occurred while processing JSON: " + e.getMessage());
+            log.error("Exception occurred while processing JSON", e);
             return null;
         }
     }

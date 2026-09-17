@@ -85,7 +85,7 @@ public class TaskRowMapper implements ResultSetExtractor<List<Task>> {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while processing task ResultSet :: {}", e.toString());
+            log.error("Error occurred while processing task ResultSet", e);
             throw new CustomException(ROW_MAPPER_EXCEPTION, "Error occurred while processing Task ResultSet: " + e.getMessage());
         }
         return new ArrayList<>(taskMap.values());

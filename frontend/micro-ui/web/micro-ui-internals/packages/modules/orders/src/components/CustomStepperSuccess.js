@@ -4,6 +4,7 @@ import { FileIcon, PrintIcon } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
 import { Urls } from "../hooks/services/Urls";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
+import { TASK_TYPES } from "../utils/constants";
 
 const submitButtonStyle = {
   fontFamily: "Roboto",
@@ -25,29 +26,30 @@ const CustomStepperSuccess = ({
   deliveryChannel,
   submitButtonText,
   closeButtonText,
-  orderType,
   isSubmitting = false,
+  rowData = {},
 }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const fileStore = sessionStorage.getItem("SignedFileStoreID");
+  const taskType = rowData?.taskType;
 
   const documentType = useMemo(() => {
     let txt = "";
-    if (orderType === "SUMMONS") {
+    if (taskType === TASK_TYPES.SUMMONS) {
       txt = "Summons";
-    } else if (orderType === "WARRANT") {
+    } else if (taskType === TASK_TYPES.WARRANT) {
       txt = "Warrant";
-    } else if (orderType === "PROCLAMATION") {
+    } else if (taskType === TASK_TYPES.PROCLAMATION) {
       txt = "Proclamation";
-    } else if (orderType === "ATTACHMENT") {
+    } else if (taskType === TASK_TYPES.ATTACHMENT) {
       txt = "Attachment";
-    } else if (orderType === "MISCELLANEOUS_PROCESS") {
+    } else if (taskType === TASK_TYPES.MISCELLANEOUS_PROCESS) {
       txt = "Miscellaneous Process";
     } else {
       txt = "Notice";
     }
     return `${txt} Document`;
-  }, [orderType]);
+  }, [taskType]);
 
   return (
     <div className="custom-stepper-modal-success" style={{ padding: "0px 20px" }}>
@@ -83,6 +85,7 @@ const CustomStepperSuccess = ({
                 t={t}
                 style={{ marginLeft: "0.5rem", color: "#007E7E" }}
                 displayFilename={"PRINT"}
+                name={`${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber}_${rowData?.taskNumber}_${rowData?.taskType}`}
               />
             ) : (
               <span style={{ marginLeft: "0.5rem", color: "grey" }}>Print</span>

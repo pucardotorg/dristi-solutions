@@ -183,6 +183,12 @@ public class Configuration {
     @Value("${egov.sms.notification.mediation.sign.template.id}")
     private String mediationSignTemplateId;
 
+    @Value("${egov.sms.notification.client.examination.esign.template.id}")
+    private String clientExaminationEsignTemplateId;
+
+    @Value("${egov.sms.notification.client.plea.esign.template.id}")
+    private String clientPleaEsignTemplateId;
+
     // ESign Config
     @Value("${egov.esign.host}")
     private String esignHost;
@@ -196,7 +202,27 @@ public class Configuration {
     @Value("${dristi.esign.signature.height:50}")
     private int esignSignatureHeight;
 
+    @Value("${dristi.esign.signature.max.left.offset:70}")
+    private int esignSignatureMaxLeftOffset;
+
+    @Value("${dristi.esign.signature.min.width:155}")
+    private int esignSignatureMinWidth;
+
+    @Value("${dristi.esign.signature.preferred.width.threshold:190}")
+    private int esignSignaturePreferredWidthThreshold;
+
     @Value("${app.zone.id}")
     private String zoneId;
+
+    //Individual Service
+    @Value("${egov.individual.host}")
+    private String individualHost;
+
+    @Value("${egov.individual.search.path}")
+    private String individualSearchEndpoint;
+
+    //Tenant Id
+    @Value("${egov-state-level-tenant-id}")
+    private String egovStateTenantId;
 
 }

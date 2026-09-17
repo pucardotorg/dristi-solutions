@@ -1,6 +1,6 @@
 // This component is used to show user registration requests on home screen.
 
-import { InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { registerUserConfig } from "../../configs/RegisterUserConfig";

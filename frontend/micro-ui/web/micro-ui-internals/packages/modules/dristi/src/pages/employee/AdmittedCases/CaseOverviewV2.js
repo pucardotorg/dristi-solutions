@@ -83,7 +83,7 @@ const CaseOverviewV2 = ({
                   style={{ color: "#007E7E", cursor: "pointer", fontWeight: 700, fontSize: "16px", lineHeight: "18.75px" }}
                   onClick={() => setShowAllTranscript(true)}
                 >
-                  {t("VIEW_ALL_SUMMARIES")}
+                  {t("VIEW_BDIARY")}
                 </div>
               </div>
               <hr style={{ borderTop: "1px solid #E8E8E8", margin: "10px -15px 0px -15px" }} />
@@ -134,7 +134,22 @@ const CaseOverviewV2 = ({
         </div>
       )}
       {showAllTranscript && (
-        <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} botdOrderList={previousBotdOrders} judgeView={true} />
+        <ShowAllTranscriptModal
+          setShowAllTranscript={setShowAllTranscript}
+          botdOrderList={previousBotdOrders}
+          judgeView={true}
+          filingNumber={filingNumber}
+          caseNumber={
+            caseData?.courtCaseNumber ||
+            caseData?.cmpNumber ||
+            caseDetails?.courtCaseNumber ||
+            caseDetails?.cmpNumber ||
+            filingNumber
+          }
+          cnrNumber={cnrNumber}
+          tenantId={tenantId}
+          courtId={caseData?.courtId || localStorage.getItem("courtId")}
+        />
       )}
     </div>
   );

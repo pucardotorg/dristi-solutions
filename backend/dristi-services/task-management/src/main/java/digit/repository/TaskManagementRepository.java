@@ -62,7 +62,7 @@ public class TaskManagementRepository {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching task application list :: {}", e.toString());
+            log.error("Error while fetching task application list", e);
             throw new CustomException("SEARCH_TASK_ERR", "Exception while fetching task application list: " + e.getMessage());
         }
     }

@@ -1,5 +1,6 @@
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-orders/src/utils/orderUtils";
-import { FormComposerV2, SubmitBar } from "@egovernments/digit-ui-react-components";
+import { SubmitBar } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useMemo, useState } from "react";
 import isEqual from "lodash/isEqual";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";

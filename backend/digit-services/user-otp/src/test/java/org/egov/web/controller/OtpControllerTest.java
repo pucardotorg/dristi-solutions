@@ -104,6 +104,18 @@ public class OtpControllerTest {
 				.andExpect(content().json(resources.getFileContents("invalidMobileNumberErrorResponse.json")));
 	}
 
+
+	@Test
+	public void test_should_return_error_response_when_user_doesntExist_incaseoftypeisctcapplication() throws Exception {
+		final OtpRequest expectedOtpRequest = new OtpRequest(null,"mobileNumber", "tenantId", OtpRequestType.CTC_APPLICATION_LOGIN, "CITIZEN");
+		doThrow(new UserNotExistingInSystemException()).when(otpService).sendOtp(expectedOtpRequest);
+
+		mockMvc.perform(post("/v1/_send").contentType(MediaType.APPLICATION_JSON_UTF8)
+						.content(resources.getFileContents("otpSendCtcApplicationRequest.json"))).andExpect(status().isBadRequest())
+				.andExpect(content().json(resources.getFileContents("userNotExistInSytemResponse.json")));
+	}
+
+
 	@Test
 	public void test_should_return_error_message_when_unhandled_exception_occurs() throws Exception {
 		final OtpRequest expectedOtpRequest = new OtpRequest(null, "mobileNumber", "tenantId", null, "CITIZEN");

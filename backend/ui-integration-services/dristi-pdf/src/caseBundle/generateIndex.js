@@ -12,19 +12,21 @@ if (!fs.existsSync(TEMP_FILES_DIR)) {
 }
 
 async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
-  logger.info(`Processing caseId: ${caseId}, state: ${state}`);
-
-  let updatedIndex;
-
-  updatedIndex = await processPendingAdmissionCase({
-    tenantId,
-    caseId,
-    index,
-    requestInfo,
-    TEMP_FILES_DIR,
-  });
-
-  return updatedIndex;
+  logger.info(`[CaseBundle] processCaseBundle started | caseId: ${caseId}, tenantId: ${tenantId}, state: ${state}`);
+  try {
+    const updatedIndex = await processPendingAdmissionCase({
+      tenantId,
+      caseId,
+      index,
+      requestInfo,
+      TEMP_FILES_DIR,
+    });
+    logger.info(`[CaseBundle] processCaseBundle completed | caseId: ${caseId}`);
+    return updatedIndex;
+  } catch (err) {
+    logger.error(`[CaseBundle] processCaseBundle failed | caseId: ${caseId}, tenantId: ${tenantId} | error: ${err.message}`);
+    throw err;
+  }
 }
 
 module.exports = processCaseBundle;

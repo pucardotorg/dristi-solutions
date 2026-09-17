@@ -133,4 +133,7 @@ public class Order {
     @Valid
     private WorkflowObject workflow = null;
 
+    @JsonProperty("partyUniqueIds")
+    private List<String> partyUniqueIds = null;
+
 }

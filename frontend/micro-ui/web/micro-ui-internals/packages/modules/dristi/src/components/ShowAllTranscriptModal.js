@@ -1,28 +1,39 @@
-import { CloseSvg, TextArea } from "@egovernments/digit-ui-components";
-import React, { useEffect } from "react";
+import { TextArea } from "@egovernments/digit-ui-components";
+import React, { useEffect, useState } from "react";
 import Modal from "./Modal";
-import { SubmitBar } from "@egovernments/digit-ui-react-components";
+import { Loader, SubmitBar } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
-import { DateUtils } from "../Utils";
+import { DateUtils, downloadCaseSummaryPdf } from "../Utils";
+import { CloseBtn } from "./ModalComponents";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.heading}</h1>;
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView = false }) => {
+const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView = false, filingNumber, caseNumber, cnrNumber, tenantId, courtId }) => {
   const { t } = useTranslation();
+  const [loader, setLoader] = useState(false);
+
+  const handleDownloadCaseSummary = async () => {
+    if (loader) return;
+    try {
+      setLoader(true);
+      await downloadCaseSummaryPdf({
+        tenantId: tenantId || window?.Digit?.ULBService?.getCurrentTenantId(),
+        filingNumber,
+        cnrNumber,
+        courtId,
+        fileName: `${(caseNumber || filingNumber || "Case").replace(/\//g, "_")}_BDiary.pdf`,
+      });
+    } catch (error) {
+      console.error("Error downloading case summary PDF:", error);
+    } finally {
+      setLoader(false);
+    }
+  };
 
   return (
     <Modal
-      headerBarMain={<Heading heading={judgeView ? t("BOTD_SUMMARIES") : t("ALL_BOTD_TRANSCRIPT")} />}
+      headerBarMain={<Heading heading={t("CS_BDIARY")} />}
       headerBarEnd={<CloseBtn onClick={() => setShowAllTranscript(false)} />}
       actionCancelLabel={null}
       actionCancelOnSubmit={() => {}}
@@ -68,7 +79,13 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView
           ))
         )}
       </div>
-      <div className="submit-bar-div">
+      <div className="submit-bar-div" style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center" }}>
+        <div
+          onClick={handleDownloadCaseSummary}
+          style={{ fontWeight: 700, fontSize: "16px", lineHeight: "18.75px", color: "#007E7E", cursor: "pointer" }}
+        >
+          {t("CS_COMMON_DOWNLOAD")}
+        </div>
         <SubmitBar
           variation="primary"
           onSubmit={() => setShowAllTranscript(false)}
@@ -76,6 +93,25 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView
           label={t("CS_COMMON_BACK")}
         ></SubmitBar>
       </div>
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "9999",
+            position: "fixed",
+            right: "0",
+            top: "0",
+            display: "flex",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
     </Modal>
   );
 };

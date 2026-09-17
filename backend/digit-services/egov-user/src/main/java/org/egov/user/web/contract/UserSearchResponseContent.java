@@ -43,6 +43,11 @@ public class UserSearchResponseContent {
     private Set<Address> addresses;
 
     private Boolean active;
+    /**
+     * Whether the user already has a real password, as opposed to the placeholder given at
+     * creation. The UI reads this to choose between the password and the OTP login screen.
+     */
+    private Boolean hasPassword;
     private String locale;
     private UserType type;
     private Boolean accountLocked;
@@ -81,6 +86,7 @@ public class UserSearchResponseContent {
         this.pan = user.getPan();
         this.aadhaarNumber = user.getAadhaarNumber();
         this.active = user.getActive();
+        this.hasPassword = user.getHasPassword();
         this.dob = user.getDob();
         this.pwdExpiryDate = user.getPasswordExpiryDate();
         this.locale = user.getLocale();

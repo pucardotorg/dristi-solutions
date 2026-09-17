@@ -76,10 +76,10 @@ public class EvidenceEnrichment {
             }
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while Enriching evidence: {}", e.toString());
+            log.error("Custom Exception occurred while Enriching evidence", e);
             throw e;
         } catch (Exception e) {
-            log.error("Error enriching evidence application: {}", e.toString());
+            log.error("Error enriching evidence application", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in evidence enrichment service: " + e.toString());
         }
     }
@@ -160,7 +160,7 @@ public class EvidenceEnrichment {
             evidenceRequest.getArtifact().setEvidenceNumber(evidenceRequest.getArtifact().getFilingNumber()+"-"+evidenceNumberList.get(0));
             evidenceRequest.getArtifact().setIsEvidence(true);
         } catch (Exception e) {
-            log.error("Error enriching evidence number upon update: {}", e.toString());
+            log.error("Error enriching evidence number upon update", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Failed to generate evidence number for " + evidenceRequest.getArtifact().getId() + ": " + e.toString());
         }
     }
@@ -169,7 +169,7 @@ public class EvidenceEnrichment {
             evidenceRequest.getArtifact().setIsActive(false);
         }
         catch (Exception e) {
-            log.error("Error enriching isActive status upon update: {}", e.toString());
+            log.error("Error enriching isActive status upon update", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in enrichment service during isActive status update process: " + e.toString());
         }
     }
@@ -190,7 +190,7 @@ public class EvidenceEnrichment {
                 evidenceRequest.getArtifact().setSeal(seal);
             }
         } catch (Exception e) {
-            log.error("Error enriching evidence application upon update: {}", e.toString());
+            log.error("Error enriching evidence application upon update", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in enrichment service during  update process: " + e.toString());
         }
     }
@@ -200,7 +200,7 @@ public class EvidenceEnrichment {
             comment.setId(UUID.randomUUID());
             comment.setAuditdetails(auditDetails);
         } catch (Exception e) {
-            log.error("Error enriching comment upon create: {}", e.toString());
+            log.error("Error enriching comment upon create", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error enriching comment upon create: " + e.getMessage());
         }
     }
@@ -211,15 +211,19 @@ public class EvidenceEnrichment {
             String idName = "";
             String idFormat = "";
             if(WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType())) {
-                if(COMPLAINANT.equalsIgnoreCase(body.getArtifact().getSourceType())) {
+                String sourceType = body.getArtifact().getSourceType();
+                if(COMPLAINANT.equalsIgnoreCase(sourceType)) {
                     idName = configuration.getProsecutionWitnessConfig();
                     idFormat = configuration.getProsecutionWitnessFormat();
-                } else if (ACCUSED.equalsIgnoreCase(body.getArtifact().getSourceType())) {
+                } else if (ACCUSED.equalsIgnoreCase(sourceType)) {
                     idName = configuration.getDefenceWitnessConfig();
                     idFormat = configuration.getDefenceWitnessFormat();
-                } else if (COURT.equalsIgnoreCase(body.getArtifact().getSourceType())) {
+                } else if (COURT.equalsIgnoreCase(sourceType)) {
                     idName = configuration.getCourtWitnessConfig();
                     idFormat = configuration.getCourtWitnessFormat();
+                } else {
+                    throw new CustomException(ENRICHMENT_EXCEPTION,
+                            "Unsupported source type for witness deposition tag enrichment: " + sourceType);
                 }
             }
             String tenantId = getTenantId(body.getArtifact().getFilingNumber());
@@ -227,20 +231,17 @@ public class EvidenceEnrichment {
             body.getArtifact().setTag(tags.get(0));
             log.info("Tag generated id: {} is {}", body.getArtifact().getId(), body.getArtifact().getTag());
         } catch (CustomException e) {
-            log.error("Error generating tag for {}: {}", body.getArtifact().getId(), e.getMessage());
+            log.error("Error generating tag for {}", body.getArtifact().getId(), e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Failed to generate tag for " + body.getArtifact().getId() + ": " + e.getMessage());
         }
     }
 
     public String enrichPseudoTag(EvidenceRequest body) {
         String sequenceName = getSequenceName(body.getArtifact().getTag());
-        if(sequenceName.isEmpty()){
-            return sequenceName;
-        }
         sequenceName = sequenceName.replace("[TENANT_ID]", getTenantId(body.getArtifact().getFilingNumber()).toLowerCase());
         Integer nextVal = evidenceRepository.getNextValForSequence(sequenceName);
         log.debug("Retrieved sequence value {} for sequence {}", nextVal, sequenceName);
-        
+
         // Set the generated tag with sequence value to the artifact
         String generatedTag = body.getArtifact().getTag() + nextVal;
         log.info("Generated pseudo tag: {} for artifact: {}", generatedTag, body.getArtifact().getId());
@@ -249,10 +250,11 @@ public class EvidenceEnrichment {
 
     private String getSequenceName(String tag) {
         return switch (tag) {
-            case PROSECUTION_WITNESS -> "seq_prsqnwtns_[TENANT_ID]";
-            case DEFENCE_WITNESS -> "seq_dfncwtns_[TENANT_ID]";
-            case COURT_WITNESS -> "seq_courtwtns_[TENANT_ID]";
-            default -> "";
+            case PROSECUTION_WITNESS -> configuration.getProsecutionWitnessSequence();
+            case DEFENCE_WITNESS -> configuration.getDefenceWitnessSequence();
+            case COURT_WITNESS -> configuration.getCourtWitnessSequence();
+            default -> throw new CustomException(ENRICHMENT_EXCEPTION,
+                    "Unsupported tag for sequence name lookup: " + tag);
         };
     }
 }

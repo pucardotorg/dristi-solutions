@@ -78,8 +78,10 @@ public class ServiceConstants {
 	public static final String AND = " AND ";
 
 	public static final String ACTIVE = "ACTIVE";
+	public static final String INACTIVE = "INACTIVE";
 
 	public static final String ADVOCATE_REGISTERED = "ADVOCATE_REGISTERED";
+	public static final String ADVOCATE_REJECTED = "ADVOCATE_REJECTED";
 
 	public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
 	public static final String NOTIFICATION_MODULE_CODE = "notification";

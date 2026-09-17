@@ -15,7 +15,7 @@ const AddIcon = () => (
   </svg>
 );
 
-const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupResponse, tenantId, filingNumber, setShowErrorToast }) => {
+const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupResponse, tenantId, filingNumber, setShowToast }) => {
   // Mock data structure for notices - this would come from props or API in a real implementation
   const [showAddAddressModal, setShowAddAddressModalLocal] = useState(false);
   const [currentNoticeId, setCurrentNoticeId] = useState(null);
@@ -184,8 +184,8 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupRes
       setShowAddAddressModalLocal(false);
     } catch (err) {
       console.error("Error while adding address", err);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
-      throw err;
+      const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ADD_ADDRESS_FAILED"), error: true, errorId });
     }
   };
 

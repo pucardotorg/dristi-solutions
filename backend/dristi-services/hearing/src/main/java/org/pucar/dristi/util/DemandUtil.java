@@ -52,7 +52,7 @@ public class DemandUtil {
             }
             return demandResponse;
         } catch (Exception e) {
-            log.error("Error while updating demand: {}", e.getMessage());
+            log.error("Error while updating demand", e);
             throw new CustomException("DEMAND_UPDATE_ERROR", "Error occurred while updating demands: " + e.getMessage());
         }
     }

@@ -330,7 +330,7 @@ public class CaseBundleIndexBuilderService {
 
                     }
                 }catch(Exception e){
-                    log.error("Not able to parse json body : {} ", e.getMessage());
+                    log.error("Not able to parse json body", e);
                 }
 
             }

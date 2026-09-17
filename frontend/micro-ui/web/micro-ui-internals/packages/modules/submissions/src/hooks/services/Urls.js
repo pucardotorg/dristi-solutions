@@ -1,5 +1,8 @@
 export const Urls = {
   Authenticate: "/user/oauth/token",
+  payment: {
+    paymentStatus: "/etreasury/payment/v1/_paymentStatus",
+  },
   application: {
     applicationCreate: "/application/v1/create",
     applicationUpdate: "/application/v1/update",

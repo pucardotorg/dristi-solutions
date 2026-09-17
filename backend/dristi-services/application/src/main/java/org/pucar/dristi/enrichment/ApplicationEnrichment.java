@@ -73,7 +73,7 @@ public class ApplicationEnrichment {
             log.error("Exception occurred while enriching application");
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while enriching application: {}", e.getMessage());
+            log.error("Error occurred while enriching application", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, e.getMessage());
         }
     }
@@ -114,10 +114,10 @@ public class ApplicationEnrichment {
             List<String> cmpNumberIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
             applicationRequest.getApplication().setApplicationCMPNumber(cmpNumberIdList.get(0));
         } catch (CustomException e) {
-            log.error("Custom Exception while enriching application number by CMP number: {}", e.toString());
+            log.error("Custom Exception while enriching application number by CMP number", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Custom Exception in case enrichment service while enriching application number: " + e);
         } catch (Exception e) {
-            log.error("Error enriching application number by CMP number: {}", e.toString());
+            log.error("Error enriching application number by CMP number", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching application number: " + e);
         }
     }
@@ -147,7 +147,7 @@ public class ApplicationEnrichment {
                 });
             }
         } catch (Exception e) {
-            log.error("Error enriching application upon update: {}", e.getMessage());
+            log.error("Error enriching application upon update", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error enriching application upon update: " + e.getMessage());
         }
     }
@@ -157,7 +157,7 @@ public class ApplicationEnrichment {
             comment.setId(UUID.randomUUID());
             comment.setAuditdetails(auditDetails);
         } catch (Exception e) {
-            log.error("Error enriching comment upon create: {}", e.getMessage());
+            log.error("Error enriching comment upon create", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error enriching comment upon create: " + e.getMessage());
         }
     }

@@ -53,7 +53,7 @@ public class AdvocateQueryBuilder {
             return query.toString();
         }
         catch (Exception e) {
-            log.error(ADVOCATE_SEARCH_QUERY_BUILD_EXCEPTION, e.toString());
+            log.error(ADVOCATE_SEARCH_QUERY_BUILD_EXCEPTION, e);
             throw new CustomException(ADVOCATE_SEARCH_QUERY_EXCEPTION, ADVOCATE_SEARCH_QUERY_BUILD_EXCEPTION + e.getMessage());
         }
     }
@@ -113,7 +113,7 @@ public class AdvocateQueryBuilder {
             return query.toString();
         }
         catch (Exception e) {
-            log.error("Error while building advocate search by status query :: {}",e.toString());
+            log.error("Error while building advocate search by status query", e);
             throw new CustomException(ADVOCATE_SEARCH_QUERY_EXCEPTION,ADVOCATE_SEARCH_QUERY_BUILD_EXCEPTION+ e.getMessage());
         }
     }
@@ -147,7 +147,7 @@ public class AdvocateQueryBuilder {
             return query.toString();
         }
         catch (Exception e) {
-            log.error("Error while building advocate search by app num query :: {}",e.toString());
+            log.error("Error while building advocate search by app num query", e);
             throw new CustomException(ADVOCATE_SEARCH_QUERY_EXCEPTION,ADVOCATE_SEARCH_QUERY_BUILD_EXCEPTION+ e.getMessage());
         }
     }
@@ -202,7 +202,7 @@ public class AdvocateQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building document search query :: {}",e.toString());
+            log.error("Error while building document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION,"Exception occurred while building the query: "+ e.getMessage());
         }
     }

@@ -81,7 +81,7 @@ public class MediationDocumentService implements DocumentTypeService {
 
         enrichment.enrichCreateMediationDocument(documentRequest);
 
-        if (!ObjectUtils.isEmpty(document.getWorkflow()) && 
+        if (!ObjectUtils.isEmpty(document.getWorkflow()) &&
                 INITIATE_E_SIGN.equalsIgnoreCase(document.getWorkflow().getAction())) {
             List<String> assignees = computeAssignees(document.getMediationDetails());
             documentRequest.getDigitalizedDocument().getWorkflow().setAssignes(assignees);
@@ -304,17 +304,17 @@ public class MediationDocumentService implements DocumentTypeService {
         if (request == null || request.getRequestInfo() == null) {
             throw new CustomException("INVALID_REQUEST", "Request or RequestInfo cannot be null");
         }
-        
+
         if (request.getRequestInfo().getUserInfo() == null) {
             throw new CustomException("INVALID_REQUEST", "UserInfo cannot be null");
         }
-        
+
         List<Role> roles = request.getRequestInfo().getUserInfo().getRoles();
         if (roles == null) {
             roles = new ArrayList<>();
             request.getRequestInfo().getUserInfo().setRoles(roles);
         }
-        
+
         roles.add(
                 Role.builder()
                         .id(123L)
@@ -333,7 +333,7 @@ public class MediationDocumentService implements DocumentTypeService {
         try {
             callNotificationServiceForSMS(request);
         } catch (Exception e) {
-            log.error("Error occurred while trying to send SMS: {}", e.getMessage());
+            log.error("Error occurred while trying to send SMS", e);
         }
     }
 

@@ -2,16 +2,8 @@ import React from "react";
 import Modal from "../../../dristi/src/components/Modal";
 import { FileDownloadIcon } from "../../../dristi/src/icons/svgIndex";
 import CustomCopyTextDiv from "../../../dristi/src/components/CustomCopyTextDiv";
-import { Banner, CardLabel, CloseSvg } from "@egovernments/digit-ui-react-components";
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { Banner, CardLabel } from "@egovernments/digit-ui-react-components";
+import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 function OrderSucessModal({ order, t, handleDownloadOrders, handleClose, actionSaveLabel, handleCloseSuccessModal }) {
   const getFormattedDate = () => {
     const currentDate = new Date();

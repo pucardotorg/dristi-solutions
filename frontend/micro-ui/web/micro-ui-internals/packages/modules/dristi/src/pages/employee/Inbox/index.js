@@ -1,4 +1,5 @@
-import { CustomDropdown, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { CustomDropdown } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";

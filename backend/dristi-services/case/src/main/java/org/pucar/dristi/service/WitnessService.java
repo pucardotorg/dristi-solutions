@@ -59,7 +59,7 @@ public class WitnessService {
         } catch(CustomException e){
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while creating witness :: {}",e.toString());
+            log.error("Error occurred while creating witness", e);
             throw new CustomException(CREATE_WITNESS_ERR, e.getMessage());
         }
 

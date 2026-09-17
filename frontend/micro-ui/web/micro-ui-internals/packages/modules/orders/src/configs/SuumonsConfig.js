@@ -59,7 +59,7 @@ const defaultSearchValuesForCompleted = {
   orderType: "",
   channel: "",
   compStatus: "",
-  completeStatus: ["EXECUTED", "NOT_EXECUTED", "DELIVERED", "UNDELIVERED"],
+  completeStatus: ["EXECUTED", "NOT_EXECUTED", "DELIVERED", "UNDELIVERED", "WARRANT_REISSUED_WITH_NEW_WARRANT"],
 };
 
 export const SummonsTabsConfig = {
@@ -82,7 +82,7 @@ export const SummonsTabsConfig = {
           apiOperation: "SEARCH",
           criteria: {
             applicationStatus: "SIGN_PENDING",
-            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT"],
+            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT", "WARRANT_REISSUED"],
             isPendingCollection: true,
           },
         },
@@ -248,7 +248,15 @@ export const SummonsTabsConfig = {
           apiOperation: "SEARCH",
           criteria: {
             applicationStatus: "SIGN_PENDING",
-            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT", "ISSUE_PROCESS"],
+            completeStatus: [
+              "ISSUE_SUMMON",
+              "ISSUE_NOTICE",
+              "ISSUE_WARRANT",
+              "ISSUE_PROCLAMATION",
+              "ISSUE_ATTACHMENT",
+              "ISSUE_PROCESS",
+              "WARRANT_REISSUED",
+            ],
             isPendingCollection: false,
           },
         },
@@ -539,7 +547,15 @@ export const SummonsTabsConfig = {
           apiOperation: "SEARCH",
           criteria: {
             applicationStatus: "SIGNED",
-            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT", "ISSUE_PROCESS"],
+            completeStatus: [
+              "ISSUE_SUMMON",
+              "ISSUE_NOTICE",
+              "ISSUE_WARRANT",
+              "ISSUE_PROCLAMATION",
+              "ISSUE_ATTACHMENT",
+              "ISSUE_PROCESS",
+              "WARRANT_REISSUED",
+            ],
             isPendingCollection: false,
           },
         },
@@ -992,7 +1008,7 @@ export const SummonsTabsConfig = {
         },
         requestBody: {
           criteria: {
-            completeStatus: ["EXECUTED", "NOT_EXECUTED", "DELIVERED", "UNDELIVERED"],
+            completeStatus: ["EXECUTED", "NOT_EXECUTED", "DELIVERED", "UNDELIVERED", "WARRANT_REISSUED_WITH_NEW_WARRANT"],
             isPendingCollection: false,
           },
         },
@@ -1109,7 +1125,7 @@ export const SummonsTabsConfig = {
                     masterName: "SentStatus",
                     // select: "(data) => {return data['Order'].SentStatus?.map((item) => {return item;});}",
                     select:
-                      "(data) => {return data['Order'].SentStatus?.filter((item) => [`DELIVERED`,`UNDELIVERED`,`EXECUTED`,`NOT_EXECUTED`].includes(item.code)).sort((a, b) => a.name.localeCompare(b.name));}",
+                      "(data) => {return data['Order'].SentStatus?.filter((item) => [`DELIVERED`,`UNDELIVERED`,`EXECUTED`,`NOT_EXECUTED`, 'WARRANT_REISSUED_WITH_NEW_WARRANT'].includes(item.code)).sort((a, b) => a.name.localeCompare(b.name));}",
                     //  "(data) => {return data['Order'].OrderStatus?.filter((item)=>[`PENDING_BULK_E-SIGN`, `DRAFT_IN_PROGRESS`].includes(item.type));}",
                   },
                   optionsCustomStyle: {

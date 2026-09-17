@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -129,5 +131,11 @@ public class SummonsPdf  {
 
     @JsonProperty("partyType")
     private String partyType;
+
+    @JsonProperty("complainantList")
+    private List<PartyDetail> complainantList;
+
+    @JsonProperty("accusedList")
+    private List<PartyDetail> accusedList;
 
 }

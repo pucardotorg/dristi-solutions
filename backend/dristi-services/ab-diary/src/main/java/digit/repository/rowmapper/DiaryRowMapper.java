@@ -37,7 +37,7 @@ public class DiaryRowMapper implements ResultSetExtractor<List<CaseDiaryListItem
             return caseDiaryListItems;
 
         } catch (Exception e) {
-            log.error("Error occurred while processing document ResultSet: {}", e.getMessage());
+            log.error("Error occurred while processing document ResultSet", e);
             throw new CustomException(ROW_MAPPER_EXCEPTION, "Error occurred while processing document ResultSet: " + e.getMessage());
         }
     }

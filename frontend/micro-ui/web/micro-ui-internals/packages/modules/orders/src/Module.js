@@ -1,7 +1,6 @@
 import { Loader } from "@egovernments/digit-ui-react-components";
 import React from "react";
 import { useRouteMatch } from "react-router-dom";
-import OrdersCard from "./components/OrdersCard";
 import DeliveryChannels from "./pageComponents/DeliveryChannels";
 import { default as EmployeeApp } from "./pages/employee";
 import { overrideHooks, updateCustomConfigs } from "./utils";
@@ -46,7 +45,6 @@ export const OrdersModule = ({ stateCode, userType, tenants }) => {
 
 const componentsToRegister = {
   OrdersModule,
-  OrdersCard,
   DeliveryChannels,
   OrderWorkflowActionEnum: OrderWorkflowAction,
   OrderWorkflowStateEnum: OrderWorkflowState,

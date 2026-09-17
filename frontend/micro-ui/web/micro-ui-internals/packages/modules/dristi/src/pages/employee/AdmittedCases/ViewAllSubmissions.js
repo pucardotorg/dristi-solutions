@@ -1,22 +1,15 @@
 import React from "react";
 import Modal from "../../../components/Modal";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import { useHistory } from "react-router-dom";
 import { DRISTIService } from "../../../services";
+import { CloseBtn } from "../../../components/ModalComponents";
 
 const ViewAllSubmissions = ({ t, setShow, submissionList, filingNumber, openEvidenceModal }) => {
   const userInfo = Digit.UserService.getUser()?.info;
   const userRoles = userInfo?.roles?.map((role) => role.code);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const history = useHistory();
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   const Heading = (props) => {
     return (
       <div className="evidence-title">

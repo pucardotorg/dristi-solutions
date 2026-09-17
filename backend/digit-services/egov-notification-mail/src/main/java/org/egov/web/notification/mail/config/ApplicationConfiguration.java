@@ -153,4 +153,7 @@ public class ApplicationConfiguration {
     @Value("${custom.email.subject}")
     private List<String> customEmailSubject;
 
+    @Value("${kafka.topics.health.status}")
+    private String healthStatusTopic;
+
 }

@@ -90,7 +90,7 @@ public class ApplicationRowMapper implements ResultSetExtractor<List<Application
             }
         }
         catch (Exception e){
-            log.error("Error occurred while processing Application ResultSet: {}", e.getMessage());
+            log.error("Error occurred while processing Application ResultSet", e);
             throw new CustomException(ROW_MAPPER_EXCEPTION,"Error occurred while processing Application ResultSet: "+ e.getMessage());
         }
         return new ArrayList<>(applicationMap.values());
@@ -137,7 +137,7 @@ public class ApplicationRowMapper implements ResultSetExtractor<List<Application
                 list = objectMapper.readValue(str, new TypeReference<List<Integer>>() {});
             }
         } catch (Exception e) {
-            log.error("Error occurred while converting string to list: {}", e.getMessage());
+            log.error("Error occurred while converting string to list", e);
             throw new CustomException(JSON_PARSE_ERROR, "Failed to parse application type from JSON: " + e.getMessage());
         }
         return list;

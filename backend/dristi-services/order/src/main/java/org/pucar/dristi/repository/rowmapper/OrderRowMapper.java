@@ -100,11 +100,15 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                 if(pgObject4!=null)
                     order.setAttendance(objectMapper.readTree(pgObject4.getValue()));
 
+                PGobject pgObject5 = (PGobject) rs.getObject("partyuniqueids");
+                if(pgObject5!=null)
+                    order.setPartyUniqueIds(objectMapper.readValue(pgObject5.getValue(), List.class));
+
                 orderMap.put(uuid, order);
             }
         }
         catch (Exception e){
-            log.error("Error occurred while processing order ResultSet :: {}", e.toString());
+            log.error("Error occurred while processing order ResultSet", e);
             throw new CustomException("ROW_MAPPER_EXCEPTION","Error occurred while processing order ResultSet: "+ e.getMessage());
         }
         return new ArrayList<>(orderMap.values());

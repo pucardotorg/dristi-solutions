@@ -40,6 +40,24 @@ public class DocumentRowMapper implements ResultSetExtractor<Map<UUID,List<Docum
                 if(pgObject!=null)
                     document.setAdditionalDetails(objectMapper.readTree(pgObject.getValue()));
 
+                // Extract fileName / documentName from additionalDetails when available
+                try {
+                    if (document.getAdditionalDetails() != null) {
+                        com.fasterxml.jackson.databind.JsonNode docNode = objectMapper.convertValue(document.getAdditionalDetails(), com.fasterxml.jackson.databind.JsonNode.class);
+                        if (docNode.has("fileName") && !docNode.get("fileName").isNull()) {
+                            document.setFileName(docNode.get("fileName").asText());
+                        } else if (docNode.has("filename") && !docNode.get("filename").isNull()) {
+                            document.setFileName(docNode.get("filename").asText());
+                        }
+
+                        if (docNode.has("documentName") && !docNode.get("documentName").isNull()) {
+                            document.setDocumentName(docNode.get("documentName").asText());
+                        } else if (docNode.has("documentname") && !docNode.get("documentname").isNull()) {
+                            document.setDocumentName(docNode.get("documentname").asText());
+                        }
+                    }
+                } catch (Exception ignored) {}
+
                 if (documentMap.containsKey(uuid) ) {
                     documentMap.get(uuid).add(document);
                 }
@@ -52,7 +70,7 @@ public class DocumentRowMapper implements ResultSetExtractor<Map<UUID,List<Docum
         } catch(CustomException e){
             throw e;
         } catch (Exception e){
-            log.error("Error occurred while processing document ResultSet :: {}", e.toString());
+            log.error("Error occurred while processing document ResultSet", e);
             throw new CustomException("ROW_MAPPER_EXCEPTION","Exception occurred while processing document ResultSet: "+ e.getMessage());
         }
         return documentMap;

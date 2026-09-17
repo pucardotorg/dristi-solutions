@@ -572,7 +572,7 @@
   .popup-module.otp-modal-class {
     width: unset !important;
     .header-wrap {
-      padding: 0px 0px 0px 16px;
+      padding: 0px 16px 0px 16px;
       border-bottom: none;
 
       .header-end {
@@ -1078,5 +1078,17 @@ body {
     display: flex;
     gap: 4px;
     align-items: center;
+  }
+}
+
+.unregistered-number-modal{
+  border-radius: 4px;
+  
+  .header-wrap{
+    .header-content.popup-header-fix{
+      .heading-m{
+        margin: 14px !important;
+      }
+    }
   }
 }

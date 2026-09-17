@@ -1,4 +1,5 @@
 const { getStringAddressDetails } = require("../utils/addressUtils");
+const { cleanName } = require("./cleanName");
 
 function getComplaintAndAccusedList(courtCase) {
   const litigants = courtCase?.litigants?.map((litigant) => ({
@@ -6,14 +7,14 @@ function getComplaintAndAccusedList(courtCase) {
     representatives:
       courtCase?.representatives?.filter((rep) =>
         rep?.representing?.some(
-          (complainant) => complainant?.individualId === litigant?.individualId
-        )
+          (complainant) => complainant?.individualId === litigant?.individualId,
+        ),
       ) || [],
   }));
 
   const complainants =
     litigants?.filter((litigant) =>
-      litigant.partyType.includes("complainant")
+      litigant.partyType.includes("complainant"),
     ) || [];
 
   const complainantList = complainants?.map((complainant) => {
@@ -21,10 +22,10 @@ function getComplaintAndAccusedList(courtCase) {
       courtCase?.additionalDetails?.complainantDetails?.formdata?.find(
         (comp) =>
           comp?.data?.complainantVerification?.individualDetails
-            ?.individualId === complainant?.individualId
+            ?.individualId === complainant?.individualId,
       );
     const address = getStringAddressDetails(
-      complainantInAdditionalDetails?.data?.addressDetails
+      complainantInAdditionalDetails?.data?.addressDetails,
     );
     return {
       name: complainant?.additionalDetails?.fullName,
@@ -42,7 +43,7 @@ function getComplaintAndAccusedList(courtCase) {
         courtCase?.additionalDetails?.respondentDetails?.formdata?.find(
           (comp) =>
             comp?.data?.respondentVerification?.individualDetails
-              ?.individualId === accused?.individualId
+              ?.individualId === accused?.individualId,
         );
       const addresses = (
         accusedInAdditionalDetails?.data?.addressDetails || []
@@ -86,8 +87,8 @@ function getComplaintAndAccusedList(courtCase) {
             (joined) =>
               joined?.individualId &&
               unJoined?.individualId &&
-              joined?.individualId === unJoined?.individualId
-          )
+              joined?.individualId === unJoined?.individualId,
+          ),
       ) || [];
 
   const accusedList = [...joinedAccuseds, ...unJoinedAccuseds]
@@ -97,38 +98,52 @@ function getComplaintAndAccusedList(courtCase) {
   return { complainantList, accusedList };
 }
 
-function getNameByUuid(uuid, courtCase ) {
-    const litigants = courtCase?.litigants || [];
-    const representatives = courtCase?.representatives || [];
-    const poa = courtCase?.poaHolders || [];
+function getNameByUuid(uuid, courtCase) {
+  const litigants = courtCase?.litigants || [];
+  const representatives = courtCase?.representatives || [];
+  const poa = courtCase?.poaHolders || [];
 
-    if (!uuid) return null;
-  
-    const litigantMatch = litigants.find(
-      (lit) => lit?.additionalDetails?.uuid === uuid
-    );
-  
-    if (litigantMatch) {
-      return litigantMatch?.additionalDetails?.fullName || null;
-    }
-  
-    const representativeMatch = representatives.find(
-      (rep) => rep?.additionalDetails?.uuid === uuid
-    );
-  
-    if (representativeMatch) {
-      return representativeMatch?.additionalDetails?.advocateName || null;
-    }
-  
-    const poaMatch = poa.find(
-      (p) => p?.additionalDetails?.uuid === uuid
-    );
-  
-    if (poaMatch) {
-      return poaMatch?.name || null;
-    }
-  
-    return null;
+  if (!uuid) return null;
+
+  const litigantMatch = litigants.find(
+    (lit) => lit?.additionalDetails?.uuid === uuid,
+  );
+
+  if (litigantMatch) {
+    return cleanName(litigantMatch?.additionalDetails?.fullName) || null;
   }
 
-module.exports = { getComplaintAndAccusedList, getNameByUuid };
+  const representativeMatch = representatives.find(
+    (rep) => rep?.additionalDetails?.uuid === uuid,
+  );
+
+  if (representativeMatch) {
+    return (
+      cleanName(representativeMatch?.additionalDetails?.advocateName) || null
+    );
+  }
+
+  const poaMatch = poa.find((p) => p?.additionalDetails?.uuid === uuid);
+
+  if (poaMatch) {
+    return cleanName(poaMatch?.name) || null;
+  }
+
+  const advocateOffices = courtCase?.advocateOffices || [];
+  for (const office of advocateOffices) {
+    const member = [
+      ...(office?.advocates || []),
+      ...(office?.clerks || []),
+    ].find((m) => m?.memberUserUuid === uuid);
+    if (member) {
+      return cleanName(member?.memberName) || null;
+    }
+  }
+
+  return null;
+}
+
+module.exports = {
+  getComplaintAndAccusedList,
+  getNameByUuid,
+};

@@ -9,6 +9,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
+const { getCaseNumber } = require("../utils/commonUtils");
 const {
   getNameByUuid,
   getComplaintAndAccusedList,
@@ -247,9 +248,7 @@ async function applicationProfileEdit(
         ? oldData?.data?.respondentType?.code
         : oldData?.data?.complainantType?.code;
 
-    const caseNumber = courtCase?.isLPRCase
-      ? courtCase?.lprNumber
-      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = getCaseNumber(courtCase);
     const reasonForChange =
       application?.additionalDetails?.formdata?.reasonForChange?.text || "";
     const comments =
@@ -264,9 +263,35 @@ async function applicationProfileEdit(
         ? oldData?.data?.respondentTypeOfEntity?.name
         : oldData?.data?.complainantTypeOfEntity?.name;
 
+    const newCompanyName =
+      partyType === "respondent"
+        ? newData?.respondentCompanyName
+        : newData?.complainantCompanyName;
+    const newEntityType =
+      partyType === "respondent"
+        ? newData?.respondentTypeOfEntity?.name
+        : newData?.complainantTypeOfEntity?.name;
+
     const { complainantList, accusedList } = getComplaintAndAccusedList(
       courtCase || {},
     );
+
+    // Resolve the litigant(s) the filing advocate actually represents, so the
+    // signature reads "Advocate for <real client>" rather than the party being
+    // edited (these differ when, e.g., a complainant's advocate edits the accused).
+    const filingAdvocate =
+      courtCase?.representatives?.find(
+        (rep) => rep?.additionalDetails?.uuid === application?.asUser,
+      ) || {};
+    const advocateRepresentingName =
+      filingAdvocate?.representing?.find(
+        (litigant) => litigant?.individualId === uniqueId,
+      )?.additionalDetails?.fullName ||
+      filingAdvocate?.representing
+        ?.map((litigant) => litigant?.additionalDetails?.fullName)
+        ?.filter(Boolean)
+        ?.join(", ") ||
+      partyName;
 
     const data = {
       Data: [
@@ -282,6 +307,7 @@ async function applicationProfileEdit(
           date: formattedToday,
           partyName: partyName,
           advocateName,
+          advocateRepresentingName,
           reasonForEditing: reasonForChange,
           advocateSignature: "Advocate Signature",
           day: day + ordinalSuffix,
@@ -302,6 +328,8 @@ async function applicationProfileEdit(
             showAddress(oldData?.data?.addressDetails) || [],
           currentResedentialAddress:
             showAddress(oldData?.data?.currentAddressDetails) || [],
+          currentAddressCompanyDetails:
+            showAddress(oldData?.data?.addressCompanyDetails) || [],
           isEntity: currentDetailsLitigantTypeCode !== "INDIVIDUAL",
           currentCompanyName: currentCompanyName || "",
           currentEntityType: currentEntityType || "",
@@ -314,6 +342,10 @@ async function applicationProfileEdit(
           newPermanentAddress: showAddress(newData?.addressDetails) || [],
           newResedentialAddress:
             showAddress(newData?.currentAddressDetails) || [],
+          newAddressCompanyDetails:
+            showAddress(newData?.addressCompanyDetails) || [],
+          newCompanyName: newCompanyName || "",
+          newEntityType: newEntityType || "",
           applicationTitle: "APPLICATION FOR EDITING LITIGANT DETAILS",
           petitionerName: getNameByUuid(application?.asUser, courtCase),
           complainantList: complainantList,

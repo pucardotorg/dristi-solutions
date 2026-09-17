@@ -1,4 +1,3 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../components/Modal";
 import { Button, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
@@ -8,6 +7,7 @@ import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/cas
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import useGetDiaryEntry from "../../../hooks/dristi/useGetDiaryEntry";
 import { getAllAssociatedPartyUuids, getAuthorizedUuid } from "../../../Utils";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 function PublishedOrderModal({
   t,
@@ -31,18 +31,7 @@ function PublishedOrderModal({
 
   const { documents, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments({ ...(!isCitizen && { courtId }) });
   const [loading, setLoading] = useState(false);
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   const { data: caseData } = useSearchCaseService(
     {
       criteria: [

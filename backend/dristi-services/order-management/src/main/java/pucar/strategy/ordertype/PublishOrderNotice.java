@@ -282,7 +282,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
 
                 callNotificationService(orderRequest,PAYMENT_LINK_SMS, smsTemplateData, uniqueAssignee);
             } catch (Exception e) {
-                log.error("Error occurred while sending notification to user: {}", e.toString());
+                log.error("Error occurred while sending notification to user", e);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -410,7 +410,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
             }
         }
         catch (Exception e) {
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
     }
 

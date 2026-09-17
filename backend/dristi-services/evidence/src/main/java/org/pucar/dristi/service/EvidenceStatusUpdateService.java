@@ -74,7 +74,7 @@ public class EvidenceStatusUpdateService {
             throw new RuntimeException();
         } catch (Exception e) {
             log.error("Error occurred while updating evidence, method: updateEvidenceStatus , result: Failure");
-            log.error("Error: {}", e.toString());
+            log.error("Error", e);
 
         }
         log.info("method: updateEvidenceStatus , result: Success");

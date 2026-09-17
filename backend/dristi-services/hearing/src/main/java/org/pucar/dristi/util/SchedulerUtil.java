@@ -75,7 +75,7 @@ public class SchedulerUtil {
         try {
             response = restTemplate.postForEntity(uri.toString(), request, Map.class);
         } catch (Exception e) {
-            log.error("Error updating time for hearing in Scheduler :: {}", e.getMessage());
+            log.error("Error updating time for hearing in Scheduler", e);
             throw new CustomException("Error updating time for hearing in Scheduler.", e.getMessage());
         }
     }

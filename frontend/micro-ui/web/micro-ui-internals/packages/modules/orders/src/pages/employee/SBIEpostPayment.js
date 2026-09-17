@@ -1,12 +1,13 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { Loader } from "@egovernments/digit-ui-components";
-import { useMemo } from "react";
-import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { SBIPaymentService } from "../../hooks/services";
-import { Modal, Button, CardText, RadioButtons, CardLabel, LabelFieldPair } from "@egovernments/digit-ui-react-components";
+import { RadioButtons, CardLabel, LabelFieldPair } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { ORDER_TYPES } from "../../utils/constants";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const modeOptions = [
   { label: "Net Banking", value: "NB" },
@@ -18,11 +19,10 @@ const modeOptions = [
   { label: "UPI", value: "UPI" },
 ];
 
-const SBIEpostPayment = () => {
+const SBIEpostPayment = ({ path }) => {
   const { t } = useTranslation();
   const location = useLocation();
   const [selectedOption, setSelectedOption] = useState({});
-  const [optionLoader, setOptionLoader] = useState(true);
   const [paymentLoader, setPaymentLoader] = useState(false);
   const bill = location.state.state.billData;
   const serviceNumber = location?.state?.state?.serviceNumber;
@@ -40,10 +40,9 @@ const SBIEpostPayment = () => {
   const orderType = location?.state?.state?.orderType;
   const [isCaseLocked, setIsCaseLocked] = useState(false);
   const [payOnlineButtonTitle, setPayOnlineButtonTitle] = useState("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
+  const [showToast, setShowToast] = useState(null);
 
-  let history = useHistory();
-
-  const { data: ePostBillResponse, isLoading: isEPOSTBillLoading, refetch: refetchBill } = Digit.Hooks.dristi.useBillSearch(
+  const { refetch: refetchBill } = Digit.Hooks.dristi.useBillSearch(
     {},
     {
       tenantId,
@@ -65,6 +64,8 @@ const SBIEpostPayment = () => {
       setIsCaseLocked(status?.Lock?.isLocked);
     } catch (error) {
       console.error("Error fetching case lock status", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_FETCHING_CASE_LOCK_STATUS"), error: true, errorId });
     }
   });
   useEffect(() => {
@@ -75,7 +76,6 @@ const SBIEpostPayment = () => {
 
   const onSBIPayment = async () => {
     setPaymentLoader(true);
-    let status;
     try {
       const { data: freshBillResponse } = await refetchBill();
       if (freshBillResponse?.Bill?.[0]?.status === "PAID") {
@@ -107,7 +107,7 @@ const SBIEpostPayment = () => {
             OtherDetails: "NA",
             PayMode: "NB",
             billId: bill?.Bill?.[0]?.billDetails?.[0]?.billId,
-            tenantId: "kl",
+            tenantId,
             totalDue: bill?.Bill?.[0]?.totalAmount,
             businessService: businessService,
             serviceNumber: serviceNumber,
@@ -154,7 +154,7 @@ const SBIEpostPayment = () => {
           isCourtBillPaid: isCourtBillPaid,
           hearingId: hearingId,
           orderType: orderType,
-          partyIndex: orderType === "NOTICE" && partyIndex,
+          partyIndex: orderType === ORDER_TYPES.NOTICE && partyIndex,
         };
 
         sessionStorage.setItem("paymentReceiptData", JSON.stringify({ receiptData }));
@@ -163,6 +163,8 @@ const SBIEpostPayment = () => {
       }
     } catch (e) {
       console.error(e);
+      const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_PROCESSING_PAYMENT"), error: true, errorId });
     }
   };
 
@@ -201,38 +203,49 @@ const SBIEpostPayment = () => {
   };
 
   return (
-    <div>
-      {paymentLoader ? (
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-          <Loader />
-        </div>
-      ) : (
-        <div className="payment-for-summon">
-          <LabelFieldPair className="case-label-field-pair">
-            <div className="join-case-tooltip-wrapper">
-              <CardLabel className="case-input-label">{t("Select preferred mode of Payment")}</CardLabel>
-            </div>
-            <RadioButtons
-              options={modeOptions}
-              optionsKey={"label"}
-              onSelect={(value) => {
-                setSelectedOption(value);
-              }}
-              selectedOption={selectedOption}
-              disabled={false}
+    <React.Fragment>
+      <div>
+        {paymentLoader ? (
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+            <Loader />
+          </div>
+        ) : (
+          <div className="payment-for-summon">
+            <LabelFieldPair className="case-label-field-pair">
+              <div className="join-case-tooltip-wrapper">
+                <CardLabel className="case-input-label">{t("Select preferred mode of Payment")}</CardLabel>
+              </div>
+              <RadioButtons
+                options={modeOptions}
+                optionsKey={"label"}
+                onSelect={(value) => {
+                  setSelectedOption(value);
+                }}
+                selectedOption={selectedOption}
+                disabled={false}
+              />
+            </LabelFieldPair>
+            <ButtonSelector
+              style={{ border: "1px solid" }}
+              label={t("SBI_PAYMENT")}
+              onSubmit={onSBIPayment}
+              isDisabled={paymentLoader || isCaseLocked}
+              title={isCaseLocked ? t(payOnlineButtonTitle) : ""}
+              textStyles={{ margin: "0px" }}
             />
-          </LabelFieldPair>
-          <ButtonSelector
-            style={{ border: "1px solid" }}
-            label={t("SBI_PAYMENT")}
-            onSubmit={onSBIPayment}
-            isDisabled={paymentLoader || isCaseLocked}
-            title={isCaseLocked ? t(payOnlineButtonTitle) : ""}
-            textStyles={{ margin: "0px" }}
-          />
-        </div>
+          </div>
+        )}
+      </div>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
-    </div>
+    </React.Fragment>
   );
 };
 

@@ -69,7 +69,7 @@ public class AdvocateRowMapper implements ResultSetExtractor<List<Advocate>> {
             throw e;
         }
         catch (Exception e){
-            log.error("Error occurred while processing Advocate ResultSet :: {}", e.toString());
+            log.error("Error occurred while processing Advocate ResultSet", e);
             throw new CustomException(ROW_MAPPER_EXCEPTION,"Exception occurred while processing Advocate ResultSet: "+ e.getMessage());
         }
         return new ArrayList<>(advocateMap.values());

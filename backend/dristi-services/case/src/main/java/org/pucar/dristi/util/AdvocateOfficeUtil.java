@@ -57,7 +57,7 @@ public class AdvocateOfficeUtil {
             }
             return Collections.emptyList();
         } catch (Exception e) {
-            log.error("Error while fetching office members: {}", e.getMessage(), e);
+            log.error("Error while fetching office members", e);
             throw new CustomException(ERROR_WHILE_FETCHING_OFFICE_MEMBERS, e.getMessage());
         }
     }

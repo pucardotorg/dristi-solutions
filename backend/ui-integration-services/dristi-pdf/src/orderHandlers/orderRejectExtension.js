@@ -14,6 +14,7 @@ const { formatDate } = require("./formatDate");
 const { getAdvocates } = require("../applicationHandlers/getAdvocates");
 const { handleApiCall } = require("../utils/handleApiCall");
 const { extractOrderNumber } = require("../utils/extractOrderNumber");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 async function orderRejectExtension(
   req,
@@ -201,12 +202,7 @@ async function orderRejectExtension(
       ? formatDate(new Date(originalOrder.createdDate), "DD-MM-YYYY")
       : "";
     const caseNumber =
-      (courtCase?.isLPRCase
-        ? courtCase?.lprNumber
-        : courtCase?.courtCaseNumber) ||
-      courtCase?.courtCaseNumber ||
-      courtCase?.cmpNumber ||
-      "";
+      getCaseNumber(courtCase);
     const data = {
       Data: [
         {

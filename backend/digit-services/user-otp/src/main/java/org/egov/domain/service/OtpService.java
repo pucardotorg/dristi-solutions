@@ -38,7 +38,7 @@ public class OtpService {
 
     public void sendOtp(OtpRequest otpRequest) {
         otpRequest.validate();
-        if (otpRequest.isRegistrationRequestType() || otpRequest.isLoginRequestType()) {
+        if (otpRequest.isRegistrationRequestType() || otpRequest.isLoginRequestType() || otpRequest.isCTCApplicationLoginRequestType() || otpRequest.isCTCApplicationRegisterRequestType()) {
             sendOtpForUserRegistration(otpRequest);
         } else {
             sendOtpForPasswordReset(otpRequest);
@@ -49,16 +49,16 @@ public class OtpService {
         final User matchingUser = userRepository.fetchUser(otpRequest.getMobileNumber(), otpRequest.getTenantId(),
                 otpRequest.getUserType());
 
-        if (otpRequest.isRegistrationRequestType() && null != matchingUser)
+        if ((otpRequest.isRegistrationRequestType() || otpRequest.isCTCApplicationRegisterRequestType())&& null != matchingUser)
             throw new UserAlreadyExistInSystemException();
-        else if (otpRequest.isLoginRequestType() && null == matchingUser)
+        else if ((otpRequest.isLoginRequestType() || otpRequest.isCTCApplicationLoginRequestType()) && null == matchingUser)
             throw new UserNotExistingInSystemException();
 
         final String otpNumber = otpRepository.fetchOtp(otpRequest);
         if(!isTest) {
             otpSMSSender.send(otpRequest, otpNumber);
         }
-        if(!otpRequest.isRegistrationRequestType()) // Because new user doesn't have any email configured
+        if(!otpRequest.isRegistrationRequestType() && !otpRequest.isCTCApplicationLoginRequestType() && !otpRequest.isCTCApplicationRegisterRequestType()) // Because new user doesn't have any email configured
             try{
                 otpEmailRepository.send(matchingUser.getEmail(), otpNumber, otpRequest);
             } catch (Exception ignore){

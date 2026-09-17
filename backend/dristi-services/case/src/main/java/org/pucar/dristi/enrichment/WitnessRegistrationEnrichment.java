@@ -32,7 +32,7 @@ public class WitnessRegistrationEnrichment {
                 witness.setCnrNumber(witness.getFilingNumber());
             }
         } catch (Exception e) {
-            log.error("Error enriching witness application :: {}", e.toString());
+            log.error("Error enriching witness application", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, e.getMessage());
         }
     }
@@ -44,7 +44,7 @@ public class WitnessRegistrationEnrichment {
             witness.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
             witness.getAuditDetails().setLastModifiedBy(witnessRequest.getRequestInfo().getUserInfo().getUuid());
         } catch (Exception e) {
-            log.error("Error enriching witness application upon update :: {}", e.toString());
+            log.error("Error enriching witness application upon update", e);
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in witness enrichment service during witness update process: " + e.getMessage());
         }
     }

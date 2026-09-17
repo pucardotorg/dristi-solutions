@@ -1,0 +1,663 @@
+openapi: 3.0.0
+
+info:
+  title: Advocate and Advocate Clerk Registry Service API
+  description: |
+    DIGIT Advocate Registry Service responsible for advocate and advocate clerk
+    registration, update and search operations across tenants.
+    Corrected against AdvocateApiController and ClerkApiController as implemented today.
+  version: 1.0.0
+
+servers:
+  - url: /advocateregistry
+    description: Advocate Registry Base Path
+
+tags:
+  - name: Advocate
+    description: APIs for advocate registration lifecycle (AdvocateApiController)
+  - name: AdvocateClerk
+    description: APIs for advocate clerk registration lifecycle (ClerkApiController)
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /v1/_create:
+    post:
+      tags: [Advocate]
+      summary: Register a new advocate
+      description: Creates a new advocate registration entry.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateRequest'
+            example:
+              RequestInfo:
+                apiId: Rainmaker
+                msgId: 1730970507148|en_IN
+                authToken: <AUTH_TOKEN>
+                userInfo:
+                  uuid: 64220357-defd-4abd-bcc3-e4b278203917
+                  tenantId: kl
+              advocate:
+                tenantId: kl
+                individualId: 9e8d13f2-7d6c-4a8c-b9cb-97c1b8fd6f21
+                barRegistrationNumber: KL/2016/1234
+                advocateType: PROSECUTOR
+                status: PENDING_VERIFICATION
+      responses:
+        '200':
+          description: Advocate created successfully. Response contains a single-element advocates array.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateResponse'
+
+  /v1/_update:
+    post:
+      tags: [Advocate]
+      summary: Update advocate details
+      description: Updates an existing advocate record.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateRequest'
+            example:
+              RequestInfo:
+                apiId: Rainmaker
+                authToken: <AUTH_TOKEN>
+              advocate:
+                id: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
+                tenantId: kl
+                status: ACTIVE
+      responses:
+        '200':
+          description: Advocate updated successfully. Response contains a single-element advocates array.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateResponse'
+
+  /v1/_search:
+    post:
+      tags: [Advocate]
+      summary: Search advocates
+      description: |
+        Search advocates using an array of filter criteria objects. Note: per the current
+        controller implementation, the response `advocates` array echoes back the request's
+        `criteria` list (each criteria object enriched with its own `responseList`), not a
+        flat list of Advocate records.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 1000
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateSearchRequest'
+            example:
+              RequestInfo:
+                apiId: Rainmaker
+                authToken: <AUTH_TOKEN>
+              tenantId: kl
+              criteria:
+                - status: ACTIVE
+      responses:
+        '200':
+          description: Advocate list (criteria enriched with matching advocates)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateListResponse'
+
+  /v1/status/_search:
+    post:
+      tags: [Advocate]
+      summary: Search for advocates using the status of their registration
+      parameters:
+        - name: status
+          in: query
+          description: status of advocate registration being searched
+          required: true
+          schema:
+            type: string
+        - name: tenantId
+          in: query
+          description: Search by tenantId
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 1000
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateSimpleSearchRequest'
+      responses:
+        '200':
+          description: ResponseInfo with advocates matching search criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateResponse'
+
+  /v1/applicationnumber/_search:
+    post:
+      tags: [Advocate]
+      summary: Search for advocates using the applicationNumber of their registration
+      parameters:
+        - name: applicationNumber
+          in: query
+          description: applicationNumber of advocate registration being searched
+          required: true
+          schema:
+            type: string
+        - name: tenantId
+          in: query
+          description: Search by tenantId
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 1000
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateSimpleSearchRequest'
+      responses:
+        '200':
+          description: ResponseInfo with advocates matching search criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateResponse'
+
+  /clerk/v1/_create:
+    post:
+      tags: [AdvocateClerk]
+      summary: Register a new advocate clerk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateClerkRequest'
+      responses:
+        '200':
+          description: Advocate clerk created successfully. Response contains a single-element clerks array.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateClerkResponse'
+
+  /clerk/v1/_search:
+    post:
+      tags: [AdvocateClerk]
+      summary: Search for registered advocate clerks
+      description: |
+        Note: per the current controller implementation, the response `clerks` array echoes
+        back the request's `criteria` list (each criteria object enriched with its own
+        `responseList`), not a flat list of AdvocateClerk records.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 1000
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateClerkSearchRequest'
+      responses:
+        '200':
+          description: ResponseInfo with advocate clerks matching search criteria (criteria enriched with matches)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateClerkListResponse'
+
+  /clerk/v1/status/_search:
+    post:
+      tags: [AdvocateClerk]
+      summary: Search for clerks using the status of their registration
+      parameters:
+        - name: status
+          in: query
+          description: status of clerks registration being searched
+          required: true
+          schema:
+            type: string
+        - name: tenantId
+          in: query
+          description: Search by tenantId
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 1000
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateClerkSimpleSearchRequest'
+      responses:
+        '200':
+          description: ResponseInfo with advocate clerks matching search criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateClerkResponse'
+
+  /clerk/v1/applicationnumber/_search:
+    post:
+      tags: [AdvocateClerk]
+      summary: Search for clerks using the applicationNumber of their registration
+      description: |
+        # REVIEW: Controller builds AdvocateClerkResponse from AdvocateClerkService but binds the
+        # request body as AdvocateSimpleSearchRequest (the Advocate criteria wrapper, not
+        # AdvocateClerkSimpleSearchRequest) - verify this is intentional vs a controller bug in
+        # ClerkApiController.clerkV1ApplicationnumberSearchPost().
+      parameters:
+        - name: applicationNumber
+          in: query
+          description: applicationNumber of clerks registration being searched
+          required: true
+          schema:
+            type: string
+        - name: tenantId
+          in: query
+          description: Search by tenantId
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 1000
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateSimpleSearchRequest'
+      responses:
+        '200':
+          description: ResponseInfo with advocate clerks matching search criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateClerkResponse'
+
+  /clerk/v1/_update:
+    post:
+      tags: [AdvocateClerk]
+      summary: Update advocate clerk requests
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateClerkRequest'
+      responses:
+        '200':
+          description: Advocate clerk updated successfully. Response contains a single-element clerks array.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateClerkResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    AdvocateRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        advocate:
+          $ref: '#/components/schemas/Advocate'
+
+    AdvocateSearchRequest:
+      type: object
+      description: advocate search is based on an array of criteria objects.
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        tenantId:
+          type: string
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateSearchCriteria'
+
+    AdvocateSimpleSearchRequest:
+      type: object
+      description: used by the status and applicationNumber search endpoints
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/AdvocateSearchCriteria'
+
+    AdvocateSearchCriteria:
+      type: object
+      description: the fields specified will be used in a logical AND condition
+      properties:
+        id:
+          type: string
+        barRegistrationNumber:
+          type: string
+        applicationNumber:
+          type: string
+        individualId:
+          type: string
+        responseList:
+          type: array
+          description: output field - populated with advocates found as per the search criteria
+          items:
+            $ref: '#/components/schemas/Advocate'
+
+    AdvocateResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        advocates:
+          type: array
+          items:
+            $ref: '#/components/schemas/Advocate'
+
+    AdvocateListResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        advocates:
+          type: array
+          description: the input search criteria enriched with advocate response list
+          items:
+            $ref: '#/components/schemas/AdvocateSearchCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    Advocate:
+      type: object
+      required: [tenantId]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        tenantId:
+          type: string
+          minLength: 2
+          maxLength: 128
+        applicationNumber:
+          type: string
+          minLength: 2
+          maxLength: 64
+        status:
+          type: string
+          description: current status of the advocate application as pulled from the Workflow service
+        barRegistrationNumber:
+          type: string
+          minLength: 2
+          maxLength: 64
+        advocateType:
+          type: string
+          minLength: 2
+          maxLength: 64
+        organisationID:
+          type: string
+          format: uuid
+          description: Organisation/legal firm the advocate belongs to, if any.
+        individualId:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+        workflow:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Workflow'
+        currentProcessInstance:
+          $ref: '#/components/schemas/ProcessInstance'
+        documents:
+          type: array
+          items:
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document'
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+        additionalDetails:
+          type: object
+          description: Any extra fields not captured as first class fields, stored as key/value pairs.
+
+    AdvocateClerkRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        clerk:
+          $ref: '#/components/schemas/AdvocateClerk'
+
+    AdvocateClerkSearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        tenantId:
+          type: string
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateClerkSearchCriteria'
+
+    AdvocateClerkSimpleSearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/AdvocateClerkSearchCriteria'
+
+    AdvocateClerkSearchCriteria:
+      type: object
+      description: the fields specified will be used in a logical AND condition
+      properties:
+        id:
+          type: string
+        applicationNumber:
+          type: string
+        stateRegnNumber:
+          type: string
+        individualId:
+          type: string
+        status:
+          type: string
+        responseList:
+          type: array
+          description: output field - populated with clerks found as per the search criteria
+          items:
+            $ref: '#/components/schemas/AdvocateClerk'
+
+    AdvocateClerkResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        clerks:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateClerk'
+
+    AdvocateClerkListResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        clerks:
+          type: array
+          description: the input search criteria enriched with clerk response list
+          items:
+            $ref: '#/components/schemas/AdvocateClerkSearchCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    AdvocateClerk:
+      type: object
+      required: [tenantId]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        tenantId:
+          type: string
+          minLength: 2
+          maxLength: 128
+        applicationNumber:
+          type: string
+          minLength: 2
+          maxLength: 64
+        stateRegnNumber:
+          type: string
+          minLength: 2
+          maxLength: 64
+        status:
+          type: string
+          description: current status of the advocate clerk application as pulled from the Workflow service
+        individualId:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+        workflow:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Workflow'
+        currentProcessInstance:
+          $ref: '#/components/schemas/ProcessInstance'
+        documents:
+          type: array
+          items:
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document'
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+        additionalDetails:
+          type: object
+          description: Any extra fields not captured as first class fields, stored as key/value pairs.
+
+    Pagination:
+      type: object
+      description: Pagination details
+      properties:
+        limit:
+          type: number
+          default: 10
+          maximum: 100
+        offSet:
+          type: number
+          default: 0
+        totalCount:
+          type: number
+        sortBy:
+          type: string
+        order:
+          type: string
+          enum: [asc, desc]
+
+    ProcessInstance:
+      type: object
+      description: >-
+        # TODO: fields not fully expanded, verify against org.egov.common.contract.workflow.ProcessInstance
+        (external shared library class - the current workflow process instance snapshot attached to the entity).
+      additionalProperties: true

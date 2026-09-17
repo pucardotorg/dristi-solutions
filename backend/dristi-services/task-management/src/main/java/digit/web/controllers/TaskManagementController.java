@@ -89,7 +89,7 @@ public class TaskManagementController {
         try {
             taskCreationService.generateFollowUpTasks(request.getRequestInfo(), request.getTaskManagement());
         } catch (Exception e) {
-            log.error("Error generating follow-up tasks: {}", e.getMessage(), e);
+            log.error("Error generating follow-up tasks", e);
         }
     }
 }

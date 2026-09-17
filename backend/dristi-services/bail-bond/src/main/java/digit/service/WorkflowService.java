@@ -54,7 +54,7 @@ public class WorkflowService {
         } catch(CustomException e){
             throw e;
         } catch (Exception e) {
-            log.error("Error updating workflow status :: {}", e.toString());
+            log.error("Error updating workflow status", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,"Error updating workflow status: "+e.getMessage());
         }
     }
@@ -71,7 +71,7 @@ public class WorkflowService {
         } catch(CustomException e){
             throw e;
         } catch (Exception e) {
-            log.error("Error calling workflow :: {}", e.toString());
+            log.error("Error calling workflow", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,e.getMessage());
         }
     }
@@ -99,7 +99,7 @@ public class WorkflowService {
             }
             return processInstance;
         } catch (Exception e) {
-            log.error("Error getting process instance for BAIL :: {}", e.toString());
+            log.error("Error getting process instance for BAIL", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,e.getMessage());
         }
     }
@@ -113,7 +113,7 @@ public class WorkflowService {
                 return response.getProcessInstances().get(0);
             return null;
         } catch (Exception e) {
-            log.error("Error getting current workflow :: {}", e.toString());
+            log.error("Error getting current workflow", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
     }
@@ -143,7 +143,7 @@ public class WorkflowService {
         } catch(CustomException e){
             throw e;
         } catch (Exception e) {
-            log.error("Error getting process instance for case registration payment :: {}", e.toString());
+            log.error("Error getting process instance for case registration payment", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
     }

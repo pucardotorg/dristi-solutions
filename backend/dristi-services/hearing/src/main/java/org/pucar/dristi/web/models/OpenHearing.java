@@ -80,4 +80,25 @@ public class OpenHearing {
 
     @JsonProperty("orderStatus")
     private OrderStatus orderStatus;
+
+    @JsonProperty("cmpNumber")
+    private String cmpNumber = null;
+
+    @JsonProperty("courtCaseNumber")
+    private String courtCaseNumber = null;
+
+    @JsonProperty("lprNumber")
+    private String lprNumber = null;
+
+    @JsonProperty("secondaryStage")
+    private String secondaryStage = null;
+
+    @JsonProperty("outcome")
+    private String outcome = null;
+
+    @JsonProperty("accessCode")
+    private String accessCode = null;
+
+    @JsonProperty("caseStatus")
+    private String caseStatus = null;
 }

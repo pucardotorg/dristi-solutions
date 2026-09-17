@@ -29,7 +29,7 @@ public class EvidenceStatusUpdateConsumer {
             evidenceStatusUpdateService.updateEvidenceStatus(record);
         } catch (Exception e) {
             log.error("Error while listening the record:{} in topic {} , method: applicationUpdate , result: Failure ", record, topic);
-            log.error("Error: {}", e.toString());
+            log.error("Error", e);
         }
 
     }

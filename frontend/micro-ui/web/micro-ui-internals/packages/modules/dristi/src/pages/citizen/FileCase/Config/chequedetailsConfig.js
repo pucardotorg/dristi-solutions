@@ -35,7 +35,6 @@ export const chequeDetailsFormConfig = [
               name: "document",
               type: "DragDropComponent",
               fileTypes: ["JPG", "JPEG", "PDF", "PNG"],
-              isMandatory: true,
               maxFileSize: 10,
               documentHeader: "CS_BOUNCED_CHEQUE",
               isMultipleUpload: true,

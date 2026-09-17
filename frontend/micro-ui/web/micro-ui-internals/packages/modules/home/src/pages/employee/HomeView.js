@@ -1,10 +1,11 @@
 import { useTranslation } from "react-i18next";
 import React, { useState, useEffect, useMemo, useCallback, useRef, useContext } from "react";
 import { useHistory } from "react-router-dom";
-import { Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { Button } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import { rolesToConfigMapping, userTypeOptions, getUnifiedEmployeeConfig, getOnRowClickConfig, litigantConfig } from "../../configs/HomeConfig";
 import UpcomingHearings from "../../components/UpComingHearing";
-import { Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
 import TasksComponent from "../../components/TaskComponent";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { HomeService } from "../../hooks/services";
@@ -21,6 +22,9 @@ import { BreadCrumb } from "@egovernments/digit-ui-react-components";
 import SelectAdvocateModal from "./SelectAdvocateModal";
 import { extractedSeniorAdvocates } from "../../utils";
 import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import SetPasswordPromptModal from "@egovernments/digit-ui-module-dristi/src/pages/citizen/Login/SetPasswordPromptModal";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -98,7 +102,42 @@ const HomeView = () => {
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
+
+  // "Set a password" prompt shown over the home screen when a citizen logged in without a password
+  // (flag persisted at login). Shown once per session; the user's choice is remembered via sessionStorage.
+  const [showPwPrompt, setShowPwPrompt] = useState(
+    () => window.localStorage.getItem("showPasswordSetupPrompt") === "true" && window.sessionStorage.getItem("pwPromptHandled") !== "true"
+  );
+  const dismissPwPrompt = () => {
+    window.sessionStorage.setItem("pwPromptHandled", "true");
+    setShowPwPrompt(false);
+  };
+  const handlePwSetPassword = () => {
+    dismissPwPrompt();
+    history.push(`/${window?.contextPath}/citizen/dristi/home/password-settings`);
+  };
+  const handlePwRemindLater = () => {
+    dismissPwPrompt();
+  };
+  const handlePwDontRemind = async () => {
+    try {
+      await axiosInstance.post("/user/password/prompt/_suppress", {
+        tenantId,
+        RequestInfo: {
+          apiId: "Rainmaker",
+          msgId: `${Date.now()}|${window?.Digit?.StoreData?.getCurrentLanguage?.() || "en_IN"}`,
+          ts: 0,
+          authToken: window.localStorage.getItem("token"),
+          userInfo,
+        },
+      });
+    } catch (e) {
+      // Even if suppression fails, don't block the user - just dismiss the prompt.
+    }
+    window.localStorage.setItem("showPasswordSetupPrompt", "false");
+    dismissPwPrompt();
+  };
   const courtId = localStorage.getItem("courtId");
   const isLitigant = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role?.code)), [
     userInfo?.roles,
@@ -210,7 +249,7 @@ const HomeView = () => {
     return userType === "ADVOCATE" ? { memberId: advocateId } : userType === "ADVOCATE_CLERK" ? { memberId: advClerkId } : {};
   }, [advocateId, advClerkId, userType]);
 
-  const { data: officeMembersData, isLoading: isLoadingMembers, refetch: refetchMembers } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
+  const { data: officeMembersData, isLoading: isLoadingMembers } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
     {
       searchCriteria: {
         ...searchCriteria,
@@ -253,12 +292,33 @@ const HomeView = () => {
     if (userInfoType === "citizen" && !userType) return null;
     if ((userType === "ADVOCATE" && !advocateId) || (userType === "ADVOCATE_CLERK" && !advClerkId)) return null;
     if (((userType === "ADVOCATE" && advocateId) || (userType === "ADVOCATE_CLERK" && advClerkId)) && !selectedSeniorAdvocate?.id) return null;
+
+    // Advocate Clerk acting as Self -> fetch all cases
+    if (advClerkId && selectedSeniorAdvocate?.isSelf) {
+      return {
+        searchKey: "filingNumber",
+        defaultFields: true,
+        casesFor: "ALL",
+        ...(courtId && !isScrutiny && { courtId }),
+      };
+    }
+
+    // Advocate logged in and selected their own entry
+    if (advocateId && advocateId === selectedSeniorAdvocate?.id) {
+      return {
+        searchKey: "filingNumber",
+        defaultFields: true,
+        casesFor: "ALL",
+        ...(courtId && !isScrutiny && { courtId }),
+      };
+    }
+
     return {
       ...(advClerkId
         ? {
             searchKey: "filingNumber",
             defaultFields: true,
-            officeAdvocateId: selectedSeniorAdvocate?.id, // TODO: handle for jr adv and senr adv
+            officeAdvocateId: selectedSeniorAdvocate?.id,
             memberId: advClerkId,
             ...(courtId && !isScrutiny && { courtId }),
           }
@@ -369,52 +429,34 @@ const HomeView = () => {
     } else return null;
   }, [userInfoType, advocateId, individualId, isSearchLoading]);
 
-  const casefetchCriteriaForCitizen = useMemo(() => {
-    if (!citizenId) return false;
-    if (citizenId) {
-      if (!userType) return false;
-      if (userType === "LITIGANT") {
-        if (individualId) return true;
-        return false;
-      }
-      if ((userType === "ADVOCATE" && !advocateId) || (userType === "ADVOCATE_CLERK" && !advClerkId)) return false;
-      if ((userType === "ADVOCATE" && advocateId) || (userType === "ADVOCATE_CLERK" && advClerkId)) {
-        if (selectedSeniorAdvocate?.id) {
-          return true;
-        }
-      }
-      return false;
+  const citizenCaseCriteria = useMemo(() => {
+    if (!citizenId) return {};
+    if (advocateId && advocateId === selectedSeniorAdvocate?.id) {
+      return { casesFor: "ALL" };
     }
-    return false;
-  }, [citizenId, userType, advocateId, advClerkId, selectedSeniorAdvocate?.id, individualId]);
+    if (advocateId) {
+      return { officeAdvocateId: selectedSeniorAdvocate?.id, memberId: advocateId };
+    }
+    if (advClerkId) {
+      if (selectedSeniorAdvocate?.isSelf) return { memberId: advClerkId, casesFor: "ALL" };
+      return { officeAdvocateId: selectedSeniorAdvocate?.id, memberId: advClerkId };
+    }
+    return { litigantId: individualId };
+  }, [citizenId, advocateId, advClerkId, individualId, selectedSeniorAdvocate]);
 
   const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseListService(
     {
       criteria: {
-        ...(citizenId
-          ? advocateId
-            ? advocateId === selectedSeniorAdvocate?.id
-              ? { advocateId }
-              : {
-                  officeAdvocateId: selectedSeniorAdvocate?.id,
-                  memberId: advocateId,
-                }
-            : advClerkId
-            ? {
-                officeAdvocateId: selectedSeniorAdvocate?.id,
-                memberId: advClerkId,
-              }
-            : { litigantId: individualId }
-          : {}),
+        ...citizenCaseCriteria,
         pagination: { offSet: 0, limit: 1 },
         tenantId,
       },
       tenantId,
     },
     {},
-    `dristi-${casefetchCriteriaForCitizen}`,
+    `dristi-${JSON.stringify(citizenCaseCriteria)}-${selectedSeniorAdvocate?.id || ""}`,
     "",
-    Boolean(casefetchCriteriaForCitizen),
+    Boolean(citizenCaseCriteria),
     true,
     6 * 1000
   );
@@ -494,7 +536,7 @@ const HomeView = () => {
       try {
         const response = await DRISTIService.getCaseLockStatus({}, { uniqueId: filingNumber, tenantId: tenantId });
         if (response?.Lock?.isLocked) {
-          showToast("error", t("CASE_IS_ALREADY_LOCKED"), 5000);
+          setShowToast({ error: true, label: t("CASE_IS_ALREADY_LOCKED") });
           return false;
         } else {
           await DRISTIService.setCaseLock({ Lock: { uniqueId: filingNumber, tenantId: tenantId, lockType: "SCRUTINY" } }, {});
@@ -502,7 +544,8 @@ const HomeView = () => {
           return true;
         }
       } catch (error) {
-        showToast("error", t("ISSUE_WITH_LOCK"), 5000);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ error: true, label: t("ISSUE_WITH_LOCK"), errorId });
         console.error(error);
         return false;
       }
@@ -583,18 +626,22 @@ const HomeView = () => {
     // },
   ];
 
+  const isClerkActingAsSelf = useMemo(() => userType === "ADVOCATE_CLERK" && selectedSeniorAdvocate?.isSelf === true, [
+    userType,
+    selectedSeniorAdvocate?.isSelf,
+  ]);
+
   const canJoinCase = useMemo(() => {
-    // iF user is advocate clerk then do not allow to join case(only for sprint 1st half, in 2nd half it is allowed)
     if (userType === "ADVOCATE_CLERK") {
-      return false;
+      // Clerk can join a case only when acting as Self (not on behalf of a senior advocate)
+      return selectedSeniorAdvocate?.isSelf === true;
     } else if (userType === "ADVOCATE" && advocateId === selectedSeniorAdvocate?.id) {
-      //TODO: if adv is working as assistant for a senior adv, then not allowed to join case for this sprint
       return true;
     } else if (isLitigant) {
       return true;
     }
     return false;
-  }, [userType, advocateId, selectedSeniorAdvocate?.id, isLitigant]);
+  }, [userType, advocateId, selectedSeniorAdvocate?.id, selectedSeniorAdvocate?.isSelf, isLitigant]);
 
   const canFileCase = useMemo(() => {
     if (userType === "ADVOCATE" || userType === "ADVOCATE_CLERK") {
@@ -614,9 +661,14 @@ const HomeView = () => {
   }, [searchResult, userType]);
 
   useEffect(() => {
-    if (!individualData || !searchResult || (userType === "ADVOCATE_CLERK" && unAssociatedClerk)) return;
+    if (
+      !individualData ||
+      (["ADVOCATE", "ADVOCATE_CLERK"]?.includes(userType) && !searchResult) ||
+      (userType === "ADVOCATE_CLERK" && unAssociatedClerk)
+    )
+      return;
 
-    const userHasIncompleteRegistration = !individualId || isRejected || isLitigantPartialRegistered;
+    const userHasIncompleteRegistration = !individualId || isRejected || isLitigantPartialRegistered || searchResult?.length === 0;
 
     const registrationIsDoneApprovalIsPending = individualId && isApprovalPending && !isRejected && !isLitigantPartialRegistered;
 
@@ -644,12 +696,6 @@ const HomeView = () => {
   if (isLoading || isFetching || isSearchLoading || isOrdersLoading || isOutcomeLoading || isCitizenCaseDataLoading || isLoadingMembers) {
     return <Loader />;
   }
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
 
   const handleConfirmAdvocate = (advocate) => {
     setShowSelectAdvocateModal(false);
@@ -667,12 +713,25 @@ const HomeView = () => {
         setShowSelectAdvocateModal(true);
       }
     } else if (userType === "ADVOCATE_CLERK") {
-      setShowSelectAdvocateModal(true);
+      if (selectedSeniorAdvocate?.isSelf) {
+        // No need to show modal if clerk is filing the case for themselves (self).
+        history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
+      } else {
+        setShowSelectAdvocateModal(true);
+      }
     }
   };
 
   return (
     <React.Fragment>
+      {showPwPrompt && userInfoType === "citizen" && (
+        <SetPasswordPromptModal
+          t={t}
+          onSetPassword={handlePwSetPassword}
+          onRemindLater={handlePwRemindLater}
+          onDontRemindAgain={handlePwDontRemind}
+        />
+      )}
       {!hideBreadcrumbForUnlinkedClerk && <ProjectBreadCrumb location={window.location} t={t} />}
       <div className="home-view-hearing-container">
         {individualId &&
@@ -737,7 +796,9 @@ const HomeView = () => {
                   {individualId && userType && userInfoType === "citizen" && (
                     <div className="button-field" style={{ width: "fit-content" }}>
                       <React.Fragment>
-                        {canJoinCase && <JoinCaseHome refreshInbox={refreshInbox} />}
+                        {canJoinCase && (
+                          <JoinCaseHome refreshInbox={refreshInbox} isClerkSelf={userType === "ADVOCATE_CLERK" && selectedSeniorAdvocate?.isSelf} />
+                        )}
                         {canFileCase && (
                           <Button
                             className={"tertiary-button-selector"}
@@ -770,6 +831,7 @@ const HomeView = () => {
                       additionalConfig={{
                         resultsTable: {
                           onClickRow: onRowClick,
+                          ...(isClerkActingAsSelf && { noResultsMessageKey: "CLERK_HOME_NO_RESULTS_FOUND" }),
                         },
                       }}
                     />
@@ -797,13 +859,13 @@ const HomeView = () => {
             />
           </div>
         )}
-        {toastMsg && (
-          <Toast
-            error={toastMsg.key === "error"}
-            label={t(toastMsg.action)}
-            onClose={() => setToastMsg(null)}
-            isDleteBtn={true}
-            style={{ maxWidth: "500px" }}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
           />
         )}
         {showSelectAdvocateModal && (

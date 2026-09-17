@@ -39,7 +39,7 @@ public class LandingPageNoticeEnrichment {
             landingPageNotice.setLastModifiedTime(landingPageNoticeUtil.getCurrentTimeInMilliSec());
 
         } catch (CustomException e) {
-            log.error("Error occurred while enriching landing page notice: {}", e.getMessage(), e);
+            log.error("Error occurred while enriching landing page notice", e);
             throw new CustomException("ENRICHMENT_EXCEPTION", "Error during enriching landing page notice");
         }
 

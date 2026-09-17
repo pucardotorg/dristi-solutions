@@ -1,0 +1,1345 @@
+openapi: 3.0.0
+
+info:
+  title: Case Management Service API
+  description: |
+    DIGIT Case Management (`casemanagement`) Service. Provides retrieval of the aggregated
+    case file/history, (stubbed) case grouping/ungrouping, case-summary lookup (stubbed),
+    on-demand and bulk case-bundle PDF generation, case-bundle PDF index enrichment,
+    a document-preview/bundle-tree API used by the CTC and case-bundle UI flows, and two
+    thin proxy endpoints (Verifiable Credential generation and generic PDF retrieval) that
+    forward to other services.
+
+    This spec was regenerated from `CasemanagerApiController.java` (org.pucar.dristi.web.controllers)
+    and its request/response DTOs (org.pucar.dristi.web.models) as they exist in the codebase today.
+    It intentionally diverges from the older `case-management-api.yaml` / `-0.1.0` / `-0.2.0` specs
+    wherever those described endpoints or fields that no longer exist (or never existed) in the
+    controller — see inline `# REVIEW:` / `# TODO:` comments for anything not fully verified.
+  version: 1.1.0
+
+servers:
+  - url: /casemanagement
+    description: Case Management Service base path (server.servlet.context-path)
+
+tags:
+  - name: Case Management
+    description: Aggregated case file/history and case-summary retrieval
+  - name: Case Grouping
+    description: Grouping/ungrouping of cases (currently unimplemented stubs in the controller)
+  - name: Case Bundles
+    description: On-demand and bulk generation of case-bundle PDFs, and index enrichment
+  - name: Document Preview
+    description: Preview/selection tree for documents that make up a case bundle
+  - name: Credentials
+    description: Verifiable Credential (VC) generation proxy
+  - name: PDF
+    description: Generic PDF retrieval proxy
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /casemanager/case/v1/_history:
+    post:
+      tags: [Case Management]
+      summary: Retrieve the full case file(s)/history for a case
+      description: |
+        Returns the aggregated case file (CourtCase + hearings + witnesses + orders/tasks +
+        applications + evidence/artifacts) for the case identified by caseId, filingNumber
+        or caseNumber. Backed by CaseManagerService.getCaseFiles(...); this is the only
+        endpoint among the four "case management" endpoints that is actually implemented
+        (the others below are present but return HTTP 501).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseRequest'
+      responses:
+        '200':
+          description: Case file(s) retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseFileResponse'
+
+  /casemanager/case/v1/_summary:
+    post:
+      tags: [Case Management]
+      summary: Retrieve case summary
+      description: |
+        # REVIEW: Endpoint exists in the controller (casemanagerCaseV1SummaryPost) but is a
+        # stub — it always returns HTTP 501 Not Implemented (or 500 on a JSON parse error);
+        # there is no real service-layer implementation wired up. Request/response schemas
+        # below reflect the declared DTOs (CaseRequest / CaseSummaryResponse), not a verified
+        # runtime contract.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseRequest'
+      responses:
+        '501':
+          description: Not implemented (stub — current behavior for every request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseSummaryResponse'
+
+  /casemanager/case/v1/_group:
+    post:
+      tags: [Case Grouping]
+      summary: Group cases together
+      description: |
+        # REVIEW: Stub endpoint (casemanagerCaseV1GroupPost) — always returns HTTP 501 Not
+        # Implemented (or 500 on a JSON parse error). No CaseGroup persistence/service layer
+        # is wired up in this codebase today.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseGroupRequest'
+      responses:
+        '501':
+          description: Not implemented (stub — current behavior for every request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseGroupResponse'
+
+  /casemanager/case/v1/_ungroup:
+    post:
+      tags: [Case Grouping]
+      summary: Ungroup cases
+      description: |
+        # REVIEW: Stub endpoint (casemanagerCaseV1UngroupPost) — always returns HTTP 501 Not
+        # Implemented (or 500 on a JSON parse error), same as `_group`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseGroupRequest'
+      responses:
+        '501':
+          description: Not implemented (stub — current behavior for every request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseGroupResponse'
+
+  /casemanager/case/v1/_buildcasebundle:
+    post:
+      tags: [Case Bundles]
+      summary: Generate a case bundle PDF for a single case
+      description: |
+        Called directly from the front end when an on-demand case bundle needs to be built.
+        Backed by CaseBundleService.getCaseBundle(...).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseBundleRequest'
+      responses:
+        '200':
+          description: Case bundle generated; response contains the file store id of the PDF
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseBundleResponse'
+
+  /casemanager/case/v1/bulk/_buildcasebundle:
+    post:
+      tags: [Case Bundles]
+      summary: Generate case bundle PDFs in bulk
+      description: |
+        Typically invoked by the daily cron job. Queries the case-bundle-pdf index and
+        creates case bundle PDFs for all matching cases, storing the files and logging
+        start/end time and counts. Backed by CaseBundleService.getBulkCaseBundle(...).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseBundleBulkRequest'
+      responses:
+        '200':
+          description: Bulk case bundle generation completed/started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseBundleBulkResponse'
+
+  /casemanager/case/v1/_rebuildcasebundle:
+    post:
+      tags: [Case Bundles]
+      summary: Rebuild (regenerate) a case bundle PDF for a single case
+      description: |
+        Forces regeneration of the case bundle PDF for the given case. Backed by
+        CaseBundleService.getRebuiltCaseBundle(...). Uses the same request schema as
+        `_buildcasebundle` but returns a status message instead of a file store id.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseBundleRequest'
+      responses:
+        '200':
+          description: Case bundle rebuilt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseBundleCreateIndexResponse'
+
+  /casemanager/case/v1/_enrichcasebundlepdfindex:
+    post:
+      tags: [Case Bundles]
+      summary: Enrich the case-bundle PDF index for a filing
+      description: |
+        Used to (re)build/enrich the case-bundle PDF index entries for a filing so that
+        subsequent bulk case-bundle generation can pick it up. Backed by
+        CaseBundleIndexBuilderService.enrichCaseBundlePdfIndex(...).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrichCaseBundlePdfIndexRequest'
+      responses:
+        '200':
+          description: Case bundle PDF index enrichment completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrichCaseBundlePdfIndexResponse'
+        '500':
+          description: Case bundle PDF index enrichment failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrichCaseBundlePdfIndexResponse'
+
+  /casemanager/preview/doc:
+    post:
+      tags: [Document Preview]
+      summary: Preview the document/case-bundle node tree for a filing
+      description: |
+        Returns the hierarchical tree of documents (with accepted/rejected/pending status
+        and file store ids) that make up a case bundle, for preview/selection in the UI
+        before final bundle generation. Backed by DocPreviewService.getBundle(...).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocPreviewRequest'
+      responses:
+        '200':
+          description: Document preview tree generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocPreviewResponse'
+
+  /credentials/v1/_generate:
+    post:
+      tags: [Credentials]
+      summary: Generate a Verifiable Credential (VC)
+      description: |
+        Thin proxy to ServiceUrlMapperVCService.generateVc(...), which forwards the request
+        to the sunbirdrc-credential-service (or equivalent) and returns the same
+        VcCredentialRequest shape back to the caller (the service mutates/echoes it rather
+        than returning a distinct response DTO).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VcCredentialRequest'
+      responses:
+        '200':
+          description: VC generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VcCredentialRequest'
+
+  /pdf/v1/_get:
+    post:
+      tags: [PDF]
+      summary: Retrieve a generated PDF by reference
+      description: |
+        Thin proxy to ServiceUrlMappingPdfService.getSVcUrlMappingPdf(...), which forwards
+        the request to the configured PDF-generation service (URL resolved by moduleName)
+        and returns that service's response verbatim.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PdfRequest'
+      responses:
+        '200':
+          description: |
+            PDF-service response, returned verbatim. The controller method signature is
+            `ResponseEntity<Object>` with no fixed schema.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PdfResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    # ---------------------------------------------------------------------
+    # Case history / case file
+    # ---------------------------------------------------------------------
+
+    CaseRequest:
+      type: object
+      description: |
+        Request wrapper for `_history` and `_summary`. Note: none of the fields below carry
+        a `@NotNull`/`@NotEmpty` in the DTO (org.pucar.dristi.web.models.CaseRequest), so
+        nothing is marked required here even though at least one identifier is needed in
+        practice.
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        caseId:
+          type: string
+        filingNumber:
+          type: string
+        caseNumber:
+          type: string
+
+    CaseFileResponse:
+      type: object
+      description: |
+        # NOTE: In the DTO (org.pucar.dristi.web.models.CaseFileResponse) the field is
+        # typed as `ResponseInfo` but its `@JsonProperty` is literally "requestInfo" (not
+        # "responseInfo") — reflected as-is below since that's the actual wire field name.
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        caseFiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseFile'
+
+    CaseFile:
+      type: object
+      required: [case]
+      description: Aggregation of all entities across the case lifecycle for one case.
+      properties:
+        case:
+          $ref: '#/components/schemas/CourtCase'
+        hearings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hearing'
+        witnesses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Witness'
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderTasks'
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Application'
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artifact'
+
+    CourtCase:
+      type: object
+      required: [tenantId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        resolutionMechanism:
+          type: string
+        caseTitle:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+        caseDescription:
+          type: string
+        filingNumber:
+          type: string
+        courtCaseNumber:
+          type: string
+        caseNumber:
+          type: string
+        cnrNumber:
+          type: string
+        accessCode:
+          type: string
+        courtId:
+          type: string
+        benchId:
+          type: string
+        linkedCases:
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkedCase'
+        filingDate:
+          type: integer
+          format: int64
+          description: Epoch millis
+        registrationDate:
+          type: integer
+          format: int64
+          description: Epoch millis
+        judgementDate:
+          type: integer
+          format: int64
+          description: Epoch millis
+        caseDetails:
+          type: object
+          additionalProperties: true
+        caseCategory:
+          type: string
+        judgeId:
+          type: string
+        stage:
+          type: string
+        substage:
+          type: string
+        natureOfPleading:
+          type: string
+        statutesAndSections:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatuteSection'
+        litigants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Party'
+        representatives:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateMapping'
+        advocateOffices:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateOffice'
+        status:
+          type: string
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        remarks:
+          type: string
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+        additionalDetails:
+          type: object
+          additionalProperties: true
+        auditDetails:
+          $ref: '#/components/schemas/AuditDetails'
+          description: "# NOTE: JSON property is \"auditDetails\" though the Java field is named auditdetails."
+
+    LinkedCase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        relationshipType:
+          type: string
+        caseNumber:
+          type: string
+        referenceUri:
+          type: string
+        isActive:
+          type: boolean
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        additionalDetails:
+          type: object
+          additionalProperties: true
+        auditdetails:
+          $ref: '#/components/schemas/AuditDetails'
+
+    StatuteSection:
+      type: object
+      required: [tenantId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        statute:
+          type: string
+        sections:
+          type: array
+          items:
+            type: string
+        subsections:
+          type: array
+          items:
+            type: string
+        additionalDetails:
+          type: object
+          additionalProperties: true
+        auditdetails:
+          $ref: '#/components/schemas/AuditDetails'
+        strSections:
+          type: string
+        strSubsections:
+          type: string
+
+    Party:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        caseId:
+          type: string
+        partyCategory:
+          type: string
+        organisationID:
+          type: string
+        individualId:
+          type: string
+        partyType:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        auditDetails:
+          $ref: '#/components/schemas/AuditDetails'
+        additionalDetails:
+          type: object
+          additionalProperties: true
+
+    AdvocateMapping:
+      type: object
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        advocateId:
+          type: string
+        caseId:
+          type: string
+        representing:
+          type: array
+          items:
+            $ref: '#/components/schemas/Party'
+        isActive:
+          type: boolean
+          default: true
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        auditDetails:
+          $ref: '#/components/schemas/AuditDetails'
+        additionalDetails:
+          type: object
+          additionalProperties: true
+
+    AdvocateOffice:
+      type: object
+      properties:
+        officeAdvocateId:
+          type: string
+        officeAdvocateName:
+          type: string
+        officeAdvocateUserUuid:
+          type: string
+        advocates:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateOfficeMember'
+        clerks:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateOfficeMember'
+
+    AdvocateOfficeMember:
+      type: object
+      # TODO: fields not fully expanded, verify against AdvocateOfficeMember.java
+      additionalProperties: true
+
+    Hearing:
+      type: object
+      required: [tenantId, hearingType, status]
+      description: A case can have multiple hearings; this represents one of them.
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        hearingId:
+          type: string
+        filingNumber:
+          type: array
+          items:
+            type: string
+        cnrNumbers:
+          type: array
+          items:
+            type: string
+        applicationNumbers:
+          type: array
+          items:
+            type: string
+        hearingType:
+          type: string
+        status:
+          type: string
+        startTime:
+          type: integer
+          format: int64
+          description: Epoch millis
+        endTime:
+          type: integer
+          format: int64
+          description: Epoch millis
+        presidedBy:
+          $ref: '#/components/schemas/PresidedBy'
+        attendees:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attendee'
+        transcript:
+          type: array
+          items:
+            type: string
+        vcLink:
+          type: string
+        isActive:
+          type: boolean
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        additionalDetails:
+          type: object
+          additionalProperties: true
+        auditDetails:
+          $ref: '#/components/schemas/AuditDetails'
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+        notes:
+          type: string
+
+    PresidedBy:
+      type: object
+      description: The bench/judge/court presiding over a hearing.
+      properties:
+        benchID:
+          type: string
+        judgeID:
+          type: array
+          items:
+            type: string
+        courtID:
+          type: string
+
+    Attendee:
+      type: object
+      description: A person required/present at a hearing.
+      properties:
+        name:
+          type: string
+        individualId:
+          type: string
+        type:
+          type: string
+        associatedWith:
+          type: string
+        wasPresent:
+          type: boolean
+
+    Witness:
+      type: object
+      required: [caseId, individualId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        caseId:
+          type: string
+        filingNumber:
+          type: string
+        cnrNumber:
+          type: string
+        witnessIdentifier:
+          type: string
+        individualId:
+          type: string
+        remarks:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+        auditDetails:
+          $ref: '#/components/schemas/AuditDetails'
+        additionalDetails:
+          type: object
+          additionalProperties: true
+
+    OrderTasks:
+      type: object
+      properties:
+        order:
+          $ref: '#/components/schemas/Order'
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+
+    Order:
+      type: object
+      required: [tenantId, createdDate, orderType, status, isActive]
+      description: An order is created as an outcome of a hearing or based on an application; contains a set of tasks.
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        filingNumber:
+          type: string
+        cnrNumber:
+          type: string
+        applicationNumber:
+          type: array
+          items:
+            type: string
+        hearingNumber:
+          type: string
+        hearingType:
+          type: string
+        orderNumber:
+          type: string
+        linkedOrderNumber:
+          type: string
+        createdDate:
+          type: integer
+          format: int64
+          description: Epoch millis
+        issuedBy:
+          $ref: '#/components/schemas/IssuedBy'
+        orderType:
+          type: string
+        orderCategory:
+          type: string
+        status:
+          type: string
+        comments:
+          type: string
+        isActive:
+          type: boolean
+        statuteSection:
+          $ref: '#/components/schemas/StatuteSection'
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        additionalDetails:
+          type: object
+          additionalProperties: true
+        auditDetails:
+          $ref: '#/components/schemas/AuditDetails'
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+        partyUniqueIds:
+          type: array
+          items:
+            type: string
+
+    IssuedBy:
+      type: object
+      properties:
+        benchId:
+          type: string
+        judgeId:
+          type: array
+          items:
+            type: string
+            format: uuid
+        courtId:
+          type: string
+
+    Task:
+      type: object
+      required: [tenantId, orderId, createdDate, taskType, status]
+      description: A task is created as part of an Order; always linked to an order.
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        orderId:
+          type: string
+          format: uuid
+        filingNumber:
+          type: string
+        taskNumber:
+          type: string
+        cnrNumber:
+          type: string
+        createdDate:
+          type: integer
+          format: int64
+          description: Epoch millis
+        dateCloseBy:
+          type: integer
+          format: int64
+          description: Epoch millis
+        dateClosed:
+          type: integer
+          format: int64
+          description: Epoch millis
+        taskDescription:
+          type: string
+        taskType:
+          type: string
+        taskDetails:
+          type: object
+          additionalProperties: true
+        amount:
+          $ref: '#/components/schemas/Amount'
+        status:
+          type: string
+        assignedTo:
+          type: object
+          additionalProperties: true
+          description: "# REVIEW: typed as java.lang.Object in the DTO — actual shape not verified."
+        isActive:
+          type: boolean
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        additionalDetails:
+          type: object
+          additionalProperties: true
+        auditDetails:
+          $ref: '#/components/schemas/AuditDetails'
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+
+    Amount:
+      type: object
+      required: [amount, type, status]
+      description: Amount in the form of fees or penalty.
+      properties:
+        id:
+          type: string
+          format: uuid
+        amount:
+          type: string
+        type:
+          type: string
+        paymentRefNumber:
+          type: string
+        additionalDetails:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+
+    Application:
+      type: object
+      required: [tenantId, caseId, createdDate, applicationType, status, isActive]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        caseId:
+          type: string
+        filingNumber:
+          type: string
+        cnrNumber:
+          type: string
+        referenceId:
+          type: string
+          format: uuid
+        createdDate:
+          type: string
+          description: "# NOTE: typed java.lang.String in the DTO (not epoch millis, despite the *Date name)."
+        createdBy:
+          type: string
+          format: uuid
+        onBehalfOf:
+          type: array
+          items:
+            type: string
+            format: uuid
+        asUser:
+          type: string
+        applicationType:
+          type: string
+        applicationNumber:
+          type: string
+        issuedBy:
+          $ref: '#/components/schemas/IssuedBy'
+        status:
+          type: string
+        comment:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        isActive:
+          type: boolean
+        statuteSection:
+          $ref: '#/components/schemas/StatuteSection'
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        additionalDetails:
+          type: object
+          additionalProperties: true
+        auditDetails:
+          $ref: '#/components/schemas/AuditDetails'
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+
+    Comment:
+      type: object
+      required: [tenantId, artifactId, individualId, comment]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        artifactId:
+          type: string
+        individualId:
+          type: string
+        comment:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+        additionalDetails:
+          type: object
+          additionalProperties: true
+        auditdetails:
+          $ref: '#/components/schemas/AuditDetails'
+
+    Artifact:
+      type: object
+      required: [tenantId, filingNumber, caseId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        artifactNumber:
+          type: string
+        evidenceNumber:
+          type: string
+        filingNumber:
+          type: string
+        externalRefNumber:
+          type: string
+        caseId:
+          type: string
+        application:
+          type: string
+        hearing:
+          type: string
+        order:
+          type: string
+        mediaType:
+          type: string
+        artifactType:
+          type: string
+        sourceType:
+          type: string
+        sourceID:
+          type: string
+        sourceName:
+          type: string
+        applicableTo:
+          type: array
+          items:
+            type: string
+        createdDate:
+          type: integer
+          format: int64
+          description: Epoch millis
+        isActive:
+          type: boolean
+          default: true
+        isEvidence:
+          type: boolean
+          default: false
+        status:
+          type: string
+        file:
+          $ref: '#/components/schemas/Document'
+        description:
+          type: string
+        artifactDetails:
+          type: object
+          additionalProperties: true
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        additionalDetails:
+          type: object
+          additionalProperties: true
+        auditdetails:
+          $ref: '#/components/schemas/AuditDetails'
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+        asUser:
+          type: string
+        tag:
+          type: string
+
+    # ---------------------------------------------------------------------
+    # Case summary (stub endpoint)
+    # ---------------------------------------------------------------------
+
+    CaseSummaryResponse:
+      type: object
+      description: |
+        # NOTE: field is named/typed "requestInfo" : RequestInfo in the actual DTO
+        # (org.pucar.dristi.web.models.CaseSummaryResponse) — a response echoing back the
+        # request info rather than a responseInfo, reflected as-is since this is a stub
+        # endpoint (see `_summary` path description).
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseSummary'
+
+    CaseSummary:
+      type: object
+      required:
+        - caseTitle
+        - caseDescription
+        - filingNumber
+        - cnrNumber
+        - registrationDate
+        - caseDetails
+        - caseCategory
+        - statutesAndSections
+        - status
+      properties:
+        resolutionMechanism:
+          type: string
+        caseTitle:
+          type: string
+        caseDescription:
+          type: string
+        filingNumber:
+          type: string
+        courCaseNumber:
+          type: string
+          description: "# NOTE: property name is spelled \"courCaseNumber\" (typo for courtCaseNumber) in the DTO."
+        cnrNumber:
+          type: string
+        filingDate:
+          type: string
+          format: date
+          description: "Typed java.time.LocalDate in the DTO."
+        registrationDate:
+          type: string
+          description: "# NOTE: typed java.lang.String in the DTO, not a date/epoch type."
+        caseDetails:
+          type: object
+          additionalProperties: true
+        caseCategory:
+          type: string
+        statutesAndSections:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatuteSection'
+        status:
+          type: string
+        remarks:
+          type: string
+        judgement:
+          $ref: '#/components/schemas/Order'
+
+    # ---------------------------------------------------------------------
+    # Case grouping (stub endpoints)
+    # ---------------------------------------------------------------------
+
+    CaseGroupRequest:
+      type: object
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        caseGroups:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseGroup'
+
+    CaseGroupResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        caseGroups:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseGroup'
+
+    CaseGroup:
+      type: object
+      required: [caseIds]
+      description: Holds a logical grouping of cases.
+      properties:
+        id:
+          type: string
+          description: Autogenerated id of the case group (read-only).
+        caseIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+
+    # ---------------------------------------------------------------------
+    # Case bundles
+    # ---------------------------------------------------------------------
+
+    CaseBundleRequest:
+      type: object
+      required: [tenantId, caseId]
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        tenantId:
+          type: string
+        caseId:
+          type: string
+
+    CaseBundleResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        fileStoreId:
+          type: string
+
+    CaseBundleBulkRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        tenantId:
+          type: string
+
+    CaseBundleBulkResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        status:
+          type: boolean
+
+    CaseBundleCreateIndexResponse:
+      type: object
+      description: Response for `_rebuildcasebundle`.
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        message:
+          type: string
+
+    EnrichCaseBundlePdfIndexRequest:
+      type: object
+      required: [filingNumber, tenantId, isDelayRequired]
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        filingNumber:
+          type: string
+          description: Filing number or business ID
+        tenantId:
+          type: string
+        stateName:
+          type: string
+        isDelayRequired:
+          type: boolean
+          default: false
+
+    EnrichCaseBundlePdfIndexResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        message:
+          type: string
+        success:
+          type: boolean
+
+    # ---------------------------------------------------------------------
+    # Document preview
+    # ---------------------------------------------------------------------
+
+    DocPreviewRequest:
+      type: object
+      required: [RequestInfo, tenantId, filingNumber, courtId]
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        tenantId:
+          type: string
+        filingNumber:
+          type: string
+        ctcApplicationNumber:
+          type: string
+        isCaseFileView:
+          type: boolean
+          default: false
+        courtId:
+          type: string
+
+    DocPreviewResponse:
+      type: object
+      required: [responseInfo, caseBundleNodes]
+      description: |
+        # NOTE: `caseBundleNodes` carries a `@NotBlank` annotation in the DTO even though
+        # its type is a List (not a String) — likely a copy/paste artifact in the source;
+        # reflected here only as `required`, not as a string-only constraint.
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        caseBundleNodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseBundleNode'
+
+    CaseBundleNode:
+      type: object
+      description: |
+        Plain POJO (no bean-validation annotations in the DTO), so nothing is marked required.
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        fileStoreId:
+          type: string
+        issuedFileStoreId:
+          type: string
+        status:
+          type: string
+          enum: [accepted, rejected, pending]
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseBundleNode'
+
+    # ---------------------------------------------------------------------
+    # Credentials / PDF proxy endpoints
+    # ---------------------------------------------------------------------
+
+    VcCredentialRequest:
+      type: object
+      description: |
+        Used as both the request AND response body for `/credentials/v1/_generate` — the
+        controller returns the same VcCredentialRequest type it received (mutated by
+        ServiceUrlMapperVCService.generateVc).
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        fileStoreId:
+          type: string
+        referenceId:
+          type: string
+        referenceCode:
+          type: string
+        tenantId:
+          type: string
+        moduleName:
+          type: string
+
+    PdfRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        referenceId:
+          type: string
+        referenceCode:
+          type: string
+        tenantId:
+          type: string
+        moduleName:
+          type: string
+
+    PdfResponse:
+      type: object
+      additionalProperties: true
+      description: |
+        # REVIEW: The controller declares `ResponseEntity<Object>` for `/pdf/v1/_get` and
+        # simply returns whatever ServiceUrlMappingPdfService.getSVcUrlMappingPdf(...)
+        # produces (a proxied call to an external PDF service resolved via moduleName).
+        # The actual shape was not verified against a downstream contract; treated as an
+        # opaque/freeform object here rather than fabricating fields.
+
+    # ---------------------------------------------------------------------
+    # Shared / external common-contract models
+    # ---------------------------------------------------------------------
+
+    Document:
+      type: object
+      # TODO: fields not fully expanded, verify against org.egov.common.contract.models.Document
+      # (external DIGIT common-contract library class, not present in this repo's source tree).
+      additionalProperties: true
+
+    AuditDetails:
+      type: object
+      # TODO: fields not fully expanded, verify against org.egov.common.contract.models.AuditDetails
+      # (external DIGIT common-contract library class, not present in this repo's source tree).
+      additionalProperties: true
+
+    Workflow:
+      type: object
+      # TODO: fields not fully expanded, verify against org.egov.common.contract.models.Workflow
+      # (external DIGIT common-contract library class, not present in this repo's source tree).
+      additionalProperties: true

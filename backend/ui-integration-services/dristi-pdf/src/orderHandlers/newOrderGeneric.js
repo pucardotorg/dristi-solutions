@@ -12,6 +12,7 @@ const { formatDate } = require("./formatDate");
 const { handleApiCall } = require("../utils/handleApiCall");
 const { getStringAddressDetails } = require("../utils/addressUtils");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 const _getBailOrderData = (order) => {
   let orderDetails = {};
@@ -126,9 +127,7 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
 
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
-    const caseNumber = courtCase?.isLPRCase
-      ? courtCase?.lprNumber
-      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = getCaseNumber(courtCase);
 
     const litigants = courtCase?.litigants?.map((litigant) => ({
       ...litigant,

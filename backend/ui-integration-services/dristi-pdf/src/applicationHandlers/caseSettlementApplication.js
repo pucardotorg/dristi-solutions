@@ -10,6 +10,7 @@ const { renderError } = require("../utils/renderError");
 const { cleanName } = require("./cleanName");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 const { formatDate } = require("./formatDate");
+const { getCaseNumber } = require("../utils/commonUtils");
 const {
   getNameByUuid,
   getComplaintAndAccusedList,
@@ -182,9 +183,7 @@ async function caseSettlementApplication(
     const additionalComments = htmlToFormattedText(
       application?.applicationDetails?.additionalComments || "",
     );
-    const caseNumber = courtCase?.isLPRCase
-      ? courtCase?.lprNumber
-      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = getCaseNumber(courtCase);
     const { complainantList, accusedList } = getComplaintAndAccusedList(
       courtCase || {},
     );

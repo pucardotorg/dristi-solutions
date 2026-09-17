@@ -161,7 +161,7 @@ public class ApplicationRepository {
             throw e;
         }
         catch (Exception e){
-            log.error("Error while fetching application list {}", e.getMessage());
+            log.error("Error while fetching application list", e);
             throw new CustomException(APPLICATION_SEARCH_ERR,"Error while fetching application list: "+e.getMessage());
         }
     }

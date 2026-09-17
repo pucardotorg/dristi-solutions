@@ -58,7 +58,7 @@ public class FileStoreService {
             log.error("Filestore upload failed: status={}, body={}", response.getStatusCode(), response.getBody());
             return null;
         } catch (Exception e) {
-            log.error("Exception uploading to filestore: {}", e.getMessage(), e);
+            log.error("Exception uploading to filestore", e);
             return null;
         }
     }

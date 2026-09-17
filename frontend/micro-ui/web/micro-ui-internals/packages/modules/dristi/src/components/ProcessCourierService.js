@@ -2,20 +2,9 @@ import React, { useEffect, useState } from "react";
 import isEqual from "lodash/isEqual";
 import CourierService from "./CourierService";
 import Modal from "./Modal";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import { DRISTIService } from "../services";
-
-const Heading = (props) => {
-  return <h1 className="main-heading">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
+import { CloseBtn, Heading } from "./ModalComponents";
+import { TASK_TYPES } from "../Utils/constants";
 
 function ProcessCourierService({ t, config, onSelect, formData, errors, setError, clearErrors }) {
   // Initialize state based on formData or default values
@@ -23,6 +12,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [summonsActive, setSummonsActive] = useState(false);
   const [noticeActive, setNoticeActive] = useState(false);
+  const [warrantActive, setWarrantActive] = useState(false);
   const [checked, setChecked] = useState(true);
   const urlParams = new URLSearchParams(window.location.search);
   const caseId = urlParams.get("caseId");
@@ -47,18 +37,31 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
       return addr;
     });
     if (updatedAddresses?.every((addr) => !addr?.checked)) {
-      handleDataChange({ addressDetails: updatedAddresses, noticeCourierService: [], summonsCourierService: [] });
+      handleDataChange({ addressDetails: updatedAddresses, noticeCourierService: [], summonsCourierService: [], warrantCourierService: [] });
     } else {
       handleDataChange({ addressDetails: updatedAddresses });
     }
   };
 
   const handleCourierServiceChange = (value, type) => {
-    if (type === "notice") {
+    if (type === TASK_TYPES.NOTICE.toLocaleLowerCase()) {
       handleDataChange({ noticeCourierService: value });
-    } else if (type === "summons") {
+    } else if (type === TASK_TYPES.SUMMONS.toLocaleLowerCase()) {
       handleDataChange({ summonsCourierService: value });
+    } else if (type === TASK_TYPES.WARRANT.toLocaleLowerCase()) {
+      handleDataChange({ warrantCourierService: value });
     }
+  };
+
+  const handleInitialCourierServiceChange = (data) => {
+    const updatedData = {
+      ...processCourierData,
+      noticeCourierService: data?.notice || processCourierData?.noticeCourierService || [],
+      summonsCourierService: data?.summons || processCourierData?.summonsCourierService || [],
+      warrantCourierService: data?.warrant || processCourierData?.warrantCourierService || [],
+    };
+    setProcessCourierData(updatedData);
+    onSelect(config?.key, updatedData);
   };
 
   const handleAddAddress = async (newAddress, accusedData) => {
@@ -106,13 +109,16 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
         setSummonsActive={setSummonsActive}
         noticeActive={noticeActive}
         setNoticeActive={setNoticeActive}
+        warrantActive={warrantActive}
+        setWarrantActive={setWarrantActive}
         setShowConfirmationModal={setShowConfirmationModal}
         handleAddAddress={handleAddAddress}
         isDisableAllFields={isDisableAllFields}
+        handleInitialCourierServiceChange={handleInitialCourierServiceChange}
       />
       {showConfirmationModal && (
         <Modal
-          headerBarMain={<Heading label={t("CONSENT_FOR_SUMMON")} />}
+          headerBarMain={<Heading className="main-heading" label={t("CONSENT_FOR_SUMMON")} />}
           headerBarEnd={
             <CloseBtn
               onClick={() => {

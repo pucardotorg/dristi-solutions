@@ -139,7 +139,7 @@ public class TaskQueryBuilder {
 
             return query.toString();
         } catch (Exception e) {
-            log.error("Error while building task search query :: {}", e.toString());
+            log.error("Error while building task search query", e);
             throw new CustomException(TASK_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the task search query: " + e.getMessage());
         }
     }
@@ -235,7 +235,7 @@ public class TaskQueryBuilder {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while building document search query :: {}", e.toString());
+            log.error("Error while building document search query", e);
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the query for task document search: " + e.getMessage());
         }
     }
@@ -256,7 +256,7 @@ public class TaskQueryBuilder {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while building amount search query :: {}", e.toString());
+            log.error("Error while building amount search query", e);
             throw new CustomException(AMOUNT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the query for amount: " + e.getMessage());
         }
     }

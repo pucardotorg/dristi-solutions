@@ -1,10 +1,12 @@
-import { CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
+import { CheckBox } from "@egovernments/digit-ui-react-components";
 
 import React, { useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
-import { useToast } from "../../../components/Toast/useToast";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Modal from "../../../components/Modal";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import { userRolesEnum } from "../../../Utils/constants";
 
 const caseLockingMainDiv = {
   padding: "24px",
@@ -20,23 +22,6 @@ const caseSubmissionWarningText = {
   lineHeight: "21.6px",
   color: "#3D3C3C",
 };
-
-const Heading = (props) => {
-  return (
-    <h1 className="heading-m" style={{ marginLeft: "47px" }}>
-      {props.label}
-    </h1>
-  );
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
 function CaseLockModal({
   t,
   path,
@@ -51,9 +36,27 @@ function CaseLockModal({
 }) {
   const [submitConfirmed, setSubmitConfirmed] = useState(false);
   const history = useHistory();
-  const toast = useToast();
+  const [showToast, setShowToast] = useState(null);
   const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
-  const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
+  const { uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
+  const userInfo = Digit?.UserService?.getUser()?.info;
+
+  const isAdvocateInCase = useMemo(() => {
+    return Boolean(caseDetails?.representatives?.some((rep) => rep?.additionalDetails?.uuid === userInfo?.uuid));
+  }, [caseDetails?.representatives, userInfo?.uuid]);
+
+  const isLitigantInCase = useMemo(() => {
+    return Boolean(caseDetails?.litigants?.some((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid));
+  }, [caseDetails?.litigants, userInfo?.uuid]);
+
+  const isPoaHolderInCase = useMemo(() => {
+    return Boolean(caseDetails?.poaHolders?.some((poa) => poa?.additionalDetails?.uuid === userInfo?.uuid));
+  }, [caseDetails?.poaHolders, userInfo?.uuid]);
+
+  const isClerkRepresentingAdvocate =
+    userInfo?.roles?.some((role) => role?.code === userRolesEnum.ADVOCATE_CLERK_ROLE) && selectedAdvocateUuid !== userInfo?.uuid;
+
+  const isAdvocateFlow = selectedAdvocateUuid && (isAdvocateInCase || !isLitigantInCase || isClerkRepresentingAdvocate) && !isPoaHolderInCase;
 
   const filingNumber = useMemo(() => {
     return caseDetails?.filingNumber;
@@ -105,15 +108,16 @@ function CaseLockModal({
       await Promise.all(promises);
       history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}&caseId=${caseId}`);
     } catch (error) {
-      console.error("An error occurred:", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("Failed to create e-sign tasks:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("FAILED_TO_CREATE_ESIGN_TASKS"), error: true, errorId });
     }
   };
 
   const handleCancelOnSubmit = async () => {
     setShowCaseLockingModal(false);
 
-    if (selectedAdvocateUuid) {
+    if (isAdvocateFlow) {
       const assignees = Array.isArray(caseDetails?.representatives)
         ? caseDetails?.representatives?.map((advocate) => ({
             uuid: advocate?.additionalDetails?.uuid,
@@ -137,76 +141,88 @@ function CaseLockModal({
         });
         history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}&caseId=${caseId}`);
       } catch (error) {
-        console.error("An error occurred:", error);
-        toast.error(t("SOMETHING_WENT_WRONG"));
+        console.error("Failed to create signature upload task:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("FAILED_TO_CREATE_SIGNATURE_UPLOAD_TASK"), error: true, errorId });
       }
     }
   };
 
   return (
-    <Modal
-      headerBarEnd={
-        <CloseBtn
-          onClick={() => {
-            setPrevSelected(selected);
-            setShowCaseLockingModal(false);
-          }}
-        />
-      }
-      actionSaveLabel={selectedAdvocateUuid ? t("CS_ESIGN") : t("CONFIRM_AND_SIGN")}
-      actionSaveOnSubmit={handleSaveOnSubmit}
-      actionCancelLabel={selectedAdvocateUuid ? t("UPLOAD_SIGNED_COPY") : t("DOWNLOAD_CS_BACK")}
-      actionCancelOnSubmit={handleCancelOnSubmit}
-      formId="modal-action"
-      headerBarMain={<Heading label={selectedAdvocateUuid ? t("SUBMIT_CASE_CONFIRMATION") : t("CONFIRM_CASE_DETAILS")} />}
-      popmoduleClassName={"case-lock-confirm-modal"}
-      style={{ width: "50%", height: "40px" }}
-      // textStyle={{ margin: "0px", color: "" }}
-      // popupStyles={{ maxWidth: "60%" }}
-      popUpStyleMain={{ zIndex: "1000" }}
-      isDisabled={!submitConfirmed}
-      isBackButtonDisabled={!submitConfirmed && selectedAdvocateUuid}
-      actionCancelStyle={{ width: "50%", height: "40px" }}
-    >
-      <div className="case-locking-main-div" style={caseLockingMainDiv}>
-        <div>
-          {selectedAdvocateUuid ? (
-            <React.Fragment>
-              <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
-                {t("CONFIRM_HOW_COMPLAINT_WILL_BE_SIGNED")}
-              </p>
-              <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
-                {t("UPLOAD_SIGNED_COPY_MESSAGE")}
-              </p>
-              <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
-                {t("LITIGANT_ESIGN_MESSAGE")}
-              </p>
-              <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
-                {t("MOVE_BACK_TO_DRAFT_FOR_CHANGE_MODE_SIGNING")}
-              </p>
-            </React.Fragment>
-          ) : (
-            <React.Fragment>
-              <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
-                {t("CASE_SUBMISSION_WARNING")}
-              </p>
-              <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
-                {t("CASE_SUBMISSION_PROCESS_SUBMISSION")} <span style={{ fontWeight: "700" }}>{t("CASE_SUBMISSION_PROCESS_SIGNED")}</span>{" "}
-                {t("CASE_SUBMISSION_PROCESS_MOVED")} <span style={{ fontWeight: "700" }}>{t("CASE_SUBMISSION_PROCESS_SCRUTINY")}</span>{" "}
-                {t("CASE_SUBMISSION_PROCESS_COMPLETED")}
-              </p>
-            </React.Fragment>
-          )}
-          <CheckBox
-            value={submitConfirmed}
-            label={t("CASE_SUBMISSION_CONFIRMATION")}
-            wrkflwStyle={{}}
-            style={{ ...caseSubmissionWarningText, lineHeight: "18.75px", fontStyle: "italic" }}
-            onChange={() => setSubmitConfirmed(!submitConfirmed)}
+    <React.Fragment>
+      <Modal
+        headerBarEnd={
+          <CloseBtn
+            onClick={() => {
+              setPrevSelected(selected);
+              setShowCaseLockingModal(false);
+            }}
           />
+        }
+        actionSaveLabel={isAdvocateFlow ? t("CS_ESIGN") : t("CONFIRM_AND_SIGN")}
+        actionSaveOnSubmit={handleSaveOnSubmit}
+        actionCancelLabel={isAdvocateFlow ? t("UPLOAD_SIGNED_COPY") : t("DOWNLOAD_CS_BACK")}
+        actionCancelOnSubmit={handleCancelOnSubmit}
+        formId="modal-action"
+        headerBarMain={<Heading style={{ marginLeft: "47px" }} label={isAdvocateFlow ? t("SUBMIT_CASE_CONFIRMATION") : t("CONFIRM_CASE_DETAILS")} />}
+        popmoduleClassName={"case-lock-confirm-modal"}
+        style={{ width: "50%", height: "40px" }}
+        // textStyle={{ margin: "0px", color: "" }}
+        // popupStyles={{ maxWidth: "60%" }}
+        popUpStyleMain={{ zIndex: "1000" }}
+        isDisabled={!submitConfirmed}
+        isBackButtonDisabled={!submitConfirmed && isAdvocateFlow}
+        actionCancelStyle={{ width: "50%", height: "40px" }}
+      >
+        <div className="case-locking-main-div" style={caseLockingMainDiv}>
+          <div>
+            {isAdvocateFlow ? (
+              <React.Fragment>
+                <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
+                  {t("CONFIRM_HOW_COMPLAINT_WILL_BE_SIGNED")}
+                </p>
+                <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
+                  {t("UPLOAD_SIGNED_COPY_MESSAGE")}
+                </p>
+                <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
+                  {t("LITIGANT_ESIGN_MESSAGE")}
+                </p>
+                <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
+                  {t("MOVE_BACK_TO_DRAFT_FOR_CHANGE_MODE_SIGNING")}
+                </p>
+              </React.Fragment>
+            ) : (
+              <React.Fragment>
+                <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
+                  {t("CASE_SUBMISSION_WARNING")}
+                </p>
+                <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
+                  {t("CASE_SUBMISSION_PROCESS_SUBMISSION")} <span style={{ fontWeight: "700" }}>{t("CASE_SUBMISSION_PROCESS_SIGNED")}</span>{" "}
+                  {t("CASE_SUBMISSION_PROCESS_MOVED")} <span style={{ fontWeight: "700" }}>{t("CASE_SUBMISSION_PROCESS_SCRUTINY")}</span>{" "}
+                  {t("CASE_SUBMISSION_PROCESS_COMPLETED")}
+                </p>
+              </React.Fragment>
+            )}
+            <CheckBox
+              value={submitConfirmed}
+              label={t("CASE_SUBMISSION_CONFIRMATION")}
+              wrkflwStyle={{}}
+              style={{ ...caseSubmissionWarningText, lineHeight: "18.75px", fontStyle: "italic" }}
+              onChange={() => setSubmitConfirmed(!submitConfirmed)}
+            />
+          </div>
         </div>
-      </div>
-    </Modal>
+      </Modal>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
+    </React.Fragment>
   );
 }
 

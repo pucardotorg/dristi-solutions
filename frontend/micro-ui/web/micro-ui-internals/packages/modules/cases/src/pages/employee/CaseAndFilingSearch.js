@@ -1,7 +1,5 @@
-import {
-    Header,
-    InboxSearchComposer
-} from "@egovernments/digit-ui-react-components";
+import { Header } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { caseAndFilingSearchConfig } from "../../configs/caseAndFilingSearchConfig";

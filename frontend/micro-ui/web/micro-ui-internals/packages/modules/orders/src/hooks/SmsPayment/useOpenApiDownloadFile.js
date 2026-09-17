@@ -3,7 +3,7 @@ import { Urls } from "../services/Urls";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 export const useOpenApiDownloadFile = () => {
-  const download = useCallback(async (fileStoreId, tenantId = "kl", moduleName = "DRISTI", filename) => {
+  const download = useCallback(async (fileStoreId, tenantId, moduleName = "DRISTI", filename) => {
     if (!fileStoreId) return console.error("fileStoreId missing");
 
     try {

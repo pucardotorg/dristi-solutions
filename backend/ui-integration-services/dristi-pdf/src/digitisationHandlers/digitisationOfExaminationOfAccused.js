@@ -8,6 +8,7 @@ const {
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 const digitisationOfExaminationOfAccused = async (
   req,
@@ -117,9 +118,7 @@ const digitisationOfExaminationOfAccused = async (
     } else {
       return renderError(res, "Invalid filingDate format", 500);
     }
-    const caseNumber = courtCase?.isLPRCase
-      ? courtCase?.lprNumber
-      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = getCaseNumber(courtCase);
     const place = mdmsCourtRoom?.place || digitisationRecord?.place || "";
     const state = mdmsCourtRoom?.state || digitisationRecord?.state || "";
 

@@ -2,6 +2,7 @@ package org.pucar.dristi.web.models;
 
 import java.util.List;
 
+import org.pucar.dristi.web.models.v2.CasesFor;
 import org.springframework.validation.annotation.Validated;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -66,8 +67,8 @@ public class CaseCriteria {
     @JsonProperty("stage")
     private List<String> stage = null;
 
-    @JsonProperty("substage")
-    private String substage = null;
+    @JsonProperty("casesFor")
+    private CasesFor casesFor = null;
 
     @JsonProperty("litigantId")
     @Valid
@@ -98,7 +99,19 @@ public class CaseCriteria {
     @Valid
     private Pagination pagination = null;
 
+    @JsonProperty("officeAdvocateId")
+    private String officeAdvocateId = null;
+
+    @JsonProperty("memberId")
+    private String memberId = null;
+
+    @JsonProperty("isMemberActiveInCase")
+    private Boolean isMemberActiveInCase = null;
+
     @JsonProperty("isClerk")
     private Boolean isClerk = null;
+
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = null;
 
 }

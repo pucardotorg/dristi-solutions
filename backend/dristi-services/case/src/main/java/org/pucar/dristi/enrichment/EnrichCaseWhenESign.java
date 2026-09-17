@@ -73,9 +73,14 @@ public class EnrichCaseWhenESign implements EnrichmentStrategy {
 
 
         boolean isLitigantSigned = Optional.ofNullable(caseRequest.getCases().getLitigants()).orElse(Collections.emptyList()).stream()
-                .filter(party -> individualId.equals(party.getIndividualId()) && litigantPoaMapping.containsKey(party.getIndividualId()) && litigantPoaMapping.get(party.getIndividualId()).isEmpty()
-
-                )
+                .filter(party -> individualId.equals(party.getIndividualId()))
+                .filter(party -> {
+                    List<POAHolder> poaHolders = Optional.ofNullable(litigantPoaMapping.get(party.getIndividualId()))
+                            .orElse(Collections.emptyList());
+                    // Sign if no POA holders OR if the signing individual is the POA holder
+                    return poaHolders.isEmpty() || poaHolders.stream()
+                            .anyMatch(poa -> individualId.equals(poa.getIndividualId()));
+                })
                 .findFirst()
                 .map(party -> {
                     party.setHasSigned(true);
@@ -84,32 +89,28 @@ public class EnrichCaseWhenESign implements EnrichmentStrategy {
                 .orElse(false);
         log.info("Method=EnrichCaseWhenESign,Result=IN_PROGRESS, LitigantSigned={}", isLitigantSigned);
 
-        if (!isLitigantSigned && !litigantPoaMapping.containsKey(individualId)) {
-            log.info("Method=EnrichCaseWhenESign,Result=IN_PROGRESS, checking if advocate signed");
+        log.info("Method=EnrichCaseWhenESign,Result=IN_PROGRESS, checking if advocate signed");
 
-            List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
+        List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
 
-            List<Advocate> activeAdvocate = advocates.stream()
-                    .filter(Advocate::getIsActive)
-                    .toList();
+        List<Advocate> activeAdvocate = advocates.stream()
+                .filter(Advocate::getIsActive)
+                .toList();
 
-            if (!activeAdvocate.isEmpty()) {
-                //expecting only one advocate
-                String advocateId = activeAdvocate.get(0).getId().toString();
+        if (!activeAdvocate.isEmpty()) {
+            //expecting only one advocate
+            String advocateId = activeAdvocate.get(0).getId().toString();
 
-                boolean isAdvocateSigned = Optional.ofNullable(caseRequest.getCases().getRepresentatives())
-                        .orElse(Collections.emptyList()).stream()
-                        .filter(advocate -> advocateId.equals(advocate.getAdvocateId()))
-                        .findFirst()
-                        .map(advocate -> {
-                            advocate.setHasSigned(true);
-                            return true;
-                        })
-                        .orElse(false);
-                log.info("Method=EnrichCaseWhenESign,Result=IN_PROGRESS, AdvocateSigned={}", isAdvocateSigned);
-            }
-
-
+            boolean isAdvocateSigned = Optional.ofNullable(caseRequest.getCases().getRepresentatives())
+                    .orElse(Collections.emptyList()).stream()
+                    .filter(advocate -> advocateId.equals(advocate.getAdvocateId()))
+                    .findFirst()
+                    .map(advocate -> {
+                        advocate.setHasSigned(true);
+                        return true;
+                    })
+                    .orElse(false);
+            log.info("Method=EnrichCaseWhenESign,Result=IN_PROGRESS, AdvocateSigned={}", isAdvocateSigned);
         }
         log.info("Method=EnrichCaseWhenESign,Result=SUCCESS, CaseId={}", caseRequest.getCases().getId());
     }

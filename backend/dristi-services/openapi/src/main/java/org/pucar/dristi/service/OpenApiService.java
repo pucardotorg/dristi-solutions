@@ -899,7 +899,7 @@ public class OpenApiService {
 
             return response;
         } catch (Exception e) {
-            log.error("Failed to get order details :: {}", e.toString());
+            log.error("Failed to get order details", e);
             throw new CustomException("GET_ORDER_DETAILS_ERROR",
                     "Error Occurred while getting order details: " + e.getMessage());
         }

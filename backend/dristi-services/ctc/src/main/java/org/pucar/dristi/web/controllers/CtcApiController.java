@@ -53,7 +53,7 @@ public class CtcApiController {
             return new ResponseEntity<>(response, HttpStatus.CREATED);
 
         } catch (CustomException e) {
-            log.error("Error creating CTC application: {}", e.getMessage());
+            log.error("Error creating CTC application", e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error creating CTC application", e);
@@ -78,7 +78,7 @@ public class CtcApiController {
             return ResponseEntity.ok(response);
 
         } catch (CustomException e) {
-            log.error("Error updating CTC application: {}", e.getMessage());
+            log.error("Error updating CTC application", e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error updating CTC application", e);
@@ -104,7 +104,7 @@ public class CtcApiController {
             return ResponseEntity.ok(response);
 
         } catch (CustomException e) {
-            log.error("Error searching CTC applications: {}", e.getMessage());
+            log.error("Error searching CTC applications", e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error searching CTC applications", e);
@@ -129,7 +129,7 @@ public class CtcApiController {
             return ResponseEntity.ok(response);
 
         } catch (CustomException e) {
-            log.error("Error reviewing CTC applications: {}", e.getMessage());
+            log.error("Error reviewing CTC applications", e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error reviewing CTC applications", e);
@@ -154,7 +154,7 @@ public class CtcApiController {
             return ResponseEntity.ok(response);
 
         } catch (CustomException e) {
-            log.error("Error processing bulk issue/reject: {}", e.getMessage());
+            log.error("Error processing bulk issue/reject", e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error processing bulk issue/reject", e);
@@ -179,7 +179,7 @@ public class CtcApiController {
             return ResponseEntity.ok(response);
 
         } catch (CustomException e) {
-            log.error("Error validating user for CTC application: {}", e.getMessage());
+            log.error("Error validating user for CTC application", e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error validating user for CTC application", e);
@@ -204,7 +204,7 @@ public class CtcApiController {
             return ResponseEntity.ok(response);
 
         } catch (CustomException e) {
-            log.error("Error getting docs to sign: {}", e.getMessage());
+            log.error("Error getting docs to sign", e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error getting docs to sign", e);
@@ -228,7 +228,7 @@ public class CtcApiController {
             return ResponseEntity.ok(response);
 
         } catch (CustomException e) {
-            log.error("Error updating signed docs: {}", e.getMessage());
+            log.error("Error updating signed docs", e);
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error updating signed docs", e);

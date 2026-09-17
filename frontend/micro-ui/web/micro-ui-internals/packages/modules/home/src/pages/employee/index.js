@@ -1,8 +1,7 @@
-import { AppContainer, BreadCrumb, PrivateRoute } from "@egovernments/digit-ui-react-components";
+import { AppContainer, PrivateRoute } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
 import { Switch } from "react-router-dom";
 import HearingsResponse from "./HearingsResponse";
-import InsideHearingMainPage from "./InsideHearingMainPage";
 import HomeView from "./HomeView";
 import ViewHearing from "./ViewHearing";
 import HomePopUp from "./HomePopUp";
@@ -54,7 +53,6 @@ const App = ({ path, stateCode, userType, tenants }) => {
     <Switch>
       <AppContainer className="ground-container">
         <PrivateRoute path={`${path}/hearings-response`} component={() => <HearingsResponse></HearingsResponse>} />
-        <PrivateRoute path={`${path}/inside-hearing`} component={() => <InsideHearingMainPage />} />
         <PrivateRoute path={`${path}/home-pending-task/e-filing-payment-response`} component={() => <EFilingPaymentRes></EFilingPaymentRes>} />
         <PrivateRoute
           exact

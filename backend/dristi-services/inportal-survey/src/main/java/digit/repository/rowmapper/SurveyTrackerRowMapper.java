@@ -47,7 +47,7 @@ public class SurveyTrackerRowMapper implements ResultSetExtractor<List<SurveyTra
             return surveyTrackers;
 
         } catch (Exception e) {
-            log.error("Error occurred while processing SurveyTracker ResultSet: {}", e.getMessage());
+            log.error("Error occurred while processing SurveyTracker ResultSet", e);
             throw new CustomException(ROW_MAPPER_EXCEPTION, "Error occurred while processing SurveyTracker ResultSet: " + e.getMessage());
         }
     }

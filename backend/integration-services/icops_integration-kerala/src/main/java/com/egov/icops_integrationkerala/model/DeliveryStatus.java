@@ -18,5 +18,7 @@ public enum DeliveryStatus {
 
     EXECUTED,
 
-    NOT_EXECUTED
+    NOT_EXECUTED,
+
+    RESCHEDULED
 }

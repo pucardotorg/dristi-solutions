@@ -39,4 +39,7 @@ public class PartyDetails {
     @JsonProperty("status")
     private UpFrontStatus status;
 
+    @JsonProperty("processDeliveryDetails")
+    private List<ProcessDeliveryDetails> processDeliveryDetails;
+
 }

@@ -6,6 +6,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.service.CaseService;
 import org.pucar.dristi.service.PaymentUpdateService;
+import org.pucar.dristi.web.models.CaseRequest;
 import org.pucar.dristi.web.models.CourtCase;
 import org.pucar.dristi.web.models.analytics.CaseOutcome;
 import org.pucar.dristi.web.models.analytics.CaseOverallStatus;
@@ -49,6 +50,17 @@ public class CaseUpdateConsumer {
         }
     }
 
+    @KafkaListener(topics = {"${egov.case.overall.status.topic.v2}"})
+    public void updateCaseOverallStatusV2(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            logger.info("Received case overall status record on topic: {}", topic);
+            CaseStageSubStage caseStageSubStage = objectMapper.convertValue(payload.value(), CaseStageSubStage.class);
+            caseService.updateCaseOverallStatusV2(caseStageSubStage);
+        } catch (final Exception e) {
+            logger.error("Error while listening to case overall status on topic: {}: ", topic, e);
+        }
+    }
+
     @KafkaListener(topics = {"${egov.case.outcome.topic}"})
     public void updateCaseOutcome(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
@@ -79,6 +91,17 @@ public class CaseUpdateConsumer {
             caseService.updateJoinCaseRejected(taskRequest);
         } catch (CustomException e) {
             logger.info("Error while listening to join case reject on topic ; {}: ", topic, e);
+        }
+    }
+
+    @KafkaListener(topics = {"${egov.case.register.evidence.topic}"})
+    public void createRegistrationEvidences(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            logger.info("Received case register evidence request on topic : {} ", topic);
+            CaseRequest caseRequest = objectMapper.convertValue(payload.value(), CaseRequest.class);
+            caseService.createRegistrationEvidences(caseRequest);
+        } catch (final Exception e) {
+            logger.error("Error while listening to case register evidence on topic : {}: ", topic, e);
         }
     }
 

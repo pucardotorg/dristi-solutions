@@ -45,7 +45,7 @@ public class DocumentRowMapper implements ResultSetExtractor<Map<UUID, List<Docu
             }
         }
         catch (Exception e){
-            log.error("Error occurred while processing document ResultSet :: {}", e.toString());
+            log.error("Error occurred while processing document ResultSet", e);
             throw new CustomException("ROW_MAPPER_EXCEPTION","Error occurred while processing document ResultSet: "+ e.getMessage());
         }
         return documentMap;

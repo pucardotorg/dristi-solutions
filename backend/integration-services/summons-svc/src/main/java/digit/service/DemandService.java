@@ -57,13 +57,23 @@ public class DemandService {
      Map<String, String> masterCodePayemntTypeMap= new HashMap<String,String>();
 
     public BillResponse fetchPaymentDetailsAndGenerateDemandAndBill(TaskRequest taskRequest) {
+        return fetchPaymentDetailsAndGenerateDemandAndBill(taskRequest, false);
+    }
+
+    /**
+     * @param isReissue when true, an already-existing demand on the same consumer code is reactivated
+     *                  (a fresh payable detail is appended) instead of being created afresh. Only the
+     *                  warrant reissue flow passes true; every other flow keeps the original
+     *                  create-only behaviour so it is unaffected.
+     */
+    public BillResponse fetchPaymentDetailsAndGenerateDemandAndBill(TaskRequest taskRequest, boolean isReissue) {
         Task task = taskRequest.getTask();
         String businessService = getBusinessService(task.getTaskType());
         List<Calculation> calculationList = generatePaymentDetails(taskRequest.getRequestInfo(), task);
         if(calculationList == null || calculationList.isEmpty()){
             throw new CustomException(PAYMENT_CALCULATOR_ERROR, "Getting empty or null data from payment-calculator");
         }
-        Set<String> consumerCodeList = generateDemands(taskRequest.getRequestInfo(), calculationList, task, businessService);
+        Set<String> consumerCodeList = generateDemands(taskRequest.getRequestInfo(), calculationList, task, businessService, isReissue);
         return getBillWithMultipleConsumerCode(taskRequest.getRequestInfo(), consumerCodeList, task, businessService);
 
     }
@@ -91,6 +101,10 @@ public class DemandService {
     }
 
     public Set<String> generateDemands(RequestInfo requestInfo, List<Calculation> calculations, Task task, String businessService) {
+        return generateDemands(requestInfo, calculations, task, businessService, false);
+    }
+
+    public Set<String> generateDemands(RequestInfo requestInfo, List<Calculation> calculations, Task task, String businessService, boolean isReissue) {
         List<Demand> demands = new ArrayList<>();
         Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo,
                 config.getEgovStateTenantId(), config.getPaymentBusinessServiceName(), createMasterDetails()
@@ -110,7 +124,22 @@ public class DemandService {
             String gatewayType = getPaymentGateway(paymentModeMaster, paymentTypeString);
 
             if (gatewayType.equalsIgnoreCase("eTreasury")) {
-                String consumerCode = generateDemandForTreasury(demand, task, calculations, requestInfo);
+                // Only the reissue flow looks for an already-existing demand. Every other flow always
+                // creates a fresh demand, exactly as before, so it stays unaffected by this change.
+                Demand existingDemand = isReissue ? searchExistingDemand(requestInfo, demand) : null;
+                String consumerCode;
+                if (existingDemand != null) {
+                    // A demand for this consumer code already exists - an in-place warrant reissue
+                    // re-uses the same task number (hence the same taskNumber_suffix consumer code)
+                    // after the original demand was already paid. The billing service rejects a
+                    // duplicate consumer code in the same period + businessService
+                    // (EG_BS_DUPLICATE_CONSUMERCODE), so reactivate the existing demand by appending a
+                    // fresh payable detail instead of creating a new one. This keeps the shared
+                    // taskNumber_suffix convention intact for the pay-now and demand-cancel paths.
+                    consumerCode = reactivateExistingDemand(requestInfo, existingDemand, demand);
+                } else {
+                    consumerCode = generateDemandForTreasury(demand, task, calculations, requestInfo);
+                }
                 consumerCodes.add(consumerCode);
                 iterator.remove();
             }
@@ -139,6 +168,76 @@ public class DemandService {
             log.error("Error creating treasury demand: ", e);
             throw new CustomException("Error creating treasury demand: ", e.getMessage());
         }
+    }
+
+    /**
+     * Looks up an existing, non-cancelled demand for the consumer code the fresh demand would use.
+     * Returns null when none exists (the normal first-issuance path) or when the search itself fails,
+     * so the caller falls back to creating a brand-new demand. Used to detect the in-place warrant
+     * reissue case where the same consumer code already carries a (paid) demand.
+     */
+    private Demand searchExistingDemand(RequestInfo requestInfo, Demand demand) {
+        try {
+            String uri = buildDemandSearchURI(demand.getTenantId(), demand.getBusinessService(), demand.getConsumerCode());
+            RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
+            Object response = repository.fetchResult(new StringBuilder(uri), requestInfoWrapper);
+            DemandResponse demandResponse = mapper.convertValue(response, DemandResponse.class);
+            if (demandResponse == null || demandResponse.getDemands() == null || demandResponse.getDemands().isEmpty()) {
+                return null;
+            }
+            // A cancelled consumer code can be recreated cleanly, so ignore cancelled demands.
+            return demandResponse.getDemands().stream()
+                    .filter(d -> d.getStatus() != Demand.DemandStatusEnum.CANCELLED)
+                    .findFirst()
+                    .orElse(null);
+        } catch (Exception e) {
+            log.warn("Could not search existing demand for consumer code: {}", demand.getConsumerCode(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Reactivates an already-existing demand (e.g. for an in-place reissued warrant) by appending the
+     * freshly calculated payable detail(s) to it, so a new outstanding balance is raised against the
+     * same consumer code without violating the billing service's duplicate-consumer-code constraint.
+     * The existing (already-collected) details are left untouched. Returns the consumer code so the
+     * caller can fetch the bill exactly as it does for a newly created demand.
+     *
+     * <p>The reissue gate only fires once the warrant has left PENDING_PAYMENT into an issued state,
+     * so the existing demand is already fully collected. Appending the fresh detail makes total tax
+     * once again exceed total collection, so the billing service's updateDemandPaymentStatus flips
+     * isPaymentCompleted back to false and the bill turns payable.
+     */
+    private String reactivateExistingDemand(RequestInfo requestInfo, Demand existingDemand, Demand freshDemand) {
+        log.info("Reactivating existing demand for consumer code: {}", existingDemand.getConsumerCode());
+        for (DemandDetail freshDetail : freshDemand.getDemandDetails()) {
+            existingDemand.addDemandDetailsItem(freshDetail);
+        }
+        existingDemand.setStatus(Demand.DemandStatusEnum.ACTIVE);
+        existingDemand.setBillExpiryTime(TWO_YEARS_IN_MILLISECOND);
+
+        DemandRequest demandRequest = DemandRequest.builder()
+                .requestInfo(requestInfo)
+                .demands(Collections.singletonList(existingDemand))
+                .build();
+        StringBuilder uri = new StringBuilder()
+                .append(config.getBillingServiceHost())
+                .append(config.getDemandUpdateEndpoint());
+        Object response = repository.fetchResult(uri, demandRequest);
+        DemandResponse demandResponse = mapper.convertValue(response, DemandResponse.class);
+        return demandResponse.getDemands().get(0).getConsumerCode();
+    }
+
+    private String buildDemandSearchURI(String tenantId, String businessService, String consumerCode) {
+        String encodedTenantId = URLEncoder.encode(tenantId, StandardCharsets.UTF_8);
+        String encodedBusinessService = URLEncoder.encode(businessService, StandardCharsets.UTF_8);
+        String encodedConsumerCode = URLEncoder.encode(consumerCode, StandardCharsets.UTF_8);
+        return String.format("%s%s?tenantId=%s&businessService=%s&consumerCode=%s",
+                config.getBillingServiceHost(),
+                config.getDemandSearchEndpoint(),
+                encodedTenantId,
+                encodedBusinessService,
+                encodedConsumerCode);
     }
 
     private static List<Calculation> getCalculations(List<Calculation> calculations) {

@@ -10,6 +10,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.repository.CaseRepositoryV2;
 import org.pucar.dristi.util.*;
+import org.pucar.dristi.enrichment.AdvocateDetailBlockBuilder;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,19 +33,21 @@ public class CaseServiceV2 {
     private final EncryptionDecryptionUtil encryptionDecryptionUtil;
     private final ObjectMapper objectMapper;
     private final CacheService cacheService;
+    private final AdvocateDetailBlockBuilder advocateDetailBlockBuilder;
 
     @Autowired
     public CaseServiceV2(CaseRegistrationEnrichment enrichmentUtil,
                          CaseRepositoryV2 caseRepository,
                          Configuration config,
                          EncryptionDecryptionUtil encryptionDecryptionUtil,
-                         ObjectMapper objectMapper, CacheService cacheService) {
+                         ObjectMapper objectMapper, CacheService cacheService, AdvocateDetailBlockBuilder advocateDetailBlockBuilder) {
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
         this.config = config;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.objectMapper = objectMapper;
         this.cacheService = cacheService;
+        this.advocateDetailBlockBuilder = advocateDetailBlockBuilder;
     }
 
     public CourtCase searchCases(CaseSearchRequestV2 caseSearchRequests) {
@@ -62,8 +65,16 @@ public class CaseServiceV2 {
                 if(courtCase!=null) {
                     log.info("CourtCase found in Redis cache for caseId: {}", criteria.getCaseId());
 
+                    caseRepository.refreshRepresentativeData(courtCase);
+
                     validateIfUserPartOfCase(caseSearchRequests, courtCase);
-                    return encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
+                    CourtCase decryptedCachedCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
+                    try {
+                       advocateDetailBlockBuilder.buildAndSet(decryptedCachedCase);
+                    } catch (Exception e) {
+                        log.error("Error building AdvocateDetailBlock for cached case", e);
+                    }
+                   return decryptedCachedCase;
                 } else {
                     log.debug("CourtCase not found in Redis cache for caseId: {}", criteria.getCaseId());
                 }
@@ -80,12 +91,18 @@ public class CaseServiceV2 {
             CourtCase decryptedCourtCases = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
             enrichAdvocateJoinedStatus(decryptedCourtCases, criteria.getAdvocateId());
 
+            try {
+                advocateDetailBlockBuilder.buildAndSet(decryptedCourtCases);
+            } catch (Exception e) {
+                log.error("Error building AdvocateDetailBlock in CaseServiceV2.searchCases", e);
+            }
+
             return decryptedCourtCases;
 
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching to search results :: {}", e.toString());
+            log.error("Error while fetching to search results", e);
             throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
         }
     }
@@ -108,16 +125,26 @@ public class CaseServiceV2 {
         }
 
         if (criteria.getAdvocateId() != null && !criteria.getAdvocateId().isEmpty()) {
+
             boolean isAdvocatePresent = courtCase.getRepresentatives() != null &&
                     courtCase.getRepresentatives().stream()
                             .anyMatch(rep -> criteria.getAdvocateId().equals(rep.getAdvocateId()));
 
-            boolean isAdvocateOfficeMember = courtCase.getAdvocateOffices()
-                    .stream()
-                    .flatMap(advocateOffice -> advocateOffice.getAdvocates().stream())
-                    .anyMatch(member -> criteria.getAdvocateId().equals(member.getMemberId()));
+            boolean isAdvocateOfficeMember = courtCase.getAdvocateOffices() != null &&
+                    courtCase.getAdvocateOffices().stream()
+                            .flatMap(advocateOffice -> advocateOffice.getAdvocates().stream())
+                            .anyMatch(member -> criteria.getAdvocateId().equals(member.getMemberId()));
 
-            if(!isPoaPresent && !isAdvocatePresent && !isAdvocateOfficeMember){
+            boolean isLitigantPresent = courtCase.getLitigants() != null &&
+                    courtCase.getLitigants().stream()
+                            .anyMatch(l ->
+                                    criteria.getPoaHolderIndividualId().equals(l.getIndividualId()));
+
+            if (!isPoaPresent
+                    && !isAdvocatePresent
+                    && !isAdvocateOfficeMember
+                    && !isLitigantPresent) {
+
                 log.debug("Advocate is not part of the case for caseId {}", criteria.getCaseId());
                 throw new CustomException(SEARCH_CASE_ERR, "Advocate is not part of the case");
             }
@@ -164,7 +191,7 @@ public class CaseServiceV2 {
             if ("CLERK_ACCESS_DENIED".equals(e.getCode()) ||
                 "CLERK_MEMBER_NOT_FOUND".equals(e.getCode()) ||
                 "CLERK_NOT_MEMBER".equals(e.getCode())) {
-                log.info("Clerk access denied: {}", e.getMessage());
+                log.error("Clerk access denied: {}", e.getMessage());
                 return new ArrayList<>();
             }
             throw e;
@@ -197,7 +224,7 @@ public class CaseServiceV2 {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching to case summary search :: {}", e.toString());
+            log.error("Error while fetching to case summary search", e);
             throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
         }
     }
@@ -213,7 +240,7 @@ public class CaseServiceV2 {
                 return null;
             }
         } catch (JsonProcessingException e) {
-            log.error("Error occurred while searching case in redis cache :: {}", e.toString());
+            log.error("Error occurred while searching case in redis cache", e);
             throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
         }
     }

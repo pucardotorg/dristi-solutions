@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ActionBar, SubmitBar, Button, Toast, Loader } from "@egovernments/digit-ui-react-components";
+import { ActionBar, SubmitBar, Button, Loader } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import BailEsignModal from "../../components/BailEsignModal";
 import SuccessBannerModal from "../../components/SuccessBannerModal";
@@ -12,8 +12,9 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
-import { getAllAssociatedPartyUuids } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { getAllAssociatedPartyUuids, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const BailBondSignaturePage = () => {
   const { t } = useTranslation();
@@ -21,7 +22,6 @@ const BailBondSignaturePage = () => {
   const { bailbondId, filingNumber, caseId } = Digit.Hooks.useQueryParams();
   const mobileNumber = location?.state?.mobileNumber;
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const [viewportWidth, setViewportWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1920);
   const history = useHistory();
   const token = window.localStorage.getItem("token");
   const isAuthorised = location?.state?.isAuthorised;
@@ -33,9 +33,11 @@ const BailBondSignaturePage = () => {
   const [isEditCaseModal, setEditCaseModal] = useState(false);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [esignMobileNumber, setEsignMobileNumber] = useState("");
   const [loader, setLoader] = useState(false);
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const { data: bailBondOpenData, isLoading: isBailBondLoading } = useOpenApiSearchBailBond(
     {
@@ -53,6 +55,7 @@ const BailBondSignaturePage = () => {
       criteria: {
         bailId: bailbondId,
         filingNumber: filingNumber,
+        asUser: authorizedUuid,
       },
       tenantId,
     },
@@ -65,7 +68,7 @@ const BailBondSignaturePage = () => {
     return bailBond?.bails?.[0] || bailBondOpenData;
   }, [bailBond, bailBondOpenData]);
 
-  const { data: caseData, refetch: refetchCaseData, isLoading: isCaseLoading } = useSearchCaseService(
+  const { data: caseData, isLoading: isCaseLoading } = useSearchCaseService(
     {
       criteria: [
         {
@@ -141,7 +144,7 @@ const BailBondSignaturePage = () => {
     };
   }, [dummyLitigants, isUserLoggedIn, mobileNumber, userInfo?.mobileNumber]);
 
-  const { data: { file: orderPreviewPdf, fileName: orderPreviewFileName } = {}, isFetching: isLoading } = useQuery({
+  const { data: { file: orderPreviewPdf } = {}, isFetching: isLoading } = useQuery({
     queryKey: ["bailBondSignaturePdf", tenantId, bailbondId, userInfo?.uuid],
     retry: 3,
     cacheTime: 0,
@@ -150,7 +153,7 @@ const BailBondSignaturePage = () => {
         .post(
           `${Urls.openApi.FileFetchByFileStore}`,
           {
-            tenantId: "kl",
+            tenantId,
             fileStoreId: fileStoreId,
             moduleName: "DRISTI",
           },
@@ -162,6 +165,8 @@ const BailBondSignaturePage = () => {
     },
     onError: (error) => {
       console.error("Failed to fetch order preview PDF:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BAIL_BOND_PREVIEW_FAILED"), error: true, errorId });
     },
     enabled: Boolean(fileStoreId),
   });
@@ -179,6 +184,10 @@ const BailBondSignaturePage = () => {
     // TODO: Update call with Signed FileStore
     try {
       const fileStoreId = sessionStorage.getItem("fileStoreId");
+      if (!fileStoreId || fileStoreId === bailBondDetails?.documents?.[0]?.fileStore) {
+        setShowToast({ label: t("SIGN_FAILED_ERROR"), error: true });
+        return;
+      }
       const payload = {
         tenantId,
         bailId: bailbondId,
@@ -186,12 +195,13 @@ const BailBondSignaturePage = () => {
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
-      const res = await submissionService.updateOpenBailBond(payload, { tenantId });
+      await submissionService.updateOpenBailBond(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BAIL_BOND_SIGNATURE_FAILED"), error: true, errorId });
     } finally {
       setShowSignatureModal(false);
       sessionStorage.removeItem("isSignSuccess");
@@ -215,7 +225,7 @@ const BailBondSignaturePage = () => {
             workflow: { ...bailBondDetails.workflow, action: bailBondWorkflowAction.EDIT, documents: [{}] },
           },
         };
-        const res = await submissionService.updateBailBond(payload, { tenantId });
+        await submissionService.updateBailBond(payload, { tenantId });
         history.replace(
           `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${bailBondDetails?.filingNumber}&bailBondId=${bailbondId}`
         );
@@ -224,7 +234,8 @@ const BailBondSignaturePage = () => {
       }
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BAIL_BOND_SIGNATURE_FAILED"), error: true, errorId });
     } finally {
       setEditCaseModal(false);
     }
@@ -256,19 +267,6 @@ const BailBondSignaturePage = () => {
     }
   }, []);
 
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
-
   const handleMockESign = async () => {
     try {
       setLoader(true);
@@ -279,12 +277,13 @@ const BailBondSignaturePage = () => {
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
-      const res = await submissionService.updateOpenBailBond(payload, { tenantId });
+      await submissionService.updateOpenBailBond(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);
     } catch (error) {
-      console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to process e-signature:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BAIL_BOND_SIGNATURE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -375,7 +374,15 @@ const BailBondSignaturePage = () => {
         />
       )}
       {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"SIGNED_BAIL_BOND_MESSAGE"} />}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

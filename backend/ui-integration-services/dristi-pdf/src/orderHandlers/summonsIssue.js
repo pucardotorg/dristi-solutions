@@ -9,6 +9,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { handleApiCall } = require("../utils/handleApiCall");
 const { formatDate } = require("./formatDate");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 async function summonsIssue(
   req,
@@ -99,12 +100,7 @@ async function summonsIssue(
       return renderError(res, "Invalid filingDate format", 500);
     }
     const caseNumber =
-      (courtCase?.isLPRCase
-        ? courtCase?.lprNumber
-        : courtCase?.courtCaseNumber) ||
-      courtCase?.courtCaseNumber ||
-      courtCase?.cmpNumber ||
-      "";
+      getCaseNumber(courtCase);
     const data = {
       Data: [
         {

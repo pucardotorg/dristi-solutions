@@ -7,6 +7,8 @@ import org.egov.tracer.model.CustomException;
 import org.egov.web.notification.mail.config.ApplicationConfiguration;
 import org.egov.web.notification.mail.config.EmailProperties;
 import org.egov.web.notification.mail.consumer.contract.Email;
+import org.egov.web.notification.mail.kafka.HealthStatusEvent;
+import org.egov.web.notification.mail.kafka.Producer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.SimpleMailMessage;
@@ -42,6 +44,9 @@ public class ExternalEmailService implements EmailService {
 	@Autowired
 	private EmailProperties properties;
 
+	@Autowired
+	private Producer producer;
+
 	public static final String EXCEPTION_MESSAGE = "Exception creating HTML email";
 	private JavaMailSenderImpl mailSender;
 
@@ -63,10 +68,13 @@ public class ExternalEmailService implements EmailService {
 		mailMessage.setTo(getEmailAddress(email));
 		mailMessage.setSubject(email.getSubject());
 		mailMessage.setText(email.getBody());
+		long start = System.currentTimeMillis();
 		try{
 			mailSender.send(mailMessage);
+			pushHealthStatus("UP", System.currentTimeMillis() - start, "Text email sent");
 		} catch (Exception e) {
 			log.error(EXCEPTION_MESSAGE, e);
+			pushHealthStatus("DOWN", System.currentTimeMillis() - start, e.getMessage());
 		}
 	}
 
@@ -75,6 +83,7 @@ public class ExternalEmailService implements EmailService {
 		MimeMessageHelper helper;
 		FileOutputStream fos = null;
 		List<String> filePaths = new ArrayList<>();
+		long start = System.currentTimeMillis();
 
 		if (! CollectionUtils.isEmpty(email.getFileStoreId())){
 			if (email.getTenantId() == null){
@@ -109,9 +118,11 @@ public class ExternalEmailService implements EmailService {
 			}
 
 			mailSender.send(message);
+			pushHealthStatus("UP", System.currentTimeMillis() - start, "HTML email sent");
 
 		} catch (Exception e) {
 			log.error(EXCEPTION_MESSAGE, e);
+			pushHealthStatus("DOWN", System.currentTimeMillis() - start, e.getMessage());
 			if(fos != null) {
 				try {
 					fos.close();
@@ -140,6 +151,22 @@ public class ExternalEmailService implements EmailService {
 
 	public String getUri(String tenantId, String entryKey){
 		return config.getFilestoreHost() + config.getFilestorePath() + "?tenantId=" + tenantId + "&fileStoreId=" + entryKey;
+	}
+
+	private void pushHealthStatus(String status, long elapsedMs, String message) {
+		try {
+			HealthStatusEvent event = HealthStatusEvent.builder()
+					.serviceName("EMAIL")
+					.serviceUrl("smtp://" + properties.getMailHost() + ":" + properties.getMailPort())
+					.lastStatus(status)
+					.lastUpdatedTime(System.currentTimeMillis())
+					.responseTimeMs(elapsedMs)
+					.message(message)
+					.build();
+			producer.push(config.getHealthStatusTopic(), event);
+		} catch (Exception e) {
+			log.error("Failed to push EMAIL health status to kafka: {}", e.getMessage(), e);
+		}
 	}
 
 }

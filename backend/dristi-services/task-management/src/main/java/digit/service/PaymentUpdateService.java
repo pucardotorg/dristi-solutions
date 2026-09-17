@@ -79,7 +79,7 @@ public class PaymentUpdateService {
         } catch (CustomException ce) {
             throw new CustomException("PAYMENT_UPDATE_ERR", ce.getMessage());
         } catch (Exception e) {
-            log.error("Error handling payment detail: {}", e.getMessage(), e);
+            log.error("Error handling payment detail", e);
         }
     }
 
@@ -123,7 +123,7 @@ public class PaymentUpdateService {
             pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo).pendingTask(pendingTask).build());
             log.info("Successfully closed payment pending task for task number: {}", taskManagement.getTaskManagementNumber());
         } catch (CustomException e) {
-            log.error("Error closing payment pending task: {}", e.getMessage(), e);
+            log.error("Error closing payment pending task", e);
         }
     }
 
@@ -217,7 +217,7 @@ public class PaymentUpdateService {
             document.setDocumentUid(document.getId());
             return document;
         } catch (Exception e) {
-            log.error("Error enriching payment receipt: {}", e.toString());
+            log.error("Error enriching payment receipt", e);
             throw new CustomException("ENRICHMENT_EXCEPTION", "Error in case enrichment service while enriching payment receipt: " + e.getMessage());
         }
     }

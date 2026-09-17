@@ -9,6 +9,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { handleApiCall } = require("../utils/handleApiCall");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 async function orderNotice(
   req,
@@ -102,12 +103,7 @@ async function orderNotice(
       : "";
     const partyName = order?.orderDetails?.respondentName || "";
     const caseNumber =
-      (courtCase?.isLPRCase
-        ? courtCase?.lprNumber
-        : courtCase?.courtCaseNumber) ||
-      courtCase?.courtCaseNumber ||
-      courtCase?.cmpNumber ||
-      "";
+      getCaseNumber(courtCase);
 
     const data = {
       Data: [

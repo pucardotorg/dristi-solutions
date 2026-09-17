@@ -52,18 +52,18 @@ public class UrlShortenerUtil {
                     .append("?tenantId=").append(tenantId)
                     .append("&referenceId=").append(referenceId)
                     .append("&orderNumber=").append(orderNumber);
-            
+
             // Add orderItemId only if it's present
             if (StringUtils.isNotEmpty(orderItemId)) {
                 longUrlBuilder.append("&orderItemId=").append(orderItemId);
             }
-            
+
             String longUrl = longUrlBuilder.toString();
 
             // Return shortened version
             return getShortenedUrl(longUrl, referenceId);
         } catch (CustomException e) {
-            log.error(URL_SHORTENING_ERROR_CODE + "{}", e.getMessage());
+            log.error(URL_SHORTENING_ERROR_CODE, e);
             throw new CustomException(URL_SHORTENING_ERROR_CODE, URL_SHORTENING_ERROR_MESSAGE + e.getMessage());
         }
     }

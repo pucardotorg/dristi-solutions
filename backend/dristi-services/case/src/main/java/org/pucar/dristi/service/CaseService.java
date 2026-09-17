@@ -33,11 +33,16 @@ import org.pucar.dristi.web.models.analytics.CaseOutcome;
 import org.pucar.dristi.web.models.analytics.CaseOverallStatus;
 import org.pucar.dristi.web.models.analytics.CaseStageSubStage;
 import org.pucar.dristi.web.models.analytics.Outcome;
+import org.pucar.dristi.web.models.enums.LifecycleStatus;
 import org.pucar.dristi.web.models.inbox.InboxRequest;
 import org.pucar.dristi.web.models.task.Task;
 import org.pucar.dristi.web.models.task.TaskRequest;
 import org.pucar.dristi.web.models.task.TaskResponse;
 import org.pucar.dristi.web.models.v2.*;
+import org.pucar.dristi.web.models.advocateDetails.AdvocateDetailBlock;
+import org.pucar.dristi.web.models.advocateDetails.PipStatus;
+import org.pucar.dristi.web.models.advocateDetails.Documents;
+import org.pucar.dristi.web.models.advocateDetails.UiFlags;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -84,6 +89,7 @@ public class CaseService {
     private final EvidenceUtil evidenceUtil;
     private final EvidenceValidator evidenceValidator;
     private final PaymentCalculaterUtil paymentCalculaterUtil;
+    private final org.pucar.dristi.enrichment.AdvocateDetailBlockBuilder advocateDetailBlockBuilder;
 
     private final CaseUtil caseUtil;
 
@@ -107,7 +113,7 @@ public class CaseService {
                        HearingUtil analyticsUtil,
                        UserService userService,
                        PaymentCalculaterUtil paymentCalculaterUtil,
-                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateOfficeCaseMemberRepository advocateOfficeCaseMemberRepository) {
+                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateOfficeCaseMemberRepository advocateOfficeCaseMemberRepository, org.pucar.dristi.enrichment.AdvocateDetailBlockBuilder advocateDetailBlockBuilder) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -134,6 +140,7 @@ public class CaseService {
         this.dateUtil = dateUtil;
         this.inboxUtil = inboxUtil;
         this.advocateOfficeCaseMemberRepository = advocateOfficeCaseMemberRepository;
+        this.advocateDetailBlockBuilder = advocateDetailBlockBuilder;
     }
 
     public static List<String> extractIndividualIds(JsonNode rootNode) {
@@ -199,6 +206,44 @@ public class CaseService {
         }
 
         return individualIds;
+    }
+
+    /**
+     * Instance helper: extract individual ids from typed AdvocateDetailBlock on the CourtCase.
+     * Falls back to parsing additionalDetails JSON when advocateDetailBlock is not present.
+     */
+    public List<String> extractIndividualIds(CourtCase courtCase) {
+        List<String> individualIds = new ArrayList<>();
+        if (courtCase == null) return individualIds;
+
+        List<AdvocateDetailBlock> blocks = courtCase.getAdvocateDetailBlock();
+        if (blocks != null && !blocks.isEmpty()) {
+            for (AdvocateDetailBlock block : blocks) {
+                if (block == null) continue;
+                try {
+                    if (block.getComplainant() != null && block.getComplainant().getIndividualId() != null && !block.getComplainant().getIndividualId().isEmpty()) {
+                        individualIds.add(block.getComplainant().getIndividualId());
+                    }
+                } catch (Exception ignored) { }
+
+                if (block.getAdvocates() != null) {
+                    for (org.pucar.dristi.web.models.Advocate adv : block.getAdvocates()) {
+                        if (adv == null) continue;
+                        if (adv.getIndividualId() != null && !adv.getIndividualId().isEmpty()) individualIds.add(adv.getIndividualId());
+                    }
+                }
+            }
+            return individualIds;
+        }
+
+        // Fallback to legacy additionalDetails JSON parsing
+        try {
+            JsonNode rootNode = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+            return extractIndividualIds(rootNode);
+        } catch (Exception e) {
+            log.debug("Failed to extract individualIds from additionalDetails fallback: {}", e.getMessage());
+            return individualIds;
+        }
     }
 
     private static void validateLitigantAlreadyPartOfCase(CourtCase courtCase, JoinCaseDataV2 joinCaseData) {
@@ -330,7 +375,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while creating case :: {}", e.toString());
+            log.error("Error occurred while creating case", e);
             throw new CustomException(CREATE_CASE_ERR, e.getMessage());
         }
     }
@@ -355,6 +400,7 @@ public class CaseService {
                 }
                 if (courtCase != null) {
                     log.info("CourtCase found in Redis cache for caseId: {}", criteria.getCaseId());
+                    caseRepository.refreshRepresentativeData(courtCase);
                     criteria.setResponseList(Collections.singletonList(courtCase));
                     caseCriteriaInRedis.add(criteria);
                 } else {
@@ -377,6 +423,11 @@ public class CaseService {
                     decryptedCourtCases.forEach(
                             courtCase -> {
                                 enrichAdvocateJoinedStatus(courtCase, caseCriteria.getAdvocateId());
+                                try {
+                                    advocateDetailBlockBuilder.buildAndSet(courtCase);
+                                } catch (Exception e) {
+                                    log.error("Error building AdvocateDetailBlock in CaseService.searchCases", e);
+                                }
                             });
                 });
                 caseCriteria.setResponseList(decryptedCourtCases);
@@ -385,9 +436,81 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching to search results :: {}", e.toString());
+            log.error("Error while fetching to search results", e);
             throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
         }
+    }
+
+    /**
+     * Redis-first, scalar-metadata lookup by filingNumber.
+     *
+     * For each filingNumber: resolve its caseId (lightweight indexed read), then look the case
+     * up in Redis by caseId. On a cache hit the metadata is built from the cached CourtCase and
+     * no case body is read from the database. On a miss it falls back to a single-table
+     * dristi_cases projection. All returned fields are plaintext, so no enc-service decryption
+     * is performed.
+     *
+     * Note: Redis is caseId-keyed, so the filingNumber -> caseId resolution is one unavoidable
+     * lightweight DB read. Only the (expensive, in the full-case sense) case body read is skipped
+     * on a cache hit. The cache is not repopulated from here, since this endpoint never
+     * materialises a full CourtCase to store.
+     *
+     * Intended for trusted internal/system callers that need case identifiers/scalars only; it
+     * does not apply the court/advocate/litigant ACL scoping that searchCases does, so it must
+     * not be exposed to citizen/advocate tokens without adding equivalent scoping.
+     */
+    public List<CaseMeta> searchCaseMeta(CaseMetaRequest request) {
+        try {
+            RequestInfo requestInfo = request.getRequestInfo();
+            List<CaseMeta> result = new ArrayList<>();
+            for (String filingNumber : request.getFilingNumbers()) {
+                CaseMeta meta = null;
+
+                String caseId = caseRepository.getCaseIdByFilingNumber(filingNumber);
+                if (caseId != null) {
+                    CourtCase cachedCase = searchRedisCache(requestInfo, caseId);
+                    if (cachedCase != null) {
+                        log.info("CaseMeta served from Redis for caseId: {}", caseId);
+                        meta = toCaseMeta(cachedCase);
+                    }
+                }
+
+                if (meta == null) {
+                    log.info("CaseMeta not found in Redis; reading dristi_cases for filingNumber: {}", filingNumber);
+                    List<CaseMeta> dbResult = caseRepository.getCaseMeta(Collections.singletonList(filingNumber));
+                    if (!dbResult.isEmpty()) {
+                        meta = dbResult.get(0);
+                    }
+                }
+
+                if (meta != null) {
+                    result.add(meta);
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("Error while fetching case meta", e);
+            throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
+        }
+    }
+
+    private CaseMeta toCaseMeta(CourtCase courtCase) {
+        return CaseMeta.builder()
+                .caseId(courtCase.getId() != null ? courtCase.getId().toString() : null)
+                .tenantId(courtCase.getTenantId())
+                .filingNumber(courtCase.getFilingNumber())
+                .courtId(courtCase.getCourtId())
+                .courtCaseNumber(courtCase.getCourtCaseNumber())
+                .cmpNumber(courtCase.getCmpNumber())
+                .lprNumber(courtCase.getLprNumber())
+                .cnrNumber(courtCase.getCnrNumber())
+                .lifecycleStatus(courtCase.getLifecycleStatus())
+                .caseTitle(courtCase.getCaseTitle())
+                .status(courtCase.getStatus())
+                .stage(courtCase.getStage())
+                .filingDate(courtCase.getFilingDate())
+                .registrationDate(courtCase.getRegistrationDate())
+                .build();
     }
 
     private void enrichAdvocateJoinedStatus(CourtCase courtCase, String advocateId) {
@@ -479,9 +602,11 @@ public class CaseService {
                 caseRequest.getCases().setCaseType(CMP);
                 updateCaseConversion(caseRequest);
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
+                // On successful registration, asynchronously create one evidence artifact per e-filed document.
+                producer.push(config.getRegisterEvidenceTopic(), caseRequest);
             }
             //todo: enhance for files delete
-            removeInactiveDocuments(documentToDelete);
+            removeInactiveDocuments(documentToDelete, caseRequest.getCases().getTenantId());
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
 
             //to prevent from double encryption
@@ -591,7 +716,7 @@ public class CaseService {
 
         } catch (Exception e) {
             log.error("Method=updateCase,Result=FAILURE, CaseId={}", caseRequest.getCases().getId());
-            log.error("Error occurred while updating case :: {}", e.toString());
+            log.error("Error occurred while updating case", e);
             throw new CustomException(UPDATE_CASE_ERR, "Exception occurred while updating case: " + e.getMessage());
         }
 
@@ -620,12 +745,15 @@ public class CaseService {
         Set<String> updatedFileStoreIds = updatedDocumentsMap.keySet();
         List<Document> documentsToDelete = existingDocumentsMap.entrySet().stream()
                 .filter(entry -> {
-                    if (COMPLAINANT_ID_PROOF.equals(entry.getValue().getDocumentType())
-                            && !updatedFileStoreIds.contains(entry.getKey())) {
+                    String docType = entry.getValue().getDocumentType();
+                    boolean isMissingInUpdate = !updatedFileStoreIds.contains(entry.getKey());
+
+                    if ((COMPLAINANT_ID_PROOF.equals(docType) || ADVOCATE_ID_PROOF.equals(docType))
+                            && isMissingInUpdate) {
                         entry.getValue().setIsActive(false);
                         return false;
                     }
-                    return !updatedFileStoreIds.contains(entry.getKey());
+                    return isMissingInUpdate;
                 })
                 .map(entry -> {
                     Document doc = entry.getValue();
@@ -760,16 +888,45 @@ public class CaseService {
         }
     }
 
-    private void removeInactiveDocuments(List<Document> documentsToDelete) {
-        List<String> fileStoreIds = new ArrayList<>();
-        for (Document document : documentsToDelete) {
-            if (!document.getIsActive()) {
-                fileStoreIds.add(document.getFileStore());
-            }
+    private void removeInactiveDocuments(List<Document> documentsToDelete, String tenantId) {
+        if (documentsToDelete == null || documentsToDelete.isEmpty()) {
+            return;
         }
+
+        if (tenantId == null || tenantId.isBlank()) {
+            log.warn("Skipping file deletion because tenantId is null/blank for documents: {}",
+                    documentsToDelete.stream()
+                            .map(Document::getFileStore)
+                            .filter(Objects::nonNull)
+                            .toList());
+            return;
+        }
+
+        List<String> fileStoreIds = documentsToDelete.stream()
+                .filter(Objects::nonNull)
+                .filter(document -> Boolean.FALSE.equals(document.getIsActive()))
+                .map(Document::getFileStore)
+                .filter(Objects::nonNull)
+                .filter(fileStoreId -> !fileStoreId.isBlank())
+                .distinct()
+                .filter(fileStoreId -> {
+                    try {
+                        boolean exists = fileStoreUtil.doesFileExist(tenantId, fileStoreId);
+                        if (!exists) {
+                            log.warn("Skipping filestore delete for missing fileStoreId={} tenantId={}", fileStoreId, tenantId);
+                        }
+                        return exists;
+                    } catch (Exception e) {
+                        log.warn("Skipping filestore delete for fileStoreId={} tenantId={} due to existence check failure: {}",
+                                fileStoreId, tenantId, e.getMessage());
+                        return false;
+                    }
+                })
+                .toList();
+
         if (!fileStoreIds.isEmpty()) {
-            fileStoreUtil.deleteFilesByFileStore(fileStoreIds, config.getTenantId());
-            log.info("Deleted files for case with ids: {}", fileStoreIds);
+            fileStoreUtil.deleteFilesByFileStore(fileStoreIds, tenantId);
+            log.info("Deleted files for case with ids: {} tenantId={}", fileStoreIds, tenantId);
         }
     }
 
@@ -975,7 +1132,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while editing case :: {}", e.toString());
+            log.error("Error occurred while editing case", e);
             throw new CustomException(EDIT_CASE_ERR, "Exception occurred while editing case: " + e.getMessage());
         }
 
@@ -1035,7 +1192,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while editing profile :: {}", e.toString());
+            log.error("Error occurred while editing profile", e);
             throw new CustomException(EDIT_CASE_ERR, "Exception occurred while editing profile: " + e.getMessage());
         }
 
@@ -1099,7 +1256,7 @@ public class CaseService {
             }
         } catch (Exception e) {
             // Log the exception and continue the execution without throwing
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
     }
 
@@ -1176,7 +1333,7 @@ public class CaseService {
             }
         } catch (Exception e) {
             // Log the exception and continue the execution without throwing
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
 
         return mobileNumber;
@@ -1194,17 +1351,21 @@ public class CaseService {
 
     private String extractProfileEditorName(String profileEditorId, CourtCase cases) {
         List<AdvocateMapping> advocateMappings = cases.getRepresentatives();
-        for (AdvocateMapping advocateMapping : advocateMappings) {
-            JsonNode additionalDetails = objectMapper.convertValue(advocateMapping.getAdditionalDetails(), JsonNode.class);
-            if (additionalDetails.get("uuid").asText().equals(profileEditorId)) {
-                return additionalDetails.get("advocateName").asText();
+        if (advocateMappings != null) {
+            for (AdvocateMapping advocateMapping : advocateMappings) {
+                JsonNode additionalDetails = objectMapper.convertValue(advocateMapping.getAdditionalDetails(), JsonNode.class);
+                if (additionalDetails != null && additionalDetails.path("uuid").asText().equals(profileEditorId)) {
+                    return additionalDetails.path("advocateName").asText();
+                }
             }
         }
         List<Party> litigants = cases.getLitigants();
-        for (Party litigant : litigants) {
-            JsonNode additionalDetails = objectMapper.convertValue(litigant.getAdditionalDetails(), JsonNode.class);
-            if (additionalDetails.get("uuid").asText().equals(profileEditorId)) {
-                return additionalDetails.get("fullName").asText();
+        if (litigants != null) {
+            for (Party litigant : litigants) {
+                JsonNode additionalDetails = objectMapper.convertValue(litigant.getAdditionalDetails(), JsonNode.class);
+                if (additionalDetails != null && additionalDetails.path("uuid").asText().equals(profileEditorId)) {
+                    return additionalDetails.path("fullName").asText();
+                }
             }
         }
         return null;
@@ -1222,7 +1383,7 @@ public class CaseService {
             }
         } catch (Exception e) {
             // Log the exception and continue the execution without throwing
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
 
         return mobileNumber;
@@ -1254,7 +1415,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error while fetching to exist case :: {}", e.toString());
+            log.error("Error while fetching to exist case", e);
             throw new CustomException(CASE_EXIST_ERR, e.getMessage());
         }
     }
@@ -1331,7 +1492,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while adding witness to the case :: {}", e.toString());
+            log.error("Error occurred while adding witness to the case", e);
             throw new CustomException(ADD_WITNESS_TO_CASE_ERR, "Exception occurred while adding witness to case: " + e.getMessage());
         }
 
@@ -1398,13 +1559,45 @@ public class CaseService {
         }
 
         Object additionalDetails = joinCaseRequest.getAdditionalDetails();
-        if (joinCaseRequest.getAdditionalDetails() != null) {
+        if (additionalDetails != null) {
             log.info("EnrichRepresentative, additional details :: {}", joinCaseRequest.getAdditionalDetails());
-            caseObj.setAdditionalDetails(editAdvocateDetails(joinCaseRequest.getAdditionalDetails(), courtCase.getAdditionalDetails()));
+
+            // Prefer to extract advocate details (typed or legacy) and pass that to editAdvocateDetails
+            ObjectNode addNode = objectMapper.convertValue(joinCaseRequest.getAdditionalDetails(), ObjectNode.class);
+            JsonNode advNode = null;
+            if (addNode != null) {
+                if (addNode.has("advocateDetailBlock")) advNode = addNode.get("advocateDetailBlock");
+                else if (addNode.has("advocateDetails")) advNode = addNode.get("advocateDetails");
+            }
+
+            // If advocate-specific node exists, pass it; otherwise fall back to passing the whole additionalDetails
+            Object sourceForEdit = advNode != null ? advNode : joinCaseRequest.getAdditionalDetails();
+            caseObj.setAdditionalDetails(editAdvocateDetails(sourceForEdit, courtCase.getAdditionalDetails()));
+
+            // Attempt to populate typed advocateDetailBlock from incoming additionalDetails (compatibility path)
+            try {
+                if (advNode == null && addNode != null) {
+                    // if no advocate-specific node found, try to pick from addNode as before
+                    if (addNode.has("advocateDetailBlock")) advNode = addNode.get("advocateDetailBlock");
+                    else if (addNode.has("advocateDetails")) advNode = addNode.get("advocateDetails");
+                }
+                if (advNode != null) {
+
+                    if (advNode != null) {
+                        try {
+                            List<AdvocateDetailBlock> blocks = objectMapper.convertValue(advNode, new com.fasterxml.jackson.core.type.TypeReference<List<AdvocateDetailBlock>>() {});
+                            caseObj.setAdvocateDetailBlock(blocks);
+                            courtCase.setAdvocateDetailBlock(blocks);
+                        } catch (IllegalArgumentException ignored) {
+                            // If advocateDetails is in a different legacy shape, skip and let other mechanisms (builder) populate blocks
+                        }
+                    }
+                }
+            } catch (Exception ignored) { }
             caseObj = encryptionDecryptionUtil.encryptObject(caseObj, config.getCourtCaseEncrypt(), CourtCase.class);
             courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             joinCaseRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
-            log.info("EnrichRepresentative,Pushing additional details :: {}", joinCaseRequest.getAdditionalDetails());
+            log.error("EnrichRepresentative,Pushing additional details :: {}", joinCaseRequest.getAdditionalDetails());
             producer.push(config.getAdditionalJoinCaseTopic(), joinCaseRequest);
 
             courtCase.setAdditionalDetails(joinCaseRequest.getAdditionalDetails());
@@ -1551,7 +1744,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Invalid request for joining a case :: {}", e.toString());
+            log.error("Invalid request for joining a case", e);
             throw new CustomException(JOIN_CASE_ERR, JOIN_CASE_INVALID_REQUEST);
         }
     }
@@ -1640,7 +1833,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Invalid join case request :: {}", e.toString());
+            log.error("Invalid join case request", e);
             throw new CustomException(JOIN_CASE_ERR, JOIN_CASE_INVALID_REQUEST);
         }
         joinCaseV2Response.setIsVerified(true);
@@ -1921,46 +2114,46 @@ public class CaseService {
         }
     }
 
-    //for updating pip related info from additional details
+    //for updating pip related info using advocateDetailBlock on the CourtCase
     private void modifyAdditionalDetailsForPIP(CourtCase courtCase, String individualIdPIPRepresenting) {
-        ObjectNode additionalDetailsNode = objectMapper.convertValue(courtCase.getAdditionalDetails(), ObjectNode.class);
-
         try {
-            if (additionalDetailsNode.has("advocateDetails")) {
-                ObjectNode advocateDetails = (ObjectNode) additionalDetailsNode.get("advocateDetails");
+            List<AdvocateDetailBlock> blocks = courtCase.getAdvocateDetailBlock();
+            if (blocks == null || blocks.isEmpty()) return;
 
-                if (advocateDetails.has("formdata") && advocateDetails.get("formdata").isArray()) {
-                    ArrayNode formData = (ArrayNode) advocateDetails.get("formdata");
+            for (AdvocateDetailBlock block : blocks) {
+                if (block == null || block.getComplainant() == null) continue;
+                String complainantIndividualId = block.getComplainant().getIndividualId();
+                if (complainantIndividualId == null) continue;
+                if (!complainantIndividualId.equalsIgnoreCase(individualIdPIPRepresenting)) continue;
 
-                    for (JsonNode formDataItem : formData) {
-                        if (!formDataItem.has("data")) continue;
-                        ObjectNode dataNode = (ObjectNode) formDataItem.get("data");
+                // Set pip status to NO
+                PipStatus pipStatus = PipStatus.builder()
+                        .code("NO")
+                        .label("No")
+                        .isEnabled(true)
+                        .build();
+                block.setIsComplainantPip(pipStatus);
 
-                        if (!dataNode.has("multipleAdvocatesAndPip")) continue;
-                        ObjectNode multipleAdvocatesAndPip = (ObjectNode) dataNode.get("multipleAdvocatesAndPip");
-
-                        if (!multipleAdvocatesAndPip.has("boxComplainant")) continue;
-                        ObjectNode boxComplainant = (ObjectNode) multipleAdvocatesAndPip.get("boxComplainant");
-
-                        if (!boxComplainant.has("individualId") || !boxComplainant.get("individualId").asText().equalsIgnoreCase(individualIdPIPRepresenting)) {
-                            continue;
-                        }
-
-                        ObjectNode isComplainantPipNode = objectMapper.createObjectNode();
-                        isComplainantPipNode.put("code", "NO");
-                        isComplainantPipNode.put("name", "No");
-                        isComplainantPipNode.put("isEnabled", true);
-                        multipleAdvocatesAndPip.set("isComplainantPip", isComplainantPipNode);
-
-                        multipleAdvocatesAndPip.putNull("pipAffidavitFileUpload");
-                    }
+                // Clear pip affidavit documents
+                Documents docs = block.getDocuments();
+                if (docs != null) {
+                    docs.setPipAffidavit(new ArrayList<>());
+                    block.setDocuments(docs);
+                } else {
+                    block.setDocuments(Documents.builder().vakalatnama(null).pipAffidavit(new ArrayList<>()).build());
                 }
+
+                // Update UI flags
+                UiFlags uiFlags = block.getUiFlags() != null ? block.getUiFlags() : UiFlags.builder().build();
+                uiFlags.setShowAffidavit(false);
+                block.setUiFlags(uiFlags);
             }
 
-            courtCase.setAdditionalDetails(objectMapper.convertValue(additionalDetailsNode, Object.class));
+            // persist the transformed advocateDetailBlock back onto the case
+            courtCase.setAdvocateDetailBlock(blocks);
 
         } catch (Exception e) {
-            log.error("Error modifying additionalDetails for pip: {}", e.getMessage(), e);
+            log.error("Error modifying advocateDetailBlock for pip", e);
         }
     }
 
@@ -2145,7 +2338,7 @@ public class CaseService {
                     additionalDetails.put("fullName", getRespondentNameByUniqueId(courtCase.getAdditionalDetails(), representingJoinCase.getUniqueId(), individual));
                 } else {
                     //complainant name enrich
-                    additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), representingJoinCase.getIndividualId()));
+                    additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase, representingJoinCase.getIndividualId()));
                 }
                 Object additionalDetailsObject = objectMapper.convertValue(additionalDetails, additionalDetails.getClass());
                 party.setAdditionalDetails(additionalDetailsObject);
@@ -2210,7 +2403,7 @@ public class CaseService {
                     additionalDetails.put("fullName", getRespondentNameByUniqueId(courtCase.getAdditionalDetails(), representingJoinCase.getUniqueId(), individual));
                 } else {
                     //complainant name enrich
-                    additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), representingJoinCase.getIndividualId()));
+                    additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase, representingJoinCase.getIndividualId()));
                 }
 
                 Object additionalDetailsObject = objectMapper.convertValue(additionalDetails, additionalDetails.getClass());
@@ -2275,7 +2468,13 @@ public class CaseService {
 
         joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting().forEach(representingJoinCase -> {
             if (representingJoinCase.getUniqueId() == null) {
-                courtCase.setAdditionalDetails(modifyAdditionalDetails(joinCaseRequest.getRequestInfo(), courtCase.getAdditionalDetails(), representingJoinCase, joinCaseData.getRepresentative()));
+                Object updatedAdditional = modifyAdditionalDetails(joinCaseRequest.getRequestInfo(), courtCase, representingJoinCase, joinCaseData.getRepresentative());
+                // keep existing additionalDetails unchanged; method will update typed advocateDetailBlock on the courtCase
+                courtCase.setAdditionalDetails(updatedAdditional);
+                // Rebuild typed AdvocateDetailBlock from current courtCase data (representatives/litigants) so code can rely on it.
+                try {
+                    advocateDetailBlockBuilder.buildAndSet(courtCase);
+                } catch (Exception ignored) { }
             }
         });
 
@@ -2454,131 +2653,247 @@ public class CaseService {
         }
     }
 
-    private Object modifyAdditionalDetails(RequestInfo requestInfo, Object additionalDetails, RepresentingJoinCase representingJoinCase, JoinCaseRepresentative joinCaseRepresentative) {
-        ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
-
+    /**
+     * Creates one evidence artifact for every complainant-side document e-filed for the case, triggered
+     * asynchronously when a case is registered (PENDING_REGISTRATION -> PENDING_RESPONSE via the REGISTER action).
+     * Each document failure is isolated so one bad document does not block the rest.
+     */
+    public void createRegistrationEvidences(CaseRequest caseRequest) {
+        CourtCase courtCase = caseRequest.getCases();
+        RequestInfo requestInfo = caseRequest.getRequestInfo();
         try {
-            // Convert the additionalDetails object to an ObjectNode for easier manipulation
+            log.info("Method=createRegistrationEvidences, Result=IN_PROGRESS, CaseId={}", courtCase.getId());
 
-            // Check if advocateDetails exist
-            if (additionalDetailsNode.has("advocateDetails")) {
-                ObjectNode advocateDetails = (ObjectNode) additionalDetailsNode.get("advocateDetails");
+            String sourceId = resolveComplainantIndividualId(courtCase, requestInfo);
+            String asUser = resolveEfilingCreatorMainUser(courtCase);
 
-                // Check if the formdata array exists within advocateDetails
-                if (advocateDetails.has("formdata") && advocateDetails.get("formdata").isArray()) {
-                    ArrayNode formData = (ArrayNode) advocateDetails.get("formdata");
+            List<RegistrationEvidenceDocument> documents = collectRegistrationDocuments(courtCase);
 
-                    // Iterate over each element in the formData array
-                    for (int i = 0; i < formData.size(); i++) {
-                        ObjectNode dataNode = (ObjectNode) formData.get(i).get("data");
+            for (RegistrationEvidenceDocument evidenceDocument : documents) {
+                Document document = evidenceDocument.document();
+                try {
+                    if (evidenceValidator.validateEvidenceCreate(courtCase, requestInfo, Collections.singletonList(document))) {
+                        log.info("Evidence already exists for fileStore={}, skipping", document.getFileStore());
+                        continue;
+                    }
+                    evidenceUtil.createEvidence(buildRegistrationEvidenceRequest(courtCase, requestInfo, evidenceDocument, sourceId, asUser));
+                } catch (Exception e) {
+                    log.error("Error creating registration evidence for fileStore={}, artifactType={}", document.getFileStore(), evidenceDocument.artifactType(), e);
+                }
+            }
+            log.info("Method=createRegistrationEvidences, Result=SUCCESS, CaseId={}", courtCase.getId());
+        } catch (Exception e) {
+            log.error("Error in createRegistrationEvidences for CaseId={}", courtCase.getId(), e);
+        }
+    }
 
-                        // Get the boxComplainant object for matching the litigant
-                        ObjectNode boxComplainant = (ObjectNode) dataNode.get("multipleAdvocatesAndPip").get("boxComplainant");
+    private String resolveComplainantIndividualId(CourtCase courtCase, RequestInfo requestInfo) {
+        try {
+            String createdBy = Optional.ofNullable(courtCase.getAuditdetails()).map(AuditDetails::getCreatedBy).orElse(null);
+            if (createdBy == null) {
+                return null;
+            }
+            List<Individual> individuals = individualService.getIndividuals(requestInfo, Collections.singletonList(createdBy));
+            if (individuals != null && !individuals.isEmpty()) {
+                return individuals.get(0).getIndividualId();
+            }
+        } catch (Exception e) {
+            log.error("Error resolving complainant individualId for registration evidence, CaseId={}", courtCase.getId(), e);
+        }
+        return null;
+    }
 
-                        // Skip if the litigant doesn't match
-                        if (!boxComplainant.get("individualId").textValue().equalsIgnoreCase(representingJoinCase.getIndividualId())) {
-                            continue;
-                        }
-
-                        // Ensure vakalatnamaFileUpload is initialized
-                        ObjectNode multipleAdvocatesAndPip = (ObjectNode) dataNode.get("multipleAdvocatesAndPip");
-                        // Update isComplainantPip
-                        ObjectNode isComplainantPipNode = objectMapper.createObjectNode();
-                        isComplainantPipNode.put("code", "NO");
-                        isComplainantPipNode.put("name", "no");
-                        isComplainantPipNode.put("isEnabled", true);
-                        multipleAdvocatesAndPip.set("isComplainantPip", isComplainantPipNode);
-
-                        if (representingJoinCase.getDocuments() != null && !representingJoinCase.getDocuments().isEmpty()) {
-
-                            ObjectNode vakalatnamaFileUpload = objectMapper.createObjectNode();
-
-                            // Initialize the 'document' array
-                            ArrayNode document = objectMapper.createArrayNode();
-
-                            ObjectNode documentNode = objectMapper.createObjectNode();
-                            documentNode.put("fileStore", representingJoinCase.getDocuments().get(0).getFileStore());
-                            documentNode.put("documentType", representingJoinCase.getDocuments().get(0).getDocumentType());
-
-                            document.add(documentNode);
-
-                            vakalatnamaFileUpload.set("document", document);
-                            multipleAdvocatesAndPip.set("vakalatnamaFileUpload", vakalatnamaFileUpload);
-
-                            // Ensure vakalatnamaFileUpload is properly set after modification
-                            multipleAdvocatesAndPip.set("vakalatnamaFileUpload", vakalatnamaFileUpload);
-
-                        }
-
-                        // Ensure multipleAdvocateNameDetails is initialized and clear it
-                        ArrayNode multipleAdvocateNameDetails = ensureArrayNodeInitialized(multipleAdvocatesAndPip.get("multipleAdvocateNameDetails"));
-
-                        List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(requestInfo, joinCaseRepresentative.getAdvocateId());
-                        Advocate joinCaseAdvocate = advocatesList.get(0);
-
-                        List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseAdvocate.getIndividualId());
-                        Individual individual = individualsList.get(0);
-
-                        // Create a new ObjectNode for the new advocate details
-                        ObjectNode newAdvocateNode = objectMapper.createObjectNode();
-
-                        // Create advocateNameDetails node
-                        ObjectNode advocateNameDetails = objectMapper.createObjectNode();
-                        advocateNameDetails.put("lastName", individual.getName().getFamilyName());
-                        advocateNameDetails.put("firstName", individual.getName().getGivenName());
-                        advocateNameDetails.put("middleName", individual.getName().getOtherNames());
-                        advocateNameDetails.put("advocateMobileNumber", individual.getMobileNumber());
-
-                        // Add advocateIdProof array
-                        ArrayNode advocateIdProof = objectMapper.createArrayNode();
-                        ObjectNode idProofNode = objectMapper.createObjectNode();
-
-                        Identifier identifier = individual.getIdentifiers().get(0);
-                        AdditionalFields additionalFields = individual.getAdditionalFields();
-
-                        List<Field> fields = additionalFields.getFields();
-                        String fileStoreId = null;
-                        String filename = null;
-
-                        for (Field field : fields) {
-                            if ("identifierIdDetails".equals(field.getKey())) {
-                                JsonNode jsonNode = objectMapper.readTree(field.getValue());
-                                fileStoreId = jsonNode.has("fileStoreId") ? jsonNode.get("fileStoreId").asText() : null;
-                                filename = jsonNode.has("filename") ? jsonNode.get("filename").asText() : null;
-                                break;
-                            }
-                        }
-
-                        idProofNode.put("name", identifier.getIdentifierType());
-                        idProofNode.put("fileName", identifier.getIdentifierType() + " Card");
-                        idProofNode.put("fileStore", fileStoreId);
-                        idProofNode.put("documentName", filename);
-                        advocateIdProof.add(idProofNode);
-
-                        // Set the advocateNameDetails and advocateIdProof into the newAdvocateNode
-                        newAdvocateNode.set("advocateNameDetails", advocateNameDetails);
-                        newAdvocateNode.set("advocateIdProof", advocateIdProof);
-
-                        // Add the new advocate node to the multipleAdvocateNameDetails array
-                        multipleAdvocateNameDetails.add(newAdvocateNode);
-                        multipleAdvocatesAndPip.set("multipleAdvocateNameDetails", multipleAdvocateNameDetails);
-
-                        // Ensure the multipleAdvocatesAndPip object exists, if not create one
-//                        ObjectNode pipNode = (ObjectNode) dataNode.get("multipleAdvocatesAndPip");
-//                        dataNode.set("multipleAdvocatesAndPip", pipNode);
-
-                        // Set updated multipleAdvocateNameDetails back to pipNode
-                        // pipNode.set("multipleAdvocateNameDetails", multipleAdvocateNameDetails);
-
-                        // No need to explicitly set pipNode again to dataNode as it's already updated within
-                        break;
+    private String resolveEfilingCreatorMainUser(CourtCase courtCase) {
+        // If an advocate office (advocate or its jr. advocate/clerk) created the case, use the case-owner advocate's uuid.
+        if (courtCase.getRepresentatives() != null) {
+            for (AdvocateMapping representative : courtCase.getRepresentatives()) {
+                if (CASE_OWNER_FILING_STATUS.equalsIgnoreCase(representative.getAdvocateFilingStatus()) && representative.getAdditionalDetails() != null) {
+                    JsonNode uuidNode = objectMapper.convertValue(representative.getAdditionalDetails(), JsonNode.class).path(UUID_KEY);
+                    if (!uuidNode.isMissingNode() && !uuidNode.isNull()) {
+                        return uuidNode.asText();
                     }
                 }
             }
-        } catch (JsonProcessingException e) {
-            // Handle JSON processing exceptions (e.g., invalid JSON syntax)
         }
-        return objectMapper.convertValue(additionalDetailsNode, additionalDetails.getClass());
+        // else the complainant created the case: use the creator's uuid.
+        return Optional.ofNullable(courtCase.getAuditdetails()).map(AuditDetails::getCreatedBy).orElse(null);
+    }
+
+    private List<RegistrationEvidenceDocument> collectRegistrationDocuments(CourtCase courtCase) {
+        List<RegistrationEvidenceDocument> result = new ArrayList<>();
+
+        JsonNode caseDetails = courtCase.getCaseDetails() == null ? null : objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
+        collectFromFormdataSections(caseDetails, CASE_DETAILS_EVIDENCE_SECTIONS, result);
+
+        JsonNode additionalDetails = courtCase.getAdditionalDetails() == null ? null : objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+        collectFromFormdataSections(additionalDetails, ADDITIONAL_DETAILS_EVIDENCE_SECTIONS, result);
+
+        collectAdvocateBlockDocuments(courtCase, result);
+
+        return result;
+    }
+
+    private void collectFromFormdataSections(JsonNode root, Map<String, List<String>> sections, List<RegistrationEvidenceDocument> result) {
+        if (root == null || root.isMissingNode()) {
+            return;
+        }
+        for (Map.Entry<String, List<String>> section : sections.entrySet()) {
+            JsonNode formdata = root.path(section.getKey()).path(FORMDATA);
+            if (!formdata.isArray()) {
+                continue;
+            }
+            for (JsonNode form : formdata) {
+                JsonNode data = form.path(DATA);
+                for (String key : section.getValue()) {
+                    addJsonDocuments(data.path(key).path(DOCUMENT), key, result);
+                }
+            }
+        }
+    }
+
+    private void addJsonDocuments(JsonNode documentsNode, String key, List<RegistrationEvidenceDocument> result) {
+        String artifactType = REGISTRATION_DOC_TYPE_MAPPING.get(key);
+        if (artifactType == null || documentsNode == null || documentsNode.isMissingNode()) {
+            return;
+        }
+        if (documentsNode.isArray()) {
+            for (JsonNode docNode : documentsNode) {
+                addRegistrationDocument(objectMapper.convertValue(docNode, Document.class), artifactType, result);
+            }
+        } else if (documentsNode.isObject()) {
+            addRegistrationDocument(objectMapper.convertValue(documentsNode, Document.class), artifactType, result);
+        }
+    }
+
+    private void collectAdvocateBlockDocuments(CourtCase courtCase, List<RegistrationEvidenceDocument> result) {
+        if (courtCase.getAdvocateDetailBlock() == null) {
+            return;
+        }
+        for (AdvocateDetailBlock block : courtCase.getAdvocateDetailBlock()) {
+            if (block == null || block.getDocuments() == null) {
+                continue;
+            }
+            Documents documents = block.getDocuments();
+            List<Document> vakalatnama = documents.getVakalatnama();
+            List<Document> pipAffidavit = documents.getPipAffidavit();
+            // frontend parity: prefer vakalatnama, fall back to PIP affidavit
+            if (vakalatnama != null && !vakalatnama.isEmpty()) {
+                vakalatnama.forEach(document -> addRegistrationDocument(document, VAKALATNAMA_DOC, result));
+            } else if (pipAffidavit != null && !pipAffidavit.isEmpty()) {
+                pipAffidavit.forEach(document -> addRegistrationDocument(document, COMPLAINANT_PIP_AFFIDAVIT, result));
+            }
+        }
+    }
+
+    private void addRegistrationDocument(Document document, String artifactType, List<RegistrationEvidenceDocument> result) {
+        if (artifactType != null && document != null && document.getFileStore() != null) {
+            result.add(new RegistrationEvidenceDocument(document, artifactType));
+        }
+    }
+
+    private EvidenceRequest buildRegistrationEvidenceRequest(CourtCase courtCase, RequestInfo requestInfo, RegistrationEvidenceDocument evidenceDocument, String sourceId, String asUser) {
+        Document document = evidenceDocument.document();
+        org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
+
+        WorkflowObject workflowObject = new WorkflowObject();
+        workflowObject.setAction(TYPE_DEPOSITION);
+        workflowObject.setDocuments(Collections.singletonList(workflowDocument));
+
+        return EvidenceRequest.builder()
+                .requestInfo(requestInfo)
+                .artifact(Artifact.builder()
+                        .artifactType(evidenceDocument.artifactType())
+                        .sourceType(COMPLAINANT)
+                        .sourceID(sourceId)
+                        .asUser(asUser)
+                        .caseId(courtCase.getId().toString())
+                        .filingNumber(courtCase.getFilingNumber())
+                        .cnrNumber(courtCase.getCnrNumber())
+                        .tenantId(courtCase.getTenantId())
+                        .filingType(CASE_FILING)
+                        .comments(new ArrayList<>())
+                        .isEvidence(false)
+                        .file(document)
+                        .workflow(workflowObject)
+                        .build())
+                .build();
+    }
+
+    private Object modifyAdditionalDetails(RequestInfo requestInfo, CourtCase courtCase, RepresentingJoinCase representingJoinCase, JoinCaseRepresentative joinCaseRepresentative) {
+        // Update typed advocateDetailBlock on the courtCase instead of mutating legacy additionalDetails JSON
+        try {
+            List<AdvocateDetailBlock> blocks = courtCase.getAdvocateDetailBlock();
+            if (blocks == null || blocks.isEmpty()) {
+                // try to build from available data
+                try { advocateDetailBlockBuilder.buildAndSet(courtCase); } catch (Exception ignored) { }
+                blocks = courtCase.getAdvocateDetailBlock();
+            }
+
+            if (blocks == null || blocks.isEmpty()) return courtCase.getAdditionalDetails();
+
+            for (AdvocateDetailBlock block : blocks) {
+                if (block == null || block.getComplainant() == null) continue;
+                String complainantIndividualId = block.getComplainant().getIndividualId();
+                if (complainantIndividualId == null) continue;
+                if (!complainantIndividualId.equalsIgnoreCase(representingJoinCase.getIndividualId())) continue;
+
+                // Set pip status to NO
+                PipStatus pipStatus = PipStatus.builder()
+                        .code("NO")
+                        .label("No")
+                        .isEnabled(true)
+                        .build();
+                block.setIsComplainantPip(pipStatus);
+
+                // Add vakalatnama document if provided
+                if (representingJoinCase.getDocuments() != null && !representingJoinCase.getDocuments().isEmpty()) {
+                    Document incoming = representingJoinCase.getDocuments().get(0);
+                    Document doc = Document.builder()
+                            .fileStore(incoming.getFileStore())
+                            .documentType(incoming.getDocumentType())
+                            .fileName(incoming.getFileName())
+                            .documentName(incoming.getDocumentName())
+                            .build();
+                    Documents docs = block.getDocuments() != null ? block.getDocuments() : Documents.builder().build();
+                    List<Document> vakalat = docs.getVakalatnama() != null ? new ArrayList<>(docs.getVakalatnama()) : new ArrayList<>();
+                    vakalat.add(doc);
+                    docs.setVakalatnama(vakalat);
+                    block.setDocuments(docs);
+                }
+
+                // Add the advocate to the block's advocate list
+                try {
+                    List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(requestInfo, joinCaseRepresentative.getAdvocateId());
+                    if (advocatesList != null && !advocatesList.isEmpty()) {
+                        Advocate joinCaseAdvocate = advocatesList.get(0);
+                        // enrich advocate with individual details
+                        try {
+                            List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseAdvocate.getIndividualId());
+                            if (individualsList != null && !individualsList.isEmpty()) {
+                                Individual individual = individualsList.get(0);
+                                joinCaseAdvocate.setFirstName(individual.getName().getGivenName());
+                                joinCaseAdvocate.setMiddleName(individual.getName().getOtherNames());
+                                joinCaseAdvocate.setLastName(individual.getName().getFamilyName());
+                                joinCaseAdvocate.setMobileNumber(individual.getMobileNumber());
+                            }
+                        } catch (Exception ignored) { }
+
+                        List<org.pucar.dristi.web.models.Advocate> advList = block.getAdvocates() != null ? block.getAdvocates() : new ArrayList<>();
+                        advList.add(joinCaseAdvocate);
+                        block.setAdvocates(advList);
+                        block.setIsFormCompleted(!advList.isEmpty());
+                    }
+                } catch (Exception ignored) { }
+            }
+
+            // persist changed blocks back
+            courtCase.setAdvocateDetailBlock(blocks);
+        } catch (Exception e) {
+            log.error("Error modifying advocateDetailBlock", e);
+        }
+
+        // Return existing additionalDetails unchanged for compatibility
+        return courtCase.getAdditionalDetails();
     }
 
     private void replaceAdvocate(JoinCaseV2Request joinCaseRequest, CourtCase courtCase, String advocateId) {
@@ -2605,7 +2920,7 @@ public class CaseService {
                                 isAdvocateDetailsNamesExtracted.set(true);
                             }
                         } catch (JsonProcessingException e) {
-                            log.error("Error occurred while creating task for pip :: {}", e.toString());
+                            log.error("Error occurred while creating task for pip", e);
                             throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
                         }
                         taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
@@ -2636,7 +2951,7 @@ public class CaseService {
                             isAdvocateDetailsNamesExtracted.set(true);
                         }
                     } catch (JsonProcessingException e) {
-                        log.error("Error occurred while creating task for advocate :: {}", e.toString());
+                        log.error("Error occurred while creating task for advocate", e);
                         throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
                     }
                     taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
@@ -2677,7 +2992,7 @@ public class CaseService {
 
             producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
         } catch (Exception e) {
-            log.error("Error occurred while creating task for join case request :: {}", e.toString());
+            log.error("Error occurred while creating task for join case request", e);
             throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
         }
 
@@ -2740,7 +3055,7 @@ public class CaseService {
                 fullName = getRespondentNameByUniqueId(courtCase.getAdditionalDetails(), representingJoinCase.getUniqueId(), individualForLitigant);
             } else {
                 //complainant name enrich
-                fullName = getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), litigant.getIndividualId());
+                fullName = getComplainantNameByIndividualId(courtCase, litigant.getIndividualId());
             }
             litigantDetails.setName(fullName);
 
@@ -2863,7 +3178,7 @@ public class CaseService {
             fullName = getRespondentNameByUniqueId(courtCase.getAdditionalDetails(), representingJoinCase.getUniqueId(), individualForLitigant);
         } else {
             //complainant name enrich
-            fullName = getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), litigant.getIndividualId());
+            fullName = getComplainantNameByIndividualId(courtCase, litigant.getIndividualId());
         }
         litigantDetails.setName(fullName);
 
@@ -2955,7 +3270,7 @@ public class CaseService {
                 fullName = getRespondentNameByUniqueId(courtCase.getAdditionalDetails(), representingJoinCase.getUniqueId(), individualForLitigant);
             } else {
                 //complainant name enrich
-                fullName = getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), litigant.getIndividualId());
+                fullName = getComplainantNameByIndividualId(courtCase, litigant.getIndividualId());
             }
             litigantDetails.setName(fullName);
 
@@ -3287,7 +3602,7 @@ public class CaseService {
                         type = "respondent";
                     } else {
                         //complainant name enrich
-                        fullName = getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), litigant.getIndividualId());
+                        fullName = getComplainantNameByIndividualId(courtCase, litigant.getIndividualId());
                         additionalDetails.put("fullName", fullName);
                         type = "complainant";
                     }
@@ -3335,7 +3650,7 @@ public class CaseService {
                     .build();
             hearings = hearingUtil.fetchHearingDetails(hearingSearchRequest);
         } catch (Exception e) {
-            log.error("Error occurred while fetching hearings for court: {}", e.getMessage());
+            log.error("Error occurred while fetching hearings for court", e);
         }
         return hearings;
     }
@@ -3429,10 +3744,38 @@ public class CaseService {
 
                         return fullName.trim();
                     }
+
+                    // Prefer typed advocateDetailBlock on CourtCase to find complainant's name. Falls back to legacy additionalDetails parsing.
                 }
             }
         }
         return "";
+    }
+
+    private String getComplainantNameByIndividualId(CourtCase courtCase, String individualId) {
+        if (courtCase == null) return "";
+        List<AdvocateDetailBlock> blocks = courtCase.getAdvocateDetailBlock();
+        if (blocks != null) {
+            for (AdvocateDetailBlock block : blocks) {
+                if (block == null || block.getComplainant() == null) continue;
+                if (individualId.equalsIgnoreCase(block.getComplainant().getIndividualId())) {
+                    String firstName = block.getComplainant().getFirstName() == null ? "" : block.getComplainant().getFirstName();
+                    String middleName = block.getComplainant().getMiddleName() == null ? "" : block.getComplainant().getMiddleName();
+                    String lastName = block.getComplainant().getLastName() == null ? "" : block.getComplainant().getLastName();
+                    String fullName = (firstName.isEmpty() ? "" : firstName) +
+                            (middleName.isEmpty() ? "" : " " + middleName) +
+                            (lastName.isEmpty() ? "" : " " + lastName);
+                    if (!fullName.trim().isEmpty()) return fullName.trim();
+                }
+            }
+        }
+
+        // fallback to legacy additionalDetails parsing
+        try {
+            return getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), individualId);
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     private TaskResponse createTask(JoinCaseV2Request joinCaseRequest, String assignes, CourtCase courtCase) {
@@ -3556,7 +3899,7 @@ public class CaseService {
             return taskUtil.callCreateTask(taskRequest);
 
         } catch (Exception e) {
-            log.error("Error occurred while creating task for join case request :: {}", e.toString());
+            log.error("Error occurred while creating task for join case request", e);
             throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
         }
     }
@@ -3583,7 +3926,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Failed to verify the given litigants and representatives to be added to the case :: {}", e.toString());
+            log.error("Failed to verify the given litigants and representatives to be added to the case", e);
             throw new CustomException(JOIN_CASE_ERR, JOIN_CASE_CODE_INVALID_REQUEST);
         }
     }
@@ -3818,8 +4161,8 @@ public class CaseService {
                 enrichAndCallEvidenceCreate(courtCase, joinCaseLitigant, joinCaseRequest.getRequestInfo());
             }
 
-            if (joinCaseLitigant.getPartyType().contains("complainant") && joinCaseLitigant.getIsPip()) {
-                courtCase.setAdditionalDetails(modifyAdvocateDetails(courtCase.getAdditionalDetails(), joinCaseLitigant));
+                if (joinCaseLitigant.getPartyType().contains("complainant") && joinCaseLitigant.getIsPip()) {
+                courtCase.setAdditionalDetails(modifyAdvocateDetails(courtCase, joinCaseLitigant));
             } else if (joinCaseLitigant.getPartyType().contains("respondent")) {
                 courtCase.setAdditionalDetails(updateRespondentDetails(courtCase.getAdditionalDetails(), joinCaseRequest.getRequestInfo(), joinCaseLitigant));
             }
@@ -3837,76 +4180,55 @@ public class CaseService {
         publishToJoinCaseIndexer(joinCaseRequest.getRequestInfo(), encrptedCourtCase);
     }
 
-    private Object modifyAdvocateDetails(Object additionalDetails, JoinCaseLitigant joinCaseLitigant) {
-
-        ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
-
-        // Check if advocateDetails exist
-        if (additionalDetailsNode.has("advocateDetails")) {
-            ObjectNode advocateDetails = (ObjectNode) additionalDetailsNode.get("advocateDetails");
-
-            // Check if the formdata array exists within advocateDetails
-            if (advocateDetails.has("formdata") && advocateDetails.get("formdata").isArray()) {
-                ArrayNode formData = (ArrayNode) advocateDetails.get("formdata");
-
-                // Iterate over each element in the formData array
-                for (int i = 0; i < formData.size(); i++) {
-                    ObjectNode dataNode = (ObjectNode) formData.get(i).get("data");
-
-                    // Get the boxComplainant object for matching the litigant
-                    ObjectNode boxComplainant = (ObjectNode) dataNode.get("multipleAdvocatesAndPip").get("boxComplainant");
-
-                    // Skip if the litigant doesn't match
-
-                    if (!(boxComplainant.get("individualId").textValue().equalsIgnoreCase(joinCaseLitigant.getIndividualId()))) {
-                        continue;
-                    }
-                    // Ensure 'multipleAdvocatesAndPip' is an ObjectNode
-                    ObjectNode multipleAdvocatesAndPipNode = (ObjectNode) dataNode.get("multipleAdvocatesAndPip");
-
-                    ObjectNode multipleAdvocatesAndPip;
-                    if (multipleAdvocatesAndPipNode != null && multipleAdvocatesAndPipNode.isObject()) {
-                        multipleAdvocatesAndPip = multipleAdvocatesAndPipNode;
-                    } else {
-                        multipleAdvocatesAndPip = objectMapper.createObjectNode();
-                        dataNode.set("multipleAdvocatesAndPip", multipleAdvocatesAndPip);
-                    }
-
-                    // Update isComplainantPip
-                    ObjectNode isComplainantPipNode = objectMapper.createObjectNode();
-                    isComplainantPipNode.put("code", "YES");
-                    isComplainantPipNode.put("name", "yes");
-                    isComplainantPipNode.put("isEnabled", true);
-                    multipleAdvocatesAndPip.set("isComplainantPip", isComplainantPipNode);
-
-                    // Ensure pipAffidavitFileUpload is initialized and add a new document to it
-                    ObjectNode pipAffidavitFileUpload = objectMapper.createObjectNode();
-
-                    // Initialize the 'document' array
-                    ArrayNode document = objectMapper.createArrayNode();
-
-                    ObjectNode documentNode = objectMapper.createObjectNode();
-                    documentNode.put("documentType", joinCaseLitigant.getDocuments().get(0).getDocumentType());
-                    documentNode.put("fileStore", joinCaseLitigant.getDocuments().get(0).getFileStore());
-
-                    document.add(documentNode);
-                    pipAffidavitFileUpload.set("document", document);
-                    multipleAdvocatesAndPip.set("pipAffidavitFileUpload", pipAffidavitFileUpload);
-
-                    // Ensure vakalatnamaFileUpload is initialized and clear it
-                    ArrayNode vakalatnamaFileUpload = ensureArrayNodeInitialized(dataNode.get("multipleAdvocatesAndPip").get("vakalatnamaFileUpload"));
-                    vakalatnamaFileUpload.removeAll();
-
-                    // Ensure multipleAdvocateNameDetails is initialized and clear it
-                    ArrayNode multipleAdvocateNameDetails = ensureArrayNodeInitialized(dataNode.get("multipleAdvocatesAndPip").get("multipleAdvocateNameDetails"));
-                    multipleAdvocateNameDetails.removeAll();
-
-                    // Exit the loop after processing the first matching item
-                    break;
-                }
+    private Object modifyAdvocateDetails(CourtCase courtCase, JoinCaseLitigant joinCaseLitigant) {
+        try {
+            List<AdvocateDetailBlock> blocks = courtCase.getAdvocateDetailBlock();
+            if (blocks == null || blocks.isEmpty()) {
+                try { advocateDetailBlockBuilder.buildAndSet(courtCase); } catch (Exception ignored) { }
+                blocks = courtCase.getAdvocateDetailBlock();
             }
+
+            if (blocks == null || blocks.isEmpty()) return courtCase.getAdditionalDetails();
+
+            for (AdvocateDetailBlock block : blocks) {
+                if (block == null || block.getComplainant() == null) continue;
+                String complainantIndividualId = block.getComplainant().getIndividualId();
+                if (complainantIndividualId == null) continue;
+                if (!complainantIndividualId.equalsIgnoreCase(joinCaseLitigant.getIndividualId())) continue;
+
+                // Set isComplainantPip = YES
+                PipStatus pipStatus = PipStatus.builder().code("YES").label("Yes").isEnabled(true).build();
+                block.setIsComplainantPip(pipStatus);
+
+                // Add pip affidavit document
+                Documents docs = block.getDocuments() != null ? block.getDocuments() : Documents.builder().build();
+                List<Document> pipAff = docs.getPipAffidavit() != null ? new ArrayList<>(docs.getPipAffidavit()) : new ArrayList<>();
+                if (joinCaseLitigant.getDocuments() != null && !joinCaseLitigant.getDocuments().isEmpty()) {
+                    Document incoming = joinCaseLitigant.getDocuments().get(0);
+                    Document doc = Document.builder()
+                            .documentType(incoming.getDocumentType())
+                            .fileStore(incoming.getFileStore())
+                            .fileName(incoming.getFileName())
+                            .documentName(incoming.getDocumentName())
+                            .build();
+                    pipAff.add(doc);
+                }
+                docs.setPipAffidavit(pipAff);
+                // clear vakalatnama
+                docs.setVakalatnama(new ArrayList<>());
+                block.setDocuments(docs);
+
+                // clear multipleAdvocateNameDetails and mark form not completed if needed
+                block.setIsFormCompleted(block.getAdvocates() != null && !block.getAdvocates().isEmpty());
+                break;
+            }
+
+            courtCase.setAdvocateDetailBlock(blocks);
+        } catch (Exception e) {
+            log.error("Error modifying advocateDetailBlock in modifyAdvocateDetails", e);
         }
-        return objectMapper.convertValue(additionalDetailsNode, additionalDetails.getClass());
+
+        return courtCase.getAdditionalDetails();
     }
 
     // Utility method to ensure ArrayNode is initialized and not null
@@ -3991,7 +4313,7 @@ public class CaseService {
                 return null;
             }
         } catch (JsonProcessingException e) {
-            log.error("Error occurred while searching case in redis cache :: {}", e.toString());
+            log.error("Error occurred while searching case in redis cache", e);
             throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
         }
     }
@@ -4015,19 +4337,32 @@ public class CaseService {
         }
     }
 
-    private Object editAdvocateDetails(Object additionalDetails1, Object additionalDetails2) {
-        // Convert the Objects to ObjectNodes for easier manipulation
-        ObjectNode details1Node = objectMapper.convertValue(additionalDetails1, ObjectNode.class);
+    private Object editAdvocateDetails(Object advocateSource, Object additionalDetails2) {
+        // Convert the target additionalDetails to ObjectNode for manipulation
         ObjectNode details2Node = objectMapper.convertValue(additionalDetails2, ObjectNode.class);
 
-        // Replace the specified field in additionalDetails2 with the value from additionalDetails1
-        if (details1Node.has("advocateDetails")) {
-            details2Node.set("advocateDetails", details1Node.get("advocateDetails"));
-        } else {
-            throw new CustomException(VALIDATION_ERR, "advocateDetails not found in additionalDetails object.");
+        // Convert the source into a JsonNode (it might be: 1) a wrapper additionalDetails object containing
+        // advocateDetailBlock/advocateDetails, or 2) the advocateDetailBlock/advocateDetails node itself.
+        JsonNode sourceNode = objectMapper.convertValue(advocateSource, JsonNode.class);
+
+        if (sourceNode == null || sourceNode.isMissingNode()) {
+            throw new CustomException(VALIDATION_ERR, "advocateDetailBlock/advocateDetails not found in source object.");
         }
 
-        // Convert the updated ObjectNode back to its original form
+        // If the source is a wrapper object having advocateDetailBlock or legacy advocateDetails, use that.
+        if (sourceNode.isObject() && sourceNode.has("advocateDetailBlock")) {
+            details2Node.set("advocateDetailBlock", sourceNode.get("advocateDetailBlock"));
+        } else if (sourceNode.isObject() && sourceNode.has("advocateDetails")) {
+            // Copy legacy advocateDetails under the new advocateDetailBlock key to migrate shape on write
+            details2Node.set("advocateDetailBlock", sourceNode.get("advocateDetails"));
+        } else if (sourceNode.isArray() || sourceNode.isObject()) {
+            // If the source itself is an array/object representing the advocate blocks, set it directly.
+            details2Node.set("advocateDetailBlock", sourceNode);
+        } else {
+            throw new CustomException(VALIDATION_ERR, "advocateDetailBlock/advocateDetails not found in source object.");
+        }
+
+        // Convert the updated ObjectNode back to the original type of additionalDetails2
         return objectMapper.convertValue(details2Node, additionalDetails2.getClass());
     }
 
@@ -4082,8 +4417,11 @@ public class CaseService {
 
         if (isLitigantPIP) {
             // Replace the specified field in additionalDetails2 with the value from additionalDetails1
-            if (details1Node.has("advocateDetails")) {
-                details2Node.set("advocateDetails", details1Node.get("advocateDetails"));
+            if (details1Node.has("advocateDetailBlock")) {
+                details2Node.set("advocateDetailBlock", details1Node.get("advocateDetailBlock"));
+            } else if (details1Node.has("advocateDetails")) {
+                // migrate legacy key into new key
+                details2Node.set("advocateDetailBlock", details1Node.get("advocateDetails"));
             }
         }
         // Convert the updated ObjectNode back to its original form
@@ -4113,9 +4451,19 @@ public class CaseService {
 
         if (courtCaseRedis != null) {
             courtCaseRedis.setStage(caseOverallStatus.getStage());
-            courtCaseRedis.setSubstage(caseOverallStatus.getSubstage());
-            courtCaseRedis.setStageBackup(caseOverallStatus.getStageBackup());
-            courtCaseRedis.setSubstageBackup(caseOverallStatus.getSubstageBackup());
+        }
+        updateCourtCaseInRedis(caseOverallStatus.getTenantId(), courtCaseRedis);
+    }
+
+    public void updateCaseOverallStatusV2(CaseStageSubStage caseStageSubStage) {
+
+        CaseOverallStatus caseOverallStatus = caseStageSubStage.getCaseOverallStatus();
+
+        CourtCase courtCaseDb = fetchCourtCaseByFilingNumber(caseStageSubStage.getRequestInfo(), caseOverallStatus.getFilingNumber());
+        CourtCase courtCaseRedis = searchRedisCache(caseStageSubStage.getRequestInfo(), courtCaseDb.getId().toString());
+
+        if (courtCaseRedis != null) {
+            courtCaseRedis.setSecondaryStage(caseOverallStatus.getSecondaryStage());
         }
         updateCourtCaseInRedis(caseOverallStatus.getTenantId(), courtCaseRedis);
     }
@@ -4205,7 +4553,7 @@ public class CaseService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error occurred while sending SMS for new witness addition :: {}", e.toString());
+            log.error("Error occurred while sending SMS for new witness addition", e);
         }
 
     }
@@ -4236,7 +4584,7 @@ public class CaseService {
                 notificationService.sendNotification(caseRequest.getRequestInfo(), smsTemplateData, NEW_WITNESS_ADDED_SMS_FOR_OTHERS, number);
             }
         } catch (Exception e) {
-            log.error("Error occurred while sending SMS for others as witness added :: {}", e.toString());
+            log.error("Error occurred while sending SMS for others as witness added", e);
         }
     }
 
@@ -4535,10 +4883,10 @@ public class CaseService {
                 log.info("operation=updateJoinCaseRejected, status=SUCCESS, taskRequest: {}", taskRequest);
             }
         } catch (CustomException e) {
-            log.error("CustomException occurred: {}", e.getMessage(), e);
+            log.error("CustomException occurred", e);
             throw new CustomException("REJECT_REQUEST_ERROR", e.getMessage());
         } catch (Exception e) {
-            log.error("Unexpected error in updateJoinCaseRejected: {}", e.getMessage(), e);
+            log.error("Unexpected error in updateJoinCaseRejected", e);
             throw new CustomException("REJECT_REQUEST_ERROR", "An unexpected error occurred");
         }
 
@@ -4593,10 +4941,10 @@ public class CaseService {
 
             }
         } catch (CustomException e) {
-            log.error("CustomException occurred: {}", e.getMessage(), e);
+            log.error("CustomException occurred", e);
             throw new CustomException("APPROVAL_REQUEST_ERROR", e.getMessage());
         } catch (Exception e) {
-            log.error("Unexpected error in updateJoinCaseRejected: {}", e.getMessage(), e);
+            log.error("Unexpected error in updateJoinCaseRejected", e);
             throw new CustomException("APPROVAL_REQUEST_ERROR", "An unexpected error occurred");
         }
 
@@ -4629,7 +4977,7 @@ public class CaseService {
                 notificationService.sendNotification(requestInfo, smsTemplateData, NEW_USER_JOIN, phoneNumber);
             }
         } catch (Exception e) {
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
 
 
@@ -4694,7 +5042,7 @@ public class CaseService {
                 notificationService.sendNotification(requestInfo, smsTemplateData, NEW_USER_JOIN, phoneNumber);
             }
         } catch (Exception e) {
-            log.error("Error occurred while sending notification: {}", e.toString());
+            log.error("Error occurred while sending notification", e);
         }
 
 
@@ -4879,10 +5227,10 @@ public class CaseService {
             producer.push(config.getPoaJoinCaseKafkaTopic(), encrptedCourtCase);
 
         } catch (CustomException e) {
-            log.error("CustomException occurred: {}", e.getMessage(), e);
+            log.error("CustomException occurred", e);
             throw new CustomException("updateCourtCaseObjectPOA", e.getMessage());
         } catch (Exception e) {
-            log.error("Unexpected error in updateCourtCaseObjectPOA: {}", e.getMessage(), e);
+            log.error("Unexpected error in updateCourtCaseObjectPOA", e);
             throw new CustomException("updateCourtCaseObjectPOA", "An unexpected error occurred");
         }
 
@@ -5083,11 +5431,17 @@ public class CaseService {
 
             log.info("operation=updateJoinCaseApproved, status=IN_PROGRESS, joinCaseRequest, advocateUuid : {}, {}", joinCaseRequest, advocateUuid);
 
+            // a case with no advocate mapping yet (every litigant in person) comes back with
+            // representatives as null, so normalise it here before anyone reads or adds to it
             List<AdvocateMapping> advocateMappings = courtCase.getRepresentatives();
+            if (advocateMappings == null) {
+                advocateMappings = new ArrayList<>();
+                courtCase.setRepresentatives(advocateMappings);
+            }
 
             // checking weather advocate is present in case or not
             AdvocateMapping advocateTryingToReplace = advocateMappings.stream().filter(advocateMapping ->
-                    advocateMapping.getAdvocateId().equalsIgnoreCase(advocateUuid)).findFirst().orElse(null);
+                    advocateUuid != null && advocateUuid.equalsIgnoreCase(advocateMapping.getAdvocateId())).findFirst().orElse(null);
 
             AuditDetails auditDetails = enrichAuditDetails(requestInfo);
 
@@ -5102,18 +5456,19 @@ public class CaseService {
             List<ReplacementDetails> replacementDetailsList = joinCaseRequest.getReplacementDetails();
             AdvocateDetails advocateDetails = joinCaseRequest.getAdvocateDetails();
 
-            for (ReplacementDetails replacementDetails : replacementDetailsList) {
+            for (ReplacementDetails replacementDetails : replacementDetailsList == null ? new ArrayList<ReplacementDetails>() : replacementDetailsList) {
 
                 Party party = enrichParty(replacementDetails, courtCase, auditDetails);
                 LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
                 String partyType = litigantDetails.getPartyType();
                 ReplacementAdvocateDetails advocateDetailsToBeReplaced = new ReplacementAdvocateDetails();
                 String advocateUuidToBeReplaced = null;
-                if (!replacementDetails.getIsLitigantPip()) {
+                boolean isLitigantPip = Boolean.TRUE.equals(replacementDetails.getIsLitigantPip());
+                if (!isLitigantPip) {
                     advocateDetailsToBeReplaced = replacementDetails.getAdvocateDetails();
                     advocateUuidToBeReplaced = advocateDetailsToBeReplaced.getAdvocateUuid();
                 }
-                if (replacementDetails.getIsLitigantPip()) {
+                if (isLitigantPip) {
                     List<Party> litigantParties = courtCase.getLitigants();
                     if (advocateTryingToReplace == null) {
                         // adding the advocate in representatives list as he is new joining the case
@@ -5125,8 +5480,9 @@ public class CaseService {
                                 advocateTryingToReplace, courtCaseObj
                         );
                     }
-                    for (Party litigantParty : litigantParties) {
-                        if (litigantParty.getIndividualId().equalsIgnoreCase(litigantDetails.getIndividualId())) {
+                    for (Party litigantParty : litigantParties == null ? new ArrayList<Party>() : litigantParties) {
+                        if (litigantDetails.getIndividualId() != null
+                                && litigantDetails.getIndividualId().equalsIgnoreCase(litigantParty.getIndividualId())) {
                             // inactive the litigant from pip as advocate going to represent him
                             litigantParty.setPartyInPerson(false);
                         }
@@ -5142,9 +5498,7 @@ public class CaseService {
                                 advocateTryingToReplace, courtCaseObj
                         );
                     }
-                    if (!replacementDetails.getIsLitigantPip()) {
-                        inactivateOldAdvocate(replacementDetails, courtCase);
-                    }
+                    inactivateOldAdvocate(replacementDetails, courtCase);
                 }
 
                 // Enrich advocate office case members for the joining advocate
@@ -5200,10 +5554,10 @@ public class CaseService {
                 }
             }
         } catch (CustomException e) {
-            log.error("CustomException occurred: {}", e.getMessage(), e);
+            log.error("CustomException occurred", e);
             throw new CustomException("updateCourtCaseObject", e.getMessage());
         } catch (Exception e) {
-            log.error("Unexpected error in updateCourtCaseObject: {}", e.getMessage(), e);
+            log.error("Unexpected error in updateCourtCaseObject", e);
             throw new CustomException("updateCourtCaseObject", "An unexpected error occurred");
         }
 
@@ -5211,9 +5565,13 @@ public class CaseService {
 
     private boolean validateAdvocateAlreadyRepresenting(AdvocateMapping advocateMapping, String
             litigantIndividualId) {
+        if (advocateMapping.getRepresenting() == null) {
+            return false;
+        }
         Party party = advocateMapping.getRepresenting().stream()
-                .filter(representing -> representing.getIndividualId().equalsIgnoreCase(litigantIndividualId)).findFirst().orElse(null);
-        return party != null && party.getIsActive();
+                .filter(representing -> litigantIndividualId != null
+                        && litigantIndividualId.equalsIgnoreCase(representing.getIndividualId())).findFirst().orElse(null);
+        return party != null && Boolean.TRUE.equals(party.getIsActive());
     }
 
     private void inactivateOldAdvocate(ReplacementDetails replacementDetails, CourtCase courtCase) {
@@ -5222,15 +5580,23 @@ public class CaseService {
         String litigantId = replacementDetails.getLitigantDetails().getIndividualId();
         //  remove the litigant in old advocate's representing list as another advocate is trying to replace
 
+        if (courtCase.getRepresentatives() == null) {
+            courtCase.setRepresentatives(new ArrayList<>());
+        }
+
         courtCase.getRepresentatives().stream()
-                .filter(mapping -> mapping.getAdvocateId().equalsIgnoreCase(advocateId))
+                .filter(mapping -> advocateId != null && advocateId.equalsIgnoreCase(mapping.getAdvocateId()))
                 .findFirst()
                 .ifPresent(mapping -> {
+                    if (mapping.getRepresenting() == null) {
+                        mapping.setRepresenting(new ArrayList<>());
+                    }
                     mapping.getRepresenting().stream()
-                            .filter(representing -> representing.getIndividualId().equalsIgnoreCase(litigantId))
+                            .filter(representing -> litigantId != null
+                                    && litigantId.equalsIgnoreCase(representing.getIndividualId()))
                             .forEach(representing -> representing.setIsActive(false)); // Use forEach to modify elements
 
-                    mapping.setIsActive(mapping.getRepresenting().stream().anyMatch(Party::getIsActive));
+                    mapping.setIsActive(mapping.getRepresenting().stream().anyMatch(party -> Boolean.TRUE.equals(party.getIsActive())));
                 });
         producer.push(config.getUpdateRepresentativeJoinCaseTopic(), courtCase);
 
@@ -5491,6 +5857,9 @@ public class CaseService {
         advocateMappingList.add(advocateMapping);
 
         courtCaseObj.setRepresentatives(advocateMappingList);
+        if (courtCase.getRepresentatives() == null) {
+            courtCase.setRepresentatives(new ArrayList<>());
+        }
         courtCase.getRepresentatives().add(advocateMapping);
         return advocateMapping;
     }
@@ -5499,14 +5868,18 @@ public class CaseService {
                                                List<AdvocateMapping> advocateMappings, AdvocateMapping advocateTryingToReplace,
                                                CourtCase courtCaseObj) {
 
-        for (AdvocateMapping advocateMapping : advocateMappings) {
-            if (advocateMapping.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
+        for (AdvocateMapping advocateMapping : advocateMappings == null ? new ArrayList<AdvocateMapping>() : advocateMappings) {
+            if (advocateUuid != null && advocateUuid.equalsIgnoreCase(advocateMapping.getAdvocateId())) {
 
                 boolean isAdvocateAlreadyRepresenting = validateAdvocateAlreadyRepresenting(advocateTryingToReplace, party.getIndividualId());
 
                 if (!isAdvocateAlreadyRepresenting) {
 
                     // Add the party to the representing list of the specific advocate mapping
+                    // representing is null when the mapping has no representing rows
+                    if (advocateMapping.getRepresenting() == null) {
+                        advocateMapping.setRepresenting(new ArrayList<>());
+                    }
                     advocateMapping.getRepresenting().add(party);
 
                     // Update the representatives in the original court case
@@ -5533,11 +5906,13 @@ public class CaseService {
             pendingAdvocateRequest) {
         log.info("operation=updateStatusOfAdvocate, status=IN_PROGRESS,courtCase advocateUuid,pendingAdvocateRequest : {}, {} ,{}", courtCase, advocateUuid,
                 pendingAdvocateRequest);
+        // representatives is null for a case that has no advocate mapping yet, and this is also
+        // reached from the reject path where nothing has normalised it
         List<AdvocateMapping> advocateMappings = courtCase.getRepresentatives();
         List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
 
-        boolean hasMapping = advocateMappings.stream()
-                .anyMatch(mapping -> mapping.getAdvocateId().equalsIgnoreCase(advocateUuid));
+        boolean hasMapping = advocateMappings != null && advocateMappings.stream()
+                .anyMatch(mapping -> advocateUuid != null && advocateUuid.equalsIgnoreCase(mapping.getAdvocateId()));
 
 
         if (hasMapping && pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
@@ -5866,7 +6241,7 @@ public class CaseService {
             log.info("operation=compareCalculationAndCreateDemand, status=SUCCESS, caseId: {}", body.getCases().getId());
             return calculation;
         } catch (Exception e) {
-            log.error("operation=compareCalculationAndCreateDemand, status=ERROR, caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
+            log.error("operation=compareCalculationAndCreateDemand, status=ERROR, caseId: {}", body.getCases().getId(), e);
             throw new CustomException("ERROR_CALCULATION_CASE", "Error while resubmitting case with id: " + body.getCases().getId() + ", error: " + e.getMessage());
         }
     }
@@ -5886,7 +6261,12 @@ public class CaseService {
                 .calculationCriteria(Collections.singletonList(calculationCriteria))
                 .build();
 
-        return paymentCalculaterUtil.callPaymentCalculator(calculationRequest);
+        CalculationRes response = paymentCalculaterUtil.callPaymentCalculator(calculationRequest);
+        if (response == null || response.getCalculation() == null || response.getCalculation().isEmpty()) {
+            throw new CustomException("EMPTY_CALCULATION_RESPONSE",
+                    "Payment calculator returned no calculation for filingNumber: " + courtCase.getFilingNumber());
+        }
+        return response;
     }
 
 
@@ -5952,7 +6332,7 @@ public class CaseService {
 
             etreasuryUtil.createDemand(demandCreateRequest);
         } catch (Exception e) {
-            log.error("Error while creating demand for caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
+            log.error("Error while creating demand for caseId: {}", body.getCases().getId(), e);
             throw new CustomException("ERROR_CREATING_DEMAND", "Error while creating demand for caseId: " + body.getCases().getId() + ", error: " + e.getMessage());
         }
     }
@@ -5968,12 +6348,15 @@ public class CaseService {
 
     private String updateAndGetConsumerCode(CaseRequest body) {
         JsonNode additionalDetails = objectMapper.convertValue(body.getCases().getAdditionalDetails(), JsonNode.class);
+        if (additionalDetails == null || !additionalDetails.isObject()) {
+            additionalDetails = objectMapper.createObjectNode();
+        }
         String baseConsumerCode = body.getCases().getFilingNumber() + "_CASE_FILING";
 
         String newConsumerCode;
         int nextSuffix = 1;
 
-        if (additionalDetails != null && additionalDetails.has("lastSubmissionConsumerCode")) {
+        if (additionalDetails.has("lastSubmissionConsumerCode")) {
             String lastConsumerCode = getLastSubmissionConsumerCode(body);
             if (lastConsumerCode != null && lastConsumerCode.startsWith(baseConsumerCode)) {
                 nextSuffix = getNextSuffix(lastConsumerCode, baseConsumerCode);
@@ -6011,8 +6394,8 @@ public class CaseService {
             return false;
         }
 
-        JsonNode delayFormData = caseDetails.get("delayApplications").get("formdata").get(0);
-        if (delayFormData == null || delayFormData.get("data") == null) {
+        JsonNode delayFormData = caseDetails.path("delayApplications").path("formdata").path(0);
+        if (delayFormData.path("data").isMissingNode() || delayFormData.path("data").isNull()) {
             return false;
         }
 
@@ -6021,7 +6404,7 @@ public class CaseService {
         JsonNode condonationFiles = data.get("condonationFileUpload");
 
         boolean isCodeNo = delayType != null
-                && "NO".equals(delayType.get("code").asText());
+                && "NO".equals(delayType.path("code").asText(""));
 
         boolean hasFile = condonationFiles != null
                 && condonationFiles.has("document")
@@ -6052,7 +6435,7 @@ public class CaseService {
                 try {
                     totalAmount += Double.parseDouble(amountNode.asText());
                 } catch (NumberFormatException e) {
-                    log.error("Error parsing chequeAmount for caseId: {}, error: {}", caseId, e.getMessage());
+                    log.error("Error parsing chequeAmount for caseId: {}", caseId, e);
                 }
             }
         }
@@ -6085,7 +6468,7 @@ public class CaseService {
             log.info("operation=addWitnessToCase, status=SUCCESS, filingNumber: {}", body.getCaseFilingNumber());
             return WitnessDetailsResponse.builder().witnessDetails(body.getWitnessDetails()).build();
         } catch (Exception e) {
-            log.error("operation=addWitnessToCase, status=FAILURE, filingNumber: {}, error: {}", body.getCaseFilingNumber(), e.getMessage());
+            log.error("operation=addWitnessToCase, status=FAILURE, filingNumber: {}", body.getCaseFilingNumber(), e);
             throw new CustomException(ERROR_ADDING_WITNESS, "Error while adding witness to case: " + body.getCaseFilingNumber() + ", error: " + e.getMessage());
         }
     }
@@ -6307,7 +6690,7 @@ public class CaseService {
 
             validator.validateUpdateLPRDetails(caseRequest);
 
-            if (courtCase.getIsLPRCase()) {
+            if (LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus())) {
                 // moving the case into LPR
                 enrichmentUtil.enrichLPRNumber(caseRequest);
             } else {
@@ -6373,7 +6756,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error occurred while adding address :: {}", e.toString());
+            log.error("Error occurred while adding address", e);
             throw new CustomException(EDIT_CASE_ERR, "Exception occurred while adding address : " + e.getMessage());
         }
 
@@ -6463,32 +6846,32 @@ public class CaseService {
 
     public void updateCaseConversion(CaseRequest caseRequest) {
         log.info("Starting case conversion update.");
-        
+
         try {
             CourtCase courtCase = caseRequest.getCases();
             String filingNumber = courtCase.getFilingNumber();
             String caseType = courtCase.getCaseType();
 
             CaseConversionDetails caseConversionDetails = buildCaseConversionDetails(courtCase, caseType);
-            
+
             CaseConversionRequest caseConversionRequest = CaseConversionRequest.builder()
                     .requestInfo(caseRequest.getRequestInfo())
                     .caseConversionDetails(caseConversionDetails)
                     .build();
-            
+
             producer.push(config.getCaseConversionTopic(), caseConversionRequest);
-            
+
             log.info("Case conversion pushed to Kafka | filingNumber: {} | convertedFrom: {} | convertedTo: {} | preCaseNumber: {} | postCaseNumber: {}",
                     filingNumber, caseConversionDetails.getConvertedFrom(), caseConversionDetails.getConvertedTo(),
                     caseConversionDetails.getPreCaseNumber(), caseConversionDetails.getPostCaseNumber());
-            
+
         } catch (Exception e) {
-            log.error("Error during case conversion | filingNumber: {} | error: {}", 
-                    caseRequest != null && caseRequest.getCases() != null ? caseRequest.getCases().getFilingNumber() : "unknown", 
+            log.error("Error during case conversion | filingNumber: {} | error: {}",
+                    caseRequest != null && caseRequest.getCases() != null ? caseRequest.getCases().getFilingNumber() : "unknown",
                     e.getMessage());
         }
     }
-    
+
     private CaseConversionDetails buildCaseConversionDetails(CourtCase courtCase, String caseType) {
         CaseConversionDetails caseConversionDetails = CaseConversionDetails.builder()
                 .caseId(courtCase.getId().toString())
@@ -6496,16 +6879,16 @@ public class CaseService {
                 .cnrNumber(courtCase.getCnrNumber())
                 .tenantId(courtCase.getTenantId())
                 .build();
-        
+
         Long dateOfConversion = dateUtil.getEpochFromLocalDate(LocalDate.now());
-        
+
         if (CMP.equalsIgnoreCase(caseType) && courtCase.getCmpNumber() != null) {
             caseConversionDetails.setConvertedFrom(FILING);
             caseConversionDetails.setConvertedTo(CMP);
             caseConversionDetails.setPreCaseNumber(courtCase.getFilingNumber());
             caseConversionDetails.setPostCaseNumber(courtCase.getCmpNumber());
             caseConversionDetails.setDateOfConversion(dateOfConversion);
-        } else if (Boolean.TRUE.equals(courtCase.getIsLPRCase()) && courtCase.getLprNumber() != null) {
+        } else if (LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus()) && courtCase.getLprNumber() != null) {
             caseConversionDetails.setConvertedFrom(ST);
             caseConversionDetails.setConvertedTo(LP);
             caseConversionDetails.setPreCaseNumber(courtCase.getCourtCaseNumber());
@@ -6524,7 +6907,7 @@ public class CaseService {
             caseConversionDetails.setPostCaseNumber(courtCase.getCourtCaseNumber());
             caseConversionDetails.setDateOfConversion(dateOfConversion);
         }
-        
+
         return caseConversionDetails;
     }
 

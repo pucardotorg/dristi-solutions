@@ -71,7 +71,7 @@ public class CtcApplicationEnrichment {
 
             return cmpNumberIdList.get(0) + "/" + year;
         } catch (Exception e) {
-            log.error("Error enriching ca number: {}", e.toString());
+            log.error("Error enriching ca number", e);
             throw new CustomException("ENRICHMENT_EXCEPTION", "Error while enriching ca number: " + e.getMessage());
         }
     }
