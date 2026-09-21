@@ -572,39 +572,30 @@ public class CaseRegistrationEnrichment {
         String individualId = individualService.getIndividualId(requestInfo);
         for (CaseCriteria c : criteriaList) {
 
-            if (c.getCasesFor() == null) {
-                c.setCasesFor(CasesFor.ALL);
-            }
-
-            // Always resolve identifiers from the requesting user, never trust client supplied values
-            c.setAdvocateId(null);
-            c.setLitigantId(null);
-            c.setPoaHolderIndividualId(null);
-
             CasesFor casesFor = c.getCasesFor();
 
-            if (CasesFor.ALL.toString().equalsIgnoreCase(casesFor.toString())) {
+            if (casesFor != null && CasesFor.ALL.toString().equalsIgnoreCase(casesFor.toString())) {
                 if (isAdvocate) {
-                    c.setAdvocateId(resolveAdvocateId(requestInfo, individualId));
+                    List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
+                    if (!advocates.isEmpty()) {
+                        String advocateId = advocates.get(0).getId().toString();
+                        c.setAdvocateId(advocateId);
+                    }
                 }
                 c.setLitigantId(individualId);
                 c.setPoaHolderIndividualId(individualId);
 
-            } else if (CasesFor.POA_LITIGANT.toString().equalsIgnoreCase(casesFor.toString())) {
+            } else if (casesFor != null && CasesFor.POA_LITIGANT.toString().equalsIgnoreCase(casesFor.toString())) {
                 c.setLitigantId(individualId);
                 c.setPoaHolderIndividualId(individualId);
-            } else if (CasesFor.ADVOCATE.toString().equalsIgnoreCase(casesFor.toString())) {
-                c.setAdvocateId(resolveAdvocateId(requestInfo, individualId));
+            } else if (casesFor != null && CasesFor.ADVOCATE.toString().equalsIgnoreCase(casesFor.toString())) {
+                List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
+                if (!advocates.isEmpty()) {
+                    String advocateId = advocates.get(0).getId().toString();
+                    c.setAdvocateId(advocateId);
+                }
             }
         }
-    }
-
-    private String resolveAdvocateId(RequestInfo requestInfo, String individualId) {
-        List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
-        if (!advocates.isEmpty()) {
-            return advocates.get(0).getId().toString();
-        }
-        return null;
     }
 
     public void enrichCaseSearchRequest(CaseSearchRequestV2 caseSearchRequest) {
@@ -642,29 +633,26 @@ public class CaseRegistrationEnrichment {
         boolean isAdvocate = roles.stream()
                 .anyMatch(role -> ADVOCATE_ROLE.equals(role.getCode()));
 
-        if (criteria.getCasesFor() == null) {
-            criteria.setCasesFor(CasesFor.ALL);
-        }
-
-        // Always resolve identifiers from the requesting user, never trust client supplied values
-        criteria.setAdvocateId(null);
-        criteria.setLitigantId(null);
-        criteria.setPoaHolderIndividualId(null);
-
-        CasesFor casesFor = criteria.getCasesFor();
-
-        if (CasesFor.ALL.toString().equalsIgnoreCase(casesFor.toString())) {
+        if (criteria.getCasesFor() != null && CasesFor.ALL.toString().equalsIgnoreCase(criteria.getCasesFor().toString())) {
             if (isAdvocate) {
-                criteria.setAdvocateId(resolveAdvocateId(requestInfo, individualId));
+                List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
+                if (!advocates.isEmpty()) {
+                    String advocateId = advocates.get(0).getId().toString();
+                    criteria.setAdvocateId(advocateId);
+                }
             }
             criteria.setLitigantId(individualId);
             criteria.setPoaHolderIndividualId(individualId);
 
-        } else if (CasesFor.POA_LITIGANT.toString().equalsIgnoreCase(casesFor.toString())) {
+        } else if (criteria.getCasesFor() != null && CasesFor.POA_LITIGANT.toString().equalsIgnoreCase(criteria.getCasesFor().toString())) {
             criteria.setLitigantId(individualId);
             criteria.setPoaHolderIndividualId(individualId);
-        } else if (CasesFor.ADVOCATE.toString().equalsIgnoreCase(casesFor.toString())) {
-            criteria.setAdvocateId(resolveAdvocateId(requestInfo, individualId));
+        } else if (criteria.getCasesFor() != null && CasesFor.ADVOCATE.toString().equalsIgnoreCase(criteria.getCasesFor().toString())) {
+            List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
+            if (!advocates.isEmpty()) {
+                String advocateId = advocates.get(0).getId().toString();
+                criteria.setAdvocateId(advocateId);
+            }
         }
     }
 
@@ -703,29 +691,26 @@ public class CaseRegistrationEnrichment {
         boolean isAdvocate = roles.stream()
                 .anyMatch(role -> ADVOCATE_ROLE.equals(role.getCode()));
 
-        if (criteria.getCasesFor() == null) {
-            criteria.setCasesFor(CasesFor.ALL);
-        }
-
-        // Always resolve identifiers from the requesting user, never trust client supplied values
-        criteria.setAdvocateId(null);
-        criteria.setLitigantId(null);
-        criteria.setPoaHolderIndividualId(null);
-
-        CasesFor casesFor = criteria.getCasesFor();
-
-        if (CasesFor.ALL.toString().equalsIgnoreCase(casesFor.toString())) {
+        if (criteria.getCasesFor() != null && CasesFor.ALL.toString().equalsIgnoreCase(criteria.getCasesFor().toString())) {
             if (isAdvocate) {
-                criteria.setAdvocateId(resolveAdvocateId(requestInfo, individualId));
+                List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
+                if (!advocates.isEmpty()) {
+                    String advocateId = advocates.get(0).getId().toString();
+                    criteria.setAdvocateId(advocateId);
+                }
             }
             criteria.setLitigantId(individualId);
             criteria.setPoaHolderIndividualId(individualId);
 
-        } else if (CasesFor.POA_LITIGANT.toString().equalsIgnoreCase(casesFor.toString())) {
+        } else if (criteria.getCasesFor() != null && CasesFor.POA_LITIGANT.toString().equalsIgnoreCase(criteria.getCasesFor().toString())) {
             criteria.setLitigantId(individualId);
             criteria.setPoaHolderIndividualId(individualId);
-        } else if (CasesFor.ADVOCATE.toString().equalsIgnoreCase(casesFor.toString())) {
-            criteria.setAdvocateId(resolveAdvocateId(requestInfo, individualId));
+        } else if (criteria.getCasesFor() != null && CasesFor.ADVOCATE.toString().equalsIgnoreCase(criteria.getCasesFor().toString())) {
+            List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
+            if (!advocates.isEmpty()) {
+                String advocateId = advocates.get(0).getId().toString();
+                criteria.setAdvocateId(advocateId);
+            }
         }
     }
 

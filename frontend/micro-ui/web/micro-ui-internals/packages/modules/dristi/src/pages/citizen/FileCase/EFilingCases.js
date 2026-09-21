@@ -115,8 +115,8 @@ const selectedArray = [
   "demandNoticeDetails",
   "delayApplications",
   "witnessDetails",
-  "prayerSwornStatement",
   "advocateDetails",
+  "prayerSwornStatement",
   "processCourierService",
 ];
 
