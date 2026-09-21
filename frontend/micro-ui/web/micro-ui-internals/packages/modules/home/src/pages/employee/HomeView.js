@@ -308,7 +308,7 @@ const HomeView = () => {
         ? {
             searchKey: "filingNumber",
             defaultFields: true,
-            litigantId: individualId,
+            casesFor: "ALL",
             ...(courtId && !isScrutiny && { courtId }),
           }
         : { ...(courtId && !isScrutiny && { courtId }) }),
@@ -411,7 +411,7 @@ const HomeView = () => {
       if (selectedSeniorAdvocate?.isSelf) return { memberId: advClerkId, casesFor: "ALL" };
       return { officeAdvocateId: selectedSeniorAdvocate?.id, memberId: advClerkId };
     }
-    return { litigantId: individualId };
+    return { casesFor: "ALL" };
   }, [citizenId, advocateId, advClerkId, individualId, selectedSeniorAdvocate]);
 
   const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseListService(
