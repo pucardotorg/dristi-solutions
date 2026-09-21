@@ -29,8 +29,49 @@ import CustomToast from "../../../components/CustomToast";
 const formatAddress = (addr) => {
   if (!addr) return "";
 
-  return [addr.locality, addr.city, addr.district, addr.state, addr.pincode].filter(Boolean).join(", ");
+  return [addr.doorNo, addr.buildingName, addr.street, addr.locality, addr.city, addr.district, addr.state, addr.pincode].filter(Boolean).join(", ");
 };
+
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+const formatAddedOnDate = (epoch) => {
+  if (!epoch) return "";
+  const date = new Date(Number(epoch));
+  if (isNaN(date.getTime())) return "";
+  return `${date.getDate()} ${MONTHS_SHORT[date.getMonth()]} ${date.getFullYear()}`;
+};
+
+// Teal info bar under the witness dropdown, carrying the witness's address and when they were added.
+const witnessMetaBarStyle = {
+  gridColumn: "1 / 3",
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  padding: "8px 12px",
+  fontSize: "14px",
+  lineHeight: "1.4",
+  flexWrap: "wrap",
+  wordBreak: "break-word",
+  color: "#231F20",
+  backgroundColor: "#ECF7F6",
+  borderLeft: "4px solid #007E7E",
+  width: "max-content",
+};
+
+const witnessMetaLabelStyle = { color: "#77787B" };
+const witnessMetaValueStyle = { color: "#231F20", fontWeight: 700 };
+const witnessMetaSeparatorStyle = { color: "#C4C4C4" };
+
+const WitnessMetaInfoIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M8.00008 0.666504C3.94999 0.666504 0.666748 3.94975 0.666748 7.99984C0.666748 12.0499 3.94999 15.3332 8.00008 15.3332C12.0502 15.3332 15.3334 12.0499 15.3334 7.99984C15.3334 3.94975 12.0502 0.666504 8.00008 0.666504ZM8.00008 4.6665C7.63189 4.6665 7.33342 4.96498 7.33342 5.33317C7.33342 5.70136 7.63189 5.99984 8.00008 5.99984H8.00675C8.37494 5.99984 8.67342 5.70136 8.67342 5.33317C8.67342 4.96498 8.37494 4.6665 8.00675 4.6665H8.00008ZM8.66675 7.99984C8.66675 7.63165 8.36827 7.33317 8.00008 7.33317C7.63189 7.33317 7.33342 7.63165 7.33342 7.99984V10.6665C7.33342 11.0347 7.63189 11.3332 8.00008 11.3332C8.36827 11.3332 8.66675 11.0347 8.66675 10.6665V7.99984Z"
+      fill="#007E7E"
+    />
+  </svg>
+);
 
 const formatAddressFromIndividualData = (addr) => {
   if (!addr) return "";
@@ -391,6 +432,7 @@ const WitnessDrawerV2 = ({
         const address = formatAddress(witness?.addressDetails?.[0]?.addressDetails);
         const tag = witness?.witnessTag;
         const uniqueId = witness?.uniqueId || witness?.uuid;
+        const createdTime = witness?.createdTime;
 
         return {
           name: getFormattedName(witness?.firstName, witness?.middleName, witness?.lastName, witness?.witnessDesignation, "(Witness)"),
@@ -400,6 +442,7 @@ const WitnessDrawerV2 = ({
           designation: witness?.witnessDesignation || "",
           address,
           uniqueId,
+          createdTime,
           partyType: "witness",
           mobileNumbers: mobileNumber?.length > 0 ? mobileNumber : [],
           sourceName: getFormattedName(witness?.firstName, witness?.middleName, witness?.lastName, witness?.witnessDesignation),
@@ -454,10 +497,17 @@ const WitnessDrawerV2 = ({
 
   useEffect(() => {
     const partiesOption =
-      allParties?.map((party) => ({
-        label: party?.name,
-        value: party?.uuid || party?.uniqueId, // For witnesses, uuid is not available so we use uniqueId.
-      })) || [];
+      allParties?.map((party) => {
+        // Witnesses sharing a designation are told apart by the tail of their uniqueId, appended to the name.
+        const shortId = party?.partyType === "witness" && party?.uniqueId ? String(party.uniqueId).slice(-6) : "";
+        return {
+          label: shortId ? `${party?.name} - ${shortId}` : party?.name,
+          value: party?.uuid || party?.uniqueId, // For witnesses, uuid is not available so we use uniqueId.
+          partyType: party?.partyType || "",
+          address: party?.address || "",
+          createdTime: party?.createdTime || "",
+        };
+      }) || [];
 
     setOptions(partiesOption);
   }, [caseDetails, allParties, activeTabs.length]);
@@ -571,6 +621,22 @@ const WitnessDrawerV2 = ({
   const IsSelectedWitness = useMemo(() => {
     return !isEmpty(selectedWitness);
   }, [selectedWitness]);
+
+  const selectedParty = useMemo(() => options?.find((opt) => opt?.value === selectedWitness?.value), [options, selectedWitness]);
+
+  // The info bar is only meaningful for witnesses, who are the ones that share a designation.
+  const isWitnessPartySelected = useMemo(() => selectedParty?.partyType === "witness", [selectedParty]);
+
+  // Address of the selected witness, shown in the bar under the dropdown.
+  const selectedWitnessAddress = useMemo(() => {
+    if (!isWitnessPartySelected) return "";
+    return selectedParty?.address || "";
+  }, [isWitnessPartySelected, selectedParty]);
+
+  const selectedWitnessAddedOn = useMemo(() => {
+    if (!isWitnessPartySelected) return "";
+    return formatAddedOnDate(selectedParty?.createdTime);
+  }, [isWitnessPartySelected, selectedParty]);
 
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
@@ -1316,6 +1382,19 @@ const WitnessDrawerV2 = ({
                     style={{ width: "100%", height: "40px", fontSize: "16px", marginBottom: "0px" }}
                   />
                 </LabelFieldPair>
+                {isWitnessPartySelected && (selectedWitnessAddress || selectedWitnessAddedOn) && (
+                  <div className="witness-meta-bar" style={witnessMetaBarStyle}>
+                    <WitnessMetaInfoIcon />
+                    {selectedWitnessAddress && <span>{selectedWitnessAddress}</span>}
+                    {selectedWitnessAddress && selectedWitnessAddedOn && <span style={witnessMetaSeparatorStyle}>|</span>}
+                    {selectedWitnessAddedOn && (
+                      <span>
+                        <span style={witnessMetaLabelStyle}>{t("WITNESS_ADDED_ON", "Added")} </span>
+                        <span style={witnessMetaValueStyle}>{selectedWitnessAddedOn}</span>
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div style={{ height: "19px", color: "#007E7E", marginTop: "2px" }}>
