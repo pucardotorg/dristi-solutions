@@ -1513,8 +1513,12 @@ export const UICustomizations = {
     },
     additionalCustomizations: (row, key, column, value, t) => {
       switch (key) {
-        case "PARTY_NAME":
-          return removeInvalidNameParts(value) || "";
+        case "PARTY_NAME": {
+          const partyName = removeInvalidNameParts(value) || "";
+          // Witnesses sharing a designation are told apart by the tail of their uniqueId.
+          const witnessShortId = row?.partyType === "witness" && row?.uniqueId ? String(row.uniqueId).slice(-6) : "";
+          return witnessShortId ? `${partyName} - ${witnessShortId}` : partyName;
+        }
 
         case "ASSOCIATED_WITH": {
           let associatedWith =
