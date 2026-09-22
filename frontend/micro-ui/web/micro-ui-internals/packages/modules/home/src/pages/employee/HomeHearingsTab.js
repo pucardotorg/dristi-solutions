@@ -717,7 +717,7 @@ const HomeHearingsTab = ({
   );
 
   if (isEpostUser || isCitizen) {
-    history.push(homePath);s
+    history.push(homePath);
   }
 
   return (

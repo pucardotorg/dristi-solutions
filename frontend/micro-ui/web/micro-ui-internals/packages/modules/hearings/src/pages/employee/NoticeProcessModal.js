@@ -89,7 +89,6 @@ function groupOrdersByParty(filteredOrders) {
     } else {
       const party = order?.additionalDetails?.formdata?.[formDataKeyMap[order?.orderType]]?.party;
       parties = Array.isArray(party) ? party : party ? [party] : [];
-      console.log("parties", order?.orderType, party, order);
     }
 
     if (!Array?.isArray(parties) || parties?.length === 0) return;
@@ -173,8 +172,6 @@ const NoticeProcessModal = ({
   const [hearingDateInfo, setHearingDateInfo] = useState({ originalHearingDate: null, hearingDate: null });
 
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
-
-  console.log("hasPendingTasks", hasPendingTasks);
 
   const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -519,7 +516,6 @@ const NoticeProcessModal = ({
                 setOrderLoading((prev) => !prev);
               }, 0);
               setCurrentHearingNumber(item?.ordersList?.[0]?.scheduledHearingNumber || item?.ordersList?.[0]?.hearingNumber);
-              console.log("item?.ordersList?.[0]", item?.ordersList?.[0]);
               setHasPendingTasks(true);
               setHearingDateInfo({ originalHearingDate: null, hearingDate: null });
             }}
