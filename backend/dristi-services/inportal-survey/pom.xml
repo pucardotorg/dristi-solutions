@@ -1,9 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+<<<<<<<< HEAD:backend/dristi-services/inportal-survey/pom.xml
     <groupId>org.egov</groupId>
     <artifactId>inportal-survey</artifactId>
     <packaging>jar</packaging>
     <name>inportal-survey</name>
+========
+    <groupId>org.pucar</groupId>
+    <artifactId>notification</artifactId>
+    <packaging>jar</packaging>
+    <name>notification</name>
+>>>>>>>> d0040a883c92ac9581530c812fc3bd6178e22ff9:backend/dristi-services/Notification/pom.xml
     <version>1.0.0</version>
     <properties>
     <java.version>25</java.version>
