@@ -52,7 +52,7 @@ public class User {
     private GuardianRelation guardianRelation;
 
     @Pattern(regexp = UserServiceConstants.PATTERN_NAME)
-    @Size(max = 50)
+    @Size(max = 250)
     private String name;
     private Gender gender;
     private String mobileNumber;
