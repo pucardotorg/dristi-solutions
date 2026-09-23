@@ -89,13 +89,6 @@ runs:
       shell: bash
       run: docker login -u "${{ inputs.docker_user }}" -p "${{ inputs.docker_password }}" "${{ inputs.docker_registry }}"
 
-    - name: Build JAR (Spring Boot executable)
-      if: env.language == 'java'
-      shell: bash
-      run: |
-        cd ${{ env.service_source_path }}
-        mvn clean package spring-boot:repackage -DskipTests
-
     - name: export image tag
       id: export-image-tag
       shell: bash
