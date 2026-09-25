@@ -1516,7 +1516,7 @@ export const UICustomizations = {
         case "PARTY_NAME": {
           const partyName = removeInvalidNameParts(value) || "";
           // Witnesses sharing a designation are told apart by the tail of their uniqueId.
-          const witnessShortId = row?.partyType === "witness" && row?.uniqueId ? String(row.uniqueId).slice(-6) : "";
+          const witnessShortId = row?.partyType === "witness" && row?.uniqueId ? `W-${String(row.uniqueId).slice(-6)}` : "";
           return witnessShortId ? `${partyName} - ${witnessShortId}` : partyName;
         }
 
