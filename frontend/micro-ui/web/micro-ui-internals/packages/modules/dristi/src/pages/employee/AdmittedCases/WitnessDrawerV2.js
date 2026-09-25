@@ -499,7 +499,7 @@ const WitnessDrawerV2 = ({
     const partiesOption =
       allParties?.map((party) => {
         // Witnesses sharing a designation are told apart by the tail of their uniqueId, appended to the name.
-        const shortId = party?.partyType === "witness" && party?.uniqueId ? String(party.uniqueId).slice(-6) : "";
+        const shortId = party?.partyType === "witness" && party?.uniqueId ? `W-${String(party.uniqueId).slice(-6)}` : "";
         return {
           label: shortId ? `${party?.name} - ${shortId}` : party?.name,
           value: party?.uuid || party?.uniqueId, // For witnesses, uuid is not available so we use uniqueId.
