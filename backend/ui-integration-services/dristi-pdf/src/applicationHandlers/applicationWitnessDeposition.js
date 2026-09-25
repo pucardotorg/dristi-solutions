@@ -109,14 +109,20 @@ const applicationWitnessDeposition = async (
         const addresses = witness?.data?.addressDetails?.map((address) => {
           return getStringAddressDetails(address?.addressDetails);
         });
+        const name = [
+          witness?.data?.firstName,
+          witness?.data?.middleName,
+          witness?.data?.lastName,
+        ]
+          ?.filter(Boolean)
+          ?.join(" ");
+        // Witnesses sharing a designation are told apart by the tail of their uniqueId.
+        const uniqueId = witness?.uniqueId || witness?.data?.uniqueId;
+        const witnessShortId = uniqueId
+          ? `W-${String(uniqueId).slice(-6)}`
+          : "";
         return {
-          witnessName: [
-            witness?.data?.firstName,
-            witness?.data?.middleName,
-            witness?.data?.lastName,
-          ]
-            ?.filter(Boolean)
-            ?.join(" "),
+          witnessName: witnessShortId ? `${name} - ${witnessShortId}` : name,
           witnessDesignation: witness?.data?.witnessDesignation || "",
           witnessAddresses: addresses || [],
           witnessAdditionalComments:
