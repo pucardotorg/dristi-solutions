@@ -46,6 +46,8 @@ function CustomCalendarV2({ config, t, handleSelect, onCalendarConfirm, selected
     },
   });
 
+  const startOfToday = useMemo(() => new Date().setHours(0, 0, 0, 0), []);
+
   const hearingDetails = useMemo(() => hearingResponse?.HearingList || null, [hearingResponse]);
   // useEffect(() => {
   //   const fetchData = async () => {
@@ -96,7 +98,9 @@ function CustomCalendarV2({ config, t, handleSelect, onCalendarConfirm, selected
     const formattedForCheck = formattedDate.replace(/\//g, "-");
     const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
     const isDateFromCurrentMonth = date.getMonth() === currentMonth.getMonth() && date.getFullYear() === currentMonth.getFullYear();
-    const isPastDate = date.getDate() < new Date().getDate();
+    // Compare whole dates, not just the day of the month - otherwise every day numbered lower than
+    // today's is treated as past in other months, and .past-date strips its non-working-day circle.
+    const isPastDate = new Date(date).setHours(0, 0, 0, 0) < startOfToday;
     const hearingCount = hearingCounts[dateStr]?.noOfHearing || 0;
     const dayStatus = hearingCounts[dateStr]?.dayStatus || "Slot Available";
     const isSelectedDate =
