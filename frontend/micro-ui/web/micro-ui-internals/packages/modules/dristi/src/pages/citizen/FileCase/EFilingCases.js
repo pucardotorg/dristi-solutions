@@ -2743,7 +2743,7 @@ function EFilingCases({ path }) {
 
   const onSaveDraft = (removeDateOfService = false) => {
     let newFormData = structuredClone(formdata);
-    if (removeDateOfService) {
+    if (removeDateOfService === true) {
       newFormData = formdata.map((item, index) =>
         index === serviceOfDemandNoticeModal?.index
           ? {
