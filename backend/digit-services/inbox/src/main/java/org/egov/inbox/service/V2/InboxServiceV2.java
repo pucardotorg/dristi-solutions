@@ -508,22 +508,9 @@ public class InboxServiceV2 {
                 .build();
 
         return InboxRequest.builder()
-                .RequestInfo(searchRequest.getRequestInfo())
+                .requestInfo(searchRequest.getRequestInfo())
                 .inbox(inboxSearchCriteria)
                 .build();
-        InboxResponse inboxResponse = getIndexResponse(inboxRequest);
-
-        if (moduleName != null && moduleName.equalsIgnoreCase(config.getAdvocateModuleName())) {
-            inboxResponse = getInboxResponse(inboxRequest);
-        }
-        if (moduleName != null && moduleName.equalsIgnoreCase(config.getBillingServiceModuleName())) {
-            inboxResponse = getIndexResponse(inboxRequest);
-        }
-
-        if (criteria.getIsOnlyCountRequired()) {
-            criteria.setCount(inboxResponse.getTotalCount());
-            setter.accept(criteria);
-        }
     }
 
     private void populateActionCategoryData(SearchRequest searchRequest,
@@ -745,7 +732,7 @@ public class InboxServiceV2 {
         List<CompletableFuture<InboxCountItem>> itemFutures = inboxList.stream()
                 .map(criteria -> CompletableFuture.supplyAsync(() -> {
                     InboxRequest inboxRequest = InboxRequest.builder()
-                            .RequestInfo(requestInfo)
+                            .requestInfo(requestInfo)
                             .inbox(criteria)
                             .build();
                     InboxQueryConfiguration inboxQueryConfiguration = mdmsUtil.getConfigFromMDMS(
