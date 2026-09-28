@@ -86,6 +86,9 @@ function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors, clea
                 disableBorderColor="#D6D5D4"
                 disableBackgroundColor="white"
                 isShowHearing={input?.isShowHearing}
+                // Citizens only suggest dates for the court to pick from, so they are free to
+                // propose a court non-working day without being warned (dristi#5854).
+                warnOnNonWorkingDay={false}
               />
             </div>
 

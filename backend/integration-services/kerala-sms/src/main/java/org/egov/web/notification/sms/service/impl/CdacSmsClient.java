@@ -141,7 +141,6 @@ public class CdacSmsClient {
         String templateId = sms.getTemplateId();
 
         String responseString = "";
-        SSLConnectionSocketFactory scf;
 
         String encryptedPassword = "";
 

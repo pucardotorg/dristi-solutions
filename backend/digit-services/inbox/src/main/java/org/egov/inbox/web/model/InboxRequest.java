@@ -3,7 +3,6 @@ package org.egov.inbox.web.model;
 import javax.validation.Valid;
 
 import org.egov.common.contract.request.RequestInfo;
-import org.springframework.validation.annotation.Validated;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -20,7 +19,7 @@ import lombok.Setter;;
 @Setter
 public class InboxRequest   {
   @JsonProperty("RequestInfo")
-  private RequestInfo RequestInfo;
+  private RequestInfo requestInfo;
 
   @Valid
   @JsonProperty("inbox")

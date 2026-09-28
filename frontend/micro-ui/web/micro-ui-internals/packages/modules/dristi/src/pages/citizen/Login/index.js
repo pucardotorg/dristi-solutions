@@ -93,10 +93,6 @@ const Login = ({ stateCode }) => {
   const finishLogin = () => {
     localStorage.setItem("citizen.userRequestObject", user);
     Digit.UserService.setUser(user);
-    if (params.isRememberMe) {
-      localStorage.setItem("refresh-token", user?.refresh_token);
-    }
-    localStorage.setItem("citizen.refresh-token", user?.refresh_token);
     setCitizenDetail(user?.info, user?.access_token, stateCode);
     const redirectPath = location.state?.from || DEFAULT_REDIRECT_URL;
     if (!Digit.ULBService.getCitizenCurrentTenant(true)) {
@@ -230,7 +226,8 @@ const Login = ({ stateCode }) => {
         userType,
         authType: "PASSWORD",
       };
-      const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
+      // refresh_token is discarded here so it is never persisted by setUser
+      const { ResponseInfo, refresh_token, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
 
       if (window?.globalConfigs?.getConfig("ENABLE_SINGLEINSTANCE")) {
         info.tenantId = Digit.ULBService.getStateId();
@@ -301,7 +298,8 @@ const Login = ({ stateCode }) => {
           userType,
           authType: "OTP",
         };
-        const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
+        // refresh_token is discarded here so it is never persisted by setUser
+        const { ResponseInfo, refresh_token, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
 
         if (location.state?.role) {
           const roleInfo = info.roles.find((userRole) => userRole.code === location.state.role);
@@ -328,7 +326,8 @@ const Login = ({ stateCode }) => {
           tenantId: stateCode,
         };
 
-        const { ResponseInfo, UserRequest: info, ...tokens } = await Digit.UserService.registerUser(requestData, stateCode);
+        // refresh_token is discarded here so it is never persisted by setUser
+        const { ResponseInfo, refresh_token, UserRequest: info, ...tokens } = await Digit.UserService.registerUser(requestData, stateCode);
 
         if (window?.globalConfigs?.getConfig("ENABLE_SINGLEINSTANCE")) {
           info.tenantId = Digit.ULBService.getStateId();

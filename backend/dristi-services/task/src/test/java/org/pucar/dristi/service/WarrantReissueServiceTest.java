@@ -1,10 +1,12 @@
 package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.egov.common.contract.request.RequestInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
@@ -17,15 +19,21 @@ import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.util.OrderUtil;
 import org.pucar.dristi.util.PendingTaskUtil;
 import org.pucar.dristi.web.models.Task;
+import org.pucar.dristi.web.models.TaskRequest;
 import org.pucar.dristi.web.models.order.Order;
 
+import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -193,5 +201,81 @@ class WarrantReissueServiceTest {
         Task warrant = new Task();
         warrant.setTaskNumber("W-3");
         assertNull(service.buildWarrantCoverageKey(warrant));
+    }
+
+    // ---- issue #5930: auto-reissue applies only to the iCoPS channel ----
+
+    private static final Long PREVIOUS_HEARING_DATE = 1_000_000_000_000L;
+    private static final Long NEW_HEARING_DATE = 2_000_000_000_000L;
+
+    // A stored warrant task tagged to PREVIOUS_HEARING_DATE, on the given delivery channel and status.
+    private Task warrantOnChannel(String taskNumber, String channelCode, String status) {
+        Task task = new Task();
+        task.setId(UUID.randomUUID());
+        task.setTaskNumber(taskNumber);
+        task.setTaskType("WARRANT");
+        task.setStatus(status);
+        ObjectNode taskDetails = objectMapper.createObjectNode();
+        ObjectNode deliveryChannels = objectMapper.createObjectNode();
+        deliveryChannels.put("channelCode", channelCode);
+        deliveryChannels.put("channelName", channelCode);
+        taskDetails.set("deliveryChannels", deliveryChannels);
+        ObjectNode caseDetails = objectMapper.createObjectNode();
+        caseDetails.put("hearingDate", PREVIOUS_HEARING_DATE);
+        taskDetails.set("caseDetails", caseDetails);
+        task.setTaskDetails(taskDetails);
+        return task;
+    }
+
+    @Test
+    void handleHearingRescheduled_reissuesIcopsWarrantInPlace() {
+        when(userService.createInternalMicroserviceRequestInfo()).thenReturn(new RequestInfo());
+        when(taskService.searchTask(any()))
+                .thenReturn(List.of(warrantOnChannel("W-ICOPS", "POLICE", "ISSUE_WARRANT")));
+
+        service.handleHearingRescheduled(new RequestInfo(), "FILING-1", NEW_HEARING_DATE);
+
+        ArgumentCaptor<TaskRequest> captor = ArgumentCaptor.forClass(TaskRequest.class);
+        verify(taskService, times(1)).updateTask(captor.capture());
+        assertEquals("WARRANT_REISSUE_ICOPS", captor.getValue().getTask().getWorkflow().getAction());
+    }
+
+    @Test
+    void handleHearingRescheduled_leavesRpadWarrantUntouched() {
+        when(userService.createInternalMicroserviceRequestInfo()).thenReturn(new RequestInfo());
+        when(taskService.searchTask(any()))
+                .thenReturn(List.of(warrantOnChannel("W-RPAD", "RPAD", "ISSUE_WARRANT")));
+
+        service.handleHearingRescheduled(new RequestInfo(), "FILING-1", NEW_HEARING_DATE);
+
+        // RPAD warrants are not auto-reissued, so the task is never updated.
+        verify(taskService, never()).updateTask(any());
+    }
+
+    @Test
+    void handleHearingCompletedAndNewHearingScheduled_reissuesIcopsWarrant() {
+        when(userService.createInternalMicroserviceRequestInfo()).thenReturn(new RequestInfo());
+        when(taskService.searchTask(any()))
+                .thenReturn(List.of(warrantOnChannel("W-ICOPS", "POLICE", "ISSUE_WARRANT")));
+        when(taskService.createTask(any())).thenReturn(new Task());
+
+        service.handleHearingCompletedAndNewHearingScheduled(new RequestInfo(), "FILING-1", NEW_HEARING_DATE, null);
+
+        // The old iCoPS warrant is terminated (update) and a replacement is created.
+        verify(taskService, times(1)).updateTask(any());
+        verify(taskService, times(1)).createTask(any());
+    }
+
+    @Test
+    void handleHearingCompletedAndNewHearingScheduled_leavesRpadWarrantUntouched() {
+        when(userService.createInternalMicroserviceRequestInfo()).thenReturn(new RequestInfo());
+        when(taskService.searchTask(any()))
+                .thenReturn(List.of(warrantOnChannel("W-RPAD", "RPAD", "ISSUE_WARRANT")));
+
+        service.handleHearingCompletedAndNewHearingScheduled(new RequestInfo(), "FILING-1", NEW_HEARING_DATE, null);
+
+        // RPAD warrants are not auto-reissued: neither terminated nor replaced.
+        verify(taskService, never()).updateTask(any());
+        verify(taskService, never()).createTask(any());
     }
 }

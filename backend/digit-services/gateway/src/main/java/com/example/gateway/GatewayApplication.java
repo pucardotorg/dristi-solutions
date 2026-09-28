@@ -9,7 +9,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
@@ -18,7 +17,8 @@ import java.util.List;
 
 @SpringBootApplication
 @RestController
-@PropertySource({"${spring.routes.filepath}"})
+// Routes from ${spring.routes.filepath} are loaded and prefix-remapped for
+// Spring Cloud 2025.0.0 by RoutesPropertySourceEnvironmentPostProcessor.
 //@Import({TracerConfiguration.class, MultiStateInstanceUtil.class})
 public class GatewayApplication {
 

@@ -3,16 +3,19 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { useGetAccessToken } from "../../../hooks/useGetAccessToken";
 import { SuccessIcon } from "../../../icons/svgIndex";
 import JoinCaseHome from "../../../../../cases/src/pages/employee/JoinCaseHome";
+import SetPasswordPromptModal from "../Login/SetPasswordPromptModal";
+import useSetPasswordPrompt from "../../../hooks/useSetPasswordPrompt";
 
 const Response = ({ refetch, setHideBack }) => {
   const { t } = useTranslation();
   const location = useLocation();
   const history = useHistory();
 
-  useGetAccessToken("citizen.refresh-token", true);
+  // A litigant is created without any approval step and lands here right after registration, so the
+  // "set a password" prompt is surfaced over this screen.
+  const { showPasswordPrompt, onSetPassword, onRemindLater, onDontRemindAgain } = useSetPasswordPrompt();
 
   useEffect(() => {
     setHideBack(true);
@@ -23,6 +26,9 @@ const Response = ({ refetch, setHideBack }) => {
 
   return (
     <React.Fragment>
+      {showPasswordPrompt && location?.state?.response === "success" && (
+        <SetPasswordPromptModal t={t} onSetPassword={onSetPassword} onRemindLater={onRemindLater} onDontRemindAgain={onDontRemindAgain} />
+      )}
       {location?.state?.response === "success" ? (
         <div className="response-main">
           <SuccessIcon />

@@ -59,8 +59,9 @@ const prayerAndSwornFormConfig = [
         key: "synopsis",
         type: "component",
         label: "CS_SYNOPSIS_HEADER",
-        component: "SelectCustomFormatterTextArea",
+        component: "SelectSynopsisTemplateTextArea",
         populators: {
+          generateButtonLabel: "SYNOPSIS_GENERATE_TEMPLATE",
           inputs: [
             {
               name: "text",

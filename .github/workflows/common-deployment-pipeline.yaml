@@ -73,7 +73,7 @@ jobs:
           echo "Set the branch for current job as $BRANCH"
 
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: github.event_name != 'workflow_dispatch'
         with:
           ref: ${{ env.BRANCH }}
@@ -219,7 +219,12 @@ jobs:
 
       - name: Deployment Summary
         run: |
-          echo "Docker image build: docker.io/venkatramireddyb/${{ matrix.service }}:${{ steps.docker_build.outputs.image_tag }} and deploying to ${{ needs.check-diff.outputs.deployment_env }}"
+          IST_TIME=$(TZ="Asia/Kolkata" date '+%Y-%m-%d %H:%M:%S IST')
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Image Tag | Environment | Time |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| ${{ matrix.service }} | ${{ steps.docker_build.outputs.image_tag }} | ${{ needs.check-diff.outputs.deployment_env }} | $IST_TIME |" >> $GITHUB_STEP_SUMMARY
 
       - name: Deploy to Kubernetes
         if: needs.check-diff.outputs.deployment_env != 'sdc-uat'

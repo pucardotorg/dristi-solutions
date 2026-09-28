@@ -29,6 +29,7 @@ import WorkflowTimeline from "../../../components/WorkflowTimeline";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
+  CREATE_DCA_SUBMISSION: 3 * 24 * 3600 * 1000,
 };
 
 const casePrimaryActions = [
@@ -655,6 +656,7 @@ function CaseFileAdmission({ t, path }) {
               caseId: caseDetails?.id,
               caseTitle: caseDetails?.caseTitle,
               isCompleted: false,
+              stateSla: todayDate + stateSla.CREATE_DCA_SUBMISSION,
               additionalDetails: {
                 litigants: [caseDetails?.litigants?.find((litigant) => litigant?.partyType === "complainant.primary")?.individualId],
               },

@@ -120,7 +120,9 @@ public class TaskUtil {
         }
 
         WorkflowObject workflowObject = new WorkflowObject();
+        // Proclamation and attachment are always fee-free irrespective of case stage (#5906)
         if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel) || LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus()) ||
+                PROCLAMATION.equalsIgnoreCase(order.getOrderType()) || ATTACHMENT.equalsIgnoreCase(order.getOrderType()) ||
                 isCourtWitness(order.getOrderType(), objectMapper.convertValue(taskDetails, JsonNode.class))) {
             workflowObject.setAction("CREATE_WITH_OUT_PAYMENT");
             // There is no pending collection when payment is not made

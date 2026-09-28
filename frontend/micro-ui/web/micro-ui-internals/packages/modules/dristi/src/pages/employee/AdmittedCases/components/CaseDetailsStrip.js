@@ -16,32 +16,55 @@ const delayCondonationTextStyle = {
   color: "#231F20",
 };
 
+const highlightedNumberStyle = {
+  fontWeight: 700,
+  color: "black",
+};
+
+// Only one case number is highlighted in the strip. Highest priority available wins:
+// LPR -> court case number (ST) -> CMP -> filing number.
+const getHighlightedNumberType = (caseDetails) => {
+  if (isLPRCase(caseDetails) && caseDetails?.lprNumber) return "LPR";
+  if (caseDetails?.courtCaseNumber) return "COURT_CASE";
+  if (caseDetails?.cmpNumber) return "CMP";
+  return "FILING";
+};
+
 const CaseDetailsStrip = ({ t, caseDetails, advocateName, delayCondonationData, isDelayApplicationCompleted, isDelayApplicationPending }) => {
+  const highlightedNumberType = getHighlightedNumberType(caseDetails);
   return (
     <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
       <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         {caseDetails?.cmpNumber && (
           <React.Fragment>
-            <div className="sub-details-text">{caseDetails?.cmpNumber}</div>
+            <div className="sub-details-text" style={highlightedNumberType === "CMP" ? highlightedNumberStyle : {}}>
+              {caseDetails?.cmpNumber}
+            </div>
             <hr className="vertical-line" />
           </React.Fragment>
         )}
         {caseDetails?.courtCaseNumber && caseDetails?.courtCaseNumber?.includes("ST/") && (
           <React.Fragment>
-            <div className="sub-details-text">{caseDetails?.courtCaseNumber}</div>
+            <div className="sub-details-text" style={highlightedNumberType === "COURT_CASE" ? highlightedNumberStyle : {}}>
+              {caseDetails?.courtCaseNumber}
+            </div>
             <hr className="vertical-line" />
           </React.Fragment>
         )}
         {isLPRCase(caseDetails) ? (
           <React.Fragment>
-            <div className="sub-details-text">{caseDetails?.lprNumber}</div>
+            <div className="sub-details-text" style={highlightedNumberType === "LPR" ? highlightedNumberStyle : {}}>
+              {caseDetails?.lprNumber}
+            </div>
             <hr className="vertical-line" />
           </React.Fragment>
         ) : (
           caseDetails?.courtCaseNumber &&
           !caseDetails?.courtCaseNumber?.includes("ST/") && (
             <React.Fragment>
-              <div className="sub-details-text">{caseDetails?.courtCaseNumber}</div>
+              <div className="sub-details-text" style={highlightedNumberType === "COURT_CASE" ? highlightedNumberStyle : {}}>
+                {caseDetails?.courtCaseNumber}
+              </div>
               <hr className="vertical-line" />
             </React.Fragment>
           )
@@ -49,7 +72,10 @@ const CaseDetailsStrip = ({ t, caseDetails, advocateName, delayCondonationData, 
         {(caseDetails?.courtCaseNumber || caseDetails?.cmpNumber) && (
           <React.Fragment>
             {" "}
-            <div className="sub-details-text">{t(caseDetails?.filingNumber)}</div> <hr className="vertical-line" />
+            <div className="sub-details-text" style={highlightedNumberType === "FILING" ? highlightedNumberStyle : {}}>
+              {t(caseDetails?.filingNumber)}
+            </div>{" "}
+            <hr className="vertical-line" />
           </React.Fragment>
         )}
         <div className="sub-details-text">Stage: {isLPRCase(caseDetails) ? t("CS_LPR") : t(caseDetails?.stage)}</div>

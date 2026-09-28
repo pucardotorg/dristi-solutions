@@ -1,62 +1,55 @@
 package org.pucar.dristi.service;
 
-import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.PathNotFoundException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
-import org.pucar.dristi.repository.ElasticSearchRepository;
-import org.pucar.dristi.util.jsonmapper.*;
+import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.function.Function;
+import java.util.Map;
 
-import static org.pucar.dristi.config.ServiceConstants.*;
-
+/**
+ * Assembles the "case file" (case + hearings + witnesses + orders/tasks + applications + evidence)
+ * for a filing number.
+ *
+ * <p>Historically each of these was fetched by querying an Elasticsearch DB-mirror index. Those
+ * indexes are eventually consistent and had to be kept alive purely for these exact-key lookups.
+ * This service now calls each owning domain service's search API directly, so the data is always
+ * consistent with PostgreSQL and the 7 mirror indexes are no longer required by this path.
+ */
 @Service
 @Slf4j
 public class CaseManagerService {
 
-	private final ElasticSearchRepository esRepository;
 	private final Configuration configuration;
-	private final CourtCaseMapper courtCaseMapper;
-	private final HearingMapper hearingMapper;
-	private final WitnessMapper witnessMapper;
-	private final OrderMapper orderMapper;
-	private final TaskMapper taskMapper;
-	private final ApplicationMapper applicationMapper;
-	private final ArtifactMapper artifactMapper;
+	private final ServiceRequestRepository serviceRequestRepository;
+	private final ObjectMapper objectMapper;
 
 	@Autowired
-	public CaseManagerService(ElasticSearchRepository esRepository, Configuration configuration,
-							  CourtCaseMapper courtCaseMapper, HearingMapper hearingMapper,
-							  WitnessMapper witnessMapper, OrderMapper orderMapper,
-							  TaskMapper taskMapper, ApplicationMapper applicationMapper,
-							  ArtifactMapper artifactMapper) {
-		this.esRepository = esRepository;
+	public CaseManagerService(Configuration configuration,
+							  ServiceRequestRepository serviceRequestRepository,
+							  ObjectMapper objectMapper) {
 		this.configuration = configuration;
-		this.courtCaseMapper = courtCaseMapper;
-		this.hearingMapper = hearingMapper;
-		this.witnessMapper = witnessMapper;
-		this.orderMapper = orderMapper;
-		this.taskMapper = taskMapper;
-		this.applicationMapper = applicationMapper;
-		this.artifactMapper = artifactMapper;
+		this.serviceRequestRepository = serviceRequestRepository;
+		this.objectMapper = objectMapper;
 	}
 
 	public List<CaseFile> getCaseFiles(CaseRequest caseRequest) {
 		List<CaseFile> caseFileList = new ArrayList<>();
 		String filingNumber = caseRequest.getFilingNumber();
+		RequestInfo requestInfo = caseRequest.getRequestInfo();
 
 		try {
-			List<CourtCase> courtCaseList = getCases(filingNumber);
+			List<CourtCase> courtCaseList = getCases(requestInfo, filingNumber);
 			if (courtCaseList == null || courtCaseList.isEmpty()) {
 				log.info("No court cases found for filing number: {}", filingNumber);
 				return caseFileList;
@@ -66,11 +59,14 @@ public class CaseManagerService {
 				CaseFile caseFile = new CaseFile();
 				caseFile.setCourtCase(courtCase);
 
-				caseFile.setHearings(getHearings(filingNumber));
-				caseFile.setWitnesses(getWitnesses(filingNumber));
-				caseFile.setOrders(getOrderTasks(filingNumber));
-				caseFile.setApplications(getApplications(filingNumber));
-				caseFile.setEvidence(getArtifacts(filingNumber));
+				String tenantId = courtCase.getTenantId();
+				String caseId = courtCase.getId() != null ? courtCase.getId().toString() : caseRequest.getCaseId();
+
+				caseFile.setHearings(getHearings(requestInfo, filingNumber, tenantId));
+				caseFile.setWitnesses(getWitnesses(requestInfo, caseId));
+				caseFile.setOrders(getOrderTasks(requestInfo, filingNumber, tenantId));
+				caseFile.setApplications(getApplications(requestInfo, filingNumber, tenantId));
+				caseFile.setEvidence(getArtifacts(requestInfo, filingNumber, tenantId));
 
 				caseFileList.add(caseFile);
 			}
@@ -83,55 +79,92 @@ public class CaseManagerService {
 		return caseFileList;
 	}
 
-	public <T> List<T> retrieveDocuments(String searchKeyValue, String indexName, String searchKeyPath, String sortKeyPath, String sortOrder, Function<JSONObject, T> converter, String errorCode) {
+	public List<CourtCase> getCases(RequestInfo requestInfo, String filingNumber) {
 		try {
-			List<T> documentList = new ArrayList<>();
+			CaseCriteria criteria = new CaseCriteria();
+			criteria.setFilingNumber(filingNumber);
+			criteria.setDefaultFields(false);
 
-			log.info("Retrieving documents from index: {} with search key: {}", indexName, searchKeyValue);
-			String uri = configuration.getEsHostUrl() + indexName + configuration.getSearchPath();
-			String request = String.format(
-					ES_TERM_QUERY,
-					searchKeyPath, searchKeyValue, sortKeyPath, sortOrder
-			);
-			log.debug("Elasticsearch request: {}", request);
-			String response = esRepository.fetchDocuments(uri, request);
-			log.debug("Elasticsearch response: {}", response);
+			CaseSearchRequest request = new CaseSearchRequest();
+			request.setRequestInfo(requestInfo);
+			request.setCriteria(new ArrayList<>(List.of(criteria)));
+			if (requestInfo != null && requestInfo.getUserInfo() != null) {
+				request.setTenantId(requestInfo.getUserInfo().getTenantId());
+			}
 
-			JSONArray jsonArray = constructJsonArray(response, ES_HITS_PATH);
-			for (int i = 0; i < jsonArray.length(); i++) {
-				if (jsonArray.get(i) != null) {
-					JSONObject jsonObject = jsonArray.getJSONObject(i);
-					T document = converter.apply(jsonObject);
-					documentList.add(document);
+			StringBuilder uri = new StringBuilder(configuration.getCaseHost()).append(configuration.getCaseSearchUrl());
+			Object response = serviceRequestRepository.fetchResult(uri, request);
+
+			List<CourtCase> courtCases = new ArrayList<>();
+			Map<String, Object> responseMap = objectMapper.convertValue(response, new TypeReference<Map<String, Object>>() {});
+			Object criteriaListObj = responseMap.get("criteria");
+			if (!(criteriaListObj instanceof List) || ((List<?>) criteriaListObj).isEmpty()) {
+				return courtCases;
+			}
+			@SuppressWarnings("unchecked")
+			Map<String, Object> firstCriteria = (Map<String, Object>) ((List<?>) criteriaListObj).get(0);
+			Object responseList = firstCriteria.get("responseList");
+			if (responseList instanceof List) {
+				for (Object item : (List<?>) responseList) {
+					courtCases.add(objectMapper.convertValue(item, CourtCase.class));
 				}
 			}
-			return documentList;
+			return courtCases;
 		} catch (CustomException e) {
 			throw e;
 		} catch (Exception e) {
-			log.error("Error retrieving documents using: {}", searchKeyValue, e);
-			throw new CustomException(errorCode, "Error retrieving documents:" + e.getMessage());
+			log.error("Error retrieving cases for filing number: {}", filingNumber, e);
+			throw new CustomException("COURT_CASE_ERROR", "Error retrieving cases:" + e.getMessage());
 		}
 	}
 
-	public List<CourtCase> getCases(String filingNumber) {
-		return retrieveDocuments(filingNumber, configuration.getCaseIndex(), CASE_BASE_PATH + FILING_NUMBER, CASE_BASE_PATH + CREATED_TIME, ORDER_ASC, courtCaseMapper::getCourtCase, "COURT_CASE_ERROR");
+	public List<Hearing> getHearings(RequestInfo requestInfo, String filingNumber, String tenantId) {
+		try {
+			Map<String, Object> criteria = new LinkedHashMap<>();
+			criteria.put("filingNumber", filingNumber);
+			if (tenantId != null) criteria.put("tenantId", tenantId);
+
+			StringBuilder uri = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingSearchUrl());
+			Object response = serviceRequestRepository.fetchResult(uri, buildCriteriaRequest(requestInfo, criteria));
+			return extractList(response, "HearingList", Hearing.class);
+		} catch (CustomException e) {
+			throw e;
+		} catch (Exception e) {
+			log.error("Error retrieving hearings for filing number: {}", filingNumber, e);
+			throw new CustomException("HEARING_ERROR", "Error retrieving hearings:" + e.getMessage());
+		}
 	}
 
-	public List<Hearing> getHearings(String filingNumber) {
-		return retrieveDocuments(filingNumber, configuration.getHearingIndex(), HEARING_BASE_PATH + FILING_NUMBER, CREATED_TIME_ABSOLUTE, ORDER_ASC, hearingMapper::getHearing, "HEARING_ERROR");
+	public List<Witness> getWitnesses(RequestInfo requestInfo, String caseId) {
+		try {
+			if (caseId == null) {
+				return new ArrayList<>();
+			}
+			Map<String, Object> searchCriteria = new LinkedHashMap<>();
+			searchCriteria.put("caseId", caseId);
+
+			Map<String, Object> body = new LinkedHashMap<>();
+			body.put("RequestInfo", requestInfo);
+			body.put("searchCriteria", new ArrayList<>(List.of(searchCriteria)));
+
+			StringBuilder uri = new StringBuilder(configuration.getCaseHost()).append(configuration.getWitnessSearchUrl());
+			Object response = serviceRequestRepository.fetchResult(uri, body);
+			return extractList(response, "witnesses", Witness.class);
+		} catch (CustomException e) {
+			throw e;
+		} catch (Exception e) {
+			log.error("Error retrieving witnesses for case id: {}", caseId, e);
+			throw new CustomException("WITNESS_ERROR", "Error retrieving witnesses:" + e.getMessage());
+		}
 	}
 
-	public List<Witness> getWitnesses(String filingNumber) {
-		return retrieveDocuments(filingNumber, configuration.getWitnessIndex(), WITNESS_BASE_PATH + FILING_NUMBER, WITNESS_BASE_PATH + CREATED_TIME, ORDER_ASC, witnessMapper::getWitness, "WITNESS_ERROR");
-	}
-
-	public List<OrderTasks> getOrderTasks(String filingNumber) throws Exception {
+	public List<OrderTasks> getOrderTasks(RequestInfo requestInfo, String filingNumber, String tenantId) {
 		List<OrderTasks> orderTasksList = new ArrayList<>();
-		List<Order> orderList = getOrders(filingNumber);
+		List<Order> orderList = getOrders(requestInfo, filingNumber, tenantId);
 
 		for (Order order : orderList) {
-			List<Task> taskList = getTasks(order.getId().toString());
+			String orderId = order.getId() != null ? order.getId().toString() : null;
+			List<Task> taskList = getTasks(requestInfo, orderId, tenantId);
 			OrderTasks orderTasks = OrderTasks.builder().order(order).tasks(taskList).build();
 			orderTasksList.add(orderTasks);
 		}
@@ -139,39 +172,126 @@ public class CaseManagerService {
 		return orderTasksList;
 	}
 
-	public List<Order> getOrders(String filingNumber) {
-		return retrieveDocuments(filingNumber, configuration.getOrderIndex(), ORDER_BASE_PATH + FILING_NUMBER, ORDER_BASE_PATH + CREATED_TIME, ORDER_ASC, orderMapper::getOrder, "ORDER_ERROR");
-	}
-
-	public List<Task> getTasks(String orderId) {
-		return retrieveDocuments(orderId, configuration.getTaskIndex(), TASK_BASE_PATH + ORDER_ID, TASK_BASE_PATH + CREATED_TIME, ORDER_ASC, taskMapper::getTask, "TASK_ERROR");
-	}
-
-	public List<Application> getApplications(String filingNumber) {
-		return retrieveDocuments(filingNumber, configuration.getApplicationIndex(), APPLICATION_BASE_PATH + FILING_NUMBER, CREATED_TIME_ABSOLUTE, ORDER_ASC, applicationMapper::getApplication, "APPLICATION_ERROR");
-	}
-
-	public List<Artifact> getArtifacts(String filingNumber) {
-		return retrieveDocuments(filingNumber, configuration.getArtifactIndex(), ARTIFACT_BASE_PATH + FILING_NUMBER, CREATED_TIME_ABSOLUTE, ORDER_ASC, artifactMapper::getArtifact, "ARTIFACT_ERROR");
-	}
-
-	public JSONArray constructJsonArray(String json, String jsonPath) {
+	public List<Order> getOrders(RequestInfo requestInfo, String filingNumber, String tenantId) {
 		try {
-			Object result = JsonPath.read(json, jsonPath);
-			if (result instanceof List && ((List<?>) result).isEmpty()) {
-				return new JSONArray(); // Return an empty JSONArray if the list is empty
-			}
-			return new JSONArray(result.toString());
-		} catch (PathNotFoundException e) {
-			log.error("JSON path not found: {}", jsonPath, e);
-			throw new CustomException("JSON_PATH_NOT_FOUND", e.getMessage());
-		} catch (JSONException e) {
-			log.error("Error parsing JSON: {}", json, e);
-			throw new CustomException("JSON_PARSING_ERR", e.getMessage());
+			Map<String, Object> criteria = new LinkedHashMap<>();
+			criteria.put("filingNumber", filingNumber);
+			if (tenantId != null) criteria.put("tenantId", tenantId);
+
+			StringBuilder uri = new StringBuilder(configuration.getOrderSearchHost()).append(configuration.getOrderSearchPath());
+			Object response = serviceRequestRepository.fetchResult(uri, buildCriteriaRequest(requestInfo, criteria));
+			return extractList(response, "list", Order.class);
+		} catch (CustomException e) {
+			throw e;
 		} catch (Exception e) {
-			log.error("Exception while constructing JSON array: ", e);
-			log.error("Object: {}", json);
-			throw new CustomException("JSON_ARRAY_CONSTRUCTION_ERR", e.getMessage());
+			log.error("Error retrieving orders for filing number: {}", filingNumber, e);
+			throw new CustomException("ORDER_ERROR", "Error retrieving orders:" + e.getMessage());
 		}
+	}
+
+	public List<Task> getTasks(RequestInfo requestInfo, String orderId, String tenantId) {
+		try {
+			if (orderId == null) {
+				return new ArrayList<>();
+			}
+			Map<String, Object> criteria = new LinkedHashMap<>();
+			criteria.put("orderId", orderId);
+			if (tenantId != null) criteria.put("tenantId", tenantId);
+
+			StringBuilder uri = new StringBuilder(configuration.getTaskSearchHost()).append(configuration.getTaskSearchPath());
+			Object response = serviceRequestRepository.fetchResult(uri, buildCriteriaRequest(requestInfo, criteria));
+			return extractList(response, "list", Task.class);
+		} catch (CustomException e) {
+			throw e;
+		} catch (Exception e) {
+			log.error("Error retrieving tasks for order id: {}", orderId, e);
+			throw new CustomException("TASK_ERROR", "Error retrieving tasks:" + e.getMessage());
+		}
+	}
+
+	public List<Application> getApplications(RequestInfo requestInfo, String filingNumber, String tenantId) {
+		try {
+			Map<String, Object> criteria = new LinkedHashMap<>();
+			criteria.put("filingNumber", filingNumber);
+			if (tenantId != null) criteria.put("tenantId", tenantId);
+
+			StringBuilder uri = new StringBuilder(configuration.getApplicationHost()).append(configuration.getApplicationSearchEndPoint());
+			Object response = serviceRequestRepository.fetchResult(uri, buildCriteriaRequest(requestInfo, criteria));
+			return extractList(response, "applicationList", Application.class);
+		} catch (CustomException e) {
+			throw e;
+		} catch (Exception e) {
+			log.error("Error retrieving applications for filing number: {}", filingNumber, e);
+			throw new CustomException("APPLICATION_ERROR", "Error retrieving applications:" + e.getMessage());
+		}
+	}
+
+	public List<Artifact> getArtifacts(RequestInfo requestInfo, String filingNumber, String tenantId) {
+		try {
+			Map<String, Object> criteria = new LinkedHashMap<>();
+			criteria.put("filingNumber", filingNumber);
+			if (tenantId != null) criteria.put("tenantId", tenantId);
+
+			Map<String, Object> body = new LinkedHashMap<>();
+			body.put("RequestInfo", requestInfo);
+			if (tenantId != null) body.put("tenantId", tenantId);
+			body.put("criteria", criteria);
+
+			StringBuilder uri = new StringBuilder(configuration.getEvidenceServiceHost()).append(configuration.getEvidenceServiceSearchEndpoint());
+			Object response = serviceRequestRepository.fetchResult(uri, body);
+			return extractList(response, "artifacts", Artifact.class);
+		} catch (CustomException e) {
+			throw e;
+		} catch (Exception e) {
+			log.error("Error retrieving artifacts for filing number: {}", filingNumber, e);
+			throw new CustomException("ARTIFACT_ERROR", "Error retrieving artifacts:" + e.getMessage());
+		}
+	}
+
+	/**
+	 * Builds the common {@code {"RequestInfo": ..., "criteria": {...}}} search body used by the
+	 * hearing, order, task and application search APIs.
+	 */
+	private Map<String, Object> buildCriteriaRequest(RequestInfo requestInfo, Map<String, Object> criteria) {
+		Map<String, Object> body = new LinkedHashMap<>();
+		body.put("RequestInfo", requestInfo);
+		body.put("criteria", criteria);
+		return body;
+	}
+
+	/**
+	 * Extracts the list found under {@code listKey} from a service search response and converts each
+	 * element to {@code clazz}. Results are ordered ascending by {@code auditDetails.createdTime} to
+	 * preserve the chronological ordering the previous Elasticsearch queries produced.
+	 */
+	private <T> List<T> extractList(Object response, String listKey, Class<T> clazz) {
+		List<T> result = new ArrayList<>();
+		if (response == null) {
+			return result;
+		}
+		Map<String, Object> responseMap = objectMapper.convertValue(response, new TypeReference<Map<String, Object>>() {});
+		Object listObj = responseMap.get(listKey);
+		if (!(listObj instanceof List)) {
+			return result;
+		}
+		@SuppressWarnings("unchecked")
+		List<Map<String, Object>> items = new ArrayList<>((List<Map<String, Object>>) listObj);
+		items.sort(Comparator.comparingLong(this::extractCreatedTime));
+		for (Map<String, Object> item : items) {
+			result.add(objectMapper.convertValue(item, clazz));
+		}
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	private long extractCreatedTime(Map<String, Object> item) {
+		Object auditDetails = item.get("auditDetails");
+		if (auditDetails instanceof Map) {
+			Object createdTime = ((Map<String, Object>) auditDetails).get("createdTime");
+			if (createdTime instanceof Number) {
+				return ((Number) createdTime).longValue();
+			}
+		}
+		return 0L;
 	}
 }

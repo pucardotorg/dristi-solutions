@@ -2,7 +2,7 @@ import { InfoBannerIcon } from "@egovernments/digit-ui-components";
 import { CustomArrowDownIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import React, { useCallback, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { checkIfDueDatePassed, getFormattedDate } from "../utils";
+import { checkIfDueDatePassed, getDefaultPendingTaskAccordionHeader, getFormattedDate } from "../utils";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 // import { CustomArrowDownIcon, CustomArrowUpIcon } from "../icons/svgIndex";
@@ -17,7 +17,7 @@ function PendingTaskAccordion({
   pendingTasks,
   t,
   totalCount,
-  accordionHeader = "COMPLETE_THIS_WEEK",
+  accordionHeader,
   accordionKey = "accordion",
   isHighlighted = false,
   isAccordionOpen = false,
@@ -35,8 +35,14 @@ function PendingTaskAccordion({
   const [showAllPendingTasksModal, setShowAllPendingTasksModal] = useState(false);
   const [showOfflineStampEnvelopeModal, setShowOfflineStampEnvelopeModal] = useState(false);
 
-  const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles?.map((role) => role?.code) || [], []);
+  const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
+  const roles = useMemo(() => userInfo?.roles?.map((role) => role?.code) || [], [userInfo]);
   const isJudge = roles.includes("JUDGE_ROLE");
+  // Citizens and employees label their first section differently, so fall back per user type.
+  const sectionHeader = useMemo(() => accordionHeader || getDefaultPendingTaskAccordionHeader(userInfo?.type === "CITIZEN"), [
+    accordionHeader,
+    userInfo?.type,
+  ]);
 
   const handleAccordionClick = () => {
     setIsOpen(!isOpen);
@@ -344,7 +350,7 @@ function PendingTaskAccordion({
                   <InfoBannerIcon fill="#9E400A" />
                 </span>
               )}
-              <span>{`${t(accordionHeader)}${totalCount ? ` (${totalCount})` : ""}`}</span>
+              <span>{`${t(sectionHeader)}${totalCount ? ` (${totalCount})` : ""}`}</span>
             </span>
             <div
               className="icon"

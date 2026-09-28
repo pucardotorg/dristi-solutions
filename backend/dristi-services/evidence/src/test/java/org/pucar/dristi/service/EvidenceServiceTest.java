@@ -831,4 +831,48 @@ class EvidenceServiceTest {
         assertEquals("CASE-001", additionalDetails.get("filingNumber"));
         assertEquals("case-123", additionalDetails.get("caseId"));
     }
+
+    @Test
+    void testCreateEvidence_WitnessDeposition_RejectsDuplicateTag() {
+        artifact.setArtifactType("WITNESS_DEPOSITION");
+        artifact.setTag("PW1");
+        artifact.setSourceID("source-id-1");
+        WorkflowObject workflow = new WorkflowObject();
+        workflow.setAction("SAVE_DRAFT");
+        artifact.setWorkflow(workflow);
+
+        Artifact existingDeposition = new Artifact();
+        existingDeposition.setTag("PW1");
+
+        when(mdmsUtil.fetchMdmsData(any(), any(), any(), any())).thenReturn(mockMdmsData);
+        when(objectMapper.convertValue(any(), eq(JSONObject.class))).thenReturn((JSONObject) mockMdmsData.get("FilingTypeModule").get("FilingTypeMaster").get(0));
+        when(repository.getArtifacts(any(), eq(null))).thenReturn(List.of(existingDeposition));
+
+        CustomException exception = assertThrows(CustomException.class, () -> evidenceService.createEvidence(evidenceRequest));
+
+        assertEquals("DUPLICATE_WITNESS_DEPOSITION", exception.getCode());
+        verify(workflowService, never()).updateWorkflowStatus(any(EvidenceRequest.class), anyString());
+        verify(producer, never()).push(any(), any());
+    }
+
+    @Test
+    void testCreateEvidence_WitnessDeposition_AllowsNonDuplicateTag() {
+        artifact.setArtifactType("WITNESS_DEPOSITION");
+        artifact.setTag("PW");
+        artifact.setSourceID("source-id-1");
+        WorkflowObject workflow = new WorkflowObject();
+        workflow.setAction("SAVE_DRAFT");
+        artifact.setWorkflow(workflow);
+
+        when(mdmsUtil.fetchMdmsData(any(), any(), any(), any())).thenReturn(mockMdmsData);
+        when(objectMapper.convertValue(any(), eq(JSONObject.class))).thenReturn((JSONObject) mockMdmsData.get("FilingTypeModule").get("FilingTypeMaster").get(0));
+        when(repository.getArtifacts(any(), eq(null))).thenReturn(Collections.emptyList());
+        when(evidenceEnrichment.enrichPseudoTag(evidenceRequest)).thenReturn("PW1");
+
+        Artifact result = evidenceService.createEvidence(evidenceRequest);
+
+        verify(workflowService).updateWorkflowStatus(evidenceRequest, artifact.getFilingType());
+        verify(producer).push(config.getEvidenceCreateTopic(), evidenceRequest);
+        assertEquals("PW1", result.getTag());
+    }
 }

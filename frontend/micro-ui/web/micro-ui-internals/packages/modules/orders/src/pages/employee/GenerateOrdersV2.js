@@ -33,6 +33,7 @@ import {
   getParties,
   getUpdateDocuments,
   prepareUpdatedOrderData,
+  syncItemTextHearingDate,
   createTaskPayload,
 } from "../../utils/orderUtils";
 import { addOrderItem, createOrder, deleteOrderItem, fetchInboxData, replaceUploadedDocsWithCombinedFile } from "../../utils/orderApiCallUtils";
@@ -692,22 +693,6 @@ const GenerateOrdersV2 = () => {
                     populators: {
                       ...field.populators,
                       options: [...complainants, ...respondents],
-                    },
-                  };
-                }
-                if (field?.populators?.inputs?.some((input) => input?.name === "respondingParty")) {
-                  return {
-                    ...field,
-                    populators: {
-                      ...field?.populators,
-                      inputs: field?.populators?.inputs.map((input) =>
-                        input.name === "respondingParty"
-                          ? {
-                              ...input,
-                              options: [...complainants, ...respondents],
-                            }
-                          : input
-                      ),
                     },
                   };
                 }
@@ -1722,11 +1707,9 @@ const GenerateOrdersV2 = () => {
           return response;
         });
     } catch (error) {
-      const errorCode = error?.response?.data?.Errors?.[0]?.code;
-      let label = errorCode ? t(errorCode) : action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("ORDER_SAVE_FAILED");
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
-        label: label,
+        label: action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("ORDER_SAVE_FAILED"),
         error: true,
         errorId,
       });
@@ -1815,6 +1798,18 @@ const GenerateOrdersV2 = () => {
       const isAcceptBailOrder = orderFormData?.orderType?.code === "ACCEPT_BAIL";
       const requestBailBond = orderFormData?.requestBailBond;
       let updatedOrderData = prepareUpdatedOrderData(currentOrder, updatedFormData, compOrderIndex);
+
+      if (updatedFormData?.orderType?.code === ORDER_TYPES.SCHEDULE_OF_HEARING_DATE) {
+        const previousHearingDate =
+          currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE
+            ? currentOrder?.compositeItems?.[compOrderIndex]?.orderSchema?.additionalDetails?.formdata?.hearingDate
+            : currentOrder?.additionalDetails?.formdata?.hearingDate;
+
+        updatedOrderData = {
+          ...updatedOrderData,
+          itemText: syncItemTextHearingDate(updatedOrderData?.itemText, previousHearingDate, updatedFormData?.hearingDate),
+        };
+      }
 
       if (orderFormData?.orderType?.code === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
         const miscItemText = orderFormData?.processTemplate?.orderText || "";
@@ -2463,9 +2458,6 @@ const GenerateOrdersV2 = () => {
       );
     } catch (error) {
       console.error("Error in processHandleIssueOrder:", error);
-      const errorCode = error?.response?.data?.Errors?.[0]?.code;
-      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
-      setShowToast({ label: errorCode, error: true, errorId });
     } finally {
       setIsLoading(false);
     }
@@ -2583,6 +2575,10 @@ const GenerateOrdersV2 = () => {
     try {
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
       const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
+      if (!refApplicationId) {
+        setShowToast({ label: t("SOMETHING_WENT_WRONG_REFRESH_AND_TRY_AGAIN"), error: true });
+        return;
+      }
       const applicationCMPNumber = documentSubmission?.[0]?.applicationList?.applicationCMPNumber;
       const currentHearingPurpose = documentSubmission?.[0]?.applicationList?.applicationDetails?.initialHearingPurpose || "";
       const caseNumber =

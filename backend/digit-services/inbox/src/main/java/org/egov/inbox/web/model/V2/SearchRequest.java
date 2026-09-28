@@ -13,7 +13,7 @@ import org.egov.common.contract.request.RequestInfo;
 public class SearchRequest {
 
     @JsonProperty("RequestInfo")
-    private RequestInfo RequestInfo;
+    private RequestInfo requestInfo;
 
     @JsonProperty("SearchCriteria")
     private IndexSearchCriteria indexSearchCriteria;

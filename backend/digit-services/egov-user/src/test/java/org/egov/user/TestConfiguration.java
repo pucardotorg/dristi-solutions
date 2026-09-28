@@ -2,6 +2,8 @@ package org.egov.user;
 
 import net.minidev.json.JSONArray;
 import org.egov.encryption.EncryptionService;
+import org.egov.encryption.config.DecryptionPolicyConfiguration;
+import org.egov.encryption.config.EncryptionPolicyConfiguration;
 import org.egov.encryption.masking.MaskingService;
 import org.egov.encryption.util.MdmsFetcher;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -55,6 +57,18 @@ public class TestConfiguration {
         when(mdmsFetcher.getMdmsForFilter(nullable(String.class), nullable(String.class)))
                 .thenReturn(new JSONArray());
         return mdmsFetcher;
+    }
+
+    @Bean
+    @Primary
+    public EncryptionPolicyConfiguration encryptionPolicyConfiguration() {
+        return mock(EncryptionPolicyConfiguration.class);
+    }
+
+    @Bean
+    @Primary
+    public DecryptionPolicyConfiguration decryptionPolicyConfiguration() {
+        return mock(DecryptionPolicyConfiguration.class);
     }
 
     @Bean

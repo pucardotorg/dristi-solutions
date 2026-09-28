@@ -5,22 +5,23 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.2.2</version>
+    <version>3.5.11</version>
   </parent>
   <groupId>org.egov</groupId>
   <artifactId>egov-persister</artifactId>
-  <version>2.9.0-SNAPSHOT</version>
+  <version>1.1.6-SNAPSHOT</version>
   <name>egov-persister</name>
   <description>egov persister framework</description>
   <properties>
     <log4j2.version>2.17.1</log4j2.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <java.version>17</java.version>
+    <java.version>25</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.version>3.3.9</maven.version>
-    <lombok.version>1.18.22</lombok.version>
+    <maven.version>3.5.11</maven.version>
+    <lombok.version>1.18.38</lombok.version>
     <commons-lang-version>2.6</commons-lang-version>
   </properties>
+  <!--    Dependency Management-->
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -44,6 +45,11 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.18.0</version>
+    </dependency>
 <!--    <dependency>
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
@@ -52,12 +58,20 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.0</version>
+      <version>3.14.0</version>
     </dependency>
     <dependency>
       <groupId>com.github.loki4j</groupId>
       <artifactId>loki-logback-appender</artifactId>
       <version>2.0.1</version>
+    </dependency>
+    <!-- YAML support (Spring Boot managed version) -->
+
+    <!-- JSON Smart (missing package net.minidev.json) -->
+    <dependency>
+      <groupId>net.minidev</groupId>
+      <artifactId>json-smart</artifactId>
+      <version>2.5.1</version>
     </dependency>
     <dependency>
       <groupId>org.codehaus.janino</groupId>
@@ -94,13 +108,17 @@
     </dependency>
     <dependency>
       <groupId>org.egov.services</groupId>
+      <artifactId>services-common</artifactId>
+      <version>1.1.1-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.egov.services</groupId>
       <artifactId>tracer</artifactId>
       <version>2.9.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
-      <version>9.22.3</version>
     </dependency>
     <dependency>
       <groupId>com.jayway.jsonpath</groupId>
@@ -134,7 +152,7 @@
     <dependency>
       <groupId>com.github.zafarkhaja</groupId>
       <artifactId>java-semver</artifactId>
-      <version>0.9.0</version>
+      <version>0.10.2</version>
     </dependency>
   </dependencies>
   <repositories>
@@ -152,8 +170,61 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.14.1</version>
+        <configuration>
+          <release>25</release>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+            </exclude>
+            <exclude>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-devtools</artifactId>
+            </exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>cz.habarta.typescript-generator</groupId>
+        <artifactId>typescript-generator-maven-plugin</artifactId>
+        <version>2.22.595</version>
+        <executions>
+          <execution>
+            <id>generate</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <phase>process-classes</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <jsonLibrary>jackson2</jsonLibrary>
+          <classes>
+            <class>org.egov.infra.persist.web.contract.Mapping</class>
+          </classes>
+          <customTypeNaming>
+            <typeNaming>org.egov.infra.persist.web.contract.TypeEnum$TypeEnum:Type</typeNaming>
+          </customTypeNaming>
+          <namespace>Digit</namespace>
+          <loggingLevel>Debug</loggingLevel>
+          <outputKind>module</outputKind>
+        </configuration>
       </plugin>
     </plugins>
   </build>

@@ -75,6 +75,11 @@ public class IdGenerationService {
 
     public IdGenerationResponse generateIdResponse(IdGenerationRequest idGenerationRequest) throws Exception {
 
+        if (idGenerationRequest == null || idGenerationRequest.getIdRequests() == null
+                || idGenerationRequest.getIdRequests().isEmpty()) {
+            throw new CustomException("INVALID_ID_REQUEST", "At least one idRequest is required");
+        }
+
         RequestInfo requestInfo = idGenerationRequest.getRequestInfo();
         List<IdRequest> idRequests = idGenerationRequest.getIdRequests();
         List<IdResponse> idResponses = new LinkedList<>();
@@ -255,6 +260,9 @@ public class IdGenerationService {
                 } else if (attributeName.substring(0, 4).equalsIgnoreCase("city")) {
                     if (cityName == null) {
                         cityName = mdmsService.getCity(requestInfo, idRequest);
+                    }
+                    if (!StringUtils.hasText(cityName)) {
+                        throw new CustomException("PARSING ERROR", "City code is Null/not valid");
                     }
                     idFormat = idFormat.replace("[" + attributeName + "]", cityName);
                 } else {

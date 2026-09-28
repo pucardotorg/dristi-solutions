@@ -85,7 +85,8 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
     requestData.tenantId = data?.city?.code || Digit.ULBService.getStateId();
     delete requestData.city;
     try {
-      const { UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
+      // refresh_token is discarded here so it is never persisted by setUser
+      const { refresh_token, UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
       Digit.SessionStorage.set("Employee.tenantId", info?.tenantId);
       const employee = await axiosInstance.post(
         Urls.dristi.searchEmployee,

@@ -536,97 +536,6 @@ export const configsOrderMandatorySubmissions = [
         },
       },
       {
-        isMandatory: true,
-        type: "component",
-        component: "SelectUserTypeComponent",
-        key: "responseInfo",
-        schemaKeyPath: {
-          isResponseRequired: { value: "orderDetails.isResponseRequired" },
-          respondingParty: { value: "orderDetails.partyDetails.partiesToRespond", transformer: "customDropdown" },
-          responseDeadline: { value: "orderDetails.dates.responseDeadlineDate", transformer: "date" },
-        },
-        withoutLabel: true,
-        populators: {
-          inputs: [
-            {
-              label: "IS_RESPONSE_REQUIRED",
-              type: "radioButton",
-              name: "isResponseRequired",
-              optionsKey: "name",
-              error: "CORE_REQUIRED_FIELD_ERROR",
-              validation: {},
-              styles: {
-                marginBottom: 0,
-              },
-              clearFields: { respondingParty: [], responseDeadline: "" },
-              isMandatory: true,
-              disableFormValidation: false,
-              options: [
-                {
-                  code: true,
-                  name: "ES_COMMON_YES",
-                },
-                {
-                  code: false,
-                  name: "ES_COMMON_NO",
-                },
-              ],
-            },
-            {
-              label: "RESPONDING_PARTY",
-              type: "dropdown",
-              name: "respondingParty",
-              optionsKey: "name",
-              error: "CORE_REQUIRED_FIELD_ERROR",
-              allowMultiSelect: true,
-              required: true,
-              isMandatory: true,
-              selectedText: "party(s)",
-              disableFormValidation: false,
-              isDependentOn: "isResponseRequired",
-              dependentKey: {
-                isResponseRequired: ["code"],
-              },
-              styles: {
-                marginBottom: 0,
-              },
-              options: [
-                {
-                  code: "PARTY_1",
-                  name: "PARTY_1",
-                },
-                {
-                  code: "PARTY_2",
-                  name: "PARTY_2",
-                },
-                {
-                  code: "PARTY_3",
-                  name: "PARTY_3",
-                },
-              ],
-            },
-            {
-              label: "RESPONSE_DEADLINE",
-              type: "date",
-              name: "responseDeadline",
-              labelChildren: "OutlinedInfoIcon",
-              tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
-              isDependentOn: "isResponseRequired",
-              dependentKey: {
-                isResponseRequired: ["code"],
-              },
-              error: "CORE_REQUIRED_FIELD_ERROR",
-              textInputStyle: { maxWidth: "100%" },
-              validation: {
-                min: new Date().toISOString().split("T")[0],
-              },
-              isMandatory: true,
-              disableFormValidation: false,
-            },
-          ],
-        },
-      },
-      {
         label: "JUDGE_DESIGNATION",
         isMandatory: true,
         key: "judgeDesignation",
@@ -969,23 +878,27 @@ export const configsScheduleHearingDate = [
         },
       },
       {
-        label: "HEARING_DATE",
-        isMandatory: true,
+        // Uses the hearing calendar (SelectCustomHearingDate) instead of a plain date input, so the
+        // court sees slot counts and gets the court non-working day warning. Current/future dates
+        // are enforced by the calendar's minDate, so no minTodayDateValidation is needed here.
         key: "hearingDate",
+        type: "component",
+        component: "SelectCustomHearingDate",
         schemaKeyPath: "orderDetails.hearingDate",
         transformer: "date",
-        type: "date",
-        labelChildren: "OutlinedInfoIcon",
-        tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
+        withoutLabel: true,
+        isMandatory: true,
+        label: "HEARING_DATE",
         populators: {
           name: "hearingDate",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiOrders",
-              masterName: "minTodayDateValidation",
+          selectDateLabel: "SELECT_HEARING_DATE",
+          inputs: [
+            {
+              name: "hearingDate",
+              options: [],
             },
-          },
+          ],
         },
       },
       {

@@ -120,8 +120,15 @@ public class WarrantReissueService {
         }
 
         for (Task warrant : activeWarrants) {
+            // Per issue #5930, auto-reissue applies only to iCoPS warrants. For RPAD (and any other
+            // channel) the document has to be reprinted, re-sent and re-enveloped manually anyway, so an
+            // auto-reissue adds no value - and the payment task it raises only confuses advocates. Leave
+            // such warrants exactly as they are.
+            if (!isIcopsDeliveryChannel(warrant)) {
+                log.info("Skipping non-iCoPS warrant {} on reschedule - auto-reissue applies only to the iCoPS channel", warrant.getTaskNumber());
+                continue;
+            }
             String currentState = warrant.getStatus();
-            boolean isIcops = isIcopsDeliveryChannel(warrant);
 
             // Store previous state and increment revision number
             setAdditionalDetail(warrant, "previousState", currentState);
@@ -131,33 +138,23 @@ public class WarrantReissueService {
             }
 
             WorkflowObject workflow = new WorkflowObject();
-            // A warrant moving back into PENDING_PAYMENT from an already-issued/paid state needs a
-            // fresh payment-pending task (and a fresh demand, which summons-svc raises off this same
-            // WARRANT_REISSUE -> PENDING_PAYMENT transition). A warrant already in PENDING_PAYMENT
-            // keeps the demand and pending task raised at order-publish time, so re-raising them
-            // would leave the litigant with a duplicate payable bill.
-            boolean reissueNeedsPayment = false;
-            if (isIcops && !PENDING_PAYMENT.equalsIgnoreCase(currentState)) {
-                // iCoPS channel: WARRANT_REISSUE_ICOPS -> WARRANT_REISSUED
+            if (!PENDING_PAYMENT.equalsIgnoreCase(currentState)) {
+                // An already-issued/paid iCoPS warrant is reissued in place without a fresh payment:
+                // WARRANT_REISSUE_ICOPS -> WARRANT_REISSUED.
                 workflow.setAction(WARRANT_REISSUE_ICOPS);
             } else {
-                // Non-iCoPS OR iCoPS still in PENDING_PAYMENT: WARRANT_REISSUE -> PENDING_PAYMENT
+                // An iCoPS warrant still in PENDING_PAYMENT keeps the demand and pending task raised at
+                // order-publish time, so it is only re-stamped for the new hearing (WARRANT_REISSUE);
+                // re-raising them would leave the litigant with a duplicate payable bill. A warrant in
+                // PENDING_PAYMENT has not been paid, so defensively clear any feePaidDate - it must not
+                // advertise one until PaymentUpdateService sets it once the payment lands.
                 workflow.setAction(WARRANT_REISSUE);
-                reissueNeedsPayment = !PENDING_PAYMENT.equalsIgnoreCase(currentState);
-                // The warrant is (re)entering PENDING_PAYMENT and a fresh demand is raised against it,
-                // so any feePaidDate carried over from the warrant's earlier payment is now stale and
-                // must be cleared - otherwise the reissued warrant is shown as already paid until the
-                // new payment completes (at which point PaymentUpdateService sets feePaidDate again).
                 clearFeePaidDate(warrant);
-                // An RPAD warrant re-entering PENDING_PAYMENT must be flagged for pending collection so
-                if (isRpadDeliveryChannel(warrant)) {
-                    setIsPendingCollection(warrant);
-                }
             }
             workflow.setDocuments(Collections.singletonList(new org.egov.common.contract.models.Document()));
 
             warrant.setWorkflow(workflow);
-            
+
             TaskRequest taskRequest = TaskRequest.builder()
                     .requestInfo(requestInfo)
                     .task(warrant)
@@ -166,11 +163,6 @@ public class WarrantReissueService {
             try {
                 taskService.updateTask(taskRequest);
                 log.info("Triggered reissue for warrant: {} with action: {}", warrant.getTaskNumber(), workflow.getAction());
-                // The reissued warrant now sits in PENDING_PAYMENT for the rescheduled hearing, so it
-                // requires the same "payment pending for warrant" task that order publish raises.
-                if (reissueNeedsPayment) {
-                    createPaymentPendingTaskForWarrant(requestInfo, warrant);
-                }
             } catch (Exception e) {
                 log.error("Error updating warrant during reschedule: {}", warrant.getTaskNumber(), e);
             }
@@ -230,6 +222,14 @@ public class WarrantReissueService {
         List<String> collectedPartyUniqueIds = new ArrayList<>();
 
         for (Task warrant : activeWarrants) {
+            // Per issue #5930, auto-reissue applies only to iCoPS warrants. For RPAD (and any other
+            // channel) the document has to be reprinted, re-sent and re-enveloped manually anyway, so an
+            // auto-reissue adds no value - and the payment task it raises only confuses advocates. Leave
+            // the existing warrant untouched (do not terminate it or create a replacement).
+            if (!isIcopsDeliveryChannel(warrant)) {
+                log.info("Skipping non-iCoPS warrant {} - auto-reissue applies only to the iCoPS channel", warrant.getTaskNumber());
+                continue;
+            }
             if (warrant.getId() != null && alreadyReissuedSourceIds.contains(warrant.getId().toString())) {
                 log.info("Skipping warrant {} - it already has a reissued clone (duplicate hearing event)", warrant.getTaskNumber());
                 continue;
@@ -241,7 +241,6 @@ public class WarrantReissueService {
                 continue;
             }
             String currentState = warrant.getStatus();
-            boolean isIcops = isIcopsDeliveryChannel(warrant);
             boolean isAlreadyExpired = EXPIRED.equalsIgnoreCase(currentState);
 
             if (!isAlreadyExpired) {
@@ -282,9 +281,12 @@ public class WarrantReissueService {
             Task newWarrant = cloneWarrantForReissue(warrant, newHearingDate, newOrderId);
             WorkflowObject createWorkflow = new WorkflowObject();
 
+            // An already-issued iCoPS warrant (not in PENDING_PAYMENT, not recovered from EXPIRED) is
+            // recreated without a fresh payment, as is a court-witness warrant. Otherwise the clone lands
+            // in PENDING_PAYMENT with a fresh demand.
             boolean shouldSkipPayment =
-                    (isIcops && !PENDING_PAYMENT.equalsIgnoreCase(currentState) && !isAlreadyExpired) || isCourtWitness(newWarrant.getTaskDetails());
-            
+                    (!PENDING_PAYMENT.equalsIgnoreCase(currentState) && !isAlreadyExpired) || isCourtWitness(newWarrant.getTaskDetails());
+
             if (shouldSkipPayment) {
                 createWorkflow.setAction(CREATE_WITH_OUT_PAYMENT);
             } else {
@@ -293,10 +295,6 @@ public class WarrantReissueService {
                 // feePaidDate copied from the (already paid) source warrant is stale and must be cleared
                 // so the reissued warrant is not shown as already paid until the new payment completes.
                 clearFeePaidDate(newWarrant);
-                // An RPAD warrant entering PENDING_PAYMENT must be flagged for pending collection so it
-                if (isRpadDeliveryChannel(newWarrant)) {
-                    setIsPendingCollection(newWarrant);
-                }
             }
             createWorkflow.setDocuments(Collections.singletonList(new org.egov.common.contract.models.Document()));
             newWarrant.setWorkflow(createWorkflow);
@@ -659,22 +657,6 @@ public class WarrantReissueService {
         return false;
     }
 
-    private boolean isRpadDeliveryChannel(Task task) {
-        try {
-            JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
-            if (taskDetails != null && taskDetails.has("deliveryChannels") && !taskDetails.get("deliveryChannels").isNull()) {
-                JsonNode deliveryChannels = taskDetails.get("deliveryChannels");
-                if (deliveryChannels.has(CHANNEL_CODE) && !deliveryChannels.get(CHANNEL_CODE).isNull()) {
-                    String channelCode = deliveryChannels.get(CHANNEL_CODE).textValue();
-                    return RPAD.equalsIgnoreCase(channelCode);
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error checking RPAD delivery channel: ", e);
-        }
-        return false;
-    }
-
     private boolean isExpiredByBail(Task task) {
         try {
             if (task.getAdditionalDetails() != null) {
@@ -805,32 +787,6 @@ public class WarrantReissueService {
             task.setTaskDetails(taskDetails);
         } catch (Exception e) {
             log.error("Error clearing feePaidDate from taskDetails: ", e);
-        }
-    }
-
-    /**
-     * Sets isPendingCollection on a warrant's taskDetails.deliveryChannels. Used when an RPAD warrant
-     * enters PENDING_PAYMENT during reissue so it is flagged for the pending-collection workflow,
-     */
-    private void setIsPendingCollection(Task task) {
-        try {
-            if (task.getTaskDetails() == null) {
-                return;
-            }
-            ObjectNode taskDetails = task.getTaskDetails() instanceof ObjectNode
-                    ? (ObjectNode) task.getTaskDetails()
-                    : objectMapper.convertValue(task.getTaskDetails(), ObjectNode.class);
-            ObjectNode deliveryChannels;
-            if (taskDetails.has("deliveryChannels") && taskDetails.get("deliveryChannels") instanceof ObjectNode) {
-                deliveryChannels = (ObjectNode) taskDetails.get("deliveryChannels");
-            } else {
-                deliveryChannels = objectMapper.createObjectNode();
-                taskDetails.set("deliveryChannels", deliveryChannels);
-            }
-            deliveryChannels.put("isPendingCollection", true);
-            task.setTaskDetails(taskDetails);
-        } catch (Exception e) {
-            log.error("Error setting isPendingCollection on taskDetails: ", e);
         }
     }
 

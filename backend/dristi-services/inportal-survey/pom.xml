@@ -1,19 +1,26 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+<<<<<<<< HEAD:backend/dristi-services/inportal-survey/pom.xml
     <groupId>org.egov</groupId>
     <artifactId>inportal-survey</artifactId>
     <packaging>jar</packaging>
     <name>inportal-survey</name>
+========
+    <groupId>org.pucar</groupId>
+    <artifactId>notification</artifactId>
+    <packaging>jar</packaging>
+    <name>notification</name>
+>>>>>>>> d0040a883c92ac9581530c812fc3bd6178e22ff9:backend/dristi-services/Notification/pom.xml
     <version>1.0.0</version>
     <properties>
-    <java.version>17</java.version>
+    <java.version>25</java.version>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
 </properties>
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.2</version>
+        <version>3.5.11</version>
     </parent>
     <!--    Dependency Management-->
     <dependencyManagement>
@@ -37,6 +44,18 @@
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

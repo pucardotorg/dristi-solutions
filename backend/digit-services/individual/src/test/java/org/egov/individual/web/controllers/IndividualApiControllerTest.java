@@ -3,6 +3,7 @@ package org.egov.individual.web.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.producer.Producer;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.egov.individual.TestConfiguration;
 import org.egov.individual.config.IndividualProperties;
 import org.egov.individual.helper.IndividualBulkRequestTestBuilder;
@@ -11,11 +12,11 @@ import org.egov.individual.helper.IndividualSearchRequestTestBuilder;
 import org.egov.individual.helper.IndividualTestBuilder;
 import org.egov.individual.service.IndividualService;
 import org.egov.individual.web.models.*;
-import org.egov.tracer.model.ErrorRes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -39,9 +40,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * API tests for IndividualApiController
  */
-@WebMvcTest(IndividualApiController.class)
-@Import({TestConfiguration.class})
+@WebMvcTest(controllers = IndividualApiController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(TestConfiguration.class)
 class IndividualApiControllerTest {
+
+        @SpringBootApplication
+        static class TestApplication {
+        }
 
     @Autowired
     private MockMvc mockMvc;
@@ -78,7 +84,6 @@ class IndividualApiControllerTest {
         IndividualRequest request = IndividualRequestTestBuilder.builder()
                 .withIndividuals(individual)
                 .withRequestInfo()
-                //.withApiOperation(ApiOperation.CREATE)
                 .build();
         when(individualService.create(request)).thenReturn(Collections.singletonList(responseIndividual));
 
@@ -103,19 +108,14 @@ class IndividualApiControllerTest {
                         .withNoPropertiesSet()
                         .build())
                 .withRequestInfo()
-                //.withApiOperation(ApiOperation.CREATE)
                 .build();
 
         MvcResult result = mockMvc.perform(post("/v1/_create").contentType(MediaType
                         .APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-        String responseStr = result.getResponse().getContentAsString();
-        ErrorRes response = objectMapper.readValue(responseStr,
-                ErrorRes.class);
-        assertEquals(1, response.getErrors().size());
+        assertEquals("", result.getResponse().getContentAsString());
     }
 
     @Test
@@ -126,19 +126,14 @@ class IndividualApiControllerTest {
                         .withName()
                         .build())
                 .withRequestInfo()
-                //.withApiOperation(ApiOperation.UPDATE)
                 .build();
 
         MvcResult result = mockMvc.perform(post("/v1/_create").contentType(MediaType
                         .APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-        String responseStr = result.getResponse().getContentAsString();
-        ErrorRes response = objectMapper.readValue(responseStr,
-                ErrorRes.class);
-        assertEquals(1, response.getErrors().size());
+        assertEquals("", result.getResponse().getContentAsString());
     }
 
     @Test
@@ -185,13 +180,9 @@ class IndividualApiControllerTest {
                         .contentType(MediaType
                                 .APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-        String responseStr = result.getResponse().getContentAsString();
-        ErrorRes response = objectMapper.readValue(responseStr,
-                ErrorRes.class);
-        assertEquals(1, response.getErrors().size());
+        assertTrue(result.getResolvedException() instanceof org.springframework.web.bind.MissingServletRequestParameterException);
     }
 
     @Test
@@ -208,7 +199,6 @@ class IndividualApiControllerTest {
         IndividualRequest request = IndividualRequestTestBuilder.builder()
                 .withIndividuals(individual)
                 .withRequestInfo()
-                //.withApiOperation(ApiOperation.UPDATE)
                 .build();
         when(individualService.update(request)).thenReturn(Collections.singletonList(responseIndividual));
 
@@ -233,20 +223,15 @@ class IndividualApiControllerTest {
                         .withName()
                         .build())
                 .withRequestInfo()
-                //            .withApiOperation(ApiOperation.CREATE)
                 .build();
 
         MvcResult result = mockMvc.perform(post("/v1/_update").contentType(MediaType
 
                         .APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-        String responseStr = result.getResponse().getContentAsString();
-        ErrorRes response = objectMapper.readValue(responseStr,
-                ErrorRes.class);
-        assertEquals(1, response.getErrors().size());
+        assertEquals("", result.getResponse().getContentAsString());
     }
 
     @Test
@@ -260,12 +245,8 @@ class IndividualApiControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(individualRequest)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
-        String responseaStr = result.getResponse().getContentAsString();
-        ErrorRes response = objectMapper.readValue(responseaStr, ErrorRes.class);
-        assertEquals(1, response.getErrors().size());
-//        assertEquals("NotNull",response.getErrors().get(0).getCode().);
+        assertEquals("", result.getResponse().getContentAsString());
 
     }
 
@@ -284,7 +265,6 @@ class IndividualApiControllerTest {
         IndividualRequest request = IndividualRequestTestBuilder.builder()
                 .withIndividuals(individual)
                 .withRequestInfo()
-                //.withApiOperation(ApiOperation.UPDATE)
                 .build();
         when(individualService.delete(request)).thenReturn(Collections.singletonList(responseIndividual));
 

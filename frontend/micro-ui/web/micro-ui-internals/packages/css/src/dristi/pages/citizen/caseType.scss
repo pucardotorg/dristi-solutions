@@ -13,6 +13,7 @@
 .popup-module.add-signature-modal,
 .popup-module.custom-modal-stepper-non-doc,
 .popup-module.orders-success-modal,
+.popup-module.synopsis-overwrite-modal,
 .popup-module.case-types {
   width: 536px;
   max-height: fit-content;
@@ -210,6 +211,7 @@
   .popup-module.verify-mobile-modal,
   .popup-module.verification-complainant-modal,
   .popup-module.edit-case-name-modal,
+  .popup-module.synopsis-overwrite-modal,
   .popup-module.case-types {
     margin: auto 16px;
     max-height: 564px;

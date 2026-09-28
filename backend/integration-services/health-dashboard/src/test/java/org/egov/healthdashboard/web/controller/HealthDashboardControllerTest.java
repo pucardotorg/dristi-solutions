@@ -1,7 +1,6 @@
 package org.egov.healthdashboard.web.controller;
 
 import org.egov.healthdashboard.repository.ServiceHealthRepository;
-import org.egov.healthdashboard.web.controller.HealthDashboardController;
 import org.egov.healthdashboard.web.models.ServiceHealthStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

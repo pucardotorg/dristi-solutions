@@ -2,7 +2,6 @@ package org.egov.healthdashboard.scheduler;
 
 import org.egov.healthdashboard.config.Configuration;
 import org.egov.healthdashboard.repository.ServiceHealthRepository;
-import org.egov.healthdashboard.scheduler.HealthCheckScheduler;
 import org.egov.healthdashboard.service.HealthCheckService;
 import org.egov.healthdashboard.web.models.ServiceHealthStatus;
 import org.junit.jupiter.api.BeforeEach;

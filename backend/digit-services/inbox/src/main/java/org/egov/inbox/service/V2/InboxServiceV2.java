@@ -508,7 +508,7 @@ public class InboxServiceV2 {
                 .build();
 
         return InboxRequest.builder()
-                .RequestInfo(searchRequest.getRequestInfo())
+                .requestInfo(searchRequest.getRequestInfo())
                 .inbox(inboxSearchCriteria)
                 .build();
     }
@@ -732,7 +732,7 @@ public class InboxServiceV2 {
         List<CompletableFuture<InboxCountItem>> itemFutures = inboxList.stream()
                 .map(criteria -> CompletableFuture.supplyAsync(() -> {
                     InboxRequest inboxRequest = InboxRequest.builder()
-                            .RequestInfo(requestInfo)
+                            .requestInfo(requestInfo)
                             .inbox(criteria)
                             .build();
                     InboxQueryConfiguration inboxQueryConfiguration = mdmsUtil.getConfigFromMDMS(

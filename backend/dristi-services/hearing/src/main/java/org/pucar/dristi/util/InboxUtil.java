@@ -168,7 +168,7 @@ public class InboxUtil {
                 .build();
 
         return InboxRequest.builder()
-                .RequestInfo(requestInfo)
+                .requestInfo(requestInfo)
                 .inbox(inboxSearchCriteria)
                 .build();
     }
@@ -193,7 +193,7 @@ public class InboxUtil {
                 .build();
 
         return InboxRequest.builder()
-                .RequestInfo(requestInfo)
+                .requestInfo(requestInfo)
                 .inbox(inboxSearchCriteria)
                 .build();
     }

@@ -2,6 +2,7 @@ package org.egov.user.web.contract;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.egov.user.config.*;
 import org.egov.user.domain.model.Address;
@@ -16,7 +17,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 
 @Setter
 @Getter
@@ -34,7 +34,7 @@ public class UserRequest {
     private String salutation;
 
     @Pattern(regexp = UserServiceConstants.PATTERN_NAME)
-    @Size(max = 50)
+    @Size(max = 250)
     private String name;
 
     @Pattern(regexp = UserServiceConstants.PATTERN_GENDER)

@@ -40,10 +40,11 @@
 package org.egov.pg.models;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import lombok.*;
+import org.hibernate.validator.constraints.Length;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-import lombok.*;
 
 @Builder
 @Getter
@@ -61,46 +62,46 @@ public class BankBranchContract extends AuditableContract {
     private BankContract bank;
 
     @NotNull
-    @Size(max = 50, min = 1)
+    @Length(max = 50, min = 1)
     private String code;
 
     @NotNull
-    @Size(max = 50, min = 1)
+    @Length(max = 50, min = 1)
     @Pattern(regexp = "^[a-zA-Z0-9_]*$")
     private String name;
 
     @NotNull
-    @Size(max = 50, min = 1)
+    @Length(max = 50, min = 1)
     private String address;
 
-    @Size(max = 50)
+    @Length(max = 50)
     private String address2;
 
-    @Size(max = 50)
+    @Length(max = 50)
     private String city;
 
-    @Size(max = 50)
+    @Length(max = 50)
     private String state;
 
-    @Size(max = 50)
+    @Length(max = 50)
     private String pincode;
 
-    @Size(max = 15)
+    @Length(max = 15)
     private String phone;
 
-    @Size(max = 15)
+    @Length(max = 15)
     private String fax;
 
-    @Size(max = 50)
+    @Length(max = 50)
     private String contactPerson;
 
     @NotNull
     private Boolean active;
 
-    @Size(max = 256)
+    @Length(max = 256)
     private String description;
 
-    @Size(max = 50)
+    @Length(max = 50)
     private String micr;
 
     public BankBranchContract(final String id) {

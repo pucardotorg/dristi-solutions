@@ -1,0 +1,12 @@
+CREATE OR REPLACE FUNCTION epoch_to_ts(epoch_ms BIGINT)
+RETURNS TIMESTAMPTZ
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE AS $$
+SELECT to_timestamp(epoch_ms / 1000.0)
+           $$;
+
+CREATE OR REPLACE FUNCTION to_ist(epoch_ms BIGINT)
+RETURNS TEXT
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE AS $$
+SELECT to_char(to_timestamp(epoch_ms / 1000.0) AT TIME ZONE 'Asia/Kolkata',
+               'YYYY-MM-DD HH24:MI:SS')
+           $$;

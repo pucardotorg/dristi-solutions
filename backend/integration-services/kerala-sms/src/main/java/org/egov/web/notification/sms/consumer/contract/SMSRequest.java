@@ -9,8 +9,8 @@ import org.egov.web.notification.sms.models.Category;
 import org.egov.web.notification.sms.models.Sms;
 import org.egov.web.notification.sms.models.enums.SmsContentType;
 
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 @Slf4j
 @Getter

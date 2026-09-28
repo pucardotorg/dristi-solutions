@@ -56,6 +56,8 @@ import CaseLockModal from "./CaseLockModal";
 import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
+import { EFilingCaseContext } from "../../../components/EFilingCaseContext";
+import ConfirmAccusedMobileNumberModal from "./ConfirmAccusedMobileNumberModal";
 import ErrorDataModal from "./ErrorDataModal";
 import { documentLabels } from "../../../Utils";
 import useSearchTaskMangementService from "../../../hooks/dristi/useSearchTaskMangementService";
@@ -113,8 +115,8 @@ const selectedArray = [
   "demandNoticeDetails",
   "delayApplications",
   "witnessDetails",
-  "prayerSwornStatement",
   "advocateDetails",
+  "prayerSwornStatement",
   "processCourierService",
 ];
 
@@ -164,6 +166,8 @@ function EFilingCases({ path }) {
   // Refs map for all FormComposerV2 instances — enables multi-form validation
   const formRefsMap = useRef({});
 
+  const accusedMobileScrollAttempts = useRef(0);
+
   const urlParams = new URLSearchParams(window.location.search);
   const selected = urlParams.get("selected") || sideMenuConfig?.[0]?.children?.[0]?.key;
   const caseId = urlParams.get("caseId");
@@ -178,8 +182,10 @@ function EFilingCases({ path }) {
   const [serviceOfDemandNoticeModal, setServiceOfDemandNoticeModal] = useState({ show: false, index: 0 });
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [showConfirmMandatoryModal, setShowConfirmMandatoryModal] = useState(false);
-  const [optionalFieldModalAlreadyViewed, setOptionalFieldModalAlreadyViewed] = useState(false);
-  const [showConfirmOptionalModal, setShowConfirmOptionalModal] = useState(false);
+  // Nudge asking the user to add the accused's phone number before the case is submitted (issue #5868).
+  const [showAccusedMobileNumberModal, setShowAccusedMobileNumberModal] = useState(false);
+  const [accusedMobileNumberNudgeViewed, setAccusedMobileNumberNudgeViewed] = useState(false);
+  const [scrollToAccusedMobileIndex, setScrollToAccusedMobileIndex] = useState(null);
   const [showReviewCorrectionModal, setShowReviewCorrectionModal] = useState(false);
   const [showCaseLockingModal, setShowCaseLockingModal] = useState(false);
   const [showConfirmDcaSkipModal, setShowConfirmDcaSkipModal] = useState(false);
@@ -219,23 +225,10 @@ function EFilingCases({ path }) {
     return mandatoryRemainingPages;
   }, [fieldsRemaining]);
 
-  const checkAndGetOptionalFieldLeftPages = useMemo(() => {
-    const optionalRemainingPages = fieldsRemaining.filter((page) => page.optionalTotalCount !== 0) || [];
-    return optionalRemainingPages;
-  }, [fieldsRemaining]);
-
   const mandatoryFieldsLeftTotalCount = useMemo(() => {
     let count = 0;
     for (let i = 0; i < fieldsRemaining.length; i++) {
       count = count + fieldsRemaining[i].mandatoryTotalCount;
-    }
-    return count;
-  }, [fieldsRemaining]);
-
-  const optionalFieldsLeftTotalCount = useMemo(() => {
-    let count = 0;
-    for (let i = 0; i < fieldsRemaining.length; i++) {
-      count = count + fieldsRemaining[i].optionalTotalCount;
     }
     return count;
   }, [fieldsRemaining]);
@@ -300,14 +293,6 @@ function EFilingCases({ path }) {
     return (
       <div>
         <h3>{t("ENSURE_ALL_MANDATORY_ARE_FILLED")}</h3>
-      </div>
-    );
-  }, []);
-
-  const optionalFieldsRemainingText = useCallback((count) => {
-    return (
-      <div>
-        <h3>{`${t("MORE_INFO_HELPS_FIRST_HALF")} ${count} ${t("MORE_INFO_HELPS_SECOND_HALF")}`}</h3>
       </div>
     );
   }, []);
@@ -385,7 +370,22 @@ function EFilingCases({ path }) {
     return false;
   }, [selected, mandatoryFieldsLeftTotalCount]);
 
-  const showOptionalFieldsRemainingModal = useMemo(() => {
+  // Accused (respondent) forms for which no phone number has been entered.
+  // Index is the position among the enabled forms, i.e. the order in which they are rendered on the accused details page.
+  const accusedWithoutMobileNumber = useMemo(() => {
+    return (caseDetails?.additionalDetails?.respondentDetails?.formdata || [])
+      ?.filter((form) => form?.isenabled !== false)
+      ?.map((form, index) => ({ index, form }))
+      ?.filter(({ form }) => !form?.data?.phonenumbers?.mobileNumber?.some((number) => String(number || "")?.trim()?.length > 0));
+  }, [caseDetails]);
+
+  // Once the user signs off on filing without the accused's phone number, the sign-off is persisted on the case
+  // so that the nudge is not shown again every time the review screen is visited.
+  const isAccusedMobileNumberNudgeConfirmed = useMemo(() => Boolean(caseDetails?.additionalDetails?.accusedPhoneNumberNudge?.isConfirmed), [
+    caseDetails,
+  ]);
+
+  const showAccusedMobileNumberNudge = useMemo(() => {
     if (selected === "reviewCaseFile") {
       if (!isComplainantDetailsCompleted && isDraftInProgress) {
         setShowFillComplainantDetailsAdvisoryModal({ show: true, redirectTo: "complainantDetails" });
@@ -393,15 +393,17 @@ function EFilingCases({ path }) {
       } else if (isComplainantDetailsChanged && mandatoryFieldsLeftTotalCount === 0 && isDraftInProgress) {
         setShowFillComplainantDetailsAdvisoryModal({ show: true, redirectTo: "advocateDetails" });
         return false;
-      } else if (checkAndGetOptionalFieldLeftPages.length !== 0) {
-        setShowConfirmOptionalModal(true);
+      } else if (isDraftInProgress && !isAccusedMobileNumberNudgeConfirmed && accusedWithoutMobileNumber?.length > 0) {
+        // This nudge is only for the e-filing flow, it is not shown when the case comes back after scrutiny.
+        setShowAccusedMobileNumberModal(true);
         return true;
       } else return false;
     }
     return false;
   }, [
     selected,
-    checkAndGetOptionalFieldLeftPages,
+    accusedWithoutMobileNumber,
+    isAccusedMobileNumberNudgeConfirmed,
     isComplainantDetailsCompleted,
     isComplainantDetailsChanged,
     mandatoryFieldsLeftTotalCount,
@@ -442,6 +444,15 @@ function EFilingCases({ path }) {
   }, [caseDetails]);
 
   const prevCaseDetails = useMemo(() => structuredClone(caseDetails), [caseDetails]);
+
+  // In CASE_REASSIGNED the pages accumulate their edits into `errorCaseDetails` and only
+  // persist at the review step, so that copy - not the searched case - is the live one.
+  const activeCaseDetails = useMemo(() => (isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails), [
+    isCaseReAssigned,
+    errorCaseDetails,
+    caseDetails,
+  ]);
+  const eFilingCaseContextValue = useMemo(() => ({ caseDetails: activeCaseDetails }), [activeCaseDetails]);
 
   const scrutinyObj = useMemo(() => {
     return caseDetails?.additionalDetails?.scrutiny?.data || {};
@@ -597,6 +608,35 @@ function EFilingCases({ path }) {
 
     hydrateFreshCaseData();
   }, [shouldRefetchCaseDetails, selected]);
+
+  // After "Add Details" is clicked on the accused phone number nudge, bring the phone number field
+  // of the first accused without a phone number into view once the accused details page has rendered.
+  useEffect(() => {
+    if (scrollToAccusedMobileIndex === null || selected !== "respondentDetails") return;
+
+    // Changing the page saves the current page and then refetches the case. The refetch resolves after
+    // isLoader is already false and remounts every form (setFormdata + setFormRenderKey), which resets the
+    // scroll position. isDisabled stays true until that refetch settles, and the timer below is restarted on
+    // every re-render trigger, so we only scroll once the forms have stopped remounting.
+    if (isLoading || isLoader || isDisabled) return;
+
+    const timer = setTimeout(() => {
+      const mobileNumberInputs = document.querySelectorAll(".file-case-form-section .form-wrapper-d input[name='mobileNumber']");
+      const targetInput = mobileNumberInputs?.[scrollToAccusedMobileIndex] || mobileNumberInputs?.[0];
+      accusedMobileScrollAttempts.current = accusedMobileScrollAttempts.current + 1;
+      if (targetInput) {
+        targetInput.scrollIntoView({ block: "center", behavior: "smooth" });
+        targetInput.focus({ preventScroll: true });
+      }
+      // If the forms are not rendered yet, keep the target so that the next render retries.
+      if (targetInput || accusedMobileScrollAttempts.current >= 5) {
+        accusedMobileScrollAttempts.current = 0;
+        setScrollToAccusedMobileIndex(null);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [scrollToAccusedMobileIndex, selected, isLoading, isLoader, isDisabled, formdata, formRenderKey, caseDetails]);
 
   useEffect(() => {
     if (selected !== "complainantDetails") return;
@@ -1631,6 +1671,7 @@ function EFilingCases({ path }) {
                       "SelectBulkInputs",
                       "SelectCustomTextArea",
                       "SelectCustomFormatterTextArea",
+                      "SelectSynopsisTemplateTextArea",
                       "SelectUserTypeComponent",
                     ].includes(formComponent.component)
                   ) {
@@ -1860,14 +1901,6 @@ function EFilingCases({ path }) {
 
   const handleAddForm = () => {
     setFormdata([...formdata, { isenabled: true, data: {}, displayindex: activeForms }]);
-  };
-
-  const handleSkip = () => {
-    setShowConfirmOptionalModal(false);
-    // optionalFieldModalAlreadyViewed -> We want to show the optional remaining fields modal only once when the user visits the review page for the first time.
-    // Then for viewing it again, user has to go to different page and come back on review page.
-    // This logic is implemented so that this modal does not pop up again and again unnecessarily on review page when save draft or continue button is clicked.
-    setOptionalFieldModalAlreadyViewed(true);
   };
 
   const createPendingTask = async ({
@@ -2710,7 +2743,7 @@ function EFilingCases({ path }) {
 
   const onSaveDraft = (removeDateOfService = false) => {
     let newFormData = structuredClone(formdata);
-    if (removeDateOfService) {
+    if (removeDateOfService === true) {
       newFormData = formdata.map((item, index) =>
         index === serviceOfDemandNoticeModal?.index
           ? {
@@ -2753,9 +2786,15 @@ function EFilingCases({ path }) {
     })
       .then(() => {
         refetchCaseData().then((updatedCaseData) => {
-          const caseData = updatedCaseData?.data?.criteria[0].responseList[0].additionalDetails?.[selected]?.formdata ||
-            caseDetails?.additionalDetails?.[nextSelected]?.formdata ||
-            caseDetails?.caseDetails?.[nextSelected]?.formdata || [{ isenabled: true, data: {}, displayindex: 0 }];
+          // Save draft keeps the user on the current page, so rehydrate from the refreshed data of `selected`.
+          // Pages like demandNoticeDetails/chequeDetails are persisted under caseDetails, not additionalDetails,
+          // so both have to be looked up - otherwise formdata falls back to another page's data and conditional
+          // fields (e.g. dateOfReply) unmount, losing their value in react-hook-form.
+          const updatedCase = updatedCaseData?.data?.criteria?.[0]?.responseList?.[0];
+          const caseData =
+            updatedCase?.additionalDetails?.[selected]?.formdata ||
+            updatedCase?.caseDetails?.[selected]?.formdata ||
+            (selected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
           setFormdata(caseData);
           setIsDisabled(false);
         });
@@ -2792,7 +2831,8 @@ function EFilingCases({ path }) {
     setIsLoader(true);
     setParmas({ ...params, [pageConfig.key]: formdata });
     setFormdata([{ isenabled: true, data: {}, displayindex: 0 }]);
-    setOptionalFieldModalAlreadyViewed(false);
+    // The accused phone number nudge is shown again if the user navigates away and comes back to the review screen.
+    setAccusedMobileNumberNudgeViewed(false);
     if (resetFormData.current) {
       resetFormData.current();
       setIsDisabled(false);
@@ -2985,43 +3025,58 @@ function EFilingCases({ path }) {
     }
   };
 
-  const takeUserToRemainingOptionalFieldsPage = async () => {
+  // "Add Details" on the accused phone number nudge -> take the user to the accused details page and
+  // scroll to the phone number field of the first accused whose phone number is missing.
+  const takeUserToAccusedMobileNumberField = () => {
+    setShowAccusedMobileNumberModal(false);
+    accusedMobileScrollAttempts.current = 0;
+    setScrollToAccusedMobileIndex(accusedWithoutMobileNumber?.[0]?.index || 0);
+    handlePageChange("respondentDetails");
+  };
+
+  // "Confirm" on the accused phone number nudge -> record the sign-off on the case so that
+  // the user is not nudged again for this case during e-filing.
+  const confirmFilingWithoutAccusedMobileNumber = async () => {
+    setShowAccusedMobileNumberModal(false);
+    setAccusedMobileNumberNudgeViewed(true);
     try {
       setIsLoader(true);
-
-      const firstPageInTheListWhichHasOptionalFieldsLeft = checkAndGetOptionalFieldLeftPages?.[0];
-
-      const selectedPage = firstPageInTheListWhichHasOptionalFieldsLeft?.selectedPage;
-
-      // clear stale local state first
-      setFormdata([]);
-
-      // refetch latest backend data
-      const updatedCaseResponse = await refetchCaseData();
-
-      const updatedCaseDetails = updatedCaseResponse?.data?.criteria?.[0]?.responseList?.[0];
-
-      const freshFormData =
-        updatedCaseDetails?.additionalDetails?.[selectedPage]?.formdata ||
-        updatedCaseDetails?.caseDetails?.[selectedPage]?.formdata ||
-        (selectedPage === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
-
-      // hydrate fresh state
-      setFormdata(freshFormData);
-
-      // force FormComposerV2 remount
-      setFormRenderKey(Date.now());
-
-      setPrevSelected(selected);
-
-      // navigate after state hydration
-      history.push(`?caseId=${caseId}&selected=${selectedPage}`);
-
-      setShowConfirmOptionalModal(false);
-      setOptionalFieldModalAlreadyViewed(true);
+      const newCaseDetails = {
+        ...caseDetails,
+        additionalDetails: {
+          ...caseDetails?.additionalDetails,
+          modifiedCaseTitle: newCaseName || caseDetails?.additionalDetails?.modifiedCaseTitle,
+          accusedPhoneNumberNudge: {
+            isConfirmed: true,
+          },
+        },
+      };
+      await updateCaseDetails({
+        t,
+        caseDetails: newCaseDetails,
+        prevCaseDetails: prevCaseDetails,
+        formdata,
+        setFormDataValue: setFormDataValue.current,
+        pageConfig,
+        selected,
+        setIsDisabled,
+        tenantId,
+        setErrorCaseDetails,
+        multiUploadList,
+        scrutinyObj,
+        filingType: filingType,
+        setShouldShowConfirmDcaModal,
+        isDelayCondonation,
+        isCaseReAssigned,
+        isDraftInProgress,
+      });
+      await refetchCaseData();
     } catch (error) {
-      console.error("Failed to reload optional page data", error);
+      console.error("Failed to save accused phone number confirmation", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("CASE_SAVE_FAILED"), error: true, errorId });
     } finally {
+      setIsDisabled(false);
       setIsLoader(false);
     }
   };
@@ -3308,74 +3363,76 @@ function EFilingCases({ path }) {
             />
           )}
           {sectionWiseErrors?.[selected] && <ScrutinyInfo t={t} config={{ populators: { scrutinyMessage: sectionWiseErrors?.[selected] } }} />}
-          {!isLoading &&
-            !isLoader &&
-            modifiedFormConfig.map((config, index) => {
-              return formdata[index].isenabled ? (
-                <div key={`${selected}-${index}`} className={`${selected !== "processCourierService" ? "form-wrapper-d" : ""}`}>
-                  {pageConfig?.addFormText && (
-                    <div className="form-item-name">
-                      <h1>{`${t(pageConfig?.formItemName)} ${formdata[index]?.displayindex + 1}`}</h1>
-                      {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) &&
-                        (isDraftInProgress ||
-                          (isCaseReAssigned &&
-                            (Object?.keys(judgeObj || {})?.length > 0 ||
-                              (!!formdata?.[index] &&
-                                !(
-                                  caseDetails?.additionalDetails?.[selected]?.formdata?.[index] ||
-                                  caseDetails?.caseDetails?.[selected]?.formdata?.[index]
-                                ))))) && (
-                          <span
-                            style={{ cursor: "pointer" }}
-                            onClick={() => {
-                              setConfirmDeleteModal(true);
-                              setDeleteFormIndex(index);
-                            }}
-                          >
-                            <CustomDeleteIcon />
-                          </span>
-                        )}
-                    </div>
-                  )}
-                  <FormComposerV2
-                    key={`${selected}-${index}-${formRenderKey}-${
-                      (caseDetails || errorCaseDetails || {})?.additionalDetails?.[selected]?.formdata?.[index]?.transferredPOA?.code || "EMPTY"
-                    }`}
-                    label={showActionsLabels && actionName}
-                    config={config}
-                    onSubmit={() => onSubmit("SAVE_DRAFT")}
-                    onSecondayActionClick={onSaveDraft}
-                    defaultValues={getDefaultValues(index)}
-                    onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-                      onFormValueChange(
-                        setValue,
-                        formData,
-                        formState,
-                        reset,
-                        setError,
-                        clearErrors,
-                        trigger,
-                        getValues,
-                        index,
-                        formdata[index].displayindex
-                      );
-                    }}
-                    isDisabled={isSubmitDisabled}
-                    cardStyle={{ minWidth: "100%" }}
-                    cardClassName={`e-filing-card-form-style ${pageConfig.className}`}
-                    secondaryLabel={t("CS_SAVE_DRAFT")}
-                    showSecondaryLabel={isDraftInProgress}
-                    actionClassName="e-filing-action-bar"
-                    className={`${pageConfig.className} ${getFormClassName()}`}
-                    noBreakLine
-                    submitIcon={<RightArrow />}
-                    formRef={formRefsMap.current[index] || (formRefsMap.current[index] = { current: null })}
-                    validateAllForms={validateAllForms}
-                    allFormRefs={formRefsMap}
-                  />
-                </div>
-              ) : null;
-            })}
+          <EFilingCaseContext.Provider value={eFilingCaseContextValue}>
+            {!isLoading &&
+              !isLoader &&
+              modifiedFormConfig.map((config, index) => {
+                return formdata[index].isenabled ? (
+                  <div key={`${selected}-${index}`} className={`${selected !== "processCourierService" ? "form-wrapper-d" : ""}`}>
+                    {pageConfig?.addFormText && (
+                      <div className="form-item-name">
+                        <h1>{`${t(pageConfig?.formItemName)} ${formdata[index]?.displayindex + 1}`}</h1>
+                        {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) &&
+                          (isDraftInProgress ||
+                            (isCaseReAssigned &&
+                              (Object?.keys(judgeObj || {})?.length > 0 ||
+                                (!!formdata?.[index] &&
+                                  !(
+                                    caseDetails?.additionalDetails?.[selected]?.formdata?.[index] ||
+                                    caseDetails?.caseDetails?.[selected]?.formdata?.[index]
+                                  ))))) && (
+                            <span
+                              style={{ cursor: "pointer" }}
+                              onClick={() => {
+                                setConfirmDeleteModal(true);
+                                setDeleteFormIndex(index);
+                              }}
+                            >
+                              <CustomDeleteIcon />
+                            </span>
+                          )}
+                      </div>
+                    )}
+                    <FormComposerV2
+                      key={`${selected}-${index}-${formRenderKey}-${
+                        (caseDetails || errorCaseDetails || {})?.additionalDetails?.[selected]?.formdata?.[index]?.transferredPOA?.code || "EMPTY"
+                      }`}
+                      label={showActionsLabels && actionName}
+                      config={config}
+                      onSubmit={() => onSubmit("SAVE_DRAFT")}
+                      onSecondayActionClick={onSaveDraft}
+                      defaultValues={getDefaultValues(index)}
+                      onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+                        onFormValueChange(
+                          setValue,
+                          formData,
+                          formState,
+                          reset,
+                          setError,
+                          clearErrors,
+                          trigger,
+                          getValues,
+                          index,
+                          formdata[index].displayindex
+                        );
+                      }}
+                      isDisabled={isSubmitDisabled}
+                      cardStyle={{ minWidth: "100%" }}
+                      cardClassName={`e-filing-card-form-style ${pageConfig.className}`}
+                      secondaryLabel={t("CS_SAVE_DRAFT")}
+                      showSecondaryLabel={isDraftInProgress}
+                      actionClassName="e-filing-action-bar"
+                      className={`${pageConfig.className} ${getFormClassName()}`}
+                      noBreakLine
+                      submitIcon={<RightArrow />}
+                      formRef={formRefsMap.current[index] || (formRefsMap.current[index] = { current: null })}
+                      validateAllForms={validateAllForms}
+                      allFormRefs={formRefsMap}
+                    />
+                  </div>
+                ) : null;
+              })}
+          </EFilingCaseContext.Provider>
           {confirmDeleteModal && (
             <Modal
               headerBarMain={<Heading label={t("Are you sure?")} />}
@@ -3450,27 +3507,24 @@ function EFilingCases({ path }) {
               actionSaveOnSubmit={() => takeUserToRemainingMandatoryFieldsPage()}
             ></Modal>
           )}
-          {showOptionalFieldsRemainingModal &&
-            showConfirmOptionalModal &&
+          {/* Nudge the filing party to add the accused's phone number before the case is submitted. */}
+          {isDraftInProgress &&
+            showAccusedMobileNumberNudge &&
+            showAccusedMobileNumberModal &&
+            !accusedMobileNumberNudgeViewed &&
             !mandatoryFieldsLeftTotalCount &&
             !isDisableAllFieldsMode &&
-            !optionalFieldModalAlreadyViewed && (
-              <Modal
-                headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASES")} />}
-                headerBarEnd={
-                  <CloseBtn
-                    onClick={() => {
-                      setShowConfirmOptionalModal(false);
-                      setOptionalFieldModalAlreadyViewed(true);
-                    }}
-                  />
-                }
-                actionCancelLabel={t("SKIP_AND_CONTINUE")}
-                actionCancelOnSubmit={handleSkip}
-                actionSaveLabel={isEditingAllowed && t("FILL_NOW")}
-                children={optionalFieldsRemainingText(optionalFieldsLeftTotalCount)}
-                actionSaveOnSubmit={() => takeUserToRemainingOptionalFieldsPage()}
-              ></Modal>
+            isEditingAllowed && (
+              <ConfirmAccusedMobileNumberModal
+                t={t}
+                accusedWithoutMobileNumberCount={accusedWithoutMobileNumber?.length}
+                onAddDetails={takeUserToAccusedMobileNumberField}
+                onConfirm={confirmFilingWithoutAccusedMobileNumber}
+                onClose={() => {
+                  setShowAccusedMobileNumberModal(false);
+                  setAccusedMobileNumberNudgeViewed(true);
+                }}
+              />
             )}
           {showReviewCorrectionModal && isDraftInProgress && (
             <Modal
