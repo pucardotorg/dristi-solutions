@@ -374,11 +374,22 @@ export const UICustomizations = {
             }
 
             if (typeof additionalDetails?.setHearingDateInfo === "function") {
-              const caseDetails = data?.list?.[0]?.taskDetails?.caseDetails;
-              additionalDetails.setHearingDateInfo({
-                originalHearingDate: caseDetails?.originalHearingDate || null,
-                hearingDate: caseDetails?.hearingDate || null,
-              });
+              const isTaskWithHearingDateChanged = data?.list?.find(
+                (task) => task?.taskDetails?.caseDetails?.originalHearingDate !== task?.taskDetails?.caseDetails?.hearingDate
+              );
+              if (isTaskWithHearingDateChanged) {
+                additionalDetails.setHearingDateInfo({
+                  originalHearingDate: isTaskWithHearingDateChanged?.taskDetails?.caseDetails?.originalHearingDate || null,
+                  hearingDate: isTaskWithHearingDateChanged?.taskDetails?.caseDetails?.hearingDate || null,
+                });
+              } 
+              else {
+                const caseDetails = data?.list?.[0]?.taskDetails?.caseDetails;
+                additionalDetails.setHearingDateInfo({
+                  originalHearingDate: caseDetails?.originalHearingDate || null,
+                  hearingDate: caseDetails?.hearingDate || null,
+                });
+              }
             }
             return { list: taskData || [] };
           },
