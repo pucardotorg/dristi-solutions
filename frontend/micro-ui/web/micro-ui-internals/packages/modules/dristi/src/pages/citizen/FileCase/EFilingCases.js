@@ -2786,9 +2786,15 @@ function EFilingCases({ path }) {
     })
       .then(() => {
         refetchCaseData().then((updatedCaseData) => {
-          const caseData = updatedCaseData?.data?.criteria[0].responseList[0].additionalDetails?.[selected]?.formdata ||
-            caseDetails?.additionalDetails?.[nextSelected]?.formdata ||
-            caseDetails?.caseDetails?.[nextSelected]?.formdata || [{ isenabled: true, data: {}, displayindex: 0 }];
+          // Save draft keeps the user on the current page, so rehydrate from the refreshed data of `selected`.
+          // Pages like demandNoticeDetails/chequeDetails are persisted under caseDetails, not additionalDetails,
+          // so both have to be looked up - otherwise formdata falls back to another page's data and conditional
+          // fields (e.g. dateOfReply) unmount, losing their value in react-hook-form.
+          const updatedCase = updatedCaseData?.data?.criteria?.[0]?.responseList?.[0];
+          const caseData =
+            updatedCase?.additionalDetails?.[selected]?.formdata ||
+            updatedCase?.caseDetails?.[selected]?.formdata ||
+            (selected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
           setFormdata(caseData);
           setIsDisabled(false);
         });
