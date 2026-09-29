@@ -520,7 +520,7 @@ public class CauseListService {
         try {
             CaseCriteria criteria = CaseCriteria.builder().filingNumber(causeList.getFilingNumber()).build();
             SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder()
-                    .RequestInfo(createInternalRequestInfo())
+                    .requestInfo(createInternalRequestInfo())
                     .tenantId(config.getEgovStateTenantId())
                     .criteria(Collections.singletonList(criteria))
                     .flow(FLOW_JAC)
@@ -674,7 +674,7 @@ public class CauseListService {
         try {
             CaseCriteria criteria = CaseCriteria.builder().filingNumber(filingNumber).build();
             SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder()
-                    .RequestInfo(createInternalRequestInfo())
+                    .requestInfo(createInternalRequestInfo())
                     .tenantId(config.getEgovStateTenantId())
                     .criteria(Collections.singletonList(criteria))
                     .flow(FLOW_JAC)

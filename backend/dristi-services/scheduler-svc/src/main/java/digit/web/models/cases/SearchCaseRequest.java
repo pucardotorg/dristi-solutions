@@ -18,7 +18,7 @@ public class SearchCaseRequest {
 
     @JsonProperty("RequestInfo")
     @Valid
-    private RequestInfo RequestInfo = null;
+    private RequestInfo requestInfo = null;
 
     @JsonProperty("criteria")
     @Valid

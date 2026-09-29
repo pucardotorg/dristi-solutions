@@ -13,7 +13,7 @@ public class PendingTaskSearchRequest {
 
 
     @JsonProperty("RequestInfo")
-    private RequestInfo RequestInfo;
+    private RequestInfo requestInfo;
 
     @JsonProperty("SearchCriteria")
     private IndexSearchCriteria indexSearchCriteria;
