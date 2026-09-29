@@ -87,7 +87,7 @@ public class ReScheduleHearingService {
 
             for (ReScheduleHearing hearingDetail : reScheduleHearing) {
                 CaseCriteria criteria = CaseCriteria.builder().tenantId(tenantId).filingNumber(hearingDetail.getCaseId()).build();
-                SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder().RequestInfo(requestInfo).criteria(Collections.singletonList(criteria)).build();
+                SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder().requestInfo(requestInfo).criteria(Collections.singletonList(criteria)).build();
                 JsonNode cases = caseUtil.getCases(searchCaseRequest);
                 JsonNode litigants = caseUtil.getLitigants(cases);
                 Set<String> litigantIds = caseUtil.getIndividualIds(litigants);

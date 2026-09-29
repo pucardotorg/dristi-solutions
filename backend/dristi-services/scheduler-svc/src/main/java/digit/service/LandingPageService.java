@@ -97,7 +97,7 @@ public class LandingPageService {
 //                    .build();
 //
 //            SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder()
-//                    .RequestInfo(createInternalRequestInfo())
+//                    .requestInfo(createInternalRequestInfo())
 //                    .tenantId(config.getEgovStateTenantId())
 //                    .criteria(Collections.singletonList(criteria))
 //                    .flow(FLOW_JAC)
@@ -148,7 +148,7 @@ public class LandingPageService {
             log.info("operation = getTotalDisposedCases, result = IN_PROGRESS");
             CaseCriteria criteria = CaseCriteria.builder().outcome(config.getCaseStatusesDisposed()).build();
             SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder()
-                    .RequestInfo(createInternalRequestInfo())
+                    .requestInfo(createInternalRequestInfo())
                     .tenantId(config.getEgovStateTenantId())
                     .criteria(Collections.singletonList(criteria))
                     .build();
@@ -167,7 +167,7 @@ public class LandingPageService {
             CaseCriteria criteria = CaseCriteria.builder().status(config.getCaseStatusesAfterPayment()).build();
 
             SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder()
-                    .RequestInfo(createInternalRequestInfo())
+                    .requestInfo(createInternalRequestInfo())
                     .tenantId(config.getEgovStateTenantId())
                     .criteria(Collections.singletonList(criteria))
                     .build();

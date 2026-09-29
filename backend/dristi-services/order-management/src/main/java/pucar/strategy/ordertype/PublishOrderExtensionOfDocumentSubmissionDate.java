@@ -68,7 +68,7 @@ public class PublishOrderExtensionOfDocumentSubmissionDate implements OrderUpdat
         moduleSearchCriteria.put("isCompleted", false);
 
         InboxRequest searchRequest = InboxRequest.builder()
-                .RequestInfo(requestInfo)
+                .requestInfo(requestInfo)
                 .inbox(InboxSearchCriteria.builder()
                         .tenantId(order.getTenantId())
                         .processSearchCriteria(ProcessInstanceSearchCriteria.builder()
