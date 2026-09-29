@@ -113,7 +113,7 @@ public class HearingProcessor {
 
     private void enrichCaseDetails(@Valid RequestInfo requestInfo, ScheduleHearing scheduleHearing, List<String> fillingNumbers) {
         log.info("operation = enrichCaseDetails, result = IN_PROGRESS, fillingNumber={}", fillingNumbers.get(0));
-        SearchCaseRequest caseRequest = SearchCaseRequest.builder().RequestInfo(requestInfo).flow("FLOW_JAC")
+        SearchCaseRequest caseRequest = SearchCaseRequest.builder().requestInfo(requestInfo).flow("FLOW_JAC")
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(fillingNumbers.get(0)).build())).build();
 
         JsonNode cases = caseUtil.getCases(caseRequest);
