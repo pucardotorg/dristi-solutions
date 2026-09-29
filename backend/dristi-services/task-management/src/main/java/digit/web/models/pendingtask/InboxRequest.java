@@ -13,7 +13,7 @@ import javax.validation.Valid;
 @Setter
 public class InboxRequest   {
     @JsonProperty("RequestInfo")
-    private RequestInfo RequestInfo;
+    private RequestInfo requestInfo;
 
     @Valid
     @JsonProperty("inbox")

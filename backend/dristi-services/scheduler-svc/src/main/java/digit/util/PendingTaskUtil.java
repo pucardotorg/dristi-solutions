@@ -80,7 +80,7 @@ public class PendingTaskUtil {
 
         CaseCriteria criteria = CaseCriteria.builder().filingNumber(pendingTask.getFilingNumber()).build();
         SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder()
-                .RequestInfo(createInternalRequestInfo())
+                .requestInfo(createInternalRequestInfo())
                 .tenantId(config.getEgovStateTenantId())
                 .criteria(Collections.singletonList(criteria))
                 .flow(FLOW_JAC)
