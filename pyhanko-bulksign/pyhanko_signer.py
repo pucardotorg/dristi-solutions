@@ -78,7 +78,9 @@ if os.name == "nt":
     _PROGRAM_DIRS = [os.environ.get("ProgramFiles", r"C:\Program Files"),
                      os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")]
     _KNOWN_MODULES = [
-        os.path.join(_SYS32, "eps2003csp11v2.dll"),   # ePass2003
+        os.path.join(_SYS32, "eps2003csp11v2.dll"),   # ePass2003 / HYP2003 India (FIPS 140-3) driver
+        os.path.join(_SYS32, "HYP2003csp11IND.dll"),  # HYP2003 India driver
+        os.path.join(_SYS32, "HyperPKICsp11_2003.dll"),  # HYP2003 global HyperPKI driver
         os.path.join(_SYS32, "eps2003csp11.dll"),     # ePass2003 (older driver)
         os.path.join(_SYS32, "SignatureP11.dll"),     # WatchData ProxKey
         os.path.join(_SYS32, "eTPKCS11.dll"),         # SafeNet eToken

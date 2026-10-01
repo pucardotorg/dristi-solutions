@@ -65,6 +65,16 @@ auto-creates a self-signed `test-cert.p12`). The token PIN is never stored.
 `PKCS11_MODULE_PATH` from `.env` (if that file exists) -> any `.dll`/`.so` copied
 next to the exe -> the vendor's standard install location (ePass2003, WatchData,
 SafeNet, HyperPKI/castle). If none is found, the error lists every place it looked.
+HYP2003 file names (checked inside the vendor installers): Windows India/FIPS 140-3
+driver installs `System32\eps2003csp11v2.dll`, the global HyperPKI driver
+`System32\HyperPKICsp11_2003.dll` (both 64-bit, depend only on Windows DLLs incl.
+`WinSCard.dll`). Linux: `redist/libcastle_v2.so.1.0.0` in the HYP2003 Linux zip.
+
+**Linux USB access (no pcscd):** `libcastle_v2.so` has its own USB/CCID stack and
+does not use pcscd; it needs write access to the token's USB node. The first time
+DSC mode is chosen, the app offers a one-time setup (`linux_setup.py`) that installs
+the vendor's udev rule (`idVendor` 096e/2ccf, as in the vendor `config.sh`) via a
+graphical `pkexec` password prompt, falling back to a terminal running sudo.
 Leave `PKCS11_CERT_LABEL`/`PKCS11_KEY_LABEL` **blank** to auto-use a single-identity
 token; the app shows the certificate, label and library under the title.
 

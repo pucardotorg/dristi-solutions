@@ -95,6 +95,10 @@ def _check_signing(report):
 def _check_token(report):
     from pyhanko_signer import find_pkcs11_module, prepare_module_dir
 
+    import linux_setup
+
+    if linux_setup.is_linux():
+        report.append(f"[INFO] Linux USB access for DSC token: {linux_setup.usb_status()}")
     path, searched = find_pkcs11_module()
     if not path:
         report.append("[INFO] DSC token library: not found (only needed for real signing). Looked in:")

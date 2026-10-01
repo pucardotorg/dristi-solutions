@@ -60,6 +60,14 @@ BG = "#f4f6f8"
 PANEL = "#eef5f5"
 
 
+def _needs_linux_usb_setup(module_path) -> bool:
+    """Linux + the castle (HYP2003/ePass2003) library + no USB access yet."""
+    import linux_setup
+
+    return (bool(module_path) and "castle" in os.path.basename(module_path).lower()
+            and linux_setup.needs_usb_setup())
+
+
 class _QueueLogHandler(logging.Handler):
     def __init__(self, q: "queue.Queue[str]"):
         super().__init__()
@@ -82,6 +90,7 @@ class BulkSignApp:
         self.thread = None
         self.log_queue: "queue.Queue[str]" = queue.Queue()
         self.mode_var = tk.StringVar(value=DEFAULT_MODE)
+        self._usb_setup_offered = False
 
         root.title("OnCourts Bulk Sign")
         root.configure(bg=BG)
@@ -246,7 +255,7 @@ class BulkSignApp:
     def detect_token(self):
         if self.mode != MODE_DSC:
             return
-        self.detect_btn.configure(state="disabled")
+        self.detect_btn.configure(text="Detect", command=self.detect_token, state="disabled")
         self.token_var.set("DSC token: checking…")
         threading.Thread(target=self._detect_worker, daemon=True).start()
 
@@ -256,6 +265,9 @@ class BulkSignApp:
             from pyhanko_signer import prepare_module_dir, require_pkcs11_module
 
             module_path = require_pkcs11_module()
+            if _needs_linux_usb_setup(module_path):
+                self.root.after(0, self._on_usb_setup_needed)
+                return
             prepare_module_dir(module_path)
             from token_utils import list_token_identities
 
@@ -286,6 +298,45 @@ class BulkSignApp:
             self.token_var.set(
                 f"DSC token: {len(ids)} certificates found — set PKCS11_CERT_LABEL in .env:\n{lines}{lib}"
             )
+
+    # ----- one-time Linux USB setup -----------------------------------------
+    def _on_usb_setup_needed(self):
+        from tkinter import messagebox
+
+        self.token_var.set("DSC token: one-time setup needed so this app can use the token "
+                           "on this computer. Click 'Set up' (asks for your computer password).")
+        self.detect_btn.configure(text="Set up", command=self.usb_setup, state="normal")
+        if not self._usb_setup_offered:
+            # Offer it automatically the first time; the button stays for later.
+            self._usb_setup_offered = True
+            if messagebox.askyesno(
+                    "One-time setup",
+                    "This computer needs a one-time setup before the DSC token can be "
+                    "used.\n\nYou will be asked for your computer (login) password.\n\n"
+                    "Set it up now?"):
+                self.usb_setup()
+
+    def usb_setup(self):
+        self.detect_btn.configure(state="disabled")
+        self.token_var.set("DSC token: setting up… enter your computer password if asked.")
+        self._log("Running one-time DSC token setup…")
+        threading.Thread(target=self._usb_setup_worker, daemon=True).start()
+
+    def _usb_setup_worker(self):
+        import linux_setup
+
+        ok, msg = linux_setup.run_usb_setup()
+        self.root.after(0, lambda: self._on_usb_setup_done(ok, msg))
+
+    def _on_usb_setup_done(self, ok, msg):
+        from tkinter import messagebox
+
+        self._log(msg)
+        if ok:
+            self.detect_token()
+        else:
+            self._on_usb_setup_needed()
+            messagebox.showwarning("Setup not completed", msg)
 
     # ----- start / stop -----------------------------------------------------
     def start(self):
@@ -323,7 +374,11 @@ class BulkSignApp:
                 self._log("TEST mode: using the built-in test certificate.")
             else:
                 self._log("Checking token and PIN…")
-                from pyhanko_signer import validate_signer
+                from pyhanko_signer import find_pkcs11_module, validate_signer
+
+                if _needs_linux_usb_setup(find_pkcs11_module()[0]):
+                    raise RuntimeError("One-time DSC token setup is not done on this "
+                                       "computer yet. Click 'Set up' in the token box first.")
 
                 cn = validate_signer()
                 self._log(f"Token OK{f' — {cn}' if cn else ''}.")

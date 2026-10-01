@@ -33,11 +33,16 @@ This folder is the whole app. Copy/extract it anywhere; nothing to install.
 
 
 Where the token library comes from
-   It is installed with the token's driver. Copy it from there into this folder:
-     ePass2003 (Windows):  C:\Windows\System32\eps2003csp11v2.dll
-     HYP2003 (Linux):      libcastle_v2.so.1.0.0 (from the HyperPKI/ePass Linux package)
-     HYP2003 (Windows):    the PKCS#11 .dll in the HyperPKI install folder
-   This app is 64-bit: use the 64-bit library (System32, not SysWOW64).
+   Windows: usually nothing to copy. Installing the token's driver puts the
+   library in C:\Windows\System32 and the app finds it there:
+     HYP2003 India driver (from your CA)  -> eps2003csp11v2.dll
+     HYP2003 HyperPKI driver (hypersecu)  -> HyperPKICsp11_2003.dll
+     ePass2003 driver                     -> eps2003csp11v2.dll
+   To avoid installing the driver, copy that 64-bit .dll from a PC that has it
+   (C:\Windows\System32, NOT SysWOW64) into this folder, next to the exe.
+
+   Linux: copy libcastle_v2.so.1.0.0 (inside the HYP2003 Linux x86_64 driver zip,
+   folder "redist") into this folder, next to the app.
 
 
 Windows notes
@@ -45,9 +50,11 @@ Windows notes
    - Allow the firewall prompt (the app only listens on this computer).
 
 Linux notes
-   - The token needs the smart-card service once per machine:
-       sudo apt install pcscd && sudo systemctl enable --now pcscd
-   - Make the app executable if needed: chmod +x OncourtsBulkSign
+   - First time you choose "DSC token", the app asks to do a one-time setup and
+     shows a password box: enter your computer login password. That is all.
+     (It lets your user account access the token over USB.)
+   - Make the app executable if needed: right-click -> Properties -> "Allow
+     executing as program", or: chmod +x OncourtsBulkSign
 
 
 Reporting a problem: send selftest-result.txt and a photo/screenshot of the error.
