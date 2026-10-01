@@ -58,7 +58,6 @@ import static org.mockito.Mockito.*;
         advocateRequest.setAdvocate(advocate);
 
         when(individualService.searchIndividual(requestInfo, "validIndividualId", new HashMap<>())).thenReturn(true);
-        when(configuration.getBarRegistrationNumberFormat()).thenReturn("^K/(?!0+/)(\\d{1,6})/\\d{4}$");
 
         assertDoesNotThrow(() -> validator.validateAdvocateRegistration(advocateRequest));
     }
@@ -106,7 +105,6 @@ import static org.mockito.Mockito.*;
         advocate.setBarRegistrationNumber("K/1234/2025");
         advocateRequest.setAdvocate(advocate);
 
-        when(configuration.getBarRegistrationNumberFormat()).thenReturn("^K/(?!0+/)(\\d{1,6})/\\d{4}$");
         when(repository.isBarRegistrationNumberActive(eq("kl"), anyString(), anyString(), anyString())).thenReturn(true);
 
         assertThrows(CustomException.class, () -> validator.validateBarRegistrationNumber(advocateRequest));
