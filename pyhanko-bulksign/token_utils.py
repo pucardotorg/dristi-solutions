@@ -30,7 +30,14 @@ def list_token_identities(module_path: str) -> List[TokenIdentity]:
     PKCS#11 module. Returns [] if no token is present. Raises if the module cannot
     be loaded (e.g. wrong path / not a PKCS#11 library).
     """
-    lib = pkcs11.lib(module_path)
+    try:
+        lib = pkcs11.lib(module_path)
+    except Exception as e:  # noqa: BLE001 - OS loader errors come in many types
+        raise RuntimeError(
+            f"Could not load the DSC token library {module_path}: {e}\n"
+            "The token's driver may not be installed, the library may need other "
+            "vendor files next to it, or it may be 32-bit (this app is 64-bit)."
+        ) from e
     identities: List[TokenIdentity] = []
 
     for token in lib.get_tokens():

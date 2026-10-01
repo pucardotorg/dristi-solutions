@@ -64,6 +64,114 @@ def resolve_app_path(path):
     return path
 
 
+# --- DSC token library (PKCS#11 module) discovery ---------------------------
+# Each token brand ships its own PKCS#11 library (.dll on Windows, .so on Linux).
+# Lookup order:
+#   1. PKCS11_MODULE_PATH from .env, if that file exists
+#   2. any token library copied INTO the app folder (next to the exe) -- the
+#      portable way: drop the vendor .dll/.so beside the exe and it is picked up
+#   3. the vendor's standard install locations (driver already installed)
+_LIB_EXT = (".dll",) if os.name == "nt" else (".so",)
+
+if os.name == "nt":
+    _SYS32 = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32")
+    _PROGRAM_DIRS = [os.environ.get("ProgramFiles", r"C:\Program Files"),
+                     os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")]
+    _KNOWN_MODULES = [
+        os.path.join(_SYS32, "eps2003csp11v2.dll"),   # ePass2003
+        os.path.join(_SYS32, "eps2003csp11.dll"),     # ePass2003 (older driver)
+        os.path.join(_SYS32, "SignatureP11.dll"),     # WatchData ProxKey
+        os.path.join(_SYS32, "eTPKCS11.dll"),         # SafeNet eToken
+    ]
+    # Vendor install folders, searched for a PKCS#11-looking .dll.
+    _VENDOR_GLOBS = [os.path.join(d, v, "**", "*.dll")
+                     for d in _PROGRAM_DIRS if d
+                     for v in ("HyperPKI*", "Hypersecu*", "ePass2003*", "WatchData*")]
+else:
+    _KNOWN_MODULES = []
+    _VENDOR_GLOBS = [
+        "/usr/lib/libcastle*.so*",                    # HYP2003 / ePass2003 (castle)
+        "/usr/lib/x86_64-linux-gnu/libcastle*.so*",
+        "/usr/local/lib/libcastle*.so*",
+        "/usr/lib/WatchData/ProxKey/lib/libwdpkcs*.so*",
+        "/usr/lib/libeTPkcs11.so*",
+    ]
+
+# Name hints for files found by a broad search; the app folder accepts any library.
+_P11_HINTS = ("pkcs11", "p11", "csp11", "castle")
+
+
+def _is_library(name: str) -> bool:
+    lower = name.lower()
+    return any(lower.endswith(ext) or (ext + ".") in lower for ext in _LIB_EXT)
+
+
+def find_pkcs11_module():
+    """
+    Locate the DSC token's PKCS#11 library. Returns (path, searched) where `path`
+    is the first match (or None) and `searched` lists the places tried, so a
+    "not found" error can tell the user exactly where we looked.
+    """
+    import glob
+
+    searched = []
+
+    configured = (os.environ.get("PKCS11_MODULE_PATH") or "").strip()
+    if configured:
+        p = resolve_app_path(configured)
+        searched.append(p)
+        if os.path.isfile(p):
+            return p, searched
+
+    searched.append(os.path.join(_BASE_DIR, "<any token library>"))
+    local = sorted(f for f in os.listdir(_BASE_DIR)
+                   if _is_library(f) and os.path.isfile(os.path.join(_BASE_DIR, f)))
+    if local:
+        return os.path.join(_BASE_DIR, local[0]), searched
+
+    for p in _KNOWN_MODULES:
+        searched.append(p)
+        if os.path.isfile(p):
+            return p, searched
+
+    for pattern in _VENDOR_GLOBS:
+        searched.append(pattern)
+        for p in sorted(glob.glob(pattern, recursive=True)):
+            if os.path.isfile(p) and any(h in os.path.basename(p).lower() for h in _P11_HINTS):
+                return p, searched
+
+    return None, searched
+
+
+def require_pkcs11_module() -> str:
+    """find_pkcs11_module(), raising an actionable error if nothing is found."""
+    path, searched = find_pkcs11_module()
+    if path:
+        return path
+    raise RuntimeError(
+        "DSC token library not found. Install the token's driver, or copy the "
+        f"vendor PKCS#11 library ({'/'.join(_LIB_EXT)}) into {_BASE_DIR}.\n"
+        "Looked in:\n  " + "\n  ".join(searched)
+    )
+
+
+def prepare_module_dir(module_path: str):
+    """
+    Let a vendor .dll that depends on sibling DLLs load on Windows: Python 3.8+
+    no longer searches PATH for dependencies, so register the module's folder
+    (and the app folder) explicitly. No-op elsewhere.
+    """
+    if os.name != "nt":
+        return
+    for d in {os.path.dirname(module_path), _BASE_DIR}:
+        try:
+            os.add_dll_directory(d)
+        except (OSError, AttributeError):
+            pass
+        if d not in os.environ.get("PATH", ""):
+            os.environ["PATH"] = d + os.pathsep + os.environ.get("PATH", "")
+
+
 _STAMP_TEXT = os.environ.get(
     "SIGN_STAMP_TEXT", "Digitally signed by %(signer)s\nDate: %(ts)s"
 )
@@ -105,9 +213,9 @@ def _build_signer():
         from pyhanko.config.pkcs11 import PKCS11SignatureConfig
         from pyhanko.sign.pkcs11 import PKCS11SigningContext
 
-        # Bare filename -> resolved next to .env/exe, so the vendor .so/.dll can
-        # live in the same self-contained folder.
-        module_path = resolve_app_path(os.environ["PKCS11_MODULE_PATH"])
+        # .env path, else a library next to the exe, else the vendor install dir.
+        module_path = require_pkcs11_module()
+        prepare_module_dir(module_path)
         cert_label = os.environ.get("PKCS11_CERT_LABEL") or None
         key_label = os.environ.get("PKCS11_KEY_LABEL") or None
 

@@ -1,6 +1,7 @@
 @echo off
 REM Build a SELF-CONTAINED Windows package -> dist\windows\
-REM   dist\windows\{ OncourtsBulkSign.exe, .env, court-seal.png, <vendor pkcs11 .dll> }
+REM   dist\windows\{ OncourtsBulkSign.exe, .env, court-seal.png, READ-ME-FIRST.txt,
+REM                  <vendor pkcs11 .dll> }
 REM Everything the app needs sits in that one folder (paths in .env are bare
 REM filenames resolved next to the exe).
 REM
@@ -14,9 +15,9 @@ cd /d "%~dp0"
 
 set "DIST=dist\windows"
 
-if not exist .venv python -m venv .venv
+if not exist .venv python -m venv .venv || exit /b 1
 call .venv\Scripts\python -m pip install -q --upgrade pip
-call .venv\Scripts\pip install -q -r requirements.txt pyinstaller
+call .venv\Scripts\pip install -q -r requirements.txt pyinstaller || exit /b 1
 
 if exist "%DIST%" rmdir /s /q "%DIST%"
 call .venv\Scripts\pyinstaller --noconfirm --clean --onefile --windowed ^
@@ -32,11 +33,15 @@ call .venv\Scripts\pyinstaller --noconfirm --clean --onefile --windowed ^
   --hidden-import pyhanko_signer ^
   --hidden-import gen_test_cert ^
   --hidden-import token_utils ^
+  --hidden-import selftest ^
+  --hidden-import test_client ^
   bulk_sign_app.py
+if errorlevel 1 exit /b 1
 
 REM --- assemble the self-contained folder ------------------------------------
 if exist .env copy /y .env "%DIST%\.env" >nul
-if exist court-seal.png copy /y court-seal.png "%DIST%\" >nul
+copy /y court-seal.png "%DIST%\" >nul
+copy /y READ-ME-FIRST.txt "%DIST%\" >nul
 if not "%PKCS11_MODULE_SRC%"=="" if exist "%PKCS11_MODULE_SRC%" copy /y "%PKCS11_MODULE_SRC%" "%DIST%\" >nul
 
 echo.

@@ -1,0 +1,53 @@
+OnCourts Bulk Sign -- quick start
+==================================
+
+This folder is the whole app. Copy/extract it anywhere; nothing to install.
+
+  OncourtsBulkSign(.exe)   the app -- double-click it
+  .env                     settings (no changes needed normally)
+  court-seal.png           seal drawn in the signature box
+  <token library>          your DSC token's .dll (Windows) / .so (Linux), if copied here
+
+
+1. FIRST: CHECK THIS COMPUTER (takes ~10 seconds)
+   Open the app -> click "Self-test".
+   It signs a sample PDF and looks for your DSC token. The result is shown in the
+   Activity box and saved to selftest-result.txt in this folder.
+   RESULT: PASS  = the app works on this computer.
+
+
+2. TEST MODE (no DSC token)
+   Choose "Test mode" -> START. Bulk sign in the browser as usual.
+   The PDF is signed with a test certificate ("untrusted" in Adobe -- expected).
+
+
+3. REAL SIGNING WITH A DSC TOKEN
+   a. Close Capricorn if it is running (both use port 1620; only one can run).
+   b. Plug in the DSC token.
+   c. Choose "DSC token". The grey box should show the certificate name.
+      - "DSC token library not found": copy the token's PKCS#11 library into this
+        folder (next to the exe), or install the token's driver. Then click Detect.
+        The message lists every place the app looked.
+   d. Type the token PIN -> START (status turns green).
+   e. Bulk sign in the browser. Click STOP when finished.
+
+
+Where the token library comes from
+   It is installed with the token's driver. Copy it from there into this folder:
+     ePass2003 (Windows):  C:\Windows\System32\eps2003csp11v2.dll
+     HYP2003 (Linux):      libcastle_v2.so.1.0.0 (from the HyperPKI/ePass Linux package)
+     HYP2003 (Windows):    the PKCS#11 .dll in the HyperPKI install folder
+   This app is 64-bit: use the 64-bit library (System32, not SysWOW64).
+
+
+Windows notes
+   - SmartScreen may warn about an unknown app: "More info" -> "Run anyway".
+   - Allow the firewall prompt (the app only listens on this computer).
+
+Linux notes
+   - The token needs the smart-card service once per machine:
+       sudo apt install pcscd && sudo systemctl enable --now pcscd
+   - Make the app executable if needed: chmod +x OncourtsBulkSign
+
+
+Reporting a problem: send selftest-result.txt and a photo/screenshot of the error.

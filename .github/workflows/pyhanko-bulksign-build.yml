@@ -1,0 +1,79 @@
+name: pyHanko Bulk Sign - desktop packages
+
+# Builds the portable OnCourts Bulk Sign app (pyhanko-bulksign/) for Windows and
+# Linux, runs the packaged app's self-test, and uploads each folder as a
+# downloadable zip (Actions run page -> Artifacts).
+on:
+  push:
+    branches:
+      - pyhanko-bulk-sign-poc
+    paths:
+      - 'pyhanko-bulksign/**'
+      - '.github/workflows/pyhanko-bulksign-build.yml'
+  workflow_dispatch:
+
+jobs:
+  windows:
+    # PyInstaller does not cross-compile, so the .exe is built on Windows.
+    runs-on: windows-2022
+    defaults:
+      run:
+        working-directory: pyhanko-bulksign
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+
+      - name: Build
+        shell: cmd
+        run: build_app.bat
+
+      - name: Self-test the packaged exe
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath dist\windows\OncourtsBulkSign.exe -ArgumentList '--selftest' -Wait -PassThru
+          Get-Content dist\windows\selftest-result.txt
+          Remove-Item dist\windows\selftest-result.txt
+          exit $p.ExitCode
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OnCourts-BulkSign-Windows
+          path: pyhanko-bulksign/dist/windows/
+          include-hidden-files: true   # keep .env
+          if-no-files-found: error
+
+  linux:
+    # Oldest supported runner = widest glibc compatibility (runs on Ubuntu 22.04+).
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: pyhanko-bulksign
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build prerequisites
+        run: sudo apt-get update && sudo apt-get install -y python3-venv python3-tk binutils
+
+      - name: Build
+        run: ./build_app.sh
+
+      - name: Self-test the packaged binary
+        run: |
+          cd dist/linux
+          status=0
+          ./OncourtsBulkSign --selftest || status=$?
+          rm -f selftest-result.txt test-cert.p12
+          exit $status
+
+      - name: Package (zip keeps the executable bit)
+        run: cd dist && zip -r ../OnCourts-BulkSign-Linux.zip linux
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OnCourts-BulkSign-Linux
+          path: pyhanko-bulksign/OnCourts-BulkSign-Linux.zip
+          if-no-files-found: error

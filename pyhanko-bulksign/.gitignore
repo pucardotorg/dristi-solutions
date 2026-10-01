@@ -13,3 +13,5 @@ dist/
 *.spec
 # Machine-specific desktop launcher (copy from the .example)
 OncourtsBulkSign.desktop
+# Self-test report written next to the app
+selftest-result.txt

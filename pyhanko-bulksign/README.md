@@ -24,7 +24,7 @@ status light, and an activity log.
 **Daily use (staff):**
 1. Plug in the DSC token.
 2. Open **PUCAR Bulk Sign**.
-3. Type the token **PIN** → click **START** (status turns green = "ready to sign").
+3. Choose **DSC token**, type the token **PIN** → click **START** (status turns green = "ready to sign").
 4. Do the bulk signing in the browser as usual.
 5. Click **STOP** (or close the window) when finished.
 
@@ -57,18 +57,26 @@ status light, and an activity log.
 Either way the app listens on `http://localhost:1620` — the same `BULK_SIGN_URL`
 the frontend already uses. STOP shuts the service down cleanly.
 
-**Test vs token mode:** `.env` ships set to **TEST mode** (`SIGNER_MODE=software`,
-no token — the app auto-creates a self-signed `test-cert.p12` on first START), so
-you can try the whole build → double-click flow immediately. To use a real DSC
-token, edit `.env`: set `SIGNER_MODE=pkcs11` and uncomment the `PKCS11_*` block
-with this machine's module path + labels. The token PIN is never stored; the app
-prompts for it.
+**Test vs DSC mode:** chosen in the window ("DSC token" or "Test mode"); `.env`
+`SIGNER_MODE` only sets the pre-selected option. Test mode needs no token (the app
+auto-creates a self-signed `test-cert.p12`). The token PIN is never stored.
 
-**Finding the token labels (any new DSC pendrive):** you don't have to. In pkcs11
-mode the app reads the token under the title and shows the certificate + label
-(no PIN needed). Leave `PKCS11_CERT_LABEL`/`PKCS11_KEY_LABEL` **blank** in `.env`
-and the app auto-uses a single-identity token — plug in a new pendrive and it works.
-(Set the label explicitly only if a token carries several certificates.)
+**Token library (any DSC brand):** found automatically, in this order: the
+`PKCS11_MODULE_PATH` from `.env` (if that file exists) -> any `.dll`/`.so` copied
+next to the exe -> the vendor's standard install location (ePass2003, WatchData,
+SafeNet, HyperPKI/castle). If none is found, the error lists every place it looked.
+Leave `PKCS11_CERT_LABEL`/`PKCS11_KEY_LABEL` **blank** to auto-use a single-identity
+token; the app shows the certificate, label and library under the title.
+
+**Self-test (OS compatibility check):** the **Self-test** button, or
+`OncourtsBulkSign --selftest`, signs a sample PDF through the real HTTP agent,
+then loads the token library and lists any plugged-in token. The report goes to
+`selftest-result.txt` next to the exe. CI runs it on every build.
+
+**Prebuilt zips:** every push to `pyhanko-bulk-sign-poc` that touches this folder
+runs `.github/workflows/pyhanko-bulksign-build.yml`, which builds Windows + Linux
+packages, self-tests them, and attaches `OnCourts-BulkSign-Windows` /
+`OnCourts-BulkSign-Linux` as run artifacts. Testers start with `READ-ME-FIRST.txt`.
 
 The sections below describe the underlying agent (HTTP contract, CLI run, config)
 for developers; staff only need the app above.
@@ -99,17 +107,11 @@ must be built **on Windows**.
    ```
    → a self-contained **`dist\windows\`** with `OncourtsBulkSign.exe`, `.env`,
    `court-seal.png`, and the vendor `.dll` copied in.
-3. Edit **`dist\windows\.env`** — everything is a **bare filename** (no absolute paths):
-   ```
-   SIGNER_MODE=pkcs11
-   PKCS11_MODULE_PATH=<vendor-pkcs11>.dll   # the file now sitting in this folder
-   PKCS11_CERT_LABEL=                        # blank -> auto-detect
-   PKCS11_KEY_LABEL=
-   SIGN_STAMP_IMAGE=court-seal.png
-   SIGN_STAMP_OPACITY=0.3
-   ```
+3. No `.env` edits needed: the library copied into the folder is found
+   automatically (blank `PKCS11_MODULE_PATH`), as are the cert labels.
 4. Copy the whole **`dist\windows\`** folder to each machine. Double-click the exe →
-   the DSC-token panel shows the label → PIN → **START** → bulk-sign in the browser.
+   **Self-test** → choose **DSC token** (panel shows the certificate) → PIN →
+   **START** → bulk-sign in the browser.
 
 **Windows gotchas:** module path is the **`.dll`** (not the Linux `.so`); SmartScreen
 may warn on the unsigned exe ("More info → Run anyway"); allow the firewall prompt for

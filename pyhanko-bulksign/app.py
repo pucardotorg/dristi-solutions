@@ -36,6 +36,7 @@ try:
 except Exception:  # pragma: no cover - dotenv is optional
     pass
 
+import uvicorn
 from fastapi import FastAPI, Form
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
@@ -58,6 +59,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class ThreadedServer(uvicorn.Server):
+    """uvicorn server that can run off the main thread (no signal handlers).
+    Used by the desktop app and the self-test."""
+
+    def install_signal_handlers(self):  # noqa: D401 - intentionally a no-op
+        pass
 
 
 def _text(root: ET.Element, tag: str, default: str = "") -> str:

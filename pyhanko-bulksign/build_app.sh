@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Build a SELF-CONTAINED Linux package -> dist/linux/
-#   dist/linux/{ OncourtsBulkSign, .env, court-seal.png, <vendor pkcs11 .so> }
+#   dist/linux/{ OncourtsBulkSign, .env, court-seal.png, READ-ME-FIRST.txt,
+#                <vendor pkcs11 .so> }
 # Everything the app needs sits in that one folder (paths in .env are bare
 # filenames resolved next to the exe).
 #
@@ -32,17 +33,19 @@ rm -rf "$DIST"
   --hidden-import pyhanko_signer \
   --hidden-import gen_test_cert \
   --hidden-import token_utils \
+  --hidden-import selftest \
+  --hidden-import test_client \
   bulk_sign_app.py
 
 # --- assemble the self-contained folder -------------------------------------
 [ -f .env ] && cp .env "$DIST/.env"
-[ -f court-seal.png ] && cp court-seal.png "$DIST/"
+cp court-seal.png READ-ME-FIRST.txt "$DIST/"
 if [ -n "${PKCS11_MODULE_SRC:-}" ] && [ -f "${PKCS11_MODULE_SRC}" ]; then
   cp "${PKCS11_MODULE_SRC}" "$DIST/"
   echo "Included PKCS#11 module: $(basename "$PKCS11_MODULE_SRC")"
 else
-  echo "NOTE: set PKCS11_MODULE_SRC=/path/to/vendor.so to bundle the token module,"
-  echo "      then set PKCS11_MODULE_PATH=<that filename> in $DIST/.env."
+  echo "NOTE: no token library bundled. Set PKCS11_MODULE_SRC=/path/to/vendor.so to"
+  echo "      include it, or copy it next to the binary later (found automatically)."
 fi
 
 echo
