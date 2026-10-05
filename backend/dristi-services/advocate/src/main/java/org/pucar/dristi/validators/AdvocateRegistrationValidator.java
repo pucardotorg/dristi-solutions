@@ -66,8 +66,6 @@ public class AdvocateRegistrationValidator {
             throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE, "Bar Registration Number is mandatory");
         }
 
-        validateBarRegistrationNumberFormat(barRegistrationNumber);
-
         BarRegistrationNumberComponents components = tokenizeBarRegistrationNumber(barRegistrationNumber);
         validateBarRegistrationNumberUniqueness(advocate.getTenantId(), components, barRegistrationNumber);
     }
