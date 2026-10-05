@@ -158,14 +158,12 @@ public class AdvocateRepository {
                         " AND status = 'ACTIVE' " +
                         " AND array_length(string_to_array(barregistrationnumber, '/'), 1) = 3 " +
                         " AND split_part(barregistrationnumber, '/', 1) = ? " +
-                        " AND CASE WHEN split_part(barregistrationnumber, '/', 2) ~ '^\\d+$' " +
-                        "          THEN split_part(barregistrationnumber, '/', 2)::int " +
-                        "          END = ? " +
+                        " AND ltrim(split_part(barregistrationnumber, '/', 2), '0') = ? " +
                         " AND split_part(barregistrationnumber, '/', 3) = ? " +
                         ")";
 
-        // Format is already validated before this stage, so normalizedSerialNumber is guaranteed to be an integer
-        Boolean exists = jdbcTemplate.queryForObject(query, Boolean.class, tenantId, stateCode, Integer.valueOf(normalizedSerialNumber), year);
+        // Serial numbers may be alphanumeric, so compare as a string with leading zeros trimmed (matching normalizedSerialNumber)
+        Boolean exists = jdbcTemplate.queryForObject(query, Boolean.class, tenantId, stateCode, normalizedSerialNumber, year);
         return Boolean.TRUE.equals(exists);
     }
 }
