@@ -51,11 +51,17 @@ Linux notes
 
 
 macOS notes
-   - The app is not yet signed by Apple, so the first time macOS blocks it:
-       1. Double-click OncourtsBulkSign.app -> click "Done" on the warning.
-       2. Open System Settings -> Privacy & Security, scroll down, click
-          "Open Anyway" next to OncourtsBulkSign, enter your Mac password.
-       3. Double-click the app again -> "Open". After that it opens normally.
+   - The app is not yet signed by Apple, so the first time macOS blocks it
+     ("can't be opened because Apple cannot check it for malicious software" or
+     "Apple could not verify ..."). Allow it once:
+       macOS 14 Sonoma and older:
+         Right-click (or Control-click) OncourtsBulkSign.app -> Open -> Open.
+       macOS 15 Sequoia and newer (or if there is no "Open" button above):
+         1. Double-click the app, close the warning (OK / Done).
+         2. System Settings -> Privacy & Security, scroll down, click
+            "Open Anyway" next to OncourtsBulkSign, enter your Mac password.
+         3. Open the app again -> "Open".
+     After that it opens normally with a double-click.
    - Use the macOS-AppleSilicon zip on M1/M2/M3/M4 Macs and macOS-Intel on
      older Intel Macs (Apple menu -> About This Mac -> "Chip" or "Processor").
    - selftest-result.txt is saved in your home folder under
