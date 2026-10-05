@@ -130,9 +130,11 @@ def no_token_hint() -> str:
             readers = None
         os_name = "macOS" if IS_MAC else "Windows"
         if readers == []:
+            fix = ("Install the token driver once (macOS: the app's 'Set up' button, or the "
+                   "HYP2003 macOS driver from your CA)" if IS_MAC else
+                   "Install the HYP2003 driver from your CA once")
             return (f"The token is plugged in, but {os_name} does not recognise it as a "
-                    "smart-card reader. Install the HYP2003 driver from your CA / "
-                    "Hypersecu once, re-plug the token, then click Detect.")
+                    f"smart-card reader. {fix}, unplug and re-plug the token, then click Detect.")
         if readers:
             return ("Smart-card reader found (" + "; ".join(readers) + ") but no token "
                     "in it was readable. Re-plug the token, then click Detect.")

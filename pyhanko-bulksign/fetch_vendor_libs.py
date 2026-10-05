@@ -8,7 +8,9 @@ loudly if the vendor ever changes it (re-test, then update the hash).
 
     python fetch_vendor_libs.py windows|linux|macos <out_dir>
 
-Prints the library path; under GitHub Actions also exports PKCS11_MODULE_SRC.
+Prints the library path; under GitHub Actions also exports PKCS11_MODULE_SRC
+(and, for macOS, VENDOR_DRIVER_PKG_SRC: the vendor's signed driver installer,
+bundled so the app can install the token's reader driver on first use).
 Needs 7-Zip (`7z`/`7zz`) for the Windows installer and `pkgutil` (macOS) or
 7-Zip for the macOS .pkg.
 """
@@ -38,6 +40,17 @@ LIBS = {
     "macos": (_BASE + "HYP2003-MAC-iOS-FIPS140-3.zip", "libcastle_v2.1.0.0.dylib",
               "libcastle_v2.1.0.0.dylib",
               "8eac3882ba00449748d0b5e656c8c4939a820c9a402834b4e0da199fd34c9653"),
+}
+
+
+# Extra files bundled per OS: (file inside the driver download, name in our
+# package, SHA-256, env var exported for the build).
+EXTRAS = {
+    # macOS needs the vendor's smart-card reader driver (ifd-FeiTccid.bundle);
+    # verified: the token is detected only after installing this package.
+    "macos": [("HYP2003-India-20260703.pkg", "HYP2003-India-driver.pkg",
+               "354ad59c50407325af34375a9c63b89957e34fb2f360194c1f80f7a5c214ed74",
+               "VENDOR_DRIVER_PKG_SRC")],
 }
 
 
@@ -85,15 +98,7 @@ def _unpack_installer(path: str, dest: str):
                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def fetch(target: str, out_dir: str) -> str:
-    url, inner_name, out_name, sha = LIBS[target]
-    work = tempfile.mkdtemp(prefix="vendor-")
-    archive = os.path.join(work, os.path.basename(url))
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=300) as resp, open(archive, "wb") as fh:
-        shutil.copyfileobj(resp, fh)
-    _unpack(archive, os.path.join(work, "x"))
-
+def _pick(work: str, inner_name: str, sha: str, url: str) -> str:
     found = []
     for root, _, files in os.walk(work):
         for f in files:
@@ -105,24 +110,41 @@ def fetch(target: str, out_dir: str) -> str:
         raise SystemExit(
             f"{inner_name}: no copy with the tested SHA-256 {sha} in {url}.\n"
             f"Found: {[h for _, h in found] or 'none'}. The vendor changed the driver: "
-            "re-test the new library with a real token, then update LIBS.")
+            "re-test the new file with a real token, then update LIBS/EXTRAS.")
+    return match
+
+
+def fetch(target: str, out_dir: str):
+    """Returns [(path, env_var)]: the library first, then any EXTRAS."""
+    url, inner_name, out_name, sha = LIBS[target]
+    work = tempfile.mkdtemp(prefix="vendor-")
+    archive = os.path.join(work, os.path.basename(url))
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=300) as resp, open(archive, "wb") as fh:
+        shutil.copyfileobj(resp, fh)
+    _unpack(archive, os.path.join(work, "x"))
 
     os.makedirs(out_dir, exist_ok=True)
-    dest = os.path.join(out_dir, out_name)
-    shutil.copyfile(match, dest)
+    wanted = [(inner_name, out_name, sha, "PKCS11_MODULE_SRC")] + EXTRAS.get(target, [])
+    results = []
+    for inner, out, digest, env_var in wanted:
+        dest = os.path.join(out_dir, out)
+        shutil.copyfile(_pick(work, inner, digest, url), dest)
+        results.append((os.path.abspath(dest), env_var))
     shutil.rmtree(work, ignore_errors=True)
-    return dest
+    return results
 
 
 def main():
     if len(sys.argv) != 3 or sys.argv[1] not in LIBS:
         raise SystemExit(f"usage: {sys.argv[0]} {'|'.join(LIBS)} <out_dir>")
-    dest = os.path.abspath(fetch(sys.argv[1], sys.argv[2]))
-    print(dest)
+    results = fetch(sys.argv[1], sys.argv[2])
     gh_env = os.environ.get("GITHUB_ENV")
-    if gh_env:
-        with open(gh_env, "a", encoding="utf-8") as fh:
-            fh.write(f"PKCS11_MODULE_SRC={dest}\n")
+    for dest, env_var in results:
+        print(f"{env_var}={dest}")
+        if gh_env:
+            with open(gh_env, "a", encoding="utf-8") as fh:
+                fh.write(f"{env_var}={dest}\n")
 
 
 if __name__ == "__main__":

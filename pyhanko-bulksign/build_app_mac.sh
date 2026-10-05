@@ -7,8 +7,10 @@
 # the .app still take precedence when visible. Writable files (test certificate,
 # self-test report) go to ~/Library/Application Support/OnCourts Bulk Sign.
 #
-# To bundle the token's PKCS#11 library, point PKCS11_MODULE_SRC at it:
-#   PKCS11_MODULE_SRC=/usr/local/lib/libcastle_v2.1.0.0.dylib ./build_app_mac.sh
+# To bundle the token's PKCS#11 library (and the vendor driver installer), set:
+#   PKCS11_MODULE_SRC=/usr/local/lib/libcastle_v2.1.0.0.dylib \
+#   VENDOR_DRIVER_PKG_SRC=/path/to/HYP2003-India-driver.pkg ./build_app_mac.sh
+# (fetch_vendor_libs.py macos <dir> downloads and verifies both.)
 #
 # Builds for the CPU of the machine it runs on (Apple Silicon or Intel); the
 # HYP2003 dylib itself is universal.
@@ -31,6 +33,12 @@ if [ -n "${PKCS11_MODULE_SRC:-}" ] && [ -f "${PKCS11_MODULE_SRC}" ]; then
 else
   echo "NOTE: no token library bundled (set PKCS11_MODULE_SRC=/path/to/vendor.dylib)."
 fi
+# The vendor's signed driver installer: macOS needs its smart-card reader driver
+# (ifd-FeiTccid.bundle); the app offers to open it on first use (mac_setup.py).
+if [ -n "${VENDOR_DRIVER_PKG_SRC:-}" ] && [ -f "${VENDOR_DRIVER_PKG_SRC}" ]; then
+  EXTRA+=(--add-data "${VENDOR_DRIVER_PKG_SRC}:.")
+  echo "Bundling token driver installer: $(basename "$VENDOR_DRIVER_PKG_SRC")"
+fi
 
 rm -rf "$DIST" "$WORK"
 ./.venv/bin/pyinstaller --noconfirm --clean --windowed \
@@ -51,6 +59,8 @@ rm -rf "$DIST" "$WORK"
   --hidden-import selftest \
   --hidden-import diagnostics \
   --hidden-import linux_setup \
+  --hidden-import mac_setup \
+  --hidden-import os_setup \
   --hidden-import test_client \
   --add-data ".env:." \
   --add-data "court-seal.png:." \

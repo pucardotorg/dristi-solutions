@@ -96,10 +96,9 @@ def _check_token(report):
     from pyhanko_signer import find_pkcs11_module, prepare_module_dir
 
     import diagnostics
-    import linux_setup
+    import os_setup
 
-    if linux_setup.is_linux():
-        report.append(f"[INFO] Linux USB access for DSC token: {linux_setup.usb_status()}")
+    report.extend(os_setup.status_lines())
     # Before touching the vendor library, so these are recorded even if it hangs.
     report.extend(diagnostics.report_lines())
     path, searched = find_pkcs11_module()

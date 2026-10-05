@@ -59,12 +59,12 @@ BG = "#f4f6f8"
 PANEL = "#eef5f5"
 
 
-def _needs_linux_usb_setup(module_path) -> bool:
-    """Linux + the castle (HYP2003/ePass2003) library + no USB access yet."""
-    import linux_setup
+def _needs_os_setup(module_path) -> bool:
+    """The per-computer setup this OS needs for the bundled token library
+    (Linux: USB access; macOS: reader driver) is not done yet."""
+    import os_setup
 
-    return (bool(module_path) and "castle" in os.path.basename(module_path).lower()
-            and linux_setup.needs_usb_setup())
+    return os_setup.needs_setup(module_path)
 
 
 def _reveal_file(path):
@@ -107,7 +107,7 @@ class BulkSignApp:
         self.thread = None
         self.log_queue: "queue.Queue[str]" = queue.Queue()
         self.mode_var = tk.StringVar(value=DEFAULT_MODE)
-        self._usb_setup_offered = False
+        self._setup_offered = False
 
         root.title("OnCourts Bulk Sign")
         root.configure(bg=BG)
@@ -282,8 +282,8 @@ class BulkSignApp:
             from pyhanko_signer import prepare_module_dir, require_pkcs11_module
 
             module_path = require_pkcs11_module()
-            if _needs_linux_usb_setup(module_path):
-                self.root.after(0, self._on_usb_setup_needed)
+            if _needs_os_setup(module_path):
+                self.root.after(0, self._on_setup_needed)
                 return
             prepare_module_dir(module_path)
             from token_utils import list_token_identities_safe
@@ -323,43 +323,46 @@ class BulkSignApp:
                 f"DSC token: {len(ids)} certificates found — set PKCS11_CERT_LABEL in .env:\n{lines}{lib}"
             )
 
-    # ----- one-time Linux USB setup -----------------------------------------
-    def _on_usb_setup_needed(self):
+    # ----- one-time per-computer setup (Linux USB access / macOS driver) ----
+    def _on_setup_needed(self):
         from tkinter import messagebox
 
-        self.token_var.set("DSC token: one-time setup needed so this app can use the token "
-                           "on this computer. Click 'Set up' (asks for your computer password).")
-        self.detect_btn.configure(text="Set up", command=self.usb_setup, state="normal")
-        if not self._usb_setup_offered:
+        import os_setup
+
+        self.token_var.set(os_setup.panel_text())
+        self.detect_btn.configure(text="Set up", command=self.os_setup, state="normal")
+        if not self._setup_offered:
             # Offer it automatically the first time; the button stays for later.
-            self._usb_setup_offered = True
-            if messagebox.askyesno(
-                    "One-time setup",
-                    "This computer needs a one-time setup before the DSC token can be "
-                    "used.\n\nYou will be asked for your computer (login) password.\n\n"
-                    "Set it up now?"):
-                self.usb_setup()
+            self._setup_offered = True
+            if messagebox.askyesno("One-time setup", os_setup.prompt_text()):
+                self.os_setup()
 
-    def usb_setup(self):
+    def os_setup(self):
+        import os_setup
+
         self.detect_btn.configure(state="disabled")
-        self.token_var.set("DSC token: setting up… enter your computer password if asked.")
+        self.token_var.set(os_setup.progress_text())
         self._log("Running one-time DSC token setup…")
-        threading.Thread(target=self._usb_setup_worker, daemon=True).start()
+        threading.Thread(target=self._setup_worker, daemon=True).start()
 
-    def _usb_setup_worker(self):
-        import linux_setup
+    def _setup_worker(self):
+        import os_setup
 
-        ok, msg = linux_setup.run_usb_setup()
-        self.root.after(0, lambda: self._on_usb_setup_done(ok, msg))
+        try:
+            ok, msg = os_setup.run_setup()
+        except Exception as e:  # noqa: BLE001 - report, keep the button usable
+            ok, msg = False, f"Setup failed: {e}"
+        self.root.after(0, lambda: self._on_setup_done(ok, msg))
 
-    def _on_usb_setup_done(self, ok, msg):
+    def _on_setup_done(self, ok, msg):
         from tkinter import messagebox
 
         self._log(msg)
         if ok:
+            messagebox.showinfo("Setup complete", msg)
             self.detect_token()
         else:
-            self._on_usb_setup_needed()
+            self._on_setup_needed()
             messagebox.showwarning("Setup not completed", msg)
 
     # ----- start / stop -----------------------------------------------------
@@ -400,7 +403,7 @@ class BulkSignApp:
                 self._log("Checking token and PIN…")
                 from pyhanko_signer import find_pkcs11_module, validate_signer
 
-                if _needs_linux_usb_setup(find_pkcs11_module()[0]):
+                if _needs_os_setup(find_pkcs11_module()[0]):
                     raise RuntimeError("One-time DSC token setup is not done on this "
                                        "computer yet. Click 'Set up' in the token box first.")
 

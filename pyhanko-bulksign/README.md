@@ -89,7 +89,12 @@ the .app, because macOS App Translocation can run a downloaded app from a hidden
 read-only copy that cannot see files beside it (files beside the .app still win
 when visible; see `app_paths.py`). Writable files go to `~/Library/Application
 Support/OnCourts Bulk Sign`. The HYP2003 macOS library (`libcastle_v2.1.0.0.dylib`,
-universal) uses the macOS PC/SC service, so no USB setup is needed. The app is
+universal) uses the macOS PC/SC service, and macOS's built-in reader driver does
+not recognise the HYP2003 (verified on an Intel Mac): the vendor's reader driver
+(`/usr/local/libexec/SmartCardServices/drivers/ifd-FeiTccid.bundle`) is required.
+The app bundles the vendor's signed installer (`HYP2003-India-driver.pkg`) and, the
+first time DSC mode needs it, opens it in the macOS Installer (`mac_setup.py`;
+`os_setup.py` holds the per-OS one-time setup for the window). The app is
 ad-hoc signed only: until it is Developer ID-signed and notarized, users must
 allow it once in System Settings -> Privacy & Security.
 

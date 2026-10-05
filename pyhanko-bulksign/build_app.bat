@@ -37,6 +37,8 @@ call .venv\Scripts\pyinstaller --noconfirm --clean --onefile --windowed ^
   --hidden-import selftest ^
   --hidden-import diagnostics ^
   --hidden-import linux_setup ^
+  --hidden-import mac_setup ^
+  --hidden-import os_setup ^
   --hidden-import test_client ^
   bulk_sign_app.py
 if errorlevel 1 exit /b 1

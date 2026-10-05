@@ -6,7 +6,8 @@ The HYP2003 DSC token library is already included.
 
   Windows:  OncourtsBulkSign.exe  + .env, court-seal.png, eps2003csp11v2.dll
   Linux:    OncourtsBulkSign      + .env, court-seal.png, libcastle_v2.so.1.0.0
-  macOS:    OncourtsBulkSign.app  (settings, seal and token library are inside it)
+  macOS:    OncourtsBulkSign.app  (settings, seal, token library and the token's
+                                  driver installer are inside it)
 
 
 1. FIRST: CHECK THIS COMPUTER (takes ~10 seconds)
@@ -66,7 +67,14 @@ macOS notes
      older Intel Macs (Apple menu -> About This Mac -> "Chip" or "Processor").
    - selftest-result.txt is saved in your home folder under
      Library/Application Support/OnCourts Bulk Sign (shown in the Activity box).
-   - No one-time setup is needed on macOS.
+   - One-time driver install (first time you choose "DSC token" on a Mac):
+       The app asks to install the DSC token's driver -> click Yes. The macOS
+       Installer opens (the token vendor's own installer, included in the app):
+       Continue -> Agree -> Install -> enter your Mac password -> Close.
+       Then UNPLUG the token, plug it back in, and click Detect.
+       If you clicked No, use the "Set up" button in the token box later.
+       (The installer also adds the vendor's own token tool to Applications;
+       this app does not need it, but it is part of the vendor's package.)
 
 
 Reporting a problem: send selftest-result.txt and a photo/screenshot of the error.
