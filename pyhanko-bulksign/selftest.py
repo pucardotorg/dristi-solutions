@@ -95,10 +95,13 @@ def _check_signing(report):
 def _check_token(report):
     from pyhanko_signer import find_pkcs11_module, prepare_module_dir
 
+    import diagnostics
     import linux_setup
 
     if linux_setup.is_linux():
         report.append(f"[INFO] Linux USB access for DSC token: {linux_setup.usb_status()}")
+    # Before touching the vendor library, so these are recorded even if it hangs.
+    report.extend(diagnostics.report_lines())
     path, searched = find_pkcs11_module()
     if not path:
         report.append("[INFO] DSC token library: not found (only needed for real signing). Looked in:")
@@ -106,22 +109,57 @@ def _check_token(report):
         return
     report.append(f"[INFO] DSC token library: {path}")
     prepare_module_dir(path)
-    from token_utils import list_token_identities
+    from token_utils import list_token_identities_safe
 
-    ids = list_token_identities(path)
+    ids = list_token_identities_safe(path)
     if not ids:
-        report.append("[INFO] Library loaded OK; no token plugged in.")
+        report.append("[INFO] Library loaded OK; no token found. " + diagnostics.no_token_hint())
     for i in ids:
         report.append(f"[PASS] Token '{i['token_label']}': {i['cn'] or '(no CN)'}  [label: {i['cert_label']}]")
 
 
-def run_selftest():
+class _Report(list):
+    """Report lines, also streamed to a file (flushed per line), a callback and
+    stdout as they are produced -- a check that hangs still leaves the lines
+    before it on screen and on disk."""
+
+    def __init__(self, result_path=None, on_line=None):
+        super().__init__()
+        self._on_line = on_line
+        self._fh = None
+        if result_path:
+            try:
+                self._fh = open(result_path, "w", encoding="utf-8")
+            except OSError:
+                pass
+
+    def append(self, line):
+        super().append(line)
+        if self._fh:
+            self._fh.write(line + "\n")
+            self._fh.flush()
+        if self._on_line:
+            self._on_line(line)
+        try:
+            print(line, flush=True)
+        except Exception:  # windowed exe on Windows has no console
+            pass
+
+    def extend(self, lines):
+        for line in lines:
+            self.append(line)
+
+    def close(self):
+        if self._fh:
+            self._fh.close()
+
+
+def run_selftest(result_path=None, on_line=None):
     """Run all checks. Returns (ok, lines)."""
-    report = [
-        f"OnCourts Bulk Sign self-test  {time.strftime('%Y-%m-%d %H:%M:%S')}",
-        f"OS: {platform.platform()}  ({platform.machine()}, Python {platform.python_version()},"
-        f" {'packaged exe' if getattr(sys, 'frozen', False) else 'source'})",
-    ]
+    report = _Report(result_path, on_line)
+    report.append(f"OnCourts Bulk Sign self-test  {time.strftime('%Y-%m-%d %H:%M:%S')}")
+    report.append(f"OS: {platform.platform()}  ({platform.machine()}, Python {platform.python_version()},"
+                  f" {'packaged exe' if getattr(sys, 'frozen', False) else 'source'})")
     ok = True
     try:
         _check_signing(report)
@@ -133,20 +171,12 @@ def run_selftest():
     except Exception as e:  # noqa: BLE001
         report.append(f"[WARN] DSC token: {e}")
     report.append("RESULT: " + ("PASS" if ok else "FAIL"))
-    return ok, report
+    report.close()
+    return ok, list(report)
 
 
-def main(result_path: str):
-    """Run, save the report to `result_path`, print it. Returns (exit_code, lines)."""
-    ok, lines = run_selftest()
-    text = "\n".join(lines) + "\n"
-    try:
-        with open(result_path, "w", encoding="utf-8") as fh:
-            fh.write(text)
-    except OSError:
-        pass
-    try:
-        print(text, end="")
-    except Exception:  # windowed exe on Windows has no console
-        pass
+def main(result_path: str, on_line=None):
+    """Run, streaming the report to `result_path` (and `on_line`, stdout).
+    Returns (exit_code, lines)."""
+    ok, lines = run_selftest(result_path, on_line)
     return (0 if ok else 1), lines

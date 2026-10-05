@@ -67,6 +67,24 @@ def _needs_linux_usb_setup(module_path) -> bool:
             and linux_setup.needs_usb_setup())
 
 
+def _reveal_file(path):
+    """Show the file in Finder / Explorer / the file manager (best effort)."""
+    import subprocess
+
+    try:
+        from linux_setup import _subprocess_env
+
+        if sys.platform == "darwin":
+            cmd = ["open", "-R", path]
+        elif os.name == "nt":
+            cmd = ["explorer", f"/select,{path}"]
+        else:
+            cmd = ["xdg-open", os.path.dirname(path)]
+        subprocess.Popen(cmd, env=_subprocess_env())
+    except Exception:
+        pass
+
+
 class _QueueLogHandler(logging.Handler):
     def __init__(self, q: "queue.Queue[str]"):
         super().__init__()
@@ -268,15 +286,20 @@ class BulkSignApp:
                 self.root.after(0, self._on_usb_setup_needed)
                 return
             prepare_module_dir(module_path)
-            from token_utils import list_token_identities
+            from token_utils import list_token_identities_safe
 
-            ids = list_token_identities(module_path)
-            self.root.after(0, lambda: self._on_token_detected(module_path, ids, None))
+            ids = list_token_identities_safe(module_path)
+            hint = ""
+            if not ids:
+                import diagnostics
+
+                hint = diagnostics.no_token_hint()
+            self.root.after(0, lambda: self._on_token_detected(module_path, ids, None, hint))
         except Exception as e:  # noqa: BLE001 - show any failure in the panel
             err = str(e)  # `e` is cleared when the except block exits
             self.root.after(0, lambda: self._on_token_detected(module_path, None, err))
 
-    def _on_token_detected(self, module_path, ids, err):
+    def _on_token_detected(self, module_path, ids, err, hint=""):
         self.detect_btn.configure(state="normal")
         lib = f"\nLibrary: {module_path}" if module_path else ""
         if err is not None:
@@ -284,7 +307,9 @@ class BulkSignApp:
             self._log(f"Token check failed: {err}")
             return
         if not ids:
-            self.token_var.set(f"DSC token: none detected — plug it in, then click Detect.{lib}")
+            self.token_var.set(f"DSC token: none found. {hint or 'Plug it in, then click Detect.'}{lib}")
+            if hint:
+                self._log(f"No DSC token found: {hint}")
             return
         if len(ids) == 1:
             i = ids[0]
@@ -461,14 +486,19 @@ class BulkSignApp:
         threading.Thread(target=self._selftest_worker, daemon=True).start()
 
     def _selftest_worker(self):
-        import selftest
-
         result_path = os.path.join(DATA_DIR, "selftest-result.txt")
-        _, lines = selftest.main(result_path)
-        for line in lines:
-            self._log(line)
-        self._log(f"Saved to {result_path}")
-        self.root.after(0, lambda: self._set_controls_running(False))
+        self._log(f"Report file: {result_path}")
+        try:
+            import selftest
+
+            # Lines appear in the Activity box as each check runs.
+            selftest.main(result_path, on_line=self._log)
+            self._log(f"Saved to {result_path}")
+            _reveal_file(result_path)
+        except Exception as e:  # noqa: BLE001 - never leave the buttons disabled
+            self._log(f"Self-test could not run: {e}")
+        finally:
+            self.root.after(0, lambda: self._set_controls_running(False))
 
     # ----- window close -----------------------------------------------------
     def _on_close(self):

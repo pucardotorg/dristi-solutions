@@ -7,9 +7,10 @@ This lets the desktop app show the token's labels under the title and auto-use a
 single-identity token, so staff never have to hand-find PKCS11_CERT_LABEL for a
 new DSC pendrive.
 
-Works the same on Linux (vendor .so) and Windows (vendor .dll).
+Works the same on Linux (.so), Windows (.dll) and macOS (.dylib).
 """
 
+import threading
 from typing import List, TypedDict
 
 import pkcs11
@@ -22,6 +23,43 @@ class TokenIdentity(TypedDict):
     cert_label: str
     cert_id_hex: str
     cn: str
+
+
+# One caller at a time into the vendor library (token detection / self-test).
+TOKEN_LOCK = threading.Lock()
+
+TOKEN_TIMEOUT_S = 30
+
+
+def call_with_timeout(fn, *args, timeout=TOKEN_TIMEOUT_S):
+    """Run fn(*args) on a helper thread; raise TimeoutError if it does not return,
+    so a stuck vendor library cannot freeze the caller."""
+    result = {}
+
+    def run():
+        try:
+            result["value"] = fn(*args)
+        except BaseException as e:  # noqa: BLE001 - re-raised in the caller
+            result["error"] = e
+
+    t = threading.Thread(target=run, daemon=True)
+    t.start()
+    t.join(timeout)
+    if t.is_alive():
+        raise TimeoutError(f"the DSC token library did not respond within {timeout} s "
+                           "(re-plug the token; if it repeats, restart the app)")
+    if "error" in result:
+        raise result["error"]
+    return result["value"]
+
+
+def list_token_identities_safe(module_path: str) -> List[TokenIdentity]:
+    """list_token_identities() with the lock and a timeout."""
+    def locked():
+        with TOKEN_LOCK:
+            return list_token_identities(module_path)
+
+    return call_with_timeout(locked)
 
 
 def list_token_identities(module_path: str) -> List[TokenIdentity]:

@@ -35,6 +35,7 @@ rm -rf "$DIST"
   --hidden-import gen_test_cert \
   --hidden-import token_utils \
   --hidden-import selftest \
+  --hidden-import diagnostics \
   --hidden-import linux_setup \
   --hidden-import test_client \
   bulk_sign_app.py
