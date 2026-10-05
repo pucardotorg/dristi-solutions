@@ -8,3 +8,6 @@ python-dotenv>=1.0         # load .env (optional, non-secret config)
 # Test / verification helpers
 requests>=2.31
 cryptography>=42.0         # used by gen_test_cert.py (software-mode testing)
+# Intel Macs: cryptography 49+ ships Apple Silicon wheels only; a source build links
+# Homebrew OpenSSL and breaks in the packaged app. 48.x has a universal2 wheel.
+cryptography<49; sys_platform == "darwin" and platform_machine == "x86_64"

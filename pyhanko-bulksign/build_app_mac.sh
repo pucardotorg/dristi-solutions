@@ -20,7 +20,9 @@ WORK="dist/macos-build"
 
 [ -d .venv ] || python3 -m venv .venv
 ./.venv/bin/pip install -q --upgrade pip
-./.venv/bin/pip install -q -r requirements.txt pyinstaller
+# Prebuilt cryptography only: a source build links Homebrew OpenSSL, which clashes
+# with Python's own libssl inside the .app (see requirements.txt).
+./.venv/bin/pip install -q --only-binary=cryptography -r requirements.txt pyinstaller
 
 EXTRA=()
 if [ -n "${PKCS11_MODULE_SRC:-}" ] && [ -f "${PKCS11_MODULE_SRC}" ]; then
