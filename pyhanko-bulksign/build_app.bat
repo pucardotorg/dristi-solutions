@@ -30,6 +30,7 @@ call .venv\Scripts\pyinstaller --noconfirm --clean --onefile --windowed ^
   --collect-submodules pkcs11 ^
   --collect-submodules multipart ^
   --hidden-import app ^
+  --hidden-import app_paths ^
   --hidden-import pyhanko_signer ^
   --hidden-import gen_test_cert ^
   --hidden-import token_utils ^

@@ -1,8 +1,12 @@
 name: pyHanko Bulk Sign - desktop packages
 
-# Builds the portable OnCourts Bulk Sign app (pyhanko-bulksign/) for Windows and
-# Linux, runs the packaged app's self-test, and uploads each folder as a
-# downloadable zip (Actions run page -> Artifacts).
+# Builds the portable OnCourts Bulk Sign app (pyhanko-bulksign/) for Windows,
+# Linux and macOS (Apple Silicon + Intel) with the HYP2003 token library bundled,
+# runs the packaged app's self-test, and uploads each package as a downloadable
+# artifact (Actions run page -> Artifacts).
+#
+# The vendor library is downloaded at build time and checked against the SHA-256
+# of the tested file (fetch_vendor_libs.py); vendor binaries are not stored here.
 on:
   push:
     branches:
@@ -27,6 +31,9 @@ jobs:
           python-version: '3.12'
           architecture: x64
 
+      - name: Fetch HYP2003 token library
+        run: python fetch_vendor_libs.py windows vendor
+
       - name: Build
         shell: cmd
         run: build_app.bat
@@ -37,6 +44,7 @@ jobs:
           $p = Start-Process -FilePath dist\windows\OncourtsBulkSign.exe -ArgumentList '--selftest' -Wait -PassThru
           Get-Content dist\windows\selftest-result.txt
           Remove-Item dist\windows\selftest-result.txt
+          Remove-Item dist\windows\test-cert.p12 -ErrorAction SilentlyContinue
           exit $p.ExitCode
 
       - uses: actions/upload-artifact@v4
@@ -58,6 +66,9 @@ jobs:
       - name: Install build prerequisites
         run: sudo apt-get update && sudo apt-get install -y python3-venv python3-tk binutils
 
+      - name: Fetch HYP2003 token library
+        run: python3 fetch_vendor_libs.py linux vendor
+
       - name: Build
         run: ./build_app.sh
 
@@ -70,10 +81,55 @@ jobs:
           exit $status
 
       - name: Package (zip keeps the executable bit)
-        run: cd dist && zip -r ../OnCourts-BulkSign-Linux.zip linux
+        run: cd dist && mv linux OnCourts-BulkSign-Linux && zip -r ../OnCourts-BulkSign-Linux.zip OnCourts-BulkSign-Linux
 
       - uses: actions/upload-artifact@v4
         with:
           name: OnCourts-BulkSign-Linux
           path: pyhanko-bulksign/OnCourts-BulkSign-Linux.zip
+          if-no-files-found: error
+
+  macos:
+    # One build per CPU; the bundled HYP2003 dylib is universal.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14
+            label: AppleSilicon
+          - runner: macos-15-intel
+            label: Intel
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        working-directory: pyhanko-bulksign
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Fetch HYP2003 token library
+        run: python fetch_vendor_libs.py macos vendor
+
+      - name: Build
+        run: ./build_app_mac.sh
+
+      - name: Self-test the packaged app
+        run: |
+          status=0
+          dist/macos/OncourtsBulkSign.app/Contents/MacOS/OncourtsBulkSign --selftest || status=$?
+          exit $status
+
+      - name: Package (ditto keeps the .app's symlinks and signatures)
+        run: |
+          mv dist/macos "dist/OnCourts-BulkSign-macOS-${{ matrix.label }}"
+          ditto -c -k --keepParent "dist/OnCourts-BulkSign-macOS-${{ matrix.label }}" \
+            "OnCourts-BulkSign-macOS-${{ matrix.label }}.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OnCourts-BulkSign-macOS-${{ matrix.label }}
+          path: pyhanko-bulksign/OnCourts-BulkSign-macOS-${{ matrix.label }}.zip
           if-no-files-found: error

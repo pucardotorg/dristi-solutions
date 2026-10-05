@@ -26,20 +26,19 @@ import sys
 import threading
 import time
 
-# Run from the app's own folder so .env (and, when running from source, app.py /
-# pyhanko_signer.py) resolve -- including when launched by double-click or from a
-# PyInstaller bundle. For a frozen build, the folder is where the executable lives
-# (sys.executable), so staff drop a .env next to OncourtsBulkSign(.exe).
-if getattr(sys, "frozen", False):
-    APP_DIR = os.path.dirname(os.path.abspath(sys.executable))
-else:
-    APP_DIR = os.path.dirname(os.path.abspath(__file__))
-os.chdir(APP_DIR)
+# Folders per OS/packaging (see app_paths): .env sits next to the exe, or inside
+# the .app on macOS; relative writable files (test-cert.p12) go to DATA_DIR, so
+# run from there -- including when launched by double-click.
+from app_paths import DATA_DIR, SEARCH_DIRS, ensure_data_dir
+
+os.chdir(ensure_data_dir())
 
 try:
     from dotenv import load_dotenv
 
-    load_dotenv(os.path.join(APP_DIR, ".env"))
+    # First found wins (load_dotenv never overrides): beside the app, then bundled.
+    for _d in SEARCH_DIRS:
+        load_dotenv(os.path.join(_d, ".env"))
 except Exception:
     pass
 
@@ -464,7 +463,7 @@ class BulkSignApp:
     def _selftest_worker(self):
         import selftest
 
-        result_path = os.path.join(APP_DIR, "selftest-result.txt")
+        result_path = os.path.join(DATA_DIR, "selftest-result.txt")
         _, lines = selftest.main(result_path)
         for line in lines:
             self._log(line)
@@ -491,7 +490,7 @@ def main():
     if "--selftest" in sys.argv:
         import selftest
 
-        code, _ = selftest.main(os.path.join(APP_DIR, "selftest-result.txt"))
+        code, _ = selftest.main(os.path.join(DATA_DIR, "selftest-result.txt"))
         sys.exit(code)
 
     import tkinter as tk

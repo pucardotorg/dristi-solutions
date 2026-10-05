@@ -46,32 +46,37 @@ from pyhanko.stamp import TextStampStyle
 # in Adobe is the VIEWER's validity icon for an untrusted cert (turns into a green
 # check once CCA trust is configured) -- it is NOT drawn here.
 
-# Folder that holds .env / the seal: the executable's dir when frozen, else this
-# module's dir (both are where the app is deployed and .env lives).
-if getattr(sys, "frozen", False):
-    _BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))
-else:
-    _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Folder that holds .env / the seal: next to the exe (inside the .app on macOS
+# as a fallback) -- see app_paths.
+from app_paths import APP_DIR as _BASE_DIR
+from app_paths import SEARCH_DIRS as _SEARCH_DIRS
+from app_paths import find_file
 
 
 def resolve_app_path(path):
     """Resolve a bare filename / relative path against the app folder (where .env
-    and the exe live). Absolute paths and empty values pass through unchanged.
-    Lets .env reference the seal image AND the PKCS#11 module by bare filename, so
-    everything can live self-contained in one folder."""
+    and the exe live; on macOS also inside the .app). Absolute paths and empty
+    values pass through unchanged. Lets .env reference the seal image AND the
+    PKCS#11 module by bare filename, so everything can live in one folder."""
     if path and not os.path.isabs(path):
-        return os.path.join(_BASE_DIR, path)
+        return find_file(path)
     return path
 
 
 # --- DSC token library (PKCS#11 module) discovery ---------------------------
-# Each token brand ships its own PKCS#11 library (.dll on Windows, .so on Linux).
+# Each token brand ships its own PKCS#11 library (.dll on Windows, .so on Linux,
+# .dylib on macOS).
 # Lookup order:
 #   1. PKCS11_MODULE_PATH from .env, if that file exists
 #   2. any token library copied INTO the app folder (next to the exe) -- the
 #      portable way: drop the vendor .dll/.so beside the exe and it is picked up
 #   3. the vendor's standard install locations (driver already installed)
-_LIB_EXT = (".dll",) if os.name == "nt" else (".so",)
+if os.name == "nt":
+    _LIB_EXT = (".dll",)
+elif sys.platform == "darwin":
+    _LIB_EXT = (".dylib",)
+else:
+    _LIB_EXT = (".so",)
 
 if os.name == "nt":
     _SYS32 = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32")
@@ -89,6 +94,12 @@ if os.name == "nt":
     _VENDOR_GLOBS = [os.path.join(d, v, "**", "*.dll")
                      for d in _PROGRAM_DIRS if d
                      for v in ("HyperPKI*", "Hypersecu*", "ePass2003*", "WatchData*")]
+elif sys.platform == "darwin":
+    _KNOWN_MODULES = []
+    _VENDOR_GLOBS = [
+        "/usr/local/lib/libcastle*.dylib",            # HYP2003 / ePass2003 (vendor .pkg)
+        "/usr/local/lib/libeTPkcs11.dylib",           # SafeNet eToken
+    ]
 else:
     _KNOWN_MODULES = []
     _VENDOR_GLOBS = [
@@ -125,11 +136,19 @@ def find_pkcs11_module():
         if os.path.isfile(p):
             return p, searched
 
-    searched.append(os.path.join(_BASE_DIR, "<any token library>"))
-    local = sorted(f for f in os.listdir(_BASE_DIR)
-                   if _is_library(f) and os.path.isfile(os.path.join(_BASE_DIR, f)))
-    if local:
-        return os.path.join(_BASE_DIR, local[0]), searched
+    for i, d in enumerate(_SEARCH_DIRS):
+        searched.append(os.path.join(d, "<any token library>"))
+        try:
+            names = os.listdir(d)
+        except OSError:
+            continue
+        # The app folder accepts any library; the macOS .app's own bundle also
+        # holds Python's libraries, so there only PKCS#11-looking names count.
+        local = sorted(f for f in names
+                       if _is_library(f) and os.path.isfile(os.path.join(d, f))
+                       and (i == 0 or any(h in f.lower() for h in _P11_HINTS)))
+        if local:
+            return os.path.join(d, local[0]), searched
 
     for p in _KNOWN_MODULES:
         searched.append(p)

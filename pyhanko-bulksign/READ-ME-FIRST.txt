@@ -2,11 +2,11 @@ OnCourts Bulk Sign -- quick start
 ==================================
 
 This folder is the whole app. Copy/extract it anywhere; nothing to install.
+The HYP2003 DSC token library is already included.
 
-  OncourtsBulkSign(.exe)   the app -- double-click it
-  .env                     settings (no changes needed normally)
-  court-seal.png           seal drawn in the signature box
-  <token library>          your DSC token's .dll (Windows) / .so (Linux), if copied here
+  Windows:  OncourtsBulkSign.exe  + .env, court-seal.png, eps2003csp11v2.dll
+  Linux:    OncourtsBulkSign      + .env, court-seal.png, libcastle_v2.so.1.0.0
+  macOS:    OncourtsBulkSign.app  (settings, seal and token library are inside it)
 
 
 1. FIRST: CHECK THIS COMPUTER (takes ~10 seconds)
@@ -32,17 +32,10 @@ This folder is the whole app. Copy/extract it anywhere; nothing to install.
    e. Bulk sign in the browser. Click STOP when finished.
 
 
-Where the token library comes from
-   Windows: usually nothing to copy. Installing the token's driver puts the
-   library in C:\Windows\System32 and the app finds it there:
-     HYP2003 India driver (from your CA)  -> eps2003csp11v2.dll
-     HYP2003 HyperPKI driver (hypersecu)  -> HyperPKICsp11_2003.dll
-     ePass2003 driver                     -> eps2003csp11v2.dll
-   To avoid installing the driver, copy that 64-bit .dll from a PC that has it
-   (C:\Windows\System32, NOT SysWOW64) into this folder, next to the exe.
-
-   Linux: copy libcastle_v2.so.1.0.0 (inside the HYP2003 Linux x86_64 driver zip,
-   folder "redist") into this folder, next to the app.
+Other token brands
+   The app also finds the token library if the token's driver is installed, or
+   if you copy the vendor's PKCS#11 library next to the app (64-bit; on Windows
+   from C:\Windows\System32, NOT SysWOW64).
 
 
 Windows notes
@@ -55,6 +48,19 @@ Linux notes
      (It lets your user account access the token over USB.)
    - Make the app executable if needed: right-click -> Properties -> "Allow
      executing as program", or: chmod +x OncourtsBulkSign
+
+
+macOS notes
+   - The app is not yet signed by Apple, so the first time macOS blocks it:
+       1. Double-click OncourtsBulkSign.app -> click "Done" on the warning.
+       2. Open System Settings -> Privacy & Security, scroll down, click
+          "Open Anyway" next to OncourtsBulkSign, enter your Mac password.
+       3. Double-click the app again -> "Open". After that it opens normally.
+   - Use the macOS-AppleSilicon zip on M1/M2/M3/M4 Macs and macOS-Intel on
+     older Intel Macs (Apple menu -> About This Mac -> "Chip" or "Processor").
+   - selftest-result.txt is saved in your home folder under
+     Library/Application Support/OnCourts Bulk Sign (shown in the Activity box).
+   - No one-time setup is needed on macOS.
 
 
 Reporting a problem: send selftest-result.txt and a photo/screenshot of the error.

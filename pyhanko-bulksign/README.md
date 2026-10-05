@@ -83,10 +83,24 @@ token; the app shows the certificate, label and library under the title.
 then loads the token library and lists any plugged-in token. The report goes to
 `selftest-result.txt` next to the exe. CI runs it on every build.
 
+**macOS:** `build_app_mac.sh` builds `OncourtsBulkSign.app` (one per CPU: Apple
+Silicon / Intel). `.env`, `court-seal.png` and the token library are bundled inside
+the .app, because macOS App Translocation can run a downloaded app from a hidden
+read-only copy that cannot see files beside it (files beside the .app still win
+when visible; see `app_paths.py`). Writable files go to `~/Library/Application
+Support/OnCourts Bulk Sign`. The HYP2003 macOS library (`libcastle_v2.1.0.0.dylib`,
+universal) uses the macOS PC/SC service, so no USB setup is needed. The app is
+ad-hoc signed only: until it is Developer ID-signed and notarized, users must
+allow it once in System Settings -> Privacy & Security.
+
+**Vendor libraries in CI:** `fetch_vendor_libs.py` downloads the HYP2003 driver
+for each OS, unpacks it and verifies the library against the SHA-256 of the
+tested file before bundling (no vendor binaries in this repo).
+
 **Prebuilt zips:** every push to `pyhanko-bulk-sign-poc` that touches this folder
-runs `.github/workflows/pyhanko-bulksign-build.yml`, which builds Windows + Linux
-packages, self-tests them, and attaches `OnCourts-BulkSign-Windows` /
-`OnCourts-BulkSign-Linux` as run artifacts. Testers start with `READ-ME-FIRST.txt`.
+runs `.github/workflows/pyhanko-bulksign-build.yml`, which builds Windows, Linux and
+macOS (Apple Silicon + Intel) packages with the HYP2003 library bundled, self-tests
+them, and attaches them as run artifacts. Testers start with `READ-ME-FIRST.txt`.
 
 The sections below describe the underlying agent (HTTP contract, CLI run, config)
 for developers; staff only need the app above.

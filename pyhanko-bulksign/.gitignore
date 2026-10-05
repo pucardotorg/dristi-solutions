@@ -15,3 +15,5 @@ dist/
 OncourtsBulkSign.desktop
 # Self-test report written next to the app
 selftest-result.txt
+# Vendor token libraries downloaded by fetch_vendor_libs.py (never committed)
+vendor/
