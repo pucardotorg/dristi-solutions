@@ -181,6 +181,7 @@ const DocViewerWrapper = ({
         fileName: file?.name,
       }));
 
+
   return (
     <div className={`docviewer-wrapper ${disableInnerViewerScroll ? "single-scroll-doc-viewer" : ""}`} id="docviewer-id">
       <Card
