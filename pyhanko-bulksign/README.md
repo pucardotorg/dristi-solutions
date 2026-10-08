@@ -79,8 +79,7 @@ graphical `pkexec` password prompt, falling back to a terminal running sudo.
 Leave `PKCS11_CERT_LABEL`/`PKCS11_KEY_LABEL` **blank** to auto-use a single-identity
 token; the app shows the certificate, label and library under the title.
 
-**Self-test (OS compatibility check):** the **Self-test** button, or
-`OncourtsBulkSign --selftest`, signs a sample PDF through the real HTTP agent,
+**Self-test (build check, not in the window):** `OncourtsBulkSign --selftest` signs a sample PDF through the real HTTP agent,
 then loads the token library and lists any plugged-in token. The report goes to
 `selftest-result.txt` next to the exe. CI runs it on every build.
 
@@ -140,7 +139,7 @@ must be built **on Windows**.
 3. No `.env` edits needed: the library copied into the folder is found
    automatically (blank `PKCS11_MODULE_PATH`), as are the cert labels.
 4. Copy the whole **`dist\windows\`** folder to each machine. Double-click the exe →
-   **Self-test** → the token panel shows the certificate → PIN →
+   the token panel shows the certificate → PIN →
    **START** → bulk-sign in the browser.
 
 **Windows gotchas:** module path is the **`.dll`** (not the Linux `.so`); SmartScreen

@@ -10,15 +10,7 @@ The HYP2003 DSC token library is already included.
                                   driver installer are inside it)
 
 
-1. FIRST: CHECK THIS COMPUTER (takes ~10 seconds)
-   Open the app -> click "Self-test".
-   It checks the signing engine with a sample PDF (nothing is sent anywhere)
-   and looks for your DSC token. The result is shown in the
-   Activity box and saved to selftest-result.txt in this folder.
-   RESULT: PASS  = the app works on this computer.
-
-
-2. SIGNING WITH YOUR DSC TOKEN
+SIGNING WITH YOUR DSC TOKEN
    a. Close Capricorn if it is running (both use port 1620; only one can run).
    b. Plug in the DSC token.
    c. Open the app. The grey box should show the certificate name.
@@ -61,8 +53,6 @@ macOS notes
      After that it opens normally with a double-click.
    - Use the macOS-AppleSilicon zip on M1/M2/M3/M4 Macs and macOS-Intel on
      older Intel Macs (Apple menu -> About This Mac -> "Chip" or "Processor").
-   - selftest-result.txt is saved in your home folder under
-     Library/Application Support/OnCourts Bulk Sign (shown in the Activity box).
    - One-time driver install (the first time you open the app on a Mac):
        The app asks to install the DSC token's driver -> click Yes. The macOS
        Installer opens (the token vendor's own installer, included in the app):
@@ -73,4 +63,5 @@ macOS notes
        this app does not need it, but it is part of the vendor's package.)
 
 
-Reporting a problem: send selftest-result.txt and a photo/screenshot of the error.
+Reporting a problem: send a screenshot of the app window (including the
+Activity box) and of the error message.

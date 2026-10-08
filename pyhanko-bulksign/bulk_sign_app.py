@@ -14,7 +14,7 @@ exactly what the court frontend's BULK_SIGN_URL points to. The token library is
 found automatically (next to the exe, or the vendor's install folder); .env can
 override it. Staff only ever enter the PIN. Signing always uses the DSC token.
 
-Headless check (used by the CI build, and handy on a new machine):
+Headless check for the CI build (not shown to users):
     OncourtsBulkSign --selftest   -> selftest-result.txt next to the exe
 """
 
@@ -59,24 +59,6 @@ def _needs_os_setup(module_path) -> bool:
     import os_setup
 
     return os_setup.needs_setup(module_path)
-
-
-def _reveal_file(path):
-    """Show the file in Finder / Explorer / the file manager (best effort)."""
-    import subprocess
-
-    try:
-        from linux_setup import _subprocess_env
-
-        if sys.platform == "darwin":
-            cmd = ["open", "-R", path]
-        elif os.name == "nt":
-            cmd = ["explorer", f"/select,{path}"]
-        else:
-            cmd = ["xdg-open", os.path.dirname(path)]
-        subprocess.Popen(cmd, env=_subprocess_env())
-    except Exception:
-        pass
 
 
 class _QueueLogHandler(logging.Handler):
@@ -171,11 +153,6 @@ class BulkSignApp:
                                   font=("Segoe UI", 11, "bold"), padx=24, pady=8,
                                   cursor="hand2", state="disabled")
         self.stop_btn.pack(side="left", padx=(10, 0))
-        self.selftest_btn = tk.Button(btns, text="Self-test", command=self.selftest,
-                                      bg="#dcebeb", fg=TEAL, relief="flat",
-                                      font=("Segoe UI", 10, "bold"), padx=12, pady=8,
-                                      cursor="hand2")
-        self.selftest_btn.pack(side="right")
 
         # Activity log
         tk.Label(wrap, text="Activity", bg=BG, fg=GREY,
@@ -189,7 +166,6 @@ class BulkSignApp:
 
     def _set_controls_running(self, running: bool):
         state = "disabled" if running else "normal"
-        self.selftest_btn.configure(state=state)
         self.start_btn.configure(state=state)
         self.stop_btn.configure(state="normal" if running else "disabled")
 
@@ -417,30 +393,6 @@ class BulkSignApp:
     def _set_status(self, text: str, color: str):
         self.status_var.set(text)
         self.status_lbl.configure(fg=color)
-
-    # ----- self-test --------------------------------------------------------
-    def selftest(self):
-        if self.server is not None:
-            return
-        self._set_controls_running(True)
-        self.stop_btn.configure(state="disabled")
-        self._log("Running self-test…")
-        threading.Thread(target=self._selftest_worker, daemon=True).start()
-
-    def _selftest_worker(self):
-        result_path = os.path.join(DATA_DIR, "selftest-result.txt")
-        self._log(f"Report file: {result_path}")
-        try:
-            import selftest
-
-            # Lines appear in the Activity box as each check runs.
-            selftest.main(result_path, on_line=self._log)
-            self._log(f"Saved to {result_path}")
-            _reveal_file(result_path)
-        except Exception as e:  # noqa: BLE001 - never leave the buttons disabled
-            self._log(f"Self-test could not run: {e}")
-        finally:
-            self.root.after(0, lambda: self._set_controls_running(False))
 
     # ----- window close -----------------------------------------------------
     def _on_close(self):
