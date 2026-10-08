@@ -12,20 +12,16 @@ The HYP2003 DSC token library is already included.
 
 1. FIRST: CHECK THIS COMPUTER (takes ~10 seconds)
    Open the app -> click "Self-test".
-   It signs a sample PDF and looks for your DSC token. The result is shown in the
+   It checks the signing engine with a sample PDF (nothing is sent anywhere)
+   and looks for your DSC token. The result is shown in the
    Activity box and saved to selftest-result.txt in this folder.
    RESULT: PASS  = the app works on this computer.
 
 
-2. TEST MODE (no DSC token)
-   Choose "Test mode" -> START. Bulk sign in the browser as usual.
-   The PDF is signed with a test certificate ("untrusted" in Adobe -- expected).
-
-
-3. REAL SIGNING WITH A DSC TOKEN
+2. SIGNING WITH YOUR DSC TOKEN
    a. Close Capricorn if it is running (both use port 1620; only one can run).
    b. Plug in the DSC token.
-   c. Choose "DSC token". The grey box should show the certificate name.
+   c. Open the app. The grey box should show the certificate name.
       - "DSC token library not found": copy the token's PKCS#11 library into this
         folder (next to the exe), or install the token's driver. Then click Detect.
         The message lists every place the app looked.
@@ -44,7 +40,7 @@ Windows notes
    - Allow the firewall prompt (the app only listens on this computer).
 
 Linux notes
-   - First time you choose "DSC token", the app asks to do a one-time setup and
+   - The first time you open the app, it asks to do a one-time setup and
      shows a password box: enter your computer login password. That is all.
      (It lets your user account access the token over USB.)
    - Make the app executable if needed: right-click -> Properties -> "Allow
@@ -67,7 +63,7 @@ macOS notes
      older Intel Macs (Apple menu -> About This Mac -> "Chip" or "Processor").
    - selftest-result.txt is saved in your home folder under
      Library/Application Support/OnCourts Bulk Sign (shown in the Activity box).
-   - One-time driver install (first time you choose "DSC token" on a Mac):
+   - One-time driver install (the first time you open the app on a Mac):
        The app asks to install the DSC token's driver -> click Yes. The macOS
        Installer opens (the token vendor's own installer, included in the app):
        Continue -> Agree -> Install -> enter your Mac password -> Close.

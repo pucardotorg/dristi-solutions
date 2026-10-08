@@ -5,15 +5,14 @@ A tiny window so non-technical staff can run the bulk-sign agent without any
 terminal or Python commands:
 
     1. Plug in the DSC token.
-    2. Open this app, choose "DSC token" (or "Test mode" to try it without a
-       token), type the token PIN, click START.
+    2. Open this app, type the token PIN, click START.
     3. Do the bulk signing in the browser as usual.
     4. Click STOP when done (or just close the window).
 
 It embeds the same FastAPI agent (app.py) and runs it on http://localhost:1620,
 exactly what the court frontend's BULK_SIGN_URL points to. The token library is
 found automatically (next to the exe, or the vendor's install folder); .env can
-override it. Staff only ever pick the mode and enter the PIN.
+override it. Staff only ever enter the PIN. Signing always uses the DSC token.
 
 Headless check (used by the CI build, and handy on a new machine):
     OncourtsBulkSign --selftest   -> selftest-result.txt next to the exe
@@ -45,11 +44,6 @@ except Exception:
 HOST = os.environ.get("HOST", "127.0.0.1")
 PORT = int(os.environ.get("PORT", "1620"))
 SIGN_URL = f"http://{HOST}:{PORT}"
-
-MODE_DSC = "pkcs11"
-MODE_TEST = "software"
-# The mode is chosen in the window; .env SIGNER_MODE only sets the default choice.
-DEFAULT_MODE = MODE_TEST if os.environ.get("SIGNER_MODE", "").lower() == MODE_TEST else MODE_DSC
 
 # Brand-ish palette (matches the court app's teal).
 TEAL = "#007E7E"
@@ -106,7 +100,6 @@ class BulkSignApp:
         self.server = None
         self.thread = None
         self.log_queue: "queue.Queue[str]" = queue.Queue()
-        self.mode_var = tk.StringVar(value=DEFAULT_MODE)
         self._setup_offered = False
 
         root.title("OnCourts Bulk Sign")
@@ -118,11 +111,7 @@ class BulkSignApp:
         self._setup_logging()
         self.root.after(150, self._drain_log)
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
-        self._on_mode_changed()
-
-    @property
-    def mode(self) -> str:
-        return self.mode_var.get()
+        self.detect_token()
 
     # ----- UI ---------------------------------------------------------------
     def _build_ui(self):
@@ -137,26 +126,9 @@ class BulkSignApp:
         tk.Label(wrap, text="Sign court documents in bulk using your DSC token.",
                  bg=BG, fg=GREY, font=("Segoe UI", 10)).pack(anchor="w", pady=(0, 12))
 
-        # Mode choice: real DSC token, or test mode with a built-in test certificate.
-        tk.Label(wrap, text="Signing mode", bg=BG, fg="#1a2b34",
-                 font=("Segoe UI", 10, "bold")).pack(anchor="w")
-        modes = tk.Frame(wrap, bg=BG)
-        modes.pack(fill="x", pady=(2, 10))
-        self.mode_radios = []
-        for value, label in ((MODE_DSC, "DSC token (real signing)"),
-                             (MODE_TEST, "Test mode (no token, test certificate)")):
-            rb = tk.Radiobutton(modes, text=label, value=value, variable=self.mode_var,
-                                command=self._on_mode_changed, bg=BG,
-                                activebackground=BG, font=("Segoe UI", 10), anchor="w")
-            rb.pack(anchor="w")
-            self.mode_radios.append(rb)
-
-        # Mode-specific area: rebuilt on mode change, kept above the status pill.
-        self.mode_area = tk.Frame(wrap, bg=BG)
-        self.mode_area.pack(fill="x")
-
-        # DSC widgets (shown in DSC mode). Token panel is read without a PIN.
-        self.dsc_frame = tk.Frame(self.mode_area, bg=BG)
+        # DSC token panel (read without a PIN) + PIN box.
+        self.dsc_frame = tk.Frame(wrap, bg=BG)
+        self.dsc_frame.pack(fill="x")
         self.token_var = tk.StringVar(value="DSC token: checking…")
         tbox = tk.Frame(self.dsc_frame, bg=PANEL, bd=1, relief="solid")
         tbox.pack(fill="x", pady=(0, 12))
@@ -177,14 +149,6 @@ class BulkSignApp:
                                   font=("Segoe UI", 12), relief="solid", bd=1)
         self.pin_entry.pack(fill="x", ipady=5, pady=(4, 12))
         self.pin_entry.bind("<Return>", lambda e: self.start())
-
-        # Test-mode note (shown in test mode).
-        self.test_frame = tk.Frame(self.mode_area, bg=BG)
-        tk.Label(self.test_frame,
-                 text="TEST mode: signs with a built-in test certificate (shown as\n"
-                      "untrusted in Adobe). Use only to check the setup.",
-                 bg=BG, fg=GREY, font=("Segoe UI", 10, "italic"),
-                 justify="left").pack(anchor="w", pady=(0, 12))
 
         # Status pill
         self.status_var = tk.StringVar(value="● Stopped")
@@ -223,19 +187,8 @@ class BulkSignApp:
 
         self._log(f"Ready. The browser will reach this app at {SIGN_URL}")
 
-    def _on_mode_changed(self):
-        self.dsc_frame.pack_forget()
-        self.test_frame.pack_forget()
-        if self.mode == MODE_DSC:
-            self.dsc_frame.pack(fill="x")
-            self.detect_token()
-        else:
-            self.test_frame.pack(fill="x")
-
     def _set_controls_running(self, running: bool):
         state = "disabled" if running else "normal"
-        for rb in self.mode_radios:
-            rb.configure(state=state)
         self.selftest_btn.configure(state=state)
         self.start_btn.configure(state=state)
         self.stop_btn.configure(state="normal" if running else "disabled")
@@ -270,8 +223,6 @@ class BulkSignApp:
 
     # ----- token detection --------------------------------------------------
     def detect_token(self):
-        if self.mode != MODE_DSC:
-            return
         self.detect_btn.configure(text="Detect", command=self.detect_token, state="disabled")
         self.token_var.set("DSC token: checking…")
         threading.Thread(target=self._detect_worker, daemon=True).start()
@@ -371,44 +322,33 @@ class BulkSignApp:
 
         if self.server is not None:
             return
-        mode = self.mode
-        if mode == MODE_DSC:
-            pin = self.pin_var.get().strip()
-            if not pin:
-                messagebox.showwarning("PIN required", "Please enter your DSC token PIN.")
-                return
-            os.environ["PKCS11_USER_PIN"] = pin
-        # The signer and the /health endpoint read the mode from the environment.
-        os.environ["SIGNER_MODE"] = mode
+        pin = self.pin_var.get().strip()
+        if not pin:
+            messagebox.showwarning("PIN required", "Please enter your DSC token PIN.")
+            return
+        os.environ["PKCS11_USER_PIN"] = pin
+        # Always the DSC token, whatever an old .env says (the signer and the
+        # /health endpoint read the mode from the environment).
+        os.environ["SIGNER_MODE"] = "pkcs11"
 
         self._set_controls_running(True)
         self.stop_btn.configure(state="disabled")
         self._set_status("● Starting…", GREY)
-        threading.Thread(target=self._start_worker, args=(mode,), daemon=True).start()
+        threading.Thread(target=self._start_worker, daemon=True).start()
 
-    def _start_worker(self, mode):
+    def _start_worker(self):
         try:
             import uvicorn
 
-            if mode == MODE_TEST:
-                # Zero-setup testing: make the self-signed cert if it's missing.
-                from gen_test_cert import ensure_test_cert
+            self._log("Checking token and PIN…")
+            from pyhanko_signer import find_pkcs11_module, validate_signer
 
-                ensure_test_cert(
-                    os.environ.get("SIGNER_P12_PATH", "test-cert.p12"),
-                    os.environ.get("SIGNER_P12_PASSWORD", "test").encode("utf-8"),
-                )
-                self._log("TEST mode: using the built-in test certificate.")
-            else:
-                self._log("Checking token and PIN…")
-                from pyhanko_signer import find_pkcs11_module, validate_signer
+            if _needs_os_setup(find_pkcs11_module()[0]):
+                raise RuntimeError("One-time DSC token setup is not done on this "
+                                   "computer yet. Click 'Set up' in the token box first.")
 
-                if _needs_os_setup(find_pkcs11_module()[0]):
-                    raise RuntimeError("One-time DSC token setup is not done on this "
-                                       "computer yet. Click 'Set up' in the token box first.")
-
-                cn = validate_signer()
-                self._log(f"Token OK{f' — {cn}' if cn else ''}.")
+            cn = validate_signer()
+            self._log(f"Token OK{f' — {cn}' if cn else ''}.")
 
             from app import ThreadedServer, app
 
@@ -428,7 +368,7 @@ class BulkSignApp:
                 raise RuntimeError(f"Server failed to start. Is port {PORT} already in use "
                                    "(for example by Capricorn)? Close it and try again.")
 
-            self.root.after(0, lambda: self._on_started(mode))
+            self.root.after(0, self._on_started)
         except Exception as e:  # noqa: BLE001 - surface any startup failure to the user
             os.environ.pop("PKCS11_USER_PIN", None)
             self.server = None
@@ -438,11 +378,10 @@ class BulkSignApp:
             err = str(e)
             self.root.after(0, lambda: self._on_start_failed(err))
 
-    def _on_started(self, mode):
+    def _on_started(self):
         # Don't keep the PIN on screen once we're signing.
         self.pin_var.set("")
-        label = "TEST mode" if mode == MODE_TEST else "DSC token"
-        self._set_status(f"● Running ({label}) — ready to sign", TEAL)
+        self._set_status("● Running — ready to sign", TEAL)
         self.stop_btn.configure(state="normal")
         self._log(f"Running. Keep this window open and sign in the browser. ({SIGN_URL})")
 

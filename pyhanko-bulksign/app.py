@@ -84,7 +84,7 @@ def _build_response(status: str, data_b64: str = "", error: str = "") -> Respons
 
 @app.get("/health")
 def health():
-    return {"status": "UP", "mode": os.environ.get("SIGNER_MODE", "software")}
+    return {"status": "UP", "mode": os.environ.get("SIGNER_MODE", "pkcs11")}
 
 
 @app.post("/")

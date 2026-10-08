@@ -213,7 +213,8 @@ _STAMP_STYLE = TextStampStyle(
 
 def _build_signer():
     """Construct a pyHanko Signer based on environment configuration."""
-    mode = os.environ.get("SIGNER_MODE", "software").lower()
+    # DSC token unless explicitly asked for test signing (only the self-test does).
+    mode = os.environ.get("SIGNER_MODE", "pkcs11").lower()
 
     if mode == "software":
         p12_path = os.environ.get("SIGNER_P12_PATH", "test-cert.p12")

@@ -24,7 +24,7 @@ status light, and an activity log.
 **Daily use (staff):**
 1. Plug in the DSC token.
 2. Open **PUCAR Bulk Sign**.
-3. Choose **DSC token**, type the token **PIN** → click **START** (status turns green = "ready to sign").
+3. Type the token **PIN** → click **START** (status turns green = "ready to sign").
 4. Do the bulk signing in the browser as usual.
 5. Click **STOP** (or close the window) when finished.
 
@@ -57,9 +57,10 @@ status light, and an activity log.
 Either way the app listens on `http://localhost:1620` — the same `BULK_SIGN_URL`
 the frontend already uses. STOP shuts the service down cleanly.
 
-**Test vs DSC mode:** chosen in the window ("DSC token" or "Test mode"); `.env`
-`SIGNER_MODE` only sets the pre-selected option. Test mode needs no token (the app
-auto-creates a self-signed `test-cert.p12`). The token PIN is never stored.
+**DSC token only:** the desktop app always signs with the DSC token (test mode was
+removed after real-token testing on Windows 11 and an Intel Mac). The `software`
+signer (self-signed `.p12`) remains only for the self-test's sample PDF and for
+developers (`run.sh software`); nothing selects it by default.
 
 **Token library (any DSC brand):** found automatically, in this order: the
 `PKCS11_MODULE_PATH` from `.env` (if that file exists) -> any `.dll`/`.so` copied
@@ -139,7 +140,7 @@ must be built **on Windows**.
 3. No `.env` edits needed: the library copied into the folder is found
    automatically (blank `PKCS11_MODULE_PATH`), as are the cert labels.
 4. Copy the whole **`dist\windows\`** folder to each machine. Double-click the exe →
-   **Self-test** → choose **DSC token** (panel shows the certificate) → PIN →
+   **Self-test** → the token panel shows the certificate → PIN →
    **START** → bulk-sign in the browser.
 
 **Windows gotchas:** module path is the **`.dll`** (not the Linux `.so`); SmartScreen
