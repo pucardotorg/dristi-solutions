@@ -133,6 +133,10 @@ public class WarrantReissueService {
             // Store previous state and increment revision number
             setAdditionalDetail(warrant, "previousState", currentState);
             incrementRevisionNumber(warrant);
+            // The warrant is reverting out of its current (possibly WARRANT_SENT) state and must be
+            // signed and sent again, so its last "sent" date is now stale - clear it so the Status
+            // Update Date is not shown until the reissued warrant is re-sent (issue #6006).
+            clearStatusChangeDate(warrant);
             if (newHearingDate != null) {
                 updateHearingDateInTaskDetails(warrant, newHearingDate, false);
             }
@@ -375,6 +379,11 @@ public class WarrantReissueService {
         if (newHearingDate != null) {
             updateHearingDateInTaskDetails(newWarrant, newHearingDate, true);
         }
+
+        // The clone copies the source warrant's taskDetails, including its (already sent) statusChangeDate.
+        // The clone has not been sent yet, so drop the copied send date - it is re-stamped when this
+        // reissued warrant is sent (issue #6006).
+        clearStatusChangeDate(newWarrant);
 
         ObjectNode additionalDetails = objectMapper.createObjectNode();
         if (oldWarrant.getAdditionalDetails() != null && oldWarrant.getAdditionalDetails() instanceof ObjectNode) {
@@ -787,6 +796,32 @@ public class WarrantReissueService {
             task.setTaskDetails(taskDetails);
         } catch (Exception e) {
             log.error("Error clearing feePaidDate from taskDetails: ", e);
+        }
+    }
+
+    /**
+     * Removes a stale statusChangeDate from a warrant's taskDetails.deliveryChannels. statusChangeDate
+     * is the "warrant sent" date - it is stamped only when the SEND action runs
+     * (TaskService.bulkSend -> updateStatusChangeDate). When a warrant is reissued it reverts to a
+     * pre-sent state (PENDING_PAYMENT / WARRANT_REISSUED) and must be signed and sent again, so the old
+     * send date is stale and has to be cleared; otherwise the "Status Update Date" column keeps showing
+     * the previous send date against a warrant that now reads "Issued"/"Reissued" (issue #6006). It is
+     * re-stamped once the reissued warrant is sent again. Mirrors {@link #clearFeePaidDate(Task)}.
+     */
+    private void clearStatusChangeDate(Task task) {
+        try {
+            if (task.getTaskDetails() == null) {
+                return;
+            }
+            ObjectNode taskDetails = task.getTaskDetails() instanceof ObjectNode
+                    ? (ObjectNode) task.getTaskDetails()
+                    : objectMapper.convertValue(task.getTaskDetails(), ObjectNode.class);
+            if (taskDetails.has("deliveryChannels") && taskDetails.get("deliveryChannels") instanceof ObjectNode) {
+                ((ObjectNode) taskDetails.get("deliveryChannels")).remove("statusChangeDate");
+            }
+            task.setTaskDetails(taskDetails);
+        } catch (Exception e) {
+            log.error("Error clearing statusChangeDate from taskDetails: ", e);
         }
     }
 
