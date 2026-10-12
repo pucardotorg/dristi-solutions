@@ -389,7 +389,17 @@ public class SummonsService {
                 if (isWarrantToWitness) {
                     return config.getWitnessWarrantPdfTemplateKey();
                 }
-                if (SPECIFIC.equals(templateType)) {
+                if (GENERIC.equals(templateType)) {
+                    return config.getTaskWarrantGenericPdfTemplateKey();
+                } else {
+                    // SPECIFIC, or a missing/blank templateType, resolves to the structured
+                    // bailable/non-bailable warrant template selected by docSubType. templateType was
+                    // introduced in 2025 alongside the generic (free-text) warrant, so warrants that
+                    // predate it - the ones surfaced by a reissue cloning old taskDetails - are always
+                    // §138 arrest warrants, i.e. SPECIFIC. Defaulting a null templateType to GENERIC
+                    // would render those with an empty body (the generic template only prints
+                    // warrantText, which legacy warrants don't carry) - that is the blank warrant in
+                    // issue #6011. So a null/blank templateType is treated as SPECIFIC, not GENERIC.
                     if (BAILABLE.equals(docSubType)) {
                         return config.getBailableWarrantPdfTemplateKey();
                     } else if (NON_BAILABLE.equals(docSubType)) {
@@ -397,10 +407,6 @@ public class SummonsService {
                     } else {
                         throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
                     }
-                } else if (GENERIC.equals(templateType)) {
-                    return config.getTaskWarrantGenericPdfTemplateKey();
-                } else {
-                    throw new CustomException("INVALID_TEMPLATE_TYPE", "Template Type must be valid. Provided: " + templateType);
                 }
             }
             case PROCLAMATION -> {
