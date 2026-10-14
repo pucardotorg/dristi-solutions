@@ -206,6 +206,8 @@ function EFilingCases({ path }) {
   const [showFillComplainantDetailsAdvisoryModal, setShowFillComplainantDetailsAdvisoryModal] = useState({ show: false, redirectTo: "" });
   const [deleteFormIndex, setDeleteFormIndex] = useState(null);
   const [formRenderKey, setFormRenderKey] = useState(0);
+  // "Generate Template" clicks on the Synopsis not yet persisted; added to the stored count on the next update call.
+  const [synopsisGenerateCount, setSynopsisGenerateCount] = useState(0);
   const setFieldsRemainingInitially = () => {
     const array = [];
     for (let i = 0; i < selectedArray.length; i++) {
@@ -452,7 +454,11 @@ function EFilingCases({ path }) {
     errorCaseDetails,
     caseDetails,
   ]);
-  const eFilingCaseContextValue = useMemo(() => ({ caseDetails: activeCaseDetails }), [activeCaseDetails]);
+  const incrementSynopsisGenerateCount = useCallback(() => setSynopsisGenerateCount((count) => count + 1), []);
+  const eFilingCaseContextValue = useMemo(() => ({ caseDetails: activeCaseDetails, incrementSynopsisGenerateCount }), [
+    activeCaseDetails,
+    incrementSynopsisGenerateCount,
+  ]);
 
   const scrutinyObj = useMemo(() => {
     return caseDetails?.additionalDetails?.scrutiny?.data || {};
@@ -2668,6 +2674,7 @@ function EFilingCases({ path }) {
             modifiedCaseTitle: newCaseName || caseDetails?.additionalDetails?.modifiedCaseTitle,
           },
         };
+        const pendingSynopsisGenerateCount = selected === "prayerSwornStatement" ? synopsisGenerateCount : 0;
         await updateCaseDetails({
           t,
           isCompleted: true,
@@ -2692,7 +2699,9 @@ function EFilingCases({ path }) {
           isContinueClicked: true,
           isCaseReAssigned,
           isDraftInProgress,
+          synopsisGenerateCount: pendingSynopsisGenerateCount,
         });
+        setSynopsisGenerateCount((count) => count - pendingSynopsisGenerateCount);
 
         if (resetFormData.current) {
           resetFormData.current();
@@ -2765,6 +2774,7 @@ function EFilingCases({ path }) {
         modifiedCaseTitle: newCaseName || caseDetails?.additionalDetails?.modifiedCaseTitle,
       },
     };
+    const pendingSynopsisGenerateCount = selected === "prayerSwornStatement" ? synopsisGenerateCount : 0;
     updateCaseDetails({
       t,
       caseDetails: newCaseDetails,
@@ -2783,8 +2793,10 @@ function EFilingCases({ path }) {
       setShouldShowConfirmDcaModal,
       isCaseReAssigned,
       isDraftInProgress,
+      synopsisGenerateCount: pendingSynopsisGenerateCount,
     })
       .then(() => {
+        setSynopsisGenerateCount((count) => count - pendingSynopsisGenerateCount);
         refetchCaseData().then((updatedCaseData) => {
           // Save draft keeps the user on the current page, so rehydrate from the refreshed data of `selected`.
           // Pages like demandNoticeDetails/chequeDetails are persisted under caseDetails, not additionalDetails,
@@ -2857,6 +2869,7 @@ function EFilingCases({ path }) {
         modifiedCaseTitle: newCaseName || caseDetails?.additionalDetails?.modifiedCaseTitle,
       },
     };
+    const pendingSynopsisGenerateCount = selected === "prayerSwornStatement" ? synopsisGenerateCount : 0;
     updateCaseDetails({
       t,
       isCompleted: isDrafted,
@@ -2877,8 +2890,10 @@ function EFilingCases({ path }) {
       isDelayCondonation,
       isCaseReAssigned,
       isDraftInProgress,
+      synopsisGenerateCount: pendingSynopsisGenerateCount,
     })
       .then(() => {
+        setSynopsisGenerateCount((count) => count - pendingSynopsisGenerateCount);
         if (!isCaseReAssigned) {
           refetchCaseData().then(() => {
             const caseData =

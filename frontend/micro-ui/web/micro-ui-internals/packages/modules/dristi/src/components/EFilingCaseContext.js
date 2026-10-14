@@ -9,7 +9,7 @@ import React, { useContext } from "react";
  * components that need details captured on the earlier pages must read the copy handed
  * down here rather than fetching the case themselves.
  */
-export const EFilingCaseContext = React.createContext({ caseDetails: null });
+export const EFilingCaseContext = React.createContext({ caseDetails: null, incrementSynopsisGenerateCount: null });
 
 export const useEFilingCase = () => useContext(EFilingCaseContext);
 
