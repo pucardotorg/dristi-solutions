@@ -40,14 +40,15 @@ const SelectSynopsisTemplateTextArea = ({ t, config, formData = {}, onSelect, er
 
   // The live case, which is `errorCaseDetails` while the case is CASE_REASSIGNED - the
   // earlier pages are not persisted until the review step in that flow.
-  const { caseDetails } = useEFilingCase();
+  const { caseDetails, incrementSynopsisGenerateCount } = useEFilingCase();
 
   const currentText = useMemo(() => formData?.[configKey]?.[inputName], [formData, configKey, inputName]);
 
   const applyTemplate = useCallback(() => {
     const generatedHtml = generateSynopsisTemplate({ caseDetails: caseDetails || {}, t });
     onSelect(configKey, { ...(formData?.[configKey] || {}), [inputName]: generatedHtml }, { shouldValidate: true });
-  }, [caseDetails, t, onSelect, configKey, inputName, formData]);
+    if (incrementSynopsisGenerateCount) incrementSynopsisGenerateCount();
+  }, [caseDetails, t, onSelect, configKey, inputName, formData, incrementSynopsisGenerateCount]);
 
   const onGenerateClick = useCallback(() => {
     if (hasExistingText(currentText)) {

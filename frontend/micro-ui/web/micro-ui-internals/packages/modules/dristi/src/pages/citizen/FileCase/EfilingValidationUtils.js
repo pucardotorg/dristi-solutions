@@ -1769,6 +1769,7 @@ export const updateCaseDetails = async ({
   isContinueClicked = false,
   isCaseReAssigned = false,
   isDraftInProgress = false,
+  synopsisGenerateCount = 0,
 }) => {
   const data = {};
   setIsDisabled(true);
@@ -3286,6 +3287,8 @@ export const updateCaseDetails = async ({
       prayerSwornStatement: {
         formdata: newFormData,
         isCompleted: isCompleted === "PAGE_CHANGE" ? caseDetails.additionalDetails?.[selected]?.isCompleted : isCompleted,
+        // Total "Generate Template" clicks on the Synopsis across all saves of this case.
+        synopsisGenerateCount: (caseDetails.additionalDetails?.prayerSwornStatement?.synopsisGenerateCount || 0) + synopsisGenerateCount,
       },
     };
   }
