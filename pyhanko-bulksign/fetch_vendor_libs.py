@@ -2,11 +2,17 @@
 Fetch the HYP2003 DSC token's PKCS#11 library for one OS, for bundling into the
 package (used by the CI build; vendor binaries are not stored in this repo).
 
-The vendor's driver download is unpacked and the library is checked against the
-SHA-256 of the exact file that was tested with a real token, so the build fails
-loudly if the vendor ever changes it (re-test, then update the hash).
+By default the files come from our own GitHub release (RELEASE_URL): the exact
+vendor files that were tested with a real token. Vendors update their download
+sites without notice (the macOS driver changed on 2026-10-19), so building from
+our tested copies keeps the build reproducible. Every file is checked against
+its tested SHA-256 either way.
 
     python fetch_vendor_libs.py windows|linux|macos <out_dir>
+    python fetch_vendor_libs.py --from-vendor windows|linux|macos <out_dir>
+        (unpack the vendor's current download instead -- to evaluate a driver
+        update: test it with a real token, upload it to a new release, then
+        update RELEASE_URL and the hashes)
 
 Prints the library path; under GitHub Actions also exports PKCS11_MODULE_SRC
 (and, for macOS, VENDOR_DRIVER_PKG_SRC: the vendor's signed driver installer,
@@ -23,6 +29,10 @@ import sys
 import tempfile
 import urllib.request
 import zipfile
+
+# Our release holding the tested vendor files (see its notes for their origin).
+RELEASE_URL = ("https://github.com/pucardotorg/dristi-solutions/releases/download/"
+               "bulksign-vendor-drivers-v1/")
 
 _BASE = "https://charteredinfo.com/DSC/TokenDrivers/"
 
@@ -135,10 +145,38 @@ def fetch(target: str, out_dir: str):
     return results
 
 
+def _download(url: str, dest: str):
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=300) as resp, open(dest, "wb") as fh:
+        shutil.copyfileobj(resp, fh)
+
+
+def fetch_release(target: str, out_dir: str):
+    """Download the tested files for `target` from our release; verify SHA-256.
+    Returns [(path, env_var)] like fetch()."""
+    _, _, out_name, sha = LIBS[target]
+    wanted = [(out_name, sha, "PKCS11_MODULE_SRC")] + [
+        (out, digest, env_var) for _, out, digest, env_var in EXTRAS.get(target, [])]
+    os.makedirs(out_dir, exist_ok=True)
+    results = []
+    for name, digest, env_var in wanted:
+        dest = os.path.join(out_dir, name)
+        _download(RELEASE_URL + name, dest)
+        got = _sha256(dest)
+        if got != digest:
+            raise SystemExit(f"{name}: SHA-256 {got} from {RELEASE_URL} does not match the "
+                             f"tested {digest}. The release asset was changed -- investigate.")
+        results.append((os.path.abspath(dest), env_var))
+    return results
+
+
 def main():
-    if len(sys.argv) != 3 or sys.argv[1] not in LIBS:
-        raise SystemExit(f"usage: {sys.argv[0]} {'|'.join(LIBS)} <out_dir>")
-    results = fetch(sys.argv[1], sys.argv[2])
+    args = sys.argv[1:]
+    from_vendor = "--from-vendor" in args
+    args = [a for a in args if a != "--from-vendor"]
+    if len(args) != 2 or args[0] not in LIBS:
+        raise SystemExit(f"usage: {sys.argv[0]} [--from-vendor] {'|'.join(LIBS)} <out_dir>")
+    results = (fetch if from_vendor else fetch_release)(args[0], args[1])
     gh_env = os.environ.get("GITHUB_ENV")
     for dest, env_var in results:
         print(f"{env_var}={dest}")
