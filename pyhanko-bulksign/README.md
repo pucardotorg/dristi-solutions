@@ -66,6 +66,17 @@ developers (`run.sh software`); nothing selects it by default.
 `PKCS11_MODULE_PATH` from `.env` (if that file exists) -> any `.dll`/`.so` copied
 next to the exe -> the vendor's standard install location (ePass2003, WatchData,
 SafeNet, HyperPKI/castle). If none is found, the error lists every place it looked.
+
+**Several token brands on one computer:** all candidate libraries are collected
+(`find_pkcs11_modules`); Detect and START try each in order
+(`token_utils.find_token_module`, per-library lock + timeout) and select the first
+that sees a token, which signing then uses (`select_module`). So a court PC with
+the WatchData **ProxKey** driver installed works with the HYP2003 build too.
+ProxKey library locations: Windows `System32\SignatureP11.dll`, Linux
+`/usr/lib/WatchData/ProxKey/lib/libwdpkcs_SignatureP11.so`, macOS
+`/usr/local/lib/wdProxKeyUsbKeyTool/libwdpkcs_Proxkey.dylib`. Unlike HYP2003,
+ProxKey cannot be bundled: its library loads further WatchData components and its
+own reader driver/daemon, so the vendor driver must be installed.
 HYP2003 file names (checked inside the vendor installers): Windows India/FIPS 140-3
 driver installs `System32\eps2003csp11v2.dll`, the global HyperPKI driver
 `System32\HyperPKICsp11_2003.dll` (both 64-bit, depend only on Windows DLLs incl.

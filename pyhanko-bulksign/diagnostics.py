@@ -1,8 +1,8 @@
 """
 Why is the DSC token not found? Checks independent of the vendor library:
 
-  usb_tokens()    is a HYP2003/ePass2003 token visible on USB at all?
-                  (USB vendor IDs 096e = Feitian hardware, 2ccf = Hypersecu)
+  usb_tokens()    is a known DSC token visible on USB at all? (by USB vendor
+                  ID: HYP2003/ePass2003 = Feitian/Hypersecu, ProxKey = WatchData)
   pcsc_readers()  does the OS smart-card service (PC/SC) see it as a reader?
                   The Windows and macOS token libraries talk to the token
                   through PC/SC, so "on USB but no reader" means the OS lacks a
@@ -10,12 +10,19 @@ Why is the DSC token not found? Checks independent of the vendor library:
                   talks USB directly, so PC/SC is not checked there.)
 """
 
+import glob
 import os
 import re
 import subprocess
 import sys
 
-TOKEN_VENDOR_IDS = (0x096E, 0x2CCF)
+# USB vendor ID -> token family, for messages.
+TOKEN_VENDORS = {
+    0x096E: "HYP2003/ePass2003 (Feitian)",
+    0x2CCF: "HYP2003 (Hypersecu)",
+    0x163C: "ProxKey (WatchData)",
+}
+TOKEN_VENDOR_IDS = tuple(TOKEN_VENDORS)
 IS_MAC = sys.platform == "darwin"
 IS_WIN = os.name == "nt"
 
@@ -26,30 +33,45 @@ def _run(cmd, timeout=15):
     kwargs = {"creationflags": 0x08000000} if IS_WIN else {}  # no console window
     out = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout,
                          env=_subprocess_env(), **kwargs)
+    if out.returncode != 0:
+        # A failed check must not read as "no token" (e.g. PowerShell blocked).
+        raise RuntimeError((out.stderr or out.stdout or f"exit {out.returncode}").strip()[:200])
     return out.stdout
 
 
 def usb_tokens():
-    """List of 'VID:PID name' strings for plugged-in HYP2003-family tokens."""
+    """'VID:PID family' strings for plugged-in known DSC tokens. Raises if the
+    check itself could not run (callers report "could not check", not "none")."""
     found = []
     if IS_MAC:
         # One "+-o" block per device; properties follow on their own lines.
         for block in _run(["ioreg", "-p", "IOUSB", "-l", "-w0"]).split("+-o ")[1:]:
             vid = re.search(r'"idVendor" = (\d+)', block)
-            if vid and int(vid.group(1)) in TOKEN_VENDOR_IDS:
+            if vid and int(vid.group(1)) in TOKEN_VENDORS:
+                v = int(vid.group(1))
                 pid = re.search(r'"idProduct" = (\d+)', block)
-                name = block.split("@")[0].strip()
-                found.append(f"{int(vid.group(1)):04x}:{int(pid.group(1)) if pid else 0:04x} {name}")
+                found.append(f"{v:04x}:{int(pid.group(1)) if pid else 0:04x} "
+                             f"{TOKEN_VENDORS[v]} ({block.split('@')[0].strip()})")
     elif IS_WIN:
+        vids = "|".join(f"{v:04X}" for v in TOKEN_VENDORS)
         ps = ("Get-PnpDevice -PresentOnly | Where-Object { $_.InstanceId -match "
-              "'VID_(096E|2CCF)' } | ForEach-Object { $_.InstanceId + ' ' + $_.FriendlyName }")
-        found = [line.strip() for line in
-                 _run(["powershell", "-NoProfile", "-Command", ps]).splitlines() if line.strip()]
+              f"'VID_({vids})' }} | ForEach-Object {{ $_.InstanceId + ' ' + $_.FriendlyName }}")
+        for line in _run(["powershell", "-NoProfile", "-Command", ps]).splitlines():
+            m = re.search(r"VID_([0-9A-F]{4})", line, re.I)
+            if m:
+                found.append(f"{TOKEN_VENDORS.get(int(m.group(1), 16), '?')}: {line.strip()}")
     else:
-        from linux_setup import plugged_token_devices
-
-        found = plugged_token_devices()
-    return found
+        for vid_file in glob.glob("/sys/bus/usb/devices/*/idVendor"):
+            try:
+                with open(vid_file) as fh:
+                    v = int(fh.read().strip(), 16)
+                if v in TOKEN_VENDORS:
+                    with open(os.path.join(os.path.dirname(vid_file), "idProduct")) as fh:
+                        found.append(f"{v:04x}:{fh.read().strip()} {TOKEN_VENDORS[v]}")
+            except (OSError, ValueError):
+                continue
+    # Same device can appear several times (USB device + its interfaces).
+    return sorted(set(found))
 
 
 def pcsc_readers():
@@ -101,9 +123,9 @@ def report_lines():
     lines = []
     try:
         usb = usb_tokens()
-        lines.append("[INFO] HYP2003 token on USB: " + ("; ".join(usb) if usb else "not seen"))
+        lines.append("[INFO] Known DSC token on USB: " + ("; ".join(usb) if usb else "none seen"))
     except Exception as e:  # noqa: BLE001
-        lines.append(f"[INFO] HYP2003 token on USB: could not check ({e})")
+        lines.append(f"[INFO] Known DSC token on USB: could not check ({e})")
     if IS_WIN or IS_MAC:
         try:
             readers, err = pcsc_readers()
@@ -115,27 +137,35 @@ def report_lines():
 
 
 def no_token_hint() -> str:
-    """Plain-language next step when the token library reports no token."""
-    try:
-        usb = usb_tokens()
-    except Exception:  # noqa: BLE001
-        usb = None
-    if usb == []:
-        return ("The token is not visible on USB: re-plug it (try another USB port), "
-                "then click Detect.")
+    """Plain-language next step when no token library found a token."""
+    readers = None
     if IS_WIN or IS_MAC:
         try:
             readers, _ = pcsc_readers()
         except Exception:  # noqa: BLE001
             readers = None
+    if readers:
+        # The OS sees a token reader (its name usually shows the brand), but no
+        # library we have could read it: that brand's driver is missing.
+        return ("The computer sees a token reader (" + "; ".join(readers) + ") but none of "
+                "the token libraries on this computer could read it. Install the driver "
+                "for this token's brand (from your CA), re-plug the token, then click Detect.")
+    try:
+        usb = usb_tokens()
+    except Exception:  # noqa: BLE001 - check failed: do not claim "not visible"
+        usb = None
+    if usb:
         os_name = "macOS" if IS_MAC else "Windows"
-        if readers == []:
+        if IS_WIN or IS_MAC:
             fix = ("Install the token driver once (macOS: the app's 'Set up' button, or the "
-                   "HYP2003 macOS driver from your CA)" if IS_MAC else
-                   "Install the HYP2003 driver from your CA once")
-            return (f"The token is plugged in, but {os_name} does not recognise it as a "
-                    f"smart-card reader. {fix}, unplug and re-plug the token, then click Detect.")
-        if readers:
-            return ("Smart-card reader found (" + "; ".join(readers) + ") but no token "
-                    "in it was readable. Re-plug the token, then click Detect.")
+                   "token's macOS driver from your CA)" if IS_MAC else
+                   "Install the token's driver from your CA once")
+            return (f"The token is plugged in ({'; '.join(usb)}), but {os_name} does not "
+                    f"recognise it as a smart-card reader. {fix}, re-plug the token, then "
+                    "click Detect.")
+        return "The token is plugged in but could not be read. Re-plug it, then click Detect."
+    if usb == []:
+        return ("No DSC token found on USB (looked for HYP2003/ePass2003 and ProxKey): "
+                "re-plug it (try another USB port), then click Detect. Other brands need "
+                "their driver installed.")
     return "Re-plug the token, then click Detect."

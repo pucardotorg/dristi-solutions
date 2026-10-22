@@ -66,11 +66,13 @@ def resolve_app_path(path):
 # --- DSC token library (PKCS#11 module) discovery ---------------------------
 # Each token brand ships its own PKCS#11 library (.dll on Windows, .so on Linux,
 # .dylib on macOS).
-# Lookup order:
+# Candidates, in this order (all of them are collected; token detection tries
+# each and uses the first that actually sees a token -- see select_module()):
 #   1. PKCS11_MODULE_PATH from .env, if that file exists
-#   2. any token library copied INTO the app folder (next to the exe) -- the
-#      portable way: drop the vendor .dll/.so beside the exe and it is picked up
-#   3. the vendor's standard install locations (driver already installed)
+#   2. any token library in the app folder (next to the exe) -- the bundled
+#      HYP2003 library, or a vendor library an admin dropped there
+#   3. the vendors' standard install locations (token driver installed), e.g.
+#      WatchData ProxKey, whose library needs its driver installed to work
 if os.name == "nt":
     _LIB_EXT = (".dll",)
 elif sys.platform == "darwin":
@@ -87,7 +89,7 @@ if os.name == "nt":
         os.path.join(_SYS32, "HYP2003csp11IND.dll"),  # HYP2003 India driver
         os.path.join(_SYS32, "HyperPKICsp11_2003.dll"),  # HYP2003 global HyperPKI driver
         os.path.join(_SYS32, "eps2003csp11.dll"),     # ePass2003 (older driver)
-        os.path.join(_SYS32, "SignatureP11.dll"),     # WatchData ProxKey
+        os.path.join(_SYS32, "SignatureP11.dll"),     # WatchData ProxKey (needs its driver)
         os.path.join(_SYS32, "eTPKCS11.dll"),         # SafeNet eToken
     ]
     # Vendor install folders, searched for a PKCS#11-looking .dll.
@@ -98,6 +100,7 @@ elif sys.platform == "darwin":
     _KNOWN_MODULES = []
     _VENDOR_GLOBS = [
         "/usr/local/lib/libcastle*.dylib",            # HYP2003 / ePass2003 (vendor .pkg)
+        "/usr/local/lib/wdProxKeyUsbKeyTool/libwdpkcs*.dylib",  # WatchData ProxKey
         "/usr/local/lib/libeTPkcs11.dylib",           # SafeNet eToken
     ]
 else:
@@ -106,12 +109,12 @@ else:
         "/usr/lib/libcastle*.so*",                    # HYP2003 / ePass2003 (castle)
         "/usr/lib/x86_64-linux-gnu/libcastle*.so*",
         "/usr/local/lib/libcastle*.so*",
-        "/usr/lib/WatchData/ProxKey/lib/libwdpkcs*.so*",
+        "/usr/lib/WatchData/ProxKey/lib/libwdpkcs*.so*",   # WatchData ProxKey
         "/usr/lib/libeTPkcs11.so*",
     ]
 
 # Name hints for files found by a broad search; the app folder accepts any library.
-_P11_HINTS = ("pkcs11", "p11", "csp11", "castle")
+_P11_HINTS = ("pkcs11", "p11", "csp11", "castle", "wdpkcs")
 
 
 def _is_library(name: str) -> bool:
@@ -119,22 +122,26 @@ def _is_library(name: str) -> bool:
     return any(lower.endswith(ext) or (ext + ".") in lower for ext in _LIB_EXT)
 
 
-def find_pkcs11_module():
+def find_pkcs11_modules():
     """
-    Locate the DSC token's PKCS#11 library. Returns (path, searched) where `path`
-    is the first match (or None) and `searched` lists the places tried, so a
-    "not found" error can tell the user exactly where we looked.
+    All candidate PKCS#11 libraries, in preference order (no duplicates).
+    Returns (paths, searched); `searched` lists every place looked, so a "not
+    found" error can tell the user exactly where we looked.
     """
     import glob
 
-    searched = []
+    found, searched = [], []
+
+    def add(p):
+        if p and os.path.isfile(p) and os.path.normcase(os.path.abspath(p)) not in {
+                os.path.normcase(os.path.abspath(f)) for f in found}:
+            found.append(p)
 
     configured = (os.environ.get("PKCS11_MODULE_PATH") or "").strip()
     if configured:
         p = resolve_app_path(configured)
         searched.append(p)
-        if os.path.isfile(p):
-            return p, searched
+        add(p)
 
     for i, d in enumerate(_SEARCH_DIRS):
         searched.append(os.path.join(d, "<any token library>"))
@@ -144,24 +151,40 @@ def find_pkcs11_module():
             continue
         # The app folder accepts any library; the macOS .app's own bundle also
         # holds Python's libraries, so there only PKCS#11-looking names count.
-        local = sorted(f for f in names
-                       if _is_library(f) and os.path.isfile(os.path.join(d, f))
-                       and (i == 0 or any(h in f.lower() for h in _P11_HINTS)))
-        if local:
-            return os.path.join(d, local[0]), searched
+        for f in sorted(names):
+            if _is_library(f) and (i == 0 or any(h in f.lower() for h in _P11_HINTS)):
+                add(os.path.join(d, f))
 
     for p in _KNOWN_MODULES:
         searched.append(p)
-        if os.path.isfile(p):
-            return p, searched
+        add(p)
 
     for pattern in _VENDOR_GLOBS:
         searched.append(pattern)
         for p in sorted(glob.glob(pattern, recursive=True)):
-            if os.path.isfile(p) and any(h in os.path.basename(p).lower() for h in _P11_HINTS):
-                return p, searched
+            if any(h in os.path.basename(p).lower() for h in _P11_HINTS):
+                add(p)
 
-    return None, searched
+    return found, searched
+
+
+# The library that last found a token (set by token detection / START), used for
+# signing so that every request talks to the same, working library.
+_selected_module = None
+
+
+def select_module(path):
+    global _selected_module
+    _selected_module = path
+
+
+def find_pkcs11_module():
+    """The library to use: the one that found the token, else the first
+    candidate. Returns (path or None, searched)."""
+    paths, searched = find_pkcs11_modules()
+    if _selected_module and _selected_module in paths:
+        return _selected_module, searched
+    return (paths[0] if paths else None), searched
 
 
 def require_pkcs11_module() -> str:

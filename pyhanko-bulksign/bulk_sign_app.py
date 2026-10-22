@@ -53,6 +53,36 @@ BG = "#f4f6f8"
 PANEL = "#eef5f5"
 
 
+def _locate_token():
+    """
+    Try every token library on this computer (bundled first, then installed
+    vendor drivers) and select the first that sees a token; signing then uses
+    it. Returns dict(module, ids, needs_setup, hint, tried). Raises with the list
+    of places searched if there is no token library at all.
+    """
+    from pyhanko_signer import (find_pkcs11_modules, prepare_module_dir,
+                                require_pkcs11_module, select_module)
+    from token_utils import find_token_module
+
+    paths, _ = find_pkcs11_modules()
+    if not paths:
+        require_pkcs11_module()  # raises "not found" + where it looked
+    module, ids, tried = find_token_module(paths, prepare_module_dir)
+    if module:
+        select_module(module)
+        return {"module": module, "ids": ids, "needs_setup": False, "hint": "", "tried": tried}
+    # No library sees a token: maybe this OS's one-time setup for the bundled
+    # library is missing (Linux USB access / macOS driver).
+    needs_setup = any(_needs_os_setup(p) for p in paths)
+    hint = ""
+    if not needs_setup:
+        import diagnostics
+
+        hint = diagnostics.no_token_hint()
+    return {"module": paths[0], "ids": [], "needs_setup": needs_setup, "hint": hint,
+            "tried": tried}
+
+
 def _needs_os_setup(module_path) -> bool:
     """The per-computer setup this OS needs for the bundled token library
     (Linux: USB access; macOS: reader driver) is not done yet."""
@@ -206,25 +236,26 @@ class BulkSignApp:
     def _detect_worker(self):
         module_path = None
         try:
-            from pyhanko_signer import prepare_module_dir, require_pkcs11_module
-
-            module_path = require_pkcs11_module()
-            if _needs_os_setup(module_path):
+            found = _locate_token()
+            module_path = found["module"]
+            self._log_tried(found["tried"])
+            if found["needs_setup"]:
                 self.root.after(0, self._on_setup_needed)
                 return
-            prepare_module_dir(module_path)
-            from token_utils import list_token_identities_safe
-
-            ids = list_token_identities_safe(module_path)
-            hint = ""
-            if not ids:
-                import diagnostics
-
-                hint = diagnostics.no_token_hint()
-            self.root.after(0, lambda: self._on_token_detected(module_path, ids, None, hint))
+            self.root.after(0, lambda: self._on_token_detected(
+                module_path, found["ids"], None, found["hint"]))
         except Exception as e:  # noqa: BLE001 - show any failure in the panel
             err = str(e)  # `e` is cleared when the except block exits
             self.root.after(0, lambda: self._on_token_detected(module_path, None, err))
+
+    def _log_tried(self, tried):
+        """Activity line per library tried, when more than one was needed."""
+        if len(tried) < 2 and all(not isinstance(r, str) for _, r in tried):
+            return
+        for path, result in tried:
+            what = result if isinstance(result, str) else (
+                f"{len(result)} certificate(s)" if result else "no token")
+            self._log(f"Token library {os.path.basename(path)}: {what}")
 
     def _on_token_detected(self, module_path, ids, err, hint=""):
         self.detect_btn.configure(state="normal")
@@ -317,11 +348,17 @@ class BulkSignApp:
             import uvicorn
 
             self._log("Checking token and PIN…")
-            from pyhanko_signer import find_pkcs11_module, validate_signer
+            from pyhanko_signer import validate_signer
 
-            if _needs_os_setup(find_pkcs11_module()[0]):
-                raise RuntimeError("One-time DSC token setup is not done on this "
-                                   "computer yet. Click 'Set up' in the token box first.")
+            # Pick the library that actually sees the token (bundled HYP2003, an
+            # installed ProxKey driver, ...); signing then uses that library.
+            found = _locate_token()
+            if not found["ids"]:
+                if found["needs_setup"]:
+                    raise RuntimeError("One-time DSC token setup is not done on this "
+                                       "computer yet. Click 'Set up' in the token box first.")
+                raise RuntimeError("No DSC token found. " + found["hint"])
+            self._log(f"Using token library: {found['module']}")
 
             cn = validate_signer()
             self._log(f"Token OK{f' — {cn}' if cn else ''}.")

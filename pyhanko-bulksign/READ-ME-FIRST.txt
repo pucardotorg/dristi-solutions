@@ -21,10 +21,14 @@ SIGNING WITH YOUR DSC TOKEN
    e. Bulk sign in the browser. Click STOP when finished.
 
 
-Other token brands
-   The app also finds the token library if the token's driver is installed, or
-   if you copy the vendor's PKCS#11 library next to the app (64-bit; on Windows
-   from C:\Windows\System32, NOT SysWOW64).
+Other token brands (e.g. PROXKey)
+   HYP2003 / ePass2003 tokens work as-is (their library is included). For other
+   brands such as WatchData PROXKey, install that token's driver from your CA
+   once (on most court computers it is already installed, because Capricorn uses
+   it). The app then finds it by itself: it tries every token library on the
+   computer and uses the one that sees your token.
+   You can also copy a vendor's 64-bit PKCS#11 library next to the app (on
+   Windows from C:\Windows\System32, NOT SysWOW64).
 
 
 Windows notes

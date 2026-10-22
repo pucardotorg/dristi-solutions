@@ -93,26 +93,30 @@ def _check_signing(report):
 
 
 def _check_token(report):
-    from pyhanko_signer import find_pkcs11_module, prepare_module_dir
+    from pyhanko_signer import find_pkcs11_modules, prepare_module_dir
 
     import diagnostics
     import os_setup
 
     report.extend(os_setup.status_lines())
-    # Before touching the vendor library, so these are recorded even if it hangs.
+    # Before touching any vendor library, so these are recorded even if one hangs.
     report.extend(diagnostics.report_lines())
-    path, searched = find_pkcs11_module()
-    if not path:
-        report.append("[INFO] DSC token library: not found (only needed for real signing). Looked in:")
+    paths, searched = find_pkcs11_modules()
+    if not paths:
+        report.append("[INFO] DSC token library: none found (only needed for real signing). Looked in:")
         report.extend(f"         {p}" for p in searched)
         return
-    report.append(f"[INFO] DSC token library: {path}")
-    prepare_module_dir(path)
-    from token_utils import list_token_identities_safe
+    from token_utils import find_token_module
 
-    ids = list_token_identities_safe(path)
-    if not ids:
-        report.append("[INFO] Library loaded OK; no token found. " + diagnostics.no_token_hint())
+    module, ids, tried = find_token_module(paths, prepare_module_dir)
+    for path, result in tried:
+        what = result if isinstance(result, str) else (
+            f"{len(result)} certificate(s)" if result else "loaded OK, no token")
+        report.append(f"[INFO] DSC token library {path}: {what}")
+    for path in paths[len(tried):]:
+        report.append(f"[INFO] DSC token library {path}: not tried (token already found)")
+    if not module:
+        report.append("[INFO] No token found. " + diagnostics.no_token_hint())
     for i in ids:
         report.append(f"[PASS] Token '{i['token_label']}': {i['cn'] or '(no CN)'}  [label: {i['cert_label']}]")
 

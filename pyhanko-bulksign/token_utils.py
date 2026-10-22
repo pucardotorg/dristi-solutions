@@ -25,8 +25,15 @@ class TokenIdentity(TypedDict):
     cn: str
 
 
-# One caller at a time into the vendor library (token detection / self-test).
-TOKEN_LOCK = threading.Lock()
+# One caller at a time into each vendor library (token detection / self-test).
+# Per library, so one library that hangs cannot block trying the others.
+_LOCKS = {}
+_LOCKS_GUARD = threading.Lock()
+
+
+def _lock_for(module_path):
+    with _LOCKS_GUARD:
+        return _LOCKS.setdefault(module_path, threading.Lock())
 
 TOKEN_TIMEOUT_S = 30
 
@@ -56,10 +63,32 @@ def call_with_timeout(fn, *args, timeout=TOKEN_TIMEOUT_S):
 def list_token_identities_safe(module_path: str) -> List[TokenIdentity]:
     """list_token_identities() with the lock and a timeout."""
     def locked():
-        with TOKEN_LOCK:
+        with _lock_for(module_path):
             return list_token_identities(module_path)
 
     return call_with_timeout(locked)
+
+
+def find_token_module(candidates, prepare=None):
+    """
+    Try each candidate library until one sees a token (a computer can have
+    several brands' libraries: the bundled HYP2003 one, an installed ProxKey
+    driver, ...). Returns (module or None, identities, tried) where `tried` is a
+    list of (module, identities-or-error-string) for every library attempted.
+    """
+    tried = []
+    for path in candidates:
+        try:
+            if prepare:
+                prepare(path)
+            ids = list_token_identities_safe(path)
+        except Exception as e:  # noqa: BLE001 - note it, try the next library
+            tried.append((path, f"error: {e}"))
+            continue
+        tried.append((path, ids))
+        if ids:
+            return path, ids, tried
+    return None, [], tried
 
 
 def list_token_identities(module_path: str) -> List[TokenIdentity]:
