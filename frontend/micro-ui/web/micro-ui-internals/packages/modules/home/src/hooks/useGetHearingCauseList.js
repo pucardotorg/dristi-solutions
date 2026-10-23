@@ -29,6 +29,9 @@ function useGetHearingCauseList({ limit = 300, offset = 0 } = {}) {
           tenantId,
           courtId: localStorage.getItem("courtId"),
           date: filters?.date || todayStr,
+          // backend defaults limit to 100; fetch the full day's list since pagination is done client-side
+          offset: 0,
+          limit: 300,
           ...(filters?.status?.code && { status: filters.status.code }),
           ...(filters?.purpose?.code && { hearingType: filters.purpose.code }),
           ...(filters?.caseQuery && { searchableFields: filters.caseQuery.trim() }),
