@@ -239,6 +239,12 @@ class BulkSignApp:
             found = _locate_token()
             module_path = found["module"]
             self._log_tried(found["tried"])
+            if not found["ids"]:
+                import diagnostics
+
+                # Does the token work through Windows (as Capricorn uses it)?
+                for line in diagnostics.windows_store_lines():
+                    self._log(line.replace("[INFO] ", ""))
             if found["needs_setup"]:
                 self.root.after(0, self._on_setup_needed)
                 return

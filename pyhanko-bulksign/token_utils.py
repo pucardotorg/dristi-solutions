@@ -18,6 +18,15 @@ from asn1crypto import x509
 from pkcs11 import Attribute, ObjectClass
 
 
+def describe_error(e: BaseException) -> str:
+    """python-pkcs11 errors are classes per PKCS#11 return code and often carry no
+    message (str(e) == ""), so always include the class name."""
+    text = str(e).strip()
+    if isinstance(e, RuntimeError) and type(e) is RuntimeError and text:
+        return text  # our own messages already say what failed
+    return f"{type(e).__name__}: {text}" if text else type(e).__name__
+
+
 class TokenIdentity(TypedDict):
     token_label: str
     cert_label: str
@@ -83,7 +92,7 @@ def find_token_module(candidates, prepare=None):
                 prepare(path)
             ids = list_token_identities_safe(path)
         except Exception as e:  # noqa: BLE001 - note it, try the next library
-            tried.append((path, f"error: {e}"))
+            tried.append((path, f"error: {describe_error(e)}"))
             continue
         tried.append((path, ids))
         if ids:
@@ -106,8 +115,19 @@ def list_token_identities(module_path: str) -> List[TokenIdentity]:
             "vendor files next to it, or it may be 32-bit (this app is 64-bit)."
         ) from e
     identities: List[TokenIdentity] = []
+    slot_errors = []
 
-    for token in lib.get_tokens():
+    try:
+        tokens = list(lib.get_tokens())
+    except Exception as e:  # noqa: BLE001
+        # Say which step failed and which slots the library reports, if any.
+        try:
+            slots = "; ".join(s.slot_description.strip() for s in lib.get_slots()) or "none"
+        except Exception as e2:  # noqa: BLE001
+            slots = f"could not list ({describe_error(e2)})"
+        raise RuntimeError(f"listing tokens failed ({describe_error(e)}); slots: {slots}") from e
+
+    for token in tokens:
         token_label = (token.label or "").strip()
         try:
             # No user_pin -> public session; enough to read certificates.
@@ -133,10 +153,15 @@ def list_token_identities(module_path: str) -> List[TokenIdentity]:
                         cert_id_hex=cert_id,
                         cn=cn,
                     ))
-        except pkcs11.PKCS11Error:
-            # A token slot that can't be opened publicly -> skip it.
+        except pkcs11.PKCS11Error as e:
+            # A token that can't be opened publicly -> try the others, but report
+            # it if nothing else is found (instead of a silent "no token").
+            slot_errors.append(f"token '{token_label}': opening a session failed "
+                               f"({describe_error(e)})")
             continue
 
+    if not identities and slot_errors:
+        raise RuntimeError("; ".join(slot_errors))
     return identities
 
 

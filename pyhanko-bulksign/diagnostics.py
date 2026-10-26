@@ -118,6 +118,82 @@ def pcsc_readers():
         lib.SCardReleaseContext(ctx)
 
 
+def windows_store_certs():
+    """
+    Certificates in the current user's Windows Personal store that are linked to
+    a private key, as [(name, key provider)]. Windows signing tools (such as
+    Capricorn) typically sign through this store via the token vendor's
+    CSP/KSP -- a different interface from the PKCS#11 library this app uses --
+    so a token certificate listed here proves the token works through Windows
+    even when its PKCS#11 library fails.
+    """
+    import ctypes
+    from ctypes import wintypes
+
+    crypt32 = ctypes.WinDLL("crypt32", use_last_error=True)
+
+    class CRYPT_KEY_PROV_INFO(ctypes.Structure):
+        _fields_ = [("pwszContainerName", wintypes.LPWSTR),
+                    ("pwszProvName", wintypes.LPWSTR),
+                    ("dwProvType", wintypes.DWORD),
+                    ("dwFlags", wintypes.DWORD),
+                    ("cProvParam", wintypes.DWORD),
+                    ("rgProvParam", ctypes.c_void_p),
+                    ("dwKeySpec", wintypes.DWORD)]
+
+    crypt32.CertOpenSystemStoreW.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR]
+    crypt32.CertOpenSystemStoreW.restype = ctypes.c_void_p
+    crypt32.CertEnumCertificatesInStore.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+    crypt32.CertEnumCertificatesInStore.restype = ctypes.c_void_p
+    crypt32.CertGetNameStringW.argtypes = [ctypes.c_void_p, wintypes.DWORD, wintypes.DWORD,
+                                           ctypes.c_void_p, wintypes.LPWSTR, wintypes.DWORD]
+    crypt32.CertGetNameStringW.restype = wintypes.DWORD
+    crypt32.CertGetCertificateContextProperty.argtypes = [
+        ctypes.c_void_p, wintypes.DWORD, ctypes.c_void_p, ctypes.POINTER(wintypes.DWORD)]
+    crypt32.CertGetCertificateContextProperty.restype = wintypes.BOOL
+    crypt32.CertCloseStore.argtypes = [ctypes.c_void_p, wintypes.DWORD]
+
+    CERT_NAME_SIMPLE_DISPLAY_TYPE, CERT_KEY_PROV_INFO_PROP_ID = 4, 2
+    store = crypt32.CertOpenSystemStoreW(None, "MY")
+    if not store:
+        raise OSError(f"cannot open the certificate store (error {ctypes.get_last_error()})")
+    found, ctx = [], None
+    try:
+        while True:
+            ctx = crypt32.CertEnumCertificatesInStore(store, ctx)  # frees the previous one
+            if not ctx:
+                break
+            size = wintypes.DWORD(0)
+            if not crypt32.CertGetCertificateContextProperty(
+                    ctx, CERT_KEY_PROV_INFO_PROP_ID, None, ctypes.byref(size)):
+                continue  # no private key linked
+            raw = ctypes.create_string_buffer(size.value)
+            if not crypt32.CertGetCertificateContextProperty(
+                    ctx, CERT_KEY_PROV_INFO_PROP_ID, raw, ctypes.byref(size)):
+                continue
+            info = ctypes.cast(raw, ctypes.POINTER(CRYPT_KEY_PROV_INFO)).contents
+            name = ctypes.create_unicode_buffer(256)
+            crypt32.CertGetNameStringW(ctx, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, None, name, 256)
+            found.append((name.value or "(no name)", info.pwszProvName or "(unknown provider)"))
+    finally:
+        crypt32.CertCloseStore(store, 0)
+    return found
+
+
+def windows_store_lines():
+    """Self-test / Activity lines for windows_store_certs() (Windows only)."""
+    if not IS_WIN:
+        return []
+    try:
+        certs = windows_store_certs()
+    except Exception as e:  # noqa: BLE001
+        return [f"[INFO] Windows certificate store: could not check ({e})"]
+    if not certs:
+        return ["[INFO] Windows certificate store: no certificates with a private key"]
+    return ["[INFO] Windows certificate store: " + "; ".join(f"{n} -- key provider: {p}"
+                                                         for n, p in certs)]
+
+
 def report_lines():
     """Self-test lines describing USB + PC/SC state."""
     lines = []
@@ -133,6 +209,7 @@ def report_lines():
                          + (err if err else ("; ".join(readers) if readers else "none")))
         except Exception as e:  # noqa: BLE001
             lines.append(f"[INFO] Smart-card readers seen by the OS: could not check ({e})")
+    lines.extend(windows_store_lines())
     return lines
 
 

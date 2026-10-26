@@ -95,7 +95,12 @@ if os.name == "nt":
     # Vendor install folders, searched for a PKCS#11-looking .dll.
     _VENDOR_GLOBS = [os.path.join(d, v, "**", "*.dll")
                      for d in _PROGRAM_DIRS if d
-                     for v in ("HyperPKI*", "Hypersecu*", "ePass2003*", "WatchData*")]
+                     for v in ("HyperPKI*", "Hypersecu*", "ePass2003*", "WatchData*")] + [
+        # WatchData's core PKCS#11 library (SignatureP11.dll is only a front end
+        # for it); its installer puts it in a vendor subfolder of System32.
+        os.path.join(_SYS32, "*", "wdpkcs*.dll"),
+        os.path.join(_SYS32, "*", "*", "wdpkcs*.dll"),
+    ]
 elif sys.platform == "darwin":
     _KNOWN_MODULES = []
     _VENDOR_GLOBS = [
