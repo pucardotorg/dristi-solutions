@@ -36,6 +36,7 @@ call .venv\Scripts\pyinstaller --noconfirm --clean --onefile --windowed ^
   --hidden-import token_utils ^
   --hidden-import selftest ^
   --hidden-import diagnostics ^
+  --hidden-import winstore ^
   --hidden-import linux_setup ^
   --hidden-import mac_setup ^
   --hidden-import os_setup ^

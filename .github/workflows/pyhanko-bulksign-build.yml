@@ -38,6 +38,10 @@ jobs:
         shell: cmd
         run: build_app.bat
 
+      - name: Test Windows certificate-store signing (CryptoAPI + CNG)
+        shell: cmd
+        run: .venv\Scripts\python winstore_ci_test.py
+
       - name: Self-test the packaged exe
         shell: pwsh
         run: |

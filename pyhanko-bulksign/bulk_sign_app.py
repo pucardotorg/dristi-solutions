@@ -65,12 +65,22 @@ def _locate_token():
     from token_utils import find_token_module
 
     paths, _ = find_pkcs11_modules()
-    if not paths:
-        require_pkcs11_module()  # raises "not found" + where it looked
-    module, ids, tried = find_token_module(paths, prepare_module_dir)
+    module, ids, tried = find_token_module(paths, prepare_module_dir) if paths else (None, [], [])
     if module:
         select_module(module)
         return {"module": module, "ids": ids, "needs_setup": False, "hint": "", "tried": tried}
+
+    # Windows: no PKCS#11 library reads the token -> sign through the Windows
+    # certificate store, as Capricorn does (works for any brand whose driver
+    # registers its certificate there; see winstore.py).
+    store = _locate_store_cert() if os.name == "nt" else None
+    if store and store.get("cert"):
+        cert = store["cert"]
+        return {"module": None, "store": cert, "needs_setup": False, "hint": "", "tried": tried,
+                "ids": [{"cn": cert["name"], "cert_label": f"Windows store, {cert['provider']}",
+                         "token_label": "", "cert_id_hex": cert["thumbprint"], "slot_no": None}]}
+    if not paths and not (store and store.get("hint")):
+        require_pkcs11_module()  # raises "not found" + where it looked
     # No library sees a token: maybe this OS's one-time setup for the bundled
     # library is missing (Linux USB access / macOS driver).
     needs_setup = any(_needs_os_setup(p) for p in paths)
@@ -78,9 +88,50 @@ def _locate_token():
     if not needs_setup:
         import diagnostics
 
-        hint = diagnostics.no_token_hint()
-    return {"module": paths[0], "ids": [], "needs_setup": needs_setup, "hint": hint,
-            "tried": tried}
+        hint = (store or {}).get("hint") or diagnostics.no_token_hint()
+    return {"module": paths[0] if paths else None, "ids": [], "needs_setup": needs_setup,
+            "hint": hint, "tried": tried}
+
+
+def _close_store_session():
+    """Release the Windows-store key opened at START (no-op otherwise)."""
+    try:
+        from pyhanko_signer import close_store_session
+
+        close_store_session()
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _locate_store_cert():
+    """
+    The DSC certificate to use from the Windows store: hardware-backed, valid,
+    for signing -- preferring ones whose token is plugged in. Returns
+    {"cert": info} or {"hint": why none is usable}, or None if nothing found.
+    """
+    import winstore
+
+    try:
+        certs = winstore.find_signing_certs()
+    except Exception as e:  # noqa: BLE001
+        return {"hint": f"Could not read the Windows certificate store ({e})."}
+    if not certs:
+        return None
+    usable = [c for c in certs if not c["problem"]]
+    if not usable:
+        return {"hint": "The token's certificate cannot be used: " + "; ".join(
+            f"{c['name']} {c['problem']}" for c in certs) + "."}
+    present = [c for c in usable if winstore.is_present(c)]
+    chosen = present or usable
+    names = {c["thumbprint"] for c in chosen}
+    if len(names) > 1:
+        return {"hint": "Several DSC certificates are available (" + "; ".join(
+            f"{c['name']} ({c['provider']})" for c in chosen) + "). Plug in only the "
+            "token you want to sign with, then click Detect."}
+    from pyhanko_signer import select_store_cert
+
+    select_store_cert(chosen[0])
+    return {"cert": chosen[0]}
 
 
 def _needs_os_setup(module_path) -> bool:
@@ -364,7 +415,13 @@ class BulkSignApp:
                     raise RuntimeError("One-time DSC token setup is not done on this "
                                        "computer yet. Click 'Set up' in the token box first.")
                 raise RuntimeError("No DSC token found. " + found["hint"])
-            self._log(f"Using token library: {found['module']}")
+            if found.get("store"):
+                os.environ["SIGNER_MODE"] = "winstore"
+                self._log("Using the Windows certificate store "
+                          f"({found['store']['provider']}).")
+            else:
+                os.environ["SIGNER_MODE"] = "pkcs11"
+                self._log(f"Using token library: {found['module']}")
 
             cn = validate_signer()
             self._log(f"Token OK{f' — {cn}' if cn else ''}.")
@@ -424,6 +481,7 @@ class BulkSignApp:
         if self.thread is not None:
             self.thread.join(timeout=10)
         os.environ.pop("PKCS11_USER_PIN", None)
+        _close_store_session()
         self.server = None
         self.thread = None
         self.root.after(0, self._on_stopped)
@@ -450,6 +508,7 @@ class BulkSignApp:
             if self.thread is not None:
                 self.thread.join(timeout=10)
             os.environ.pop("PKCS11_USER_PIN", None)
+            _close_store_session()
         self.root.destroy()
 
 

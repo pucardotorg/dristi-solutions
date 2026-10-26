@@ -32,6 +32,7 @@ class TokenIdentity(TypedDict):
     cert_label: str
     cert_id_hex: str
     cn: str
+    slot_no: int   # index in lib.get_slots(); signing opens exactly this slot
 
 
 # One caller at a time into each vendor library (token detection / self-test).
@@ -118,16 +119,22 @@ def list_token_identities(module_path: str) -> List[TokenIdentity]:
     slot_errors = []
 
     try:
-        tokens = list(lib.get_tokens())
+        slots = list(lib.get_slots())
     except Exception as e:  # noqa: BLE001
-        # Say which step failed and which slots the library reports, if any.
-        try:
-            slots = "; ".join(s.slot_description.strip() for s in lib.get_slots()) or "none"
-        except Exception as e2:  # noqa: BLE001
-            slots = f"could not list ({describe_error(e2)})"
-        raise RuntimeError(f"listing tokens failed ({describe_error(e)}); slots: {slots}") from e
+        raise RuntimeError(f"listing slots failed ({describe_error(e)})") from e
 
-    for token in tokens:
+    # Ask each slot separately: some libraries (WatchData ProxKey) report several
+    # reader slots, some of which fail with DeviceError -- python-pkcs11's
+    # get_tokens() aborts on the first such slot, hiding the working one.
+    for slot_no, slot in enumerate(slots):
+        try:
+            token = slot.get_token()
+        except Exception as e:  # noqa: BLE001 - empty or broken slot: try the next
+            if not isinstance(e, (pkcs11.exceptions.TokenNotPresent,
+                                  pkcs11.exceptions.TokenNotRecognised)):
+                slot_errors.append(f"slot {slot_no} ({slot.slot_description.strip()}): "
+                                   f"{describe_error(e)}")
+            continue
         token_label = (token.label or "").strip()
         try:
             # No user_pin -> public session; enough to read certificates.
@@ -152,6 +159,7 @@ def list_token_identities(module_path: str) -> List[TokenIdentity]:
                         cert_label=label or "",
                         cert_id_hex=cert_id,
                         cn=cn,
+                        slot_no=slot_no,
                     ))
         except pkcs11.PKCS11Error as e:
             # A token that can't be opened publicly -> try the others, but report
@@ -165,19 +173,26 @@ def list_token_identities(module_path: str) -> List[TokenIdentity]:
     return identities
 
 
-def detect_single_cert_label(module_path: str) -> str:
+def pick_identity(module_path: str, cert_label=None) -> TokenIdentity:
     """
-    Return the cert_label of the token's sole identity.
+    The identity to sign with: the one whose certificate label is `cert_label`,
+    or the token's sole identity if no label is configured.
 
     Raises RuntimeError with an actionable message if no token is present or if
-    the token holds more than one certificate (caller must then set the label).
+    the token holds several certificates and no label is set.
     """
     ids = list_token_identities(module_path)
     if not ids:
         raise RuntimeError("No DSC token detected -- plug it in and try again.")
+    if cert_label:
+        match = [i for i in ids if i["cert_label"] == cert_label]
+        if not match:
+            raise RuntimeError(f"No certificate labelled '{cert_label}' on the token "
+                               "(PKCS11_CERT_LABEL in .env).")
+        return match[0]
     if len(ids) > 1:
         opts = ", ".join(i["cert_label"] for i in ids if i["cert_label"])
         raise RuntimeError(
             "Multiple certificates on the token; set PKCS11_CERT_LABEL to one of: " + opts
         )
-    return ids[0]["cert_label"]
+    return ids[0]

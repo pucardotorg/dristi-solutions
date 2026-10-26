@@ -170,6 +170,10 @@ def find_pkcs11_modules():
             if any(h in os.path.basename(p).lower() for h in _P11_HINTS):
                 add(p)
 
+    # A vendor "front end" (WatchData SignatureP11.dll) initialises its core
+    # library (wdpkcs.dll) inside our process; trying the core afterwards then
+    # fails with "already initialized". So try front ends last.
+    found.sort(key=lambda p: "signaturep11" in os.path.basename(p).lower())
     return found, searched
 
 
@@ -181,6 +185,47 @@ _selected_module = None
 def select_module(path):
     global _selected_module
     _selected_module = path
+
+
+# --- Windows certificate store mode (SIGNER_MODE=winstore) ------------------
+# Used when no PKCS#11 library can read the token but its driver registered the
+# certificate in the Windows store (see winstore.py). The key stays open from
+# START to STOP so the PIN is given once.
+_store_cert = None
+_store_key = None
+
+
+def select_store_cert(cert_info):
+    global _store_cert
+    _store_cert = cert_info
+
+
+def open_store_session(pin):
+    """Open the selected store certificate's key with the PIN and prove it can
+    sign (a wrong PIN or missing token fails here, not on the first document)."""
+    global _store_key
+    import hashlib
+
+    import winstore
+
+    close_store_session()
+    if _store_cert is None:
+        raise RuntimeError("No DSC token selected -- click Detect.")
+    key = winstore.StoreKey(_store_cert, pin=pin)
+    try:
+        key.sign(hashlib.sha256(b"OnCourts PIN check").digest(), "sha256")
+    except Exception:
+        key.close()
+        raise
+    _store_key = key
+    return key
+
+
+def close_store_session():
+    global _store_key
+    if _store_key is not None:
+        _store_key.close()
+        _store_key = None
 
 
 def find_pkcs11_module():
@@ -269,16 +314,19 @@ def _build_signer():
         cert_label = os.environ.get("PKCS11_CERT_LABEL") or None
         key_label = os.environ.get("PKCS11_KEY_LABEL") or None
 
-        # Auto-detect: if no cert label is configured, use the token's sole identity
-        # (raises a clear error for zero / multiple certs). Lets a new DSC pendrive
-        # work with no .env editing.
-        if not cert_label:
-            from token_utils import detect_single_cert_label
+        # Find the identity (and its slot): the configured label, else the token's
+        # sole identity (raises a clear error for zero / multiple certs), so a new
+        # DSC pendrive works with no .env editing. The slot number matters for
+        # libraries with several slots (ProxKey): pyHanko then opens exactly that
+        # slot instead of refusing ("more than 1 slot") or tripping on bad ones.
+        from token_utils import pick_identity
 
-            cert_label = detect_single_cert_label(module_path)
+        identity = pick_identity(module_path, cert_label)
+        cert_label = identity["cert_label"]
 
         config = PKCS11SignatureConfig(
             module_path=module_path,
+            slot_no=identity["slot_no"],
             token_criteria=None,
             cert_label=cert_label,
             key_label=key_label,   # None -> pyHanko defaults key_label to cert_label
@@ -287,7 +335,14 @@ def _build_signer():
         # Context manager; the caller keeps it open for the duration of the request.
         return PKCS11SigningContext(config)
 
-    raise RuntimeError(f"Unknown SIGNER_MODE '{mode}' (use 'software' or 'pkcs11')")
+    if mode == "winstore":
+        import winstore
+
+        if _store_key is None:
+            raise RuntimeError("Signing service not started -- enter the PIN and click START.")
+        return winstore.StoreSigner(_store_key)
+
+    raise RuntimeError(f"Unknown SIGNER_MODE '{mode}' (use 'pkcs11', 'winstore' or 'software')")
 
 
 def validate_signer():
@@ -306,6 +361,10 @@ def validate_signer():
             return s.subject_name
         except Exception:
             return None
+
+    if os.environ.get("SIGNER_MODE", "pkcs11").lower() == "winstore":
+        key = open_store_session(os.environ.get("PKCS11_USER_PIN"))
+        return key.cert.subject.native.get("common_name")
 
     signer_obj = _build_signer()
     if hasattr(signer_obj, "__enter__"):
